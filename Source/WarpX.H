@@ -598,17 +598,11 @@ public:
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
 #ifdef WARPX_USE_PSATD
-    // Host and device vectors of stencil coefficients used for finite-order centering of fields
-    amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_x;
-    amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_y;
-    amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_z;
+    // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_z;
-    // Host and device vectors of stencil coefficients used for finite-order centering of currents
-    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_x;
-    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_y;
-    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_z;
+    // Device vectors of stencil coefficients used for finite-order centering of currents
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
@@ -760,9 +754,19 @@ private:
         return gather_buffer_masks[lev].get();
     }
 
-    void ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coeffs,
-                                     amrex::Vector<amrex::Real>& unordered_coeffs,
-                                     const int order);
+#ifdef WARPX_USE_PSATD
+    // TODO Add Doxygen
+    void ReorderFornbergCoefficients (amrex::Vector<amrex::Real>& ordered_coeffs,
+                                      amrex::Vector<amrex::Real>& unordered_coeffs,
+                                      const int order);
+    // TODO Add Doxygen
+    void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
+                                        amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
+                                        amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
+                                        const int centering_nox,
+                                        const int centering_noy,
+                                        const int centering_noz);
+#endif
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,

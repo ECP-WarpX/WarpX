@@ -708,18 +708,19 @@ WarpX::ReadParameters ()
         pp.query("noz", noz);
 
 #ifdef WARPX_USE_PSATD
+
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 
             // For momentum-conserving field gathering, read from input the order of
             // interpolation from the staggered positions to the grid nodes
-            if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
+            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving) {
                 pp.query("field_centering_nox", field_centering_nox);
                 pp.query("field_centering_noy", field_centering_noy);
                 pp.query("field_centering_noz", field_centering_noz);
             }
 
             // Read order of finite-order centering of currents (nodal to staggered)
-            if (do_current_centering) {
+            if (WarpX::do_current_centering) {
                 pp.query("current_centering_nox", current_centering_nox);
                 pp.query("current_centering_noy", current_centering_noy);
                 pp.query("current_centering_noz", current_centering_noz);
@@ -732,99 +733,24 @@ WarpX::ReadParameters ()
                     "High-order interpolation (order > 2) is not implemented with mesh refinement");
             }
 
-            // Host vectors for Fornberg stencil coefficients
-            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_x;
-            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_y;
-            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_z;
-
-            if (field_gathering_algo == GatheringAlgo::MomentumConserving)
+            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving)
             {
-                // Allocate stencil coefficients for finite-order centering of fields:
-
-                host_Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(field_centering_nox, false);
-                host_Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(field_centering_noy, false);
-                host_Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(field_centering_noz, false);
-
-                // (1) Host vectors for ordered Fornberg stencil coefficients used for finite-order centering
-                host_field_centering_stencil_coeffs_x.resize(field_centering_nox);
-                host_field_centering_stencil_coeffs_y.resize(field_centering_noy);
-                host_field_centering_stencil_coeffs_z.resize(field_centering_noz);
-
-                // (2) Re-order Fornberg stencil coefficients
-                // example for order 6: (c_0,c_1,c_2) becomes (c_2,c_1,c_0,c_0,c_1,c_2)
-                ReorderFornbergCoefficients(host_field_centering_stencil_coeffs_x,
-                                            host_Fornberg_stencil_coeffs_x, field_centering_nox);
-                ReorderFornbergCoefficients(host_field_centering_stencil_coeffs_y,
-                                            host_Fornberg_stencil_coeffs_y, field_centering_noy);
-                ReorderFornbergCoefficients(host_field_centering_stencil_coeffs_z,
-                                            host_Fornberg_stencil_coeffs_z, field_centering_noz);
-
-                // (3) Device vectors for ordered Fornberg stencil coefficients used for finite-order centering
-                device_field_centering_stencil_coeffs_x.resize(host_field_centering_stencil_coeffs_x.size());
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                                      host_field_centering_stencil_coeffs_x.begin(),
-                                      host_field_centering_stencil_coeffs_x.end(),
-                                      device_field_centering_stencil_coeffs_x.begin());
-
-                device_field_centering_stencil_coeffs_y.resize(host_field_centering_stencil_coeffs_y.size());
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                                      host_field_centering_stencil_coeffs_y.begin(),
-                                      host_field_centering_stencil_coeffs_y.end(),
-                                      device_field_centering_stencil_coeffs_y.begin());
-
-                device_field_centering_stencil_coeffs_z.resize(host_field_centering_stencil_coeffs_z.size());
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                                      host_field_centering_stencil_coeffs_z.begin(),
-                                      host_field_centering_stencil_coeffs_z.end(),
-                                      device_field_centering_stencil_coeffs_z.begin());
-
-                // TODO Is this necessary?
-                amrex::Gpu::synchronize();
+                AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
+                                              device_field_centering_stencil_coeffs_y,
+                                              device_field_centering_stencil_coeffs_z,
+                                              field_centering_nox,
+                                              field_centering_noy,
+                                              field_centering_noz);
             }
 
-            if (do_current_centering)
+            if (WarpX::do_current_centering)
             {
-                // Allocate stencil coefficients for finite-order centering of currents:
-
-                host_Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(current_centering_nox, false);
-                host_Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(current_centering_noy, false);
-                host_Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(current_centering_noz, false);
-
-                // (1) Host vectors for ordered Fornberg stencil coefficients used for finite-order centering
-                host_current_centering_stencil_coeffs_x.resize(current_centering_nox);
-                host_current_centering_stencil_coeffs_y.resize(current_centering_noy);
-                host_current_centering_stencil_coeffs_z.resize(current_centering_noz);
-
-                // (2) Re-order Fornberg stencil coefficients
-                // example for order 6: (c_0,c_1,c_2) becomes (c_2,c_1,c_0,c_0,c_1,c_2)
-                ReorderFornbergCoefficients(host_current_centering_stencil_coeffs_x,
-                                            host_Fornberg_stencil_coeffs_x, current_centering_nox);
-                ReorderFornbergCoefficients(host_current_centering_stencil_coeffs_y,
-                                            host_Fornberg_stencil_coeffs_y, current_centering_noy);
-                ReorderFornbergCoefficients(host_current_centering_stencil_coeffs_z,
-                                            host_Fornberg_stencil_coeffs_z, current_centering_noz);
-
-                // (3) Device vectors for ordered Fornberg stencil coefficients used for finite-order centering
-                device_current_centering_stencil_coeffs_x.resize(host_current_centering_stencil_coeffs_x.size());
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                                      host_current_centering_stencil_coeffs_x.begin(),
-                                      host_current_centering_stencil_coeffs_x.end(),
-                                      device_current_centering_stencil_coeffs_x.begin());
-
-                device_current_centering_stencil_coeffs_y.resize(host_current_centering_stencil_coeffs_y.size());
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                                      host_current_centering_stencil_coeffs_y.begin(),
-                                      host_current_centering_stencil_coeffs_y.end(),
-                                      device_current_centering_stencil_coeffs_y.begin());
-
-                device_current_centering_stencil_coeffs_z.resize(host_current_centering_stencil_coeffs_z.size());
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                                      host_current_centering_stencil_coeffs_z.begin(),
-                                      host_current_centering_stencil_coeffs_z.end(),
-                                      device_current_centering_stencil_coeffs_z.begin());
-
-                // TODO Is this necessary?
-                amrex::Gpu::synchronize();
+                AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
+                                              device_current_centering_stencil_coeffs_y,
+                                              device_current_centering_stencil_coeffs_z,
+                                              current_centering_nox,
+                                              current_centering_noy,
+                                              current_centering_noz);
             }
         }
 #endif
@@ -1826,9 +1752,10 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
 #endif
 }
 
-void WarpX::ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coeffs,
-                                        amrex::Vector<amrex::Real>& unordered_coeffs,
-                                        const int order)
+#ifdef WARPX_USE_PSATD
+void WarpX::ReorderFornbergCoefficients (amrex::Vector<amrex::Real>& ordered_coeffs,
+                                         amrex::Vector<amrex::Real>& unordered_coeffs,
+                                         const int order)
 {
     const int n = order / 2;
     for (int i = 0; i < n; i++) {
@@ -1838,6 +1765,64 @@ void WarpX::ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coef
         ordered_coeffs[i] = unordered_coeffs[i-n];
     }
 }
+
+void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
+                                           amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
+                                           amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
+                                           const int centering_nox,
+                                           const int centering_noy,
+                                           const int centering_noz)
+{
+    // Vectors of Fornberg stencil coefficients
+    amrex::Vector<amrex::Real> Fornberg_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> Fornberg_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> Fornberg_stencil_coeffs_z;
+
+    // Host vectors of stencil coefficients used for finite-order centering
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
+
+    Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(centering_nox, false);
+    Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(centering_noy, false);
+    Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(centering_noz, false);
+
+    host_centering_stencil_coeffs_x.resize(centering_nox);
+    host_centering_stencil_coeffs_y.resize(centering_noy);
+    host_centering_stencil_coeffs_z.resize(centering_noz);
+
+    // Re-order Fornberg stencil coefficients:
+    // example for order 6: (c_0,c_1,c_2) becomes (c_2,c_1,c_0,c_0,c_1,c_2)
+    ReorderFornbergCoefficients(host_centering_stencil_coeffs_x,
+                                Fornberg_stencil_coeffs_x, centering_nox);
+    ReorderFornbergCoefficients(host_centering_stencil_coeffs_y,
+                                Fornberg_stencil_coeffs_y, centering_noy);
+    ReorderFornbergCoefficients(host_centering_stencil_coeffs_z,
+                                Fornberg_stencil_coeffs_z, centering_noz);
+
+    // Device vectors of stencil coefficients used for finite-order centering
+
+    device_centering_stencil_coeffs_x.resize(host_centering_stencil_coeffs_x.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          host_centering_stencil_coeffs_x.begin(),
+                          host_centering_stencil_coeffs_x.end(),
+                          device_centering_stencil_coeffs_x.begin());
+
+    device_centering_stencil_coeffs_y.resize(host_centering_stencil_coeffs_y.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          host_centering_stencil_coeffs_y.begin(),
+                          host_centering_stencil_coeffs_y.end(),
+                          device_centering_stencil_coeffs_y.begin());
+
+    device_centering_stencil_coeffs_z.resize(host_centering_stencil_coeffs_z.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          host_centering_stencil_coeffs_z.begin(),
+                          host_centering_stencil_coeffs_z.end(),
+                          device_centering_stencil_coeffs_z.begin());
+
+    amrex::Gpu::synchronize();
+}
+#endif
 
 const iMultiFab*
 WarpX::CurrentBufferMasks (int lev)
