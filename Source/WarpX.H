@@ -138,7 +138,7 @@ public:
     static int em_solver_medium;
     static int macroscopic_solver_algo;
 
-    // If true, the current is deposited on a nodal grid and then interpolated onto a Yee grid
+    // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     static bool do_current_centering;
 
     // PSATD: If true (overwritten by the user in the input file), the current correction
@@ -598,16 +598,17 @@ public:
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
 #ifdef WARPX_USE_PSATD
-    // Host and device vectors for ordered Fornberg stencil coefficients used for finite-order centering
+    // Host and device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_x;
     amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_y;
     amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_z;
-    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_x;
-    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_y;
-    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_z;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_z;
+    // Host and device vectors of stencil coefficients used for finite-order centering of currents
+    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_z;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
@@ -804,7 +805,7 @@ private:
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
-    // Nodal MultiFab for nodal current deposition if do_current_centering = 1
+    // Nodal MultiFab for nodal current deposition if warpx.do_current_centering = 1
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> current_fp_nodal;
 
     // Coarse patch

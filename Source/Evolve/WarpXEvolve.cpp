@@ -294,7 +294,7 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
 
-    // If do_current_centering = 1, interpolate nodal current onto a Yee grid
+    // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (WarpX::do_current_centering)
     {
         for (int lev = 0; lev <= finest_level; lev++)
@@ -628,8 +628,8 @@ WarpX::PushParticlesandDepose (amrex::Real cur_time)
 void
 WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
 {
-    // If do_current_centering = 1, the current is deposited on the nodal MultiFab current_fp_nodal
-    // and then interpolated onto the Yee MultiFab current_fp
+    // If warpx.do_current_centering = 1, the current is deposited on the nodal MultiFab current_fp_nodal
+    // and then centered onto the staggered MultiFab current_fp
     amrex::MultiFab* current_x = (WarpX::do_current_centering) ? current_fp_nodal[lev][0].get()
                                                                : current_fp[lev][0].get();
     amrex::MultiFab* current_y = (WarpX::do_current_centering) ? current_fp_nodal[lev][1].get()
