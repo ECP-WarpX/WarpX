@@ -218,7 +218,7 @@ if(WarpX_IPO)
             set_target_properties(${warpx_tgt} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
         endforeach()
     else()
-        message(FATAL_ERROR "Interprocedural optimization is not available")
+        message(FATAL_ERROR "Interprocedural optimization is not available, set WarpX_IPO=OFF")
     endif()
 endif()
 
