@@ -134,7 +134,7 @@ public:
         const amrex::ParticleReal uz, const amrex::ParticleReal ex,
         const amrex::ParticleReal ey, const amrex::ParticleReal ez,
         const amrex::ParticleReal bx, const amrex::ParticleReal by,
-        const amrex::ParticleReal bz, const amrex::ParticleReal dt,
+        const amrex::ParticleReal bz, const amrex::Real dt,
         amrex::ParticleReal& opt_depth) const noexcept
     {
         namespace pxr_m = picsar::multi_physics::math;
