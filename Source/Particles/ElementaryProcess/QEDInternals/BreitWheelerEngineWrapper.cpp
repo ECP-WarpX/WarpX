@@ -61,7 +61,7 @@ bool BreitWheelerEngine::are_lookup_tables_initialized () const
 bool
 BreitWheelerEngine::init_lookup_tables_from_raw_data (
     const vector<char>& raw_data,
-    const amrex::ParticleReal bw_minimum_chi_phot)
+    const amrex::Real bw_minimum_chi_phot)
 {
     auto raw_iter = raw_data.begin();
     const auto size_first = pxr_sr::get_out<uint64_t>(raw_iter);
