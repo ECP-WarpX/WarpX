@@ -89,7 +89,7 @@ BreitWheelerEngine::init_lookup_tables_from_raw_data (
 }
 
 void BreitWheelerEngine::init_builtin_tables(
-    const amrex::ParticleReal bw_minimum_chi_phot)
+    const amrex::Real bw_minimum_chi_phot)
 {
     init_builtin_dndt_table();
     init_builtin_pair_prod_table();
