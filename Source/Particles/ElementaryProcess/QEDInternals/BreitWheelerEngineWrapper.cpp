@@ -192,7 +192,7 @@ void BreitWheelerEngine::init_builtin_pair_prod_table()
     pair_prod_params.chi_phot_how_many = 64;
     pair_prod_params.frac_how_many = 64;
 
-    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::Real>{
         0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt,
         0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt, 3.35120e-221_rt,
         1.13067e-188_rt, 2.14228e-163_rt, 3.39948e-143_rt, 1.09215e-126_rt,
