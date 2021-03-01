@@ -145,20 +145,6 @@ WarpX::Evolve (int numsteps)
 
         if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
 
-        if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
-            // At the end of last step, push p by 0.5*dt to synchronize
-            UpdateAuxilaryData();
-            FillBoundaryAux(guard_cells.ng_UpdateAux);
-            for (int lev = 0; lev <= finest_level; ++lev) {
-                mypc->PushP(lev, 0.5_rt*dt[lev],
-                            *Efield_aux[lev][0],*Efield_aux[lev][1],
-                            *Efield_aux[lev][2],
-                            *Bfield_aux[lev][0],*Bfield_aux[lev][1],
-                            *Bfield_aux[lev][2]);
-            }
-            is_synchronized = true;
-        }
-
         if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 
         for (int lev = 0; lev <= max_level; ++lev) {
@@ -224,6 +210,24 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
+        }
+
+        if ((cur_time + dt[0] >= stop_time - 1.e-3*dt[0]) ||
+            (step == numsteps_max-1) ||
+            (synchronize_velocity_for_diagnostics &&
+                (multi_diags->DoComputeAndPack(step) ||
+                 reduced_diags->DoDiags(step)))) {
+            // At the end of last step, push p by 0.5*dt to synchronize
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                mypc->PushP(lev, 0.5_rt*dt[lev],
+                            *Efield_aux[lev][0],*Efield_aux[lev][1],
+                            *Efield_aux[lev][2],
+                            *Bfield_aux[lev][0],*Bfield_aux[lev][1],
+                            *Bfield_aux[lev][2]);
+            }
+            is_synchronized = true;
         }
 
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
