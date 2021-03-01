@@ -153,11 +153,6 @@ WarpX::AddSpaceChargeFieldLabFrame ()
    a source, assuming that the source moves at a constant speed \f$\vec{\beta}\f$.
    This uses the amrex solver.
 
-   More specifically, this solves the equation
-   \f[
-       \vec{\nabla}^2\phi - (\vec{\beta}\cdot\vec{\nabla})^2\phi = -\frac{\rho}{\epsilon_0}
-   \f]
-
    \param[in] rho The charge density a given species
    \param[out] phi The potential to be computed by this function
    \param[in] beta Represents the velocity of the source of `phi`
@@ -170,7 +165,35 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const max_iters) const
 {
 #ifdef WARPX_DIM_RZ
+    computePhiRZ( rho, phi, beta, required_precision, max_iters );
+#else
+    computePhiCartesian( rho, phi, beta, required_precision, max_iters );
+#endif
 
+}
+
+#ifdef WARPX_DIM_RZ
+/* Compute the potential `phi` in cylindrical geometry by solving the Poisson equation
+   with `rho` as a source, assuming that the source moves at a constant
+   speed \f$\vec{\beta}\f$.
+   This uses the amrex solver.
+
+   More specifically, this solves the equation
+   \f[
+       \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
+   \f]
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+   \param[in] beta Represents the velocity of the source of `phi`
+*/
+void
+WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                   amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<Real, 3> const beta,
+                   Real const required_precision,
+                   int const max_iters) const
+{
     // Create a new geometry with the z coordinate scaled by gamma
     amrex::Real const gamma = std::sqrt(1._rt/(1. - beta[2]*beta[2]));
 
@@ -229,6 +252,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             {
                 amrex::Real r = rmin + (i - irmin)*dr;
                 if (r == 0.) {
+                    // dr/3 is used to be consistent with the finite volume formulism
+                    // that is used to solve Poisson's equation
                     rho_arr(i,j,0,icomp) *= dr/3._rt;
                 } else {
                     rho_arr(i,j,0,icomp) *= r;
@@ -257,7 +282,42 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         linop.setSigma( lev, *sigma[lev] );
     }
 
+    // Solve the Poisson equation
+    linop.setDomainBC( lobc, hibc );
+    MLMG mlmg(linop);
+    mlmg.setVerbose(2);
+    mlmg.setMaxIter(max_iters);
+    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+
+    // Normalize by the correct physical constant
+    for (int lev=0; lev < rho.size(); lev++){
+        phi[lev]->mult(-1._rt/PhysConst::ep0);
+    }
+}
+
 #else
+
+/* Compute the potential `phi` in Cartesian geometry by solving the Poisson equation
+   hwith `rho` as a source, assuming that the source moves at a constant
+   speed \f$\vec{\beta}\f$.
+   This uses the amrex solver.
+
+   More specifically, this solves the equation
+   \f[
+       \vec{\nabla}^2\phi - (\vec{\beta}\cdot\vec{\nabla})^2\phi = -\frac{\rho}{\epsilon_0}
+   \f]
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+   \param[in] beta Represents the velocity of the source of `phi`
+*/
+void
+WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                            amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                            std::array<Real, 3> const beta,
+                            Real const required_precision,
+                            int const max_iters) const
+{
 
     // Define the boundary conditions
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
@@ -284,8 +344,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
     linop.setBeta( beta_solver );
 
-#endif
-
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
     MLMG mlmg(linop);
@@ -298,6 +356,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         phi[lev]->mult(-1._rt/PhysConst::ep0);
     }
 }
+#endif
 
 /* \bried Compute the electric field that corresponds to `phi`, and
           add it to the set of MultiFab `E`.
