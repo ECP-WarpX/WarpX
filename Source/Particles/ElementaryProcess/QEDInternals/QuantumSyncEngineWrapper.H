@@ -227,11 +227,11 @@ public:
         const auto chi_particle = QedUtils::chi_ele_pos(
             px, py, pz, ex, ey, ez, bx, by, bz);
 
-        auto momentum_particle = pxr_m::vec3<amrex::Real>{px, py, pz};
-        auto momentum_photon = pxr_m::vec3<amrex::Real>();
+        auto momentum_particle = pxr_m::vec3<amrex::ParticleReal>{px, py, pz};
+        auto momentum_photon = pxr_m::vec3<amrex::ParticleReal>();
 
         const auto is_out = pxr_qs::generate_photon_update_momentum<
-            amrex::Real,
+            amrex::ParticleReal,
             QS_phot_em_table_view,
             pxr_p::unit_system::SI>(
                 chi_particle, momentum_particle,

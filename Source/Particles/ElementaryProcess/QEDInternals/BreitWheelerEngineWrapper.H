@@ -240,12 +240,12 @@ public:
         const auto chi_photon = QedUtils::chi_photon(
             px, py, pz, ex, ey, ez, bx, by, bz);
 
-        const auto momentum_photon = pxr_m::vec3<amrex::Real>{px, py, pz};
-        auto momentum_ele = pxr_m::vec3<amrex::Real>();
-        auto momentum_pos = pxr_m::vec3<amrex::Real>();
+        const auto momentum_photon = pxr_m::vec3<amrex::ParticleReal>{px, py, pz};
+        auto momentum_ele = pxr_m::vec3<amrex::ParticleReal>();
+        auto momentum_pos = pxr_m::vec3<amrex::ParticleReal>();
 
         const auto is_out = pxr_bw::generate_breit_wheeler_pairs<
-            amrex::Real,
+            amrex::ParticleReal,
             BW_pair_prod_table_view,
             pxr_p::unit_system::SI>(
                 chi_photon, momentum_photon,
