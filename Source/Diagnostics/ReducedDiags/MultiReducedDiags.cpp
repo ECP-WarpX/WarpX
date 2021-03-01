@@ -141,3 +141,15 @@ void MultiReducedDiags::WriteToFile (int step)
     // end loop over all reduced diags
 }
 // end void MultiReducedDiags::WriteToFile
+
+// Check if any diagnostics will be done
+bool MultiReducedDiags::DoDiags(int step)
+{
+    bool result = false;
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
+    {
+        result = result || m_multi_rd[i_rd] -> DoDiags(step);
+    }
+    return result;
+}
+// end bool MultiReducedDiags::DoDiags
