@@ -50,8 +50,8 @@ jobs:
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
       if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git \
-          -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 \
+          -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
       fi
       if [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
