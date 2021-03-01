@@ -551,6 +551,17 @@ public:
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
                      const int max_iters=200) const;
+    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
