@@ -1,0 +1,164 @@
+{
+    "creators": [
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Vay, Jean-Luc"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Almgren, Ann"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Amorim, L\u00edgia Diana"
+      },
+      {
+        "affiliation": "Laboratoire d'Optique Appliqu\u00e9e",
+        "name": "Andriyash, Igor"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Belkin, Daniel"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Bizzozero, David"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Blelly, Aurore"
+      },
+      {
+        "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
+        "name": "Fedeli, Luca"
+      },
+      {
+        "affiliation": "SLAC National Accelerator Laboratory",
+        "name": "Ge, Lixin"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Gott, Kevin"
+      },
+      {
+        "affiliation": "Lawrence Livermore National Laboratory",
+        "name": "Harrison, Cyrus"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Huebl, Axel",
+        "orcid": "0000-0003-1943-7141"
+      },
+      {
+        "affiliation": "Lawrence Livermore National Laboratory",
+        "name": "Grote, David"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Gu, Junmin",
+        "orcid": "0000-0002-1521-8534"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Jambunathan, Revathi"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory, now DESY",
+        "name": "Th\u00e9venet, Maxence"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Richardson, Glenn"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Shapoval, Olga"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Lehe, R\u00e9mi"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Loring, Burlen"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Myers, Andrew"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Rowan, Michael E."
+      },
+      ,
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Weber, Gunther H.",
+        "orcid": "..."
+      }
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Yang, Eloise"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Zhang, Weiqun",
+        "orcid": "0000-0001-8092-1974"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Zhao, Yinjian"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Zoni, Edoardo"
+      },
+      {
+        "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
+        "name": "Zaim, Ne\u00efl"
+      }
+    ],
+    "contributors": [
+      {
+        "affiliation": "Intel",
+        "type": "Other",
+        "name": "Cohn, Robert"
+      },
+      {
+        "affiliation": "Bloomberg LP",
+        "type": "Other",
+        "name": "Levine, Michael"
+      },
+      {
+        "type": "Other",
+        "name": "Liu, Bin"
+      },
+      {
+        "type": "Other",
+        "name": "nckwcq"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "type": "Other",
+        "name": "Park, Jaehong"
+      }
+    ],
+    "license": {
+      "id": "BSD-3-Clause-LBNL"
+    },
+    "language": "eng",
+    "keywords": [
+      "research",
+      "simulation",
+      "plasma",
+      "particle-in-cell",
+      "gpu",
+      "laser",
+      "physics",
+      "pic"
+    ],
+    "access_right": "open",
+    "references": [
+      "J.-L. Vay et al. Modeling of a chain of three plasma accelerator stages with the WarpX electromagnetic PIC code on GPUs. Physics of Plasmas 28, 023105 (2021) DOI:10.1063/5.0028512"
+    ]
+}
