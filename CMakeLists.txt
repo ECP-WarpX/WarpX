@@ -212,7 +212,7 @@ set_target_properties(${_ALL_TARGETS} PROPERTIES
 
 # Interprocedural optimization
 if(WarpX_IPO)
-
+    enable_IPO(${_ALL_TARGETS})
 endif()
 
 # link dependencies
