@@ -87,6 +87,7 @@ option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 set_default_build_type("RelWithDebInfo")
 
 # Option to enable interprocedural optimization
+# (also know as "link-time optimization" or "whole program optimization")
 option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
 
 # this defined the variable BUILD_TESTING which is ON by default
@@ -211,15 +212,7 @@ set_target_properties(${_ALL_TARGETS} PROPERTIES
 
 # Interprocedural optimization
 if(WarpX_IPO)
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT is_IPO_available)
-    if(is_IPO_available)
-        foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-            set_target_properties(${warpx_tgt} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-        endforeach()
-    else()
-        message(FATAL_ERROR "Interprocedural optimization is not available, set WarpX_IPO=OFF")
-    endif()
+
 endif()
 
 # link dependencies
