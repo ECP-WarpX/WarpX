@@ -87,7 +87,7 @@ option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 set_default_build_type("RelWithDebInfo")
 
 # Option to enable interprocedural optimization
-option(WarpX_IPO                                "Compile with interprocedural optimization (will take more time)" OFF)
+option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
