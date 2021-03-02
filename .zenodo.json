@@ -2,23 +2,28 @@
     "creators": [
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Vay, Jean-Luc"
+        "name": "Vay, Jean-Luc",
+        "orcid": "0000-0002-0040-799X"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Almgren, Ann"
+        "name": "Almgren, Ann",
+        "orcid": "0000-0003-2103-312X"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Amorim, L\u00edgia Diana"
+        "name": "Amorim, L\u00edgia Diana",
+        "orcid": "0000-0002-1445-0032"
       },
       {
         "affiliation": "Laboratoire d'Optique Appliqu\u00e9e",
-        "name": "Andriyash, Igor"
+        "name": "Andriyash, Igor",
+        "orcid": "0000-0003-0313-4496"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Belkin, Daniel"
+        "name": "Belkin, Daniel",
+        "orcid": "0000-0002-3936-6419"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -38,7 +43,8 @@
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Gott, Kevin"
+        "name": "Gott, Kevin",
+        "orcid": "0000-0003-3244-5525"
       },
       {
         "affiliation": "Lawrence Livermore National Laboratory",
@@ -51,7 +57,8 @@
       },
       {
         "affiliation": "Lawrence Livermore National Laboratory",
-        "name": "Grote, David"
+        "name": "Grote, David",
+        "orcid": "0000-0002-4057-8582"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -64,11 +71,13 @@
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory, now DESY",
-        "name": "Th\u00e9venet, Maxence"
+        "name": "Th\u00e9venet, Maxence",
+        "orcid": "0000-0001-7216-2277"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Richardson, Glenn"
+        "name": "Richardson, Glenn",
+        "orcid": "0000-0003-0313-4496"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -81,21 +90,24 @@
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Loring, Burlen"
+        "name": "Loring, Burlen",
+        "orcid": "0000-0002-4678-8142"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Myers, Andrew"
+        "name": "Myers, Andrew",
+        "orcid": "0000-0001-8427-8330"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Rowan, Michael E."
+        "name": "Rowan, Michael E.",
+        "orcid": "0000-0003-2406-1273"
       },
       ,
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Weber, Gunther H.",
-        "orcid": "..."
+        "orcid": "0000-0002-1794-1398"
       }
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -108,15 +120,18 @@
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Zhao, Yinjian"
+        "name": "Zhao, Yinjian",
+        "orcid": "0000-0003-4362-3630"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Zoni, Edoardo"
+        "name": "Zoni, Edoardo",
+        "orcid": "0000-0001-5662-4646"
       },
       {
         "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
-        "name": "Zaim, Ne\u00efl"
+        "name": "Zaim, Ne\u00efl",
+        "orcid": "0000-0003-0313-4496"
       }
     ],
     "contributors": [
@@ -132,11 +147,15 @@
       },
       {
         "type": "Other",
-        "name": "Liu, Bin"
+        "affiliation": "Helmholtz Institute Jena",
+        "name": "Liu, Bin",
+        "orcid": "0000-0002-8066-184X"
       },
       {
         "type": "Other",
-        "name": "nckwcq"
+        "affiliation": "SLAC National Accelerator Laboratory",
+        "name": "Ng, Cho-Kuen",
+        "orcid": "0000-0002-1903-904X"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
