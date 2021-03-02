@@ -486,9 +486,9 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                nox, galerkin_interpolation);
                 getExternalE(ip, Exp, Eyp, Ezp);
                 getExternalB(ip, Bxp, Byp, Bzp);
-                
+
                 amrex::Real qp = q;
-                if (ion_lev != nullptr) { qp *= ion_lev[ip]; }
+                if (ion_lev) { qp *= ion_lev[ip]; }
 
                 if (do_crr) {
                     UpdateMomentumBorisWithRadiationReaction(uxpp[ip], uypp[ip], uzpp[ip],
