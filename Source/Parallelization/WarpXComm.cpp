@@ -87,22 +87,22 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             amrex::Real const * stencil_coeffs_z = WarpX::device_centering_stencil_coeffs_z.data();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
 #endif
