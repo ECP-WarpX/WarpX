@@ -61,6 +61,7 @@ macro(find_amrex)
             set(AMReX_PRECISION_PARTICLES "SINGLE" CACHE INTERNAL "")
         endif()
 
+        set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN_INTERFACES OFF CACHE INTERNAL "")
@@ -185,7 +186,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "21.03"
+set(WarpX_amrex_branch "dd2ec76a5cc5db01caa17bdf51efb603c019346d"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
