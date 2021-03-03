@@ -51,10 +51,10 @@ PsatdAlgorithm::PsatdAlgorithm(
     X1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-    X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
     if (m_is_galilean)
     {
+        X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         T2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     }
 
@@ -100,11 +100,12 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         Array4<const Complex> X1_arr = X1_coef[mfi].array();
         Array4<const Complex> X2_arr = X2_coef[mfi].array();
         Array4<const Complex> X3_arr = X3_coef[mfi].array();
-        Array4<const Complex> X4_arr = X4_coef[mfi].array();
 
+        Array4<const Complex> X4_arr;
         Array4<const Complex> T2_arr;
         if (is_galilean)
         {
+            X4_arr = X4_coef[mfi].array();
             T2_arr = T2_coef[mfi].array();
         }
 
@@ -175,7 +176,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             const Complex X1 = X1_arr(i,j,k);
             const Complex X2 = X2_arr(i,j,k);
             const Complex X3 = X3_arr(i,j,k);
-            const Complex X4 = X4_arr(i,j,k);
+            const Complex X4 = (is_galilean) ? X4_arr(i,j,k) : - S_ck * inv_ep0;
             const Complex T2 = (is_galilean) ? T2_arr(i,j,k) : 1.0_rt;
 
             // Update equations for E in the formulation with rho
@@ -298,11 +299,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
         Array4<Complex> X1 = X1_coef[mfi].array();
         Array4<Complex> X2 = X2_coef[mfi].array();
         Array4<Complex> X3 = X3_coef[mfi].array();
-        Array4<Complex> X4 = X4_coef[mfi].array();
 
+        Array4<Complex> X4;
         Array4<Complex> T2;
         if (is_galilean)
         {
+            X4 = X4_coef[mfi].array();
             T2 = T2_coef[mfi].array();
         }
 
@@ -458,7 +460,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                         X3(i,j,k) = I * c2 * X2_old * (T2_tmp - 1._rt) / (ep0 * nu * om3_c * om2);
                     }
 
-                    X4(i,j,k) = I * nu * om_c * X1(i,j,k) - T2_tmp * S_ck(i,j,k) / ep0;
+                    if (is_galilean)
+                    {
+                        X4(i,j,k) = I * nu * om_c * X1(i,j,k) - T2_tmp * S_ck(i,j,k) / ep0;
+                    }
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
@@ -507,7 +512,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                         X3(i,j,k) = c2 * (S_ck(i,j,k) / dt - 1._rt) * dt / (ep0 * om2);
                     }
 
-                    X4(i,j,k) = - S_ck(i,j,k) / ep0;
+                    if (is_galilean)
+                    {
+                        X4(i,j,k) = - S_ck(i,j,k) / ep0;
+                    }
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
@@ -554,7 +562,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                             / (4._rt * ep0 * om3);
                     }
 
-                    X4(i,j,k) = (- I + I * tmp1 * tmp1 - 2._rt * om * dt) / (4._rt * ep0 * om);
+                    if (is_galilean)
+                    {
+                        X4(i,j,k) = (- I + I * tmp1 * tmp1 - 2._rt * om * dt) / (4._rt * ep0 * om);
+                    }
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
@@ -604,7 +615,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                             / (4._rt * ep0 * om3);
                     }
 
-                    X4(i,j,k) = (I - I * tmp2 * tmp2 - 2._rt * om * dt) / (4._rt * ep0 * om);
+                    if (is_galilean)
+                    {
+                        X4(i,j,k) = (I - I * tmp2 * tmp2 - 2._rt * om * dt) / (4._rt * ep0 * om);
+                    }
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
@@ -643,11 +657,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 
                 S_ck(i,j,k) = std::sin(om * dt) / om;
 
-                if (is_galilean)
-                {
-                    T2(i,j,k) = 1._rt;
-                }
-
                 X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2);
 
                 if (update_with_rho)
@@ -664,7 +673,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                     X3(i,j,k) = c2 * (S_ck(i,j,k) / dt - 1._rt) * dt / (ep0 * om2);
                 }
 
-                X4(i,j,k) = - S_ck(i,j,k) / ep0;
+                if (is_galilean)
+                {
+                    X4(i,j,k) = - S_ck(i,j,k) / ep0;
+
+                    T2(i,j,k) = 1._rt;
+                }
 
                 // Averaged Galilean algorithm
                 if (time_averaging)
@@ -735,7 +749,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                             + I * nu2 * om2_c * dt2 * T2_tmp) / (2._rt * ep0 * nu2 * nu * om3_c);
                     }
 
-                    X4(i,j,k) = I * (T2_tmp - 1._rt) / (ep0 * nu * om_c);
+                    if (is_galilean)
+                    {
+                        X4(i,j,k) = I * (T2_tmp - 1._rt) / (ep0 * nu * om_c);
+                    }
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
@@ -781,7 +798,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                         X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
                     }
 
-                    X4(i,j,k) = - dt / ep0;
+                    if (is_galilean)
+                    {
+                        X4(i,j,k) = - dt / ep0;
+                    }
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
@@ -827,11 +847,11 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                     X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
                 }
 
-                X4(i,j,k) = - dt / ep0;
-
                 // T2 = 1 always with standard PSATD (zero Galilean velocity)
                 if (is_galilean)
                 {
+                    X4(i,j,k) = - dt / ep0;
+
                     T2(i,j,k) = 1._rt;
                 }
 
