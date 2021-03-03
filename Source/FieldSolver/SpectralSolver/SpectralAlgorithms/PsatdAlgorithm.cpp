@@ -43,6 +43,8 @@ PsatdAlgorithm::PsatdAlgorithm(
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
+    m_is_galilean = (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.);
+
     // Always allocate these coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
@@ -50,7 +52,11 @@ PsatdAlgorithm::PsatdAlgorithm(
     X2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-    T2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+
+    if (m_is_galilean)
+    {
+        T2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+    }
 
     // Allocate these coefficients only with averaged Galilean PSATD
     if (time_averaging)
@@ -78,6 +84,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging  = m_time_averaging;
+    const bool is_galilean     = m_is_galilean;
 
     // Loop over boxes
     for (MFIter mfi(f.fields); mfi.isValid(); ++mfi)
@@ -94,7 +101,12 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         Array4<const Complex> X2_arr = X2_coef[mfi].array();
         Array4<const Complex> X3_arr = X3_coef[mfi].array();
         Array4<const Complex> X4_arr = X4_coef[mfi].array();
-        Array4<const Complex> T2_arr = T2_coef[mfi].array();
+
+        Array4<const Complex> T2_arr;
+        if (is_galilean)
+        {
+            T2_arr = T2_coef[mfi].array();
+        }
 
         // These coefficients are allocated only with averaged Galilean PSATD
         Array4<const Complex> Psi1_arr;
@@ -164,7 +176,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             const Complex X2 = X2_arr(i,j,k);
             const Complex X3 = X3_arr(i,j,k);
             const Complex X4 = X4_arr(i,j,k);
-            const Complex T2 = T2_arr(i,j,k);
+            const Complex T2 = (is_galilean) ? T2_arr(i,j,k) : 1.0_rt;
 
             // Update equations for E in the formulation with rho
             // T2 = 1 always with standard PSATD (zero Galilean velocity)
@@ -260,7 +272,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
     const amrex::Real dt)
 {
     const bool update_with_rho = m_update_with_rho;
-    const bool time_averaging = m_time_averaging;
+    const bool time_averaging  = m_time_averaging;
+    const bool is_galilean     = m_is_galilean;
 
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -286,7 +299,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
         Array4<Complex> X2 = X2_coef[mfi].array();
         Array4<Complex> X3 = X3_coef[mfi].array();
         Array4<Complex> X4 = X4_coef[mfi].array();
-        Array4<Complex> T2 = T2_coef[mfi].array();
+
+        Array4<Complex> T2;
+        if (is_galilean)
+        {
+            T2 = T2_coef[mfi].array();
+        }
 
         // Coefficients allocated only with averaged Galilean PSATD
         Array4<Real> C1;
@@ -403,7 +421,11 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 const Complex theta_star = amrex::exp(- I * nu * om_c * dt * 0.5_rt);
 
                 // T2 = 1 always with standard PSATD (zero Galilean velocity)
-                T2(i,j,k) = theta * theta;
+                if (is_galilean)
+                {
+                    T2(i,j,k) = theta * theta;
+                }
+                const Complex T2_tmp = (is_galilean) ? T2(i,j,k) : 1.0_rt;
 
                 // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
                 if (nu != om/om_c && nu != -om/om_c && nu != 0.)
@@ -431,34 +453,34 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                         X3_old = (x1 * om2 - theta_star * (1._rt - C(i,j,k)) * om2_c)
                             / (theta_star - theta);
 
-                        X2(i,j,k) = c2 * T2(i,j,k) * (X2_old - X3_old) / (om2_c * om2);
+                        X2(i,j,k) = c2 * T2_tmp * (X2_old - X3_old) / (om2_c * om2);
 
-                        X3(i,j,k) = I * c2 * X2_old * (T2(i,j,k) - 1._rt) / (ep0 * nu * om3_c * om2);
+                        X3(i,j,k) = I * c2 * X2_old * (T2_tmp - 1._rt) / (ep0 * nu * om3_c * om2);
                     }
 
-                    X4(i,j,k) = I * nu * om_c * X1(i,j,k) - T2(i,j,k) * S_ck(i,j,k) / ep0;
+                    X4(i,j,k) = I * nu * om_c * X1(i,j,k) - T2_tmp * S_ck(i,j,k) / ep0;
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
                     {
-                        Complex C_rho = I * c2 / ((1._rt - T2(i,j,k)) * ep0);
+                        Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
 
                         Psi1(i,j,k) = theta * ((om * S1(i,j,k) + I * nu * om_c * C1(i,j,k))
-                            - T2(i,j,k) * (om * S3(i,j,k) + I * nu * om_c * C3(i,j,k)))
+                            - T2_tmp * (om * S3(i,j,k) + I * nu * om_c * C3(i,j,k)))
                             / (dt * (nu2 * om2_c - om2));
 
                         Psi2(i,j,k) = theta * ((om * C1(i,j,k) - I * nu * om_c * S1(i,j,k))
-                            - T2(i,j,k) * (om * C3(i,j,k) - I * nu * om_c * S3(i,j,k)))
+                            - T2_tmp * (om * C3(i,j,k) - I * nu * om_c * S3(i,j,k)))
                             / (om * dt * (nu2 * om2_c - om2));
 
-                        Psi3(i,j,k) = I * theta * (1._rt - T2(i,j,k)) / (nu * om_c * dt);
+                        Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
 
                         A1(i,j,k) = (Psi1(i,j,k) - 1._rt + I * nu * om_c * Psi2(i,j,k))
                             / (nu2 * om2_c - om2);
 
                         A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / om2;
 
-                        CRhoold(i,j,k) = C_rho * (T2(i,j,k) * A1(i,j,k) - A2(i,j,k));
+                        CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
 
                         CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
 
@@ -537,7 +559,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                     // Averaged Galilean algorithm
                     if (time_averaging)
                     {
-                        Complex C_rho = I * c2 / ((1._rt - T2(i,j,k)) * ep0);
+                        Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
 
                         Psi1(i,j,k) = (2._rt * om * dt + I * tmp1 - I * tmp1 * tmp1 * tmp1)
                             / (4._rt * om * dt);
@@ -545,14 +567,14 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                         Psi2(i,j,k) = (- 2._rt * I * om * dt - tmp1 + tmp1 * tmp1 * tmp1)
                             / (4._rt * om2 * dt);
 
-                        Psi3(i,j,k) = I * theta * (1._rt - T2(i,j,k)) / (nu * om_c * dt);
+                        Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
 
                         A1(i,j,k) = (2._rt * om * dt + I * (4._rt * om2 * dt2 - tmp1 + tmp1 * tmp1 * tmp1))
                             / (8._rt * om3 * dt);
 
                         A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / om2;
 
-                        CRhoold(i,j,k) = C_rho * (T2(i,j,k) * A1(i,j,k) - A2(i,j,k));
+                        CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
 
                         CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
 
@@ -587,7 +609,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                     // Averaged Galilean algorithm
                     if (time_averaging)
                     {
-                        Complex C_rho = I * c2 / ((1._rt - T2(i,j,k)) * ep0);
+                        Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
 
                         Psi1(i,j,k) = (2._rt * om * dt - I * tmp2 + I * tmp2 * tmp2 * tmp2)
                             / (4._rt * om * dt);
@@ -595,14 +617,14 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                         Psi2(i,j,k) = (2._rt * I * om * dt - tmp2 + tmp2 * tmp2 * tmp2)
                             / (4._rt * om2 * dt);
 
-                        Psi3(i,j,k) = I * theta * (1._rt - T2(i,j,k)) / (nu * om_c * dt);
+                        Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
 
                         A1(i,j,k) = (2._rt * om * dt * (1._rt - 2._rt * I * om * dt)
                             + I * (tmp2 - tmp2 * tmp2 * tmp2)) / (8._rt * om3 * dt);
 
                         A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / om2;
 
-                        CRhoold(i,j,k) = C_rho * (T2(i,j,k) * A1(i,j,k) - A2(i,j,k));
+                        CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
 
                         CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
 
@@ -621,7 +643,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 
                 S_ck(i,j,k) = std::sin(om * dt) / om;
 
-                T2(i,j,k) = 1._rt;
+                if (is_galilean)
+                {
+                    T2(i,j,k) = 1._rt;
+                }
 
                 X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2);
 
@@ -682,51 +707,55 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 
                 S_ck(i,j,k) = dt;
 
-                T2(i,j,k) = theta * theta;
+                if (is_galilean)
+                {
+                    T2(i,j,k) = theta * theta;
+                }
+                const Complex T2_tmp = (is_galilean) ? T2(i,j,k) : 1.0_rt;
 
                 // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
                 if (nu != 0.)
                 {
-                    X1(i,j,k) = (- 1._rt + T2(i,j,k) - I * nu * om_c * dt * T2(i,j,k)) / (ep0 * nu2 * om2_c);
+                    X1(i,j,k) = (- 1._rt + T2_tmp - I * nu * om_c * dt * T2_tmp) / (ep0 * nu2 * om2_c);
 
                     if (update_with_rho)
                     {
-                        X2(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
-                            + 0.5_rt * nu2 * om2_c * dt2 * T2(i,j,k)) / (ep0 * nu2 * om2_c * (T2(i,j,k) - 1._rt));
+                        X2(i,j,k) = c2 * (1._rt - T2_tmp + I * nu * om_c * dt * T2_tmp
+                            + 0.5_rt * nu2 * om2_c * dt2 * T2_tmp) / (ep0 * nu2 * om2_c * (T2_tmp - 1._rt));
 
-                        X3(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
-                            + 0.5_rt * nu2 * om2_c * dt2) / (ep0 * nu2 * om2_c * (T2(i,j,k) - 1._rt));
+                        X3(i,j,k) = c2 * (1._rt - T2_tmp + I * nu * om_c * dt * T2_tmp
+                            + 0.5_rt * nu2 * om2_c * dt2) / (ep0 * nu2 * om2_c * (T2_tmp - 1._rt));
                     }
 
                     else // update_with_rho = 0
                     {
-                        X2(i,j,k) = c2 * dt2 * T2(i,j,k) * 0.5_rt;
+                        X2(i,j,k) = c2 * dt2 * T2_tmp * 0.5_rt;
 
-                        X3(i,j,k) = c2 * (2._rt * I - 2._rt * nu * om_c * dt * T2(i,j,k)
-                            + I * nu2 * om2_c * dt2 * T2(i,j,k)) / (2._rt * ep0 * nu2 * nu * om3_c);
+                        X3(i,j,k) = c2 * (2._rt * I - 2._rt * nu * om_c * dt * T2_tmp
+                            + I * nu2 * om2_c * dt2 * T2_tmp) / (2._rt * ep0 * nu2 * nu * om3_c);
                     }
 
-                    X4(i,j,k) = I * (T2(i,j,k) - 1._rt) / (ep0 * nu * om_c);
+                    X4(i,j,k) = I * (T2_tmp - 1._rt) / (ep0 * nu * om_c);
 
                     // Averaged Galilean algorithm
                     if (time_averaging)
                     {
-                        Complex C_rho = I * c2 / ((1._rt - T2(i,j,k)) * ep0);
+                        Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
 
-                        Psi1(i,j,k) = I * theta * (1._rt - T2(i,j,k)) / (nu * om_c * dt);
+                        Psi1(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
 
-                        Psi2(i,j,k) = theta * (2._rt - I * nu * om_c * dt + T2(i,j,k) * (3._rt * I * nu * om_c * dt - 2._rt))
+                        Psi2(i,j,k) = theta * (2._rt - I * nu * om_c * dt + T2_tmp * (3._rt * I * nu * om_c * dt - 2._rt))
                             / (2._rt * nu2 * om2_c * dt);
 
-                        Psi3(i,j,k) = I * theta * (1._rt - T2(i,j,k)) / (nu * om_c * dt);
+                        Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
 
                         A1(i,j,k) = (Psi1(i,j,k) - 1._rt + I * nu * om_c * Psi2(i,j,k)) / (nu2 * om2_c);
 
-                        A2(i,j,k) = theta * (8._rt * I * (T2(i,j,k) - 1._rt) + 4._rt * nu * om_c * dt
-                            * (3._rt * T2(i,j,k) - 1._rt) + I * nu2 * om2_c * dt2 * (1._rt - 9._rt * T2(i,j,k)))
+                        A2(i,j,k) = theta * (8._rt * I * (T2_tmp - 1._rt) + 4._rt * nu * om_c * dt
+                            * (3._rt * T2_tmp - 1._rt) + I * nu2 * om2_c * dt2 * (1._rt - 9._rt * T2_tmp))
                             / (8._rt * nu2 * nu * om2_c * om_c * dt);
 
-                        CRhoold(i,j,k) = C_rho * (T2(i,j,k) * A1(i,j,k) - A2(i,j,k));
+                        CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
 
                         CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
 
@@ -801,7 +830,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 X4(i,j,k) = - dt / ep0;
 
                 // T2 = 1 always with standard PSATD (zero Galilean velocity)
-                T2(i,j,k) = 1._rt;
+                if (is_galilean)
+                {
+                    T2(i,j,k) = 1._rt;
+                }
 
                 // Averaged Galilean algorithm
                 if (time_averaging)
