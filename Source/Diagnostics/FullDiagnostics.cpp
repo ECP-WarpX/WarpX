@@ -450,8 +450,8 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     // First, make sure all guard cells are properly filled
     // Probably overkill/unnecessary, but safe and shouldn't happen often !!
     auto & warpx = WarpX::GetInstance();
-    warpx.FillBoundaryE(warpx.getngE(), warpx.getngExtra());
-    warpx.FillBoundaryB(warpx.getngE(), warpx.getngExtra());
+    warpx.FillBoundaryE(warpx.getngE());
+    warpx.FillBoundaryB(warpx.getngE());
     warpx.UpdateAuxilaryData();
     warpx.FillBoundaryAux(warpx.getngUpdateAux());
 
