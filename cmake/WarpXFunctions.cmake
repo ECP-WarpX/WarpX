@@ -125,7 +125,7 @@ function(enable_IPO all_targets_list)
     else()
         message(FATAL_ERROR "Interprocedural optimization is not available, set WarpX_IPO=OFF")
     endif()
-endmacro()
+endfunction()
 
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
