@@ -54,6 +54,9 @@ class SimData:
         self.data_fields, self.keys = data_fields, list(prange)
 
         data = np.genfromtxt(directory)
+        if len(data.shape) == 1:
+            data = data.reshape(-1, data.shape[0])
+
         steps = data[:,0].astype(int)
 
         times = data[:,1]
