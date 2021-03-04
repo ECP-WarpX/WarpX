@@ -33,14 +33,14 @@ We use the following modules and environments on the system.
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake/3.16.8
+   module load cmake/3.18.0
    module load intel/19.1.2
    module load mvapich2/2.3
 
    # optional: for PSATD support
    module load fftw/3.3.8
 
-   # optional: for QED support
+   # optional: for QED lookup table generation support
    module load boost/1.73.0
 
    # optional: for openPMD support
@@ -89,6 +89,6 @@ The other :ref:`general compile-time options <building-cmake>` apply as usual.
 Running
 -------
 
-Please see :ref:`our example job scripts <running-cpp-quartz>` on how to run WarpX on Quartz.
+Please see :ref:`our example job scripts <running-cpp-quartz-CPUs>` on how to run WarpX on Quartz.
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.

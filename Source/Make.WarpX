@@ -68,6 +68,7 @@ endif
 include $(WARPX_HOME)/Source/Make.package
 include $(WARPX_HOME)/Source/BoundaryConditions/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/Make.package
+include $(WARPX_HOME)/Source/EmbeddedBoundary/Make.package
 include $(WARPX_HOME)/Source/FieldSolver/Make.package
 include $(WARPX_HOME)/Source/Filter/Make.package
 include $(WARPX_HOME)/Source/Initialization/Make.package
@@ -90,8 +91,13 @@ ifeq ($(USE_SENSEI_INSITU),TRUE)
   include $(AMREX_HOME)/Src/Extern/SENSEI/Make.package
 endif
 
+ifeq ($(USE_EB),TRUE)
+  include $(AMREX_HOME)/Src/EB/Make.package
+  USERSuffix := $(USERSuffix).EB
+endif
+
 ifeq ($(QED),TRUE)
-  INCLUDE_LOCATIONS += $(PICSAR_HOME)/src/multi_physics/QED/src
+  INCLUDE_LOCATIONS += $(PICSAR_HOME)/multi_physics/QED/include
   CXXFLAGS += -DWARPX_QED
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED

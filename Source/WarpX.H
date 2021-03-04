@@ -52,7 +52,7 @@
 #include <AMReX_Interpolater.H>
 #include <AMReX_FillPatchUtil.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -258,12 +258,27 @@ public:
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
 
-    static amrex::LayoutData<amrex::Real>* getCosts (int lev) {
-        if (m_instance) {
-            return m_instance->costs[lev].get();
+    static amrex::LayoutData<amrex::Real>* getCosts (int lev);
+
+    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency)
+    {
+        if (m_instance)
+        {
+            m_instance->load_balance_efficiency[lev] = efficiency;
         } else
         {
-            return nullptr;
+            return;
+        }
+    }
+
+    amrex::Real getLoadBalanceEfficiency (const int lev)
+    {
+        if (m_instance)
+        {
+            return m_instance->load_balance_efficiency[lev];
+        } else
+        {
+            return -1;
         }
     }
 
@@ -377,6 +392,21 @@ public:
     void DampJPML (int lev, PatchType patch_type);
 
     void CopyJPML ();
+
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs
+     */
+    void NodalSyncPML ();
+
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level
+     */
+    void NodalSyncPML (int lev);
+
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level and patch
+     */
+    void NodalSyncPML (int lev, PatchType patch_type);
 
     PML* GetPML (int lev);
 
@@ -562,6 +592,16 @@ public:
 
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
+#ifdef WARPX_USE_PSATD
+    // Host and device vectors for Fornberg stencil coefficients used for finite-order centering
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_z;
+#endif
+
 protected:
 
     /**
@@ -693,11 +733,10 @@ private:
 
     void InitNCICorrector ();
 
-    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
+    /** Check the requested resources and write performance hints */
+    void PerformanceHints ();
 
-    void ExchangeWithPmlB (int lev);
-    void ExchangeWithPmlE (int lev);
-    void ExchangeWithPmlF (int lev);
+    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
     void BuildBufferMasks ();
     void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
@@ -796,7 +835,7 @@ private:
 
 
     // Load balancing
-    /** Load balancing intervals that reads the "load_balance_int" string int the input file
+    /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
     IntervalsParser load_balance_intervals;
     /** Collection of LayoutData to keep track of weights used in load balancing
@@ -815,6 +854,8 @@ private:
      * distribution mapping efficiency is larger than the threshold; 'efficiency'
      * here means the average cost per MPI rank.  */
     amrex::Real load_balance_efficiency_ratio_threshold = amrex::Real(1.1);
+    /** Current load balance efficiency for each level.  */
+    amrex::Vector<amrex::Real> load_balance_efficiency;
     /** Weight factor for cells in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is an empty (i.e. no particles) domain
@@ -881,6 +922,24 @@ private:
 
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
+
+    //
+    // Embeded Boundary
+    //
+
+    // Factory for field data
+    amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > > m_field_factory;
+
+    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory (int lev) const noexcept {
+        return *m_field_factory[lev];
+    }
+#ifdef AMREX_USE_EB
+    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
+        return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
+    }
+#endif
+
+    void InitEB ();
 
 private:
     // void EvolvePSATD (int numsteps);

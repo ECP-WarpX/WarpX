@@ -8,6 +8,7 @@
 #define FILTERFUNCTORS_H
 
 #include "WarpX.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
 
@@ -15,6 +16,13 @@
 #include <AMReX_Random.H>
 
 using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
+
+/**
+ *  \brief Used to keep track of what inputs units a filter function should expect.
+ *         "WarpX units" means the momentum is "gamma*v" (aka proper velocity)
+ *         "SI" means the momentum is mass*gamma*v.
+ */
+enum struct InputUnits{WarpX, SI};
 
 /**
  * \brief Functor that returns 0 or 1 depending on a random draw per particle
@@ -82,10 +90,11 @@ struct ParserFilter
     /** constructor
      * \param a_is_active whether the test is active
      */
-    ParserFilter(bool a_is_active, HostDeviceParser<7> const& a_filter_parser)
-        : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
+    ParserFilter(bool a_is_active, HostDeviceParser<7> const& a_filter_parser, amrex::Real a_mass)
+        : m_is_active(a_is_active), m_function_partparser(a_filter_parser), m_mass(a_mass)
     {
         m_t = WarpX::GetInstance().gett_new(0);
+        m_units = InputUnits::WarpX;
     }
 
     /**
@@ -97,12 +106,18 @@ struct ParserFilter
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
         if ( !m_is_active ) return 1;
-        amrex::Real const x  = p.pos(0);
-        amrex::Real const y  = p.pos(1);
-        amrex::Real const z  = p.pos(2);
-        amrex::Real const ux = p.rdata(PIdx::ux)/PhysConst::c;
-        amrex::Real const uy = p.rdata(PIdx::uy)/PhysConst::c;
-        amrex::Real const uz = p.rdata(PIdx::uz)/PhysConst::c;
+        amrex::ParticleReal x, y, z;
+        get_particle_position(p, x, y, z);
+        amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
+        amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
+        amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
+        if (m_units == InputUnits::SI)
+        {
+            ux /= m_mass;
+            uy /= m_mass;
+            uz /= m_mass;
+        }
+        // ux, uy, uz are now in beta*gamma
         if ( m_function_partparser(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
     }
@@ -114,6 +129,10 @@ public:
     HostDeviceParser<7> const m_function_partparser;
     /** Store physical time. */
     amrex::Real m_t;
+    /** Mass of particle species */
+    amrex::Real m_mass;
+    /** keep track of momentum units particles will come in with **/
+    InputUnits m_units;
 };
 
 

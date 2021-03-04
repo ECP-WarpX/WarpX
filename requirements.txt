@@ -1,0 +1,8 @@
+numpy~=1.15
+periodictable~=1.5
+picmistandard==0.0.14
+# optional, some used for testing:
+# yt
+# openpmd-api
+# openpmd-viewer
+# matplotlib

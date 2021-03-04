@@ -3,6 +3,7 @@
 #include "Utils/Interpolate.H"
 #include "Particles/Filter/FilterFunctors.H"
 
+#include <AMReX_AmrParticles.H>
 #include <AMReX_buildInfo.H>
 
 using namespace amrex;
@@ -34,7 +35,7 @@ FlushFormatPlotfile::WriteToFile (
     amrex::WriteMultiLevelPlotfile(filename, nlev,
                                    amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
-                                   time, iteration, warpx.refRatio(),
+                                   static_cast<Real>(time), iteration, warpx.refRatio(),
                                    "HyperCLaw-V1.1",
                                    "Level_",
                                    "Cell",
@@ -78,7 +79,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << PrettyLine;
 
         jobInfoFile << "number of MPI processes: " << ParallelDescriptor::NProcs() << "\n";
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         jobInfoFile << "number of threads:       " << omp_get_max_threads() << "\n";
 #endif
 
@@ -268,7 +269,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::ParticleContainer<0, 0, PIdx::nattribs> tmp(pc->GetParGDB());
+        amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
+            tmp(&WarpX::GetInstance());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -304,15 +306,16 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         }
 #endif
 
-        // Convert momentum to SI
         pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
-        ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
-                                         getParser(particle_diags[i].m_particle_filter_parser));
+        ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                                   getParser(particle_diags[i].m_particle_filter_parser),
+                                   pc->getMass());
+        parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
 
@@ -332,7 +335,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             particle_diags[i].plot_flags, int_flags,
             real_names, int_names);
 
-        // Convert momentum back to WarpX units
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }

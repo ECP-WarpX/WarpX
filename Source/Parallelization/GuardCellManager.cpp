@@ -7,15 +7,17 @@
 #include "GuardCellManager.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX.H>
-
 
 using namespace amrex;
 
 void
 guardCellManager::Init (
+    const amrex::Real dt,
+    const amrex::RealVect dx,
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
     const bool do_nodal,
@@ -29,7 +31,8 @@ guardCellManager::Init (
     const int max_level,
     const amrex::Array<amrex::Real,3> v_galilean,
     const amrex::Array<amrex::Real,3> v_comoving,
-    const bool safe_guard_cells)
+    const bool safe_guard_cells,
+    const int do_electrostatic)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -89,17 +92,29 @@ guardCellManager::Init (
     ng_alloc_J = IntVect(ngJx,ngJz);
 #endif
 
-    // Rho is needed both at the beginning and at the end of the PIC iteration.
-    // Hence we add one extra guard cell for the allocation of the MultiFab that
-    // contains rho, in order to account for the change in the particle positions
-    // within a time step
+    // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
+    // now takes into account the time step (see code block below). However, this does seem to be
+    // necessary in order to avoid some remaining instances of out-of-bound array access in
+    // simulations with large time steps (revealed by building WarpX with BOUND_CHECK = TRUE).
     ng_alloc_Rho = ng_alloc_J+1;
+
+    // Electromagnetic simulations: account for change in particle positions within half a time step
+    // for current deposition and within one time step for charge deposition (since rho is needed
+    // both at the beginning and at the end of the PIC iteration)
+    if (do_electrostatic == ElectrostaticSolverAlgo::None)
+    {
+        for (int i = 0; i < AMREX_SPACEDIM; i++)
+        {
+            ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt / dx[i]));
+            ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt / dx[i] * 0.5_rt));
+        }
+    }
 
     // Number of guard cells for local deposition of J and rho
     ng_depos_J   = ng_alloc_J;
     ng_depos_rho = ng_alloc_Rho;
 
-    // after pushing particle.
+    // After pushing particle
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
     if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );

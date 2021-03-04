@@ -40,7 +40,7 @@ zmax = +40.e-6
 # Wave vector of the wave
 k0 = 2.*np.pi*n_osc_z/(zmax - zmin)
 
-diagnostic_interval = 40
+diagnostic_intervals = 40
 
 ##########################
 # physics components
@@ -97,13 +97,13 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=1., warpx_do_pml=False)
 
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
-                                    period = diagnostic_interval,
+                                    period = diagnostic_intervals,
                                     data_list = ['Ex', 'Ez', 'By', 'Jx', 'Jz', 'part_per_cell'],
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_Langmuir_rz_multimode_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
-                                      period = diagnostic_interval,
+                                      period = diagnostic_intervals,
                                       species = [electrons],
                                       data_list = ['weighting', 'momentum'])
 

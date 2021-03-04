@@ -74,6 +74,6 @@ ions.uz_th = 0.0001
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 100
+diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez By jx jz rho divE

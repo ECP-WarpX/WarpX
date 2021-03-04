@@ -8,6 +8,8 @@
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 
+#include <memory>
+
 /**
  * \brief base class for diagnostics.
  * Contains main routines to filter, compute and flush diagnostics.
@@ -111,7 +113,7 @@ protected:
     /** Whether this iteration has already been dumped, to avoid writing data twice */
     int m_already_done = false;
     /** This class is responsible for flushing the data to file */
-    FlushFormat* m_flush_format;
+    std::unique_ptr<FlushFormat> m_flush_format;
     /** output multifab, where all fields are computed (cell-centered or back-transformed)
      *  and stacked.
      *  The first vector is for total number of snapshots. (=1 for FullDiagnostics)

@@ -310,24 +310,16 @@ public:
     amrex::ParticleReal getMass () const {return mass;}
 
     int DoFieldIonization() const { return do_field_ionization; }
-    int DoQED() const {
+
 #ifdef WARPX_QED
-        return m_do_qed;
-#else
-        return false;
-#endif
-    }
     //Species for which QED effects are relevant should override these methods
     virtual bool has_quantum_sync() const {return false;}
     virtual bool has_breit_wheeler() const {return false;}
 
-    // build filter functors
-    bool m_do_random_filter  = false;
-    bool m_do_uniform_filter = false;
-    bool m_do_parser_filter  = false;
-    amrex::Real m_random_fraction = 1.0;
-    int m_uniform_stride = 1;
-    std::unique_ptr<ParserWrapper<7>> m_particle_filter_parser;
+    int DoQED() const { return has_quantum_sync() || has_breit_wheeler(); }
+#else
+    int DoQED() const { return false; }
+#endif
 
     /* \brief This function tests if the current species
     *  is of a given PhysicalSpecies (specified as a template parameter).
@@ -392,8 +384,6 @@ protected:
     int do_back_transformed_diagnostics = 1;
 
 #ifdef WARPX_QED
-    bool m_do_qed = false;
-
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void

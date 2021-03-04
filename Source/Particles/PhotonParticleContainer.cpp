@@ -16,7 +16,7 @@
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #include <omp.h>
 #endif
 
@@ -34,9 +34,8 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
     ParmParse pp(species_name);
 
 #ifdef WARPX_QED
-        //IF m_do_qed is enabled, find out if Breit Wheeler process is enabled
-        if(m_do_qed)
-            pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+        //Find out if Breit Wheeler process is enabled
+        pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
 
         //If Breit Wheeler process is enabled, look for the target electron and positron
         //species

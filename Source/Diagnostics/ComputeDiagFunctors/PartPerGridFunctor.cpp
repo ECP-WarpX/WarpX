@@ -22,7 +22,7 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const i
     // Temporary MultiFab containing number of particles per grid.
     // (stored as constant for all cells in each grid)
     amrex::MultiFab ppg_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     for (amrex::MFIter mfi(ppg_mf); mfi.isValid(); ++mfi) {

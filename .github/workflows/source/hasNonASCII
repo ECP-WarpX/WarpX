@@ -28,6 +28,7 @@ for i in $(find . \
                 -not -path "*wp_parse*"        \
                 -not -path "./tmp_build_dir/*" \
                 -not -path "./Docs/*"          \
+                -not -path "./setup.py"        \
                 -type f | \
            grep -E "${pattern}")
 do

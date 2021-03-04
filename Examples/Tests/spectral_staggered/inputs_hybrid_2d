@@ -110,6 +110,6 @@ laser1.profile_focal_distance = 0.5e-3
 laser1.wavelength = 0.81e-6
 
 diagnostics.diags_names = diag1
-diag1.period = 500
+diag1.intervals = 500
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho

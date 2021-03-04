@@ -13,8 +13,34 @@
 #include <AMReX.H>
 #include <AMReX_REAL.H>
 
+#include <cmath>
 #include <limits>
 
+/** \brief Extract the cartesian position coordinates of the particle
+ *         p and store them in the variables `x`, `y`, `z`
+ *         This version operates on a SuperParticle */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
+                            amrex::ParticleReal& x,
+                            amrex::ParticleReal& y,
+                            amrex::ParticleReal& z) noexcept
+{
+#ifdef WARPX_DIM_RZ
+    amrex::ParticleReal theta = p.rdata(PIdx::theta);
+    amrex::ParticleReal r = p.pos(0);
+    x = r*std::cos(theta);
+    y = r*std::sin(theta);
+    z = p.pos(1);
+#elif WARPX_DIM_3D
+    x = p.pos(0);
+    y = p.pos(1);
+    z = p.pos(2);
+#else
+    x = p.pos(0);
+    y = std::numeric_limits<amrex::ParticleReal>::quiet_NaN();
+    z = p.pos(1);
+#endif
+}
 
 /** \brief Functor that can be used to extract the positions of the macroparticles
  *         inside a ParallelFor kernel
@@ -52,19 +78,20 @@ struct GetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const int i, RType& x, RType& y, RType& z) const noexcept
     {
+        const PType& p = m_structs[i];
 #ifdef WARPX_DIM_RZ
-        RType r = m_structs[i].pos(0);
+        RType r = p.pos(0);
         x = r*std::cos(m_theta[i]);
         y = r*std::sin(m_theta[i]);
-        z = m_structs[i].pos(1);
+        z = p.pos(1);
 #elif WARPX_DIM_3D
-        x = m_structs[i].pos(0);
-        y = m_structs[i].pos(1);
-        z = m_structs[i].pos(2);
+        x = p.pos(0);
+        y = p.pos(1);
+        z = p.pos(2);
 #else
-        x = m_structs[i].pos(0);
+        x = p.pos(0);
         y = m_snan;
-        z = m_structs[i].pos(1);
+        z = p.pos(1);
 #endif
     }
 };
