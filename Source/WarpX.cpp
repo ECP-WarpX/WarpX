@@ -820,6 +820,23 @@ WarpX::ReadParameters ()
             }
         }
 
+        if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                amrex::Abort("Vay current deposition not implemented for Galilean algorithms");
+            }
+        }
+
+        if (current_correction) {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                if (fft_do_time_averaging) {
+                    amrex::Abort("Current correction not implemented for averaged Galilean algorithm");
+                }
+            }
+        }
+
+#   ifdef WARPX_DIM_RZ
+        update_with_rho = true;  // Must be true for RZ PSATD
+#   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
             update_with_rho = false; // standard PSATD
@@ -827,6 +844,7 @@ WarpX::ReadParameters ()
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
         }
+#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
@@ -1174,7 +1192,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
 
-
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[x]"));
     Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[y]"));
     Bfield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[z]"));
@@ -1274,6 +1291,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         // Create aux multifabs on Nodal Box Array
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
+
         Bfield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Bfield_aux[x]"));
         Bfield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Bfield_aux[y]"));
         Bfield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Bfield_aux[z]"));
@@ -1281,6 +1299,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[x]"));
         Efield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[z]"));
+
+        Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Efield_aux[lev][0], amrex::make_alias, 0, ncomps);
+        Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Efield_aux[lev][1], amrex::make_alias, 0, ncomps);
+        Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Efield_aux[lev][2], amrex::make_alias, 0, ncomps);
+
+        Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Bfield_aux[lev][0], amrex::make_alias, 0, ncomps);
+        Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Bfield_aux[lev][1], amrex::make_alias, 0, ncomps);
+        Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Bfield_aux[lev][2], amrex::make_alias, 0, ncomps);
     }
     else if (lev == 0)
     {
@@ -1302,7 +1328,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_aux[z]"));
 
-
         Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[x]"));
         Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[y]"));
         Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[z]"));
@@ -1310,7 +1335,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[x]"));
         Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[y]"));
         Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[z]"));
-
     }
 
     //
