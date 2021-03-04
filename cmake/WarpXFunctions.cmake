@@ -113,6 +113,19 @@ macro(set_cxx_warnings)
     endif ()
 endmacro()
 
+# Enables interprocedural optimization for a list of targets
+#
+function(enable_IPO all_targets_list)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT is_IPO_available)
+    if(is_IPO_available)
+        foreach(tgt IN ITEMS ${all_targets_list})
+            set_target_properties(${tgt} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+        endforeach()
+    else()
+        message(FATAL_ERROR "Interprocedural optimization is not available, set WarpX_IPO=OFF")
+    endif()
+endfunction()
 
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
