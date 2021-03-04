@@ -12,25 +12,38 @@ Installation
 
 openPMD-viewer can be installed via ``conda`` or ``pip``:
 
-::
+.. code-block:: bash
 
-    conda install -c conda-forge openpmd-viewer
+    conda install -c conda-forge openpmd-viewer openpmd-api
 
-::
+.. code-block:: bash
 
-    pip install openPMD-viewer
+    pip install openPMD-viewer openPMD-api
 
 Usage
 -----
 
-openPMD-viewer can be used either in simple Python scripts, or in a Jupyter
-notebook. In both cases, you can import openPMD-viewer, and load the data
-with the following commands:
+openPMD-viewer can be used either in simple Python scripts or in [Jupyter](https://jupyter.org).
+For interactive plots in Jupyter notebook, add this ["cell magic"](https://ipython.readthedocs.io/en/stable/interactive/magics.html) to the first line of your notebook:
 
-::
+.. code-block:: python
 
-    from opmd_viewer import OpenPMDTimeSeries
-    ts = OpenPMDTimeSeries('./diags/hdf5')
+   %matplotlib notebook
+
+and for Jupyter Lab use this instead:
+
+.. code-block:: python
+
+   %matplotlib widget
+
+If none of those work, e.g. because [ipympl](https://github.com/matplotlib/ipympl#installation) is not properly installed, you can as a last resort always try `%matplotlib inline` for non-interactive plots.
+
+In both interactive and scripted usage, you can import openPMD-viewer, and load the data with the following commands:
+
+.. code-block:: python
+
+    from openpmd_viewer import OpenPMDTimeSeries
+    ts = OpenPMDTimeSeries('./diags/diag1/')
 
 .. note::
 

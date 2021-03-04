@@ -23,6 +23,7 @@
 #include "Particles/Gather/GetExternalFields.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <AMReX_Geometry.H>
 #include <AMReX_Print.H>
 #include <AMReX.H>
 
@@ -479,6 +480,18 @@ PhysicalParticleContainer::AddParticles (int lev)
                       &(plasma_injector->single_particle_vel[1]),
                       &(plasma_injector->single_particle_vel[2]),
                       1, &(plasma_injector->single_particle_weight), 0);
+        return;
+    }
+
+    if (plasma_injector->add_multiple_particles) {
+        AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
+                      plasma_injector->multiple_particles_pos_x.dataPtr(),
+                      plasma_injector->multiple_particles_pos_y.dataPtr(),
+                      plasma_injector->multiple_particles_pos_z.dataPtr(),
+                      plasma_injector->multiple_particles_vel_x.dataPtr(),
+                      plasma_injector->multiple_particles_vel_y.dataPtr(),
+                      plasma_injector->multiple_particles_vel_z.dataPtr(),
+                      1, plasma_injector->multiple_particles_weight.dataPtr(), 0);
         return;
     }
 
@@ -1550,24 +1563,9 @@ PhysicalParticleContainer::GetParticleSlice (
     AMREX_ALWAYS_ASSERT(do_back_transformed_diagnostics == 1);
 
     const int nlevs = std::max(0, finestLevel()+1);
-
-    // we figure out a box for coarse-grained rejection. If the RealBox corresponding to a
-    // given tile doesn't intersect with this, there is no need to check any particles.
-    const Real* base_dx = Geom(0).CellSize();
-    const Real z_min = z_new - base_dx[direction];
-    const Real z_max = z_old + base_dx[direction];
-
-    RealBox slice_box = Geom(0).ProbDomain();
-    slice_box.setLo(direction, z_min);
-    slice_box.setHi(direction, z_max);
-
     diagnostic_particles.resize(finestLevel()+1);
 
     for (int lev = 0; lev < nlevs; ++lev) {
-
-        const Real* dx  = Geom(lev).CellSize();
-        const Real* plo = Geom(lev).ProbLo();
-
         // first we touch each map entry in serial
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -1589,11 +1587,7 @@ PhysicalParticleContainer::GetParticleSlice (
             amrex::Gpu::DeviceVector<int> IndexForPartCopy;
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                const Box& box = pti.validbox();
                 auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                const RealBox tile_real_box(box, dx, plo);
-
-                if ( !slice_box.intersects(tile_real_box) ) continue;
 
                 const auto GetPosition = GetParticlePosition(pti);
 

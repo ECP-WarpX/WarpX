@@ -3,7 +3,7 @@ name: Ubuntu build
 on: [push, pull_request]
 
 jobs:
-  build_minimal:
+  build_cxxminimal:
     name: GCC Minimal w/o MPI [Linux]
     runs-on: ubuntu-20.04
     steps:
@@ -19,8 +19,29 @@ jobs:
           -DWarpX_QED=OFF
         cmake --build build -j 2
 
+  build_pyfull:
+    name: Clang pywarpx [Linux]
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: |
+        .github/workflows/dependencies/pyfull.sh
+    - name: build WarpX
+      run: |
         python3 -m pip install --upgrade pip setuptools wheel
+        export WarpX_MPI=ON
+        export WarpX_OPENPMD=ON
+        export WarpX_PSATD=ON
+        export WarpX_QED_TABLE_GEN=ON
+        export CC=$(which clang)
+        export CXX=$(which clang++)
         python3 -m pip install -v .
+
+    - name: run pywarpx
+      run: |
+        export OMP_NUM_THREADS=1
+        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
 
 # Ref.:
 #   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
@@ -35,7 +56,7 @@ jobs:
       run: |
         .github/workflows/dependencies/nvcc11.sh
         export CEI_SUDO="sudo"
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
     - name: build WarpX
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
@@ -45,6 +66,7 @@ jobs:
         cmake -S . -B build_sp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=CUDA         \
+          -DWarpX_LIB=ON               \
           -DAMReX_CUDA_ARCH=6.0        \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
@@ -54,7 +76,9 @@ jobs:
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+        export WarpX_MPI=ON
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        python3 -m pip install *.whl
 
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
@@ -79,7 +103,7 @@ jobs:
         sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
         sudo chmod a+x /usr/local/bin/cmake-easyinstall
         export CEI_SUDO="sudo"
-        CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
     - name: build WarpX
       run: |
         set +e
@@ -88,14 +112,25 @@ jobs:
         export CXX=$(which icpc)
         export CC=$(which icc)
 
-        cmake -S . -B build_dp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        cmake -S . -B build_dp \
+          -DCMAKE_VERBOSE_MAKEFILE=ON \
+          -DWarpX_LIB=ON              \
+          -DWarpX_MPI=OFF             \
+          -DWarpX_OPENPMD=ON          \
+          -DWarpX_openpmd_internal=OFF
         cmake --build build_dp -j 2
 
-        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
+        cmake -S . -B build_sp \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_LIB=ON               \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_openpmd_internal=OFF \
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip install -v .
 
   build_icpx:
     name: oneAPI ICX SP [Linux]
@@ -123,6 +158,7 @@ jobs:
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="14"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
@@ -130,12 +166,23 @@ jobs:
 
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel -v .
+        python3 -m pip install *.whl
      # note: setting the CXX compiler ID is a work-around for
      # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
      # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
+    - name: run pywarpx
+      run: |
+        set +e
+        source /opt/intel/oneapi/setvars.sh
+        set -e
+        export OMP_NUM_THREADS=2
+        Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
+
+# disabled on 2020-02-25 because DPC++ got too large and we run out CI disk space
   build_dpcc:
+    if: false
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-20.04
     steps:
@@ -159,6 +206,7 @@ jobs:
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
+          -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
@@ -166,7 +214,8 @@ jobs:
 
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        python3 -m pip install *.whl
      # note: setting the CXX compiler ID is a work-around for
      # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
      # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
@@ -187,7 +236,17 @@ jobs:
         export CXX=$(which hipcc)
         export CC=$(which hipcc)
 
-        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=ON -DWarpX_COMPUTE=HIP -DAMReX_AMD_ARCH=gfx900 -DWarpX_OPENPMD=ON -DWarpX_PRECISION=SINGLE
+        cmake -S . -B build_sp \
+          -DCMAKE_VERBOSE_MAKEFILE=ON \
+          -DAMReX_AMD_ARCH=gfx900     \
+          -DWarpX_COMPUTE=HIP         \
+          -DWarpX_LIB=ON              \
+          -DWarpX_MPI=ON              \
+          -DWarpX_OPENPMD=ON          \
+          -DWarpX_PRECISION=SINGLE    \
+          -DWarpX_PSATD=ON
         cmake --build build_sp -j 2
 
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+        export WarpX_MPI=ON
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        python3 -m pip install *.whl

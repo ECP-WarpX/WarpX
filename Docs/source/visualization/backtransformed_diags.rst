@@ -9,7 +9,7 @@ python file :download:`read_raw_data.py<../../../Tools/PostProcessing/read_raw_d
 The full back-transformed diagnostics of the entire domain is written in ``lab_frame_data/snapshots/`` and the back-transformed diagnostics of the reduced domain is written to ``lab_frame_data/slices/``
 For instance: To plot the ``Ez`` field along the z-direction at the center of the 3D-domain of the full back-transformed diagnostics for the entire 3D domain:
 
-::
+.. code-block:: python
 
     import read_raw_data
     import matplotlib.pyplot as plt
@@ -24,7 +24,7 @@ For instance: To plot the ``Ez`` field along the z-direction at the center of th
 
 Similarly, the back-transformed diagnostics on a reduced domain (1D line, 2D slice, 3D reduced diagnostic) can also be visualized using read_raw_data.py. For instance -- let us say that the user-input is an "x-z" slice (at the center of the domain in the "y-direction"), then, to plot ``Ez`` on this x-z slice:
 
-::
+.. code-block:: python
 
     iteration = 0
     field = 'Ez'
@@ -39,7 +39,7 @@ Note that, in the above snippet, we compare the 0th cell of the reduced diagnost
 
 If the back-transformed diagnostics are written in the HDF5 format (This can be done by compiling WarpX with USE_HDF5=TRUE), then the full domain snapshot and reduced domain diagnostics can be visualized using h5py:
 
-::
+.. code-block:: python
 
     import matplotlib.pyplot as plt
     import h5py
@@ -59,7 +59,7 @@ If the back-transformed diagnostics are written in the HDF5 format (This can be 
 
 The back-transformed particle data on the full and reduced diagnostic can be visualized as follows
 
-::
+.. code-block:: python
 
     species='ions'
     iteration = 1

@@ -302,6 +302,16 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if (lev > 0)
            current_cp[lev][i]->setVal(0.0);
 
+        // Initialize aux MultiFabs on level 0
+        if (lev == 0) {
+            Bfield_aux[lev][i]->setVal(0.0);
+            Efield_aux[lev][i]->setVal(0.0);
+            if (fft_do_time_averaging) {
+                Bfield_avg_aux[lev][i]->setVal(0.0);
+                Efield_avg_aux[lev][i]->setVal(0.0);
+            }
+        }
+
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
            if (fft_do_time_averaging) {
@@ -330,7 +340,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                   Efield_avg_aux[lev][i]->setVal(E_external_grid[i]);
                   Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
               }
-
            }
         }
     }

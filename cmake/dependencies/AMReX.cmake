@@ -1,7 +1,13 @@
 macro(find_amrex)
-    if(WarpX_amrex_internal)
+    if(WarpX_amrex_src)
+        message(STATUS "Compiling local AMReX ...")
+        message(STATUS "AMReX source path: ${WarpX_amrex_src}")
+    elseif(WarpX_amrex_internal)
         message(STATUS "Downloading AMReX ...")
+        message(STATUS "AMReX repository: ${WarpX_amrex_repo} (${WarpX_amrex_branch})")
         include(FetchContent)
+    endif()
+    if(WarpX_amrex_internal OR WarpX_amrex_src)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # see https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options
@@ -55,6 +61,7 @@ macro(find_amrex)
             set(AMReX_PRECISION_PARTICLES "SINGLE" CACHE INTERNAL "")
         endif()
 
+        set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN_INTERFACES OFF CACHE INTERNAL "")
@@ -74,30 +81,39 @@ macro(find_amrex)
             set(AMReX_SPACEDIM ${WarpX_DIMS} CACHE INTERNAL "")
         endif()
 
-        FetchContent_Declare(fetchedamrex
-            GIT_REPOSITORY ${WarpX_amrex_repo}
-            GIT_TAG        ${WarpX_amrex_branch}
-            BUILD_IN_SOURCE 0
-        )
-        FetchContent_GetProperties(fetchedamrex)
-
-        if(NOT fetchedamrex_POPULATED)
-            FetchContent_Populate(fetchedamrex)
-            list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
+        if(WarpX_amrex_src)
+            list(APPEND CMAKE_MODULE_PATH "${WarpX_amrex_src}/Tools/CMake")
             if(WarpX_COMPUTE STREQUAL CUDA)
                 enable_language(CUDA)
                 include(AMReX_SetupCUDA)
             endif()
-            add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
-        endif()
+            add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
+        else()
+            FetchContent_Declare(fetchedamrex
+                GIT_REPOSITORY ${WarpX_amrex_repo}
+                GIT_TAG        ${WarpX_amrex_branch}
+                BUILD_IN_SOURCE 0
+            )
+            FetchContent_GetProperties(fetchedamrex)
 
-        # advanced fetch options
-        mark_as_advanced(FETCHCONTENT_BASE_DIR)
-        mark_as_advanced(FETCHCONTENT_FULLY_DISCONNECTED)
-        mark_as_advanced(FETCHCONTENT_QUIET)
-        mark_as_advanced(FETCHCONTENT_SOURCE_DIR_FETCHEDAMREX)
-        mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED)
-        mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_FETCHEDAMREX)
+            if(NOT fetchedamrex_POPULATED)
+                FetchContent_Populate(fetchedamrex)
+                list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
+                if(WarpX_COMPUTE STREQUAL CUDA)
+                    enable_language(CUDA)
+                    include(AMReX_SetupCUDA)
+                endif()
+                add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
+            endif()
+
+            # advanced fetch options
+            mark_as_advanced(FETCHCONTENT_BASE_DIR)
+            mark_as_advanced(FETCHCONTENT_FULLY_DISCONNECTED)
+            mark_as_advanced(FETCHCONTENT_QUIET)
+            mark_as_advanced(FETCHCONTENT_SOURCE_DIR_FETCHEDAMREX)
+            mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED)
+            mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_FETCHEDAMREX)
+        endif()
 
         # AMReX options not relevant to WarpX users
         mark_as_advanced(AMREX_BUILD_DATETIME)
@@ -130,8 +146,9 @@ macro(find_amrex)
         mark_as_advanced(AMReX_TP_PROFILE)
         mark_as_advanced(USE_XSDK_DEFAULTS)
 
-        message(STATUS "AMReX: Using INTERNAL version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
+        message(STATUS "AMReX: Using version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
     else()
+        message(STATUS "Searching for pre-installed AMReX ...")
         # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#importing-amrex-into-your-cmake-project
         if(WarpX_ASCENT)
             set(COMPONENT_ASCENT AMReX_ASCENT AMReX_CONDUIT)
@@ -155,15 +172,21 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
 
-        find_package(AMReX 21.01 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
+        find_package(AMReX 21.03 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
 
+# local source-tree
+set(WarpX_amrex_src ""
+    CACHE PATH
+    "Local path to AMReX source directory (preferred if set)")
+
+# Git fetcher
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "development"
+set(WarpX_amrex_branch "dd2ec76a5cc5db01caa17bdf51efb603c019346d"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

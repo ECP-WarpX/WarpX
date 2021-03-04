@@ -45,6 +45,7 @@
 #include <AMReX_AmrCore.H>
 #include <AMReX_BLProfiler.H>
 #include <AMReX_Print.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_VisMF.H>
@@ -92,9 +93,8 @@ public:
     MultiParticleContainer& GetPartContainer () { return *mypc; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                         int num_shift, int dir, amrex::IntVect ng_extra,
-                         amrex::Real external_field=0.0, bool useparser = false,
-                         HostDeviceParser<3> const& field_parser={});
+                         int num_shift, int dir, amrex::Real external_field=0.0,
+                         bool useparser = false, HostDeviceParser<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -436,17 +436,17 @@ public:
     void UpdateAuxilaryDataSameType ();
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryB   (amrex::IntVect ng);
+    void FillBoundaryE   (amrex::IntVect ng);
+    void FillBoundaryB_avg   (amrex::IntVect ng);
+    void FillBoundaryE_avg   (amrex::IntVect ng);
 
     void FillBoundaryF   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryE   (int lev, amrex::IntVect ng);
+    void FillBoundaryB   (int lev, amrex::IntVect ng);
+    void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
+    void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
     void FillBoundaryF   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
@@ -528,7 +528,6 @@ public:
 
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; }
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
-    const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
@@ -550,10 +549,22 @@ public:
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
                      const int max_iters=200) const;
+    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+
     void setDirichletBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                          const int idim) const;
     void getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
                                amrex::Real &pot_hi) const;
+
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
@@ -593,7 +604,7 @@ public:
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
 #ifdef WARPX_USE_PSATD
-    // Host and device vectors for Fornberg stencil coefficients used for finite-order centering
+    // Host and device vectors for ordered Fornberg stencil coefficients used for finite-order centering
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
@@ -748,10 +759,14 @@ private:
         return gather_buffer_masks[lev].get();
     }
 
+    void ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coeffs,
+                                     amrex::Vector<amrex::Real>& unordered_coeffs,
+                                     const int order);
+
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
-                        const amrex::IntVect& ngextra, const bool aux_is_nodal);
+                        const bool aux_is_nodal);
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

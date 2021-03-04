@@ -43,13 +43,18 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     }
 #endif
 
-    const amrex::IntVect& Bx_stag = Bfield_fp[0][0]->ixType().toIntVect();
-    const amrex::IntVect& By_stag = Bfield_fp[0][1]->ixType().toIntVect();
-    const amrex::IntVect& Bz_stag = Bfield_fp[0][2]->ixType().toIntVect();
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Bmf = WarpX::fft_do_time_averaging ?
+                                                                                Bfield_avg_fp : Bfield_fp;
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Emf = WarpX::fft_do_time_averaging ?
+                                                                                Efield_avg_fp : Efield_fp;
 
-    const amrex::IntVect& Ex_stag = Efield_fp[0][0]->ixType().toIntVect();
-    const amrex::IntVect& Ey_stag = Efield_fp[0][1]->ixType().toIntVect();
-    const amrex::IntVect& Ez_stag = Efield_fp[0][2]->ixType().toIntVect();
+    const amrex::IntVect& Bx_stag = Bmf[0][0]->ixType().toIntVect();
+    const amrex::IntVect& By_stag = Bmf[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Bz_stag = Bmf[0][2]->ixType().toIntVect();
+
+    const amrex::IntVect& Ex_stag = Emf[0][0]->ixType().toIntVect();
+    const amrex::IntVect& Ey_stag = Emf[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Ez_stag = Emf[0][2]->ixType().toIntVect();
 
     // For level 0, we only need to do the average.
 #ifdef AMREX_USE_OMP
@@ -60,22 +65,21 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real> const& bx_aux = Bfield_aux[0][0]->array(mfi);
         Array4<Real> const& by_aux = Bfield_aux[0][1]->array(mfi);
         Array4<Real> const& bz_aux = Bfield_aux[0][2]->array(mfi);
-        Array4<Real const> const& bx_fp = Bfield_fp[0][0]->const_array(mfi);
-        Array4<Real const> const& by_fp = Bfield_fp[0][1]->const_array(mfi);
-        Array4<Real const> const& bz_fp = Bfield_fp[0][2]->const_array(mfi);
+        Array4<Real const> const& bx_fp = Bmf[0][0]->const_array(mfi);
+        Array4<Real const> const& by_fp = Bmf[0][1]->const_array(mfi);
+        Array4<Real const> const& bz_fp = Bmf[0][2]->const_array(mfi);
 
         Array4<Real> const& ex_aux = Efield_aux[0][0]->array(mfi);
         Array4<Real> const& ey_aux = Efield_aux[0][1]->array(mfi);
         Array4<Real> const& ez_aux = Efield_aux[0][2]->array(mfi);
-        Array4<Real const> const& ex_fp = Efield_fp[0][0]->const_array(mfi);
-        Array4<Real const> const& ey_fp = Efield_fp[0][1]->const_array(mfi);
-        Array4<Real const> const& ez_fp = Efield_fp[0][2]->const_array(mfi);
+        Array4<Real const> const& ex_fp = Emf[0][0]->const_array(mfi);
+        Array4<Real const> const& ey_fp = Emf[0][1]->const_array(mfi);
+        Array4<Real const> const& ez_fp = Emf[0][2]->const_array(mfi);
 
-        Box bx = mfi.validbox();
-        // TODO It seems like it is necessary to loop over the valid box grown
-        // with 2 guard cells. Should this number of guard cells be expressed
-        // in terms of the parameters defined in the guardCellManager class?
-        bx.grow(2);
+        // Loop over full box including ghost cells
+        // (input arrays will be padded with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations)
+        Box bx = mfi.fabbox();
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifdef WARPX_USE_PSATD
@@ -88,22 +92,22 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             amrex::Real const * stencil_coeffs_z = WarpX::device_centering_stencil_coeffs_z.data();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
 #endif
@@ -357,20 +361,20 @@ WarpX::UpdateAuxilaryDataSameType ()
 }
 
 void
-WarpX::FillBoundaryB (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryB(lev, ng, ng_extra_fine);
+        FillBoundaryB(lev, ng);
     }
 }
 
 void
-WarpX::FillBoundaryE (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryE(lev, ng, ng_extra_fine);
+        FillBoundaryE(lev, ng);
     }
 }
 
@@ -384,28 +388,28 @@ WarpX::FillBoundaryF (IntVect ng)
 }
 
 void
-WarpX::FillBoundaryB_avg (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB_avg (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryB_avg(lev, ng, ng_extra_fine);
+        FillBoundaryB_avg(lev, ng);
     }
 }
 
 void
-WarpX::FillBoundaryE_avg (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE_avg (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryE_avg(lev, ng, ng_extra_fine);
+        FillBoundaryE_avg(lev, ng);
     }
 }
 
 
 void
-WarpX::FillBoundaryE(int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE(int lev, IntVect ng)
 {
-    FillBoundaryE(lev, PatchType::fine, ng+ng_extra_fine);
+    FillBoundaryE(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng);
 }
 
@@ -465,9 +469,9 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryB (int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB (int lev, IntVect ng)
 {
-    FillBoundaryB(lev, PatchType::fine, ng + ng_extra_fine);
+    FillBoundaryB(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng);
 }
 
@@ -525,9 +529,9 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryE_avg(int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE_avg(int lev, IntVect ng)
 {
-    FillBoundaryE_avg(lev, PatchType::fine, ng+ng_extra_fine);
+    FillBoundaryE_avg(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryE_avg(lev, PatchType::coarse, ng);
 }
 
@@ -579,9 +583,9 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
 
 
 void
-WarpX::FillBoundaryB_avg (int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB_avg (int lev, IntVect ng)
 {
-    FillBoundaryB_avg(lev, PatchType::fine, ng + ng_extra_fine);
+    FillBoundaryB_avg(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryB_avg(lev, PatchType::coarse, ng);
 }
 
