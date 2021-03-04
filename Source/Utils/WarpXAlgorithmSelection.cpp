@@ -154,7 +154,7 @@ GetBCTypeInteger( std::string BCType, bool field ){
     else BCType_to_int = ParticleBCType_algo_to_int; // set particle boundary
 
     if (BCType_to_int.count(BCType) == 0) {
-        std::string error_message = "Invalid string for Field BC. : " + BCType                         + "\nThe valid values are : \n";
+        std::string error_message = "Invalid string for field/particle BC. : " + BCType                         + "\nThe valid values are : \n";
         for (const auto &valid_pair : BCType_to_int) {
             if (valid_pair.first != "default"){
                 error_message += " - " + valid_pair.first + "\n";
