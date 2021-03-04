@@ -506,6 +506,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
  * \param[in] stencil_coeffs_y array of ordered Fornberg coefficients for finite-order centering stencil along y
  * \param[in] stencil_coeffs_z array of ordered Fornberg coefficients for finite-order centering stencil along z
  */
+template< bool IS_PSATD = false >
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp (const int j,
                    const int k,
@@ -642,52 +643,53 @@ void warpx_interp (const int j,
 
     amrex::Real res = 0.0_rt;
 
-#ifndef WARPX_USE_PSATD // FDTD (linear interpolation)
-
-    for (int ll = 0; ll <= nl; ll++)
+    if( !IS_PSATD ) // FDTD (linear interpolation)
     {
-        for (int kk = 0; kk <= nk; kk++)
+        for (int ll = 0; ll <= nl; ll++)
         {
-            for (int jj = 0; jj <= nj; jj++)
+            for (int kk = 0; kk <= nk; kk++)
             {
-                res += src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
+                for (int jj = 0; jj <= nj; jj++)
+                {
+                    res += src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
+                }
             }
         }
+
     }
 
-#else // PSATD (finite-order interpolation)
+    else // PSATD (finite-order interpolation)
+    {
+        amrex::Real cj = 1.0_rt;
+        amrex::Real ck = 1.0_rt;
+        amrex::Real cl = 1.0_rt;
 
-    amrex::Real cj = 1.0_rt;
-    amrex::Real ck = 1.0_rt;
-    amrex::Real cl = 1.0_rt;
-
-    amrex::Real const* scj = stencil_coeffs_x;
-#if   (AMREX_SPACEDIM == 2)
-    amrex::Real const* sck = stencil_coeffs_z;
+        amrex::Real const* scj = stencil_coeffs_x;
+#if (AMREX_SPACEDIM == 2)
+        amrex::Real const* sck = stencil_coeffs_z;
 #elif (AMREX_SPACEDIM == 3)
-    amrex::Real const* sck = stencil_coeffs_y;
-    amrex::Real const* scl = stencil_coeffs_z;
+        amrex::Real const* sck = stencil_coeffs_y;
+        amrex::Real const* scl = stencil_coeffs_z;
 #endif
 
-    for (int ll = 0; ll <= nl; ll++)
-    {
-#if (AMREX_SPACEDIM == 3)
-        if (interp_l) cl = scl[ll];
-#endif
-        for (int kk = 0; kk <= nk; kk++)
+        for (int ll = 0; ll <= nl; ll++)
         {
-            if (interp_k) ck = sck[kk];
-
-            for (int jj = 0; jj <= nj; jj++)
+#if (AMREX_SPACEDIM == 3)
+            if (interp_l) cl = scl[ll];
+#endif
+            for (int kk = 0; kk <= nk; kk++)
             {
-                if (interp_j) cj = scj[jj];
+                if (interp_k) ck = sck[kk];
 
-                res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
+                for (int jj = 0; jj <= nj; jj++)
+                {
+                    if (interp_j) cj = scj[jj];
+
+                    res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
+                }
             }
         }
     }
-
-#endif // PSATD (finite-order interpolation)
 
     dst_arr(j,k,l) = wj * wk * wl * res;
 }

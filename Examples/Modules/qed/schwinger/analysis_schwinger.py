@@ -112,7 +112,7 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
         # Sorting the arrays is required because electrons and positrons are not necessarily
         # dumped in the same order.
         assert(np.array_equal(np.sort(ele_data),np.sort(pos_data)))
-        # 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
+        # 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
         error = np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)
         print("difference between expected and actual number of pairs created: " + str(error))
         print("tolerance: " + str(5*std_total_physical_pairs_created))

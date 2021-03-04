@@ -89,8 +89,8 @@ WarpX::Evolve (int numsteps)
         if (is_synchronized) {
             if (do_electrostatic == ElectrostaticSolverAlgo::None) {
                 // Not called at each iteration, so exchange all guard cells
-                FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-                FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+                FillBoundaryE(guard_cells.ng_alloc_EB);
+                FillBoundaryB(guard_cells.ng_alloc_EB);
                 UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
@@ -108,14 +108,14 @@ WarpX::Evolve (int numsteps)
                 // Particles have p^{n-1/2} and x^{n}.
 
                 // E and B are up-to-date inside the domain only
-                FillBoundaryE(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
-                FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                FillBoundaryE(guard_cells.ng_FieldGather);
+                FillBoundaryB(guard_cells.ng_FieldGather);
                 // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
                 // Need to update Aux on lower levels, to interpolate to higher levels.
                 if (fft_do_time_averaging)
                 {
-                    FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
-                    FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                    FillBoundaryE_avg(guard_cells.ng_FieldGather);
+                    FillBoundaryB_avg(guard_cells.ng_FieldGather);
                 }
                 // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
                 if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD)
@@ -357,16 +357,16 @@ WarpX::OneStep_nosub (Real cur_time)
             if (use_hybrid_QED)
             {
                 WarpX::Hybrid_QED_Push(dt);
-                FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+                FillBoundaryE(guard_cells.ng_alloc_EB);
             }
             PushPSATD(dt[0]);
-            FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-            FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+            FillBoundaryE(guard_cells.ng_alloc_EB);
+            FillBoundaryB(guard_cells.ng_alloc_EB);
 
             if (use_hybrid_QED)
             {
                 WarpX::Hybrid_QED_Push(dt);
-                FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+                FillBoundaryE(guard_cells.ng_alloc_EB);
             }
             if (do_pml) {
                 DampPML();
@@ -377,7 +377,7 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryF(guard_cells.ng_FieldSolverF);
             EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
 
-            FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+            FillBoundaryB(guard_cells.ng_FieldSolver);
             if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
                 // vacuum medium
                 EvolveE(dt[0]); // We now have E^{n+1}
@@ -388,21 +388,21 @@ WarpX::OneStep_nosub (Real cur_time)
                 amrex::Abort(" Medium for EM is unknown \n");
             }
 
-            FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+            FillBoundaryE(guard_cells.ng_FieldSolver);
             EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
             EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
             if (do_pml) {
                 FillBoundaryF(guard_cells.ng_alloc_F);
                 DampPML();
                 NodalSyncPML();
-                FillBoundaryE(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
+                FillBoundaryE(guard_cells.ng_MovingWindow);
                 FillBoundaryF(guard_cells.ng_MovingWindow);
-                FillBoundaryB(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
+                FillBoundaryB(guard_cells.ng_MovingWindow);
             }
             // E and B are up-to-date in the domain, but all guard cells are
             // outdated.
             if (safe_guard_cells)
-                FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+                FillBoundaryB(guard_cells.ng_alloc_EB);
         } // !PSATD
     } // !do_electrostatic
 }
@@ -495,11 +495,11 @@ WarpX::OneStep_sub1 (Real curtime)
 
     EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
-    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather + guard_cells.ng_Extra);
+    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
     FillBoundaryF(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
-    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather + guard_cells.ng_Extra);
+    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
 
     // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
     FillBoundaryAux(guard_cells.ng_UpdateAux);

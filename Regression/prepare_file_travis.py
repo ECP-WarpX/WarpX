@@ -53,6 +53,13 @@ if ci_openpmd:
     text = re.sub('addToCompileString =',
                   'addToCompileString = USE_OPENPMD=TRUE ', text)
 
+# always build with PSATD support (runtime controlled if used)
+if ci_psatd:
+    text = re.sub('addToCompileString =',
+                  'addToCompileString = USE_PSATD=TRUE ', text)
+    text = re.sub('USE_PSATD=FALSE',
+                  '', text)
+
 # Ccache
 if ci_ccache:
     text = re.sub('addToCompileString =',
@@ -102,7 +109,6 @@ def select_tests(blocks, match_string_list, do_test):
 if ci_regular_cartesian_2d:
     test_blocks = select_tests(test_blocks, ['dim = 2'], True)
     test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
@@ -111,18 +117,10 @@ if ci_regular_cartesian_2d:
 if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['dim = 2'], False)
     test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
-
-if ci_psatd:
-    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
-    # Remove PSATD single-precision, which is done in ci_single_precision
-    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
-    # Remove PSATD RZ, which is done in ci_rz_or_nompi
-    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
