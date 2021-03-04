@@ -3,5 +3,6 @@ target_sources(WarpX
     CollisionHandler.cpp
     CollisionBase.cpp
     PairWiseCoulombCollision.cpp
+    BackgroundMCCCollision.cpp
 )
 
