@@ -356,20 +356,20 @@ WarpX::UpdateAuxilaryDataSameType ()
 }
 
 void
-WarpX::FillBoundaryB (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryB(lev, ng, ng_extra_fine);
+        FillBoundaryB(lev, ng);
     }
 }
 
 void
-WarpX::FillBoundaryE (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryE(lev, ng, ng_extra_fine);
+        FillBoundaryE(lev, ng);
     }
 }
 
@@ -383,28 +383,28 @@ WarpX::FillBoundaryF (IntVect ng)
 }
 
 void
-WarpX::FillBoundaryB_avg (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB_avg (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryB_avg(lev, ng, ng_extra_fine);
+        FillBoundaryB_avg(lev, ng);
     }
 }
 
 void
-WarpX::FillBoundaryE_avg (IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE_avg (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryE_avg(lev, ng, ng_extra_fine);
+        FillBoundaryE_avg(lev, ng);
     }
 }
 
 
 void
-WarpX::FillBoundaryE(int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE(int lev, IntVect ng)
 {
-    FillBoundaryE(lev, PatchType::fine, ng+ng_extra_fine);
+    FillBoundaryE(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng);
 }
 
@@ -464,9 +464,9 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryB (int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB (int lev, IntVect ng)
 {
-    FillBoundaryB(lev, PatchType::fine, ng + ng_extra_fine);
+    FillBoundaryB(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng);
 }
 
@@ -524,9 +524,9 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryE_avg(int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryE_avg(int lev, IntVect ng)
 {
-    FillBoundaryE_avg(lev, PatchType::fine, ng+ng_extra_fine);
+    FillBoundaryE_avg(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryE_avg(lev, PatchType::coarse, ng);
 }
 
@@ -578,9 +578,9 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
 
 
 void
-WarpX::FillBoundaryB_avg (int lev, IntVect ng, IntVect ng_extra_fine)
+WarpX::FillBoundaryB_avg (int lev, IntVect ng)
 {
-    FillBoundaryB_avg(lev, PatchType::fine, ng + ng_extra_fine);
+    FillBoundaryB_avg(lev, PatchType::fine, ng);
     if (lev > 0) FillBoundaryB_avg(lev, PatchType::coarse, ng);
 }
 
