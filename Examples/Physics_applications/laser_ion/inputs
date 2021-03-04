@@ -42,7 +42,6 @@ warpx.use_filter = 1          # bilinear current/charge filter
 #
 amr.max_grid_size = 64
 amr.blocking_factor = 64
-warpx.do_dynamic_scheduling = 0
 
 # load balancing
 algo.load_balance_intervals = 10
