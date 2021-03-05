@@ -12,10 +12,9 @@
 #include <AMReX_Random.H>
 
 /** \brief Function to perform elastic scattering of a particle in the lab
- * frame. The center of momentum velocity is calculated and the particle
- * velocities transformed to that frame where a hard sphere collision occurs.
- * The resulting particle velocities are transformed back to the lab frame
- * and the input particle's velocity is updated.
+ * frame. The particle velocities transformed to the COM frame where a hard
+ * sphere collision occurs. The resulting particle velocities are transformed
+ * back to the lab frame and the input particle's velocity is updated.
  * @param[in/out] ux, uy, uz colliding particle's velocity
  * @param[in] uCOM_x, uCOM_y, uCOM_z velocity of the center of momentum frame.
  * @param[in] engine random number generator.
@@ -49,6 +48,26 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
     ux += uCOM_x;
     uy += uCOM_y;
     uz += uCOM_z;
+}
+
+
+/** \brief Function to perform back scattering of a particle in the lab
+ * frame. The particle velocity is transformed to the COM frame where it is
+ * reversed. The resulting particle velocities are then transformed back to the
+ * lab frame and the input particle's velocity is updated.
+ * @param[in/out] ux, uy, uz colliding particle's velocity
+ * @param[in] uCOM_x, uCOM_y, uCOM_z velocity of the center of momentum frame.
+ */
+
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
+                         amrex::ParticleReal& uz, amrex::ParticleReal& uCOM_x,
+                         amrex::ParticleReal& uCOM_y, amrex::ParticleReal& uCOM_z)
+{
+    // transform to COM frame, reverse particle velocity and transform back
+    ux = -1.0 * ux + 2.0 * uCOM_x;
+    uy = -1.0 * uy + 2.0 * uCOM_y;
+    uz = -1.0 * uz + 2.0 * uCOM_z;
 }
 
 #endif // WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_

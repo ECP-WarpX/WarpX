@@ -21,23 +21,29 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     amrex::ParmParse pp(collision_name);
 
-    // default Coulomb log, if < 0, will be computed automatically
-    // m_CoulombLog = -1.0_rt;
-    // queryWithParser(pp, "CoulombLog", m_CoulombLog);
     pp.query("background_density", m_background_density);
+    pp.query("background_temperature", m_background_temperature);
+
+    // if the neutral mass is specified use, but if a secondary species
+    // is given the background mass will be overwritten
+    m_background_mass = -1;
+    pp.query("background_mass", m_background_mass);
 
     // query for a list of collision processes
-    // collision_types = ['elastic', 'ionization', etc.]
+    // these could be ionization, elastic, charge_exchange, back, etc.
+    pp.queryarr("scattering_processes", m_scattering_processes);
+
+    // now we need functions to bind the cross-sections for each process
+    // maybe use another vector of a children of a 'CrossSection' class??
+    // in Warp this is simply a dictionary of each process' get_xsec(E) function
+
+
     // build maximum cross-section and collision probability
     // and everything else done in the __init__ function for Warp MCC
-    // for testing now I'll just specify a collision probability
-    m_total_collision_prob = 0.08356;
-    // and use dummy constant cross-section and assume max velocity of 5 keV
+    // for testing now I'll just specify dummy constant cross-section and
+    // assume max velocity of 5 keV
     amrex::Real sigma_E = 1e-18;
     m_nu_max = 473299989.9733926;
-    m_background_mass = 6.646475849910765e-27;
-    m_background_temperature = 300;
-
 }
 
 void
@@ -48,10 +54,37 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
-    auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
-    // TODO add functionality to identify secondary species
+    // calculate total collision probability
+    auto coll_n = m_nu_max * dt;
+    m_total_collision_prob = 1.0 - std::exp(-coll_n);
 
+    // dt has to be small enough that a linear expansion of the collision
+    // probability is sufficiently accurately, otherwise the MCC results
+    // will be very heavily affected by small changes in the timestep
+    if (coll_n > 0.1){
+        amrex::Print() <<
+            "dt is too large to ensure accurate MCC results for "
+            << m_species_names[0] << " collisions since nu_max*dt = "
+            << coll_n << " > 0.1\n";
+        amrex::Abort();
+    }
+
+    auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
     m_mass1 = species1.getMass();
+
+    // if a second species is specified that will also be the species
+    // generated during ionization collisions and therefore the background
+    // mass is equal to the mass of that species
+    if (m_species_names.size() == 2){
+        auto& species2 = mypc->GetParticleContainerFromName(m_species_names[1]);
+        m_background_mass = species2.getMass();
+    }
+    // otherwise if no neutral species mass was specified assume that the
+    // collisions will be with neutrals of the same mass as the colliding
+    // species (like with ion-neutral collisions)
+    else if (m_background_mass == -1){
+        m_background_mass = species1.getMass();
+    }
 
     // Enable tiling
     // amrex::MFItInfo info;
@@ -105,11 +138,12 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
     // get neutral properties
     amrex::Real n_a = m_background_density;
-    amrex::Real mass_a = m_background_mass;
     amrex::Real T_a = m_background_temperature;
+    amrex::Real mass_a = m_background_mass;
     amrex::Real vel_std = std::sqrt(PhysConst::kb * T_a / mass_a);
 
     // get collision parameters
+    auto scattering_processes = m_scattering_processes;
     amrex::Real total_collision_prob = m_total_collision_prob;
     amrex::Real nu_max = m_nu_max;
 
@@ -171,7 +205,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                 // E_coll = 0.5 * mass1 * v_coll2 / PhysConst::q_e;
 
                 // loop through all collision pathways
-                // TODO for col_pathway in col_pathways:
+                for (int i = 0; i < scattering_processes.size(); ++i) {
 
                     // get collision cross-section
                     //sigma_E = ...
@@ -182,12 +216,19 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                     // check if this collision should be performed and call
                     // the appropriate scattering function
                     if (col_select < nu_i){
-                        // if pathway is elastic collision with heavy
-                        ElasticScattering(
-                            ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z,
-                            engine
-                        );
+                        if (scattering_processes[i] == "elastic"){
+                            ElasticScattering(
+                                ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z,
+                                engine
+                            );
+                        }
+                        else if (scattering_processes[i] == "back"){
+                            BackScattering(
+                                ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z
+                            );
+                        }
                     }
+                }
             }
         }
     );

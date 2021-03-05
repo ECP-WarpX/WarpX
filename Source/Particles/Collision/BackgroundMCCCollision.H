@@ -40,9 +40,11 @@ private:
 
     amrex::Real m_mass1;
 
+    amrex::Vector<std::string> m_scattering_processes;
+
+    amrex::Real m_background_temperature;
     amrex::Real m_background_density;
     amrex::Real m_background_mass;
-    amrex::Real m_background_temperature;
     amrex::Real m_total_collision_prob;
     amrex::Real m_nu_max;
 
