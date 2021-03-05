@@ -62,6 +62,7 @@ macro(find_amrex)
         endif()
 
         set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN_INTERFACES OFF CACHE INTERNAL "")
