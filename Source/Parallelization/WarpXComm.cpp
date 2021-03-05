@@ -379,8 +379,6 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
         return;
     }
 
-#ifdef WARPX_USE_PSATD
-
     amrex::IntVect const& dst_stag = dst.ixType().toIntVect();
 
     // Source MultiFab always has nodal index type when this function is called
@@ -397,29 +395,39 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
         // for out-of-bound accesses due to large-stencil operations)
         Box bx = mfi.fabbox();
 
-        // Order of finite-order centering of currents
-        const int cc_nox = WarpX::current_centering_nox;
-        const int cc_noy = WarpX::current_centering_noy;
-        const int cc_noz = WarpX::current_centering_noz;
+        amrex::Array4<amrex::Real const> const& src_arr = src.const_array(mfi);
+        amrex::Array4<amrex::Real>       const& dst_arr = dst.array(mfi);
 
-        // Device vectors of stencil coefficients used for finite-order centering of currents
-        amrex::Real const * stencil_coeffs_x = WarpX::device_current_centering_stencil_coeffs_x.data();
-        amrex::Real const * stencil_coeffs_y = WarpX::device_current_centering_stencil_coeffs_y.data();
-        amrex::Real const * stencil_coeffs_z = WarpX::device_current_centering_stencil_coeffs_z.data();
-
-        if (bx.ok())
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            amrex::Array4<amrex::Real const> const& src_arr = src.const_array(mfi);
-            amrex::Array4<amrex::Real>       const& dst_arr = dst.array(mfi);
+#ifdef WARPX_USE_PSATD
+
+            // Order of finite-order centering of currents
+            const int cc_nox = WarpX::current_centering_nox;
+            const int cc_noy = WarpX::current_centering_noy;
+            const int cc_noz = WarpX::current_centering_noz;
+
+            // Device vectors of stencil coefficients used for finite-order centering of currents
+            amrex::Real const * stencil_coeffs_x = WarpX::device_current_centering_stencil_coeffs_x.data();
+            amrex::Real const * stencil_coeffs_y = WarpX::device_current_centering_stencil_coeffs_y.data();
+            amrex::Real const * stencil_coeffs_z = WarpX::device_current_centering_stencil_coeffs_z.data();
 
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, cc_nox, cc_noy, cc_noz,
-                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+                warpx_interp<true>(j, k, l, dst_arr, src_arr, dst_stag, src_stag, cc_nox, cc_noy, cc_noz,
+                                   stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+            });
+#endif
+        }
+
+        else // FDTD
+        {
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                warpx_interp<false>(j, k, l, dst_arr, src_arr, dst_stag, src_stag);
             });
         }
     }
-#endif // PSATD
 }
 
 void
