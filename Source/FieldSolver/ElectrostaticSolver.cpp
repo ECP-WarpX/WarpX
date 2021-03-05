@@ -106,7 +106,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #endif
 
     // Allocate fields for charge
-    // Also, zero out the phi data - is this necessary?
+    // Also, zero out the phi data
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     // Use number of guard cells used for local deposition of rho
@@ -274,6 +274,9 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         // Ideally, we would often want open boundary conditions here.
         lobc[1] = LinOpBCType::Dirichlet;
         hibc[1] = LinOpBCType::Dirichlet;
+
+        // set the boundary potential values for the given dimension
+        setDirichletBC(phi, idim);
     }
 
     // Define the linear operator (Poisson operator)
@@ -282,17 +285,16 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         linop.setSigma( lev, *sigma[lev] );
     }
 
+    for (int lev=0; lev < rho.size(); lev++){
+        rho[lev]->mult(-1._rt/PhysConst::ep0);
+    }
+
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
     MLMG mlmg(linop);
     mlmg.setVerbose(2);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
-
-    // Normalize by the correct physical constant
-    for (int lev=0; lev < rho.size(); lev++){
-        phi[lev]->mult(-1._rt/PhysConst::ep0);
-    }
 }
 
 #else
@@ -351,20 +353,14 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
 
-    // This is apparently necessary for how AMReX expects phi
     for (int lev=0; lev < rho.size(); lev++){
-        phi[lev]->mult(-1.*PhysConst::ep0);
+        rho[lev]->mult(-1._rt/PhysConst::ep0);
     }
-  
+
     MLMG mlmg(linop);
     mlmg.setVerbose(0);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
-
-    // Normalize by the correct physical constant
-    for (int lev=0; lev < rho.size(); lev++){
-        phi[lev]->mult(-1._rt/PhysConst::ep0);
-    }
 }
 #endif
 
