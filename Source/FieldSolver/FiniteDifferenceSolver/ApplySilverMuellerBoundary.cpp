@@ -29,13 +29,18 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     // Ensure that we are using the cells the domain
     domain_box.enclosedCells();
 
-    // Extract cell size
+    // Calculate relevant coefficients
     amrex::Real const cdt_over_dx = PhysConst::c*dt*m_stencil_coefs_x[0];
+    amrex::Real coef1_x = (1. - cdt_over_dx)/(1. + cdt_over_dx);
+    amrex::Real coef2_x = 2*cdt_over_dx/(1. + cdt_over_dx) / PhysConst::c;
 #ifdef WARPX_DIM_3D
     amrex::Real const cdt_over_dy = PhysConst::c*dt*m_stencil_coefs_y[0];
+    amrex::Real coef1_y = (1. - cdt_over_dy)/(1. + cdt_over_dx);
+    amrex::Real coef2_y = 2*cdt_over_dy/(1. + cdt_over_dy) / PhysConst::c;
 #endif
     amrex::Real const cdt_over_dz = PhysConst::c*dt*m_stencil_coefs_z[0];
-    amrex::Real const inv_c = 1/PhysConst::c;
+    amrex::Real coef1_z = (1. - cdt_over_dz)/(1. + cdt_over_dx);
+    amrex::Real coef2_z = 2*cdt_over_dz/(1. + cdt_over_dz) / PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -69,15 +74,22 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
                 // At the +x boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ) {
-                    By(i, j, k) = (1. - cdt_over_dx)/(1. + cdt_over_dx) * By(i, j, k) \
-                                    - 2*cdt_over_dx/(1. + cdt_over_dx) * inv_c * Ez(i, j, k);
+                    By(i,j,k) = coef1_x * By(i,j,k) - coef2_x * Ez(i,j,k);
                 }
                 // At the -x boundary (innermost guard cell)
                 if ( i==domain_box.smallEnd(0)-1 ) {
-                    By(i, j, k) = (1. - cdt_over_dx)/(1. + cdt_over_dx) * By(i, j, k) \
-                                    + 2*cdt_over_dx/(1. + cdt_over_dx) * inv_c * Ez(i+1, j, k);
+                    By(i,j,k) = coef1_x * By(i,j,k) + coef2_x * Ez(i+1,j,k);
                 }
-
+#ifdef WARPX_DIM_XZ
+                // At the +z boundary (innermost guard cell)
+                if ( j==domain_box.bigEnd(1)+1 ) {
+                    By(i,j,k) = coef1_z * By(i,j,k) + coef2_z * Ex(i,j,k);
+                }
+                // At the -z boundary (innermost guard cell)
+                if ( j==domain_box.smallEnd(1)-1 ) {
+                    By(i,j,k) = coef1_z * By(i,j,k) - coef2_z * Ex(i,j+1,k);
+                }
+#endif
             }
         );
 
@@ -87,13 +99,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
                 // At the +x boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ) {
-                    Bz(i, j, k) = (1. - cdt_over_dx)/(1. + cdt_over_dx) * Bz(i, j, k) \
-                                    + 2*cdt_over_dx/(1. + cdt_over_dx) * inv_c * Ey(i, j, k);
+                    Bz(i,j,k) = coef1_x * Bz(i,j,k) + coef2_x * Ey(i,j,k);
                 }
                 // At the -x boundary (innermost guard cell)
                 if ( i==domain_box.smallEnd(0)-1 ) {
-                    Bz(i, j, k) = (1. - cdt_over_dx)/(1. + cdt_over_dx) * Bz(i, j, k) \
-                                    - 2*cdt_over_dx/(1. + cdt_over_dx) * inv_c * Ey(i+1, j, k);
+                    Bz(i,j,k) = coef1_x * Bz(i, j, k) - coef2_x * Ey(i+1, j, k);
                 }
 
             }
