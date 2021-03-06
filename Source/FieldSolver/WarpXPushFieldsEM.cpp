@@ -27,7 +27,7 @@ using namespace amrex;
 namespace {
     void
     PushPSATDSinglePatch (
-        const int lev, 
+        const int lev,
 #ifdef WARPX_DIM_RZ
         SpectralSolverRZ& solver,
 #else
