@@ -64,8 +64,6 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         tbz.grow(1);
 
         // Apply Boundary condition to By
-        amrex::Print() << "Applying Silver-Mueller" << std::endl;
-        amrex::Print() << tby << " " << domain_box << std::endl;
         amrex::ParallelFor(tby,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
@@ -82,5 +80,24 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
             }
         );
+
+        // Apply Boundary condition to Bz
+        amrex::ParallelFor(tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                // At the +x boundary (innermost guard cell)
+                if ( i==domain_box.bigEnd(0)+1 ) {
+                    Bz(i, j, k) = (1. - cdt_over_dx)/(1. + cdt_over_dx) * Bz(i, j, k) \
+                                    + 2*cdt_over_dx/(1. + cdt_over_dx) * inv_c * Ey(i, j, k);
+                }
+                // At the -x boundary (innermost guard cell)
+                if ( i==domain_box.smallEnd(0)-1 ) {
+                    Bz(i, j, k) = (1. - cdt_over_dx)/(1. + cdt_over_dx) * Bz(i, j, k) \
+                                    - 2*cdt_over_dx/(1. + cdt_over_dx) * inv_c * Ey(i+1, j, k);
+                }
+
+            }
+        );
+
     }
 }
