@@ -62,6 +62,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
         virtual void CurrentCorrection (
+            const int lev,
             SpectralFieldData& field_data,
             std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
             const std::unique_ptr<amrex::MultiFab>& rho) override final;
@@ -78,6 +79,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          *                           the three components of the current density
          */
         virtual void VayDeposition (
+            const int lev, 
             SpectralFieldData& field_data,
             std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 

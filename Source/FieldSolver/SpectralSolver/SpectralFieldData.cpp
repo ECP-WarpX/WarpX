@@ -6,6 +6,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralFieldData.H"
+#include "WarpX.H"
 
 #include <map>
 
@@ -14,12 +15,12 @@
 using namespace amrex;
 
 /* \brief Initialize fields in spectral space, and FFT plans */
-SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
+SpectralFieldData::SpectralFieldData( const int lev,
+                                      const amrex::BoxArray& realspace_ba,
                                       const SpectralKSpace& k_space,
                                       const amrex::DistributionMapping& dm,
                                       const int n_field_required,
-                                      const bool periodic_single_box,
-                      const int lev)
+                                      const bool periodic_single_box)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -203,7 +204,7 @@ SpectralFieldData::ForwardTransform (const int lev,
  * real space, and store it in the component `i_comp` of `mf` */
 void
 SpectralFieldData::BackwardTransform( const int lev,
-                      MultiFab& mf,
+                                      MultiFab& mf,
                                       const int field_index,
                                       const int i_comp )
 {

@@ -33,13 +33,13 @@
  * \param periodic_single_box Whether the full simulation domain consists of a single periodic box (i.e. the global domain is not MPI parallelized)
  */
 SpectralSolver::SpectralSolver(
+                const int lev,
                 const amrex::BoxArray& realspace_ba,
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
                 const int norder_z, const bool nodal,
                 const amrex::Array<amrex::Real,3>& v_galilean,
                 const amrex::Array<amrex::Real,3>& v_comoving,
-        const int lev,
                 const amrex::RealVect dx, const amrex::Real dt,
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
@@ -74,13 +74,13 @@ SpectralSolver::SpectralSolver(
 
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldData( lev, realspace_ba, k_space, dm,
-                    algorithm->getRequiredNumberOfFields(), periodic_single_box, lev );
+                    algorithm->getRequiredNumberOfFields(), periodic_single_box);
 
 }
 
 void
 SpectralSolver::ForwardTransform( const int lev,
-                  const amrex::MultiFab& mf,
+                                  const amrex::MultiFab& mf,
                                   const int field_index,
                                   const int i_comp )
 {
@@ -90,7 +90,7 @@ SpectralSolver::ForwardTransform( const int lev,
 
 void
 SpectralSolver::BackwardTransform( const int lev,
-                   amrex::MultiFab& mf,
+                                   amrex::MultiFab& mf,
                                    const int field_index,
                                    const int i_comp )
 {

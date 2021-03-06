@@ -47,21 +47,22 @@ class SpectralFieldData
 {
 
     public:
-        SpectralFieldData( const amrex::BoxArray& realspace_ba,
+        SpectralFieldData( const int lev,
+                           const amrex::BoxArray& realspace_ba,
                            const SpectralKSpace& k_space,
                            const amrex::DistributionMapping& dm,
                            const int n_field_required,
-                           const bool periodic_single_box );
+                           const bool periodic_single_box);
         SpectralFieldData() = default; // Default constructor
         SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
         ~SpectralFieldData();
 
         void ForwardTransform (const int lev,
-                   const amrex::MultiFab& mf, const int field_index,
+                               const amrex::MultiFab& mf, const int field_index,
                                const int i_comp, const amrex::IntVect& stag);
         AMREX_FORCE_INLINE
         void ForwardTransform (const int lev,
-                   const amrex::MultiFab& mf, const int field_index, const int i_comp)
+                               const amrex::MultiFab& mf, const int field_index, const int i_comp)
         {
             ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
         }
