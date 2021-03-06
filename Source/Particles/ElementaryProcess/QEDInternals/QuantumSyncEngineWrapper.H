@@ -200,11 +200,13 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     bool operator()(
-    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
-    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-    amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz,
-    amrex::RandomEngine const& engine) const noexcept
+    amrex::ParticleReal& ux, amrex::ParticleReal& uy,
+    amrex::ParticleReal& uz,
+    const amrex::ParticleReal ex, const amrex::ParticleReal ey,
+    const amrex::ParticleReal ez, const amrex::ParticleReal bx,
+    const amrex::ParticleReal by, const amrex::ParticleReal bz,
+    amrex::ParticleReal& g_ux, amrex::ParticleReal& g_uy,
+    amrex::ParticleReal& g_uz, amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
         namespace pxr_m = picsar::multi_physics::math;
@@ -225,11 +227,11 @@ public:
         const auto chi_particle = QedUtils::chi_ele_pos(
             px, py, pz, ex, ey, ez, bx, by, bz);
 
-        auto momentum_particle = pxr_m::vec3<amrex::Real>{px, py, pz};
-        auto momentum_photon = pxr_m::vec3<amrex::Real>();
+        auto momentum_particle = pxr_m::vec3<amrex::ParticleReal>{px, py, pz};
+        auto momentum_photon = pxr_m::vec3<amrex::ParticleReal>();
 
         const auto is_out = pxr_qs::generate_photon_update_momentum<
-            amrex::Real,
+            amrex::ParticleReal,
             QS_phot_em_table_view,
             pxr_p::unit_system::SI>(
                 chi_particle, momentum_particle,

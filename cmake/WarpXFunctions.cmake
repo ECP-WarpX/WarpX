@@ -113,6 +113,19 @@ macro(set_cxx_warnings)
     endif ()
 endmacro()
 
+# Enables interprocedural optimization for a list of targets
+#
+function(enable_IPO all_targets_list)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT is_IPO_available)
+    if(is_IPO_available)
+        foreach(tgt IN ITEMS ${all_targets_list})
+            set_target_properties(${tgt} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+        endforeach()
+    else()
+        message(FATAL_ERROR "Interprocedural optimization is not available, set WarpX_IPO=OFF")
+    endif()
+endfunction()
 
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
@@ -195,7 +208,7 @@ function(set_warpx_binary_name)
         # alias to the latest build, because using the full name is often confusing
         add_custom_command(TARGET app POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE:app>
+                $<TARGET_FILE_NAME:app>
                 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
         )
     endif()
@@ -209,14 +222,14 @@ function(set_warpx_binary_name)
             set(lib_suffix "rz")
         endif()
         if(WIN32)
-            set(mod_ext "pyd")
+            set(mod_ext "dll")
         else()
             set(mod_ext "so")
         endif()
         add_custom_command(TARGET shared POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE:shared>
-                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx${lib_suffix}.${mod_ext}
+                $<TARGET_FILE_NAME:shared>
+                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx.${lib_suffix}.${mod_ext}
         )
     endif()
 endfunction()

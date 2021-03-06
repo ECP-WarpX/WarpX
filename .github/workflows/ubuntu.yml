@@ -56,7 +56,7 @@ jobs:
       run: |
         .github/workflows/dependencies/nvcc11.sh
         export CEI_SUDO="sudo"
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
     - name: build WarpX
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
@@ -103,7 +103,7 @@ jobs:
         sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
         sudo chmod a+x /usr/local/bin/cmake-easyinstall
         export CEI_SUDO="sudo"
-        CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
     - name: build WarpX
       run: |
         set +e
@@ -180,7 +180,9 @@ jobs:
         export OMP_NUM_THREADS=2
         Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
 
+# disabled on 2020-02-25 because DPC++ got too large and we run out CI disk space
   build_dpcc:
+    if: false
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-20.04
     steps:
