@@ -554,6 +554,7 @@ WarpX::ReadParameters ()
         }
 
         pp.query("do_pml", do_pml);
+        pp.query("do_silver_mueller", do_silver_mueller);
         pp.query("pml_ncell", pml_ncell);
         pp.query("pml_delta", pml_delta);
         pp.query("pml_has_particles", pml_has_particles);

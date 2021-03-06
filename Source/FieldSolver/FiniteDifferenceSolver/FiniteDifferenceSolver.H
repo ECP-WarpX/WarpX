@@ -52,6 +52,12 @@ class FiniteDifferenceSolver
                        int const rhocomp,
                        amrex::Real const dt );
 
+        void ApplySilverMuellerBoundary(
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            amrex::Box domain_box,
+            amrex::Real const dt );
+
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 

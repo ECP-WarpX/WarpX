@@ -327,6 +327,7 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void ApplySilverMuellerBoundary (amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -820,6 +821,7 @@ private:
 
     // PML
     int do_pml = 1;
+    int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
     int pml_has_particles = 0;
