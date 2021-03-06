@@ -54,10 +54,12 @@ class SimData:
         self.data_fields, self.keys = data_fields, list(prange)
 
         data = np.genfromtxt(directory)
+        if len(data.shape) == 1:
+            data = data.reshape(-1, data.shape[0])
+
         steps = data[:,0].astype(int)
 
         times = data[:,1]
-        reduced_diags_interval = steps[1] - steps[0]
         data = data[:,2:]
 
         # Compute the number of datafields saved per box
@@ -103,7 +105,7 @@ class SimData:
         is_3D = i_is_int and j_is_int and k_is_int
 
         for key in self.keys:
-            row = key//reduced_diags_interval
+            row = np.where(key == steps)[0][0]
             costs = data[row, 0::n_data_fields].astype(float)
             ranks = data[row, 1::n_data_fields].astype(int)
             icoords = i.astype(int)//i_blocking_factor

@@ -151,6 +151,27 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         getWithParser(pp, "single_particle_weight", single_particle_weight);
         add_single_particle = true;
         return;
+    } else if (part_pos_s == "multipleparticles") {
+        pp.getarr("multiple_particles_pos_x", multiple_particles_pos_x);
+        pp.getarr("multiple_particles_pos_y", multiple_particles_pos_y);
+        pp.getarr("multiple_particles_pos_z", multiple_particles_pos_z);
+        pp.getarr("multiple_particles_vel_x", multiple_particles_vel_x);
+        pp.getarr("multiple_particles_vel_y", multiple_particles_vel_y);
+        pp.getarr("multiple_particles_vel_z", multiple_particles_vel_z);
+        pp.getarr("multiple_particles_weight", multiple_particles_weight);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_vel_x.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_vel_y.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_vel_z.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_weight.size())),
+            "Error: The multiple particles source quantities must all have the same number of elements");
+        for (auto& vx : multiple_particles_vel_x) { vx *= PhysConst::c; }
+        for (auto& vy : multiple_particles_vel_y) { vy *= PhysConst::c; }
+        for (auto& vz : multiple_particles_vel_z) { vz *= PhysConst::c; }
+        add_multiple_particles = true;
+        return;
     } else if (part_pos_s == "gaussian_beam") {
         getWithParser(pp, "x_m", x_m);
         getWithParser(pp, "y_m", y_m);

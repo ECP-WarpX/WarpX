@@ -86,6 +86,10 @@ option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 # change the default build type to RelWithDebInfo (or Release) instead of Debug
 set_default_build_type("RelWithDebInfo")
 
+# Option to enable interprocedural optimization
+# (also know as "link-time optimization" or "whole program optimization")
+option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
+
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
@@ -205,6 +209,11 @@ set_target_properties(${_ALL_TARGETS} PROPERTIES
     CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON
 )
+
+# Interprocedural optimization
+if(WarpX_IPO)
+    enable_IPO("${_ALL_TARGETS}")
+endif()
 
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)

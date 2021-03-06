@@ -61,6 +61,25 @@ collision2.CoulombLog = 15.9
 collision3.CoulombLog = 15.9
 
 # Diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag_parser_filter diag_uniform_filter diag_random_filter
 diag1.intervals = 10
 diag1.diag_type = Full
+
+## diag_parser_filter is a diag used to test the particle filter function.
+diag_parser_filter.intervals = 150:150:
+diag_parser_filter.diag_type = Full
+diag_parser_filter.species = electron
+diag_parser_filter.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "(x > 200) * (z < 200) *
+                                                                      (ux-3*uz>0)"
+
+## diag_uniform_filter is a diag used to test the particle uniform filter.
+diag_uniform_filter.intervals = 150:150:
+diag_uniform_filter.diag_type = Full
+diag_uniform_filter.species = electron
+diag_uniform_filter.electron.uniform_stride = 6
+
+## diag_random_filter is a diag used to test the particle random filter.
+diag_random_filter.intervals = 150:150:
+diag_random_filter.diag_type = Full
+diag_random_filter.species = electron
+diag_random_filter.electron.random_fraction = 0.77

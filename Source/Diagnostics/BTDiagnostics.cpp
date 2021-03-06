@@ -114,11 +114,7 @@ BTDiagnostics::ReadParameters ()
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp(m_diag_name);
 
-    if (m_format == "openpmd") {
-        m_file_prefix = "diags/" + m_diag_name;
-    } else {
-        m_file_prefix = "diags/lab_frame_data/" + m_diag_name;
-    }
+    m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
     pp.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp.query("do_back_transformed_particles", m_do_back_transformed_particles);
@@ -688,7 +684,7 @@ BTDiagnostics::Flush (int i_buffer)
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
-        file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
+        file_name = amrex::Concatenate(m_file_prefix,i_buffer,5);
         file_name = file_name+"/buffer";
     }
     bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
@@ -757,7 +753,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
     const amrex::Vector<int> iteration = warpx.getistep();
     if (amrex::ParallelContext::IOProcessorSub()) {
         // Path to final snapshot plotfiles
-        std::string snapshot_path = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_snapshot,5);
+        std::string snapshot_path = amrex::Concatenate(m_file_prefix,i_snapshot,5);
         // BTD plotfile have only one level, Level0.
         std::string snapshot_Level0_path = snapshot_path + "/Level_0";
         std::string snapshot_Header_filename = snapshot_path + "/Header";

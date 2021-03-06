@@ -249,8 +249,8 @@ Distribution across MPI ranks and parallelization
     For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`,
     no more than 8 boxes can be assigned to any rank.
 
-* ``algo.load_balance_costs_update`` (`Heuristic` or `Timers`) optional (default `Timers`)
-    If this is `Heuristic`: load balance costs are updated according to a measure of
+* ``algo.load_balance_costs_update`` (`heuristic` or `timers` or `gpuclock`) optional (default `timers`)
+    If this is `heuristic`: load balance costs are updated according to a measure of
     particles and cells assigned to each box of the domain.  The cost :math:`c` is
     computed as
 
@@ -264,7 +264,10 @@ Distribution across MPI ranks and parallelization
     :math:`n_{\text{cell}}` is the number of cells on the box, and
     :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
 
-    If this is `Timers`: costs are updated according to in-code timers.
+    If this is `timers`: costs are updated according to in-code timers.
+
+    If this is `gpuclock`: costs are measured as (max-over-threads) time spent in
+    current deposition routine (only applies when running on GPUs).
 
 * ``algo.costs_heuristic_particles_wt`` (`float`) optional
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
@@ -399,6 +402,16 @@ Particle initialization
       ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
       ``<species_name>.single_particle_vel`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
       ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
+
+    * ``MultipleParticles``: Inject multiple macroparticles.
+      This requires the additional parameters:
+      ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
+      ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
+      ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
+      ``<species_name>.multiple_particles_vel_x`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+      ``<species_name>.multiple_particles_vel_y`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+      ``<species_name>.multiple_particles_vel_z`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+      ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:

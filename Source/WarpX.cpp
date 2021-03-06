@@ -752,12 +752,30 @@ WarpX::ReadParameters ()
                     "High-order interpolation (order > 2) is not implemented with mesh refinement");
             }
 
-            // Host vectors for Fornberg stencil coefficients used for finite-order centering
-            host_centering_stencil_coeffs_x = getFornbergStencilCoefficients(field_gathering_nox, false);
-            host_centering_stencil_coeffs_y = getFornbergStencilCoefficients(field_gathering_noy, false);
-            host_centering_stencil_coeffs_z = getFornbergStencilCoefficients(field_gathering_noz, false);
+            // Host vectors for Fornberg stencil coefficients
+            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_x;
+            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_y;
+            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_z;
 
-            // Device vectors for Fornberg stencil coefficients used for finite-order centering
+            host_Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(field_gathering_nox, false);
+            host_Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(field_gathering_noy, false);
+            host_Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(field_gathering_noz, false);
+
+            // Host vectors for ordered Fornberg stencil coefficients used for finite-order centering
+            host_centering_stencil_coeffs_x.resize(field_gathering_nox);
+            host_centering_stencil_coeffs_y.resize(field_gathering_noy);
+            host_centering_stencil_coeffs_z.resize(field_gathering_noz);
+
+            // Re-order Fornberg stencil coefficients
+            // example for order 6: (c_0,c_1,c_2) becomes (c_2,c_1,c_0,c_0,c_1,c_2)
+            ReorderFornbergCoefficients(host_centering_stencil_coeffs_x,
+                                        host_Fornberg_stencil_coeffs_x, field_gathering_nox);
+            ReorderFornbergCoefficients(host_centering_stencil_coeffs_y,
+                                        host_Fornberg_stencil_coeffs_y, field_gathering_noy);
+            ReorderFornbergCoefficients(host_centering_stencil_coeffs_z,
+                                        host_Fornberg_stencil_coeffs_z, field_gathering_noz);
+
+            // Device vectors for ordered Fornberg stencil coefficients used for finite-order centering
             device_centering_stencil_coeffs_x.resize(host_centering_stencil_coeffs_x.size());
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                                   host_centering_stencil_coeffs_x.begin(),
@@ -852,6 +870,23 @@ WarpX::ReadParameters ()
             }
         }
 
+        if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                amrex::Abort("Vay current deposition not implemented for Galilean algorithms");
+            }
+        }
+
+        if (current_correction) {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                if (fft_do_time_averaging) {
+                    amrex::Abort("Current correction not implemented for averaged Galilean algorithm");
+                }
+            }
+        }
+
+#   ifdef WARPX_DIM_RZ
+        update_with_rho = true;  // Must be true for RZ PSATD
+#   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
             update_with_rho = false; // standard PSATD
@@ -859,6 +894,7 @@ WarpX::ReadParameters ()
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
         }
+#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
@@ -1078,7 +1114,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::use_fdtd_nci_corr,
         do_nodal,
         do_moving_window,
-        aux_is_nodal,
         moving_window_dir,
         WarpX::nox,
         nox_fft, noy_fft, noz_fft,
@@ -1107,14 +1142,13 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     }
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
-                  guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F,
-                  guard_cells.ng_Extra, aux_is_nodal);
+                  guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, aux_is_nodal);
 }
 
 void
 WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
                       const IntVect& ngE, const IntVect& ngJ, const IntVect& ngRho,
-                      const IntVect& ngF, const IntVect& ngextra, const bool aux_is_nodal)
+                      const IntVect& ngF, const bool aux_is_nodal)
 {
     // Declare nodal flags
     IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
@@ -1196,18 +1230,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     std::array<Real,3> dx = CellSize(lev);
 
-    Bfield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE+ngextra,tag("Bfield_fp[x]"));
-    Bfield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE+ngextra,tag("Bfield_fp[y]"));
-    Bfield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE+ngextra,tag("Bfield_fp[z]"));
+    Bfield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_fp[x]"));
+    Bfield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_fp[y]"));
+    Bfield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE,tag("Bfield_fp[z]"));
 
-    Efield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE+ngextra,tag("Efield_fp[x]"));
-    Efield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE+ngextra,tag("Efield_fp[y]"));
-    Efield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE+ngextra,tag("Efield_fp[z]"));
+    Efield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE,tag("Efield_fp[x]"));
+    Efield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_fp[y]"));
+    Efield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_fp[z]"));
 
     current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_fp[x]"));
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
-
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[x]"));
     Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[y]"));
@@ -1309,6 +1342,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         // Create aux multifabs on Nodal Box Array
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
+
         Bfield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Bfield_aux[x]"));
         Bfield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Bfield_aux[y]"));
         Bfield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Bfield_aux[z]"));
@@ -1316,6 +1350,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[x]"));
         Efield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[z]"));
+
+        Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Efield_aux[lev][0], amrex::make_alias, 0, ncomps);
+        Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Efield_aux[lev][1], amrex::make_alias, 0, ncomps);
+        Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Efield_aux[lev][2], amrex::make_alias, 0, ncomps);
+
+        Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Bfield_aux[lev][0], amrex::make_alias, 0, ncomps);
+        Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Bfield_aux[lev][1], amrex::make_alias, 0, ncomps);
+        Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Bfield_aux[lev][2], amrex::make_alias, 0, ncomps);
     }
     else if (lev == 0)
     {
@@ -1337,7 +1379,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_aux[z]"));
 
-
         Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[x]"));
         Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[y]"));
         Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[z]"));
@@ -1345,7 +1386,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[x]"));
         Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[y]"));
         Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[z]"));
-
     }
 
     //
@@ -1766,6 +1806,19 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
         }
     }
 #endif
+}
+
+void WarpX::ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coeffs,
+                                        amrex::Vector<amrex::Real>& unordered_coeffs,
+                                        const int order)
+{
+    const int n = order / 2;
+    for (int i = 0; i < n; i++) {
+        ordered_coeffs[i] = unordered_coeffs[n-1-i];
+    }
+    for (int i = n; i < order; i++) {
+        ordered_coeffs[i] = unordered_coeffs[i-n];
+    }
 }
 
 const iMultiFab*
