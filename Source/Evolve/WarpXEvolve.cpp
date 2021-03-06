@@ -379,7 +379,7 @@ WarpX::OneStep_nosub (Real cur_time)
                 amrex::Abort(" Medium for EM is unknown \n");
             }
 
-            if (do_sylver_mueller) ApplySilverMuellerBoundary( dt[0] );
+            if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
             FillBoundaryE(guard_cells.ng_FieldSolver);
             EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
             EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
