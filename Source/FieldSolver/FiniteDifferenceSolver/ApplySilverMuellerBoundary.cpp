@@ -21,6 +21,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Box domain_box,
     amrex::Real const dt ) {
 
+#ifdef WARPX_DIM_RZ
+    amrex::Abort("The Silver-Mueller boundary conditions cannot be used in RZ geometry.");
+#endif
+
     // Ensure that we are using the Yee solver
     if (m_fdtd_algo != MaxwellSolverAlgo::Yee) {
         amrex::Abort("The Silver-Mueller boundary conditions can only be used with the Yee solver.");
@@ -72,7 +76,20 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         amrex::ParallelFor(tbx,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
-#ifdef WARPX_DIM_XZ
+#ifdef WARPX_DIM_3D
+                // At the +y boundary (innermost guard cell)
+                if ( j==domain_box.bigEnd(1)+1 )
+                    Bx(i,j,k) = coef1_y * Bx(i,j,k) + coef2_y * Ez(i,j,k);
+                // At the -y boundary (innermost guard cell)
+                if ( j==domain_box.smallEnd(1)-1 )
+                    Bx(i,j,k) = coef1_y * Bx(i,j,k) - coef2_y * Ez(i,j+1,k);
+                // At the +z boundary (innermost guard cell)
+                if ( k==domain_box.bigEnd(2)+1 )
+                    Bx(i,j,k) = coef1_z * Bx(i,j,k) - coef2_z * Ey(i,j,k);
+                // At the -z boundary (innermost guard cell)
+                if ( k==domain_box.smallEnd(2)-1 )
+                    Bx(i,j,k) = coef1_z * Bx(i,j,k) + coef2_z * Ey(i,j,k+1);
+#elif WARPX_DIM_XZ
                 // At the +z boundary (innermost guard cell)
                 if ( j==domain_box.bigEnd(1)+1 )
                     Bx(i,j,k) = coef1_z * Bx(i,j,k) - coef2_z * Ey(i,j,k);
@@ -93,7 +110,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 // At the -x boundary (innermost guard cell)
                 if ( i==domain_box.smallEnd(0)-1 )
                     By(i,j,k) = coef1_x * By(i,j,k) + coef2_x * Ez(i+1,j,k);
-#ifdef WARPX_DIM_XZ
+#ifdef WARPX_DIM_3D
+                // At the +z boundary (innermost guard cell)
+                if ( k==domain_box.bigEnd(2)+1 )
+                    By(i,j,k) = coef1_z * By(i,j,k) + coef2_z * Ex(i,j,k);
+                // At the -z boundary (innermost guard cell)
+                if ( k==domain_box.smallEnd(2)-1 )
+                    By(i,j,k) = coef1_z * By(i,j,k) - coef2_z * Ex(i,j,k+1);
+#elif WARPX_DIM_XZ
                 // At the +z boundary (innermost guard cell)
                 if ( j==domain_box.bigEnd(1)+1 )
                     By(i,j,k) = coef1_z * By(i,j,k) + coef2_z * Ex(i,j,k);
@@ -114,7 +138,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 // At the -x boundary (innermost guard cell)
                 if ( i==domain_box.smallEnd(0)-1 )
                     Bz(i,j,k) = coef1_x * Bz(i,j,k) - coef2_x * Ey(i+1,j,k);
-
+#ifdef WARPX_DIM_3D
+                // At the +y boundary (innermost guard cell)
+                if ( j==domain_box.bigEnd(1)+1 )
+                    Bz(i,j,k) = coef1_x * Bz(i,j,k) - coef2_y * Ex(i,j,k);
+                // At the -y boundary (innermost guard cell)
+                if ( j==domain_box.smallEnd(1)-1 )
+                    Bz(i,j,k) = coef1_x * Bz(i,j,k) + coef2_y * Ex(i,j+1,k);
+#endif
             }
         );
 
