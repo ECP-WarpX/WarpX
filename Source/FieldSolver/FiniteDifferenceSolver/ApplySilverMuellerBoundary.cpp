@@ -50,7 +50,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+    bool const tiling = false;
+    // tiling is usually set by TilingIfNotGPU()
+    // but here, we deactivate it because of potential race condition,
+    // since we grow the tiles by one guard cell after creating them.
+    for ( MFIter mfi(*Efield[0], tiling); mfi.isValid(); ++mfi ) {
 
         // Extract field data for this grid/tile
         Array4<Real> const& Ex = Efield[0]->array(mfi);
