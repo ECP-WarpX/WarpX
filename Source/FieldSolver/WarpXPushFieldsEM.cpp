@@ -285,9 +285,9 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                 a_dt, pml_has_particles );
         }
     }
-    
+
     ApplyEfieldBoundary(lev, patch_type);
-        
+
 }
 
 
