@@ -6,7 +6,7 @@
 using namespace amrex::literals;
 
 void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
-{    
+{
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoEfield( Efield_fp[lev], lev, patch_type);
@@ -60,17 +60,17 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type)
 //        // loop over cells and update fields
 //        amrex::ParallelFor(tex, tey, tez,
 //            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-//                amrex::IntVect iv(AMREX_D_DECL(i,j,k));                    
+//                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 //                const int icomp = 0;
 //                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ex(i,j,k), Ex_stag);
 //            },
 //            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-//                amrex::IntVect iv(AMREX_D_DECL(i,j,k));                    
+//                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 //                const int icomp = 1;
 //                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ey(i,j,k), Ey_stag);
 //            },
 //            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-//                amrex::IntVect iv(AMREX_D_DECL(i,j,k));                    
+//                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 //                const int icomp = 2;
 //                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ez(i,j,k), Ez_stag);
 //            }
