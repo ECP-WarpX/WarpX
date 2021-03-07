@@ -68,27 +68,38 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         tby.grow(1);
         tbz.grow(1);
 
+        // Apply Boundary condition to Bx
+        amrex::ParallelFor(tbx,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+#ifdef WARPX_DIM_XZ
+                // At the +z boundary (innermost guard cell)
+                if ( j==domain_box.bigEnd(1)+1 )
+                    Bx(i,j,k) = coef1_z * Bx(i,j,k) - coef2_z * Ey(i,j,k);
+                // At the -z boundary (innermost guard cell)
+                if ( j==domain_box.smallEnd(1)-1 )
+                    Bx(i,j,k) = coef1_z * Bx(i,j,k) + coef2_z * Ey(i,j+1,k);
+#endif
+            }
+        );
+
         // Apply Boundary condition to By
         amrex::ParallelFor(tby,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
                 // At the +x boundary (innermost guard cell)
-                if ( i==domain_box.bigEnd(0)+1 ) {
+                if ( i==domain_box.bigEnd(0)+1 )
                     By(i,j,k) = coef1_x * By(i,j,k) - coef2_x * Ez(i,j,k);
-                }
                 // At the -x boundary (innermost guard cell)
-                if ( i==domain_box.smallEnd(0)-1 ) {
+                if ( i==domain_box.smallEnd(0)-1 )
                     By(i,j,k) = coef1_x * By(i,j,k) + coef2_x * Ez(i+1,j,k);
-                }
 #ifdef WARPX_DIM_XZ
                 // At the +z boundary (innermost guard cell)
-                if ( j==domain_box.bigEnd(1)+1 ) {
+                if ( j==domain_box.bigEnd(1)+1 )
                     By(i,j,k) = coef1_z * By(i,j,k) + coef2_z * Ex(i,j,k);
-                }
                 // At the -z boundary (innermost guard cell)
-                if ( j==domain_box.smallEnd(1)-1 ) {
+                if ( j==domain_box.smallEnd(1)-1 )
                     By(i,j,k) = coef1_z * By(i,j,k) - coef2_z * Ex(i,j+1,k);
-                }
 #endif
             }
         );
@@ -98,13 +109,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
                 // At the +x boundary (innermost guard cell)
-                if ( i==domain_box.bigEnd(0)+1 ) {
+                if ( i==domain_box.bigEnd(0)+1 )
                     Bz(i,j,k) = coef1_x * Bz(i,j,k) + coef2_x * Ey(i,j,k);
-                }
                 // At the -x boundary (innermost guard cell)
-                if ( i==domain_box.smallEnd(0)-1 ) {
-                    Bz(i,j,k) = coef1_x * Bz(i, j, k) - coef2_x * Ey(i+1, j, k);
-                }
+                if ( i==domain_box.smallEnd(0)-1 )
+                    Bz(i,j,k) = coef1_x * Bz(i,j,k) - coef2_x * Ey(i+1,j,k);
 
             }
         );
