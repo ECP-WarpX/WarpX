@@ -227,6 +227,12 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                 ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z
                             );
                         }
+                        else if (scattering_processes[i] == "charge_exchange"){
+                            ChargeExchange(
+                                ux[ip], uy[ip], uz[ip], ua_x, ua_y, ua_z
+                            );
+                        }
+                        break;
                     }
                 }
             }
