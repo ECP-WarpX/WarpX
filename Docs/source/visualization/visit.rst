@@ -14,7 +14,7 @@ Assuming that you ran a 2D simulation, here are instructions for making a simple
 - Open the header file: Run VisIt, then select “File” -> “Open file …”, then select the Header file associated with the plotfile of interest (e.g., ``plt10000/Header``).
 - View the data: Select “Add” -> “Pseudocolor” -> “Ez” and select “Draw”. You can select other variable to draw, such as ``jx``, ``jy``, ``jz``, ``Ex``, ...
 
-- View the grid structure: Select “Subset”  -> “levels”. Then double clik the text “Subset-levels”, enable the “Wireframe” option, select “Apply”, select “Dismiss”, and then select “Draw”.
+- View the grid structure: Select “Subset”  -> “levels”. Then double click the text “Subset-levels”, enable the “Wireframe” option, select “Apply”, select “Dismiss”, and then select “Draw”.
 
 - Save the image: Select “File” -> “Set save options”, then customize the image format to your liking, then click "Save".
 

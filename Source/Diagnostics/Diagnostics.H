@@ -156,6 +156,8 @@ protected:
     int m_num_buffers;
     /** Array of species indices that dump rho per species */
     amrex::Vector<int> m_rho_per_species_index;
+    /** Temporarily clear species output for BTD until particle buffer is added */
+    virtual void TMP_ClearSpeciesDataForBTD() {}
 };
 
 #endif // WARPX_DIAGNOSTICS_H_

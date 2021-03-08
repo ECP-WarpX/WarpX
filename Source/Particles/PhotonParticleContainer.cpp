@@ -102,7 +102,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
 #ifdef WARPX_QED
     BreitWheelerEvolveOpticalDepth evolve_opt;
-    amrex::Real* AMREX_RESTRICT p_optical_depth_BW = nullptr;
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_BW = nullptr;
     const bool local_has_breit_wheeler = has_breit_wheeler();
     if (local_has_breit_wheeler) {
         evolve_opt = m_shr_p_bw_engine->build_evolve_functor();

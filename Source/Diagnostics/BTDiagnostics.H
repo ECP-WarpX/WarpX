@@ -11,6 +11,14 @@ public:
     BTDiagnostics (int i, std::string name);
 
 private:
+    /** Whether to plot raw (i.e., NOT cell-centered) fields */
+    bool m_plot_raw_fields = false;
+    /** Whether to plot guard cells of raw fields */
+    bool m_plot_raw_fields_guards = false;
+    /** Whether to plot charge density rho in raw fields */
+    bool m_plot_raw_rho = false;
+    /** Whether to plot F (charge conservation error) in raw fields */
+    bool m_plot_raw_F = false;
     /** Read relevant parameters for BTD */
     void ReadParameters ();
     /** \brief Flush m_mf_output and particles to file.
@@ -120,11 +128,17 @@ private:
     amrex::Vector<amrex::RealBox> m_prob_domain_lab;
     /** Vector of user-defined physical region for diagnostics in lab-frame
      *  for each back-transformed snapshot */
+    amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
+    /** Vector of physical region corresponding to the buffer that spans a part
+     *  of the full back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
     /** Vector of number of cells in the lab-frame for each back-transformed snapshot */
-    amrex::Vector<amrex::IntVect> m_buffer_ncells_lab;
+    amrex::Vector<amrex::IntVect> m_snapshot_ncells_lab;
     /** Vector of Box-dimension in boosted-frame index space
      *  for each back-transformed snapshot */
+    amrex::Vector<amrex::Box> m_snapshot_box;
+    /** Vector of Box-dimension in boosted-frame index space corresponding to the
+     *  buffer that covers a part of the full backtransformed snapshot */
     amrex::Vector<amrex::Box> m_buffer_box;
     /** Vector of lab-frame z co-ordinate of each back-transformed snapshot
      *  at the current timestep */
@@ -132,6 +146,17 @@ private:
     /** Vector of boosted-frame z co-ordinate corresponding to each back-transformed
         snapshot at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_boost;
+    /** Geometry that defines the domain attributes corresponding to the
+     *  full snapshot in the back-transformed lab-frame.
+     *  Specifically, the user-defined physical co-ordinates for the diagnostics
+     *  is used to construct the geometry information for each snapshot at
+     *  the respective levels. This geometry will be used to integrate all
+     *  the buffers that were dumped out with partial field data
+     *  in the back-transformed frame at a particle snapshot, t_lab.
+     *  WriteToFile() for BTD will include this additional geometry information
+     *  to guide the integration process.
+     */
+    amrex::Vector< amrex::Vector <amrex::Geometry> > m_geom_snapshot;
     /** Vector of counters tracking number of back-transformed z-slices filled
      *  in the output buffer multifab, m_mf_output, for each snapshot.
      *  When the buffer counter for a snapshot is equal to the maximum number
@@ -139,6 +164,14 @@ private:
      *  stored in the buffer multifab is flushed out and the counter is reset is zero.
      */
     amrex::Vector<int> m_buffer_counter;
+    /** Vector of maximum number of buffer multifabs that need to be flushed to
+     *  generate each lab-frame snapshot. At the final flush, m_buffer_flush_counter
+     *  will be equal to the predicted m_max_buffer_multifabs for each snapshot.
+     */
+    amrex::Vector<int> m_max_buffer_multifabs;
+    /** Vector of counters tracking number of times the buffer of multifab is
+     *  flushed out and emptied before being refilled again for each snapshot */
+    amrex::Vector<int> m_buffer_flush_counter;
     /** Multi-level cell-centered multifab with all field-data components, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      *  This cell-centered data extending over the entire domain
@@ -156,7 +189,6 @@ private:
      *  using the coarsening-ratio provided by the user.
      */
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
-
     /** Customized (temporary) function to flush out back-transformed data */
     void TMP_writeMetaData ();
     /** Customized (temporary) functions creating lab-frame directories
@@ -183,12 +215,21 @@ private:
      */
     void DefineCellCenteredMultiFab(int lev);
     /** Define the cell-centered multi-component output buffer MultiFab for
-     *  snapshot, i_buffer, at level, lev.
+     *  snapshot, i_buffer, at level, lev
      *
      * \param[in] i_buffer buffer-id of the back-transformed snapshot
      * \param[in] lev, level at which the output buffer MultiFab is defined
      */
     void DefineFieldBufferMultiFab (const int i_buffer, const int lev);
+
+    /** Define the geometry object that spans the user-defined region for the
+     *  ith snapshot, i_buffer, at level, lev.
+     *
+     * \param[in] i_buffer id of the back-transformed snapshot
+     * \param[in] lev, level at which the geometry object is defined
+     */
+    void DefineSnapshotGeometry (const int i_buffer, const int lev);
+
     /** Compute and return z-position in the boosted-frame at the current timestep
       * \param[in] t_lab, lab-frame time of the snapshot
       * \param[in] t_boost, boosted-frame time at level, lev
@@ -236,10 +277,16 @@ private:
     }
 
     /** Reset buffer counter to zero.
-     * \param[in] i_buffer, ith buffer for which the bounter is set to zero.
+     * \param[in] i_buffer, ith buffer for which the counter is set to zero.
      */
     void ResetBufferCounter(int i_buffer) {
         m_buffer_counter[i_buffer] = 0;
+    }
+    /** Increment buffer counter by one when the buffer of a snapshot has been flushed.
+     * \param[in] i_buffer, ith buffer for which the counter is incremented.
+     */
+    void IncrementBufferFlushCounter(int i_buffer) {
+        m_buffer_flush_counter[i_buffer]++;
     }
     /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
@@ -249,6 +296,15 @@ private:
                                                           "Bx", "By", "Bz",
                                                           "jx", "jy", "jz", "rho"};
 
+    /** Temporarily clear species output for BTD until particle buffer is added */
+    void TMP_ClearSpeciesDataForBTD() override;
+
+    void MergeBuffersForPlotfile (int i_snapshot);
+    void InterleaveBufferAndSnapshotHeader ( std::string buffer_Header,
+                                             std::string snapshot_Header);
+    void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
+                                   std::string snapshot_FabHeaderFilename,
+                                   std::string newsnapshot_FabFilename);
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

@@ -1,10 +1,8 @@
 target_sources(WarpX
   PRIVATE
-    GalileanAlgorithm.cpp
-    PMLPsatdAlgorithm.cpp
     PsatdAlgorithm.cpp
+    PMLPsatdAlgorithm.cpp
     SpectralBaseAlgorithm.cpp
-    AvgGalileanAlgorithm.cpp
     ComovingPsatdAlgorithm.cpp
 )
 

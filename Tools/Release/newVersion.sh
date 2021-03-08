@@ -2,7 +2,8 @@
 #
 # Copyright 2021 Axel Huebl
 #
-# This file is part of WarpX.#
+# This file is part of WarpX.
+#
 
 # This file is a maintainer tool to bump the versions inside WarpX'
 # source directory at all places where necessary.

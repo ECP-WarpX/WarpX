@@ -25,5 +25,5 @@ Our Doxygen API documentation in classic formatting `is located here <../_static
    testing
    documentation
    performance_tests
-   workflow
+   release
    checksum
