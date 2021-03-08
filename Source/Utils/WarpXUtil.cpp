@@ -412,6 +412,7 @@ void ReadBCParams ()
             }
 
         }
+ 
     }
 
     pp_geometry.addarr("is_periodic", geom_periodicity);

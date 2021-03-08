@@ -170,6 +170,16 @@ WarpX::InitFromScratch ()
 void
 WarpX::InitPML ()
 {
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Lo[idim] = 1;
+        }
+        if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Hi[idim] = 1;
+        }
+    }
     if (do_pml)
     {
         amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;

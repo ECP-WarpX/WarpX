@@ -446,7 +446,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     // with same [min,max]. But it does not support multiple disjoint refinement patches.
     Box domain0 = grid_ba.minimalBox();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if ( ! geom->isPeriodic(idim)) {
+        //if ( ! geom->isPeriodic(idim)) {
             if (do_pml_Lo[idim]){
                 domain0.growLo(idim, -ncell);
             }
@@ -454,7 +454,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                 domain0.growHi(idim, -ncell);
             }
 
-        }
+        //}
     }
     const BoxArray grid_ba_reduced = BoxArray(grid_ba.boxList().intersect(domain0));
 
@@ -586,7 +586,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches, similar to fine patch.
         amrex::Box domain1 = grid_cba.minimalBox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if ( ! cgeom->isPeriodic(idim)) {
+            //if ( ! cgeom->isPeriodic(idim)) {
                 if (do_pml_Lo[idim]){
                     // ncell is divided by refinement ratio to ensure that the
                     // physical width of the PML region is equal is fine and coarse patch
@@ -597,7 +597,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                     // physical width of the PML region is equal is fine and coarse patch
                     domain1.growHi(idim, -ncell/ref_ratio[idim]);
                 }
-            }
+            //}
         }
         const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain1));
 
@@ -681,14 +681,14 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
 {
     Box domain = geom.Domain();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if ( ! geom.isPeriodic(idim) ) {
+        //if ( ! geom.isPeriodic(idim) ) {
             if (do_pml_Lo[idim]){
                 domain.growLo(idim, ncell);
             }
             if (do_pml_Hi[idim]){
                 domain.growHi(idim, ncell);
             }
-        }
+        //}
     }
     BoxList bl;
     for (int i = 0, N = grid_ba.size(); i < N; ++i)
@@ -701,13 +701,13 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
             //  the PML cells surrounding these patches cannot overlap
             // The check is only needed along the axis where PMLs are being used.
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if (! geom.isPeriodic(idim)) {
+                //if (! geom.isPeriodic(idim)) {
                     if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
                         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                             grid_bx.length(idim) > ncell,
                             "Consider using larger amr.blocking_factor with PMLs");
                     }
-                }
+                //}
             }
         }
 
