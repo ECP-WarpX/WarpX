@@ -181,6 +181,29 @@ Setting up the field mesh
     When using the RZ version, this is the number of azimuthal modes.
 
 .. _running-cpp-parameters-parallelization:
+Domain Boundary Conditions
+--------------------------
+
+* ``boundary.field_lo`` and ``boundary_field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+    Boundary conditions applied to field at the lower and upper domain boundaries.
+    Options are:
+    * ``PEC``: This option can be used to simulate a perfect conductor or a metallic surface,
+               where, the tangential electric field is zero, and normal magnetic field is zero.
+               Note that the particle boundary must be selected to be consistent with this option using ``boundary.particle_lo`` and ``boundary.particle_hi``. This option is currently not supported through this interface. 
+    * ``PMC``: This option can be used to apply a perfect magnetic conductor or a symmetry boundary for the fields, where, the tangential magnetic field is zero and the normal electric field is zero.
+               Note that the particle boundary must be selected to be consistent with this option using ``boundary.particle_lo`` and ``boundary.particle_hi``.
+    * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input field, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+    * ``PML``: This option can be used to absorb fields at the domain boundary. Note that, this will override the ``do_pml`` option. Additional pml parameters, such as ``do_pml_in_domain``, ``pml_ncell``, and ``pml_delta`` can be set by the user. Note that particles boundary must be consistent with the field, and set to absorbing/open. For particles, additional pml parameters include ``pml_has_particles`` and ``do_pml_j_damping``. This option is currently not supported through this interface.
+    
+* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+    Boundary conditions applied to particles at the lower and upper domain boundaries.
+    Options are:
+    * ``Reflecting``: Particles leaving the boundary will be reflected. This option is currently not supported.
+    * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+    * ``Open``: Particles leaving the boundary will be deleted. This option is not supported through this interface currently.
+    * ``Absorbing``: Particles leaving the boundary will be absorbed. Additional pml parameters include ``pml_has_particles`` and ``do_pml_j_damping``. This option is currently not supported through this interface.
+
+.. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
