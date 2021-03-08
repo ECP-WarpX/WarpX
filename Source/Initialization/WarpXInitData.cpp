@@ -180,6 +180,7 @@ WarpX::InitPML ()
             do_pml_Hi[idim] = 1;
         }
     }
+    if (finest_level > 0) do_pml = 1;
     if (do_pml)
     {
         amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
