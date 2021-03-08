@@ -23,7 +23,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
 #ifdef WARPX_DIM_RZ
     amrex::Abort("The Silver-Mueller boundary conditions cannot be used in RZ geometry.");
-#endif
+#else
 
     // Ensure that we are using the Yee solver
     if (m_fdtd_algo != MaxwellSolverAlgo::Yee) {
@@ -153,4 +153,5 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         );
 
     }
+#endif // WARPX_DIM_RZ
 }

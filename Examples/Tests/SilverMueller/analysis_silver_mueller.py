@@ -14,7 +14,6 @@ test check that the reflected field at the boundary is negligible.
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
-import scipy.constants as scc
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -26,8 +25,8 @@ Ex = all_data_level_0['boxlib', 'Ex'].v.squeeze()
 Ey = all_data_level_0['boxlib', 'Ey'].v.squeeze()
 Ez = all_data_level_0['boxlib', 'Ez'].v.squeeze()
 # The peak of the initial laser pulse is on the order of 6 V/m
-# Check that the amplitude after reflection is less than 0.006 V/m
-max_reflection_amplitude = 0.006
+# Check that the amplitude after reflection is less than 0.01 V/m
+max_reflection_amplitude = 0.01
 assert np.all( abs(Ex) < max_reflection_amplitude )
 assert np.all( abs(Ey) < max_reflection_amplitude )
 assert np.all( abs(Ez) < max_reflection_amplitude )
