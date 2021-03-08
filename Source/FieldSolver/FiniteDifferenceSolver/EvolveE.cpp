@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
+#include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
 #ifdef WARPX_DIM_RZ
