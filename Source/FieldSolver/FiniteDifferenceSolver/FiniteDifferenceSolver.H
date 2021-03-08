@@ -114,7 +114,7 @@ class FiniteDifferenceSolver
         void EvolveBCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-            const int lev, 
+            const int lev,
             amrex::Real const dt );
 
         template< typename T_Algo >
@@ -123,7 +123,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
-            const int lev, 
+            const int lev,
             amrex::Real const dt );
 
         template< typename T_Algo >

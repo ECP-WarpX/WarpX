@@ -121,7 +121,7 @@ SpectralSolverRZ::pushSpectralFields () {
   * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
   */
 void
-SpectralSolverRZ::ComputeSpectralDivE (const int lev, 
+SpectralSolverRZ::ComputeSpectralDivE (const int lev,
                                        const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                        amrex::MultiFab& divE) {
     algorithm->ComputeSpectralDivE(lev, field_data, Efield, divE);
