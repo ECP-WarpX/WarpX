@@ -7,7 +7,8 @@
 [![Development Status](https://img.shields.io/badge/development%20status-alpha-orange.svg)]()  
 [![Gitter](https://badges.gitter.im/ECP-WarpX/community.svg)](https://gitter.im/ECP-WarpX/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![License WarpX](https://img.shields.io/badge/license-BSD--3--Clause--LBNL-blue.svg)](https://spdx.org/licenses/BSD-3-Clause-LBNL.html)
-[![DOI](https://img.shields.io/badge/DOI-10.1016/j.nima.2018.01.035-blue.svg)](https://doi.org/10.1016/j.nima.2018.01.035)
+[![DOI (source)](https://img.shields.io/badge/DOI%20(source)-10.5281/zenodo.4571577-blue.svg)](https://doi.org/10.5281/zenodo.4571577)
+[![DOI (paper)](https://img.shields.io/badge/DOI%20(paper)-10.1063/5.0028512-blue.svg)](https://doi.org/10.1063/5.0028512)
 
 ## Overview
 
