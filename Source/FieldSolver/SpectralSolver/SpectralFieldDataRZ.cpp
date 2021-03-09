@@ -535,7 +535,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
                     sign = +1._rt;
                 } else {
                     // Odd modes are anti-symmetric
-                    int imode = (icomp + 1)/2; 
+                    int imode = (icomp + 1)/2;
                     sign = -std::pow(-1._rt, imode+1);
                 }
             }
@@ -605,7 +605,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
                     sign = -1._rt;
                 } else {
                     // Even modes are anti-symmetric
-                    int imode = (icomp + 1)/2; 
+                    int imode = (icomp + 1)/2;
                     sign = std::pow(-1._rt, imode+1);
                 }
             }
