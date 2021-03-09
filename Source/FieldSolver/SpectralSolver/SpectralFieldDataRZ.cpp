@@ -506,7 +506,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
 
-        amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
+        amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
         FABZBackwardTransform(mfi, realspace_bx, field_index, tempHTransformedSplit, is_nodal_z);
 
@@ -514,7 +514,39 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf does not.
         multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(tempHTransformedSplit[mfi], field_mf_copy[mfi]);
-        field_mf[mfi].copy<amrex::RunOn::Device>(field_mf_copy[mfi], 0, i_comp*ncomp, ncomp);
+
+        amrex::Array4<amrex::Real> const & field_mf_array = field_mf[mfi].array();
+        amrex::Array4<amrex::Real> const & field_mf_copy_array = field_mf_copy[mfi].array();
+
+        // Extend the box to include the guards cells below the axis
+        // so that they can be filled in. This is not a simple copy
+        // since the signs will change when there is anti-symmetry.
+        amrex::Box const& realspace_bx_with_guards = field_mf[mfi].box();
+        const int* lo_with_guards = realspace_bx_with_guards.loVect();
+        realspace_bx.growLo(0, -lo_with_guards[0]);
+        ParallelFor(realspace_bx, ncomp,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
+            int ii = i;
+            amrex::Real sign = +1._rt;
+            if (i < 0) {
+                ii = -i - 1;
+                if (icomp == 0) {
+                    // Mode zero is symmetric
+                    sign = +1._rt;
+                } else {
+                    // Odd modes are anti-symmetric
+                    int imode = (icomp + 1)/2; 
+                    sign = -std::pow(-1._rt, imode+1);
+                }
+            }
+            int ic = icomp + i_comp;
+            if (icomp == 0) {
+                // mode zero
+                field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp);
+            } else {
+                field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp+1);
+            }
+        });
 
     }
 }
@@ -539,7 +571,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf_r); mfi.isValid(); ++mfi){
 
-        amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
+        amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
         FABZBackwardTransform(mfi, realspace_bx, field_index_r, tempHTransformedSplit_p, is_nodal_z);
         FABZBackwardTransform(mfi, realspace_bx, field_index_t, tempHTransformedSplit_m, is_nodal_z);
@@ -556,15 +588,34 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
         amrex::Array4<amrex::Real> const & field_mf_r_copy_array = field_mf_r_copy[mfi].array();
         amrex::Array4<amrex::Real> const & field_mf_t_copy_array = field_mf_t_copy[mfi].array();
 
+        // Extend the box to include the guards cells below the axis
+        // so that they can be filled in. This is not a simple copy
+        // since the signs will change when there is anti-symmetry.
+        amrex::Box const& realspace_bx_with_guards = field_mf_r[mfi].box();
+        const int* lo_with_guards = realspace_bx_with_guards.loVect();
+        realspace_bx.growLo(0, -lo_with_guards[0]);
         ParallelFor(realspace_bx, 2*n_rz_azimuthal_modes-1,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
+            int ii = i;
+            amrex::Real sign = +1._rt;
+            if (i < 0) {
+                ii = -i - 1;
+                if (icomp == 0) {
+                    // Mode zero is anti-symmetric
+                    sign = -1._rt;
+                } else {
+                    // Even modes are anti-symmetric
+                    int imode = (icomp + 1)/2; 
+                    sign = std::pow(-1._rt, imode+1);
+                }
+            }
             if (icomp == 0) {
-                // mode 0
-                field_mf_r_array(i,j,k,icomp) = field_mf_r_copy_array(i,j,k,icomp);
-                field_mf_t_array(i,j,k,icomp) = field_mf_t_copy_array(i,j,k,icomp);
+                // mode zero
+                field_mf_r_array(i,j,k,icomp) = sign*field_mf_r_copy_array(ii,j,k,icomp);
+                field_mf_t_array(i,j,k,icomp) = sign*field_mf_t_copy_array(ii,j,k,icomp);
             } else {
-                field_mf_r_array(i,j,k,icomp) = field_mf_r_copy_array(i,j,k,icomp+1);
-                field_mf_t_array(i,j,k,icomp) = field_mf_t_copy_array(i,j,k,icomp+1);
+                field_mf_r_array(i,j,k,icomp) = sign*field_mf_r_copy_array(ii,j,k,icomp+1);
+                field_mf_t_array(i,j,k,icomp) = sign*field_mf_t_copy_array(ii,j,k,icomp+1);
             }
         });
 
