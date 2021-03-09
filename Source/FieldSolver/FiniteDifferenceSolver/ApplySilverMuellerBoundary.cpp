@@ -35,16 +35,16 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
     // Calculate relevant coefficients
     amrex::Real const cdt_over_dx = PhysConst::c*dt*m_stencil_coefs_x[0];
-    amrex::Real coef1_x = (1. - cdt_over_dx)/(1. + cdt_over_dx);
-    amrex::Real coef2_x = 2*cdt_over_dx/(1. + cdt_over_dx) / PhysConst::c;
+    amrex::Real const coef1_x = (1._rt - cdt_over_dx)/(1._rt + cdt_over_dx);
+    amrex::Real const coef2_x = 2._rt*cdt_over_dx/(1._rt + cdt_over_dx) / PhysConst::c;
 #ifdef WARPX_DIM_3D
     amrex::Real const cdt_over_dy = PhysConst::c*dt*m_stencil_coefs_y[0];
-    amrex::Real coef1_y = (1. - cdt_over_dy)/(1. + cdt_over_dx);
-    amrex::Real coef2_y = 2*cdt_over_dy/(1. + cdt_over_dy) / PhysConst::c;
+    amrex::Real const coef1_y = (1._rt - cdt_over_dy)/(1._rt + cdt_over_dx);
+    amrex::Real const coef2_y = 2._rt*cdt_over_dy/(1._rt + cdt_over_dy) / PhysConst::c;
 #endif
     amrex::Real const cdt_over_dz = PhysConst::c*dt*m_stencil_coefs_z[0];
-    amrex::Real coef1_z = (1. - cdt_over_dz)/(1. + cdt_over_dx);
-    amrex::Real coef2_z = 2*cdt_over_dz/(1. + cdt_over_dz) / PhysConst::c;
+    amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dx);
+    amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -144,10 +144,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 #ifdef WARPX_DIM_3D
                 // At the +y boundary (innermost guard cell)
                 if ( j==domain_box.bigEnd(1)+1 )
-                    Bz(i,j,k) = coef1_x * Bz(i,j,k) - coef2_y * Ex(i,j,k);
+                    Bz(i,j,k) = coef1_y * Bz(i,j,k) - coef2_y * Ex(i,j,k);
                 // At the -y boundary (innermost guard cell)
                 if ( j==domain_box.smallEnd(1)-1 )
-                    Bz(i,j,k) = coef1_x * Bz(i,j,k) + coef2_y * Ex(i,j+1,k);
+                    Bz(i,j,k) = coef1_y * Bz(i,j,k) + coef2_y * Ex(i,j+1,k);
 #endif
             }
         );
