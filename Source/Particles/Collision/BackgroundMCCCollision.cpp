@@ -31,18 +31,28 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     // query for a list of collision processes
     // these could be ionization, elastic, charge_exchange, back, etc.
-    pp.queryarr("scattering_processes", m_scattering_processes);
+    amrex::Vector<std::string> scattering_process_names;
+    pp.queryarr("scattering_processes", scattering_process_names);
 
-    // now we need functions to bind the cross-sections for each process
-    // maybe use another vector of a children of a 'CrossSection' class??
-    // in Warp this is simply a dictionary of each process' get_xsec(E) function
+    // create a vector of CrossSectionHandler objects from each scattering
+    // process name
+    for (auto scattering_process : scattering_process_names) {
+        std::string temp = scattering_process;
+        temp.append("_cross_section");
+        char kw[temp.length() + 1];
+        std::strcpy(kw, temp.c_str());
+        std::string cross_section_file;
+        pp.query(kw, cross_section_file);
 
+        m_scattering_processes.push_back(
+            CrossSectionHandler(scattering_process, cross_section_file)
+        );
+    }
 
     // build maximum cross-section and collision probability
     // and everything else done in the __init__ function for Warp MCC
     // for testing now I'll just specify dummy constant cross-section and
     // assume max velocity of 5 keV
-    amrex::Real sigma_E = 1e-18;
     m_nu_max = 473299989.9733926;
 }
 
@@ -148,7 +158,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     amrex::Real nu_max = m_nu_max;
 
     // instantiate a random number generator
-    amrex::RandomEngine const engine;
+    // amrex::RandomEngine const engine;
 
     // Get Struct-Of-Array particle data, also called attribs
     auto& attribs = pti.GetAttribs();
@@ -156,18 +166,13 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
-
-    // use dummy constant cross-section
-    amrex::Real sigma_E = 1e-18;
-
-
-    amrex::ParallelFor( np,
-        [=] AMREX_GPU_DEVICE (long ip)
+    amrex::ParallelForRNG( np,
+        [=] AMREX_GPU_DEVICE (long ip, amrex::RandomEngine const& engine)
         {
             // determine if this particle should collide
             if (amrex::Random(engine) < total_collision_prob){
 
-                amrex::Real v_coll, v_coll2, E_coll, nu_i = 0;
+                amrex::Real v_coll, v_coll2, E_coll, sigma_E, nu_i = 0;
                 amrex::Real col_select = amrex::Random(engine);
                 amrex::ParticleReal ua_x, ua_y, ua_z;
                 amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
@@ -201,14 +206,14 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                 }
                 v_coll = std::sqrt(v_coll2);
 
-                // calculate particle energy in eV
-                // E_coll = 0.5 * mass1 * v_coll2 / PhysConst::q_e;
+                // calculate collision energy in eV
+                E_coll = 0.5 * mass1 * v_coll2 / PhysConst::q_e;
 
                 // loop through all collision pathways
-                for (int i = 0; i < scattering_processes.size(); ++i) {
+                for (auto scattering_process : scattering_processes){
 
                     // get collision cross-section
-                    //sigma_E = ...
+                    sigma_E = scattering_process.getCrossSection(E_coll);
 
                     // calculate collision frequency
                     nu_i += n_a * sigma_E * v_coll / nu_max;
@@ -216,21 +221,38 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                     // check if this collision should be performed and call
                     // the appropriate scattering function
                     if (col_select < nu_i){
-                        if (scattering_processes[i] == "elastic"){
+                        if (scattering_process.name == "elastic"){
                             ElasticScattering(
                                 ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z,
                                 engine
                             );
                         }
-                        else if (scattering_processes[i] == "back"){
+                        else if (scattering_process.name == "back"){
                             BackScattering(
                                 ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z
                             );
                         }
-                        else if (scattering_processes[i] == "charge_exchange"){
+                        else if (scattering_process.name == "charge_exchange"){
                             ChargeExchange(
                                 ux[ip], uy[ip], uz[ip], ua_x, ua_y, ua_z
                             );
+                        }
+                        else if (scattering_process.name == "excitation"){
+                            // get the new velocity magnitude
+                            amrex::Real vp = std::sqrt(
+                                2.0 / mass1 * PhysConst::q_e
+                                * (E_coll
+                                    - scattering_process.energy_penalty)
+                            );
+                            Excitation(
+                                ux[ip], uy[ip], uz[ip], vp, engine
+                            );
+                        }
+                        else if (scattering_process.name == "ionization"){
+                            // Ionization(
+                            //    ux[ip], uy[ip], uz[ip], ua_x, ua_y, ua_z
+                            //);
+                            amrex::Print() << "Not implemented yet.";
                         }
                         break;
                     }

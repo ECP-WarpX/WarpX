@@ -9,6 +9,7 @@
 
 #include "Particles/MultiParticleContainer.H"
 #include "CollisionBase.H"
+#include "CrossSectionHandler.H"
 #include <AMReX_ParmParse.H>
 
 class BackgroundMCCCollision
@@ -38,9 +39,9 @@ public:
 
 private:
 
-    amrex::Real m_mass1;
+    amrex::Vector< CrossSectionHandler > m_scattering_processes;
 
-    amrex::Vector<std::string> m_scattering_processes;
+    amrex::Real m_mass1;
 
     amrex::Real m_background_temperature;
     amrex::Real m_background_density;
