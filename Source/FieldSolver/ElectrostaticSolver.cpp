@@ -275,8 +275,8 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         lobc[1] = LinOpBCType::Dirichlet;
         hibc[1] = LinOpBCType::Dirichlet;
 
-        // set the boundary potential values for the given dimension
-        setDirichletBC(phi, idim);
+        // set the boundary potential values for dimension 1
+        setDirichletBC(phi, 1);
     }
 
     // Define the linear operator (Poisson operator)
@@ -468,11 +468,19 @@ WarpX::getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
     Vector<std::string> potential_lo_str(AMREX_SPACEDIM);
     Vector<std::string> potential_hi_str(AMREX_SPACEDIM);
 
+    // set default potentials to zero in order for current tests to pass
+    // but forcing the user to specify a potential might be better
+    for (int i = 0; i < AMREX_SPACEDIM; i++)
+    {
+        potential_lo_str[i] = "0";
+        potential_hi_str[i] = "0";
+    }
+
     // Get the boundary potentials specified in the simulation input file
     // first as strings and then parse those for possible math expressions
     ParmParse pp_geom("geometry");
-    pp_geom.getarr("potential_lo",potential_lo_str,0,AMREX_SPACEDIM);
-    pp_geom.getarr("potential_hi",potential_hi_str,0,AMREX_SPACEDIM);
+    pp_geom.queryarr("potential_lo",potential_lo_str,0,AMREX_SPACEDIM);
+    pp_geom.queryarr("potential_hi",potential_hi_str,0,AMREX_SPACEDIM);
 
     auto parser_lo = makeParser(potential_lo_str[idim], {"t"});
     pot_lo = parser_lo.eval(gett_new(0));
