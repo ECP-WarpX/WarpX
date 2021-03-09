@@ -524,6 +524,8 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
         amrex::Box const& realspace_bx_with_guards = field_mf[mfi].box();
         const int* lo_with_guards = realspace_bx_with_guards.loVect();
         realspace_bx.growLo(0, -lo_with_guards[0]);
+        // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
+        realspace_bx &= realspace_bx_with_guards;
         ParallelFor(realspace_bx, ncomp,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
@@ -594,6 +596,8 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
         amrex::Box const& realspace_bx_with_guards = field_mf_r[mfi].box();
         const int* lo_with_guards = realspace_bx_with_guards.loVect();
         realspace_bx.growLo(0, -lo_with_guards[0]);
+        // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
+        realspace_bx &= realspace_bx_with_guards;
         ParallelFor(realspace_bx, 2*n_rz_azimuthal_modes-1,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
