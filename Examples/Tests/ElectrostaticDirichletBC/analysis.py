@@ -20,7 +20,7 @@ import glob
 
 dt = 7.5e-10
 
-files = sorted(glob.glob('diags/openpmd_*.h5'))[1:]
+files = sorted(glob.glob('dirichletbc_plt/openpmd_*.h5'))[1:]
 
 times = np.zeros(len(files))
 potentials = np.zeros(len(files))
