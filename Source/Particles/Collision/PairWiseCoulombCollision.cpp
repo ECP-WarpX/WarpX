@@ -285,8 +285,8 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
 #endif
                         ComputeLocalDensities(
                             n1[i_cell], n2[i_cell], n12[i_cell],
-                            w_1, cell_start_1, cell_stop_1,
-                            w_2, cell_start_2, cell_stop_2, dV);
+                            w_1, cell_start_1, cell_stop_1, indices_1,
+                            w_2, cell_start_2, cell_stop_2, indices_2, dV);
                     }
                 }
             );
@@ -313,7 +313,8 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                     UpdateMomentumPerezElastic(
                         ux_1[i1], uy_1[i1], uz_1[i1],
                         ux_1[i2], uy_2[i2], uz_2[i2],
-                        n1, n2, n12, q1, m1, w_1[i1], q2, m2, w_2[i2],
+                        local_n1, local_n2, local_n12,
+                        q1, m1, w_1[i1], q2, m2, w_2[i2],
                         dt, L, lmdD, engine);
                         // TODO: Add an argument to actually neglect the change of momentum
                 }

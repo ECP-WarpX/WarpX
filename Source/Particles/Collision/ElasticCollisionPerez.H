@@ -14,6 +14,35 @@
 #include <AMReX_Random.H>
 
 
+template <typename T_index, typename T_R>
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+void ComputeLocalDensities(
+    T_R& n1, T_R& n2, T_R& n12,
+    T_R const *w1, T_index const I1s, T_index const I1e, T_index *I1,
+    T_R const *w2, T_index const I2s, T_index const I2e, T_index *I2,
+    T_R const dV ) {
+
+    int const NI1 = I1e - I1s;
+    int const NI2 = I2e - I2s;
+
+    n1  = T_R(0.0);
+    n2  = T_R(0.0);
+    n12 = T_R(0.0);
+    for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
+    for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
+    n1 = n1 / dV; n2 = n2 / dV;
+    {
+      int i1 = I1s; int i2 = I2s;
+      for (int k = 0; k < amrex::max(NI1,NI2); ++k)
+      {
+        n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
+        ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
+        ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+      }
+      n12 = n12 / dV;
+    }
+}
+
 /** \brief Prepare information for and call
  *        UpdateMomentumPerezElastic().
  * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
@@ -33,7 +62,6 @@
  *            otherwise will be computed.
  * @param[in] dV is the volume of the corresponding cell.
 */
-
 template <typename T_index, typename T_R>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void ElasticCollisionPerez (
@@ -49,40 +77,21 @@ void ElasticCollisionPerez (
     T_R const  dt, T_R const   L, T_R const dV,
     amrex::RandomEngine const& engine)
 {
-
-    int NI1 = I1e - I1s;
-    int NI2 = I2e - I2s;
-
     // get local T1t and T2t
     T_R T1t; T_R T2t;
-    if ( T1 <= T_R(0.0) && L <= T_R(0.0) )
-    {
+    if ( T1 <= T_R(0.0) && L <= T_R(0.0) ) {
         T1t = ComputeTemperature(I1s,I1e,I1,u1x,u1y,u1z,m1);
     }
     else { T1t = T1; }
-    if ( T2 <= T_R(0.0) && L <= T_R(0.0) )
-    {
+    if ( T2 <= T_R(0.0) && L <= T_R(0.0) ) {
         T2t = ComputeTemperature(I2s,I2e,I2,u2x,u2y,u2z,m2);
     }
     else { T2t = T2; }
 
     // local density
-    T_R n1  = T_R(0.0);
-    T_R n2  = T_R(0.0);
-    T_R n12 = T_R(0.0);
-    for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
-    for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
-    n1 = n1 / dV; n2 = n2 / dV;
-    {
-      int i1 = I1s; int i2 = I2s;
-      for (int k = 0; k < amrex::max(NI1,NI2); ++k)
-      {
-        n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
-        ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-        ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
-      }
-      n12 = n12 / dV;
-    }
+    T_R n1, n2, n12;
+    ComputeLocalDensities( n1, n2, n12,
+        w1, I1s, I1e, I1, w2, I2s, I2e, I2, dV );
 
     // compute Debye length lmdD
     T_R lmdD;
@@ -95,6 +104,8 @@ void ElasticCollisionPerez (
     // call UpdateMomentumPerezElastic()
     {
       int i1 = I1s; int i2 = I2s;
+      int const NI1 = I1e - I1s;
+      int const NI2 = I2e - I2s;
       for (int k = 0; k < amrex::max(NI1,NI2); ++k)
       {
           UpdateMomentumPerezElastic(
