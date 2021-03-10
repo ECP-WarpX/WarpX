@@ -791,7 +791,7 @@ void MultiParticleContainer::InitQuantumSync ()
     std::string lookup_table_mode;
     ParmParse pp("qed_qs");
 
-    //If specified, use a user-defined energy threshold for photon creaction
+    //If specified, use a user-defined energy threshold for photon creation
     ParticleReal temp;
     constexpr auto mec2 = PhysConst::c * PhysConst::c * PhysConst::m_e;
     if(queryWithParser(pp, "photon_creation_energy_threshold", temp)){
@@ -800,7 +800,7 @@ void MultiParticleContainer::InitQuantumSync ()
     }
     else{
         amrex::Print() << "Using default value (2*me*c^2)" <<
-            " for photon energy creaction threshold \n" ;
+            " for photon energy creation threshold \n" ;
     }
 
     // qs_minimum_chi_part is the minimum chi parameter to be
