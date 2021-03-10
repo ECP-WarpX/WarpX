@@ -259,34 +259,34 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                     index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
 
                     // Only continue if there are particles of species 1 in this cell
-                    if ( cell_stop_1 - cell_start_1 >= 1 ) {
-                        // Check if there are collision partners from species 2 in this cell
-                        if (cell_stop_2 - cell_start_2) {
-                            // No collision partners in this cell: set index to -1
-                            for (int i1 = cell_start_1; i1 < cell_stop_1; i1++) {
-                                idx_partner[i1] = -1;
-                            }
-                        } else {
-                            // Form the pairs
-                            // - First shuffle the particles of species 2 in this cell
-                            ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
-                            // - Then loop over particles of species 1 and pair them with species 2
-                            for (int i1 = cell_start_1; i1 < cell_stop_1; i1++) {
-                                // Cycle through particles of species 2 in this cell (modulo operation)
-                                int i2 = cell_start_2 + (i1-cell_start_1) % (cell_stop_2-cell_start_2);
-                                idx_partner[i1] = i2;
-                                idx_cell[i1] = i_cell;
-                            }
-                            // Compute local densities for this cell
-#if defined WARPX_DIM_RZ
-                            int ri = (i_cell - i_cell%nz) / nz;
-                            auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
-#endif
-                            ComputeLocalDensities(
-                                n1[i_cell], n2[i_cell], n12[i_cell],
-                                w_1, cell_start_1, cell_stop_1,
-                                w_2, cell_start_2, cell_stop_2, dV);
+                    if ( cell_stop_1 - cell_start_1 < 1 ) return;
+
+                    // Check if there are collision partners from species 2 in this cell
+                    if (cell_stop_2 - cell_start_2) {
+                        // No collision partners in this cell: set index to -1
+                        for (int i1 = cell_start_1; i1 < cell_stop_1; i1++) {
+                            idx_partner[i1] = -1;
                         }
+                    } else {
+                        // Form the pairs
+                        // - First shuffle the particles of species 2 in this cell
+                        ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
+                        // - Then loop over particles of species 1 and pair them with species 2
+                        for (int i1 = cell_start_1; i1 < cell_stop_1; i1++) {
+                            // Cycle through particles of species 2 in this cell (modulo operation)
+                            int i2 = cell_start_2 + (i1-cell_start_1) % (cell_stop_2-cell_start_2);
+                            idx_partner[i1] = i2;
+                            idx_cell[i1] = i_cell;
+                        }
+                        // Compute local densities for this cell
+#if defined WARPX_DIM_RZ
+                        int ri = (i_cell - i_cell%nz) / nz;
+                        auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+#endif
+                        ComputeLocalDensities(
+                            n1[i_cell], n2[i_cell], n12[i_cell],
+                            w_1, cell_start_1, cell_stop_1,
+                            w_2, cell_start_2, cell_stop_2, dV);
                     }
                 }
             );
@@ -296,25 +296,26 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 {
                     // Find collision partner from the pairs formed in previous kernel
                     int const i2 = idx_partner[i1];
-                    if (i2 >= 0) { // Only continue if there is indeed a partner
 
-                        // Look up the local density
-                        int const i_cell = idx_cell[i1];
-                        amrex::Real const local_n1 = n1[i_cell];
-                        amrex::Real const local_n2 = n2[i_cell];
-                        amrex::Real const local_n12 = n12[i_cell];
-                        // `lmdD` is actually only need if the Coulomb logarithm is
-                        // not given by the user, which is a mode which is not
-                        // supported when `m_neglect_feedback_on_species_2` is true
-                        amrex::Real const lmdD = 0.;
+                    // Do not continue if there is no collision partner
+                    if (i2 < 0) return;
 
-                        UpdateMomentumPerezElastic(
-                            ux_1[i1], uy_1[i1], uz_1[i1],
-                            ux_1[i2], uy_2[i2], uz_2[i2],
-                            n1, n2, n12, q1, m1, w_1[i1], q2, m2, w_2[i2],
-                            dt, L, lmdD, engine);
-                            // TODO: Add an argument to actually neglect the change of momentum
-                    }
+                    // Look up the local density
+                    int const i_cell = idx_cell[i1];
+                    amrex::Real const local_n1 = n1[i_cell];
+                    amrex::Real const local_n2 = n2[i_cell];
+                    amrex::Real const local_n12 = n12[i_cell];
+                    // `lmdD` is actually only need if the Coulomb logarithm is
+                    // not given by the user, which is a mode which is not
+                    // supported when `m_neglect_feedback_on_species_2` is true
+                    amrex::Real const lmdD = 0.;
+
+                    UpdateMomentumPerezElastic(
+                        ux_1[i1], uy_1[i1], uz_1[i1],
+                        ux_1[i2], uy_2[i2], uz_2[i2],
+                        n1, n2, n12, q1, m1, w_1[i1], q2, m2, w_2[i2],
+                        dt, L, lmdD, engine);
+                        // TODO: Add an argument to actually neglect the change of momentum
                 }
             );
 
