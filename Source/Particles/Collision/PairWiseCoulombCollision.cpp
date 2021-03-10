@@ -232,9 +232,11 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
             // with one thread per macroparticle of species 1 without race condition
 
             // Allocate array of indices, that gives a collision partner for each particle of species 1
-            amrex::Gpu::DeviceVector<int> idx_partner_vec;
+            amrex::Gpu::DeviceVector<int> idx_partner_vec, idx_cell_vec;
             idx_partner_vec.resize( ptile_1.numParticles() );
+            idx_cell_vec.resize( ptile_1.numParticles() );
             int* idx_partner = idx_partner_vec.data();
+            int* idx_cell = idx_cell_vec.data();
             // Allocate arrays for local density
             amrex::Gpu::DeviceVector<amrex::Real> n1_vec, n2_vec, n12_vec;
             n1_vec.resize(n_cells); n2_vec.resize(n_cells); n12_vec.resize(n_cells);
@@ -273,12 +275,17 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                                 // Cycle through particles of species 2 in this cell (modulo operation)
                                 int i2 = cell_start_2 + (i1-cell_start_1) % (cell_stop_2-cell_start_2);
                                 idx_partner[i1] = i2;
-                            // TODO: Compute local densities
-                            // PASS by reference!!
-                            // ComputeLocalDensities( n1[i_cell], n2[i_cell], n12[i_cell],
-                            //    w1, cell_start_1, cell_stop_1,
-                            //    w2, cell_start_2, cell_stop_2);
+                                idx_cell[i1] = i_cell;
                             }
+                            // Compute local densities for this cell
+#if defined WARPX_DIM_RZ
+                            int ri = (i_cell - i_cell%nz) / nz;
+                            auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+#endif
+                            ComputeLocalDensities(
+                                n1[i_cell], n2[i_cell], n12[i_cell],
+                                w_1, cell_start_1, cell_stop_1,
+                                w_2, cell_start_2, cell_stop_2, dV);
                         }
                     }
                 }
@@ -292,10 +299,13 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                     if (i2 >= 0) { // Only continue if there is indeed a partner
 
                         // Look up the local density
-                        // int const i_cell =
-                        amrex::Real const n1 = 1.;
-                        amrex::Real const n2 = 1.;
-                        amrex::Real const n12 = 1.;
+                        int const i_cell = idx_cell[i1];
+                        amrex::Real const local_n1 = n1[i_cell];
+                        amrex::Real const local_n2 = n2[i_cell];
+                        amrex::Real const local_n12 = n12[i_cell];
+                        // `lmdD` is actually only need if the Coulomb logarithm is
+                        // not given by the user, which is a mode which is not
+                        // supported when `m_neglect_feedback_on_species_2` is true
                         amrex::Real const lmdD = 0.;
 
                         UpdateMomentumPerezElastic(
