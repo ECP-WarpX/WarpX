@@ -140,24 +140,23 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
 
                 // Do not collide if there is only one particle in the cell
-                if ( cell_stop_1 - cell_start_1 >= 2 )
-                {
-                    // shuffle
-                    ShuffleFisherYates(
-                        indices_1, cell_start_1, cell_half_1, engine );
+                if ( cell_stop_1 - cell_start_1 <= 1 ) return;
+
+                // shuffle
+                ShuffleFisherYates(
+                    indices_1, cell_start_1, cell_half_1, engine );
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+                int ri = (i_cell - i_cell%nz) / nz;
+                auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
-                    // Call the function in order to perform collisions
-                    ElasticCollisionPerez(
-                        cell_start_1, cell_half_1,
-                        cell_half_1, cell_stop_1,
-                        indices_1, indices_1,
-                        ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
-                        q1, q1, m1, m1, amrex::Real(-1.0), amrex::Real(-1.0),
-                        dt*ndt, CoulombLog, dV, engine );
-                }
+                // Call the function in order to perform collisions
+                ElasticCollisionPerez(
+                    cell_start_1, cell_half_1,
+                    cell_half_1, cell_stop_1,
+                    indices_1, indices_1,
+                    ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
+                    q1, q1, m1, m1, amrex::Real(-1.0), amrex::Real(-1.0),
+                    dt*ndt, CoulombLog, dV, engine );
             }
         );
     }
@@ -232,24 +231,23 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 // cell_start_1 (inclusive) and cell_start_2 (exclusive)
 
                 // Do not collide if one species is missing in the cell
-                if ( cell_stop_1 - cell_start_1 >= 1 &&
-                     cell_stop_2 - cell_start_2 >= 1 )
-                {
-                    // shuffle
-                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
-                    ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
+                if ( cell_stop_1 - cell_start_1 < 1 ||
+                     cell_stop_2 - cell_start_2 < 1 ) return;
+                
+                // shuffle
+                ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
+                ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+                int ri = (i_cell - i_cell%nz) / nz;
+                auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
-                    // Call the function in order to perform collisions
-                    ElasticCollisionPerez(
-                        cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
-                        indices_1, indices_2,
-                        ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
-                        q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
-                        dt*ndt, CoulombLog, dV, engine );
-                }
+                // Call the function in order to perform collisions
+                ElasticCollisionPerez(
+                    cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
+                    indices_1, indices_2,
+                    ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
+                    q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
+                    dt*ndt, CoulombLog, dV, engine );
             }
         );
     } // end if ( m_isSameSpecies)
