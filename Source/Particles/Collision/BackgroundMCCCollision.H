@@ -19,6 +19,8 @@ public:
 
     BackgroundMCCCollision (std::string collision_name);
 
+    amrex::Real get_nu_max ( );
+
     /** Perform the collisions
      *
      * @param cur_time Current time
@@ -40,6 +42,8 @@ public:
 private:
 
     amrex::Vector< CrossSectionHandler > m_scattering_processes;
+
+    bool init_flag = false;
 
     amrex::Real m_mass1;
 

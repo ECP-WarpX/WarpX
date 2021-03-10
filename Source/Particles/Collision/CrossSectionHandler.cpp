@@ -7,13 +7,11 @@
 #include "CrossSectionHandler.H"
 #include "WarpX.H"
 
-// using namespace amrex::literals;
-
 CrossSectionHandler::CrossSectionHandler (
         const std::string scattering_process,
         const std::string cross_section_file )
 {
-    amrex::Print() << "Reading file " << cross_section_file << " for the "
+    amrex::Print() << "Reading file " << cross_section_file << " for "
         << scattering_process << " scattering cross-sections.\n";
 
     name = scattering_process;
@@ -68,15 +66,13 @@ CrossSectionHandler::readCrossSectionFile (
     amrex::Vector<amrex::Real>& energies,
     amrex::Vector<amrex::Real>& sigmas )
 {
-    // as a test we'll just use fixed values
-    energies.resize(3);
-    sigmas.resize(3);
-    energies[0] = 0.0;
-    energies[1] = 0.5;
-    energies[2] = 1.0;
-    sigmas[0] = 5e-18;
-    sigmas[1] = 2e-18;
-    sigmas[2] = 1e-18;
+    std::ifstream infile(cross_section_file);
+    double energy, sigma;
+    while (infile >> energy >> sigma)
+    {
+        energies.push_back(energy);
+        sigmas.push_back(sigma);
+    }
 }
 
 void

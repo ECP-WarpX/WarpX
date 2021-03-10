@@ -15,7 +15,6 @@
 BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name)
     : CollisionBase(collision_name)
 {
-
     // AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 2,
     //           "Pair wise Coulomb must have exactly two species.");
 
@@ -48,12 +47,37 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             CrossSectionHandler(scattering_process, cross_section_file)
         );
     }
+}
 
-    // build maximum cross-section and collision probability
-    // and everything else done in the __init__ function for Warp MCC
-    // for testing now I'll just specify dummy constant cross-section and
-    // assume max velocity of 5 keV
-    m_nu_max = 473299989.9733926;
+/** Calculate the maximum collision frequency using a fixed energy grid that
+ *  ranges from 1e-4 to 5000 eV in 0.2 eV increments
+ */
+amrex::Real
+BackgroundMCCCollision::get_nu_max()
+{
+    amrex::Real nu, nu_max = 0.0;
+
+    for (double E = 1e-4; E < 5000; E+=0.2)
+    {
+        amrex::Real sigma_E = 0.0;
+
+        // loop through all collision pathways
+        for (auto scattering_process : m_scattering_processes){
+            // get collision cross-section
+            sigma_E += scattering_process.getCrossSection(E);
+        }
+
+        // calculate collision frequency
+        nu = (
+            m_background_density * std::sqrt(2.0 / m_mass1 * PhysConst::q_e)
+            * sigma_E * std::sqrt(E)
+        );
+        if (nu > nu_max)
+        {
+            nu_max = nu;
+        }
+    }
+    return nu_max;
 }
 
 void
@@ -64,36 +88,45 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
-    // calculate total collision probability
-    auto coll_n = m_nu_max * dt;
-    m_total_collision_prob = 1.0 - std::exp(-coll_n);
-
-    // dt has to be small enough that a linear expansion of the collision
-    // probability is sufficiently accurately, otherwise the MCC results
-    // will be very heavily affected by small changes in the timestep
-    if (coll_n > 0.1){
-        amrex::Print() <<
-            "dt is too large to ensure accurate MCC results for "
-            << m_species_names[0] << " collisions since nu_max*dt = "
-            << coll_n << " > 0.1\n";
-        amrex::Abort();
-    }
-
     auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
-    m_mass1 = species1.getMass();
+    if (!init_flag)
+    {
+        m_mass1 = species1.getMass();
 
-    // if a second species is specified that will also be the species
-    // generated during ionization collisions and therefore the background
-    // mass is equal to the mass of that species
-    if (m_species_names.size() == 2){
-        auto& species2 = mypc->GetParticleContainerFromName(m_species_names[1]);
-        m_background_mass = species2.getMass();
-    }
-    // otherwise if no neutral species mass was specified assume that the
-    // collisions will be with neutrals of the same mass as the colliding
-    // species (like with ion-neutral collisions)
-    else if (m_background_mass == -1){
-        m_background_mass = species1.getMass();
+        // TODO add a flag so that the following is only done once the move the sigma_sqrtE_max calculation here
+        // calculate maximum collision frequency
+        m_nu_max = get_nu_max();
+
+        // calculate total collision probability
+        auto coll_n = m_nu_max * dt;
+        m_total_collision_prob = 1.0 - std::exp(-coll_n);
+
+        // dt has to be small enough that a linear expansion of the collision
+        // probability is sufficiently accurately, otherwise the MCC results
+        // will be very heavily affected by small changes in the timestep
+        if (coll_n > 0.1){
+            amrex::Print() <<
+                "dt is too large to ensure accurate MCC results for "
+                << m_species_names[0] << " collisions since nu_max*dt = "
+                << coll_n << " > 0.1\n";
+            amrex::Abort();
+        }
+
+        // if a second species is specified that will also be the species
+        // generated during ionization collisions and therefore the background
+        // mass is equal to the mass of that species
+        if (m_species_names.size() == 2){
+            auto& species2 = mypc->GetParticleContainerFromName(m_species_names[1]);
+            m_background_mass = species2.getMass();
+        }
+        // otherwise if no neutral species mass was specified assume that the
+        // collisions will be with neutrals of the same mass as the colliding
+        // species (like with ion-neutral collisions)
+        else if (m_background_mass == -1){
+            m_background_mass = species1.getMass();
+        }
+
+        init_flag = true;
     }
 
     // Enable tiling
