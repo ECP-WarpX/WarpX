@@ -244,7 +244,9 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
             amrex::Real* n2 = n2_vec.data();
             amrex::Real* n12 = n12_vec.data();
             // (do we need a synchronize to avoid that these arrays go out of scope?)
+            // Local copies for GPU kernel
             amrex::Real const L=m_CoulombLog;
+            bool const neglect_feedback_on_species_2 = m_neglect_feedback_on_species_2;
 
             // Loop over cells to form pairs of particles and compute local densities
             amrex::ParallelForRNG( n_cells,
@@ -315,8 +317,8 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                         ux_1[i2], uy_2[i2], uz_2[i2],
                         local_n1, local_n2, local_n12,
                         q1, m1, w_1[i1], q2, m2, w_2[i2],
-                        dt, L, lmdD, engine);
-                        // TODO: Add an argument to actually neglect the change of momentum
+                        dt, L, lmdD, engine,
+                        neglect_feedback_on_species_2);
                 }
             );
 

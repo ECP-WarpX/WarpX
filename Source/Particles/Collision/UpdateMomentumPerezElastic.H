@@ -33,7 +33,8 @@ void UpdateMomentumPerezElastic (
     T_R const q1, T_R const m1, T_R const w1,
     T_R const q2, T_R const m2, T_R const w2,
     T_R const dt, T_R const L,  T_R const lmdD,
-    amrex::RandomEngine const& engine)
+    amrex::RandomEngine const& engine,
+    bool const neglect_feedback_on_species_2=false)
 {
 
     // If g = u1 - u2 = 0, do not collide.
@@ -254,16 +255,18 @@ void UpdateMomentumPerezElastic (
         AMREX_ASSERT(!std::isinf(u1x+u1y+u1z+u2x+u2y+u2z));
 #endif
     }
-    r = amrex::Random(engine);
-    if ( w1 > r*amrex::max(w1, w2) )
-    {
-        u2x  = p2fx / m2;
-        u2y  = p2fy / m2;
-        u2z  = p2fz / m2;
-#ifndef AMREX_USE_DPCPP
-        AMREX_ASSERT(!std::isnan(u1x+u1y+u1z+u2x+u2y+u2z));
-        AMREX_ASSERT(!std::isinf(u1x+u1y+u1z+u2x+u2y+u2z));
-#endif
+    if (! neglect_feedback_on_species_2) {
+        r = amrex::Random(engine);
+        if ( w1 > r*amrex::max(w1, w2) )
+        {
+            u2x  = p2fx / m2;
+            u2y  = p2fy / m2;
+            u2z  = p2fz / m2;
+    #ifndef AMREX_USE_DPCPP
+            AMREX_ASSERT(!std::isnan(u1x+u1y+u1z+u2x+u2y+u2z));
+            AMREX_ASSERT(!std::isinf(u1x+u1y+u1z+u2x+u2y+u2z));
+    #endif
+        }
     }
 
 }
