@@ -233,7 +233,7 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 // Do not collide if one species is missing in the cell
                 if ( cell_stop_1 - cell_start_1 < 1 ||
                      cell_stop_2 - cell_start_2 < 1 ) return;
-                
+
                 // shuffle
                 ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
                 ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
