@@ -42,6 +42,7 @@ private:
 
     amrex::Real m_CoulombLog;
     bool m_isSameSpecies;
+    bool m_neglect_feedback_on_species_2;
 
 };
 

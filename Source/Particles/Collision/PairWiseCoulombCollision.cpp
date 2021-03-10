@@ -31,6 +31,18 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
     else
         m_isSameSpecies = false;
 
+    // Check if the user wants to neglect feedback on species 2
+    m_neglect_feedback_on_species_2 = false;
+    pp.query("neglect_feedback_on_species_2", m_neglect_feedback_on_species_2);
+    if (m_neglect_feedback_on_species_2) {
+        if (m_isSameSpecies) {
+            amrex::Abort("You cannot select to neglect feedback on species 2 for intra-species collisions.");
+        }
+        if (m_CoulombLog <= 0) {
+            amrex::Abort("You have to provide the Coulomb log, when neglecting the feedback on species 2.");
+        }
+    }
+
 }
 
 void
@@ -214,42 +226,126 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
-        // Loop over cells
-        amrex::ParallelForRNG( n_cells,
-            [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
-            {
-                // The particles from species1 that are in the cell `i_cell` are
-                // given by the `indices_1[cell_start_1:cell_stop_1]`
-                index_type const cell_start_1 = cell_offsets_1[i_cell];
-                index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
-                // Same for species 2
-                index_type const cell_start_2 = cell_offsets_2[i_cell];
-                index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
+        if (m_neglect_feedback_on_species_2) {
+            // Approximation for faster collisions on GPU:
+            // by neglecting the feedback on species 2, we can run a kernel
+            // with one thread per macroparticle of species 1 without race condition
 
-                // ux from species1 can be accessed like this:
-                // ux_1[ indices_1[i] ], where i is between
-                // cell_start_1 (inclusive) and cell_start_2 (exclusive)
+            // Allocate array of indices, that gives a collision partner for each particle of species 1
+            amrex::Gpu::DeviceVector<int> idx_partner_vec;
+            idx_partner_vec.resize( ptile_1.numParticles() );
+            int* idx_partner = idx_partner_vec.data();
+            // Allocate arrays for local density
+            amrex::Gpu::DeviceVector<amrex::Real> n1_vec, n2_vec, n12_vec;
+            n1_vec.resize(n_cells); n2_vec.resize(n_cells); n12_vec.resize(n_cells);
+            amrex::Real* n1 = n1_vec.data();
+            amrex::Real* n2 = n2_vec.data();
+            amrex::Real* n12 = n12_vec.data();
+            // (do we need a synchronize to avoid that these arrays go out of scope?)
+            amrex::Real const L=m_CoulombLog;
 
-                // Do not collide if one species is missing in the cell
-                if ( cell_stop_1 - cell_start_1 < 1 ||
-                     cell_stop_2 - cell_start_2 < 1 ) return;
-                
-                // shuffle
-                ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
-                ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
+            // Loop over cells to form pairs of particles and compute local densities
+            amrex::ParallelForRNG( n_cells,
+                [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
+                {
+                    // The particles from species1 that are in the cell `i_cell` are
+                    // given by the `indices_1[cell_start_1:cell_stop_1]`
+                    index_type const cell_start_1 = cell_offsets_1[i_cell];
+                    index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
+                    // Same for species 2
+                    index_type const cell_start_2 = cell_offsets_2[i_cell];
+                    index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
+
+                    // Only continue if there are particles of species 1 in this cell
+                    if ( cell_stop_1 - cell_start_1 >= 1 ) {
+                        // Check if there are collision partners from species 2 in this cell
+                        if (cell_stop_2 - cell_start_2) {
+                            // No collision partners in this cell: set index to -1
+                            for (int i1 = cell_start_1; i1 < cell_stop_1; i1++) {
+                                idx_partner[i1] = -1;
+                            }
+                        } else {
+                            // Form the pairs
+                            // - First shuffle the particles of species 2 in this cell
+                            ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
+                            // - Then loop over particles of species 1 and pair them with species 2
+                            for (int i1 = cell_start_1; i1 < cell_stop_1; i1++) {
+                                // Cycle through particles of species 2 in this cell (modulo operation)
+                                int i2 = cell_start_2 + (i1-cell_start_1) % (cell_stop_2-cell_start_2);
+                                idx_partner[i1] = i2;
+                            // TODO: Compute local densities
+                            // PASS by reference!!
+                            // ComputeLocalDensities( n1[i_cell], n2[i_cell], n12[i_cell],
+                            //    w1, cell_start_1, cell_stop_1,
+                            //    w2, cell_start_2, cell_stop_2);
+                            }
+                        }
+                    }
+                }
+            );
+            // Loop over particles of species 1 to perform collisions and modify their momentum
+            amrex::ParallelForRNG( ptile_1.numParticles(),
+                [=] AMREX_GPU_DEVICE (int i1, amrex::RandomEngine const& engine) noexcept
+                {
+                    // Find collision partner from the pairs formed in previous kernel
+                    int const i2 = idx_partner[i1];
+                    if (i2 >= 0) { // Only continue if there is indeed a partner
+
+                        // Look up the local density
+                        // int const i_cell =
+                        amrex::Real const n1 = 1.;
+                        amrex::Real const n2 = 1.;
+                        amrex::Real const n12 = 1.;
+                        amrex::Real const lmdD = 0.;
+
+                        UpdateMomentumPerezElastic(
+                            ux_1[i1], uy_1[i1], uz_1[i1],
+                            ux_1[i2], uy_2[i2], uz_2[i2],
+                            n1, n2, n12, q1, m1, w_1[i1], q2, m2, w_2[i2],
+                            dt, L, lmdD, engine);
+                            // TODO: Add an argument to actually neglect the change of momentum
+                    }
+                }
+            );
+
+        } else {
+            // Take into account full feedback (regular algorithm)
+
+            // Loop over cells
+            amrex::ParallelForRNG( n_cells,
+                [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
+                {
+                    // The particles from species1 that are in the cell `i_cell` are
+                    // given by the `indices_1[cell_start_1:cell_stop_1]`
+                    index_type const cell_start_1 = cell_offsets_1[i_cell];
+                    index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
+                    // Same for species 2
+                    index_type const cell_start_2 = cell_offsets_2[i_cell];
+                    index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
+
+                    // Do not collide if one species is missing in the cell
+                    if ( cell_stop_1 - cell_start_1 < 1 ||
+                         cell_stop_2 - cell_start_2 < 1 ) return;
+
+                    // shuffle
+                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
+                    ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 #if defined WARPX_DIM_RZ
-                int ri = (i_cell - i_cell%nz) / nz;
-                auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+                    int ri = (i_cell - i_cell%nz) / nz;
+                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
-                // Call the function in order to perform collisions
-                ElasticCollisionPerez(
-                    cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
-                    indices_1, indices_2,
-                    ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
-                    q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
-                    dt*ndt, CoulombLog, dV, engine );
-            }
-        );
+                    // Call the function in order to perform collisions
+                    ElasticCollisionPerez(
+                        cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
+                        indices_1, indices_2,
+                        ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
+                        q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
+                        dt*ndt, CoulombLog, dV, engine );
+                }
+            );
+
+        } // end if (m_neglect_feedback_on_species_2)
+
     } // end if ( m_isSameSpecies)
 
 }
