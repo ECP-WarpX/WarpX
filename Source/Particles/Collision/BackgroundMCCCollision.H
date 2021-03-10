@@ -9,7 +9,7 @@
 
 #include "Particles/MultiParticleContainer.H"
 #include "CollisionBase.H"
-#include "CrossSectionHandler.H"
+#include "MCCProcess.H"
 #include <AMReX_ParmParse.H>
 
 class BackgroundMCCCollision
@@ -37,11 +37,12 @@ public:
      */
     void doBackgroundCollisionsWithinTile (
         WarpXParIter& pti,
-        WarpXParticleContainer& species1);
+        WarpXParticleContainer& species1,
+        WarpXParticleContainer& species2);
 
 private:
 
-    amrex::Vector< CrossSectionHandler > m_scattering_processes;
+    amrex::Vector< MCCProcess > m_scattering_processes;
 
     bool init_flag = false;
 

@@ -34,8 +34,8 @@ void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
-                         amrex::ParticleReal& uz, amrex::ParticleReal& uCOM_x,
-                         amrex::ParticleReal& uCOM_y, amrex::ParticleReal& uCOM_z,
+                         amrex::ParticleReal& uz, amrex::ParticleReal uCOM_x,
+                         amrex::ParticleReal uCOM_y, amrex::ParticleReal uCOM_z,
                          amrex::RandomEngine const& engine )
 {
     amrex::Real x, y, z;

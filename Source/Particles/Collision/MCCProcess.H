@@ -4,18 +4,19 @@
  *
  * License: ????
  */
-#ifndef WARPX_PARTICLES_COLLISION_CROSSSECTIONHANDLER_H_
-#define WARPX_PARTICLES_COLLISION_CROSSSECTIONHANDLER_H_
+#ifndef WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
+#define WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
 
 #include <AMReX_Vector.H>
 
-class CrossSectionHandler
+class MCCProcess
 {
 public:
 
-    CrossSectionHandler (
+    MCCProcess (
         const std::string scattering_process,
-        const std::string cross_section_file
+        const std::string cross_section_file,
+        const amrex::Real energy
     );
 
     /** Get the collision cross-section using a simple linear interpolator. If
@@ -58,4 +59,4 @@ private:
     amrex::Real m_energy_lo, m_energy_hi, m_sigma_lo, m_sigma_hi, m_dE;
 };
 
-#endif // WARPX_PARTICLES_COLLISION_CROSSSECTIONHANDLER_H_
+#endif // WARPX_PARTICLES_COLLISION_MCCPROCESS_H_

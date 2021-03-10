@@ -4,12 +4,13 @@
  *
  * License: ????
  */
-#include "CrossSectionHandler.H"
+#include "MCCProcess.H"
 #include "WarpX.H"
 
-CrossSectionHandler::CrossSectionHandler (
+MCCProcess::MCCProcess (
         const std::string scattering_process,
-        const std::string cross_section_file )
+        const std::string cross_section_file,
+        const amrex::Real energy )
 {
     amrex::Print() << "Reading file " << cross_section_file << " for "
         << scattering_process << " scattering cross-sections.\n";
@@ -30,12 +31,11 @@ CrossSectionHandler::CrossSectionHandler (
     m_sigma_hi = m_sigmas[m_grid_size-1];
     m_dE = m_energies[1] - m_energies[0];
 
-    // #TODO should fix this
-    energy_penalty = 0.0;
+    energy_penalty = energy;
 }
 
 amrex::Real
-CrossSectionHandler::getCrossSection ( amrex::Real E_coll ) const
+MCCProcess::getCrossSection ( amrex::Real E_coll ) const
 {
     if (E_coll < m_energy_lo)
     {
@@ -61,7 +61,7 @@ CrossSectionHandler::getCrossSection ( amrex::Real E_coll ) const
 }
 
 void
-CrossSectionHandler::readCrossSectionFile (
+MCCProcess::readCrossSectionFile (
     const std::string cross_section_file,
     amrex::Vector<amrex::Real>& energies,
     amrex::Vector<amrex::Real>& sigmas )
@@ -76,7 +76,7 @@ CrossSectionHandler::readCrossSectionFile (
 }
 
 void
-CrossSectionHandler::sanityCheckEnergyGrid (
+MCCProcess::sanityCheckEnergyGrid (
     const amrex::Vector<amrex::Real> energies )
 {
     // TODO insert sanity checking logic specifically checking
