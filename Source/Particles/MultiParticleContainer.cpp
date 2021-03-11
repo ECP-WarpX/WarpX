@@ -709,8 +709,15 @@ MultiParticleContainer::doFieldIonization (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
+        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+
             auto& src_tile = pc_source ->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product->ParticlesAt(lev, pti);
 
@@ -723,6 +730,13 @@ MultiParticleContainer::doFieldIonization (int lev,
                                                                    Filter, Copy, Transform);
 
             setNewParticleIDs(dst_tile, np_dst, num_added);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+            }
         }
     }
 }
@@ -1284,8 +1298,15 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
+        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+            
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrow(),
                                                          Ex[pti], Ey[pti], Ez[pti],
@@ -1305,6 +1326,13 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
             setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
             setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
+            
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+            }
         }
     }
 }
@@ -1345,8 +1373,15 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
+        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+            
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
                   pc_source->particle_runtime_comps["optical_depth_QSR"],
@@ -1370,6 +1405,13 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             cleanLowEnergyPhotons(
                                   dst_tile, np_dst, num_added,
                                   m_quantum_sync_photon_creation_energy_threshold);
+            
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+            }
         }
     }
 }
