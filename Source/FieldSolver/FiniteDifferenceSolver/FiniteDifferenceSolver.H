@@ -54,7 +54,7 @@ class FiniteDifferenceSolver
 
         void ApplySilverMuellerBoundary(
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
             amrex::Real const dt );
 
