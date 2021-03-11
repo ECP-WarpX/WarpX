@@ -1306,7 +1306,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
                 amrex::Gpu::synchronize();
             }
             Real wt = amrex::second();
-            
+
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrow(),
                                                          Ex[pti], Ey[pti], Ez[pti],
@@ -1326,7 +1326,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
             setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
             setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
-            
+
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
@@ -1381,7 +1381,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                 amrex::Gpu::synchronize();
             }
             Real wt = amrex::second();
-            
+
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
                   pc_source->particle_runtime_comps["optical_depth_QSR"],
@@ -1405,7 +1405,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             cleanLowEnergyPhotons(
                                   dst_tile, np_dst, num_added,
                                   m_quantum_sync_photon_creation_energy_threshold);
-            
+
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
