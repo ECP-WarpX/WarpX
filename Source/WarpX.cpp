@@ -61,6 +61,7 @@ int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 bool WarpX::fft_do_time_averaging = false;
+bool WarpX::two_stream_galilean = false;
 
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
@@ -800,6 +801,7 @@ WarpX::ReadParameters ()
         pp.query("current_correction", current_correction);
         pp.query("v_comoving", m_v_comoving);
         pp.query("do_time_averaging", fft_do_time_averaging);
+        pp.query("two_stream_galilean", two_stream_galilean);
 
         if (!fft_periodic_single_box && current_correction)
             amrex::Abort(
@@ -840,6 +842,12 @@ WarpX::ReadParameters ()
                 if (fft_do_time_averaging) {
                     amrex::Abort("Current correction not implemented for averaged Galilean algorithm");
                 }
+            }
+        }
+
+        if (two_stream_galilean) {
+            if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
+                amrex::Abort("Two-stream formulation available only with non-zero Galilean velocity");
             }
         }
 
@@ -1197,9 +1205,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_fp[y]"));
     Efield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_fp[z]"));
 
-    current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_fp[x]"));
-    current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
-    current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
+    const int ncomps_J = (WarpX::two_stream_galilean) ? 2 * ncomps : ncomps;
+    current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps_J,ngJ,tag("current_fp[x]"));
+    current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps_J,ngJ,tag("current_fp[y]"));
+    current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps_J,ngJ,tag("current_fp[z]"));
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[x]"));
     Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[y]"));
@@ -1216,7 +1225,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (deposit_charge)
     {
-        rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_fp"));
+        const int ncomps_rho = (WarpX::two_stream_galilean) ? 2 * 2 * ncomps : 2 * ncomps;
+        rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,ncomps_rho,ngRho,tag("rho_fp"));
     }
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
@@ -1283,7 +1293,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         bool const pml_flag_false = false;
         spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, dt[lev],
-            pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
+            pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging,
+            two_stream_galilean );
 #   endif
 #endif
     } // MaxwellSolverAlgo::PSATD
@@ -1414,7 +1425,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             bool const pml_flag_false = false;
             spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
                 nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, dt[lev],
-                pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
+                pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging,
+                two_stream_galilean );
 #   endif
 #endif
         } // MaxwellSolverAlgo::PSATD

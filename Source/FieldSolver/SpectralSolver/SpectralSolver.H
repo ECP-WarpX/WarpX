@@ -38,7 +38,8 @@ class SpectralSolver
                         const bool pml=false,
                         const bool periodic_single_box=false,
                         const bool update_with_rho=false,
-                        const bool fft_do_time_averaging=false);
+                        const bool fft_do_time_averaging=false,
+                        const bool two_stream_galilean=false);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`

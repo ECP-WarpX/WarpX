@@ -42,7 +42,8 @@ SpectralSolver::SpectralSolver(
                 const amrex::RealVect dx, const amrex::Real dt,
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
-                const bool fft_do_time_averaging) {
+                const bool fft_do_time_averaging,
+                const bool two_stream_galilean) {
 
     // Initialize all structures using the same distribution mapping dm
 
@@ -67,7 +68,8 @@ SpectralSolver::SpectralSolver(
         // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging);
+                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho,
+                fft_do_time_averaging, two_stream_galilean);
         }
     }
 

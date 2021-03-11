@@ -508,6 +508,7 @@ public:
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
+    static bool two_stream_galilean;
 
     // slice generation //
     static int num_slice_snapshots_lab;

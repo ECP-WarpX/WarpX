@@ -44,6 +44,7 @@ namespace {
 #endif
 
         using Idx = SpectralAvgFieldIndex;
+        using TwoIdx = SpectralFieldIndexTwoStream;
 
         // Perform forward Fourier transform
 #ifdef WARPX_DIM_RZ
@@ -75,6 +76,16 @@ namespace {
             solver.ForwardTransform(*rho, Idx::rho_old, 0);
             solver.ForwardTransform(*rho, Idx::rho_new, 1);
         }
+
+        if (WarpX::two_stream_galilean)
+        {
+            solver.ForwardTransform(*current[0], TwoIdx::Jx_2, 1);
+            solver.ForwardTransform(*current[1], TwoIdx::Jy_2, 1);
+            solver.ForwardTransform(*current[2], TwoIdx::Jz_2, 1);
+            solver.ForwardTransform(*rho, TwoIdx::rho_old_2, 2);
+            solver.ForwardTransform(*rho, TwoIdx::rho_new_2, 3);
+        }
+
 #ifdef WARPX_DIM_RZ
         if (WarpX::use_kspace_filter) {
             solver.ApplyFilter(Idx::rho_old);

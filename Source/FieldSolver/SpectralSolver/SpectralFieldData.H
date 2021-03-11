@@ -27,6 +27,11 @@ struct SpectralFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
 };
 
+struct SpectralFieldIndexTwoStream {
+  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new,
+         Jx_2, Jy_2, Jz_2, rho_old_2, rho_new_2, n_fields, divE=3 };
+};
+
 /* Index for the regular fields + averaged fields, when stored in spectral space */
 struct SpectralAvgFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };

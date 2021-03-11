@@ -28,7 +28,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Array<amrex::Real,3>& v_galilean,
             const amrex::Real dt,
             const bool update_with_rho,
-            const bool time_averaging);
+            const bool time_averaging,
+            const bool two_stream);
 
         // TODO Add Doxygen docs
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
@@ -38,7 +39,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         {
             if (m_time_averaging) {
                 return SpectralAvgFieldIndex::n_fields;
-            } else {
+            }
+            else if (m_two_stream) {
+                return SpectralFieldIndexTwoStream::n_fields;
+            }
+            else {
                 return SpectralFieldIndex::n_fields;
             }
         };
@@ -86,6 +91,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+        SpectralComplexCoefficients Y1_coef, Y2_coef, Y3_coef, Y4_coef;
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralRealCoefficients C1_coef, C3_coef, S1_coef, S3_coef;
@@ -104,6 +110,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
+        bool m_two_stream;
         bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD
