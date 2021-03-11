@@ -735,7 +735,7 @@ MultiParticleContainer::doFieldIonization (int lev,
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
@@ -1331,7 +1331,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
@@ -1410,7 +1410,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
