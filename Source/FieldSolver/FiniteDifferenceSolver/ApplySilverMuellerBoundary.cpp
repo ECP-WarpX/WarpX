@@ -13,11 +13,11 @@
 using namespace amrex;
 
 /**
- * \brief Update the E field at the boundary, using the Silver-Mueller condition
+ * \brief Update the B field at the boundary, using the Silver-Mueller condition
  */
 void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     amrex::Box domain_box,
     amrex::Real const dt ) {
 
