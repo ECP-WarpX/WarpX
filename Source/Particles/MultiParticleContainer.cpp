@@ -687,6 +687,8 @@ MultiParticleContainer::doFieldIonization (int lev,
 {
     WARPX_PROFILE("MultiParticleContainer::doFieldIonization()");
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
     for (auto& pc_source : allcontainers)
@@ -709,7 +711,6 @@ MultiParticleContainer::doFieldIonization (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
@@ -1266,6 +1267,8 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 {
     WARPX_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
     // in pc_product_ele and positrons in pc_product_pos
@@ -1298,7 +1301,6 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
@@ -1347,6 +1349,8 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 {
     WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process
     // create photons in pc_product_phot
@@ -1373,7 +1377,6 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
