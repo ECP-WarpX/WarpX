@@ -314,7 +314,7 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
 
                     UpdateMomentumPerezElastic(
                         ux_1[i1], uy_1[i1], uz_1[i1],
-                        ux_1[i2], uy_2[i2], uz_2[i2],
+                        ux_2[i2], uy_2[i2], uz_2[i2],
                         local_n1, local_n2, local_n12,
                         q1, m1, w_1[i1], q2, m2, w_2[i2],
                         dt, L, lmdD, engine,
