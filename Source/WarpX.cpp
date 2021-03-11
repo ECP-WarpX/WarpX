@@ -1234,8 +1234,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
-        if (!do_dive_cleaning)
-            rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_fp"));
 
 #   if (AMREX_SPACEDIM == 3)
         RealVect dx_vect(dx[0], dx[1], dx[2]);
@@ -1385,8 +1383,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
                 "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
-            if (!do_dive_cleaning)
-                rho_cp[lev] = std::make_unique<MultiFab>( amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_cp") );
 
 #   if (AMREX_SPACEDIM == 3)
             RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
