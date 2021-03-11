@@ -1350,7 +1350,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
     WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    
+
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process
     // create photons in pc_product_phot
