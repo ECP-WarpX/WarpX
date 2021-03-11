@@ -7,7 +7,6 @@
 #ifndef KERNELTIMER_H_
 #define KERNELTIMER_H_
 
-#ifdef AMREX_USE_GPU
 #include <limits.h>
 
 /**
@@ -65,5 +64,4 @@ private:
     long long int m_wt;
 };
 
-#endif
 #endif
