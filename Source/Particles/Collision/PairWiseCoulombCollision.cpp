@@ -61,7 +61,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
             {
                 amrex::Gpu::synchronize();
             }
-        amrex::Real wt = amrex::second();
+            amrex::Real wt = amrex::second();
 
             doCoulombCollisionsWithinTile( lev, mfi, species1, species2 );
 
