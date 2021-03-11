@@ -55,20 +55,23 @@ SpectralSolver::SpectralSolver(
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
+    m_is_galilean = (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.);
+    m_is_comoving = (v_comoving[0] != 0.) || (v_comoving[1] != 0.) || (v_comoving[2] != 0.);
+
     if (pml) {
         algorithm = std::make_unique<PMLPsatdAlgorithm>(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt);
     }
     else {
         // Comoving PSATD algorithm
-        if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
+        if (m_is_comoving && !m_is_galilean) {
             algorithm = std::make_unique<ComovingPsatdAlgorithm>(
                 k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
         }
         // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho,
+                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, v_comoving, dt, update_with_rho,
                 fft_do_time_averaging, two_stream_galilean);
         }
     }

@@ -26,6 +26,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const int norder_z,
             const bool nodal,
             const amrex::Array<amrex::Real,3>& v_galilean,
+            const amrex::Array<amrex::Real,3>& v_comoving,
             const amrex::Real dt,
             const bool update_with_rho,
             const bool time_averaging,
@@ -50,6 +51,12 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
 
         // TODO Add Doxygen docs
         void InitializeSpectralCoefficients (
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm,
+            const amrex::Real dt);
+
+        // TODO Add Doxygen docs
+        void InitializeSpectralCoefficientsTwoStream (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
@@ -107,6 +114,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
 
         // Other member variables
         amrex::Array<amrex::Real,3> m_v_galilean;
+        amrex::Array<amrex::Real,3> m_v_comoving;
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;

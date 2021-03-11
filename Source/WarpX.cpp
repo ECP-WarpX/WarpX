@@ -849,6 +849,9 @@ WarpX::ReadParameters ()
             if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
                 amrex::Abort("Two-stream formulation available only with non-zero Galilean velocity");
             }
+            if (m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
+                amrex::Abort("Two-stream formulation available only with non-zero comoving velocity");
+            }
         }
 
 #   ifdef WARPX_DIM_RZ

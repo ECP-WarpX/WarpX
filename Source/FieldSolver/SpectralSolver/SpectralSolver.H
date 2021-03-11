@@ -103,6 +103,9 @@ class SpectralSolver
     private:
         void ReadParameters ();
 
+        bool m_is_galilean;
+        bool m_is_comoving;
+
         // Store field in spectral space and perform the Fourier transforms
         SpectralFieldData field_data;
 
