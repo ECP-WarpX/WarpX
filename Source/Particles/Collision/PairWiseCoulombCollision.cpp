@@ -261,10 +261,10 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                     index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
 
                     // Only continue if there are particles of species 1 in this cell
-                    if ( cell_stop_1 - cell_start_1 < 1 ) return;
+                    if (cell_stop_1 - cell_start_1 < 1) return;
 
                     // Check if there are collision partners from species 2 in this cell
-                    if (cell_stop_2 - cell_start_2) {
+                    if (cell_stop_2 - cell_start_2 < 1) {
                         // No collision partners in this cell: set index to -1
                         for (int i1 = cell_start_1; i1 < cell_stop_1; i1++) {
                             idx_partner[i1] = -1;
