@@ -541,12 +541,15 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
 
-    Real scale_fac;
+    Real scale_fac = 0.0_rt;
+
+    if(num_ppc != 0){
 #if AMREX_SPACEDIM==3
-    scale_fac = dx[0]*dx[1]*dx[2]/num_ppc;
+        scale_fac = dx[0]*dx[1]*dx[2]/num_ppc;
 #elif AMREX_SPACEDIM==2
-    scale_fac = dx[0]*dx[1]/num_ppc;
+        scale_fac = dx[0]*dx[1]/num_ppc;
 #endif
+    }
 
     defineAllParticleTiles();
 
