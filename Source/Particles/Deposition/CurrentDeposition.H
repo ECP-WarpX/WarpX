@@ -65,6 +65,10 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
+#if !defined(AMREX_USE_GPU)
+    amrex::ignore_unused(cost, load_balance_costs_update_algo);
+#endif
+
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
@@ -343,6 +347,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     ignore_unused(n_rz_azimuthal_modes);
 #endif
 
+#if !defined(AMREX_USE_GPU)
+    amrex::ignore_unused(cost, load_balance_costs_update_algo);
+#endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
@@ -664,6 +671,10 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
         np_to_depose, dt, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in RZ geometry");
+#endif
+
+#if !defined(AMREX_USE_GPU)
+    amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 
 #if !(defined WARPX_DIM_RZ)
