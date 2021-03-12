@@ -969,11 +969,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
         // Coefficients always allocated
         Array4<Real> C = C_coef[mfi].array();
         Array4<Real> S_ck = S_ck_coef[mfi].array();
+
         Array4<Complex> X1 = X1_coef[mfi].array();
-        Array4<Complex> X2 = X2_coef[mfi].array();
-        Array4<Complex> X3 = X3_coef[mfi].array();
-        Array4<Complex> X4 = X4_coef[mfi].array();
-        Array4<Complex> T2 = T2_coef[mfi].array();
 
         Array4<Complex> Y1 = Y1_coef[mfi].array();
         Array4<Complex> Y2 = Y2_coef[mfi].array();
@@ -996,14 +993,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            // Calculate norm of unmodified k vector
-            const Real knorm = std::sqrt(
-                std::pow(kx[i], 2) +
-#if (AMREX_SPACEDIM==3)
-                std::pow(ky[j], 2) + std::pow(kz[k], 2));
-#else
-                std::pow(kz[j], 2));
-#endif
             // Calculate norm of modified k vector
             const Real knorm_s = std::sqrt(
                 std::pow(kx_s[i], 2) +
@@ -1023,42 +1012,128 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
             // Physical constants and imaginary unit
             constexpr Real c = PhysConst::c;
             constexpr Real c2 = c*c;
-            constexpr Real ep0 = PhysConst::ep0;
+            constexpr Real eps0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // Auxiliary coefficients used when update_with_rho=false
             const Real dt2 = dt * dt;
-            const Real dt3 = dt * dt2;
-            Complex X2_old, X3_old;
 
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (that is, nodal) finite-order
             // modified k vectors, to work correctly for both nodal and staggered simulations.
             // kc_dot_vg = 0 always with standard PSATD (zero Galilean velocity).
-            const Real kc_dot_vg = kx_c[i]*vg_x +
+            const Real w_c = kx_c[i]*vg_x +
 #if (AMREX_SPACEDIM==3)
                 ky_c[j]*vg_y + kz_c[k]*vg_z;
 #else
                 kz_c[j]*vg_z;
 #endif
+            const Real w2_c = w_c * w_c;
+            const Real w3_c = w_c * w_c * w_c;
 
-            const Real k_dot_v = kx[i]*vx +
+            const Real w = kx[i]*vx +
 #if (AMREX_SPACEDIM==3)
                 ky[j]*vy + kz_c[k]*vz;
 #else
                 kz[j]*vz;
 #endif
-            Y1(i,j,k) = 0._rt;
-            Y2(i,j,k) = 0._rt;
-            Y3(i,j,k) = 0._rt;
-            Y4(i,j,k) = 0._rt;
+            const Real om_c  = c * knorm_c;
+            const Real om2_c = om_c * om_c;
 
-            // Note that:
-            // - Y1 multiplies i*(k \times J) in the update equation for B
-            // - Y2 multiplies rho_new
-            // - Y3 multiplies rho_old
-            // - Y4 multiplies J in the update equation for E
+            const Real om_s  = c * knorm_s;
+            const Real om2_s = om_s * om_s;
 
+            Complex theta, theta_star;
+            theta      = amrex::exp(  I * w * dt * 0.5_rt);
+            theta_star = amrex::exp(- I * w * dt * 0.5_rt);
+
+            const Complex theta_c      = amrex::exp(  I * w_c * dt * 0.5_rt);
+            const Complex theta2_c     = amrex::exp(  I * w_c * dt);
+            const Complex theta_c_star = amrex::exp(- I * w_c * dt * 0.5_rt);
+
+            C(i,j,k) = std::cos(om_s * dt);
+
+            // S / om_s
+            if (om_s != 0.)
+            {
+                S_ck(i,j,k) = std::sin(om_s * dt) / om_s;
+            }
+            else // om_s = 0.
+            {
+                S_ck(i,j,k) = dt;
+            }
+
+            Complex chi1;
+            if ((om_s == 0.) && (w_c == 0.))
+            {
+                chi1 = dt2 * om2_c * 0.5;
+            }
+            else
+            {
+                chi1 = om2_c / (om2_s - w2_c) * (theta_c_star - theta_c * C(i,j,k)
+                       + I * w_c * theta_c * S_ck(i,j,k));
+            }
+
+            // Note: might need to add limit if((om_s == 0.) && (w_c == -w))
+            Complex psi1;
+            if ((om_s == 0.) && (w_c == 0.) && (w == 0.))
+            {
+                psi1 = dt2 * 0.5;
+            }
+            else
+            {
+                psi1 = (theta_star - theta2_c * theta * C(i,j,k)
+                       + I * (w_c + w) * theta2_c * theta * S_ck(i,j,k)) / (om2_s - std::pow(w_c + w, 2));
+            }
+
+            // Y1 (multiplies i*(ks \times J2) in the update equation for B)
+            Y1(i,j,k) = psi1 / eps0;
+
+            // Y2 (multiplies rho_new)
+            if (w == 0.)
+            {
+                if ((om_s == 0.) && (w_c == 0.))
+                {
+                    Y2(i,j,k) = dt2 * c2 / (6. * eps0);
+                }
+                else
+                {
+                    Y2(i,j,k) = c2 * (dt * om2_s - dt * w2_c - om2_s * theta2_c * S_ck(i,j,k)
+                                - 2. * I * w_c * theta2_c * C(i,j,k) + 2. * I * w_c
+                                - w2_c * theta2_c * S_ck(i,j,k)) / (dt * eps0 * std::pow(om2_s - w2_c, 2));
+                }
+            }
+            else // w != 0.
+            {
+                Y2(i,j,k) = c2 * (Y1(i,j,k) - theta * X1(i,j,k)) / (theta_star - theta);
+            }
+
+            // Y3 (multiplies rho_old)
+            if (w == 0.)
+            {
+                if ((om_s == 0.) && (w_c == 0.))
+                {
+                    Y3(i,j,k) = - dt2 * c2 / (3. * eps0);
+                }
+                else
+                {
+                    Y3(i,j,k) = c2 * (dt * om2_s * theta2_c * C(i,j,k)
+                                - I * dt * om2_s * w_c * theta2_c * S_ck(i,j,k)
+                                - dt * w2_c * theta2_c * C(i,j,k)
+                                + I * dt * w3_c * theta2_c * S_ck(i,j,k)
+                                - om2_s * theta2_c * S_ck(i,j,k)
+                                - 2. * I * w_c * theta2_c * C(i,j,k)
+                                + 2. * I * w_c - w2_c * theta2_c * S_ck(i,j,k))
+                                / (dt * eps0 * std::pow(om2_s - w2_c, 2));
+                }
+            }
+            else // w != 0.
+            {
+                Y3(i,j,k) = c2 * (Y1(i,j,k) - theta_star * X1(i,j,k)) / (theta_star - theta);
+            }
+
+            // Y4 (multiplies J in the update equation for E)
+            Y4(i,j,k) = I * (w_c + w) * Y1(i,j,k) - theta2_c * theta * S_ck(i,j,k) / eps0;
         });
     }
 }
