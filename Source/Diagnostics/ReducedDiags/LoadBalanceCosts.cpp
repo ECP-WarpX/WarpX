@@ -87,7 +87,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = tbx.loVect()[1];
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = 0.0;
-#ifdef WARPX_DIM_3D
+#endif
 #if (AMREX_SPACEDIM == 3)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = tbx.loVect()[2];
 #else
