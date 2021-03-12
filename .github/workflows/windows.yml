@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build_win_msvc:
+    if: false
     name: MSVC C++17 w/o MPI
     runs-on: windows-latest
     steps:
@@ -14,6 +15,7 @@ jobs:
         cmake --build build --config Debug --parallel 2
 
   build_win_clang:
+    if: false
     name: Clang C++17 w/ OMP w/o MPI
     runs-on: windows-2019
     steps:

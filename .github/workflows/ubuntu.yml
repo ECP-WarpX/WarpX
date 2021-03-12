@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build_cxxminimal:
+    if: false
     name: GCC Minimal w/o MPI [Linux]
     runs-on: ubuntu-20.04
     steps:
@@ -20,6 +21,7 @@ jobs:
         cmake --build build -j 2
 
   build_pyfull:
+    if: false
     name: Clang pywarpx [Linux]
     runs-on: ubuntu-20.04
     steps:
@@ -48,6 +50,7 @@ jobs:
 #   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
 #   https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/
   build_nvcc:
+    if: false
     name: NVCC 11.0.2 SP [Linux]
     runs-on: ubuntu-18.04
     steps:
@@ -83,6 +86,7 @@ jobs:
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
   build_icc:
+    if: false
     name: oneAPI ICC SP&DP [Linux]
     runs-on: ubuntu-20.04
     steps:
@@ -133,6 +137,7 @@ jobs:
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip install -v .
 
   build_icpx:
+    if: false
     name: oneAPI ICX SP [Linux]
     runs-on: ubuntu-20.04
     steps:
@@ -220,6 +225,7 @@ jobs:
      # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
   build_hip:
+    if: false
     name: HIP SP [Linux]
     runs-on: ubuntu-20.04
     steps:

@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build_gcc9:
+    if: false
     name: AppleClang [macOS]
     runs-on: macos-latest
     steps:
