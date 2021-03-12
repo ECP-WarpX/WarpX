@@ -129,11 +129,11 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
         const amrex::Real dt = WarpX::GetInstance().getdt(lev);
         amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
         amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
-        const auto lo = lbound(cbx);
-        const auto hi = ubound(cbx);
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
+        const auto lo = lbound(cbx);
+        const auto hi = ubound(cbx);
         int const nz = hi.y-lo.y+1;
         auto dr = geom.CellSize(0);
         auto dz = geom.CellSize(1);
@@ -214,12 +214,12 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
         const amrex::Real dt = WarpX::GetInstance().getdt(lev);
         amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
         amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
-        const auto lo = lbound(cbx);
-        const auto hi = ubound(cbx);
-        int nz = hi.y-lo.y+1;
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
+        const auto lo = lbound(cbx);
+        const auto hi = ubound(cbx);
+        int nz = hi.y-lo.y+1;
         auto dr = geom.CellSize(0);
         auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
