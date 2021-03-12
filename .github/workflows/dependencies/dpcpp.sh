@@ -29,11 +29,10 @@ sudo apt-get install -y --no-install-recommends \
 du -sh /opt/intel/oneapi/
 du -sh /opt/intel/oneapi/*/*
 sudo rm -rf /opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sycl.a \
+            /opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.a \
+            /opt/intel/oneapi/mkl/latest/lib/intel64/*.a           \
             /opt/intel/oneapi/compiler/latest/linux/lib/oclfpga    \
             /opt/intel/oneapi/compiler/latest/linux/lib/emu
-du -sh /opt/intel/oneapi/
-du -sh /opt/intel/oneapi/*/*
-sudo rm -rf /opt/intel/oneapi/mkl/latest/lib/intel64/*.a
 du -sh /opt/intel/oneapi/
 du -sh /opt/intel/oneapi/*/*
 df -h
