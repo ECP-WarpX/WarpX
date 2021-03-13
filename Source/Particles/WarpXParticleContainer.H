@@ -347,6 +347,7 @@ protected:
     std::map<std::string, int> particle_runtime_icomps;
 
     int species_id;
+    bool is_comoving = false;
 
     amrex::Real charge;
     amrex::Real mass;

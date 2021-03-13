@@ -173,6 +173,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // Scale the Galilean velocity by the speed of light
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
+    std::vector<std::string> comoving_species;
+    pp_psatd.queryarr("comoving_species", comoving_species);
+    // Loop over comoving species (with two-stream Galilean algorithm)
+    for (const auto& this_comoving_species : comoving_species) {
+        if (species_name == this_comoving_species) is_comoving = true;
+    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
