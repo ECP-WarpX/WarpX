@@ -1053,8 +1053,8 @@ PhysicalParticleContainer::Evolve (int lev,
                 } else {
                     ion_lev = nullptr;
                 }
-                // icomp = 0 for rho_old, icomp = 1 for rho_old_2
-                int icomp = (comoving) ? 1 : 0;
+                // icomp = 0 for rho_old, icomp = 2 for rho_old_2
+                int icomp = (comoving) ? 2 : 0;
                 DepositCharge(pti, wp, ion_lev, rho, icomp, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer){
@@ -1127,14 +1127,14 @@ PhysicalParticleContainer::Evolve (int lev,
                         ion_lev = nullptr;
                     }
                     // Deposit inside domains
+                    // icomp = 0 for J, icomp = 1 for J_2
+                    int icomp = (comoving) ? 1 : 0;
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
-                                   0, np_current, thread_num,
-                                   lev, lev, dt);
+                                   icomp, 0, np_current, thread_num, lev, lev, dt);
                     if (has_buffer){
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
-                                       np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt);
+                                       0, np_current, np-np_current, thread_num, lev, lev-1, dt);
                     }
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
@@ -1149,8 +1149,8 @@ PhysicalParticleContainer::Evolve (int lev,
                     } else {
                         ion_lev = nullptr;
                     }
-                    // icomp = 2 for rho_new, icomp = 3 for rho_new_2
-                    int icomp = (comoving) ? 3 : 2;
+                    // icomp = 1 for rho_new, icomp = 3 for rho_new_2
+                    int icomp = (comoving) ? 3 : 1;
                     DepositCharge(pti, wp, ion_lev, rho, icomp, 0,
                                   np_current, thread_num, lev, lev);
                     if (has_buffer){

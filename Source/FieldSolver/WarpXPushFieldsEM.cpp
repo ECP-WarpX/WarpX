@@ -74,7 +74,7 @@ namespace {
 
         if (rho) {
             solver.ForwardTransform(*rho, Idx::rho_old, 0);
-            solver.ForwardTransform(*rho, Idx::rho_new, 2);
+            solver.ForwardTransform(*rho, Idx::rho_new, 1);
         }
 
         if (WarpX::two_stream_galilean)
@@ -82,7 +82,7 @@ namespace {
             solver.ForwardTransform(*current[0], TwoIdx::Jx_2, 1);
             solver.ForwardTransform(*current[1], TwoIdx::Jy_2, 1);
             solver.ForwardTransform(*current[2], TwoIdx::Jz_2, 1);
-            solver.ForwardTransform(*rho, TwoIdx::rho_old_2, 1);
+            solver.ForwardTransform(*rho, TwoIdx::rho_old_2, 2);
             solver.ForwardTransform(*rho, TwoIdx::rho_new_2, 3);
         }
 

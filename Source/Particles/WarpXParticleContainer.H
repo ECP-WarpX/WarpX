@@ -221,6 +221,7 @@ public:
                                 amrex::MultiFab* jx,
                                 amrex::MultiFab* jy,
                                 amrex::MultiFab* jz,
+                                const int icomp,
                                 const long offset,
                                 const long np_to_depose,
                                 int thread_num,

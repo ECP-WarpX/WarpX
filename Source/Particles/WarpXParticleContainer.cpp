@@ -233,9 +233,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                                        RealVector& uyp, RealVector& uzp,
                                        const int * const ion_lev,
                                        MultiFab* jx, MultiFab* jy, MultiFab* jz,
-                                       const long offset, const long np_to_depose,
-                                       int thread_num, int lev, int depos_lev,
-                                       Real dt)
+                                       const int icomp, const long offset,
+                                       const long np_to_depose, int thread_num,
+                                       int lev, int depos_lev, Real dt)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -306,15 +306,20 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     tilebox.grow(ng_J);
 
+    const int nc = WarpX::ncomps;
+
 #ifdef AMREX_USE_GPU
     amrex::ignore_unused(thread_num);
     // GPU, no tiling: j<xyz>_arr point to the full j<xyz> arrays
-    auto & jx_fab = jx->get(pti);
-    auto & jy_fab = jy->get(pti);
-    auto & jz_fab = jz->get(pti);
-    Array4<Real> const& jx_arr = jx->array(pti);
-    Array4<Real> const& jy_arr = jy->array(pti);
-    Array4<Real> const& jz_arr = jz->array(pti);
+    MultiFab jx_al(*jx, amrex::make_alias, icomp*nc, nc);
+    MultiFab jy_al(*jy, amrex::make_alias, icomp*nc, nc);
+    MultiFab jz_al(*jz, amrex::make_alias, icomp*nc, nc);
+    auto & jx_fab = jx_al.get(pti);
+    auto & jy_fab = jy_al.get(pti);
+    auto & jz_fab = jz_al.get(pti);
+    Array4<Real> const& jx_arr = jx_al.array(pti);
+    Array4<Real> const& jy_arr = jy_al.array(pti);
+    Array4<Real> const& jz_arr = jz_al.array(pti);
 #else
     tbx.grow(ng_J);
     tby.grow(ng_J);
@@ -441,9 +446,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 #ifndef AMREX_USE_GPU
     // CPU, tiling: atomicAdd local_j<xyz> into j<xyz>
     WARPX_PROFILE_VAR_START(blp_accumulate);
-    (*jx)[pti].atomicAdd(local_jx[thread_num], tbx, tbx, 0, 0, jx->nComp());
-    (*jy)[pti].atomicAdd(local_jy[thread_num], tby, tby, 0, 0, jy->nComp());
-    (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
+    (*jx)[pti].atomicAdd(local_jx[thread_num], tbx, tbx, 0, icomp*nc, nc);
+    (*jy)[pti].atomicAdd(local_jy[thread_num], tby, tby, 0, icomp*nc, nc);
+    (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, icomp*nc, nc);
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
 }
