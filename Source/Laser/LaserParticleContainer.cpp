@@ -407,7 +407,7 @@ LaserParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
-                                Real t, Real dt, DtType /*a_dt_type*/)
+                                Real t, Real dt, DtType /*a_dt_type*/, const bool /*comoving*/)
 {
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);

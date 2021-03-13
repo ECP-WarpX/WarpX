@@ -334,7 +334,7 @@ MultiParticleContainer::Evolve (int lev,
     if (crho) crho->setVal(0.0);
     for (auto& pc : allcontainers) {
         pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg, jx, jy, jz, cjx, cjy, cjz,
-                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type);
+                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, pc->is_comoving);
     }
 }
 

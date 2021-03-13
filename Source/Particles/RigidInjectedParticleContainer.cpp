@@ -349,9 +349,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                         MultiFab* rho, MultiFab* crho,
                                         const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                         const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                        Real t, Real dt, DtType a_dt_type)
+                                        Real t, Real dt, DtType a_dt_type, const bool comoving)
 {
-
     // Update location of injection plane in the boosted frame
     zinject_plane_lev_previous = zinject_plane_levels[lev];
     zinject_plane_levels[lev] -= dt*WarpX::beta_boost*PhysConst::c;
@@ -378,7 +377,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, a_dt_type);
+                                       t, dt, a_dt_type, comoving);
 }
 
 void

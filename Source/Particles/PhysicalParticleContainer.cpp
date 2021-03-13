@@ -943,7 +943,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                    MultiFab* rho, MultiFab* crho,
                                    const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                   Real /*t*/, Real dt, DtType a_dt_type)
+                                   Real /*t*/, Real dt, DtType a_dt_type, const bool comoving)
 {
 
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
@@ -1053,7 +1053,9 @@ PhysicalParticleContainer::Evolve (int lev,
                 } else {
                     ion_lev = nullptr;
                 }
-                DepositCharge(pti, wp, ion_lev, rho, 0, 0,
+                // icomp = 0 for rho_old, icomp = 1 for rho_old_2
+                int icomp = (comoving) ? 1 : 0;
+                DepositCharge(pti, wp, ion_lev, rho, icomp, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer){
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
@@ -1147,7 +1149,9 @@ PhysicalParticleContainer::Evolve (int lev,
                     } else {
                         ion_lev = nullptr;
                     }
-                    DepositCharge(pti, wp, ion_lev, rho, 1, 0,
+                    // icomp = 2 for rho_new, icomp = 3 for rho_new_2
+                    int icomp = (comoving) ? 3 : 2;
+                    DepositCharge(pti, wp, ion_lev, rho, icomp, 0,
                                   np_current, thread_num, lev, lev);
                     if (has_buffer){
                         DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
