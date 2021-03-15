@@ -801,6 +801,15 @@ WarpX::ReadParameters ()
         pp.query("v_comoving", m_v_comoving);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
+        if (!fft_periodic_single_box && current_correction)
+            amrex::Abort(
+                    "\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
+                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+        if (!fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
+            amrex::Abort(
+                    "\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
+                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+
         // Check whether the default Galilean velocity should be used
         bool use_default_v_galilean = false;
         pp.query("use_default_v_galilean", use_default_v_galilean);
