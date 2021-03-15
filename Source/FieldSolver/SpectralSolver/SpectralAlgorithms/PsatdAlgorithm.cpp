@@ -1064,7 +1064,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
             else
             {
                 psi1 = (theta_star - theta2_c * theta * C(i,j,k)
-                       + I * (w_c + w) * theta2_c * theta * S_ck(i,j,k)) / (om2_s - std::pow(w_c + w, 2));
+                       + I * (w_c + w) * theta2_c * theta * S_ck(i,j,k)) / (om2_s - (w_c + w) * (w_c + w));
             }
 
             // Y1 (multiplies i*(ks \times J2) in the update equation for B)
@@ -1081,7 +1081,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
                 {
                     Y2(i,j,k) = c2 * (dt * om2_s - dt * w2_c - om2_s * theta2_c * S_ck(i,j,k)
                                 - 2._rt * I * w_c * theta2_c * C(i,j,k) + 2._rt * I * w_c
-                                - w2_c * theta2_c * S_ck(i,j,k)) / (dt * eps0 * std::pow(om2_s - w2_c, 2));
+                                - w2_c * theta2_c * S_ck(i,j,k)) / (dt * eps0 * (om2_s - w2_c) * (om2_s - w2_c));
                 }
             }
             else // w != 0.
@@ -1105,7 +1105,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
                                 - om2_s * theta2_c * S_ck(i,j,k)
                                 - 2._rt * I * w_c * theta2_c * C(i,j,k)
                                 + 2._rt * I * w_c - w2_c * theta2_c * S_ck(i,j,k))
-                                / (dt * eps0 * std::pow(om2_s - w2_c, 2));
+                                / (dt * eps0 * (om2_s - w2_c) * (om2_s - w2_c));
                 }
             }
             else // w != 0.
