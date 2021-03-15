@@ -1027,7 +1027,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
 
             const Real w = kx[i]*vx +
 #if (AMREX_SPACEDIM==3)
-                ky[j]*vy + kz_c[k]*vz;
+                ky[j]*vy + kz[k]*vz;
 #else
                 kz[j]*vz;
 #endif
@@ -1035,9 +1035,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
             const Real om_s  = c * knorm_s;
             const Real om2_s = om_s * om_s;
 
-            Complex theta, theta_star;
-            theta      = amrex::exp(  I * w * dt * 0.5_rt);
-            theta_star = amrex::exp(- I * w * dt * 0.5_rt);
+            const Complex theta      = amrex::exp(  I * w * dt * 0.5_rt);
+            const Complex theta_star = amrex::exp(- I * w * dt * 0.5_rt);
 
             const Complex theta_c      = amrex::exp(  I * w_c * dt * 0.5_rt);
             const Complex theta2_c     = amrex::exp(  I * w_c * dt);
