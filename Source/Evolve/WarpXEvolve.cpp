@@ -125,6 +125,17 @@ WarpX::Evolve (int numsteps)
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
         }
+
+        // Run multi-physics modules:
+        // ionization, Coulomb collisions, QED Schwinger
+        doFieldIonization();
+        mypc->doCollisions( cur_time );
+#ifdef WARPX_QED
+        mypc->doQEDSchwinger();
+#endif
+
+        // Main PIC operation:
+        // gather fields, push particles, deposit sources, update fields
         if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
             // E : guard cells are up-to-date
@@ -136,6 +147,16 @@ WarpX::Evolve (int numsteps)
             amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
             amrex::Abort("Unsupported do_subcycling type");
         }
+
+        // Run remaining QED modules
+#ifdef WARPX_QED
+        doQEDEvents();
+#endif
+
+        // Resample particles
+        // +1 is necessary here because value of step seen by user (first step is 1) is different than
+        // value of step in code (first step is 0)
+        mypc->doResampling(istep[0]+1);
 
         if (num_mirrors>0){
             applyMirrors(cur_time);
@@ -278,14 +299,6 @@ void
 WarpX::OneStep_nosub (Real cur_time)
 {
 
-    // Loop over species. For each ionizable species, create particles in
-    // product species.
-    doFieldIonization();
-
-    mypc->doCollisions( cur_time );
-#ifdef WARPX_QED
-    mypc->doQEDSchwinger();
-#endif
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
@@ -310,14 +323,6 @@ WarpX::OneStep_nosub (Real cur_time)
                     "\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
     }
-
-#ifdef WARPX_QED
-    doQEDEvents();
-#endif
-
-    // +1 is necessary here because value of step seen by user (first step is 1) is different than
-    // value of step in code (first step is 0)
-    mypc->doResampling(istep[0]+1);
 
     // Synchronize J and rho
     SyncCurrent();
@@ -424,17 +429,6 @@ WarpX::OneStep_sub1 (Real curtime)
     }
 
     // TODO: we could save some charge depositions
-    // Loop over species. For each ionizable species, create particles in
-    // product species.
-    doFieldIonization();
-
-#ifdef WARPX_QED
-    doQEDEvents();
-#endif
-
-    // +1 is necessary here because value of step seen by user (first step is 1) is different than
-    // value of step in code (first step is 0)
-    mypc->doResampling(istep[0]+1);
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;
