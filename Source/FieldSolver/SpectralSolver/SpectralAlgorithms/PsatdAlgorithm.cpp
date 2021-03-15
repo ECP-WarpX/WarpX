@@ -1002,14 +1002,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
 #else
                 std::pow(kz_s[j], 2));
 #endif
-            // Calculate norm of modified k vector (centered)
-            const Real knorm_c = std::sqrt(
-                std::pow(kx_c[i], 2) +
-#if (AMREX_SPACEDIM==3)
-                std::pow(ky_c[j], 2) + std::pow(kz_c[k], 2));
-#else
-                std::pow(kz_c[j], 2));
-#endif
+
             // Physical constants and imaginary unit
             constexpr Real c = PhysConst::c;
             constexpr Real c2 = c*c;
@@ -1038,8 +1031,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
 #else
                 kz[j]*vz;
 #endif
-            const Real om_c  = c * knorm_c;
-            const Real om2_c = om_c * om_c;
 
             const Real om_s  = c * knorm_s;
             const Real om2_s = om_s * om_s;
@@ -1064,22 +1055,11 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
                 S_ck(i,j,k) = dt;
             }
 
-            Complex chi1;
-            if ((om_s == 0.) && (w_c == 0.))
-            {
-                chi1 = dt2 * om2_c * 0.5;
-            }
-            else
-            {
-                chi1 = om2_c / (om2_s - w2_c) * (theta_c_star - theta_c * C(i,j,k)
-                       + I * w_c * theta_c * S_ck(i,j,k));
-            }
-
             // Note: might need to add limit if((om_s == 0.) && (w_c == -w))
             Complex psi1;
             if ((om_s == 0.) && (w_c == 0.) && (w == 0.))
             {
-                psi1 = dt2 * 0.5;
+                psi1 = dt2 * 0.5_rt;
             }
             else
             {
@@ -1095,12 +1075,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
             {
                 if ((om_s == 0.) && (w_c == 0.))
                 {
-                    Y2(i,j,k) = dt2 * c2 / (6. * eps0);
+                    Y2(i,j,k) = dt2 * c2 / (6._rt * eps0);
                 }
                 else
                 {
                     Y2(i,j,k) = c2 * (dt * om2_s - dt * w2_c - om2_s * theta2_c * S_ck(i,j,k)
-                                - 2. * I * w_c * theta2_c * C(i,j,k) + 2. * I * w_c
+                                - 2._rt * I * w_c * theta2_c * C(i,j,k) + 2._rt * I * w_c
                                 - w2_c * theta2_c * S_ck(i,j,k)) / (dt * eps0 * std::pow(om2_s - w2_c, 2));
                 }
             }
@@ -1114,7 +1094,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
             {
                 if ((om_s == 0.) && (w_c == 0.))
                 {
-                    Y3(i,j,k) = - dt2 * c2 / (3. * eps0);
+                    Y3(i,j,k) = - dt2 * c2 / (3._rt * eps0);
                 }
                 else
                 {
@@ -1123,8 +1103,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
                                 - dt * w2_c * theta2_c * C(i,j,k)
                                 + I * dt * w3_c * theta2_c * S_ck(i,j,k)
                                 - om2_s * theta2_c * S_ck(i,j,k)
-                                - 2. * I * w_c * theta2_c * C(i,j,k)
-                                + 2. * I * w_c - w2_c * theta2_c * S_ck(i,j,k))
+                                - 2._rt * I * w_c * theta2_c * C(i,j,k)
+                                + 2._rt * I * w_c - w2_c * theta2_c * S_ck(i,j,k))
                                 / (dt * eps0 * std::pow(om2_s - w2_c, 2));
                 }
             }
