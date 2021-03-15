@@ -5,6 +5,7 @@ target_sources(WarpX
     PhysicalParticleContainer.cpp
     RigidInjectedParticleContainer.cpp
     WarpXParticleContainer.cpp
+    LaserParticleContainer.cpp
 )
 
 add_subdirectory(Collision)
