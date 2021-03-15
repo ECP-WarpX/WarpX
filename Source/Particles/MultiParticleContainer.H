@@ -15,7 +15,7 @@
 #include "WarpXParticleContainer.H"
 #include "PhysicalParticleContainer.H"
 #include "PhotonParticleContainer.H"
-#include "Laser/LaserParticleContainer.H"
+#include "LaserParticleContainer.H"
 #include "Parser/WarpXParserWrapper.H"
 #include "Particles/Collision/CollisionHandler.H"
 #include "Particles/ParticleCreation/SmartUtils.H"
