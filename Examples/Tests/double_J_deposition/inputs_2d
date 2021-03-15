@@ -23,7 +23,7 @@ interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
 
-psatd.do_time_averaging = 1
+psatd.do_time_averaging = 0
 psatd.use_default_v_galilean = 1
 
 warpx.gamma_boost = 10.
