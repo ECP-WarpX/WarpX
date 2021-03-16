@@ -1401,7 +1401,7 @@ Numerics and algorithms
      If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
- * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
+ * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
