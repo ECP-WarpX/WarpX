@@ -1038,9 +1038,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
             const Complex theta      = amrex::exp(  I * w * dt * 0.5_rt);
             const Complex theta_star = amrex::exp(- I * w * dt * 0.5_rt);
 
-            const Complex theta_c      = amrex::exp(  I * w_c * dt * 0.5_rt);
-            const Complex theta2_c     = amrex::exp(  I * w_c * dt);
-            const Complex theta_c_star = amrex::exp(- I * w_c * dt * 0.5_rt);
+            const Complex theta2_c = amrex::exp(I * w_c * dt);
 
             C(i,j,k) = std::cos(om_s * dt);
 
