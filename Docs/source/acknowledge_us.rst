@@ -37,4 +37,4 @@ Main WarpX reference
 
     <div id="ref-VayNIM2018">
 
-Vay JL, Almgren A, Bell J, Ge L, Grote DP, Hogan M, Kononenko O, Lehe R, Myers A, Ng C, Park J. **Warp-X: A new exascale computing platform for beam–plasma simulations**. *Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment*. 2018, 909, pp.476-479. https://doi.org/10.1016/j.nima.2018.01.035
+Vay JL, Huebl A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Jambunathan R. **Modeling of a chain of three plasma accelerator stages with the WarpX electromagnetic PIC code on GPUs**. *Physics of Plasmas*. 2021 Feb 9;28(2):023105. https://doi.org/10.1063/5.0028512
