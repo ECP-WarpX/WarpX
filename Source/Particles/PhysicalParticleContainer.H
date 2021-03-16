@@ -192,7 +192,8 @@ public:
     */
     void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
-    void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z, std::array<amrex::Real, 3>& u);
+    void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
+                                    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
 
     void AddGaussianBeam (
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
@@ -209,7 +210,7 @@ public:
 
     void CheckAndAddParticle (
         amrex::Real x, amrex::Real y, amrex::Real z,
-        std::array<amrex::Real, 3> u,
+        amrex::Real ux, amrex::Real uy, amrex::Real uz,
         amrex::Real weight,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_x,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_y,
