@@ -32,7 +32,7 @@ Please add the following sentence to your publications, it helps contributors ke
 
 Main WarpX reference
 ********************
-  
+
 .. raw:: html
 
     <div id="ref-VayNIM2018">
