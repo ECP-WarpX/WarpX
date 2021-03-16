@@ -78,6 +78,10 @@ long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
+amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
+amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
+amrex::Vector<int> WarpX::particle_boundary_lo(AMREX_SPACEDIM,0);
+amrex::Vector<int> WarpX::particle_boundary_hi(AMREX_SPACEDIM,0);
 
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;

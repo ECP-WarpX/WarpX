@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
 #endif
 
     ConvertLabParamsToBoost();
+    ReadBCParams();
 
 #ifdef WARPX_DIM_RZ
     CheckGriddingForRZSpectral();
