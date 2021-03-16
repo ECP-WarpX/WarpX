@@ -4,8 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <PMLGalileanAlgorithm.H>
-#include <WarpXConst.H>
+#include "PMLGalileanAlgorithm.H"
+#include "Utils/WarpXConst.H"
+
 #include <cmath>
 
 using namespace amrex;
@@ -163,7 +164,7 @@ void PMLGalileanAlgorithm::InitializeSpectralCoefficients (
 #else
                                  modified_kz[j]*vz;
 #endif
-                Theta2(i,j,k) = MathFunc::exp( I*kv*dt );
+                Theta2(i,j,k) = amrex::exp( I*kv*dt );
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k) = 1.;
                 S_ck(i,j,k) = dt;
