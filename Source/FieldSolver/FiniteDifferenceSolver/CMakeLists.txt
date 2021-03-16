@@ -9,6 +9,7 @@ target_sources(WarpX
     EvolveFPML.cpp
     FiniteDifferenceSolver.cpp
     MacroscopicEvolveE.cpp
+    ApplySilverMuellerBoundary.cpp
 )
 
 add_subdirectory(MacroscopicProperties)

@@ -20,6 +20,7 @@ public:
 
     /** Perform the collisions
      *
+     * @param lev AMR level of the tile
      * @param cur_time Current time
      * @param mypc Container of species involved
      *
@@ -28,7 +29,6 @@ public:
 
     /** Perform all binary collisions within a tile
      *
-     * @param lev AMR level of the tile
      * @param mfi iterator for multifab
      * @param species1/2 pointer to species container
      *

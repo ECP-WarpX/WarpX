@@ -226,7 +226,8 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
 }
 
 void
-PMLPsatdAlgorithm::CurrentCorrection (SpectralFieldData& /*field_data*/,
+PMLPsatdAlgorithm::CurrentCorrection (const int /*lev*/,
+                                      SpectralFieldData& /*field_data*/,
                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
                                       const std::unique_ptr<amrex::MultiFab>& /*rho*/)
 {
@@ -234,7 +235,8 @@ PMLPsatdAlgorithm::CurrentCorrection (SpectralFieldData& /*field_data*/,
 }
 
 void
-PMLPsatdAlgorithm::VayDeposition (SpectralFieldData& /*field_data*/,
+PMLPsatdAlgorithm::VayDeposition (const int /*lev*/,
+                                  SpectralFieldData& /*field_data*/,
                                   std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for PML PSATD");

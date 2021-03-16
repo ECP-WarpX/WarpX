@@ -554,6 +554,10 @@ WarpX::ReadParameters ()
         }
 
         pp.query("do_pml", do_pml);
+        pp.query("do_silver_mueller", do_silver_mueller);
+        if ( (do_pml==1)&&(do_silver_mueller==1) ) {
+            amrex::Abort("PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
+        }
         pp.query("pml_ncell", pml_ncell);
         pp.query("pml_delta", pml_delta);
         pp.query("pml_has_particles", pml_has_particles);
@@ -1271,8 +1275,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         }
-        spectral_solver_fp[lev] = std::make_unique<SpectralSolverRZ>( realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev, update_with_rho );
+        spectral_solver_fp[lev] = std::make_unique<SpectralSolverRZ>( lev, realspace_ba, dm,
+            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], update_with_rho );
         if (use_kspace_filter) {
             spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
         }
@@ -1281,7 +1285,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.grow(ngE); // add guard cells
         }
         bool const pml_flag_false = false;
-        spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( realspace_ba, dm,
+        spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
@@ -1404,15 +1408,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             // Define spectral solver
 #   ifdef WARPX_DIM_RZ
             c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-            spectral_solver_cp[lev] = std::make_unique<SpectralSolverRZ>( c_realspace_ba, dm,
-                n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev, update_with_rho );
+            spectral_solver_cp[lev] = std::make_unique<SpectralSolverRZ>( lev, c_realspace_ba, dm,
+                n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], update_with_rho );
             if (use_kspace_filter) {
                 spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
             }
 #   else
             c_realspace_ba.grow(ngE); // add guard cells
             bool const pml_flag_false = false;
-            spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
+            spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( lev, c_realspace_ba, dm,
                 nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, dt[lev],
                 pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
@@ -1624,7 +1628,7 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_PSATD
-        spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
+        spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
         amrex::Abort("ComputeDivE: PSATD requested but not compiled");
 #endif

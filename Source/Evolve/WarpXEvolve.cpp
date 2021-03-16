@@ -358,7 +358,9 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryF(guard_cells.ng_FieldSolverF);
             EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
 
+            if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
             FillBoundaryB(guard_cells.ng_FieldSolver);
+
             if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
                 // vacuum medium
                 EvolveE(dt[0]); // We now have E^{n+1}
@@ -739,8 +741,8 @@ WarpX::CurrentCorrection ()
     {
         for ( int lev = 0; lev <= finest_level; ++lev )
         {
-            spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
-            if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+            spectral_solver_fp[lev]->CurrentCorrection( lev, current_fp[lev], rho_fp[lev] );
+            if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( lev, current_cp[lev], rho_cp[lev] );
         }
     } else {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
@@ -761,8 +763,8 @@ WarpX::VayDeposition ()
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->VayDeposition(current_fp[lev]);
-            if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(current_cp[lev]);
+            spectral_solver_fp[lev]->VayDeposition(lev, current_fp[lev]);
+            if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(lev, current_cp[lev]);
         }
     } else {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,

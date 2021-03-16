@@ -1440,6 +1440,12 @@ Boundary conditions
 * ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
 
+* ``warpx.do_silver_mueller`` (`0` or `1`; default: 1)
+    Whether to use the Silver-Mueller absorbing boundary conditions. These
+    boundary conditions are simpler and less computationally expensive than
+    the PML, but are also less effective at absorbing the field. They only
+    work with the Yee Maxwell solver.
+
 .. _running-cpp-parameters-diagnostics:
 
 Diagnostics and output

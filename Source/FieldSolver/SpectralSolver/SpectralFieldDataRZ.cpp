@@ -19,12 +19,12 @@ using amrex::operator""_rt;
  * \param n_field_required Specifies the number of fields that will be transformed
  * \param n_modes Number of cylindrical modes
  * */
-SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
+SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
+                                          amrex::BoxArray const & realspace_ba,
                                           SpectralKSpaceRZ const & k_space,
                                           amrex::DistributionMapping const & dm,
                                           int const n_field_required,
-                                          int const n_modes,
-                                          int const lev)
+                                          int const n_modes)
     : n_rz_azimuthal_modes(n_modes)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
@@ -394,7 +394,8 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral field specified by `field_index`) */
 void
-SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int const field_index,
+SpectralFieldDataRZ::ForwardTransform (const int lev,
+                                       amrex::MultiFab const & field_mf, int const field_index,
                                        int const i_comp)
 {
     // Check field index type, in order to apply proper shift in spectral space.
@@ -440,7 +441,8 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int con
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral fields specified by `field_index_r` and `field_index_t`) */
 void
-SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf_r, int const field_index_r,
+SpectralFieldDataRZ::ForwardTransform (const int lev,
+                                       amrex::MultiFab const & field_mf_r, int const field_index_r,
                                        amrex::MultiFab const & field_mf_t, int const field_index_t)
 {
     // Check field index type, in order to apply proper shift in spectral space.
@@ -488,7 +490,8 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf_r, int c
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `field_mf` */
 void
-SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const field_index,
+SpectralFieldDataRZ::BackwardTransform (const int lev,
+                                        amrex::MultiFab& field_mf, int const field_index,
                                         int const i_comp)
 {
     // Check field index type, in order to apply proper shift in spectral space.
@@ -522,7 +525,8 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
 /* \brief Transform spectral fields specified by `field_index_r` and
  * `field_index_t` back to real space, and store them in `field_mf_r` and `field_mf_t` */
 void
-SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const field_index_r,
+SpectralFieldDataRZ::BackwardTransform (const int lev,
+                                        amrex::MultiFab& field_mf_r, int const field_index_r,
                                         amrex::MultiFab& field_mf_t, int const field_index_t)
 {
     // Check field index type, in order to apply proper shift in spectral space.
