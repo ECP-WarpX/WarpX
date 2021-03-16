@@ -1,0 +1,49 @@
+# Maximum number of time steps
+max_step = 500
+
+# number of grid points
+amr.n_cell =   512 64
+
+# Maximum allowable size of each subdomain in the problem domain;
+#    this is used to decompose the domain for parallel calculations.
+amr.max_grid_size = 128
+
+# Maximum level in hierarchy (for now must be 0, i.e., one level in total)
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0
+geometry.is_periodic = 0   0   0
+geometry.prob_lo     = -20.e-6 -40.e-6
+geometry.prob_hi     =  20.e-6  40.e-6
+
+# Verbosity
+warpx.verbose = 1
+
+# Algorithms
+
+warpx.cfl = 1.0
+warpx.do_pml = 0
+warpx.do_silver_mueller = 1
+
+warpx.do_moving_window = 0
+# warpx.moving_window_dir = z
+# warpx.moving_window_v = 1.0 # in units of the speed of light
+
+# Laser
+lasers.names        = laser1
+laser1.profile      = Gaussian
+laser1.position     = 0. 0. 0.e-6 # This point is on the laser plane
+laser1.direction    = 1. 0. 0.     # The plane normal direction
+laser1.polarization = 0. 1. 1.     # The main polarization vector
+laser1.e_max        = 1.e1        # Maximum amplitude of the laser field (in V/m)
+laser1.profile_waist = 10.e-6      # The waist of the laser (in meters)
+laser1.profile_duration = 10.e-15  # The duration of the laser (in seconds)
+laser1.profile_t_peak = 20.e-15    # The time at which the laser reaches its peak (in seconds)
+laser1.profile_focal_distance = 1.e-6  # Focal distance from the antenna (in meters)
+laser1.wavelength = 2.e-6         # The wavelength of the laser (in meters)
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 50
+diag1.diag_type = Full

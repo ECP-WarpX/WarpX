@@ -554,6 +554,10 @@ WarpX::ReadParameters ()
         }
 
         pp.query("do_pml", do_pml);
+        pp.query("do_silver_mueller", do_silver_mueller);
+        if ( (do_pml==1)&&(do_silver_mueller==1) ) {
+            amrex::Abort("PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
+        }
         pp.query("pml_ncell", pml_ncell);
         pp.query("pml_delta", pml_delta);
         pp.query("pml_has_particles", pml_has_particles);
