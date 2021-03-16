@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
+#include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
 #ifdef WARPX_DIM_RZ
@@ -24,27 +25,27 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
 
-        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 
 #else
     if (m_do_nodal) {
 
-        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, lev, dt );
 
 #endif
     } else {
@@ -60,13 +61,20 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
 
         // Extract field data for this grid/tile
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
@@ -109,8 +117,13 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
         );
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
-
 }
 
 #else // corresponds to ifndef WARPX_DIM_RZ
@@ -119,13 +132,20 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
 
         // Extract field data for this grid/tile
         Array4<Real> const& Br = Bfield[0]->array(mfi);
@@ -214,8 +234,13 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
 
         );
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
-
 }
 
 #endif // corresponds to ifndef WARPX_DIM_RZ

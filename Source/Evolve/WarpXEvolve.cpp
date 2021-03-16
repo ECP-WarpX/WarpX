@@ -739,8 +739,8 @@ WarpX::CurrentCorrection ()
     {
         for ( int lev = 0; lev <= finest_level; ++lev )
         {
-            spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
-            if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+            spectral_solver_fp[lev]->CurrentCorrection( lev, current_fp[lev], rho_fp[lev] );
+            if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( lev, current_cp[lev], rho_cp[lev] );
         }
     } else {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
@@ -761,8 +761,8 @@ WarpX::VayDeposition ()
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->VayDeposition(current_fp[lev]);
-            if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(current_cp[lev]);
+            spectral_solver_fp[lev]->VayDeposition(lev, current_fp[lev]);
+            if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(lev, current_cp[lev]);
         }
     } else {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,

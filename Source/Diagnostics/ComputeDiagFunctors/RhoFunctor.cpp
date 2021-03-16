@@ -48,9 +48,9 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     using Idx = SpectralAvgFieldIndex;
     if (WarpX::use_kspace_filter) {
         auto & solver = warpx.get_spectral_solver_fp(m_lev);
-        solver.ForwardTransform(*rho, Idx::rho_new);
+        solver.ForwardTransform(m_lev, *rho, Idx::rho_new);
         solver.ApplyFilter(Idx::rho_new);
-        solver.BackwardTransform(*rho, Idx::rho_new);
+        solver.BackwardTransform(m_lev, *rho, Idx::rho_new);
     }
 #endif
 

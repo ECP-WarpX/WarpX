@@ -33,6 +33,7 @@
  * \param periodic_single_box Whether the full simulation domain consists of a single periodic box (i.e. the global domain is not MPI parallelized)
  */
 SpectralSolver::SpectralSolver(
+                const int lev,
                 const amrex::BoxArray& realspace_ba,
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
@@ -72,27 +73,29 @@ SpectralSolver::SpectralSolver(
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans
-    field_data = SpectralFieldData( realspace_ba, k_space, dm,
-            algorithm->getRequiredNumberOfFields(), periodic_single_box );
+    field_data = SpectralFieldData( lev, realspace_ba, k_space, dm,
+                    algorithm->getRequiredNumberOfFields(), periodic_single_box);
 
 }
 
 void
-SpectralSolver::ForwardTransform( const amrex::MultiFab& mf,
+SpectralSolver::ForwardTransform( const int lev,
+                                  const amrex::MultiFab& mf,
                                   const int field_index,
                                   const int i_comp )
 {
     WARPX_PROFILE("SpectralSolver::ForwardTransform");
-    field_data.ForwardTransform( mf, field_index, i_comp );
+    field_data.ForwardTransform( lev, mf, field_index, i_comp );
 }
 
 void
-SpectralSolver::BackwardTransform( amrex::MultiFab& mf,
+SpectralSolver::BackwardTransform( const int lev,
+                                   amrex::MultiFab& mf,
                                    const int field_index,
                                    const int i_comp )
 {
     WARPX_PROFILE("SpectralSolver::BackwardTransform");
-    field_data.BackwardTransform( mf, field_index, i_comp );
+    field_data.BackwardTransform( lev, mf, field_index, i_comp );
 }
 
 void

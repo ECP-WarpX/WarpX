@@ -15,6 +15,7 @@ using namespace amrex;
  */
 void
 SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
+    const int lev,
     SpectralFieldDataRZ& field_data,
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
     amrex::MultiFab& divE )
@@ -23,9 +24,11 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
     using Idx = SpectralFieldIndex;
 
     // Forward Fourier transform of E
-    field_data.ForwardTransform( *Efield[0], Idx::Ex,
+    field_data.ForwardTransform( lev,
+                                 *Efield[0], Idx::Ex,
                                  *Efield[1], Idx::Ey );
-    field_data.ForwardTransform( *Efield[2], Idx::Ez, 0 );
+    field_data.ForwardTransform( lev,
+                                 *Efield[2], Idx::Ez, 0 );
 
     // Loop over boxes
     for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -69,5 +72,5 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
     }
 
     // Backward Fourier transform
-    field_data.BackwardTransform( divE, Idx::divE, 0 );
+    field_data.BackwardTransform( lev, divE, Idx::divE, 0 );
 }
