@@ -382,7 +382,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
-            KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 
             // --- Get particle quantities
