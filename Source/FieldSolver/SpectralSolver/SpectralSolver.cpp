@@ -62,8 +62,8 @@ SpectralSolver::SpectralSolver(
                    k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
         }
         else {
-            algorithm = std::unique_ptr<PsatdAlgorithm>( new PMLPsatdAlgorithm(
-                   k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+            algorithm = std::unique_ptr<PMLGalileanAlgorithm>( new PMLGalileanAlgorithm(
+                   k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt ) );
         }
     }
     else {
