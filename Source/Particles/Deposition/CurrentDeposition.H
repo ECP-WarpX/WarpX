@@ -713,7 +713,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     *cost_real = 0.;
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
-        KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                              == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 
         // Inverse of Lorentz factor gamma
