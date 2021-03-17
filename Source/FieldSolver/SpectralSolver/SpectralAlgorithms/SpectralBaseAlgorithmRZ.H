@@ -38,14 +38,15 @@ class SpectralBaseAlgorithmRZ
          *                           the three components of the current density
          * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( SpectralFieldDataRZ& field_data,
+        virtual void CurrentCorrection ( const int lev, SpectralFieldDataRZ& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                          const std::unique_ptr<amrex::MultiFab>& rho ) = 0;
 
         /**
          * \brief Compute spectral divergence of E
          */
-        void ComputeSpectralDivE ( SpectralFieldDataRZ& field_data,
+        void ComputeSpectralDivE ( const int lev,
+                                   SpectralFieldDataRZ& field_data,
                                    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE );
 
@@ -58,7 +59,8 @@ class SpectralBaseAlgorithmRZ
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data,
+        virtual void VayDeposition (const int lev,
+                                    SpectralFieldDataRZ& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) = 0;
 
     protected: // Meant to be used in the subclasses

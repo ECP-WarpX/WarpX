@@ -7,7 +7,8 @@
 [![Development Status](https://img.shields.io/badge/development%20status-alpha-orange.svg)]()  
 [![Gitter](https://badges.gitter.im/ECP-WarpX/community.svg)](https://gitter.im/ECP-WarpX/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![License WarpX](https://img.shields.io/badge/license-BSD--3--Clause--LBNL-blue.svg)](https://spdx.org/licenses/BSD-3-Clause-LBNL.html)
-[![DOI](https://img.shields.io/badge/DOI-10.1016/j.nima.2018.01.035-blue.svg)](https://doi.org/10.1016/j.nima.2018.01.035)
+[![DOI (source)](https://img.shields.io/badge/DOI%20(source)-10.5281/zenodo.4571577-blue.svg)](https://doi.org/10.5281/zenodo.4571577)
+[![DOI (paper)](https://img.shields.io/badge/DOI%20(paper)-10.1063/5.0028512-blue.svg)](https://doi.org/10.1063/5.0028512)
 
 ## Overview
 
@@ -24,3 +25,23 @@ To contact the developers, feel free to open an issue on this repo, or visit our
 ## Contributing
 
 Our workflow is described in [CONTRIBUTING.rst](CONTRIBUTING.rst).
+
+## License
+
+WarpX Copyright (c) 2018-2021, The Regents of the University of California,
+through Lawrence Berkeley National Laboratory (subject to receipt of any
+required approvals from the U.S. Dept. of Energy).  All rights reserved.
+
+If you have questions about your rights to use or distribute this software,
+please contact Berkeley Lab's Innovation & Partnerships Office at
+IPO@lbl.gov.
+
+NOTICE.  This Software was developed under funding from the U.S. Department
+of Energy and the U.S. Government consequently retains certain rights. As
+such, the U.S. Government has been granted for itself and others acting on
+its behalf a paid-up, nonexclusive, irrevocable, worldwide license in the
+Software to reproduce, distribute copies to the public, prepare derivative
+works, and perform publicly and display publicly, and to permit other to do
+so.
+
+License for WarpX can be found at [LICENSE.txt](LICENSE.txt).

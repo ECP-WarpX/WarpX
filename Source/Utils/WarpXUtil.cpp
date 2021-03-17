@@ -349,6 +349,70 @@ void CheckGriddingForRZSpectral ()
 #endif
 }
 
+
+void ReadBCParams ()
+{
+
+    amrex::Vector<std::string> field_BC_lo(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> field_BC_hi(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
+    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
+    ParmParse pp_geom("geometry");
+    if (pp_geom.queryarr("is_periodic", geom_periodicity)) {
+        return;
+        // When all boundary conditions are supported, the abort statement below will be introduced
+        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
+    }
+    // particle boundary may not be explicitly specified for some applications
+    bool particle_boundary_specified = false;
+    ParmParse pp("boundary");
+    pp.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
+    pp.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
+    if (pp.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
+        particle_boundary_specified = true;
+    if (pp.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM))
+        particle_boundary_specified = true;
+    AMREX_ALWAYS_ASSERT(field_BC_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(field_BC_hi.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
+
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        // Get field boundary type
+        WarpX::field_boundary_lo[idim] = GetBCTypeInteger(field_BC_lo[idim], true);
+        WarpX::field_boundary_hi[idim] = GetBCTypeInteger(field_BC_hi[idim], true);
+        // Get particle boundary type
+        WarpX::particle_boundary_lo[idim] = GetBCTypeInteger(particle_BC_lo[idim], false);
+        WarpX::particle_boundary_hi[idim] = GetBCTypeInteger(particle_BC_hi[idim], false);
+
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic ||
+            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ||
+            WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic ||
+            WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic ) {
+            geom_periodicity[idim] = 1;
+            // to ensure both lo and hi are set to periodic consistently for both field and particles.
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[idim]  == FieldBoundaryType::Periodic) &&
+                (WarpX::field_boundary_hi[idim]  == FieldBoundaryType::Periodic),
+            "field boundary must be consistenly periodic in both lo and hi");
+            if (particle_boundary_specified) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic) &&
+                    (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic),
+               "field and particle boundary must be periodic in both lo and hi");
+            } else {
+                // set particle boundary to periodic
+                WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
+                WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
+            }
+
+        }
+    }
+
+    pp_geom.addarr("is_periodic", geom_periodicity);
+}
+
 namespace WarpXUtilMsg{
 
 void AlwaysAssert(bool is_expression_true, const std::string& msg = "ERROR!")

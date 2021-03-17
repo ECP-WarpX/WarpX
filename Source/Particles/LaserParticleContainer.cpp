@@ -52,7 +52,20 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     pp.query("pusher_algo", m_pusher_algo);
     getWithParser(pp, "wavelength", m_wavelength);
-    getWithParser(pp, "e_max", m_e_max);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_wavelength > 0, "The laser wavelength must be >0.");
+    const bool e_max_is_specified = queryWithParser(pp, "e_max", m_e_max);
+    Real a0;
+    const bool a0_is_specified = queryWithParser(pp, "a0", a0);
+    if (a0_is_specified){
+        Real omega = 2._rt*MathConst::pi*PhysConst::c/m_wavelength;
+        m_e_max = PhysConst::m_e * omega * PhysConst::c * a0 / PhysConst::q_e;
+    }
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        e_max_is_specified ^ a0_is_specified,
+        "Exactly one of e_max or a0 must be specified for the laser.\n"
+        );
+
     pp.query("do_continuous_injection", do_continuous_injection);
     pp.query("min_particles_per_mode", m_min_particles_per_mode);
 

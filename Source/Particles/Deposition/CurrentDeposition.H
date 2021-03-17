@@ -65,6 +65,10 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
+#if !defined(AMREX_USE_GPU)
+    amrex::ignore_unused(cost, load_balance_costs_update_algo);
+#endif
+
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
@@ -107,10 +111,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
-#if (defined AMREX_USE_GPU)
-            KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
-#endif
+
             // --- Get particle quantities
             const amrex::Real gaminv = 1.0/std::sqrt(1.0 + uxp[ip]*uxp[ip]*clightsq
                                                          + uyp[ip]*uyp[ip]*clightsq
@@ -343,6 +346,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     ignore_unused(n_rz_azimuthal_modes);
 #endif
 
+#if !defined(AMREX_USE_GPU)
+    amrex::ignore_unused(cost, load_balance_costs_update_algo);
+#endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
@@ -383,10 +389,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
-#if (defined AMREX_USE_GPU)
-            KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
-#endif
+
             // --- Get particle quantities
             Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
                                                  + uyp[ip]*uyp[ip]*clightsq
@@ -666,6 +671,10 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 #endif
 
+#if !defined(AMREX_USE_GPU)
+    amrex::ignore_unused(cost, load_balance_costs_update_algo);
+#endif
+
 #if !(defined WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 
@@ -715,10 +724,9 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     *cost_real = 0.;
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
-#if (defined AMREX_USE_GPU)
-        KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                              == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
-#endif
+
         // Inverse of Lorentz factor gamma
         const amrex::Real invgam = 1._rt / std::sqrt(1._rt + uxp[ip] * uxp[ip] * invcsq
                                                            + uyp[ip] * uyp[ip] * invcsq
