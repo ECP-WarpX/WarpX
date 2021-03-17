@@ -42,7 +42,8 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          *                           storing the three components of the current density
          * \param[in]     rho        unique pointer to MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( SpectralFieldDataRZ& field_data,
+        virtual void CurrentCorrection ( const int lev,
+                                         SpectralFieldDataRZ& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                          const std::unique_ptr<amrex::MultiFab>& rho ) override final;
 
@@ -56,7 +57,7 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data,
+        virtual void VayDeposition (const int lev, SpectralFieldDataRZ& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:

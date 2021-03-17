@@ -687,6 +687,8 @@ MultiParticleContainer::doFieldIonization (int lev,
 {
     WARPX_PROFILE("MultiParticleContainer::doFieldIonization()");
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
     for (auto& pc_source : allcontainers)
@@ -711,6 +713,12 @@ MultiParticleContainer::doFieldIonization (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+
             auto& src_tile = pc_source ->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product->ParticlesAt(lev, pti);
 
@@ -723,6 +731,13 @@ MultiParticleContainer::doFieldIonization (int lev,
                                                                    Filter, Copy, Transform);
 
             setNewParticleIDs(dst_tile, np_dst, num_added);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
     }
 }
@@ -791,7 +806,7 @@ void MultiParticleContainer::InitQuantumSync ()
     std::string lookup_table_mode;
     ParmParse pp("qed_qs");
 
-    //If specified, use a user-defined energy threshold for photon creaction
+    //If specified, use a user-defined energy threshold for photon creation
     ParticleReal temp;
     constexpr auto mec2 = PhysConst::c * PhysConst::c * PhysConst::m_e;
     if(queryWithParser(pp, "photon_creation_energy_threshold", temp)){
@@ -800,7 +815,7 @@ void MultiParticleContainer::InitQuantumSync ()
     }
     else{
         amrex::Print() << "Using default value (2*me*c^2)" <<
-            " for photon energy creaction threshold \n" ;
+            " for photon energy creation threshold \n" ;
     }
 
     // qs_minimum_chi_part is the minimum chi parameter to be
@@ -1252,6 +1267,8 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 {
     WARPX_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
     // in pc_product_ele and positrons in pc_product_pos
@@ -1286,6 +1303,12 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrow(),
                                                          Ex[pti], Ey[pti], Ez[pti],
@@ -1305,6 +1328,13 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
             setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
             setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
     }
 }
@@ -1318,6 +1348,8 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                                const MultiFab& Bz)
 {
     WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process
@@ -1347,6 +1379,12 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
                   pc_source->particle_runtime_comps["optical_depth_QSR"],
@@ -1370,6 +1408,13 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             cleanLowEnergyPhotons(
                                   dst_tile, np_dst, num_added,
                                   m_quantum_sync_photon_creation_energy_threshold);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
     }
 }

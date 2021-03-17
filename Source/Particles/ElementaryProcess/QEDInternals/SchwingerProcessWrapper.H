@@ -36,9 +36,9 @@
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real
 getSchwingerProductionNumber (const amrex::Real dV, const amrex::Real dt,
-              const amrex::Real Ex, const amrex::Real Ey, const amrex::Real Ez,
-              const amrex::Real Bx, const amrex::Real By, const amrex::Real Bz,
-              const amrex::Real PoissonToGaussianThreshold,
+              const amrex::ParticleReal Ex, const amrex::ParticleReal Ey, const amrex::ParticleReal Ez,
+              const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
+              const amrex::ParticleReal PoissonToGaussianThreshold,
               amrex::RandomEngine const& engine)
 {
     using namespace amrex;
