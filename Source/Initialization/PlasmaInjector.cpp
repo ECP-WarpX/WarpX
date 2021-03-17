@@ -40,7 +40,7 @@ PlasmaInjector::PlasmaInjector () {}
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     : species_id(ispecies), species_name(name)
 {
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
@@ -51,7 +51,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                   "InjectorMomentum must be trivially copyable");
 #endif
 
-    pp.query("radially_weighted", radially_weighted);
+    pp_species_name.query("radially_weighted", radially_weighted);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
     // Unlimited boundaries
@@ -87,18 +87,18 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 #   endif
 
-    queryWithParser(pp, "xmin", xmin);
-    queryWithParser(pp, "ymin", ymin);
-    queryWithParser(pp, "zmin", zmin);
-    queryWithParser(pp, "xmax", xmax);
-    queryWithParser(pp, "ymax", ymax);
-    queryWithParser(pp, "zmax", zmax);
+    queryWithParser(pp_species_name, "xmin", xmin);
+    queryWithParser(pp_species_name, "ymin", ymin);
+    queryWithParser(pp_species_name, "zmin", zmin);
+    queryWithParser(pp_species_name, "xmax", xmax);
+    queryWithParser(pp_species_name, "ymax", ymax);
+    queryWithParser(pp_species_name, "zmax", zmax);
 
-    queryWithParser(pp, "density_min", density_min);
-    queryWithParser(pp, "density_max", density_max);
+    queryWithParser(pp_species_name, "density_min", density_min);
+    queryWithParser(pp_species_name, "density_max", density_max);
 
     std::string physical_species_s;
-    bool species_is_specified = pp.query("species_type", physical_species_s);
+    bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
     if (species_is_specified){
         physical_species = species::from_string( physical_species_s );
         charge = species::get_charge( physical_species );
@@ -106,11 +106,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 
     std::string s_inj_style;
-    pp.query("injection_style", s_inj_style);
+    pp_species_name.query("injection_style", s_inj_style);
 
     // parse charge and mass
-    bool charge_is_specified = queryWithParser(pp, "charge", charge);
-    bool mass_is_specified = queryWithParser(pp, "mass", mass);
+    bool charge_is_specified = queryWithParser(pp_species_name, "charge", charge);
+    bool mass_is_specified = queryWithParser(pp_species_name, "mass", mass);
 
     if ( charge_is_specified && species_is_specified ){
         Print() << "WARNING: Both '" << species_name << ".charge' and "
@@ -134,7 +134,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 
     // parse injection style
     std::string part_pos_s;
-    pp.get("injection_style", part_pos_s);
+    pp_species_name.get("injection_style", part_pos_s);
     std::transform(part_pos_s.begin(),
                    part_pos_s.end(),
                    part_pos_s.begin(),
@@ -143,22 +143,22 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     if (part_pos_s == "python") {
         return;
     } else if (part_pos_s == "singleparticle") {
-        pp.getarr("single_particle_pos", single_particle_pos, 0, 3);
-        pp.getarr("single_particle_vel", single_particle_vel, 0, 3);
+        pp_species_name.getarr("single_particle_pos", single_particle_pos, 0, 3);
+        pp_species_name.getarr("single_particle_vel", single_particle_vel, 0, 3);
         for (auto& x : single_particle_vel) {
             x *= PhysConst::c;
         }
-        getWithParser(pp, "single_particle_weight", single_particle_weight);
+        getWithParser(pp_species_name, "single_particle_weight", single_particle_weight);
         add_single_particle = true;
         return;
     } else if (part_pos_s == "multipleparticles") {
-        pp.getarr("multiple_particles_pos_x", multiple_particles_pos_x);
-        pp.getarr("multiple_particles_pos_y", multiple_particles_pos_y);
-        pp.getarr("multiple_particles_pos_z", multiple_particles_pos_z);
-        pp.getarr("multiple_particles_vel_x", multiple_particles_vel_x);
-        pp.getarr("multiple_particles_vel_y", multiple_particles_vel_y);
-        pp.getarr("multiple_particles_vel_z", multiple_particles_vel_z);
-        pp.getarr("multiple_particles_weight", multiple_particles_weight);
+        pp_species_name.getarr("multiple_particles_pos_x", multiple_particles_pos_x);
+        pp_species_name.getarr("multiple_particles_pos_y", multiple_particles_pos_y);
+        pp_species_name.getarr("multiple_particles_pos_z", multiple_particles_pos_z);
+        pp_species_name.getarr("multiple_particles_vel_x", multiple_particles_vel_x);
+        pp_species_name.getarr("multiple_particles_vel_y", multiple_particles_vel_y);
+        pp_species_name.getarr("multiple_particles_vel_z", multiple_particles_vel_z);
+        pp_species_name.getarr("multiple_particles_weight", multiple_particles_weight);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&
@@ -173,26 +173,26 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         add_multiple_particles = true;
         return;
     } else if (part_pos_s == "gaussian_beam") {
-        getWithParser(pp, "x_m", x_m);
-        getWithParser(pp, "y_m", y_m);
-        getWithParser(pp, "z_m", z_m);
-        getWithParser(pp, "x_rms", x_rms);
-        getWithParser(pp, "y_rms", y_rms);
-        getWithParser(pp, "z_rms", z_rms);
-        queryWithParser(pp, "x_cut", x_cut);
-        queryWithParser(pp, "y_cut", y_cut);
-        queryWithParser(pp, "z_cut", z_cut);
-        getWithParser(pp, "q_tot", q_tot);
-        pp.get("npart", npart);
-        pp.query("do_symmetrize", do_symmetrize);
+        getWithParser(pp_species_name, "x_m", x_m);
+        getWithParser(pp_species_name, "y_m", y_m);
+        getWithParser(pp_species_name, "z_m", z_m);
+        getWithParser(pp_species_name, "x_rms", x_rms);
+        getWithParser(pp_species_name, "y_rms", y_rms);
+        getWithParser(pp_species_name, "z_rms", z_rms);
+        queryWithParser(pp_species_name, "x_cut", x_cut);
+        queryWithParser(pp_species_name, "y_cut", y_cut);
+        queryWithParser(pp_species_name, "z_cut", z_cut);
+        getWithParser(pp_species_name, "q_tot", q_tot);
+        pp_species_name.get("npart", npart);
+        pp_species_name.query("do_symmetrize", do_symmetrize);
         gaussian_beam = true;
-        parseMomentum(pp);
+        parseMomentum(pp_species_name);
     }
     // Depending on injection type at runtime, initialize inj_pos
     // so that inj_pos->getPositionUnitBox calls
     // InjectorPosition[Random or Regular].getPositionUnitBox.
     else if (part_pos_s == "nrandompercell") {
-        pp.query("num_particles_per_cell", num_particles_per_cell);
+        pp_species_name.query("num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
@@ -204,13 +204,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         h_inj_pos = std::make_unique<InjectorPosition>(
             (InjectorPositionRandom*)nullptr,
             xmin, xmax, ymin, ymax, zmin, zmax);
-        parseDensity(pp);
-        parseMomentum(pp);
+        parseDensity(pp_species_name);
+        parseMomentum(pp_species_name);
     } else if (part_pos_s == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
         num_particles_per_cell_each_dim.assign(3, 1);
-        pp.getarr("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim);
+        pp_species_name.getarr("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim);
 #if WARPX_DIM_XZ
         num_particles_per_cell_each_dim[2] = 1;
 #endif
@@ -231,8 +231,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         num_particles_per_cell = num_particles_per_cell_each_dim[0] *
                                  num_particles_per_cell_each_dim[1] *
                                  num_particles_per_cell_each_dim[2];
-        parseDensity(pp);
-        parseMomentum(pp);
+        parseDensity(pp_species_name);
+        parseMomentum(pp_species_name);
     } else if (part_pos_s == "external_file") {
 #ifndef WARPX_USE_OPENPMD
         amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
@@ -240,10 +240,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #endif
         external_file = true;
         std::string str_injection_file;
-        pp.get("injection_file", str_injection_file);
+        pp_species_name.get("injection_file", str_injection_file);
         // optional parameters
-        queryWithParser(pp, "q_tot", q_tot);
-        queryWithParser(pp, "z_shift",z_shift);
+        queryWithParser(pp_species_name, "q_tot", q_tot);
+        queryWithParser(pp_species_name, "z_shift",z_shift);
 
 #ifdef WARPX_USE_OPENPMD
         if (ParallelDescriptor::IOProcessor()) {

@@ -39,11 +39,11 @@ InjectorDensityPredefined::InjectorDensityPredefined (
     std::string const& a_species_name) noexcept
     : profile(Profile::null)
 {
-    ParmParse pp(a_species_name);
+    ParmParse pp_species_name(a_species_name);
 
     std::vector<amrex::Real> v;
     // Read parameters for the predefined plasma profile.
-    pp.getarr("predefined_profile_params", v);
+    pp_species_name.getarr("predefined_profile_params", v);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {
@@ -52,7 +52,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
 
     // Parse predefined profile name, and update member variable profile.
     std::string which_profile_s;
-    pp.query("predefined_profile_name", which_profile_s);
+    pp_species_name.query("predefined_profile_name", which_profile_s);
     std::transform(which_profile_s.begin(), which_profile_s.end(),
                    which_profile_s.begin(), ::tolower);
     if (which_profile_s == "parabolic_channel"){

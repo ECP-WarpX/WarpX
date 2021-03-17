@@ -24,8 +24,8 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    ParmParse pp("amr");
-    pp.query("max_level", nLevel);
+    ParmParse pp_amr("amr");
+    pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
     constexpr int noutputs = 8; // total energy, E-field energy and B-field energy
