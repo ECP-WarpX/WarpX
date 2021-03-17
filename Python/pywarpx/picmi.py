@@ -545,10 +545,10 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
-            pywarpx.geometry.potential_lo = [
+            pywarpx.boundary.potential_lo = [
                 self.grid.potential_xmin, self.grid.potential_ymin
             ]
-            pywarpx.geometry.potential_hi = [
+            pywarpx.boundary.potential_hi = [
                 self.grid.potential_xmax, self.grid.potential_ymax
             ]
 

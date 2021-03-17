@@ -566,10 +566,13 @@ public:
                        amrex::Real const required_precision,
                        int const max_iters) const;
 
-    void setDirichletBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                         const int idim) const;
-    void getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
-                               amrex::Real &pot_hi) const;
+    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi
+                   ) const;
+    void getPhiBC (const int idim, amrex::Real &pot_lo,
+                   amrex::Real &pot_hi) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,

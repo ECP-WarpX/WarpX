@@ -266,18 +266,29 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
     lobc[0] = LinOpBCType::Neumann;
     hibc[0] = LinOpBCType::Dirichlet;
+    std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
+    dirichlet_flag[0] = false;
+    Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
     if ( Geom(0).isPeriodic(1) ) {
         lobc[1] = LinOpBCType::Periodic;
         hibc[1] = LinOpBCType::Periodic;
+        dirichlet_flag[1] = false;
     } else {
         // Use Dirichlet boundary condition by default.
         // Ideally, we would often want open boundary conditions here.
         lobc[1] = LinOpBCType::Dirichlet;
         hibc[1] = LinOpBCType::Dirichlet;
 
-        // set the boundary potential values for dimension 1
-        setDirichletBC(phi, 1);
+        // set flag so we know which dimensions to fix the potential for
+        dirichlet_flag[1] = true;
+        // parse the input file for the potential at the current time
+        getPhiBC(1, phi_bc_values_lo[1], phi_bc_values_hi[1]);
+
+        }
     }
+
+    // set the boundary potential values if needed
+    setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
     MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
@@ -323,20 +334,29 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 
     // Define the boundary conditions
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
+    std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
+    Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
     for (int idim=0; idim<AMREX_SPACEDIM; idim++){
         if ( Geom(0).isPeriodic(idim) ) {
             lobc[idim] = LinOpBCType::Periodic;
             hibc[idim] = LinOpBCType::Periodic;
+            dirichlet_flag[idim] = false;
         } else {
             // Use Dirichlet boundary condition by default.
             // Ideally, we would often want open boundary conditions here.
             lobc[idim] = LinOpBCType::Dirichlet;
             hibc[idim] = LinOpBCType::Dirichlet;
 
-            // set the boundary potential values for the given dimension
-            setDirichletBC(phi, idim);
+            // set flag so we know which dimensions to fix the potential for
+            dirichlet_flag[idim] = true;
+            // parse the input file for the potential at the current time
+            getPhiBC(idim, phi_bc_values_lo[idim], phi_bc_values_hi[idim]);
+
         }
     }
+
+    // set the boundary potential values if needed
+    setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
@@ -358,7 +378,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     }
 
     MLMG mlmg(linop);
-    mlmg.setVerbose(0);
+    mlmg.setVerbose(2);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
 }
@@ -368,89 +388,72 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 
     The given potential's values are fixed on the boundaries of the given
     dimension according to the desired values from the simulation input file,
-    geometry.potential_lo and geometry.potential_hi.
+    boundary.potential_lo and boundary.potential_hi.
 
    \param[inout] phi The electrostatic potential
    \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
 void
-WarpX::setDirichletBC(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                      const int idim) const
+WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                 std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
+                 Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
+                 Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi ) const
 {
-    Real potential_lo;
-    Real potential_hi;
+    // check if any dimension has Dirichlet boundary conditions
+    bool has_Dirichlet = false;
+    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+        if (dirichlet_flag[idim]) {
+            has_Dirichlet = true;
+        }
+    }
+    if (!has_Dirichlet) return;
 
-    getBoundaryPotentials(idim, potential_lo, potential_hi);
-
-    // Print() << "Potential lo = " << potential_lo << "\n";
-    // Print() << "Potential hi = " << potential_hi << "\n";
-
-    // loop over all multigrid levels and set the boundary values
+    // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
-        for (MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-            FArrayBox& fab = (*phi[0])[mfi]; //
-            Array4<Real> const& phi_gh = fab.array(); // phi include ghost cells
-            const auto lo = lbound(phi_gh);
-            const auto hi = ubound(phi_gh);
 
-            //TODO use AMREX_GPU_DEVICE for acceleration
-            // The boundary values are set at points lo.idim + 1 and hi.idim -1
-            // since phi_gh includes ghost cells
-            if (idim == 0){
-                for (int k=lo.z; k<=hi.z; k++) {
-                for (int j=lo.y; j<=hi.y; j++) {
-                    phi_gh(lo.x+1,j,k) = potential_lo;
-                    phi_gh(hi.x-1,j,k) = potential_hi;
-                }}
-            }
-            if (idim == 1){
-                for (int k=lo.z; k<=hi.z; k++) {
-                for (int i=lo.x; i<=hi.x; i++) {
-                    phi_gh(i,lo.y+1,k) = potential_lo;
-                    phi_gh(i,hi.y-1,k) = potential_hi;
-                }}
-            }
-            if (idim == 2){
-                for (int j=lo.y; j<=hi.y; j++) {
-                for (int i=lo.x; i<=hi.x; i++) {
-                    phi_gh(i,j,lo.z+1) = potential_lo;
-                    phi_gh(i,j,hi.z-1) = potential_hi;
-                }}
-            }
-    }} // lev & MFIter
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            // Extract the potential
+            auto phi_arr   = phi[lev]->array(mfi);
+            // Extract tileboxes for which to loop
+            const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
 
-    /*
-    Wei-Ting's implementation with GPU acceleration:
+            const auto lo = lbound(phi_arr);
+            const auto hi = ubound(phi_arr);
 
-    // 1.0 Init V as a linear function of X
-    amrex::Real Lx     = prob_hi[0] - prob_lo[0];
-    amrex::Real DeltaV = potential_hi[0] - potential_lo[0];
-    amrex::Real V_left = potential_lo[0];
+            amrex::ParallelFor( tb,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    int idx, idx_lo, idx_hi;
 
-    //### query the box size: maybe have the vars as the class var
-    Vector<Real> prob_lo(AMREX_SPACEDIM);
-    Vector<Real> prob_hi(AMREX_SPACEDIM);
+                    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+                        // check if the boundary in this dimension should be set
+                        if (!dirichlet_flag[idim]) return;
 
-    pp_geom.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
-    pp_geom.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+                        if (idim == 0){
+                            idx = i;
+                            idx_lo = lo.x + 1;
+                            idx_hi = hi.x - 1;
+                        }
+                        if (idim == 1){
+                            idx = j;
+                            idx_lo = lo.y + 1;
+                            idx_hi = hi.y - 1;
+                        }
+                        if (idim == 2){
+                            idx = k;
+                            idx_lo = lo.z + 1;
+                            idx_hi = hi.z - 1;
+                        }
 
-    // does not loop into ghost cell, since phi is a nodal vector
-    for (int lev=0; lev <= max_level; lev++) {
-      amrex::Real dx = WarpX::CellSize(lev)[0];
+                        if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                        if (idx == idx_hi) phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                    }
 
-      for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-         auto phi_arr   = phi[lev]->array(mfi);
-         const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
-
-         amrex::ParallelFor( tb,
-             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                phi_arr(i,j,k) = (i*dx/Lx)*DeltaV + V_left;
-             } // loop ijk
-         );
+                } // loop ijk
+            );
     }} // lev & MRIter
-    */
 }
 
 /* \bried Utility function to parse input file for boundary potentials.
@@ -463,8 +466,8 @@ WarpX::setDirichletBC(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
    \param[inout] pot_hi The specified value of `phi` on the upper boundary.
 */
 void
-WarpX::getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
-                             amrex::Real &pot_hi) const{
+WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) const
+{
     Vector<std::string> potential_lo_str(AMREX_SPACEDIM);
     Vector<std::string> potential_hi_str(AMREX_SPACEDIM);
 
@@ -478,7 +481,7 @@ WarpX::getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
 
     // Get the boundary potentials specified in the simulation input file
     // first as strings and then parse those for possible math expressions
-    ParmParse pp_geom("geometry");
+    ParmParse pp_geom("boundary");
     pp_geom.queryarr("potential_lo",potential_lo_str,0,AMREX_SPACEDIM);
     pp_geom.queryarr("potential_hi",potential_hi_str,0,AMREX_SPACEDIM);
 
