@@ -941,7 +941,7 @@ PhysicalParticleContainer::Evolve (int lev,
 {
 
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
-    WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::GatherAndPush", blp_fg);
+    WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
