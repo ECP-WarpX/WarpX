@@ -588,17 +588,17 @@ WarpX::doQEDEvents (int lev)
 #endif
 
 void
-WarpX::PushParticlesandDepose (amrex::Real cur_time)
+WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
 {
     // Evolve particles to p^{n+1/2} and x^{n+1}
     // Depose current, j^{n+1/2}
     for (int lev = 0; lev <= finest_level; ++lev) {
-        PushParticlesandDepose(lev, cur_time);
+        PushParticlesandDepose(lev, cur_time, DtType::Full, skip_deposition);
     }
 }
 
 void
-WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
+WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
 {
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
@@ -610,17 +610,19 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
                  rho_fp[lev].get(), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
-                 cur_time, dt[lev], a_dt_type);
+                 cur_time, dt[lev], a_dt_type, skip_deposition);
 #ifdef WARPX_DIM_RZ
-    // This is called after all particles have deposited their current and charge.
-    ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
-    if (current_buf[lev][0].get()) {
-        ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
-    }
-    if (rho_fp[lev].get()) {
-        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-        if (charge_buf[lev].get()) {
-            ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
+    if (! skip_deposition) {
+        // This is called after all particles have deposited their current and charge.
+        ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
+        if (current_buf[lev][0].get()) {
+            ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
+        }
+        if (rho_fp[lev].get()) {
+            ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+            if (charge_buf[lev].get()) {
+                ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
+            }
         }
     }
 #endif
