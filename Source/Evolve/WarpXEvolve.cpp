@@ -136,7 +136,13 @@ WarpX::Evolve (int numsteps)
 
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
-        if (do_subcycling == 0 || finest_level == 0) {
+        if ( do_electrostatic != ElectrostaticSolverAlgo::None ) {
+            // Special case: electrostatic solver.
+            // In this case, we only gather fields and push particles
+            // The deposition and calculation of fields is done further below
+            bool const skip_deposition=true;
+            PushParticlesandDepose(cur_time, skip_deposition);
+        } else if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
             // E : guard cells are up-to-date
             // B : guard cells are NOT up-to-date
@@ -330,64 +336,61 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
 
-    if( do_electrostatic == ElectrostaticSolverAlgo::None ) {
-        // Electromagnetic solver:
-        // Push E and B from {n} to {n+1}
-        // (And update guard cells immediately afterwards)
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            if (use_hybrid_QED)
-            {
-                WarpX::Hybrid_QED_Push(dt);
-                FillBoundaryE(guard_cells.ng_alloc_EB);
-            }
-            PushPSATD(dt[0]);
+    // Push E and B from {n} to {n+1}
+    // (And update guard cells immediately afterwards)
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (use_hybrid_QED)
+        {
+            WarpX::Hybrid_QED_Push(dt);
             FillBoundaryE(guard_cells.ng_alloc_EB);
-            FillBoundaryB(guard_cells.ng_alloc_EB);
+        }
+        PushPSATD(dt[0]);
+        FillBoundaryE(guard_cells.ng_alloc_EB);
+        FillBoundaryB(guard_cells.ng_alloc_EB);
 
-            if (use_hybrid_QED)
-            {
-                WarpX::Hybrid_QED_Push(dt);
-                FillBoundaryE(guard_cells.ng_alloc_EB);
-            }
-            if (do_pml) {
-                DampPML();
-                NodalSyncPML();
-            }
+        if (use_hybrid_QED)
+        {
+            WarpX::Hybrid_QED_Push(dt);
+            FillBoundaryE(guard_cells.ng_alloc_EB);
+        }
+        if (do_pml) {
+            DampPML();
+            NodalSyncPML();
+        }
+    } else {
+        EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
+        FillBoundaryF(guard_cells.ng_FieldSolverF);
+        EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
+
+        if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
+        FillBoundaryB(guard_cells.ng_FieldSolver);
+
+        if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
+            // vacuum medium
+            EvolveE(dt[0]); // We now have E^{n+1}
+        } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+            // macroscopic medium
+            MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
         } else {
-            EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
-            FillBoundaryF(guard_cells.ng_FieldSolverF);
-            EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
+            amrex::Abort(" Medium for EM is unknown \n");
+        }
 
-            if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
-            FillBoundaryB(guard_cells.ng_FieldSolver);
-
-            if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
-                // vacuum medium
-                EvolveE(dt[0]); // We now have E^{n+1}
-            } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
-                // macroscopic medium
-                MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
-            } else {
-                amrex::Abort(" Medium for EM is unknown \n");
-            }
-
-            FillBoundaryE(guard_cells.ng_FieldSolver);
-            EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
-            EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
-            if (do_pml) {
-                FillBoundaryF(guard_cells.ng_alloc_F);
-                DampPML();
-                NodalSyncPML();
-                FillBoundaryE(guard_cells.ng_MovingWindow);
-                FillBoundaryF(guard_cells.ng_MovingWindow);
-                FillBoundaryB(guard_cells.ng_MovingWindow);
-            }
-            // E and B are up-to-date in the domain, but all guard cells are
-            // outdated.
-            if (safe_guard_cells)
-                FillBoundaryB(guard_cells.ng_alloc_EB);
-        } // !PSATD
-    } // !do_electrostatic
+        FillBoundaryE(guard_cells.ng_FieldSolver);
+        EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
+        if (do_pml) {
+            FillBoundaryF(guard_cells.ng_alloc_F);
+            DampPML();
+            NodalSyncPML();
+            FillBoundaryE(guard_cells.ng_MovingWindow);
+            FillBoundaryF(guard_cells.ng_MovingWindow);
+            FillBoundaryB(guard_cells.ng_MovingWindow);
+        }
+        // E and B are up-to-date in the domain, but all guard cells are
+        // outdated.
+        if (safe_guard_cells)
+            FillBoundaryB(guard_cells.ng_alloc_EB);
+    } // !PSATD
 }
 
 /* /brief Perform one PIC iteration, with subcycling
