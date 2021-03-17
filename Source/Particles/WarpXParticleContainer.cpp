@@ -631,7 +631,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
     for (int lev = 0; lev <= finest_level; ++lev) {
 
         // Reset the `rho` array if `reset` is True
-        if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrow());
+        if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrowVect());
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP

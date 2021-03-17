@@ -235,7 +235,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         amrex::FArrayBox const * bxfab,
                                         amrex::FArrayBox const * byfab,
                                         amrex::FArrayBox const * bzfab,
-                                        const int ngE, const int e_is_nodal,
+                                        const amrex::IntVect ngE, const int e_is_nodal,
                                         const long offset,
                                         const long np_to_push,
                                         int lev, int gather_lev,
@@ -398,7 +398,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             amrex::Box box = pti.tilebox();
-            box.grow(Ex.nGrow());
+            box.grow(Ex.nGrowVect());
 
             const long np = pti.numParticles();
 

@@ -3,6 +3,7 @@ CEXE_sources += WarpXParticleContainer.cpp
 CEXE_sources += RigidInjectedParticleContainer.cpp
 CEXE_sources += PhysicalParticleContainer.cpp
 CEXE_sources += PhotonParticleContainer.cpp
+CEXE_sources += LaserParticleContainer.cpp
 
 include $(WARPX_HOME)/Source/Particles/Pusher/Make.package
 include $(WARPX_HOME)/Source/Particles/Deposition/Make.package

@@ -106,7 +106,7 @@ namespace CoarsenIO{
                 const int dcomp,
                 const int scomp,
                 const int ncomp,
-                const int ngrow,
+                const IntVect ngrow,
                 const IntVect crse_ratio=IntVect(1) );
 
     /**
@@ -134,6 +134,13 @@ namespace CoarsenIO{
                    const int scomp,
                    const int ncomp,
                    const int ngrow,
+                   const IntVect crse_ratio=IntVect(1) );
+    void Coarsen ( MultiFab& mf_dst,
+                   const MultiFab& mf_src,
+                   const int dcomp,
+                   const int scomp,
+                   const int ncomp,
+                   const IntVect ngrowvect,
                    const IntVect crse_ratio=IntVect(1) );
 }
 

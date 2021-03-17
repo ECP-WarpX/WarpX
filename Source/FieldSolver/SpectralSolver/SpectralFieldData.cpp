@@ -6,6 +6,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralFieldData.H"
+#include "WarpX.H"
 
 #include <map>
 
@@ -14,12 +15,15 @@
 using namespace amrex;
 
 /* \brief Initialize fields in spectral space, and FFT plans */
-SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
+SpectralFieldData::SpectralFieldData( const int lev,
+                                      const amrex::BoxArray& realspace_ba,
                                       const SpectralKSpace& k_space,
                                       const amrex::DistributionMapping& dm,
                                       const int n_field_required,
-                                      const bool periodic_single_box )
+                                      const bool periodic_single_box)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     m_periodic_single_box = periodic_single_box;
 
     const BoxArray& spectralspace_ba = k_space.spectralspace_ba;
@@ -62,6 +66,12 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
     // Loop over boxes and allocate the corresponding plan
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
         // the FFT plan, the valid dimensions are those of the real-space box.
@@ -76,6 +86,13 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
             fft_size, tmpRealField[mfi].dataPtr(),
             reinterpret_cast<AnyFFT::Complex*>( tmpSpectralField[mfi].dataPtr()),
             AnyFFT::direction::C2R, AMREX_SPACEDIM);
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
@@ -94,9 +111,12 @@ SpectralFieldData::~SpectralFieldData()
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral field specified by `field_index`) */
 void
-SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
+SpectralFieldData::ForwardTransform (const int lev,
+                     const MultiFab& mf, const int field_index,
                                      const int i_comp, const IntVect& stag)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space
     const bool is_nodal_x = (stag[0] == amrex::IndexType::NODE) ? true : false;
 #if (AMREX_SPACEDIM == 3)
@@ -108,6 +128,11 @@ SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
 
     // Loop over boxes
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
 
         // Copy the real-space field `mf` to the temporary field `tmpRealField`
         // This ensures that all fields have the same number of points
@@ -164,6 +189,13 @@ SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
                 fields_arr(i,j,k,field_index) = spectral_field_value;
             });
         }
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
@@ -171,10 +203,13 @@ SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `mf` */
 void
-SpectralFieldData::BackwardTransform( MultiFab& mf,
+SpectralFieldData::BackwardTransform( const int lev,
+                                      MultiFab& mf,
                                       const int field_index,
                                       const int i_comp )
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space
     const bool is_nodal_x = mf.is_nodal(0);
 #if (AMREX_SPACEDIM == 3)
@@ -186,6 +221,11 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
 
     // Loop over boxes
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
 
         // Copy the spectral-space field `tmpSpectralField` to the appropriate
         // field (specified by the input argument field_index)
@@ -261,6 +301,13 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
                 });
             }
 
+        }
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }

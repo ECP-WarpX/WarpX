@@ -136,6 +136,11 @@ public:
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
+    static amrex::Vector<int> field_boundary_lo;
+    static amrex::Vector<int> field_boundary_hi;
+    static amrex::Vector<int> particle_boundary_lo;
+    static amrex::Vector<int> particle_boundary_hi;
+
 
     // PSATD: If true (overwritten by the user in the input file), the current correction
     // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
@@ -327,6 +332,7 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void ApplySilverMuellerBoundary (amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -475,7 +481,7 @@ public:
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
-        amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
+        amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
 
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
@@ -523,7 +529,7 @@ public:
 
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                              const std::array<const amrex::MultiFab* const, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int const ngrow);
+                             const std::array<amrex::Real,3>& dx, amrex::IntVect const ngrow);
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
@@ -821,6 +827,7 @@ private:
 
     // PML
     int do_pml = 1;
+    int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
     int pml_has_particles = 0;

@@ -1075,7 +1075,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 WARPX_PROFILE_VAR_START(blp_fg);
                 PushPX(pti, exfab, eyfab, ezfab,
                        bxfab, byfab, bzfab,
-                       Ex.nGrow(), e_is_nodal,
+                       Ex.nGrowVect(), e_is_nodal,
                        0, np_gather, lev, lev, dt, ScaleFields(false), a_dt_type);
 
                 if (np_gather < np)
@@ -1109,7 +1109,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     e_is_nodal = cEx->is_nodal() and cEy->is_nodal() and cEz->is_nodal();
                     PushPX(pti, cexfab, ceyfab, cezfab,
                            cbxfab, cbyfab, cbzfab,
-                           cEx->nGrow(), e_is_nodal,
+                           cEx->nGrowVect(), e_is_nodal,
                            nfine_gather, np-nfine_gather,
                            lev, lev-1, dt, ScaleFields(false), a_dt_type);
                 }
@@ -1440,7 +1440,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             amrex::Box box = pti.tilebox();
-            box.grow(Ex.nGrow());
+            box.grow(Ex.nGrowVect());
 
             const long np = pti.numParticles();
 
@@ -1759,7 +1759,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::FArrayBox const * bxfab,
                                    amrex::FArrayBox const * byfab,
                                    amrex::FArrayBox const * bzfab,
-                                   const int ngE, const int /*e_is_nodal*/,
+                                   const amrex::IntVect ngE, const int /*e_is_nodal*/,
                                    const long offset,
                                    const long np_to_push,
                                    int lev, int gather_lev,
@@ -1976,7 +1976,7 @@ PhysicalParticleContainer::InitIonizationModule ()
 IonizationFilterFunc
 PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                               int lev,
-                                              int ngE,
+                                              amrex::IntVect ngE,
                                               const amrex::FArrayBox& Ex,
                                               const amrex::FArrayBox& Ey,
                                               const amrex::FArrayBox& Ez,

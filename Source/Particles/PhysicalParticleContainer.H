@@ -136,7 +136,7 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const int ngE, const int /*e_is_nodal*/,
+                         const amrex::IntVect ngE, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,
@@ -170,7 +170,7 @@ public:
 
     IonizationFilterFunc getIonizationFunc (const WarpXParIter& pti,
                                             int lev,
-                                            int ngE,
+                                            amrex::IntVect ngE,
                                             const amrex::FArrayBox& Ex,
                                             const amrex::FArrayBox& Ey,
                                             const amrex::FArrayBox& Ez,

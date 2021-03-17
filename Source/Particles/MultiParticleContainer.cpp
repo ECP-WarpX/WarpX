@@ -384,7 +384,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
         std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
         for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
             std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
         }
         if (!local) {
             const Geometry& gm = allcontainers[0]->Geom(lev);
@@ -687,6 +687,8 @@ MultiParticleContainer::doFieldIonization (int lev,
 {
     WARPX_PROFILE("MultiParticleContainer::doFieldIonization()");
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
     for (auto& pc_source : allcontainers)
@@ -711,10 +713,16 @@ MultiParticleContainer::doFieldIonization (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+
             auto& src_tile = pc_source ->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product->ParticlesAt(lev, pti);
 
-            auto Filter = phys_pc_ptr->getIonizationFunc(pti, lev, Ex.nGrow(),
+            auto Filter = phys_pc_ptr->getIonizationFunc(pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
                                                          Bx[pti], By[pti], Bz[pti]);
 
@@ -723,6 +731,13 @@ MultiParticleContainer::doFieldIonization (int lev,
                                                                    Filter, Copy, Transform);
 
             setNewParticleIDs(dst_tile, np_dst, num_added);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
     }
 }
@@ -1252,6 +1267,8 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 {
     WARPX_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
     // in pc_product_ele and positrons in pc_product_pos
@@ -1286,8 +1303,14 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
-                                                         pti, lev, Ex.nGrow(),
+                                                         pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
                                                          Bx[pti], By[pti], Bz[pti],
                                                          pc_source->get_v_galilean());
@@ -1305,6 +1328,13 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
             setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
             setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
     }
 }
@@ -1318,6 +1348,8 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                                const MultiFab& Bz)
 {
     WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process
@@ -1347,11 +1379,17 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 #endif
         for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            Real wt = amrex::second();
+
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
                   pc_source->particle_runtime_comps["optical_depth_QSR"],
                   m_shr_p_qs_engine->build_phot_em_functor(),
-                  pti, lev, Ex.nGrow(),
+                  pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
                   Bx[pti], By[pti], Bz[pti],
                   pc_source->get_v_galilean());
@@ -1370,6 +1408,13 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             cleanLowEnergyPhotons(
                                   dst_tile, np_dst, num_added,
                                   m_quantum_sync_photon_creation_energy_threshold);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
     }
 }

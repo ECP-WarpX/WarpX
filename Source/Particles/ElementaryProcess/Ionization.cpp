@@ -9,7 +9,7 @@
 #include "WarpX.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 
-IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, int ngE,
+IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
                                             amrex::FArrayBox const& exfab,
                                             amrex::FArrayBox const& eyfab,
                                             amrex::FArrayBox const& ezfab,
