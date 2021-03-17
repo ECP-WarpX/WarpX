@@ -22,7 +22,54 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Real const dt ) {
 
 #ifdef WARPX_DIM_RZ
-    amrex::Abort("The Silver-Mueller boundary conditions cannot be used in RZ geometry.");
+    // tiling is usually set by TilingIfNotGPU()
+    // but here, we set it to false because of potential race condition,
+    // since we grow the tiles by one guard cell after creating them.
+    for ( MFIter mfi(*Efield[0], false); mfi.isValid(); ++mfi ) {
+        // Extract field data for this grid/tile
+        Array4<Real> const& Er = Efield[0]->array(mfi);
+        Array4<Real> const& Et = Efield[1]->array(mfi);
+        Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real> const& Br = Bfield[0]->array(mfi);
+        Array4<Real> const& Bt = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        
+        // Extract tileboxes for which to loop
+        Box const& tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
+        Box const& tbt  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
+        Box const& tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
+        
+        // We will modify the first (i.e. innermost) guard cell
+        // (if it is outside of the physical domain)
+        // Thus, the tileboxes here are grown by 1 guard cell
+        tbx.grow(1);
+        tby.grow(1);
+        tbz.grow(1);
+
+        // Loop over the cells
+        amrex::ParallelFor(tbr, tbt, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                    // At the +r boundary (innermost guard cell)
+                    // is it not outermost?
+                if ( i==domain_box.bigEnd(0)+1 ){
+                    // Ensure that Br remains 0 on axis (except for m=1)
+                    Br(i, j, 0, 0) = 0.; // Mode m=0
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        if (m == 1){
+                            // For m==1, Ez is linear in r, for small r
+                            // Therefore, the formula below regularizes the singularity
+                            Br(i, j, 0, 2*m-1) =
+                        } else {
+                            Br(i, j, 0, 2*m-1) = 0.;
+                            Br(i, j, 0, 2*m  ) = 0.;
+                        }
+                    }
+                }
+            }
+        );
+    }
+
+    // amrex::Abort("The Silver-Mueller boundary conditions cannot be used in RZ geometry.");
 #else
 
     // Ensure that we are using the Yee solver
