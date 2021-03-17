@@ -384,7 +384,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
         std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
         for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
             std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
         }
         if (!local) {
             const Geometry& gm = allcontainers[0]->Geom(lev);
@@ -722,7 +722,7 @@ MultiParticleContainer::doFieldIonization (int lev,
             auto& src_tile = pc_source ->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product->ParticlesAt(lev, pti);
 
-            auto Filter = phys_pc_ptr->getIonizationFunc(pti, lev, Ex.nGrow(),
+            auto Filter = phys_pc_ptr->getIonizationFunc(pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
                                                          Bx[pti], By[pti], Bz[pti]);
 
@@ -1310,7 +1310,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             Real wt = amrex::second();
 
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
-                                                         pti, lev, Ex.nGrow(),
+                                                         pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
                                                          Bx[pti], By[pti], Bz[pti],
                                                          pc_source->get_v_galilean());
@@ -1389,7 +1389,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   m_shr_p_qs_engine->build_optical_depth_functor(),
                   pc_source->particle_runtime_comps["optical_depth_QSR"],
                   m_shr_p_qs_engine->build_phot_em_functor(),
-                  pti, lev, Ex.nGrow(),
+                  pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
                   Bx[pti], By[pti], Bz[pti],
                   pc_source->get_v_galilean());

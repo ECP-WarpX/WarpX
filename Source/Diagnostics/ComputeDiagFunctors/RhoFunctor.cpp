@@ -76,7 +76,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 #else
     // In Cartesian geometry, coarsen and interpolate from temporary MultiFab rho
     // to output diagnostic MultiFab mf_dst
-    CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio );
+    CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio );
     amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

@@ -481,7 +481,7 @@ public:
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
-        amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
+        amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
 
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
@@ -528,7 +528,7 @@ public:
 
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                              const std::array<const amrex::MultiFab* const, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int const ngrow);
+                             const std::array<amrex::Real,3>& dx, amrex::IntVect const ngrow);
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 

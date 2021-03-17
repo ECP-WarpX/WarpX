@@ -1592,7 +1592,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
 void
 WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
-                    const std::array<amrex::Real,3>& dx, int const ngrow)
+                    const std::array<amrex::Real,3>& dx, IntVect const ngrow)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
         "ComputeDivB not implemented with do_nodal."
@@ -1693,7 +1693,7 @@ WarpX::BuildBufferMasks ()
             iMultiFab* bmasks = (ipass == 0) ? current_buffer_masks[lev].get() : gather_buffer_masks[lev].get();
             if (bmasks)
             {
-                const int ngtmp = ngbuffer + bmasks->nGrow();
+                const IntVect ngtmp = ngbuffer + bmasks->nGrowVect();
                 iMultiFab tmp(bmasks->boxArray(), bmasks->DistributionMap(), 1, ngtmp);
                 const int covered = 1;
                 const int notcovered = 0;
