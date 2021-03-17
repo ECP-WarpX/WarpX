@@ -100,7 +100,8 @@ public:
                                 int /*thread_num*/,
                                 int /*lev*/,
                                 int /*depos_lev*/,
-                                amrex::Real /*dt*/) override {}
+                                amrex::Real /*dt*/,
+                                amrex::Real /*relative_time*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_
