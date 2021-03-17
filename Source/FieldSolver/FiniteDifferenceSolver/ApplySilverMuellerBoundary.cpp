@@ -50,7 +50,6 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         amrex::ParallelFor(tbr, tbt, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                     // At the +r boundary (innermost guard cell)
-                    // is it not outermost?
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Ensure that Br remains 0 on axis (except for m=1)
                     Br(i, j, 0, 0) = 0.; // Mode m=0
