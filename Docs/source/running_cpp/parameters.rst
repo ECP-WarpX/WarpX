@@ -778,11 +778,16 @@ Laser initialization
 
     .. math::
 
-        E_{max} = a_0 \frac{2 \pi m_e c}{e\lambda} = a_0 \times (4.0 \cdot 10^{12} \;V.m^{-1})
+        E_{max} = a_0 \frac{2 \pi m_e c^2}{e\lambda} = a_0 \times (4.0 \cdot 10^{12} \;V.m^{-1})
 
     When running a **boosted-frame simulation**, provide the value of ``<laser_name>.e_max``
     in the laboratory frame, and use ``warpx.gamma_boost`` to automatically
     perform the conversion to the boosted frame.
+
+* ``<laser_name>.a0`` (`float` ; dimensionless)
+    Peak normalized amplitude of the laser field (given in the lab frame, just as ``e_max`` above).
+    See the description of ``<laser_name>.e_max`` for the conversion between ``a0`` and ``e_max``.
+    Exactly one of ``a0`` and ``e_max`` must be specified.
 
 * ``<laser_name>.wavelength`` (`float`; in meters)
     The wavelength of the laser in vacuum.
