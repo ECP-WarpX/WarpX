@@ -357,21 +357,6 @@ MultiParticleContainer::PushP (int lev, Real dt,
 }
 
 std::unique_ptr<MultiFab>
-MultiParticleContainer::GetZeroChargeDensity (const int lev)
-{
-    WarpX& warpx = WarpX::GetInstance();
-
-    BoxArray ba = warpx.boxArray(lev);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
-    const int ng_rho = warpx.get_ng_depos_rho().max();
-
-    auto zero_rho = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheNodeVector()),
-                                               dmap,WarpX::ncomps,ng_rho);
-    zero_rho->setVal(amrex::Real(0.0));
-    return zero_rho;
-}
-
-std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
     if (allcontainers.size() == 0)
