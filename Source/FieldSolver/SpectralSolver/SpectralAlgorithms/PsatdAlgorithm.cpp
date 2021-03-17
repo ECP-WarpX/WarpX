@@ -271,11 +271,11 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Y3 = Y3_arr(i,j,k);
                 const Complex Y4 = Y4_arr(i,j,k);
 
-                fields(i,j,k,Idx::Ex) += Y4 * Jx_2 - I * (Y2 * rho_new_2 - Y3 * rho_old_2) * kx;
+                fields(i,j,k,Idx::Ex) += Y4 * Jx_2 - I * (Y2 * rho_new_2 - T2 * Y3 * rho_old_2) * kx;
 
-                fields(i,j,k,Idx::Ey) += Y4 * Jy_2 - I * (Y2 * rho_new_2 - Y3 * rho_old_2) * ky;
+                fields(i,j,k,Idx::Ey) += Y4 * Jy_2 - I * (Y2 * rho_new_2 - T2 * Y3 * rho_old_2) * ky;
 
-                fields(i,j,k,Idx::Ez) += Y4 * Jz_2 - I * (Y2 * rho_new_2 - Y3 * rho_old_2) * kz;
+                fields(i,j,k,Idx::Ez) += Y4 * Jz_2 - I * (Y2 * rho_new_2 - T2 * Y3 * rho_old_2) * kz;
 
                 fields(i,j,k,Idx::Bx) += I * Y1 * (ky * Jz_2 - kz * Jy_2);
 
@@ -1022,8 +1022,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
 #else
                 kz_c[j]*vg_z;
 #endif
-            const Real w2_c = w_c * w_c;
-            const Real w3_c = w_c * w_c * w_c;
 
             const Real w = kx[i]*vx +
 #if (AMREX_SPACEDIM==3)
@@ -1031,6 +1029,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
 #else
                 kz[j]*vz;
 #endif
+            const Real w2 = w * w;
 
             const Real om_s  = c * knorm_s;
             const Real om2_s = om_s * om_s;
@@ -1038,7 +1037,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
             const Complex theta      = amrex::exp(  I * w * dt * 0.5_rt);
             const Complex theta_star = amrex::exp(- I * w * dt * 0.5_rt);
 
-            const Complex theta2_c = amrex::exp(I * w_c * dt);
+            const Complex theta_c      = amrex::exp(  I * w_c * dt * 0.5_rt);
+            const Complex theta_c_star = amrex::exp(- I * w_c * dt * 0.5_rt);
 
             C(i,j,k) = std::cos(om_s * dt);
 
@@ -1052,66 +1052,63 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
                 S_ck(i,j,k) = dt;
             }
 
-            // Note: might need to add limit if((om_s == 0.) && (w_c == -w))
-            Complex psi1;
-            if ((om_s == 0.) && (w_c == 0.) && (w == 0.))
+            amrex::Real tmp;
+            if (om_s != 0.)
             {
-                psi1 = dt2 * 0.5_rt;
+                tmp = (1._rt - C(i,j,k)) / (eps0 * om2_s);
             }
             else
             {
-                psi1 = (theta_star - theta2_c * theta * C(i,j,k)
-                       + I * (w_c + w) * theta2_c * theta * S_ck(i,j,k)) / (om2_s - (w_c + w) * (w_c + w));
+                tmp = dt2 * 0.5_rt / eps0;
             }
 
             // Y1 (multiplies i*(ks \times J2) in the update equation for B)
-            Y1(i,j,k) = psi1 / eps0;
+            if ((om_s == 0.) && (w == 0.))
+            {
+                Y1(i,j,k) = theta_c * dt2 * 0.5_rt / eps0;
+            }
+            else
+            {
+                Y1(i,j,k) = theta_c * (theta_star - theta * C(i,j,k)
+                            + I * w * theta * S_ck(i,j,k)) / (eps0 * (om2_s - w2));
+            }
 
             // Y2 (multiplies rho_new)
             if (w == 0.)
             {
-                if ((om_s == 0.) && (w_c == 0.))
+                if (om_s == 0.)
                 {
                     Y2(i,j,k) = dt2 * c2 / (6._rt * eps0);
                 }
                 else
                 {
-                    Y2(i,j,k) = c2 * (dt * om2_s - dt * w2_c - om2_s * theta2_c * S_ck(i,j,k)
-                                - 2._rt * I * w_c * theta2_c * C(i,j,k) + 2._rt * I * w_c
-                                - w2_c * theta2_c * S_ck(i,j,k)) / (dt * eps0 * (om2_s - w2_c) * (om2_s - w2_c));
+                    Y2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (dt * eps0 * om2_s);
                 }
             }
             else // w != 0.
             {
-                Y2(i,j,k) = c2 * (Y1(i,j,k) - theta * X1(i,j,k)) / (theta_star - theta);
+                Y2(i,j,k) = c2 * (theta_c_star * Y1(i,j,k) - theta * tmp) / (theta_star - theta);
             }
 
             // Y3 (multiplies rho_old)
             if (w == 0.)
             {
-                if ((om_s == 0.) && (w_c == 0.))
+                if ((om_s == 0.))
                 {
                     Y3(i,j,k) = - dt2 * c2 / (3._rt * eps0);
                 }
                 else
                 {
-                    Y3(i,j,k) = c2 * (dt * om2_s * theta2_c * C(i,j,k)
-                                - I * dt * om2_s * w_c * theta2_c * S_ck(i,j,k)
-                                - dt * w2_c * theta2_c * C(i,j,k)
-                                + I * dt * w3_c * theta2_c * S_ck(i,j,k)
-                                - om2_s * theta2_c * S_ck(i,j,k)
-                                - 2._rt * I * w_c * theta2_c * C(i,j,k)
-                                + 2._rt * I * w_c - w2_c * theta2_c * S_ck(i,j,k))
-                                / (dt * eps0 * (om2_s - w2_c) * (om2_s - w2_c));
+                    Y3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (dt * eps0 * om2_s);
                 }
             }
             else // w != 0.
             {
-                Y3(i,j,k) = c2 * (Y1(i,j,k) - theta_star * X1(i,j,k)) / (theta_star - theta);
+                Y3(i,j,k) = c2 * (theta_c_star * Y1(i,j,k) - theta_star * tmp) / (theta_star - theta);
             }
 
             // Y4 (multiplies J in the update equation for E)
-            Y4(i,j,k) = I * (w_c + w) * Y1(i,j,k) - theta2_c * theta * S_ck(i,j,k) / eps0;
+            Y4(i,j,k) = I * w * Y1(i,j,k) - theta_c * theta * S_ck(i,j,k) / eps0;
         });
     }
 }
