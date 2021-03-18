@@ -971,8 +971,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsTwoStream (
         Array4<Real> C = C_coef[mfi].array();
         Array4<Real> S_ck = S_ck_coef[mfi].array();
 
-        Array4<Complex> X1 = X1_coef[mfi].array();
-
         Array4<Complex> Y1 = Y1_coef[mfi].array();
         Array4<Complex> Y2 = Y2_coef[mfi].array();
         Array4<Complex> Y3 = Y3_coef[mfi].array();
