@@ -283,8 +283,6 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         dirichlet_flag[1] = true;
         // parse the input file for the potential at the current time
         getPhiBC(1, phi_bc_values_lo[1], phi_bc_values_hi[1]);
-
-        }
     }
 
     // set the boundary potential values if needed
