@@ -37,12 +37,12 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
-    getWithParser(pp, "zinject_plane", zinject_plane);
-    pp.query("projected", projected);
-    pp.query("focused", focused);
-    pp.query("rigid_advance", rigid_advance);
+    getWithParser(pp_species_name, "zinject_plane", zinject_plane);
+    pp_species_name.query("projected", projected);
+    pp_species_name.query("focused", focused);
+    pp_species_name.query("rigid_advance", rigid_advance);
 
 }
 
