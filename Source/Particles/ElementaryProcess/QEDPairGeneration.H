@@ -78,7 +78,7 @@ public:
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
-                                const WarpXParIter& a_pti, int lev, int ngE,
+                                const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
                                 amrex::FArrayBox const& exfab,
                                 amrex::FArrayBox const& eyfab,
                                 amrex::FArrayBox const& ezfab,

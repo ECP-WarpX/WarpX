@@ -92,7 +92,35 @@ struct LoadBalanceCostsUpdateAlgo {
     };
 };
 
+/** Field boundary conditions at the domain boundary
+ */
+struct FieldBoundaryType {
+    enum {
+        PEC = 0,     //!< perfect electric conductor (PEC) with E_tangential=0
+        Periodic = 1,
+        PML = 2,
+        PMC = 3      //!< perfect magnetic conductor (PMC) with B_tangential=0
+    };
+};
+
+/** Particle boundary conditions at the domain boundary
+ */
+struct ParticleBoundaryType {
+    enum {
+        Absorbing = 0,     //!< particles crossing domain boundary are removed
+        Open = 1,          //!< particles cross domain boundary leave with damped j
+        Reflecting = 2,     //!< particles are reflected
+        Periodic = 3
+    };
+};
+
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
+
+/** Select BC Type for fields, if field=true
+ *  else select BCType for particles.
+ */
+int
+GetBCTypeInteger( std::string BCType, bool field );
 
 #endif // UTILS_WARPXALGORITHMSELECTION_H_

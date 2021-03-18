@@ -181,6 +181,19 @@ Setting up the field mesh
     When using the RZ version, this is the number of azimuthal modes.
 
 .. _running-cpp-parameters-parallelization:
+Domain Boundary Conditions
+--------------------------
+
+* ``boundary.field_lo`` and ``boundary_field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+    Boundary conditions applied to field at the lower and upper domain boundaries.
+    Options are:
+    * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+
+* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+    Options are:
+    * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+
+.. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
@@ -366,7 +379,7 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
-* ``particles.do_tiling`` (`bool`) optional (default `true` if WarpX is compiled for GPUs, `false` otherwise)
+* ``particles.do_tiling`` (`bool`) optional (default `false` if WarpX is compiled for GPUs, `true` otherwise)
     Controls whether tiling ('cache blocking') transformation is used for particles.
     Tiling should be on when using OpenMP and off when using GPUs.
 
@@ -765,11 +778,16 @@ Laser initialization
 
     .. math::
 
-        E_{max} = a_0 \frac{2 \pi m_e c}{e\lambda} = a_0 \times (4.0 \cdot 10^{12} \;V.m^{-1})
+        E_{max} = a_0 \frac{2 \pi m_e c^2}{e\lambda} = a_0 \times (4.0 \cdot 10^{12} \;V.m^{-1})
 
     When running a **boosted-frame simulation**, provide the value of ``<laser_name>.e_max``
     in the laboratory frame, and use ``warpx.gamma_boost`` to automatically
     perform the conversion to the boosted frame.
+
+* ``<laser_name>.a0`` (`float` ; dimensionless)
+    Peak normalized amplitude of the laser field (given in the lab frame, just as ``e_max`` above).
+    See the description of ``<laser_name>.e_max`` for the conversion between ``a0`` and ``e_max``.
+    Exactly one of ``a0`` and ``e_max`` must be specified.
 
 * ``<laser_name>.wavelength`` (`float`; in meters)
     The wavelength of the laser in vacuum.
@@ -1401,7 +1419,7 @@ Numerics and algorithms
      If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
- * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
+ * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
@@ -1451,6 +1469,12 @@ Boundary conditions
 
 * ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
+
+* ``warpx.do_silver_mueller`` (`0` or `1`; default: 1)
+    Whether to use the Silver-Mueller absorbing boundary conditions. These
+    boundary conditions are simpler and less computationally expensive than
+    the PML, but are also less effective at absorbing the field. They only
+    work with the Yee Maxwell solver.
 
 .. _running-cpp-parameters-diagnostics:
 

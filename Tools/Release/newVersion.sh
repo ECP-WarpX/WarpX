@@ -132,6 +132,13 @@ sed -i -E "s/"\
 "\1${VERSION_STR_NOSUFFIX}\3$(date +%Y)\5/g" \
     ${REPO_DIR}/LICENSE.txt
 
+# README.md
+#   README.md: WarpX Copyright (c) 2018-2021, The Regents of ...
+sed -i -E "s/"\
+"(WarpX Copyright \(c\) 2018-)(.*)(, The Regents of.*)/"\
+"\1$(date +%Y)\3/g" \
+    ${REPO_DIR}/README.md
+
 
 # Epilog ######################################################################
 
