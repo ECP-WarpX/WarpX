@@ -572,12 +572,13 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
     Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift;
-    if (icomp==0){
+    // This index icomp is set in PhysicalParticleContainer::Evolve
+    if ((icomp == 0) || (icomp == 2)) {
         galilean_shift = {
             m_v_galilean[0]*time_shift_rho_old,
             m_v_galilean[1]*time_shift_rho_old,
             m_v_galilean[2]*time_shift_rho_old };
-    } else{
+    } else {
         galilean_shift = {
             m_v_galilean[0]*time_shift_rho_new,
             m_v_galilean[1]*time_shift_rho_new,
