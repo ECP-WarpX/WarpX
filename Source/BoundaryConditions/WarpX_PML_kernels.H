@@ -309,6 +309,8 @@ void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
 {
 #if (AMREX_SPACEDIM == 2)
 
+    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo, divb_cleaning);
+
     // sx = 0 means that By is staggered in x, while sx = 1 means that By is nodal in x (same for z)
     const int sx = By_stag[0];
     const int sz = By_stag[1];
