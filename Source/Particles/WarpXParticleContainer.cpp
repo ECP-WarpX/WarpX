@@ -466,7 +466,7 @@ WarpXParticleContainer::DepositCurrent (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jx,
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jy,
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jz,
-    amrex::Real dt )
+    amrex::Real dt, amrex::Real relative_t )
 {
     // Loop over the refinement levels
     int const finest_level = jx.size() - 1;
@@ -497,7 +497,7 @@ WarpXParticleContainer::DepositCurrent (
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
                            jx[lev].get(), jy[lev].get(), jz[lev].get(),
-                           0, np, thread_num, lev, lev, dt);
+                           0, np, thread_num, lev, lev, dt, relative_t/dt);
         }
 #ifdef AMREX_USE_OMP
         }

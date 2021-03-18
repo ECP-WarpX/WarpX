@@ -200,7 +200,7 @@ public:
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jx,
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jy,
         amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jz,
-        amrex::Real dt );
+        amrex::Real dt, amrex::Real relative_t );
 
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        bool local = false, bool reset = false,

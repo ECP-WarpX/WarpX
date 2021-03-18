@@ -375,7 +375,7 @@ MultiParticleContainer::DepositCurrent (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jx,
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jy,
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jz,
-    amrex::Real dt )
+    amrex::Real dt, amrex::Real relative_t )
 {
     // Reset the `rho` array
     for (int lev = 0; lev < jx.size(); ++lev) {
@@ -387,7 +387,7 @@ MultiParticleContainer::DepositCurrent (
     // Call the deposition kernel for each species
     for (int ispecies=0; ispecies<nSpecies(); ispecies++){
         WarpXParticleContainer& species = GetParticleContainer(ispecies);
-        species.DepositCurrent(jx, jy, jz, dt);
+        species.DepositCurrent(jx, jy, jz, dt, relative_t );
     }
 
 #ifdef WARPX_DIM_RZ
@@ -399,12 +399,16 @@ MultiParticleContainer::DepositCurrent (
 
 void
 MultiParticleContainer::DepositCharge (
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho )
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    amrex::Real relative_t )
 {
     // Reset the `rho` array
     for (int lev = 0; lev < rho.size(); ++lev) {
         rho[lev]->setVal(0.0, rho[lev]->nGrowVect());
     }
+
+    // Push the particles in time, if needed
+    if (relative_time!=0) PushX(relative_t);
 
     // Call the deposition kernel for each species
     for (int ispecies=0; ispecies<nSpecies(); ispecies++){
@@ -413,8 +417,11 @@ MultiParticleContainer::DepositCharge (
         bool const do_rz_volume_scaling = false;
         bool const interpolate_across_levels = false;
         species.DepositCharge(rho, reset, do_rz_volume_scaling,
-                              interpolate_across_levels);
+                              interpolate_across_levels, relative_t);
     }
+
+    // Push the particles back in time
+    if (relative_time!=0) PushX(-relative_t);
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev) {
