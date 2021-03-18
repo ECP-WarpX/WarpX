@@ -77,10 +77,10 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     }
 
     // Deposit particle charge density (source of Poisson solver)
-    bool const local = false;
     bool const reset = true;
     bool const do_rz_volume_scaling = true;
-    pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    pc.DepositCharge(rho, reset, do_rz_volume_scaling);
+    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
@@ -122,19 +122,16 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Deposit particle charge density (source of Poisson solver)
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        bool const local = true;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
-        species.DepositCharge(rho, local, reset, do_rz_volume_scaling);
-    }
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyFilterandSumBoundaryRho (lev, lev, *rho[lev], 0, 1);
+        species.DepositCharge(rho, reset, do_rz_volume_scaling);
     }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
     }
 #endif
+    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0

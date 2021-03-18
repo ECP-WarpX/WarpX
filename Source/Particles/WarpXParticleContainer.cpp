@@ -615,8 +615,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
 void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                                        bool local, bool reset,
-                                        bool do_rz_volume_scaling)
+                                        bool reset, bool do_rz_volume_scaling)
 {
 #ifdef WARPX_DIM_RZ
     (void)do_rz_volume_scaling;
@@ -661,24 +660,6 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 #else
         ignore_unused(do_rz_volume_scaling);
 #endif
-
-        // Exchange guard cells
-        if (!local) rho[lev]->SumBoundary( m_gdb->Geom(lev).periodicity() );
-    }
-
-    // Now that the charge has been deposited at each level,
-    // we average down from fine to crse
-    for (int lev = finest_level - 1; lev >= 0; --lev) {
-        const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
-        BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
-        coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
-        MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
-        coarsened_fine_data.setVal(0.0);
-
-        int const refinement_ratio = 2;
-
-        CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
-        rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
     }
 }
 
