@@ -23,7 +23,8 @@ PsatdAlgorithm::PsatdAlgorithm(
     const Array<Real,3>& v_galilean,
     const Real dt,
     const bool update_with_rho,
-    const bool time_averaging)
+    const bool time_averaging,
+    const bool linear_in_J)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
     // Initialize the centered finite-order modified k vectors: these are computed
@@ -39,7 +40,8 @@ PsatdAlgorithm::PsatdAlgorithm(
     m_v_galilean(v_galilean),
     m_dt(dt),
     m_update_with_rho(update_with_rho),
-    m_time_averaging(time_averaging)
+    m_time_averaging(time_averaging),
+    m_linear_in_J(linear_in_J)
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -84,7 +86,10 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging  = m_time_averaging;
+    const bool linear_in_J     = m_linear_in_J;
     const bool is_galilean     = m_is_galilean;
+
+    const amrex::Real dt = m_dt;
 
     // Loop over boxes
     for (MFIter mfi(f.fields); mfi.isValid(); ++mfi)
@@ -139,6 +144,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         {
             using Idx = SpectralFieldIndex;
             using AvgIdx = SpectralAvgFieldIndex;
+            using IdxLin = SpectralFieldIndexLinearInJ;
 
             // Record old values of the fields to be updated
             const Complex Ex_old = fields(i,j,k,Idx::Ex);
@@ -229,6 +235,41 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             fields(i,j,k,Idx::Bz) = T2 * C * Bz_old - I * T2 * S_ck * (kx * Ey_old - ky * Ex_old)
                 + I * X1 * (kx * Jy - ky * Jx);
+
+            if (linear_in_J)
+            {
+                const Complex Jx_new = fields(i,j,k,IdxLin::Jx_new);
+                const Complex Jy_new = fields(i,j,k,IdxLin::Jy_new);
+                const Complex Jz_new = fields(i,j,k,IdxLin::Jz_new);
+
+                const Complex F_old = fields(i,j,k,IdxLin::F);
+                const Complex G_old = fields(i,j,k,IdxLin::G);
+
+                fields(i,j,k,Idx::Ex) += -X1 * (Jx_new - Jx) / dt + I * c2 * S_ck * F_old * kx;
+
+                fields(i,j,k,Idx::Ey) += -X1 * (Jy_new - Jy) / dt + I * c2 * S_ck * F_old * ky;
+
+                fields(i,j,k,Idx::Ez) += -X1 * (Jz_new - Jz) / dt + I * c2 * S_ck * F_old * kz;
+
+                fields(i,j,k,Idx::Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy))
+                    + I * c2 * S_ck * G_old * kx;
+
+                fields(i,j,k,Idx::By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz))
+                    + I * c2 * S_ck * G_old * ky;
+
+                fields(i,j,k,Idx::Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx))
+                    + I * c2 * S_ck * G_old * kz;
+
+                const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;
+                const Complex k_dot_dJ = kx * (Jx_new - Jx) + ky * (Jy_new - Jy) + kz * (Jz_new - Jz);
+                const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
+                const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
+
+                fields(i,j,k,IdxLin::F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
+                    - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
+
+                fields(i,j,k,IdxLin::G) = C * G_old + I * S_ck * k_dot_B;
+            }
 
             // Additional update equations for averaged Galilean algorithm
 

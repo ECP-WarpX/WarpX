@@ -28,7 +28,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Array<amrex::Real,3>& v_galilean,
             const amrex::Real dt,
             const bool update_with_rho,
-            const bool time_averaging);
+            const bool time_averaging,
+            const bool linear_in_J = false);
 
         // TODO Add Doxygen docs
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
@@ -38,7 +39,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         {
             if (m_time_averaging) {
                 return SpectralAvgFieldIndex::n_fields;
-            } else {
+            }
+            else if (m_linear_in_J) {
+                return SpectralFieldIndexLinearInJ::n_fields;
+            }
+            else {
                 return SpectralFieldIndex::n_fields;
             }
         };
@@ -106,6 +111,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
+        bool m_linear_in_J;
         bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD
