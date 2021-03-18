@@ -673,7 +673,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                         bool local, bool reset,
-                                        bool do_rz_volume_scaling)
+                                        bool do_rz_volume_scaling,
+                                        bool interpolate_across_levels)
 {
 #ifdef WARPX_DIM_RZ
     (void)do_rz_volume_scaling;
@@ -725,17 +726,19 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
     // Now that the charge has been deposited at each level,
     // we average down from fine to crse
-    for (int lev = finest_level - 1; lev >= 0; --lev) {
-        const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
-        BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
-        coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
-        MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
-        coarsened_fine_data.setVal(0.0);
+    if (interpolate_across_levels) {
+        for (int lev = finest_level - 1; lev >= 0; --lev) {
+            const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
+            BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
+            coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
+            MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
+            coarsened_fine_data.setVal(0.0);
 
-        int const refinement_ratio = 2;
+            int const refinement_ratio = 2;
 
-        CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
-        rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
+            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
+            rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
+        }
     }
 }
 

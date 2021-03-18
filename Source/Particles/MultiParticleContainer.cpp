@@ -411,7 +411,9 @@ MultiParticleContainer::DepositCharge (
         WarpXParticleContainer& species = GetParticleContainer(ispecies);
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
-        species.DepositCharge(rho, reset, do_rz_volume_scaling);
+        bool const interpolate_across_levels = false;
+        species.DepositCharge(rho, reset, do_rz_volume_scaling,
+                              interpolate_across_levels);
     }
 
 #ifdef WARPX_DIM_RZ
