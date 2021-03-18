@@ -226,9 +226,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
  * \param lev         : Level of box that contains particles
  * \param depos_lev   : Level on which particles deposit (if buffers are used)
  * \param dt          : Time step for particle level
- * \param relative_time: Time at which to deposit J, relative to the time of the current positions 
- *                       of the particles (expressed as a fraction of dt. When different than 0,
- *                       the particle position will be modified to match the time of the deposition.
+ * \param relative_time: Time at which to deposit J, relative to the time of
+ *                       the current positions of the particles (expressed as
+ *                       a fraction of dt). When different than 0, the particle
+ *                       position will be temporarily modified to match the
+ *                       time of the deposition.
  */
 void
 WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
@@ -372,7 +374,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
           amrex::Abort("The Esirkepov deposition cannot be performed at another time then -0.5 dt.");
         }
     }
-      
+
     WARPX_PROFILE_VAR_START(blp_deposit);
     amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
     amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;

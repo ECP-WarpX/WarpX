@@ -34,6 +34,11 @@ using namespace amrex::literals;
  * \param jz_fab       : FArrayBox of current density, either full array or tile.
  * \param np_to_depose : Number of particles for which current is deposited.
  * \param dt           : Time step for particle level
+ * \param relative_time: Time at which to deposit J, relative to the time of
+ *                       the current positions of the particles (expressed as
+ *                       a fraction of dt). When different than 0, the particle
+ *                       position will be temporarily modified to match the
+ *                       time of the deposition.
  * \param dx           : 3D cell size
  * \param xyzmin       : Physical lower bounds of domain.
  * \param lo           : Index lower bounds of domain.
@@ -52,7 +57,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                         amrex::FArrayBox& jx_fab,
                         amrex::FArrayBox& jy_fab,
                         amrex::FArrayBox& jz_fab,
-                        const long np_to_depose, const amrex::Real dt, const amrex::Real relative_time,
+                        const long np_to_depose, const amrex::Real dt,
+                        const amrex::Real relative_time,
                         const std::array<amrex::Real,3>& dx,
                         const std::array<amrex::Real,3>& xyzmin,
                         const amrex::Dim3 lo,
