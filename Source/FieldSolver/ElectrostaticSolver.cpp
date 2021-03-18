@@ -309,7 +309,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
 #else
 
 /* Compute the potential `phi` in Cartesian geometry by solving the Poisson equation
-   hwith `rho` as a source, assuming that the source moves at a constant
+   with `rho` as a source, assuming that the source moves at a constant
    speed \f$\vec{\beta}\f$.
    This uses the amrex solver.
 
@@ -451,7 +451,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
 
                 } // loop ijk
             );
-    }} // lev & MRIter
+    }} // lev & MFIter
 }
 
 /* \bried Utility function to parse input file for boundary potentials.

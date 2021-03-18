@@ -131,8 +131,8 @@ Setting up the field mesh
 
     For each direction, use 1 for periodic conditions, 0 otherwise. If
     warpx.do_electrostatic = labframe and non-periodic conditions are specified
-    the boundary potentials should also be specified through ``geometry.potential_lo``
-    and ``geometry.potential_hi``.
+    the boundary potentials can also be specified through ``boundary.potential_lo``
+    and ``boundary.potential_hi`` (default `0`).
 
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
