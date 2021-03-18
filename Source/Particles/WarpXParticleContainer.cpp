@@ -461,6 +461,50 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 #endif
 }
 
+void
+WarpXParticleContainer::DepositCurrent (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jx,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jy,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jz,
+    amrex::Real dt )
+{
+    // Loop over the refinement levels
+    int const finest_level = jx.size() - 1;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+
+        // Loop over particle tiles and deposit current on each level
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+        {
+        int thread_num = omp_get_thread_num();
+#else
+        int thread_num = 0;
+#endif
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            const long np = pti.numParticles();
+            auto& wp = pti.GetAttribs(PIdx::w);
+            auto& uxp = pti.GetAttribs(PIdx::ux);
+            auto& uyp = pti.GetAttribs(PIdx::uy);
+            auto& uzp = pti.GetAttribs(PIdx::uz);
+
+            int* AMREX_RESTRICT ion_lev;
+            if (do_field_ionization){
+                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+            } else {
+                ion_lev = nullptr;
+            }
+
+            DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
+                           jx[lev].get(), jy[lev].get(), jz[lev].get(),
+                           0, np, thread_num, lev, lev, dt);
+        }
+#ifdef AMREX_USE_OMP
+        }
+#endif
+    }
+}
+
 /* \brief Charge Deposition for thread thread_num
  * \param pti         : Particle iterator
  * \param wp          : Array of particle weights

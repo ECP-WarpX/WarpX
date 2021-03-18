@@ -129,6 +129,18 @@ public:
     */
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
 
+    // Deposit charge density
+    void
+    DepositCharge ( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho );
+
+    // Deposit current density
+    void
+    DepositCurrent (
+        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jx,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jy,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jz,
+        amrex::Real dt );
+
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
