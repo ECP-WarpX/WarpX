@@ -27,8 +27,8 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // read species name
-    ParmParse pp(rd_name);
-    pp.get("species",m_species_name);
+    ParmParse pp_rd_name(rd_name);
+    pp_rd_name.get("species",m_species_name);
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();

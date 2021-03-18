@@ -67,8 +67,8 @@ algo.load_balance_costs_update = Heuristic
 
 # particle bin-sorting on GPU (ideal defaults not investigated in 2D)
 #   Try larger values than the defaults below and report back! :)
-#warpx.sort_intervals = 4
-#warpx.sort_bin_size = 4 4 4
+#warpx.sort_intervals = 4    # default on CPU: -1 (off); on GPU: 4
+#warpx.sort_bin_size = 1 1 1
 
 
 #################################

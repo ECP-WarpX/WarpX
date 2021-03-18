@@ -102,33 +102,33 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();
 
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
-    pp.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
-    pp.query("do_backward_propagation", do_backward_propagation);
+    pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
+    pp_species_name.query("do_backward_propagation", do_backward_propagation);
 
     // Initialize splitting
-    pp.query("do_splitting", do_splitting);
-    pp.query("split_type", split_type);
-    pp.query("do_not_deposit", do_not_deposit);
-    pp.query("do_not_gather", do_not_gather);
-    pp.query("do_not_push", do_not_push);
+    pp_species_name.query("do_splitting", do_splitting);
+    pp_species_name.query("split_type", split_type);
+    pp_species_name.query("do_not_deposit", do_not_deposit);
+    pp_species_name.query("do_not_gather", do_not_gather);
+    pp_species_name.query("do_not_push", do_not_push);
 
-    pp.query("do_continuous_injection", do_continuous_injection);
-    pp.query("initialize_self_fields", initialize_self_fields);
-    queryWithParser(pp, "self_fields_required_precision", self_fields_required_precision);
-    pp.query("self_fields_max_iters", self_fields_max_iters);
+    pp_species_name.query("do_continuous_injection", do_continuous_injection);
+    pp_species_name.query("initialize_self_fields", initialize_self_fields);
+    queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
+    pp_species_name.query("self_fields_max_iters", self_fields_max_iters);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
-    pp.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
+    pp_species_name.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
 
-    pp.query("do_field_ionization", do_field_ionization);
+    pp_species_name.query("do_field_ionization", do_field_ionization);
 
-    pp.query("do_resampling", do_resampling);
+    pp_species_name.query("do_resampling", do_resampling);
     if (do_resampling) m_resampler = Resampling(species_name);
 
     //check if Radiation Reaction is enabled and do consistency checks
-    pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
+    pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
     WarpXUtilMsg::AlwaysAssert(
@@ -147,16 +147,16 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //_____________________________
 
 #ifdef WARPX_QED
-    pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
+    pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
     if (m_do_qed_quantum_sync)
         AddRealComp("optical_depth_QSR");
 
-    pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+    pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
     if (m_do_qed_breit_wheeler)
         AddRealComp("optical_depth_BW");
 
     if(m_do_qed_quantum_sync){
-        pp.get("qed_quantum_sync_phot_product_species",
+        pp_species_name.get("qed_quantum_sync_phot_product_species",
             m_qed_quantum_sync_phot_product_name);
     }
 #endif
@@ -190,15 +190,15 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
 void
 PhysicalParticleContainer::BackwardCompatibility ()
 {
-    ParmParse pps(species_name);
+    ParmParse pp_species_name(species_name);
     std::vector<std::string> backward_strings;
-    if (pps.queryarr("plot_vars", backward_strings)){
+    if (pp_species_name.queryarr("plot_vars", backward_strings)){
         amrex::Abort("<species>.plot_vars is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
 
     int backward_int;
-    if (pps.query("plot_species", backward_int)){
+    if (pp_species_name.query("plot_species", backward_int)){
         amrex::Abort("<species>.plot_species is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
@@ -1913,15 +1913,15 @@ void
 PhysicalParticleContainer::InitIonizationModule ()
 {
     if (!do_field_ionization) return;
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
     if (charge != PhysConst::q_e){
         amrex::Warning(
             "charge != q_e for ionizable species: overriding user value and setting charge = q_e.");
         charge = PhysConst::q_e;
     }
-    pp.query("ionization_initial_level", ionization_initial_level);
-    pp.get("ionization_product_species", ionization_product_name);
-    pp.get("physical_element", physical_element);
+    pp_species_name.query("ionization_initial_level", ionization_initial_level);
+    pp_species_name.get("ionization_product_species", ionization_product_name);
+    pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level
     AddIntComp("ionization_level");
     // Get atomic number and ionization energies from file
