@@ -165,10 +165,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                               dm, nc, ng);
             rho_fp[lev] = std::move(pmf);
         }
-        
+
 #ifdef WARPX_USE_PSATD
         if (spectral_solver_fp[lev] != nullptr) {
-            
+
             // Get the cell-centered box
             BoxArray realspace_ba = ba;   // Copy box
             realspace_ba.enclosedCells(); // Make it cell-centered
@@ -180,7 +180,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 #   elif (AMREX_SPACEDIM == 2)
             RealVect dx_vect(dx[0], dx[2]);
 #   endif
-            
+
 #    ifdef WARPX_DIM_RZ
             if ( WarpX::fft_periodic_single_box == false ) {
                 realspace_ba.grow(1, ngE[1]); // add guard cells only in z
@@ -199,7 +199,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                           SpectralSolver::m_update_with_rho  // done?
                                                           );
             spectral_solver_fp[lev] = std::move(pss);
-            
+
             if (WarpX::use_kspace_filter) {
                 spectral_solver_fp[lev]->InitFilter(WarpX::filter_npass_each_dir,
                                                     WarpX::use_filter_compensation);
@@ -301,11 +301,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
 #ifdef WARPX_USE_PSATD
             if (spectral_solver_cp[lev] != nullptr) {
-                
+
                 BoxArray cba = ba;
                 cba.coarsen(WarpX::refRatio(lev-1)); // TODO
                 std::array<Real,3> cdx = WarpX::CellSize(lev-1);
-                
+
 #   if (AMREX_SPACEDIM == 3)
                 RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
 #   elif (AMREX_SPACEDIM == 2)
@@ -314,10 +314,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 // Get the cell-centered box
                 BoxArray c_realspace_ba = cba;   // Copy box
                 c_realspace_ba.enclosedCells(); // Make it cell-centered
-                
+
                 auto ngE = WarpX::getngE();
                 auto dt = WarpX::getdt();
-                
+
 #    ifdef WARPX_DIM_RZ
                 c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
                 auto pss = std::make_unique<SpectralSolverRZ>(lev,                               // done
@@ -332,7 +332,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                               SpectralSolver::m_update_with_rho  // done?
                                                               );
                 spectral_solver_cp[lev] = std::move(pss);
-                
+
                 if (WarpX::use_kspace_filter) {
                     spectral_solver_cp[lev]->InitFilter(WarpX::filter_npass_each_dir,
                                                         WarpX::use_filter_compensation);
