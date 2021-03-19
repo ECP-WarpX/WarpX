@@ -83,8 +83,16 @@ void LoadBalanceCosts::ComputeDiags (int step)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 1] = dm[mfi.index()];
             m_data[shift_m_data + mfi.index()*m_nDataFields + 2] = lev;
             m_data[shift_m_data + mfi.index()*m_nDataFields + 3] = tbx.loVect()[0];
+#if (AMREX_SPACEDIM >= 2)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = tbx.loVect()[1];
+#else
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = 0.;
+#endif
+#if (AMREX_SPACEDIM == 3)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = tbx.loVect()[2];
+#else
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = 0.;
+#endif
 #ifdef AMREX_USE_GPU
             m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = amrex::Gpu::Device::deviceId();
 #endif
