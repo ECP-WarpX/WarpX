@@ -196,7 +196,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                           dx_vect,                           // done?
                                                           dt[lev],                           // done?
                                                           WarpX::fft_periodic_single_box,    // done?
-                                                          SpectralSolver::m_update_with_rho  // done?
+                                                          SpectralSolver::update_with_rho  // done?
                                                           );
             spectral_solver_fp[lev] = std::move(pss);
 
@@ -222,7 +222,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                         dt[lev],                           // done?
                                                         pml_flag_false,                    // done?
                                                         WarpX::fft_periodic_single_box,    // done?
-                                                        SpectralSolver::m_update_with_rho, // done?
+                                                        SpectralSolver::update_with_rho, // done?
                                                         WarpX::fft_do_time_averaging       // done?
                                                         );
             spectral_solver_fp[lev] = std::move(pss);
@@ -329,7 +329,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                               WarpX::m_v_galilean,               // done?
                                                               cdx_vect,                           // done?
                                                               dt[lev],                           // done?
-                                                              SpectralSolver::m_update_with_rho  // done?
+                                                              SpectralSolver::update_with_rho  // done?
                                                               );
                 spectral_solver_cp[lev] = std::move(pss);
 
@@ -353,7 +353,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                             dt[lev],                           // done?
                                                             pml_flag_false,                    // done?
                                                             WarpX::fft_periodic_single_box,    // done?
-                                                            SpectralSolver::m_update_with_rho, // done?
+                                                            SpectralSolver::update_with_rho, // done?
                                                             WarpX::fft_do_time_averaging       // done?
                                                             );
                 spectral_solver_cp[lev] = std::move(pss);
