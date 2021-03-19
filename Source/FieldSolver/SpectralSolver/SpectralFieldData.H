@@ -29,6 +29,7 @@ struct SpectralFieldIndex {
 
 struct SpectralFieldIndexLinearInJ {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new,
+         Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,
          Jx_new, Jy_new, Jz_new, F, G, n_fields, divE=3 };
 };
 

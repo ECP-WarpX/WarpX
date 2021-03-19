@@ -37,19 +37,28 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         // TODO Add Doxygen docs
         virtual int getRequiredNumberOfFields () const override final
         {
-            if (m_time_averaging) {
+            if (!m_linear_in_J && !m_time_averaging)
+            {
+                return SpectralFieldIndex::n_fields;
+            }
+            else if (!m_linear_in_J && m_time_averaging)
+            {
                 return SpectralAvgFieldIndex::n_fields;
             }
-            else if (m_linear_in_J) {
+            else // linear in J (both with and without time averaging)
+            {
                 return SpectralFieldIndexLinearInJ::n_fields;
-            }
-            else {
-                return SpectralFieldIndex::n_fields;
             }
         };
 
         // TODO Add Doxygen docs
         void InitializeSpectralCoefficients (
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm,
+            const amrex::Real dt);
+
+        // TODO Add Doxygen docs
+        void InitializeSpectralCoefficientsAvgLin (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
@@ -93,6 +102,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+
+        SpectralComplexCoefficients X5_coef, X6_coef;
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralRealCoefficients C1_coef, C3_coef, S1_coef, S3_coef;
