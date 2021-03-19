@@ -53,7 +53,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     }
 
     //Reads the (optional) delay
-    ppl.query("delay", t_delay);
+    ppl.query("delay", m_params.t_delay);
 
     //Allocate memory for E_data Vector
     const int data_size = m_params.time_chunk_size*
