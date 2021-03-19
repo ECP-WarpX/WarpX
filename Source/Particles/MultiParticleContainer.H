@@ -132,7 +132,7 @@ public:
     // Deposit charge density
     void
     DepositCharge ( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                    amrex::Real relative_t );
+                    amrex::Real relative_t, int const icomp=0 );
 
     // Deposit current density
     void

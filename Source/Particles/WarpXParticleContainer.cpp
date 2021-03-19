@@ -672,7 +672,8 @@ void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                         bool local, bool reset,
                                         bool do_rz_volume_scaling,
-                                        bool interpolate_across_levels)
+                                        bool interpolate_across_levels,
+                                        int const icomp)
 {
 #ifdef WARPX_DIM_RZ
     (void)do_rz_volume_scaling;
@@ -682,7 +683,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
     for (int lev = 0; lev <= finest_level; ++lev) {
 
         // Reset the `rho` array if `reset` is True
-        if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrowVect());
+        int const nc = WarpX::ncomps;
+        if (reset) rho[lev]->setVal(0., icomp*nc, nc, rho[lev]->nGrowVect());
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP
@@ -704,7 +706,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                 ion_lev = nullptr;
             }
 
-            DepositCharge(pti, wp, ion_lev, rho[lev].get(), 0, 0, np, thread_num, lev, lev);
+            DepositCharge(pti, wp, ion_lev, rho[lev].get(), icomp, 0, np, thread_num, lev, lev);
         }
 #ifdef AMREX_USE_OMP
         }

@@ -203,7 +203,8 @@ public:
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        bool local = false, bool reset = false,
                        bool do_rz_volume_scaling = false,
-                       bool interpolate_across_levels = true );
+                       bool interpolate_across_levels = true,
+                       int const icomp = 0);
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,
