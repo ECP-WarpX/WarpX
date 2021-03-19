@@ -137,7 +137,7 @@ public:
     // Deposit current density
     void
     DepositCurrent (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > J,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
         amrex::Real dt, amrex::Real relative_t );
 
     ///

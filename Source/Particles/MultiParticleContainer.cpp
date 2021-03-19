@@ -374,7 +374,7 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 
 void
 MultiParticleContainer::DepositCurrent (
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > J,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
     amrex::Real dt, amrex::Real relative_t )
 {
     // Reset the `rho` array
