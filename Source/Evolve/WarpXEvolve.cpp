@@ -415,19 +415,23 @@ WarpX::OneStep_multiJ (Real cur_time)
     PSATDForwardTransformEB();
 
     // Deposit rho^{n}
-    mypc->DepositCharge( rho_fp, -dt[0], 0 );
-    SyncRho(); // Filter, exchange boundary, and interpolate across levels
-    PSATDForwardTransformRho(0); // rho old
+    if (WarpX::update_with_rho) {
+        mypc->DepositCharge( rho_fp, -dt[0], 0 );
+        SyncRho(); // Filter, exchange boundary, and interpolate across levels
+        PSATDForwardTransformRho(0); // rho old
+    }
 
     // Deposit J^{n+1/2}
     mypc->DepositCurrent( current_fp, dt[0], -0.5*dt[0] );
     SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
     PSATDForwardTransformJ(); // Transform to k space
 
-    // Deposit rho^{n}
-    mypc->DepositCharge( rho_fp, 0, 1 );
-    SyncRho(); // Filter, exchange boundary, and interpolate across levels
-    PSATDForwardTransformRho(1); // rho old
+    // Deposit rho^{n+1}
+    if (WarpX::update_with_rho) {
+        mypc->DepositCharge( rho_fp, 0, 1 );
+        SyncRho(); // Filter, exchange boundary, and interpolate across levels
+        PSATDForwardTransformRho(1); // rho old
+    }
 
     // Advance E and B fields in time
     PSATDPushSpectralFields( dt[0] ); // Push fields in k space
