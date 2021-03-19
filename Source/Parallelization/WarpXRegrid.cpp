@@ -168,64 +168,65 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
 #ifdef WARPX_USE_PSATD
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        if (spectral_solver_fp[lev] != nullptr) {
-            // Get the cell-centered box
-            BoxArray realspace_ba = ba;   // Copy box
-            realspace_ba.enclosedCells(); // Make it cell-centered
-            auto ngE = WarpX::getngE();
-            auto dx = WarpX::CellSize(lev);
+            if (spectral_solver_fp[lev] != nullptr) {
+                // Get the cell-centered box
+                BoxArray realspace_ba = ba;   // Copy box
+                realspace_ba.enclosedCells(); // Make it cell-centered
+                auto ngE = WarpX::getngE();
+                auto dx = WarpX::CellSize(lev);
 #   if (AMREX_SPACEDIM == 3)
-            RealVect dx_vect(dx[0], dx[1], dx[2]);
+                RealVect dx_vect(dx[0], dx[1], dx[2]);
 #   elif (AMREX_SPACEDIM == 2)
-            RealVect dx_vect(dx[0], dx[2]);
+                RealVect dx_vect(dx[0], dx[2]);
 #   endif
 
 #    ifdef WARPX_DIM_RZ
-            if ( WarpX::fft_periodic_single_box == false ) {
-                realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-            }
+                if ( WarpX::fft_periodic_single_box == false ) {
+                    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                }
 
-            auto pss = std::make_unique<SpectralSolverRZ>(lev,
-                                                          realspace_ba,
-                                                          dm,
-                                                          WarpX::n_rz_azimuthal_modes,
-                                                          WarpX::noz_fft,
-                                                          WarpX::do_nodal,
-                                                          WarpX::m_v_galilean,
-                                                          dx_vect,
-                                                          WarpX::dt[lev],
-                                                          WarpX::update_with_rho
-                                                          );
-            spectral_solver_fp[lev] = std::move(pss);
+                auto pss = std::make_unique<SpectralSolverRZ>(lev,
+                                                              realspace_ba,
+                                                              dm,
+                                                              WarpX::n_rz_azimuthal_modes,
+                                                              WarpX::noz_fft,
+                                                              WarpX::do_nodal,
+                                                              WarpX::m_v_galilean,
+                                                              dx_vect,
+                                                              WarpX::dt[lev],
+                                                              WarpX::update_with_rho
+                                                              );
+                spectral_solver_fp[lev] = std::move(pss);
 
-            if (WarpX::use_kspace_filter) {
-                spectral_solver_fp[lev]->InitFilter(WarpX::filter_npass_each_dir,
-                                                    WarpX::use_filter_compensation);
+                if (WarpX::use_kspace_filter) {
+                    spectral_solver_fp[lev]->InitFilter(WarpX::filter_npass_each_dir,
+                                                        WarpX::use_filter_compensation);
             }
 #    else
-            if ( WarpX::fft_periodic_single_box == false ) {
-                realspace_ba.grow(ngE);   // add guard cells
-            }
-            bool const pml_flag_false = false;
-            auto pss = std::make_unique<SpectralSolver>(lev,
-                                                        realspace_ba,
-                                                        dm,
-                                                        WarpX::nox_fft,
-                                                        WarpX::noy_fft,
-                                                        WarpX::noz_fft,
-                                                        WarpX::do_nodal,
-                                                        WarpX::m_v_galilean,
-                                                        WarpX::m_v_comoving,
-                                                        dx_vect,
-                                                        WarpX::dt[lev],
-                                                        pml_flag_false,
-                                                        WarpX::fft_periodic_single_box,
-                                                        WarpX::update_with_rho,
-                                                        WarpX::fft_do_time_averaging
-                                                        );
-            spectral_solver_fp[lev] = std::move(pss);
+                if ( WarpX::fft_periodic_single_box == false ) {
+                    realspace_ba.grow(ngE);   // add guard cells
+                }
+                bool const pml_flag_false = false;
+                auto pss = std::make_unique<SpectralSolver>(lev,
+                                                            realspace_ba,
+                                                            dm,
+                                                            WarpX::nox_fft,
+                                                            WarpX::noy_fft,
+                                                            WarpX::noz_fft,
+                                                            WarpX::do_nodal,
+                                                            WarpX::m_v_galilean,
+                                                            WarpX::m_v_comoving,
+                                                            dx_vect,
+                                                            WarpX::dt[lev],
+                                                            pml_flag_false,
+                                                            WarpX::fft_periodic_single_box,
+                                                            WarpX::update_with_rho,
+                                                            WarpX::fft_do_time_averaging
+                                                            );
+                spectral_solver_fp[lev] = std::move(pss);
 #    endif
-        }}
+            }
+        }
 #endif
 
         // Aux patch
@@ -299,63 +300,64 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
 #ifdef WARPX_USE_PSATD
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            if (spectral_solver_cp[lev] != nullptr) {
-                BoxArray cba = ba;
-                cba.coarsen(WarpX::refRatio(lev-1));
-                std::array<Real,3> cdx = WarpX::CellSize(lev-1);
+                if (spectral_solver_cp[lev] != nullptr) {
+                    BoxArray cba = ba;
+                    cba.coarsen(WarpX::refRatio(lev-1));
+                    std::array<Real,3> cdx = WarpX::CellSize(lev-1);
 
 #   if (AMREX_SPACEDIM == 3)
-                RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
+                    RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
 #   elif (AMREX_SPACEDIM == 2)
-                RealVect cdx_vect(cdx[0], cdx[2]);
+                    RealVect cdx_vect(cdx[0], cdx[2]);
 #   endif
-                // Get the cell-centered box
-                BoxArray c_realspace_ba = cba;  // Copy box
-                c_realspace_ba.enclosedCells(); // Make it cell-centered
+                    // Get the cell-centered box
+                    BoxArray c_realspace_ba = cba;  // Copy box
+                    c_realspace_ba.enclosedCells(); // Make it cell-centered
 
-                auto ngE = WarpX::getngE();
+                    auto ngE = WarpX::getngE();
 
 #    ifdef WARPX_DIM_RZ
-                c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-                auto pss = std::make_unique<SpectralSolverRZ>(lev,
-                                                              c_realspace_ba,
-                                                              dm,
-                                                              WarpX::n_rz_azimuthal_modes,
-                                                              WarpX::noz_fft,
-                                                              WarpX::do_nodal,
-                                                              WarpX::m_v_galilean,
-                                                              cdx_vect,
-                                                              WarpX::dt[lev],
-                                                              WarpX::update_with_rho
-                                                              );
-                spectral_solver_cp[lev] = std::move(pss);
+                    c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                    auto pss = std::make_unique<SpectralSolverRZ>(lev,
+                                                                  c_realspace_ba,
+                                                                  dm,
+                                                                  WarpX::n_rz_azimuthal_modes,
+                                                                  WarpX::noz_fft,
+                                                                  WarpX::do_nodal,
+                                                                  WarpX::m_v_galilean,
+                                                                  cdx_vect,
+                                                                  WarpX::dt[lev],
+                                                                  WarpX::update_with_rho
+                                                                  );
+                    spectral_solver_cp[lev] = std::move(pss);
 
-                if (WarpX::use_kspace_filter) {
-                    spectral_solver_cp[lev]->InitFilter(WarpX::filter_npass_each_dir,
-                                                        WarpX::use_filter_compensation);
-                }
+                    if (WarpX::use_kspace_filter) {
+                        spectral_solver_cp[lev]->InitFilter(WarpX::filter_npass_each_dir,
+                                                            WarpX::use_filter_compensation);
+                    }
 #    else
-                c_realspace_ba.grow(ngE);
-                bool const pml_flag_false = false;
-                auto pss = std::make_unique<SpectralSolver>(lev,
-                                                            c_realspace_ba,
-                                                            dm,
-                                                            WarpX::nox_fft,
-                                                            WarpX::noy_fft,
-                                                            WarpX::noz_fft,
-                                                            WarpX::do_nodal,
-                                                            WarpX::m_v_galilean,
-                                                            WarpX::m_v_comoving,
-                                                            cdx_vect,
-                                                            WarpX::dt[lev],
-                                                            pml_flag_false,
-                                                            WarpX::fft_periodic_single_box,
-                                                            WarpX::update_with_rho,
-                                                            WarpX::fft_do_time_averaging
-                                                            );
-                spectral_solver_cp[lev] = std::move(pss);
+                    c_realspace_ba.grow(ngE);
+                    bool const pml_flag_false = false;
+                    auto pss = std::make_unique<SpectralSolver>(lev,
+                                                                c_realspace_ba,
+                                                                dm,
+                                                                WarpX::nox_fft,
+                                                                WarpX::noy_fft,
+                                                                WarpX::noz_fft,
+                                                                WarpX::do_nodal,
+                                                                WarpX::m_v_galilean,
+                                                                WarpX::m_v_comoving,
+                                                                cdx_vect,
+                                                                WarpX::dt[lev],
+                                                                pml_flag_false,
+                                                                WarpX::fft_periodic_single_box,
+                                                                WarpX::update_with_rho,
+                                                                WarpX::fft_do_time_averaging
+                                                                );
+                    spectral_solver_cp[lev] = std::move(pss);
 #    endif
-            }}
+                }
+            }
 #endif
         }
 
