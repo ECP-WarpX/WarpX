@@ -407,8 +407,8 @@ WarpX::OneStep_multiJ (Real cur_time)
     PushParticlesandDepose(cur_time, skip_deposition);
 
     // Deposit J^{n+1/2}
-    mypc->DepositCurrent( current_fp, -0.5*dt[0] );
-    SyncCurrent();
+    mypc->DepositCurrent( current_fp, dt[0], -0.5*dt[0] );
+    SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
 
     // Push the fields
     PushPSATD(dt[0]);
