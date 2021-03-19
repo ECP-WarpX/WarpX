@@ -168,7 +168,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
 #ifdef WARPX_USE_PSATD
         if (spectral_solver_fp[lev] != nullptr) {
-
             // Get the cell-centered box
             BoxArray realspace_ba = ba;   // Copy box
             realspace_ba.enclosedCells(); // Make it cell-centered
@@ -185,16 +184,16 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 realspace_ba.grow(1, ngE[1]); // add guard cells only in z
             }
 
-            auto pss = std::make_unique<SpectralSolverRZ>(lev,                               // done
-                                                          realspace_ba,                      // done?
-                                                          dm,                                // done
-                                                          WarpX::n_rz_azimuthal_modes,       // TOO?
-                                                          WarpX::noz_fft,                    // done?
-                                                          WarpX::do_nodal,                   // done?
-                                                          WarpX::m_v_galilean,               // done?
-                                                          dx_vect,                           // done?
-                                                          WarpX::dt[lev],                    // done?
-                                                          WarpX::update_with_rho             // done?
+            auto pss = std::make_unique<SpectralSolverRZ>(lev,
+                                                          realspace_ba,
+                                                          dm,
+                                                          WarpX::n_rz_azimuthal_modes,
+                                                          WarpX::noz_fft,
+                                                          WarpX::do_nodal,
+                                                          WarpX::m_v_galilean,
+                                                          dx_vect,
+                                                          WarpX::dt[lev],
+                                                          WarpX::update_with_rho
                                                           );
             spectral_solver_fp[lev] = std::move(pss);
 
@@ -207,21 +206,21 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 realspace_ba.grow(ngE);   // add guard cells
             }
             bool const pml_flag_false = false;
-            auto pss = std::make_unique<SpectralSolver>(lev,                               // done
-                                                        realspace_ba,                      // done?
-                                                        dm,                                // done
-                                                        WarpX::nox_fft,                    // done?
-                                                        WarpX::noy_fft,                    // done?
-                                                        WarpX::noz_fft,                    // done?
-                                                        WarpX::do_nodal,                   // done?
-                                                        WarpX::m_v_galilean,               // done?
-                                                        WarpX::m_v_comoving,               // done?
-                                                        dx_vect,                           // done?
-                                                        WarpX::dt[lev],                    // done?
-                                                        pml_flag_false,                    // done?
-                                                        WarpX::fft_periodic_single_box,    // done?
-                                                        WarpX::update_with_rho, // done?
-                                                        WarpX::fft_do_time_averaging       // done?
+            auto pss = std::make_unique<SpectralSolver>(lev,
+                                                        realspace_ba,
+                                                        dm,
+                                                        WarpX::nox_fft,
+                                                        WarpX::noy_fft,
+                                                        WarpX::noz_fft,
+                                                        WarpX::do_nodal,
+                                                        WarpX::m_v_galilean,
+                                                        WarpX::m_v_comoving,
+                                                        dx_vect,
+                                                        WarpX::dt[lev],
+                                                        pml_flag_false,
+                                                        WarpX::fft_periodic_single_box,
+                                                        WarpX::update_with_rho,
+                                                        WarpX::fft_do_time_averaging
                                                         );
             spectral_solver_fp[lev] = std::move(pss);
 #    endif
@@ -299,9 +298,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
 #ifdef WARPX_USE_PSATD
             if (spectral_solver_cp[lev] != nullptr) {
-
                 BoxArray cba = ba;
-                cba.coarsen(WarpX::refRatio(lev-1)); // TODO
+                cba.coarsen(WarpX::refRatio(lev-1));
                 std::array<Real,3> cdx = WarpX::CellSize(lev-1);
 
 #   if (AMREX_SPACEDIM == 3)
@@ -310,23 +308,23 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RealVect cdx_vect(cdx[0], cdx[2]);
 #   endif
                 // Get the cell-centered box
-                BoxArray c_realspace_ba = cba;   // Copy box
+                BoxArray c_realspace_ba = cba;  // Copy box
                 c_realspace_ba.enclosedCells(); // Make it cell-centered
 
                 auto ngE = WarpX::getngE();
 
 #    ifdef WARPX_DIM_RZ
                 c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-                auto pss = std::make_unique<SpectralSolverRZ>(lev,                               // done
-                                                              c_realspace_ba,                    // done?
-                                                              dm,                                // done
-                                                              WarpX::n_rz_azimuthal_modes,       // TODO?
-                                                              WarpX::noz_fft,                    // done?
-                                                              WarpX::do_nodal,                   // done?
-                                                              WarpX::m_v_galilean,               // done?
-                                                              cdx_vect,                           // done?
-                                                              WarpX::dt[lev],                           // done?
-                                                              WarpX::update_with_rho  // done?
+                auto pss = std::make_unique<SpectralSolverRZ>(lev,
+                                                              c_realspace_ba,
+                                                              dm,
+                                                              WarpX::n_rz_azimuthal_modes,
+                                                              WarpX::noz_fft,
+                                                              WarpX::do_nodal,
+                                                              WarpX::m_v_galilean,
+                                                              cdx_vect,
+                                                              WarpX::dt[lev],
+                                                              WarpX::update_with_rho
                                                               );
                 spectral_solver_cp[lev] = std::move(pss);
 
@@ -337,21 +335,21 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 #    else
                 c_realspace_ba.grow(ngE);
                 bool const pml_flag_false = false;
-                auto pss = std::make_unique<SpectralSolver>(lev,                               // done
-                                                            c_realspace_ba,                    // done?
-                                                            dm,                                // done
-                                                            WarpX::nox_fft,                    // done?
-                                                            WarpX::noy_fft,                    // done?
-                                                            WarpX::noz_fft,                    // done?
-                                                            WarpX::do_nodal,                   // done?
-                                                            WarpX::m_v_galilean,               // done?
-                                                            WarpX::m_v_comoving,               // done?
-                                                            cdx_vect,                         // done?
-                                                            WarpX::dt[lev],                    // done?
-                                                            pml_flag_false,                    // done?
-                                                            WarpX::fft_periodic_single_box,    // done?
-                                                            WarpX::update_with_rho,            // done?
-                                                            WarpX::fft_do_time_averaging       // done?
+                auto pss = std::make_unique<SpectralSolver>(lev,
+                                                            c_realspace_ba,
+                                                            dm,
+                                                            WarpX::nox_fft,
+                                                            WarpX::noy_fft,
+                                                            WarpX::noz_fft,
+                                                            WarpX::do_nodal,
+                                                            WarpX::m_v_galilean,
+                                                            WarpX::m_v_comoving,
+                                                            cdx_vect,
+                                                            WarpX::dt[lev],
+                                                            pml_flag_false,
+                                                            WarpX::fft_periodic_single_box,
+                                                            WarpX::update_with_rho,
+                                                            WarpX::fft_do_time_averaging
                                                             );
                 spectral_solver_cp[lev] = std::move(pss);
 #    endif
