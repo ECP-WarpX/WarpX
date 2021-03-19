@@ -49,6 +49,12 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
 
+        // TODO Add Doxygen docs
+        void InitializeSpectralCoefficientsAveraging (
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm,
+            const amrex::Real dt);
+
         /**
          * \brief Virtual function for current correction in Fourier space
          * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
