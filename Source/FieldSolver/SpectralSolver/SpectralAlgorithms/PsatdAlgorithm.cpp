@@ -30,7 +30,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     // always with the assumption of centered grids (argument nodal = true),
     // for both nodal and staggered simulations
     modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, true)),
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
     modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, true)),
     modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, true)),
 #else
@@ -78,7 +78,6 @@ PsatdAlgorithm::PsatdAlgorithm(
 
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
-
 }
 
 void
@@ -131,7 +130,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
         const Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -159,7 +158,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             // k vector values
             const Real kx = modified_kx_arr[i];
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
             const Real ky = modified_ky_arr[j];
             const Real kz = modified_kz_arr[k];
 #else
@@ -277,32 +276,32 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
     const bool update_with_rho = m_update_with_rho;
     const bool is_galilean     = m_is_galilean;
 
-    const BoxArray& ba = spectral_kspace.spectralspace_ba;
+    const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Loop over boxes and allocate the corresponding coefficients for each box
     for (MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
     {
-        const Box& bx = ba[mfi];
+        const amrex::Box& bx = ba[mfi];
 
         // Extract pointers for the k vectors
-        const Real* kx = modified_kx_vec[mfi].dataPtr();
-        const Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
-        const Real* ky = modified_ky_vec[mfi].dataPtr();
-        const Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
+        const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
+#if (AMREX_SPACEDIM == 3)
+        const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
-        const Real* kz = modified_kz_vec[mfi].dataPtr();
-        const Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
+        const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Coefficients always allocated
-        Array4<Real> C = C_coef[mfi].array();
-        Array4<Real> S_ck = S_ck_coef[mfi].array();
-        Array4<Complex> X1 = X1_coef[mfi].array();
-        Array4<Complex> X2 = X2_coef[mfi].array();
-        Array4<Complex> X3 = X3_coef[mfi].array();
+        amrex::Array4<amrex::Real> C = C_coef[mfi].array();
+        amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
+        amrex::Array4<Complex> X1 = X1_coef[mfi].array();
+        amrex::Array4<Complex> X2 = X2_coef[mfi].array();
+        amrex::Array4<Complex> X3 = X3_coef[mfi].array();
 
-        Array4<Complex> X4;
-        Array4<Complex> T2;
+        amrex::Array4<Complex> X4;
+        amrex::Array4<Complex> T2;
         if (is_galilean)
         {
             X4 = X4_coef[mfi].array();
@@ -310,341 +309,163 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
         }
 
         // Extract Galilean velocity
-        Real vx = m_v_galilean[0];
-#if (AMREX_SPACEDIM==3)
-        Real vy = m_v_galilean[1];
+        amrex::Real vg_x = m_v_galilean[0];
+#if (AMREX_SPACEDIM == 3)
+        amrex::Real vg_y = m_v_galilean[1];
 #endif
-        Real vz = m_v_galilean[2];
+        amrex::Real vg_z = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Calculate norm of k vector
-            const Real knorm = std::sqrt(
-                std::pow(kx[i], 2) +
-#if (AMREX_SPACEDIM==3)
-                std::pow(ky[j], 2) + std::pow(kz[k], 2));
+            const amrex::Real knorm_s = std::sqrt(
+                std::pow(kx_s[i], 2) +
+#if (AMREX_SPACEDIM == 3)
+                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
 #else
-                std::pow(kz[j], 2));
-#endif
-            // Calculate norm of k vector (centered)
-            const Real knorm_c = std::sqrt(
-                std::pow(kx_c[i], 2) +
-#if (AMREX_SPACEDIM==3)
-                std::pow(ky_c[j], 2) + std::pow(kz_c[k], 2));
-#else
-                std::pow(kz_c[j], 2));
+                std::pow(kz_s[j], 2));
 #endif
             // Physical constants and imaginary unit
-            constexpr Real c = PhysConst::c;
-            constexpr Real c2 = c*c;
-            constexpr Real ep0 = PhysConst::ep0;
+            constexpr amrex::Real c = PhysConst::c;
+            constexpr amrex::Real c2 = c*c;
+            constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // Auxiliary coefficients used when update_with_rho=false
-            const Real dt2 = dt * dt;
-            const Real dt3 = dt * dt2;
-            Complex X2_old, X3_old;
+            const amrex::Real dt2 = dt * dt;
+            const amrex::Real dt3 = dt * dt2;
 
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (that is, nodal) finite-order
             // modified k vectors, to work correctly for both nodal and staggered simulations.
-            // kv = 0 always with standard PSATD (zero Galilean velocity).
-            const Real kv = kx_c[i]*vx +
-#if (AMREX_SPACEDIM==3)
-                ky_c[j]*vy + kz_c[k]*vz;
+            // w_c = 0 always with standard PSATD (zero Galilean velocity).
+            const amrex::Real w_c = kx_c[i]*vg_x +
+#if (AMREX_SPACEDIM == 3)
+                ky_c[j]*vg_y + kz_c[k]*vg_z;
 #else
-                kz_c[j]*vz;
+                kz_c[j]*vg_z;
 #endif
+            const amrex::Real w2_c = w_c * w_c;
 
-            // Note that:
-            // - X1 multiplies i*(k \times J) in the update equation for B
-            // - X2 multiplies rho_new if update_with_rho = 1 or (k \dot E)
-            //      if update_with_rho = 0 in the update equation for E
-            // - X3 multiplies rho_old if update_with_rho = 1 or (k \dot J)
-            //      if update_with_rho = 0 in the update equation for E
-            // - X4 multiplies J in the update equation for E
+            const amrex::Real om_s  = c * knorm_s;
+            const amrex::Real om2_s = om_s * om_s;
 
-            if (knorm != 0. && knorm_c != 0.)
+            const Complex theta_c      = amrex::exp( I * w_c * dt * 0.5_rt);
+            const Complex theta2_c     = amrex::exp( I * w_c * dt);
+            const Complex theta_c_star = amrex::exp(-I * w_c * dt * 0.5_rt);
+
+            // C
+            C(i,j,k) = std::cos(om_s * dt);
+
+            // S_ck
+            if (om_s != 0.)
             {
-                // Auxiliary coefficients
-                const Real om = c * knorm;
-                const Real om2 = om * om;
-                const Real om3 = om * om2;
-                const Real om_c = c * knorm_c;
-                const Real om2_c = om_c * om_c;
-                const Real om3_c = om_c * om2_c;
-                const Complex tmp1 = amrex::exp(  I * om * dt);
-                const Complex tmp2 = amrex::exp(- I * om * dt);
-
-                const Real nu = kv / om_c;
-                const Real nu2 = nu * nu;
-                const Complex theta = amrex::exp(I * nu * om_c * dt * 0.5_rt);
-                const Complex theta_star = amrex::exp(- I * nu * om_c * dt * 0.5_rt);
-
-                C   (i,j,k) = std::cos(om * dt);
-                S_ck(i,j,k) = std::sin(om * dt) / om;
-
-                // T2 = 1 always with standard PSATD (zero Galilean velocity)
-                if (is_galilean)
-                {
-                    T2(i,j,k) = theta * theta;
-                }
-                const Complex T2_tmp = (is_galilean) ? T2(i,j,k) : 1.0_rt;
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu != om/om_c && nu != -om/om_c && nu != 0.)
-                {
-                    // x1 is the coefficient chi_1 in equation (12c)
-                    Complex x1 = om2_c / (om2 - nu2 * om2_c)
-                        * (theta_star - theta * C(i,j,k) + I * nu * om_c * theta * S_ck(i,j,k));
-
-                    X1(i,j,k) = theta * x1 / (ep0 * om2_c);
-
-                    if (update_with_rho)
-                    {
-                        X2(i,j,k) = c2 * (x1 * om2 - theta * (1._rt - C(i,j,k)) * om2_c)
-                            / (theta_star - theta) / (ep0 * om2_c * om2);
-
-                        X3(i,j,k) = c2 * (x1 * om2 - theta_star * (1._rt - C(i,j,k)) * om2_c)
-                            / (theta_star - theta) / (ep0 * om2_c * om2);
-                    }
-
-                    else // update_with_rho = 0
-                    {
-                        X2_old = (x1 * om2 - theta * (1._rt - C(i,j,k)) * om2_c)
-                            / (theta_star - theta);
-
-                        X3_old = (x1 * om2 - theta_star * (1._rt - C(i,j,k)) * om2_c)
-                            / (theta_star - theta);
-
-                        X2(i,j,k) = c2 * T2_tmp * (X2_old - X3_old) / (om2_c * om2);
-
-                        X3(i,j,k) = I * c2 * X2_old * (T2_tmp - 1._rt) / (ep0 * nu * om3_c * om2);
-                    }
-
-                    if (is_galilean)
-                    {
-                        X4(i,j,k) = I * nu * om_c * X1(i,j,k) - T2_tmp * S_ck(i,j,k) / ep0;
-                    }
-                }
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity)
-                if (nu == 0.)
-                {
-                    X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2);
-
-                    if (update_with_rho)
-                    {
-                        X2(i,j,k) = c2 * (1._rt - S_ck(i,j,k) / dt) / (ep0 * om2);
-
-                        X3(i,j,k) = c2 * (C(i,j,k) - S_ck(i,j,k) / dt) / (ep0 * om2);
-                    }
-
-                    else // update_with_rho = 0
-                    {
-                        X2(i,j,k) = c2 * (1._rt - C(i,j,k)) / om2;
-
-                        X3(i,j,k) = c2 * (S_ck(i,j,k) / dt - 1._rt) * dt / (ep0 * om2);
-                    }
-
-                    if (is_galilean)
-                    {
-                        X4(i,j,k) = - S_ck(i,j,k) / ep0;
-                    }
-                }
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu == om/om_c)
-                {
-                    X1(i,j,k) = (1._rt - tmp1 * tmp1 + 2._rt * I * om * dt) / (4._rt * ep0 * om2);
-
-                    if (update_with_rho)
-                    {
-                        X2(i,j,k) = c2 * (- 3._rt + 4._rt * tmp1 - tmp1 * tmp1 - 2._rt * I * om * dt)
-                            / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-
-                        X3(i,j,k) = c2 * (3._rt - 2._rt * tmp2 - 2._rt * tmp1 + tmp1 * tmp1
-                            - 2._rt * I * om * dt) / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-                    }
-
-                    else // update_with_rho = 0
-                    {
-                        X2(i,j,k) = c2 * (1._rt - C(i,j,k)) * tmp1 / om2;
-
-                        X3(i,j,k) = c2 * (2._rt * om * dt - I * tmp1 * tmp1 + 4._rt * I * tmp1 - 3._rt * I)
-                            / (4._rt * ep0 * om3);
-                    }
-
-                    if (is_galilean)
-                    {
-                        X4(i,j,k) = (- I + I * tmp1 * tmp1 - 2._rt * om * dt) / (4._rt * ep0 * om);
-                    }
-                }
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu == -om/om_c)
-                {
-                    X1(i,j,k) = (1._rt - tmp2 * tmp2 - 2._rt * I * om * dt) / (4._rt * ep0 * om2);
-
-                    if (update_with_rho)
-                    {
-                        X2(i,j,k) = c2 * (- 4._rt + 3._rt * tmp1 + tmp2 - 2._rt * I * om * dt * tmp1)
-                            / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-
-                        X3(i,j,k) = c2 * (2._rt - tmp2 - 3._rt * tmp1 + 2._rt * tmp1 * tmp1
-                            - 2._rt * I * om * dt * tmp1) / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-                    }
-
-                    else // update_with_rho = 0
-                    {
-                        X2(i,j,k) = c2 * (1._rt - C(i,j,k)) * tmp2 / om2;
-
-                        X3(i,j,k) = c2 * (2._rt * om * dt + I * tmp2 * tmp2 - 4._rt * I * tmp2 + 3._rt * I)
-                            / (4._rt * ep0 * om3);
-                    }
-
-                    if (is_galilean)
-                    {
-                        X4(i,j,k) = (I - I * tmp2 * tmp2 - 2._rt * om * dt) / (4._rt * ep0 * om);
-                    }
-                }
+                S_ck(i,j,k) = std::sin(om_s * dt) / om_s;
             }
-
-            else if (knorm != 0. && knorm_c == 0.)
+            else // om_s = 0
             {
-                const Real om = c * knorm;
-                const Real om2 = om * om;
-
-                C(i,j,k) = std::cos(om * dt);
-
-                S_ck(i,j,k) = std::sin(om * dt) / om;
-
-                X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2);
-
-                if (update_with_rho)
-                {
-                    X2(i,j,k) = c2 * (1._rt - S_ck(i,j,k) / dt) / (ep0 * om2);
-
-                    X3(i,j,k) = c2 * (C(i,j,k) - S_ck(i,j,k) / dt) / (ep0 * om2);
-                }
-
-                else // update_with_rho = 0
-                {
-                    X2(i,j,k) = c2 * (1._rt - C(i,j,k)) / om2;
-
-                    X3(i,j,k) = c2 * (S_ck(i,j,k) / dt - 1._rt) * dt / (ep0 * om2);
-                }
-
-                if (is_galilean)
-                {
-                    X4(i,j,k) = - S_ck(i,j,k) / ep0;
-
-                    T2(i,j,k) = 1._rt;
-                }
-            }
-
-            else if (knorm == 0. && knorm_c != 0.)
-            {
-                const Real om_c = c * knorm_c;
-                const Real om2_c = om_c * om_c;
-                const Real om3_c = om_c * om2_c;
-                const Real nu  = kv / om_c;
-                const Real nu2 = nu * nu;
-                const Complex theta = amrex::exp(I * nu * om_c * dt * 0.5_rt);
-
-                C(i,j,k) = 1._rt;
-
                 S_ck(i,j,k) = dt;
+            }
 
-                if (is_galilean)
+            // Auxiliary variable
+            amrex::Real tmp;
+            if (om_s != 0.)
+            {
+                tmp = (1._rt - C(i,j,k)) / (ep0 * om2_s);
+            }
+            else // om_s = 0
+            {
+                tmp = 0.5_rt * dt2 / ep0;
+            }
+
+            // T2
+            if (is_galilean)
+            {
+                T2(i,j,k) = theta_c * theta_c;
+            }
+
+            // X1 (multiplies i*([k] \times J) in the update equation for update B)
+            if ((om_s != 0.) || (w_c != 0.))
+            {
+                X1(i,j,k) = (1._rt - theta2_c * C(i,j,k) + I * w_c * theta2_c * S_ck(i,j,k))
+                            / (ep0 * (om2_s - w2_c));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                X1(i,j,k) = 0.5_rt * dt2 / ep0;
+            }
+
+            // X2 (multiplies rho_new      if update_with_rho = 1 in the update equation for E)
+            // X2 (multiplies ([k] \dot E) if update_with_rho = 0 in the update equation for E)
+            if (update_with_rho)
+            {
+                if (w_c != 0.)
                 {
-                    T2(i,j,k) = theta * theta;
+                    X2(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c * tmp)
+                                / (theta_c_star - theta_c);
                 }
-                const Complex T2_tmp = (is_galilean) ? T2(i,j,k) : 1.0_rt;
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu != 0.)
+                else // w_c = 0
                 {
-                    X1(i,j,k) = (- 1._rt + T2_tmp - I * nu * om_c * dt * T2_tmp) / (ep0 * nu2 * om2_c);
-
-                    if (update_with_rho)
+                    if (om_s != 0.)
                     {
-                        X2(i,j,k) = c2 * (1._rt - T2_tmp + I * nu * om_c * dt * T2_tmp
-                            + 0.5_rt * nu2 * om2_c * dt2 * T2_tmp) / (ep0 * nu2 * om2_c * (T2_tmp - 1._rt));
-
-                        X3(i,j,k) = c2 * (1._rt - T2_tmp + I * nu * om_c * dt * T2_tmp
-                            + 0.5_rt * nu2 * om2_c * dt2) / (ep0 * nu2 * om2_c * (T2_tmp - 1._rt));
+                        X2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
                     }
-
-                    else // update_with_rho = 0
-                    {
-                        X2(i,j,k) = c2 * dt2 * T2_tmp * 0.5_rt;
-
-                        X3(i,j,k) = c2 * (2._rt * I - 2._rt * nu * om_c * dt * T2_tmp
-                            + I * nu2 * om2_c * dt2 * T2_tmp) / (2._rt * ep0 * nu2 * nu * om3_c);
-                    }
-
-                    if (is_galilean)
-                    {
-                        X4(i,j,k) = I * (T2_tmp - 1._rt) / (ep0 * nu * om_c);
-                    }
-                }
-
-                else // nu = 0
-                {
-                    X1(i,j,k) = dt2 / (2._rt * ep0);
-
-                    if (update_with_rho)
+                    else // om_s = 0 and w_c = 0
                     {
                         X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
+                    }
+                }
+            }
+            else // update_with_rho = 0
+            {
+                X2(i,j,k) = c2 * ep0 * theta2_c * tmp;
+            }
 
+            // X3 (multiplies rho_old      if update_with_rho = 1 in the update equation for E)
+            // X3 (multiplies ([k] \dot J) if update_with_rho = 0 in the update equation for E)
+            if (update_with_rho)
+            {
+                if (w_c != 0.)
+                {
+                    X3(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c_star * tmp)
+                                / (theta_c_star - theta_c);
+                }
+                else // w_c = 0
+                {
+                    if (om_s != 0.)
+                    {
+                        X3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                    }
+                    else // om_s = 0 and w_c = 0
+                    {
                         X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
                     }
-
-                    else // update_with_rho = 0
+                }
+            }
+            else // update_with_rho = 0
+            {
+                if (w_c != 0.)
+                {
+                    X3(i,j,k) = I * c2 * (theta2_c * tmp - X1(i,j,k)) / w_c;
+                }
+                else // w_c = 0
+                {
+                    if (om_s != 0.)
                     {
-                        X2(i,j,k) = c2 * dt2 * 0.5_rt;
-
-                        X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
+                        X3(i,j,k) = c2 * (S_ck(i,j,k) - dt) / (ep0 * om2_s);
                     }
-
-                    if (is_galilean)
+                    else // om_s = 0 and w_c = 0
                     {
-                        X4(i,j,k) = - dt / ep0;
+                        X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
                     }
                 }
             }
 
-            else if (knorm == 0. && knorm_c == 0.)
+            // X4 (multiplies J in the update equation for E)
+            if (is_galilean)
             {
-                C(i,j,k) = 1._rt;
-
-                S_ck(i,j,k) = dt;
-
-                X1(i,j,k) = dt2 / (2._rt * ep0);
-
-                if (update_with_rho)
-                {
-                    X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
-
-                    X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
-                }
-
-                else // update_with_rho = 0
-                {
-                    X2(i,j,k) = c2 * dt2 * 0.5_rt;
-
-                    X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
-                }
-
-                // T2 = 1 always with standard PSATD (zero Galilean velocity)
-                if (is_galilean)
-                {
-                    X4(i,j,k) = - dt / ep0;
-
-                    T2(i,j,k) = 1._rt;
-                }
+                X4(i,j,k) = I * w_c * X1(i,j,k) - theta2_c * S_ck(i,j,k) / ep0;
             }
         });
     }
@@ -667,7 +488,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
         // Extract pointers for the k vectors
         const Real* kx = modified_kx_vec[mfi].dataPtr();
         const Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
         const Real* ky = modified_ky_vec[mfi].dataPtr();
         const Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
@@ -700,7 +521,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
 
         // Extract Galilean velocity
         Real vx = m_v_galilean[0];
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
         Real vy = m_v_galilean[1];
 #endif
         Real vz = m_v_galilean[2];
@@ -711,7 +532,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
             // Calculate norm of k vector
             const Real knorm = std::sqrt(
                 std::pow(kx[i], 2) +
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
                 std::pow(ky[j], 2) + std::pow(kz[k], 2));
 #else
                 std::pow(kz[j], 2));
@@ -719,7 +540,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
             // Calculate norm of k vector (centered)
             const Real knorm_c = std::sqrt(
                 std::pow(kx_c[i], 2) +
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
                 std::pow(ky_c[j], 2) + std::pow(kz_c[k], 2));
 #else
                 std::pow(kz_c[j], 2));
@@ -739,7 +560,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
             // modified k vectors, to work correctly for both nodal and staggered simulations.
             // kv = 0 always with standard PSATD (zero Galilean velocity).
             const Real kv = kx_c[i]*vx +
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
                 ky_c[j]*vy + kz_c[k]*vz;
 #else
                 kz_c[j]*vz;
@@ -1005,7 +826,7 @@ PsatdAlgorithm::CurrentCorrection (
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* const modified_kx_arr_c = modified_kx_vec_centered[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
         const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* const modified_ky_arr_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
@@ -1033,7 +854,7 @@ PsatdAlgorithm::CurrentCorrection (
             // k vector values, and coefficients
             const amrex::Real kx = modified_kx_arr[i];
             const amrex::Real kx_c = modified_kx_arr_c[i];
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
             const amrex::Real ky = modified_ky_arr[j];
             const amrex::Real kz = modified_kz_arr[k];
             const amrex::Real ky_c = modified_ky_arr_c[j];
@@ -1119,7 +940,7 @@ PsatdAlgorithm::VayDeposition (
 
         // Extract pointers for the modified k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
         const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -1129,7 +950,7 @@ PsatdAlgorithm::VayDeposition (
         {
             // Shortcuts for the values of D
             const Complex Dx = fields(i,j,k,Idx::Jx);
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
             const Complex Dy = fields(i,j,k,Idx::Jy);
 #endif
             const Complex Dz = fields(i,j,k,Idx::Jz);
@@ -1139,7 +960,7 @@ PsatdAlgorithm::VayDeposition (
 
             // Modified k vector values
             const amrex::Real kx_mod = modified_kx_arr[i];
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
             const amrex::Real ky_mod = modified_ky_arr[j];
             const amrex::Real kz_mod = modified_kz_arr[k];
 #else
@@ -1150,7 +971,7 @@ PsatdAlgorithm::VayDeposition (
             if (kx_mod != 0._rt) fields(i,j,k,Idx::Jx) = I * Dx / kx_mod;
             else                 fields(i,j,k,Idx::Jx) = 0._rt;
 
-#if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM == 3)
             // Compute Jy
             if (ky_mod != 0._rt) fields(i,j,k,Idx::Jy) = I * Dy / ky_mod;
             else                 fields(i,j,k,Idx::Jy) = 0._rt;
