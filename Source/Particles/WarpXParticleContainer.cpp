@@ -463,9 +463,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
 void
 WarpXParticleContainer::DepositCurrent (
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jx,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jy,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jz,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > J,
     amrex::Real dt, amrex::Real relative_t )
 {
     // Loop over the refinement levels
@@ -496,7 +494,7 @@ WarpXParticleContainer::DepositCurrent (
             }
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
-                           jx[lev].get(), jy[lev].get(), jz[lev].get(),
+                           J[lev][0].get(), J[lev][1].get(), J[lev][2].get(),
                            0, np, thread_num, lev, lev, dt, relative_t/dt);
         }
 #ifdef AMREX_USE_OMP

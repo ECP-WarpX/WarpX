@@ -374,26 +374,24 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 
 void
 MultiParticleContainer::DepositCurrent (
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jx,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jy,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& jz,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > J,
     amrex::Real dt, amrex::Real relative_t )
 {
     // Reset the `rho` array
-    for (int lev = 0; lev < jx.size(); ++lev) {
-        jx[lev]->setVal(0.0, jx[lev]->nGrowVect());
-        jy[lev]->setVal(0.0, jy[lev]->nGrowVect());
-        jz[lev]->setVal(0.0, jz[lev]->nGrowVect());
+    for (int lev = 0; lev < J.size(); ++lev) {
+        J[lev][0]->setVal(0.0, J[lev][0]->nGrowVect());
+        J[lev][1]->setVal(0.0, J[lev][1]->nGrowVect());
+        J[lev][2]->setVal(0.0, J[lev][2]->nGrowVect());
     }
 
     // Call the deposition kernel for each species
     for (int ispecies=0; ispecies<nSpecies(); ispecies++){
         WarpXParticleContainer& species = GetParticleContainer(ispecies);
-        species.DepositCurrent(jx, jy, jz, dt, relative_t );
+        species.DepositCurrent(J, dt, relative_t );
     }
 
 #ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev < jx.size(); ++lev) {
+    for (int lev = 0; lev < J.size(); ++lev) {
         WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(jx[lev].get(), jy[lev].get(), jz[lev].get(), lev);
     }
 #endif
