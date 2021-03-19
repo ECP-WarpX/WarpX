@@ -411,12 +411,19 @@ WarpX::OneStep_multiJ (Real cur_time)
     bool const skip_deposition = true;
     PushParticlesandDepose(cur_time, skip_deposition);
 
+    // Prepare E, B fields in spectral space
+    PSATDForwardTransformEB();
+    PSATDForwardTransformRho(0); // rho old
+    PSATDForwardTransformRho(1); // rho new
+
     // Deposit J^{n+1/2}
     mypc->DepositCurrent( current_fp, dt[0], -0.5*dt[0] );
     SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
+    PSATDForwardTransformJ(); // Transform to k space
+    PSATDPushSpectralFields( dt[0] ); // Push fields in k space
 
-    // Push the fields
-    PushPSATD(dt[0]);
+    // Bring fields to real space and exchange guards
+    PSATDBackwardTransformEB();
     FillBoundaryE(guard_cells.ng_alloc_EB);
     FillBoundaryB(guard_cells.ng_alloc_EB);
 }
