@@ -338,7 +338,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 c_realspace_ba.grow(ngE);
                 bool const pml_flag_false = false;
                 auto pss = std::make_unique<SpectralSolver>(lev,                               // done
-                                                            realspace_ba,                      // done?
+                                                            c_realspace_ba,                    // done?
                                                             dm,                                // done
                                                             WarpX::nox_fft,                    // done?
                                                             WarpX::noy_fft,                    // done?
@@ -346,7 +346,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                             WarpX::do_nodal,                   // done?
                                                             WarpX::m_v_galilean,               // done?
                                                             WarpX::m_v_comoving,               // done?
-                                                            dx_vect,                           // done?
+                                                            cdx_vect,                         // done?
                                                             WarpX::dt[lev],                    // done?
                                                             pml_flag_false,                    // done?
                                                             WarpX::fft_periodic_single_box,    // done?
