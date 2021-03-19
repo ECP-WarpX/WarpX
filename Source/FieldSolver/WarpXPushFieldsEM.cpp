@@ -137,9 +137,9 @@ WarpX::PSATDForwardTransformRho (int const icomp) {
     int const dst_comp = (icomp==0 ? Idx::rho_old : Idx::rho_new);
 
     for (int lev = 0; lev <= finest_level; ++lev) {
-        spectral_solver_fp[lev]->ForwardTransform(lev, *rho_fp[lev], dst_comp, icomp);
+        if (rho_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *rho_fp[lev], dst_comp, icomp);
         if (spectral_solver_cp[lev]) {
-            spectral_solver_cp[lev]->ForwardTransform(lev, *rho_cp[lev], dst_comp, icomp);
+            if (rho_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *rho_cp[lev], dst_comp, icomp);
         }
     }
 
