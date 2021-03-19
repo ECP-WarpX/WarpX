@@ -70,7 +70,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
 {
-    t += m_params.t_delay;
+    t -= m_params.t_delay;
 
     if(t >= m_params.t_coords.back())
         return;
@@ -91,7 +91,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
-    t += m_params.t_delay;
+    t -= m_params.t_delay;
 
     //Amplitude is 0 if time is out of range
     if(t < m_params.t_coords.front() ||  t > m_params.t_coords.back()){
