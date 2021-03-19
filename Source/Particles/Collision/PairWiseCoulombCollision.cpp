@@ -317,7 +317,7 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                         ux_2[i2], uy_2[i2], uz_2[i2],
                         local_n1, local_n2, local_n12,
                         q1, m1, w_1[i1], q2, m2, w_2[i2],
-                        dt, L, lmdD, engine,
+                        dt*ndt, L, lmdD, engine,
                         neglect_feedback_on_species_2);
                 }
             );
