@@ -90,22 +90,26 @@ WarpX::PSATDBackwardTransformEB () {
     for (int lev = 0; lev <= finest_level; ++lev) {
         BackwardTransformVect( lev, *spectral_solver_fp[lev], Efield_fp[lev], Idx::Ex, Idx::Ey, Idx::Ez );
         BackwardTransformVect( lev, *spectral_solver_fp[lev], Bfield_fp[lev], Idx::Bx, Idx::By, Idx::Bz );
-        if (WarpX::fft_do_time_averaging) {
-            BackwardTransformVect( lev, *spectral_solver_fp[lev], Efield_avg_fp[lev], Idx::Ex_avg, Idx::Ey_avg, Idx::Ez_avg );
-            BackwardTransformVect( lev, *spectral_solver_fp[lev], Bfield_avg_fp[lev], Idx::Bx_avg, Idx::By_avg, Idx::Bz_avg );
-        }
         if (spectral_solver_cp[lev]) {
             BackwardTransformVect( lev, *spectral_solver_cp[lev], Efield_cp[lev], Idx::Ex, Idx::Ey, Idx::Ez );
             BackwardTransformVect( lev, *spectral_solver_cp[lev], Bfield_cp[lev], Idx::Bx, Idx::By, Idx::Bz );
-            if (WarpX::fft_do_time_averaging) {
-                BackwardTransformVect( lev, *spectral_solver_cp[lev], Efield_avg_cp[lev], Idx::Ex_avg, Idx::Ey_avg, Idx::Ez_avg );
-                BackwardTransformVect( lev, *spectral_solver_cp[lev], Bfield_avg_cp[lev], Idx::Bx_avg, Idx::By_avg, Idx::Bz_avg );
-            }
         }
     }
     if (use_damp_fields_in_z_guard) {
         for (int lev = 0; lev <= finest_level; ++lev) {
             DampFieldsInGuards( Efield_fp[lev], Bfield_fp[lev] );
+        }
+    }
+}
+
+void
+WarpX::PSATDBackwardTransformEBavg () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        BackwardTransformVect( lev, *spectral_solver_fp[lev], Efield_avg_fp[lev], Idx::Ex_avg, Idx::Ey_avg, Idx::Ez_avg );
+        BackwardTransformVect( lev, *spectral_solver_fp[lev], Bfield_avg_fp[lev], Idx::Bx_avg, Idx::By_avg, Idx::Bz_avg );
+        if (spectral_solver_cp[lev]) {
+            BackwardTransformVect( lev, *spectral_solver_cp[lev], Efield_avg_cp[lev], Idx::Ex_avg, Idx::Ey_avg, Idx::Ez_avg );
+            BackwardTransformVect( lev, *spectral_solver_cp[lev], Bfield_avg_cp[lev], Idx::Bx_avg, Idx::By_avg, Idx::Bz_avg );
         }
     }
 }
@@ -182,6 +186,7 @@ WarpX::PushPSATD (amrex::Real a_dt)
     PSATDForwardTransformRho(1); // rho new
     PSATDPushSpectralFields( a_dt );
     PSATDBackwardTransformEB();
+    if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
 
     // Evolve the fields in the PML boxes
     for (int lev = 0; lev <= finest_level; ++lev) {

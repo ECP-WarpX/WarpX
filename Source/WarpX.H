@@ -963,11 +963,12 @@ private:
 private:
     void PushPSATD (amrex::Real dt);
 #ifdef WARPX_USE_PSATD
-    void PSATDForwardTransformEB();
-    void PSATDBackwardTransformEB();
-    void PSATDForwardTransformJ();
-    void PSATDForwardTransformRho(int const icomp);
-    void PSATDPushSpectralFields(amrex::Real dt);
+    void PSATDForwardTransformEB ();
+    void PSATDBackwardTransformEB ();
+    void PSATDBackwardTransformEBavg ();
+    void PSATDForwardTransformJ ();
+    void PSATDForwardTransformRho (int const icomp);
+    void PSATDPushSpectralFields (amrex::Real dt);
 #endif
 
 
