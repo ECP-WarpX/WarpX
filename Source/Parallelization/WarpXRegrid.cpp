@@ -130,21 +130,21 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             {
                 const IntVect& ng = Efield_fp[lev][idim]->nGrowVect();
                 auto pmf = std::make_unique<MultiFab>(Efield_fp[lev][idim]->boxArray(),
-                                                                  dm, Efield_fp[lev][idim]->nComp(), ng);
+                                                      dm, Efield_fp[lev][idim]->nComp(), ng);
                 pmf->Redistribute(*Efield_fp[lev][idim], 0, 0, Efield_fp[lev][idim]->nComp(), ng);
                 Efield_fp[lev][idim] = std::move(pmf);
             }
             {
                 const IntVect& ng = current_fp[lev][idim]->nGrowVect();
                 auto pmf = std::make_unique<MultiFab>(current_fp[lev][idim]->boxArray(),
-                                                                  dm, current_fp[lev][idim]->nComp(), ng);
+                                                      dm, current_fp[lev][idim]->nComp(), ng);
                 current_fp[lev][idim] = std::move(pmf);
             }
             if (current_store[lev][idim])
             {
                 const IntVect& ng = current_store[lev][idim]->nGrowVect();
                 auto pmf = std::make_unique<MultiFab>(current_store[lev][idim]->boxArray(),
-                                                                  dm, current_store[lev][idim]->nComp(), ng);
+                                                      dm, current_store[lev][idim]->nComp(), ng);
                 // no need to redistribute
                 current_store[lev][idim] = std::move(pmf);
             }
@@ -173,7 +173,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             BoxArray realspace_ba = ba;   // Copy box
             realspace_ba.enclosedCells(); // Make it cell-centered
             auto ngE = WarpX::getngE();
-            auto dt = WarpX::getdt();
             auto dx = WarpX::CellSize(lev);
 #   if (AMREX_SPACEDIM == 3)
             RealVect dx_vect(dx[0], dx[1], dx[2]);
@@ -194,9 +193,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                           WarpX::do_nodal,                   // done?
                                                           WarpX::m_v_galilean,               // done?
                                                           dx_vect,                           // done?
-                                                          dt[lev],                           // done?
-                                                          WarpX::fft_periodic_single_box,    // done?
-                                                          SpectralSolver::update_with_rho  // done?
+                                                          WarpX::dt[lev],                    // done?
+                                                          WarpX::update_with_rho             // done?
                                                           );
             spectral_solver_fp[lev] = std::move(pss);
 
@@ -219,10 +217,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                         WarpX::m_v_galilean,               // done?
                                                         WarpX::m_v_comoving,               // done?
                                                         dx_vect,                           // done?
-                                                        dt[lev],                           // done?
+                                                        WarpX::dt[lev],                    // done?
                                                         pml_flag_false,                    // done?
                                                         WarpX::fft_periodic_single_box,    // done?
-                                                        SpectralSolver::update_with_rho, // done?
+                                                        WarpX::update_with_rho, // done?
                                                         WarpX::fft_do_time_averaging       // done?
                                                         );
             spectral_solver_fp[lev] = std::move(pss);
@@ -316,7 +314,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 c_realspace_ba.enclosedCells(); // Make it cell-centered
 
                 auto ngE = WarpX::getngE();
-                auto dt = WarpX::getdt();
 
 #    ifdef WARPX_DIM_RZ
                 c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
@@ -328,8 +325,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                               WarpX::do_nodal,                   // done?
                                                               WarpX::m_v_galilean,               // done?
                                                               cdx_vect,                           // done?
-                                                              dt[lev],                           // done?
-                                                              SpectralSolver::update_with_rho  // done?
+                                                              WarpX::dt[lev],                           // done?
+                                                              WarpX::update_with_rho  // done?
                                                               );
                 spectral_solver_cp[lev] = std::move(pss);
 
@@ -350,10 +347,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                             WarpX::m_v_galilean,               // done?
                                                             WarpX::m_v_comoving,               // done?
                                                             dx_vect,                           // done?
-                                                            dt[lev],                           // done?
+                                                            WarpX::dt[lev],                    // done?
                                                             pml_flag_false,                    // done?
                                                             WarpX::fft_periodic_single_box,    // done?
-                                                            SpectralSolver::update_with_rho, // done?
+                                                            WarpX::update_with_rho,            // done?
                                                             WarpX::fft_do_time_averaging       // done?
                                                             );
                 spectral_solver_cp[lev] = std::move(pss);
