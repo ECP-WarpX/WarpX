@@ -130,6 +130,7 @@ Real WarpX::self_fields_required_precision = 1.e-11_rt;
 int WarpX::self_fields_max_iters = 200;
 
 int WarpX::do_subcycling = 0;
+int WarpX::do_multij = 0;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -400,6 +401,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("verbose", verbose);
         pp_warpx.query("regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
+        pp_warpx.query("do_multij", do_multij);
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};

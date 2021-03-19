@@ -142,6 +142,8 @@ WarpX::Evolve (int numsteps)
             // The deposition and calculation of fields is done further below
             bool const skip_deposition=true;
             PushParticlesandDepose(cur_time, skip_deposition);
+        } else if (do_multij) {
+            OneStep_multiJ(cur_time);
         } else if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
             // E : guard cells are up-to-date
@@ -393,6 +395,27 @@ WarpX::OneStep_nosub (Real cur_time)
     } // !PSATD
 }
 
+/* /brief Perform one PIC iteration, with the multiple J deposition per
+ * timestep
+ */
+void
+WarpX::OneStep_multiJ (Real cur_time)
+{
+    // Push particle from x^{n} to x^{n+1}
+    //               from p^{n-1/2} to p^{n+1/2}
+    bool const skip_deposition = true;
+    PushParticlesandDepose(cur_time, skip_deposition);
+
+    // Deposit J^{n+1/2}
+    mypc->DepositCurrent( current_fp, -0.5*dt[0] );
+    SyncCurrent();
+
+    // Push the fields
+    PushPSATD(dt[0]);
+    FillBoundaryE(guard_cells.ng_alloc_EB);
+    FillBoundaryB(guard_cells.ng_alloc_EB);
+}
+
 /* /brief Perform one PIC iteration, with subcycling
 *  i.e. The fine patch uses a smaller timestep (and steps more often)
 *  than the coarse patch, for the field advance and particle pusher.
@@ -408,8 +431,6 @@ WarpX::OneStep_nosub (Real cur_time)
 * steps of the fine grid.
 *
 */
-
-
 void
 WarpX::OneStep_sub1 (Real curtime)
 {

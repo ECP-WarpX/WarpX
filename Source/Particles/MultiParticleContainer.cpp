@@ -410,20 +410,21 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles in time, if needed
-    if (relative_time!=0) PushX(relative_t);
+    if (relative_t!=0) PushX(relative_t);
 
     // Call the deposition kernel for each species
     for (int ispecies=0; ispecies<nSpecies(); ispecies++){
         WarpXParticleContainer& species = GetParticleContainer(ispecies);
+        bool const local = false;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
         bool const interpolate_across_levels = false;
-        species.DepositCharge(rho, reset, do_rz_volume_scaling,
-                              interpolate_across_levels, relative_t);
+        species.DepositCharge(rho, local, reset, do_rz_volume_scaling,
+                              interpolate_across_levels);
     }
 
     // Push the particles back in time
-    if (relative_time!=0) PushX(-relative_t);
+    if (relative_t!=0) PushX(-relative_t);
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev) {

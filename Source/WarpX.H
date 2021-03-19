@@ -199,6 +199,7 @@ public:
     static amrex::IntVect sort_bin_size;
 
     static int do_subcycling;
+    static int do_multij;
 
     static bool do_device_synchronize_before_profile;
     static bool safe_guard_cells;
@@ -690,6 +691,7 @@ private:
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
     void OneStep_nosub (amrex::Real t);
+    void OneStep_multiJ (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
 
     void RestrictCurrentFromFineToCoarsePatch (int lev);
