@@ -1121,12 +1121,12 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
-                                   lev, lev, dt);
+                                   lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
                     if (has_buffer){
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt);
+                                       lev, lev-1, dt, -0.5_rt);  // Deposit current at t_{n+1/2}
                     }
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
