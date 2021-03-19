@@ -961,9 +961,15 @@ private:
     void InitEB ();
 
 private:
-    // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
-    void PushPSATD (int lev, amrex::Real dt);
+#ifdef WARPX_USE_PSATD
+    void PSATDForwardTransformEB();
+    void PSATDBackwardTransformEB();
+    void PSATDForwardTransformJ();
+    void PSATDForwardTransformRho(int const icomp);
+    void PSATDPushSpectralFields(amrex::Real dt);
+#endif
+
 
     int fftw_plan_measure = 1; // used with PSATD
 

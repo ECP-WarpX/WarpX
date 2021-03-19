@@ -401,6 +401,11 @@ WarpX::OneStep_nosub (Real cur_time)
 void
 WarpX::OneStep_multiJ (Real cur_time)
 {
+
+    // Warning: this does not work with galilean
+    // (the shifts are not properly taken into account when depositing)
+    // This does not work with PML
+
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     bool const skip_deposition = true;
