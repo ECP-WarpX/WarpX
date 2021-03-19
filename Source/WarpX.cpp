@@ -1051,6 +1051,13 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
+#ifdef WARPX_USE_PSATD
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        spectral_solver_fp[lev].reset();
+        spectral_solver_cp[lev].reset();
+    }
+#endif
+
     costs[lev].reset();
     load_balance_efficiency[lev] = -1;
 }

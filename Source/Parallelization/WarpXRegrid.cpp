@@ -167,6 +167,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         }
 
 #ifdef WARPX_USE_PSATD
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         if (spectral_solver_fp[lev] != nullptr) {
             // Get the cell-centered box
             BoxArray realspace_ba = ba;   // Copy box
@@ -224,7 +225,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                         );
             spectral_solver_fp[lev] = std::move(pss);
 #    endif
-        }
+        }}
 #endif
 
         // Aux patch
@@ -297,6 +298,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             }
 
 #ifdef WARPX_USE_PSATD
+            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             if (spectral_solver_cp[lev] != nullptr) {
                 BoxArray cba = ba;
                 cba.coarsen(WarpX::refRatio(lev-1));
@@ -353,7 +355,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                             );
                 spectral_solver_cp[lev] = std::move(pss);
 #    endif
-            }
+            }}
 #endif
         }
 

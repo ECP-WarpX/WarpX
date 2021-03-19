@@ -982,6 +982,7 @@ public:
         SpectralSolver&
 #   endif
             get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
+
 #endif
 
 private:
