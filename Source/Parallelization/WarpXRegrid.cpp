@@ -179,52 +179,44 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 #   elif (AMREX_SPACEDIM == 2)
                 RealVect dx_vect(dx[0], dx[2]);
 #   endif
-
-#    ifdef WARPX_DIM_RZ
+                
+#   ifdef WARPX_DIM_RZ
                 if ( fft_periodic_single_box == false ) {
                     realspace_ba.grow(1, ngE[1]); // add guard cells only in z
                 }
-
-                auto pss = std::make_unique<SpectralSolverRZ>(lev,
-                                                              realspace_ba,
-                                                              dm,
-                                                              n_rz_azimuthal_modes,
-                                                              noz_fft,
-                                                              do_nodal,
-                                                              m_v_galilean,
-                                                              dx_vect,
-                                                              dt[lev],
-                                                              update_with_rho
-                                                              );
-                spectral_solver_fp[lev] = std::move(pss);
-
-                if (use_kspace_filter) {
-                    spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir,
-                                                        use_filter_compensation);
-            }
-#    else
+                AllocLevelSpectralSolverRZ(spectral_solver_fp,
+                                           lev,
+                                           realspace_ba,
+                                           dm,
+                                           n_rz_azimuthal_modes,
+                                           noz_fft,
+                                           do_nodal,
+                                           m_v_galilean,
+                                           dx_vect,
+                                           dt[lev],
+                                           update_with_rho);
+#   else
                 if ( fft_periodic_single_box == false ) {
                     realspace_ba.grow(ngE);   // add guard cells
                 }
                 bool const pml_flag_false = false;
-                auto pss = std::make_unique<SpectralSolver>(lev,
-                                                            realspace_ba,
-                                                            dm,
-                                                            nox_fft,
-                                                            noy_fft,
-                                                            noz_fft,
-                                                            do_nodal,
-                                                            m_v_galilean,
-                                                            m_v_comoving,
-                                                            dx_vect,
-                                                            dt[lev],
-                                                            pml_flag_false,
-                                                            fft_periodic_single_box,
-                                                            update_with_rho,
-                                                            fft_do_time_averaging
-                                                            );
-                spectral_solver_fp[lev] = std::move(pss);
-#    endif
+                AllocLevelSpectralSolver(spectral_solver_fp,
+                                         lev,
+                                         realspace_ba,
+                                         dm,
+                                         nox_fft,
+                                         noy_fft,
+                                         noz_fft,
+                                         do_nodal,
+                                         m_v_galilean,
+                                         m_v_comoving,
+                                         dx_vect,
+                                         dt[lev],
+                                         pml_flag_false,
+                                         fft_periodic_single_box,
+                                         update_with_rho,
+                                         fft_do_time_averaging);
+#   endif
             }
         }
 #endif
@@ -316,46 +308,39 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
                     auto ngE = getngE();
 
-#    ifdef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
                     c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-                    auto pss = std::make_unique<SpectralSolverRZ>(lev,
-                                                                  c_realspace_ba,
-                                                                  dm,
-                                                                  n_rz_azimuthal_modes,
-                                                                  noz_fft,
-                                                                  do_nodal,
-                                                                  m_v_galilean,
-                                                                  cdx_vect,
-                                                                  dt[lev],
-                                                                  update_with_rho
-                                                                  );
-                    spectral_solver_cp[lev] = std::move(pss);
-
-                    if (use_kspace_filter) {
-                        spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir,
-                                                            use_filter_compensation);
-                    }
-#    else
+                    AllocLevelSpectralSolverRZ(spectral_solver_cp,
+                                               lev,
+                                               c_realspace_ba,
+                                               dm,
+                                               n_rz_azimuthal_modes,
+                                               noz_fft,
+                                               do_nodal,
+                                               m_v_galilean,
+                                               cdx_vect,
+                                               dt[lev],
+                                               update_with_rho);
+#   else
                     c_realspace_ba.grow(ngE);
                     bool const pml_flag_false = false;
-                    auto pss = std::make_unique<SpectralSolver>(lev,
-                                                                c_realspace_ba,
-                                                                dm,
-                                                                nox_fft,
-                                                                noy_fft,
-                                                                noz_fft,
-                                                                do_nodal,
-                                                                m_v_galilean,
-                                                                m_v_comoving,
-                                                                cdx_vect,
-                                                                dt[lev],
-                                                                pml_flag_false,
-                                                                fft_periodic_single_box,
-                                                                update_with_rho,
-                                                                fft_do_time_averaging
-                                                                );
-                    spectral_solver_cp[lev] = std::move(pss);
-#    endif
+                    AllocLevelSpectralSolver(spectral_solver_cp,
+                                             lev,
+                                             c_realspace_ba,
+                                             dm,
+                                             nox_fft,
+                                             noy_fft,
+                                             noz_fft,
+                                             do_nodal,
+                                             m_v_galilean,
+                                             m_v_comoving,
+                                             cdx_vect,
+                                             dt[lev],
+                                             pml_flag_false,
+                                             fft_periodic_single_box,
+                                             update_with_rho,
+                                             fft_do_time_averaging);
+#   endif
                 }
             }
 #endif

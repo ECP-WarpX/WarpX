@@ -768,6 +768,34 @@ private:
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const bool aux_is_nodal);
+#ifdef WARPX_USE_PSATD
+#   ifdef WARPX_DIM_RZ
+    void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
+                                     const int lev,
+                                     amrex::BoxArray const & realspace_ba,
+                                     amrex::DistributionMapping const & dm,
+                                     int const n_rz_azimuthal_modes,
+                                     int const norder_z, bool const nodal,
+                                     const amrex::Array<amrex::Real,3>& v_galilean,
+                                     amrex::RealVect const dx, amrex::Real const a_dt,
+                                     bool const a_update_with_rho);
+#   else
+    void AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
+                                   const int lev,
+                                   const amrex::BoxArray& realspace_ba,
+                                   const amrex::DistributionMapping& dm,
+                                   const int norder_x, const int norder_y,
+                                   const int norder_z, const bool nodal,
+                                   const amrex::Array<amrex::Real,3>& v_galilean,
+                                   const amrex::Array<amrex::Real,3>& v_comoving,
+                                   const amrex::RealVect dx,
+                                   const amrex::Real a_dt,
+                                   const bool pml_flag=false,
+                                   const bool periodic_single_box=false,
+                                   const bool a_update_with_rho=false,
+                                   const bool fft_do_time_averaging=false);
+#   endif
+#endif
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
