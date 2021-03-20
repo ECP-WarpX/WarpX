@@ -179,7 +179,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 #   elif (AMREX_SPACEDIM == 2)
                 RealVect dx_vect(dx[0], dx[2]);
 #   endif
-                
+
 #   ifdef WARPX_DIM_RZ
                 if ( fft_periodic_single_box == false ) {
                     realspace_ba.grow(1, ngE[1]); // add guard cells only in z

@@ -1556,7 +1556,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   a_dt,
                                                   a_update_with_rho);
     spectral_solver[lev] = std::move(pss);
-    
+
     if (use_kspace_filter) {
         spectral_solver[lev]->InitFilter(filter_npass_each_dir,
                                          use_filter_compensation);
