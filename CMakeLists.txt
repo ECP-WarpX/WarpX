@@ -251,6 +251,12 @@ set_warpx_binary_name()
 
 # Defines #####################################################################
 #
+get_source_version(WarpX ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(WarpX PUBLIC WARPX_GIT_VERSION="${WarpX_GIT_VERSION}")
+if(WarpX_QED)
+    target_compile_definitions(WarpX PUBLIC PICSAR_GIT_VERSION="${PXRMP_QED_GIT_VERSION}")
+endif()
+
 if(WarpX_DIMS STREQUAL 3)
     target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D)
 elseif(WarpX_DIMS STREQUAL 2)
