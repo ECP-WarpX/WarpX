@@ -65,12 +65,10 @@ PsatdAlgorithm::PsatdAlgorithm(
     {
         Psi1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         Psi2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-        Psi3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         A1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-        A2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-        Rhoold_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-        Rhonew_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-        Jcoef_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+        Cold_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+        Cnew_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+        J_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
@@ -84,7 +82,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
     const bool is_galilean     = m_is_galilean;
 
     // Loop over boxes
-    for (MFIter mfi(f.fields); mfi.isValid(); ++mfi)
+    for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi)
     {
         const Box& bx = f.fields[mfi].box();
 
@@ -110,18 +108,18 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         Array4<const Complex> Psi1_arr;
         Array4<const Complex> Psi2_arr;
         Array4<const Complex> A1_arr;
-        Array4<const Complex> Rhonew_arr;
-        Array4<const Complex> Rhoold_arr;
-        Array4<const Complex> Jcoef_arr;
+        Array4<const Complex> Cnew_arr;
+        Array4<const Complex> Cold_arr;
+        Array4<const Complex> J_arr;
 
         if (time_averaging)
         {
             Psi1_arr = Psi1_coef[mfi].array();
             Psi2_arr = Psi2_coef[mfi].array();
             A1_arr = A1_coef[mfi].array();
-            Rhonew_arr = Rhonew_coef[mfi].array();
-            Rhoold_arr = Rhoold_coef[mfi].array();
-            Jcoef_arr = Jcoef_coef[mfi].array();
+            Cnew_arr = Cnew_coef[mfi].array();
+            Cold_arr = Cold_coef[mfi].array();
+            J_arr = J_coef[mfi].array();
         }
 
         // Extract pointers for the k vectors
@@ -161,7 +159,6 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             constexpr Real ky = 0._rt;
             const     Real kz = modified_kz_arr[j];
 #endif
-
             // Physical constants and imaginary unit
             constexpr Real c2 = PhysConst::c * PhysConst::c;
             constexpr Real inv_ep0 = 1._rt / PhysConst::ep0;
@@ -235,21 +232,21 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Psi1 = Psi1_arr(i,j,k);
                 const Complex Psi2 = Psi2_arr(i,j,k);
                 const Complex A1 = A1_arr(i,j,k);
-                const Complex CRhoold = Rhoold_arr(i,j,k);
-                const Complex CRhonew = Rhonew_arr(i,j,k);
-                const Complex Jcoef = Jcoef_arr(i,j,k);
+                const Complex Cold = Cold_arr(i,j,k);
+                const Complex Cnew = Cnew_arr(i,j,k);
+                const Complex Jcoef = J_arr(i,j,k);
 
                 fields(i,j,k,AvgIdx::Ex_avg) = Psi1 * Ex_old
                     - I * c2 * Psi2 * (ky * Bz_old - kz * By_old)
-                    + Jcoef * Jx + (CRhonew * rho_new + CRhoold * rho_old) * kx;
+                    + Jcoef * Jx + (Cnew * rho_new + Cold * rho_old) * kx;
 
                 fields(i,j,k,AvgIdx::Ey_avg) = Psi1 * Ey_old
                     - I * c2 * Psi2 * (kz * Bx_old - kx * Bz_old)
-                    + Jcoef * Jy + (CRhonew * rho_new + CRhoold * rho_old) * ky;
+                    + Jcoef * Jy + (Cnew * rho_new + Cold * rho_old) * ky;
 
                 fields(i,j,k,AvgIdx::Ez_avg) = Psi1 * Ez_old
                     - I * c2 * Psi2 * (kx * By_old - ky * Bx_old)
-                    + Jcoef * Jz + (CRhonew * rho_new + CRhoold * rho_old) * kz;
+                    + Jcoef * Jz + (Cnew * rho_new + Cold * rho_old) * kz;
 
                 fields(i,j,k,AvgIdx::Bx_avg) = Psi1 * Bx_old + I * Psi2 * (ky * Ez_old - kz * Ey_old)
                     + I * inv_ep0 * A1 * (ky * Jz - kz * Jy);
@@ -275,7 +272,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Loop over boxes and allocate the corresponding coefficients for each box
-    for (MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
+    for (amrex::MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
     {
         const amrex::Box& bx = ba[mfi];
 
@@ -324,7 +321,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2 = c*c;
+            constexpr amrex::Real c2 = c * c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
@@ -472,318 +469,192 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
 {
-    const bool is_galilean = m_is_galilean;
-
-    const BoxArray& ba = spectral_kspace.spectralspace_ba;
+    const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Loop over boxes and allocate the corresponding coefficients for each box
-    for (MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
+    for (amrex::MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
     {
-        const Box& bx = ba[mfi];
+        const amrex::Box& bx = ba[mfi];
 
         // Extract pointers for the k vectors
-        const Real* kx = modified_kx_vec[mfi].dataPtr();
-        const Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
+        const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
 #if (AMREX_SPACEDIM == 3)
-        const Real* ky = modified_ky_vec[mfi].dataPtr();
-        const Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
+        const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
-        const Real* kz = modified_kz_vec[mfi].dataPtr();
-        const Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
+        const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Coefficients always allocated
-        Array4<Real> C = C_coef[mfi].array();
-        Array4<Real> S_ck = S_ck_coef[mfi].array();
-
-        Array4<Complex> T2;
-        if (is_galilean)
-        {
-            T2 = T2_coef[mfi].array();
-        }
+        amrex::Array4<amrex::Real> C = C_coef[mfi].array();
+        amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
 
         // Coefficients allocated only with averaged Galilean PSATD
-        Array4<Complex> Psi1 = Psi1_coef[mfi].array();
-        Array4<Complex> Psi2 = Psi2_coef[mfi].array();
-        Array4<Complex> Psi3 = Psi3_coef[mfi].array();
-        Array4<Complex> A1 = A1_coef[mfi].array();
-        Array4<Complex> A2 = A2_coef[mfi].array();
-        Array4<Complex> CRhoold = Rhoold_coef[mfi].array();
-        Array4<Complex> CRhonew = Rhonew_coef[mfi].array();
-        Array4<Complex> Jcoef = Jcoef_coef[mfi].array();
+        amrex::Array4<Complex> Psi1 = Psi1_coef[mfi].array();
+        amrex::Array4<Complex> Psi2 = Psi2_coef[mfi].array();
+        amrex::Array4<Complex> A1 = A1_coef[mfi].array();
+        amrex::Array4<Complex> Cold = Cold_coef[mfi].array();
+        amrex::Array4<Complex> Cnew = Cnew_coef[mfi].array();
+        amrex::Array4<Complex> Jcoef = J_coef[mfi].array();
 
         // Extract Galilean velocity
-        Real vx = m_v_galilean[0];
+        amrex::Real vg_x = m_v_galilean[0];
 #if (AMREX_SPACEDIM == 3)
-        Real vy = m_v_galilean[1];
+        amrex::Real vg_y = m_v_galilean[1];
 #endif
-        Real vz = m_v_galilean[2];
+        amrex::Real vg_z = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Calculate norm of k vector
-            const Real knorm = std::sqrt(
-                std::pow(kx[i], 2) +
+            const amrex::Real knorm_s = std::sqrt(
+                std::pow(kx_s[i], 2) +
 #if (AMREX_SPACEDIM == 3)
-                std::pow(ky[j], 2) + std::pow(kz[k], 2));
+                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
 #else
-                std::pow(kz[j], 2));
-#endif
-            // Calculate norm of k vector (centered)
-            const Real knorm_c = std::sqrt(
-                std::pow(kx_c[i], 2) +
-#if (AMREX_SPACEDIM == 3)
-                std::pow(ky_c[j], 2) + std::pow(kz_c[k], 2));
-#else
-                std::pow(kz_c[j], 2));
+                std::pow(kz_s[j], 2));
 #endif
             // Physical constants and imaginary unit
-            constexpr Real c = PhysConst::c;
-            constexpr Real c2 = c*c;
-            constexpr Real ep0 = PhysConst::ep0;
+            constexpr amrex::Real c = PhysConst::c;
+            constexpr amrex::Real c2 = c * c;
+            constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // Auxiliary coefficients used when update_with_rho=false
-            const Real dt2 = dt * dt;
-            Complex X2_old, X3_old;
+            const amrex::Real dt2 = dt * dt;
 
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (that is, nodal) finite-order
             // modified k vectors, to work correctly for both nodal and staggered simulations.
-            // kv = 0 always with standard PSATD (zero Galilean velocity).
-            const Real kv = kx_c[i]*vx +
+            // w_c = 0 always with standard PSATD (zero Galilean velocity).
+            const amrex::Real w_c = kx_c[i]*vg_x +
 #if (AMREX_SPACEDIM == 3)
-                ky_c[j]*vy + kz_c[k]*vz;
+                ky_c[j]*vg_y + kz_c[k]*vg_z;
 #else
-                kz_c[j]*vz;
+                kz_c[j]*vg_z;
 #endif
+            const amrex::Real w2_c = w_c * w_c;
+            const amrex::Real w3_c = w_c * w_c * w_c;
 
-            if (knorm != 0. && knorm_c != 0.)
+            const amrex::Real om_s  = c * knorm_s;
+            const amrex::Real om2_s = om_s * om_s;
+            const amrex::Real om4_s = om2_s * om2_s;
+
+            const Complex theta_c  = amrex::exp(I * w_c * dt * 0.5_rt);
+            const Complex theta2_c = amrex::exp(I * w_c * dt);
+            const Complex theta3_c = amrex::exp(I * w_c * dt * 1.5_rt);
+            const Complex theta4_c = amrex::exp(I * w_c * dt * 2.0_rt);
+            const Complex theta5_c = amrex::exp(I * w_c * dt * 2.5_rt);
+
+            // C1,C3
+            const amrex::Real C1 = std::cos(0.5_rt * om_s * dt);
+            const amrex::Real C3 = std::cos(1.5_rt * om_s * dt);
+
+            // S1_om, S3_om
+            amrex::Real S1_om, S3_om;
+            if (om_s != 0.)
             {
-                // Auxiliary coefficients
-                const Real om = c * knorm;
-                const Real om2 = om * om;
-                const Real om3 = om * om2;
-                const Real om_c = c * knorm_c;
-                const Real om2_c = om_c * om_c;
-                const Complex tmp1 = amrex::exp(  I * om * dt);
-                const Complex tmp2 = amrex::exp(- I * om * dt);
-
-                amrex::Real C1 = std::cos(0.5_rt * om * dt);
-                amrex::Real S1 = std::sin(0.5_rt * om * dt);
-                amrex::Real C3 = std::cos(1.5_rt * om * dt);
-                amrex::Real S3 = std::sin(1.5_rt * om * dt);
-
-                const Real nu = kv / om_c;
-                const Real nu2 = nu * nu;
-                const Complex theta = amrex::exp(I * nu * om_c * dt * 0.5_rt);
-                const Complex theta_star = amrex::exp(- I * nu * om_c * dt * 0.5_rt);
-
-                const Complex T2_tmp = (is_galilean) ? T2(i,j,k) : 1.0_rt;
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu != om/om_c && nu != -om/om_c && nu != 0.)
-                {
-                    Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
-
-                    Psi1(i,j,k) = theta * ((om * S1 + I * nu * om_c * C1)
-                        - T2_tmp * (om * S3 + I * nu * om_c * C3))
-                        / (dt * (nu2 * om2_c - om2));
-
-                    Psi2(i,j,k) = theta * ((om * C1 - I * nu * om_c * S1)
-                        - T2_tmp * (om * C3 - I * nu * om_c * S3))
-                        / (om * dt * (nu2 * om2_c - om2));
-
-                    Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
-
-                    A1(i,j,k) = (Psi1(i,j,k) - 1._rt + I * nu * om_c * Psi2(i,j,k))
-                        / (nu2 * om2_c - om2);
-
-                    A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / om2;
-
-                    CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
-
-                    CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
-
-                    Jcoef(i,j,k) = (I * nu * om_c * A1(i,j,k) + Psi2(i,j,k)) / ep0;
-                }
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity)
-                if (nu == 0.)
-                {
-                    Psi1(i,j,k) = (S3 - S1) / (om * dt);
-
-                    Psi2(i,j,k) = (C3 - C1) / (om2 * dt);
-
-                    Psi3(i,j,k) = 1._rt;
-
-                    A1(i,j,k) = (om * dt + S1 - S3) / (om3 * dt);
-
-                    A2(i,j,k) = (om * dt + S1 - S3) / (om3 * dt);
-
-                    CRhoold(i,j,k) = 2._rt * I * c2 * S1 * (dt * C(i,j,k) - S_ck(i,j,k))
-                        / (om3 * dt2 * ep0);
-
-                    CRhonew(i,j,k) = - I * c2 * (om2 * dt2 - C1 + C3)
-                        / (om2 * om2 * dt2 * ep0);
-
-                    Jcoef(i,j,k) = (I * nu * om_c * A1(i,j,k) + Psi2(i,j,k)) / ep0;
-                }
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu == om/om_c)
-                {
-                    Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
-
-                    Psi1(i,j,k) = (2._rt * om * dt + I * tmp1 - I * tmp1 * tmp1 * tmp1)
-                        / (4._rt * om * dt);
-
-                    Psi2(i,j,k) = (- 2._rt * I * om * dt - tmp1 + tmp1 * tmp1 * tmp1)
-                        / (4._rt * om2 * dt);
-
-                    Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
-
-                    A1(i,j,k) = (2._rt * om * dt + I * (4._rt * om2 * dt2 - tmp1 + tmp1 * tmp1 * tmp1))
-                        / (8._rt * om3 * dt);
-
-                    A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / om2;
-
-                    CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
-
-                    CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
-
-                    Jcoef(i,j,k) = (I * nu * om_c * A1(i,j,k) + Psi2(i,j,k)) / ep0;
-                }
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu == -om/om_c)
-                {
-                    Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
-
-                    Psi1(i,j,k) = (2._rt * om * dt - I * tmp2 + I * tmp2 * tmp2 * tmp2)
-                        / (4._rt * om * dt);
-
-                    Psi2(i,j,k) = (2._rt * I * om * dt - tmp2 + tmp2 * tmp2 * tmp2)
-                        / (4._rt * om2 * dt);
-
-                    Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
-
-                    A1(i,j,k) = (2._rt * om * dt * (1._rt - 2._rt * I * om * dt)
-                        + I * (tmp2 - tmp2 * tmp2 * tmp2)) / (8._rt * om3 * dt);
-
-                    A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / om2;
-
-                    CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
-
-                    CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
-
-                    Jcoef(i,j,k) = (I * nu * om_c * A1(i,j,k) + Psi2(i,j,k)) / ep0;
-                }
+                S1_om = std::sin(0.5_rt * om_s * dt) / om_s;
+                S3_om = std::sin(1.5_rt * om_s * dt) / om_s;
+            }
+            else // om_s = 0
+            {
+                S1_om = 0.5_rt * dt;
+                S3_om = 1.5_rt * dt;
             }
 
-            else if (knorm != 0. && knorm_c == 0.)
+            // Psi1
+            if ((om_s != 0.) || (w_c != 0.))
             {
-                const Real om = c * knorm;
-                const Real om2 = om * om;
-                const Real om3 = om * om2;
-
-                amrex::Real C1 = std::cos(0.5_rt * om * dt);
-                amrex::Real S1 = std::sin(0.5_rt * om * dt);
-                amrex::Real C3 = std::cos(1.5_rt * om * dt);
-                amrex::Real S3 = std::sin(1.5_rt * om * dt);
-
-                Psi1(i,j,k) = (S3 - S1) / (om * dt);
-
-                Psi2(i,j,k) = (C3 - C1) / (om2 * dt);
-
-                Psi3(i,j,k) = 1._rt;
-
-                A1(i,j,k) = (om * dt + S1 - S3) / (om3 * dt);
-
-                A2(i,j,k) = (om * dt + S1 - S3) / (om3 * dt);
-
-                CRhoold(i,j,k) = 2._rt * I * c2 * S1 * (dt * C(i,j,k) - S_ck(i,j,k))
-                    / (om3 * dt2 * ep0);
-
-                CRhonew(i,j,k) = - I * c2 * (om2 * dt2 - C1 + C3)
-                    / (om2 * om2 * dt2 * ep0);
-
-                Jcoef(i,j,k) = Psi2(i,j,k) / ep0;
+                Psi1(i,j,k) = (theta3_c * (om2_s * S3_om + I * w_c * C3)
+                              - theta_c * (om2_s * S1_om + I * w_c * C1)) / (dt * (om2_s - w2_c));
             }
-
-            else if (knorm == 0. && knorm_c != 0.)
-            {
-                const Real om_c = c * knorm_c;
-                const Real om2_c = om_c * om_c;
-                const Real nu  = kv / om_c;
-                const Real nu2 = nu * nu;
-                const Complex theta = amrex::exp(I * nu * om_c * dt * 0.5_rt);
-
-                const Complex T2_tmp = (is_galilean) ? T2(i,j,k) : 1.0_rt;
-
-                // nu = 0 always with standard PSATD (zero Galilean velocity): skip this block
-                if (nu != 0.)
-                {
-                    Complex C_rho = I * c2 / ((1._rt - T2_tmp) * ep0);
-
-                    Psi1(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
-
-                    Psi2(i,j,k) = theta * (2._rt - I * nu * om_c * dt + T2_tmp * (3._rt * I * nu * om_c * dt - 2._rt))
-                        / (2._rt * nu2 * om2_c * dt);
-
-                    Psi3(i,j,k) = I * theta * (1._rt - T2_tmp) / (nu * om_c * dt);
-
-                    A1(i,j,k) = (Psi1(i,j,k) - 1._rt + I * nu * om_c * Psi2(i,j,k)) / (nu2 * om2_c);
-
-                    A2(i,j,k) = theta * (8._rt * I * (T2_tmp - 1._rt) + 4._rt * nu * om_c * dt
-                        * (3._rt * T2_tmp - 1._rt) + I * nu2 * om2_c * dt2 * (1._rt - 9._rt * T2_tmp))
-                        / (8._rt * nu2 * nu * om2_c * om_c * dt);
-
-                    CRhoold(i,j,k) = C_rho * (T2_tmp * A1(i,j,k) - A2(i,j,k));
-
-                    CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
-
-                    Jcoef(i,j,k) = (I * nu * om_c * A1(i,j,k) + Psi2(i,j,k)) / ep0;
-                }
-
-                else // nu = 0
-                {
-                    Psi1(i,j,k) = 1._rt;
-
-                    Psi2(i,j,k) = - dt;
-
-                    Psi3(i,j,k) = 1._rt;
-
-                    A1(i,j,k) = 13._rt * dt2 / 24._rt;
-
-                    A2(i,j,k) = 13._rt * dt2 / 24._rt;
-
-                    CRhoold(i,j,k) = - I * c2 * dt2 / (3._rt * ep0);
-
-                    CRhonew(i,j,k) = - 5._rt * I * c2 * dt2 / (24._rt * ep0);
-
-                    Jcoef(i,j,k) = - dt / ep0;
-                }
-            }
-
-            else if (knorm == 0. && knorm_c == 0.)
+            else // om_s = 0 and w_c = 0
             {
                 Psi1(i,j,k) = 1._rt;
-
-                Psi2(i,j,k) = - dt;
-
-                Psi3(i,j,k) = 1._rt;
-
-                A1(i,j,k) = 13._rt * dt2 / 24._rt;
-
-                A2(i,j,k) = 13._rt * dt2 / 24._rt;
-
-                CRhoold(i,j,k) = - I * c2 * dt2 / (3._rt * ep0);
-
-                CRhonew(i,j,k) = - 5._rt * I * c2 * dt2 / (24._rt * ep0);
-
-                Jcoef(i,j,k) = - dt / ep0;
             }
+
+            // Psi2
+            if ((om_s != 0.) || (w_c != 0.))
+            {
+                Psi2(i,j,k) = (theta3_c * (C3 - I * w_c * S3_om)
+                              - theta_c * (C1 - I * w_c * S1_om)) / (dt * (om2_s - w2_c));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                Psi2(i,j,k) = - dt;
+            }
+
+            // Psi3
+            Complex Psi3;
+            if (w_c != 0.)
+            {
+                Psi3 = - I * (theta3_c - theta_c) / (dt * w_c);
+            }
+            else // w_c = 0
+            {
+                Psi3 = 1._rt;
+            }
+
+            // A1
+            if ((om_s != 0.) || (w_c != 0.))
+            {
+                A1(i,j,k) = (1._rt - Psi1(i,j,k) - I * w_c * Psi2(i,j,k)) / (om2_s - w2_c);
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                A1(i,j,k) = 13._rt * dt2 / 24._rt;
+            }
+
+            // Cold
+            if ((om_s != 0.) && (w_c != 0.))
+            {
+                Cold(i,j,k) = I * c2 * (Psi3 - Psi1(i,j,k) - theta2_c * om2_s * A1(i,j,k))
+                              / (ep0 * om2_s * (theta2_c - 1._rt));
+            }
+            else if ((om_s != 0.) && (w_c == 0.))
+            {
+                Cold(i,j,k) = I * c2 * (C3 - C1 + dt * om2_s * (S3_om - S1_om)) / (ep0 * dt2 * om4_s);
+            }
+            else if ((om_s == 0.) && (w_c != 0.))
+            {
+                Cold(i,j,k) = c2 * (9._rt * dt2 * w2_c * theta3_c - dt2 * w2_c * theta_c
+                              - 16._rt * theta5_c + 8._rt * theta3_c + 8._rt * theta_c
+                              + I * 12._rt * dt * w_c * theta5_c + I * 8._rt * dt * w_c * theta3_c
+                              - I * 4._rt * dt * w_c * theta_c + I * 8._rt * dt * w_c * theta2_c)
+                              / (8._rt * ep0 * dt * w3_c * (theta2_c - 1._rt));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                Cold(i,j,k) = - I * c2 * dt2 / (3._rt * ep0);
+            }
+
+            // Cnew
+            if ((om_s != 0.) && (w_c != 0.))
+            {
+                Cnew(i,j,k) = I * c2 * (om2_s * A1(i,j,k) - Psi3 + Psi1(i,j,k))
+                              / (ep0 * om2_s * (theta2_c - 1._rt));
+            }
+            else if ((om_s != 0.) && (w_c == 0.))
+            {
+                Cnew(i,j,k) = I * c2 * (C1 - C3 - dt2 * om2_s) / (ep0 * dt2 * om4_s);
+            }
+            else if ((om_s == 0.) && (w_c != 0.))
+            {
+                Cnew(i,j,k) = c2 * (9._rt * dt2 * w2_c * theta3_c - dt2 * w2_c * theta_c
+                              - 24._rt * theta3_c + 24._rt * theta_c + I * 8._rt * dt * w_c
+                              + I * 24._rt * dt * w_c * theta3_c - I * 8._rt * dt * w_c * theta_c)
+                              / (8._rt * ep0 * dt * w3_c * (1._rt - theta2_c));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                Cnew(i,j,k) = - I * 5._rt * c2 * dt2 / (24._rt * ep0);
+            }
+
+            // Jcoef
+            Jcoef(i,j,k) = (Psi2(i,j,k) + I * w_c * A1(i,j,k)) / ep0;
         });
     }
 }
