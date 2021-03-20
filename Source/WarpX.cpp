@@ -1282,7 +1282,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         BoxArray realspace_ba = ba;  // Copy box
         realspace_ba.enclosedCells(); // Make it cell-centered
         // Define spectral solver
-#    ifdef WARPX_DIM_RZ
+#   ifdef WARPX_DIM_RZ
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         }
@@ -1297,7 +1297,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                    dx_vect,
                                    dt[lev],
                                    update_with_rho);
-#    else
+#   else
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(ngE);   // add guard cells
         }
@@ -1318,7 +1318,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                  fft_periodic_single_box,
                                  update_with_rho,
                                  fft_do_time_averaging);
-#    endif
+#   endif
 #endif
     } // MaxwellSolverAlgo::PSATD
     else {
@@ -1449,7 +1449,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                        cdx_vect,
                                        dt[lev],
                                        update_with_rho);
-#    else
+#   else
             c_realspace_ba.grow(ngE);
             bool const pml_flag_false = false;
             AllocLevelSpectralSolver(spectral_solver_cp,

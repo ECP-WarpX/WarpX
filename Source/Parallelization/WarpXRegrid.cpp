@@ -308,7 +308,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
                     auto ngE = getngE();
 
-#ifdef WARPX_DIM_RZ
+#   ifdef WARPX_DIM_RZ
                     c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
                     AllocLevelSpectralSolverRZ(spectral_solver_cp,
                                                lev,
