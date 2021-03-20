@@ -1532,7 +1532,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 }
 
-// ADD DOCS
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
