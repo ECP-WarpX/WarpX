@@ -200,6 +200,7 @@ public:
 
     static int do_subcycling;
     static int do_multij;
+    static int multij_n_depose;
 
     static bool do_device_synchronize_before_profile;
     static bool safe_guard_cells;

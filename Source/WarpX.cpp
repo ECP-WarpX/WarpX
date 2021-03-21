@@ -131,6 +131,7 @@ int WarpX::self_fields_max_iters = 200;
 
 int WarpX::do_subcycling = 0;
 int WarpX::do_multij = 0;
+int WarpX::multij_n_depose = 1;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -402,6 +403,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
         pp_warpx.query("do_multij", do_multij);
+        pp_warpx.query("multij_n_depose", multij_n_depose);
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};
@@ -1291,8 +1293,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.grow(ngE); // add guard cells
         }
         bool const pml_flag_false = false;
+        Real solver_dt=dt[lev];
+        if (WarpX::do_multij) solver_dt /= WarpX::multij_n_depose;
         spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, dt[lev],
+            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, solver_dt,
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
@@ -1422,8 +1426,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   else
             c_realspace_ba.grow(ngE); // add guard cells
             bool const pml_flag_false = false;
+            Real solver_dt=dt[lev];
+            if (WarpX::do_multij) solver_dt /= WarpX::multij_n_depose;
             spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( lev, c_realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, dt[lev],
+                nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, solver_dt,
                 pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif

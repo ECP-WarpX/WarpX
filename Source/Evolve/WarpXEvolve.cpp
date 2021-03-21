@@ -414,27 +414,34 @@ WarpX::OneStep_multiJ (Real cur_time)
     // Prepare E, B fields in spectral space
     PSATDForwardTransformEB();
 
-    // Deposit rho^{n}
-    if (WarpX::update_with_rho) {
-        mypc->DepositCharge( rho_fp, -dt[0], 0 );
-        SyncRho(); // Filter, exchange boundary, and interpolate across levels
-        PSATDForwardTransformRho(0); // rho old
+    // Loop over mutiple j deposition
+    int const n_depose = WarpX::multij_n_depose;
+    Real const sub_dt = dt[0]/n_depose;
+    for (int i_depose=0; i_depose<n_depose; i_depose++) {
+
+        // Deposit rho^{n}
+        if (WarpX::update_with_rho) {
+            mypc->DepositCharge( rho_fp, (i_depose-n_depose)*sub_dt, 0 );
+            SyncRho(); // Filter, exchange boundary, and interpolate across levels
+            PSATDForwardTransformRho(0); // rho old
+        }
+
+        // Deposit J^{n+1/2}
+        mypc->DepositCurrent( current_fp, dt[0], (i_depose-n_depose+0.5)*sub_dt );
+        SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
+        PSATDForwardTransformJ(); // Transform to k space
+
+        // Deposit rho^{n+1}
+        if (WarpX::update_with_rho) {
+            mypc->DepositCharge( rho_fp, (i_depose-n_depose+1)*sub_dt, 1 );
+            SyncRho(); // Filter, exchange boundary, and interpolate across levels
+            PSATDForwardTransformRho(1); // rho new
+        }
+
+        // Advance E and B fields in time
+        PSATDPushSpectralFields( dt[0] ); // Push fields in k space
+
     }
-
-    // Deposit J^{n+1/2}
-    mypc->DepositCurrent( current_fp, dt[0], -0.5*dt[0] );
-    SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
-    PSATDForwardTransformJ(); // Transform to k space
-
-    // Deposit rho^{n+1}
-    if (WarpX::update_with_rho) {
-        mypc->DepositCharge( rho_fp, 0, 1 );
-        SyncRho(); // Filter, exchange boundary, and interpolate across levels
-        PSATDForwardTransformRho(1); // rho new
-    }
-
-    // Advance E and B fields in time
-    PSATDPushSpectralFields( dt[0] ); // Push fields in k space
 
     // Bring fields to real space and exchange guards
     PSATDBackwardTransformEB();
