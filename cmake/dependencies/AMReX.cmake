@@ -76,6 +76,11 @@ macro(find_amrex)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
+        # IPO/LTO
+        if(WarpX_IPO)
+            set(AMReX_IPO ON CACHE INTERNAL "")
+        endif()
+
         if(WarpX_DIMS STREQUAL RZ)
             set(AMReX_SPACEDIM 2 CACHE INTERNAL "")
         else()
