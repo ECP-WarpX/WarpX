@@ -430,7 +430,7 @@ WarpX::OneStep_multiJ (Real cur_time)
     if (WarpX::update_with_rho) {
         mypc->DepositCharge( rho_fp, 0, 1 );
         SyncRho(); // Filter, exchange boundary, and interpolate across levels
-        PSATDForwardTransformRho(1); // rho old
+        PSATDForwardTransformRho(1); // rho new
     }
 
     // Advance E and B fields in time

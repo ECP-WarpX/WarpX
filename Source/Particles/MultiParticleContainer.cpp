@@ -414,7 +414,7 @@ MultiParticleContainer::DepositCharge (
     // Call the deposition kernel for each species
     for (int ispecies=0; ispecies<nSpecies(); ispecies++){
         WarpXParticleContainer& species = GetParticleContainer(ispecies);
-        bool const local = false;
+        bool const local = true;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
         bool const interpolate_across_levels = false;
