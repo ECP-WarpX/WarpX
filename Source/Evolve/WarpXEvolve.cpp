@@ -445,6 +445,7 @@ WarpX::OneStep_multiJ (Real cur_time)
 
     // Bring fields to real space and exchange guards
     PSATDBackwardTransformEB();
+    if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
     FillBoundaryE(guard_cells.ng_alloc_EB);
     FillBoundaryB(guard_cells.ng_alloc_EB);
 }
