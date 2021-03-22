@@ -96,7 +96,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
-        SpectralComplexCoefficients Psi1_coef, Psi2_coef, A1_coef, Cold_coef, Cnew_coef, J_coef;
+        SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
 
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;
