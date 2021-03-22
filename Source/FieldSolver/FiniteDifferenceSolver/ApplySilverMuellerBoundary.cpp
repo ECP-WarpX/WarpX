@@ -45,6 +45,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
     int const n_coefs_z = m_stencil_coefs_z.size();
 
+    // Extract cylindrical specific parameters
+    Real const dr = m_dr;
+    int const nmodes = m_nmodes;
+
     // tiling is usually set by TilingIfNotGPU()
     // but here, we set it to false because of potential race condition,
     // since we grow the tiles by one guard cell after creating them.
@@ -53,7 +57,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        Array4<Real> const& Br = Bfield[0]->array(mfi);
+        // Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
