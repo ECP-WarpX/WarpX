@@ -72,11 +72,15 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         // Loop over the cells
         amrex::ParallelFor(tbr, tbt, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
                     // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Mode 0
-                    Bt(i,j,0,0) = coef1_r*Bt(i,j,0,0) - coef2_r*Ez(i,j,0,0) + 
-                        coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0));
+                    Bt(i,j,0,0) = coef1_r*Bt(i,j,0,0) - coef2_r*Ez(i,j,0,0) 
+                        + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0));
+                    Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0)
+                        - coef3_r*Et(i,j,0,0)/r;
+                    }
                 }
             }
         );
