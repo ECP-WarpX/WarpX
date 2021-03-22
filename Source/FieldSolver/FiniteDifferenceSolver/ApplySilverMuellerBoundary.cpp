@@ -56,12 +56,12 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
-        
+
         // Extract tileboxes for which to loop
         Box const& tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
         Box const& tbt  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
         Box const& tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
-        
+
         // We will modify the first (i.e. innermost) guard cell
         // (if it is outside of the physical domain)
         // Thus, the tileboxes here are grown by 1 guard cell
@@ -76,18 +76,18 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                     // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Mode 0
-                    Bt(i,j,0,0) = coef1_r*Bt(i,j,0,0) - coef2_r*Ez(i,j,0,0) 
+                    Bt(i,j,0,0) = coef1_r*Bt(i,j,0,0) - coef2_r*Ez(i,j,0,0)
                         + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0));
                     Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0)
                         - coef3_r*Et(i,j,0,0)/r;
                     for (int m=1; m<nmodes; m++) { // Higher-order modes
                         // Real part
-                        Bt(i,j,0,2*m-1) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m-1) 
+                        Bt(i,j,0,2*m-1) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m-1)
                             + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1));
                         Bz(i,j,0,2*m-1) = coef1_r*Bz(i,j,0,2*m-1) - coef2_r*Et(i+1,j,0,2*m-1)
                             + coef3_r/r*(Er(i,j,0,2*m) - Et(i,j,0,2*m-1));
                         // Imaginary part
-                        Bt(i,j,0,2*m) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m) 
+                        Bt(i,j,0,2*m) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m)
                             + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m));
                         Bz(i,j,0,2*m) = coef1_r*Bz(i,j,0,2*m) - coef2_r*Et(i+1,j,0,2*m)
                             + coef3_r/r*(Er(i,j,0,2*m-1) - Et(i,j,0,2*m));
