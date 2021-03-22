@@ -28,7 +28,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Array<amrex::Real,3>& v_galilean,
             const amrex::Real dt,
             const bool update_with_rho,
-            const bool time_averaging);
+            const bool time_averaging,
+            const bool linear_in_J = false);
 
         // TODO Add Doxygen docs
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
@@ -36,15 +37,28 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         // TODO Add Doxygen docs
         virtual int getRequiredNumberOfFields () const override final
         {
-            if (m_time_averaging) {
-                return SpectralAvgFieldIndex::n_fields;
-            } else {
+            if (!m_linear_in_J && !m_time_averaging)
+            {
                 return SpectralFieldIndex::n_fields;
+            }
+            else if (!m_linear_in_J && m_time_averaging)
+            {
+                return SpectralAvgFieldIndex::n_fields;
+            }
+            else // linear in J (both with and without time averaging)
+            {
+                return SpectralFieldIndexLinearInJ::n_fields;
             }
         };
 
         // TODO Add Doxygen docs
         void InitializeSpectralCoefficients (
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm,
+            const amrex::Real dt);
+
+        // TODO Add Doxygen docs
+        void InitializeSpectralCoefficientsAvgLin (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
@@ -89,6 +103,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
+        SpectralComplexCoefficients X5_coef, X6_coef;
+
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralRealCoefficients C1_coef, C3_coef, S1_coef, S3_coef;
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Psi3_coef, Psi4_coef,
@@ -106,6 +122,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
+        bool m_linear_in_J;
         bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD
