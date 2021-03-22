@@ -51,7 +51,7 @@ struct IonizationFilterFunc
 
     amrex::Dim3 m_lo;
 
-    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, int ngE,
+    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
                           amrex::FArrayBox const& exfab,
                           amrex::FArrayBox const& eyfab,
                           amrex::FArrayBox const& ezfab,

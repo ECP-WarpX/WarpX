@@ -102,33 +102,33 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();
 
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
-    pp.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
-    pp.query("do_backward_propagation", do_backward_propagation);
+    pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
+    pp_species_name.query("do_backward_propagation", do_backward_propagation);
 
     // Initialize splitting
-    pp.query("do_splitting", do_splitting);
-    pp.query("split_type", split_type);
-    pp.query("do_not_deposit", do_not_deposit);
-    pp.query("do_not_gather", do_not_gather);
-    pp.query("do_not_push", do_not_push);
+    pp_species_name.query("do_splitting", do_splitting);
+    pp_species_name.query("split_type", split_type);
+    pp_species_name.query("do_not_deposit", do_not_deposit);
+    pp_species_name.query("do_not_gather", do_not_gather);
+    pp_species_name.query("do_not_push", do_not_push);
 
-    pp.query("do_continuous_injection", do_continuous_injection);
-    pp.query("initialize_self_fields", initialize_self_fields);
-    queryWithParser(pp, "self_fields_required_precision", self_fields_required_precision);
-    pp.query("self_fields_max_iters", self_fields_max_iters);
+    pp_species_name.query("do_continuous_injection", do_continuous_injection);
+    pp_species_name.query("initialize_self_fields", initialize_self_fields);
+    queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
+    pp_species_name.query("self_fields_max_iters", self_fields_max_iters);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
-    pp.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
+    pp_species_name.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
 
-    pp.query("do_field_ionization", do_field_ionization);
+    pp_species_name.query("do_field_ionization", do_field_ionization);
 
-    pp.query("do_resampling", do_resampling);
+    pp_species_name.query("do_resampling", do_resampling);
     if (do_resampling) m_resampler = Resampling(species_name);
 
     //check if Radiation Reaction is enabled and do consistency checks
-    pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
+    pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
     WarpXUtilMsg::AlwaysAssert(
@@ -147,16 +147,16 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //_____________________________
 
 #ifdef WARPX_QED
-    pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
+    pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
     if (m_do_qed_quantum_sync)
         AddRealComp("optical_depth_QSR");
 
-    pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+    pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
     if (m_do_qed_breit_wheeler)
         AddRealComp("optical_depth_BW");
 
     if(m_do_qed_quantum_sync){
-        pp.get("qed_quantum_sync_phot_product_species",
+        pp_species_name.get("qed_quantum_sync_phot_product_species",
             m_qed_quantum_sync_phot_product_name);
     }
 #endif
@@ -184,15 +184,15 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
 void
 PhysicalParticleContainer::BackwardCompatibility ()
 {
-    ParmParse pps(species_name);
+    ParmParse pp_species_name(species_name);
     std::vector<std::string> backward_strings;
-    if (pps.queryarr("plot_vars", backward_strings)){
+    if (pp_species_name.queryarr("plot_vars", backward_strings)){
         amrex::Abort("<species>.plot_vars is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
 
     int backward_int;
-    if (pps.query("plot_species", backward_int)){
+    if (pp_species_name.query("plot_species", backward_int)){
         amrex::Abort("<species>.plot_species is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
@@ -1067,7 +1067,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 WARPX_PROFILE_VAR_START(blp_fg);
                 PushPX(pti, exfab, eyfab, ezfab,
                        bxfab, byfab, bzfab,
-                       Ex.nGrow(), e_is_nodal,
+                       Ex.nGrowVect(), e_is_nodal,
                        0, np_gather, lev, lev, dt, ScaleFields(false), a_dt_type);
 
                 if (np_gather < np)
@@ -1101,7 +1101,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     e_is_nodal = cEx->is_nodal() and cEy->is_nodal() and cEz->is_nodal();
                     PushPX(pti, cexfab, ceyfab, cezfab,
                            cbxfab, cbyfab, cbzfab,
-                           cEx->nGrow(), e_is_nodal,
+                           cEx->nGrowVect(), e_is_nodal,
                            nfine_gather, np-nfine_gather,
                            lev, lev-1, dt, ScaleFields(false), a_dt_type);
                 }
@@ -1121,12 +1121,12 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
-                                   lev, lev, dt);
+                                   lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
                     if (has_buffer){
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt);
+                                       lev, lev-1, dt, -0.5_rt);  // Deposit current at t_{n+1/2}
                     }
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
@@ -1430,7 +1430,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             amrex::Box box = pti.tilebox();
-            box.grow(Ex.nGrow());
+            box.grow(Ex.nGrowVect());
 
             const long np = pti.numParticles();
 
@@ -1749,7 +1749,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::FArrayBox const * bxfab,
                                    amrex::FArrayBox const * byfab,
                                    amrex::FArrayBox const * bzfab,
-                                   const int ngE, const int /*e_is_nodal*/,
+                                   const amrex::IntVect ngE, const int /*e_is_nodal*/,
                                    const long offset,
                                    const long np_to_push,
                                    int lev, int gather_lev,
@@ -1903,15 +1903,15 @@ void
 PhysicalParticleContainer::InitIonizationModule ()
 {
     if (!do_field_ionization) return;
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
     if (charge != PhysConst::q_e){
         amrex::Warning(
             "charge != q_e for ionizable species: overriding user value and setting charge = q_e.");
         charge = PhysConst::q_e;
     }
-    pp.query("ionization_initial_level", ionization_initial_level);
-    pp.get("ionization_product_species", ionization_product_name);
-    pp.get("physical_element", physical_element);
+    pp_species_name.query("ionization_initial_level", ionization_initial_level);
+    pp_species_name.get("ionization_product_species", ionization_product_name);
+    pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level
     AddIntComp("ionization_level");
     // Get atomic number and ionization energies from file
@@ -1966,7 +1966,7 @@ PhysicalParticleContainer::InitIonizationModule ()
 IonizationFilterFunc
 PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                               int lev,
-                                              int ngE,
+                                              amrex::IntVect ngE,
                                               const amrex::FArrayBox& Ex,
                                               const amrex::FArrayBox& Ey,
                                               const amrex::FArrayBox& Ez,

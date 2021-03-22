@@ -67,7 +67,7 @@ public:
                         amrex::FArrayBox const * bxfab,
                         amrex::FArrayBox const * byfab,
                         amrex::FArrayBox const * bzfab,
-                        const int ngE, const int /*e_is_nodal*/,
+                        const amrex::IntVect ngE, const int /*e_is_nodal*/,
                         const long offset,
                         const long np_to_push,
                         int lev, int gather_lev,
@@ -100,7 +100,8 @@ public:
                                 int /*thread_num*/,
                                 int /*lev*/,
                                 int /*depos_lev*/,
-                                amrex::Real /*dt*/) override {}
+                                amrex::Real /*dt*/,
+                                amrex::Real /*relative_time*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

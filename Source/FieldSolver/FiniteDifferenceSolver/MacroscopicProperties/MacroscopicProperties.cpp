@@ -16,7 +16,7 @@ MacroscopicProperties::MacroscopicProperties ()
 void
 MacroscopicProperties::ReadParameters ()
 {
-    ParmParse pp("macroscopic");
+    ParmParse pp_macroscopic("macroscopic");
     // Since macroscopic maxwell solve is turned on,
     // user-defined sigma, mu, and epsilon are queried.
     // The vacuum values are used as default for the macroscopic parameters
@@ -24,11 +24,11 @@ MacroscopicProperties::ReadParameters ()
 
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
-    if (queryWithParser(pp, "sigma", m_sigma)) {
+    if (queryWithParser(pp_macroscopic, "sigma", m_sigma)) {
         m_sigma_s = "constant";
         sigma_specified = true;
     }
-    if (pp.query("sigma_function(x,y,z)", m_str_sigma_function) ) {
+    if (pp_macroscopic.query("sigma_function(x,y,z)", m_str_sigma_function) ) {
         m_sigma_s = "parse_sigma_function";
         sigma_specified = true;
     }
@@ -37,17 +37,17 @@ MacroscopicProperties::ReadParameters ()
     }
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
-        Store_parserString(pp, "sigma_function(x,y,z)", m_str_sigma_function);
+        Store_parserString(pp_macroscopic, "sigma_function(x,y,z)", m_str_sigma_function);
         m_sigma_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
     bool epsilon_specified = false;
-    if (queryWithParser(pp, "epsilon", m_epsilon)) {
+    if (queryWithParser(pp_macroscopic, "epsilon", m_epsilon)) {
         m_epsilon_s = "constant";
         epsilon_specified = true;
     }
-    if (pp.query("epsilon_function(x,y,z)", m_str_epsilon_function) ) {
+    if (pp_macroscopic.query("epsilon_function(x,y,z)", m_str_epsilon_function) ) {
         m_epsilon_s = "parse_epsilon_function";
         epsilon_specified = true;
     }
@@ -57,18 +57,18 @@ MacroscopicProperties::ReadParameters ()
 
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
-        Store_parserString(pp, "epsilon_function(x,y,z)", m_str_epsilon_function);
+        Store_parserString(pp_macroscopic, "epsilon_function(x,y,z)", m_str_epsilon_function);
         m_epsilon_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
     // Query input for material permittivity, epsilon.
     bool mu_specified = false;
-    if (queryWithParser(pp, "mu", m_mu)) {
+    if (queryWithParser(pp_macroscopic, "mu", m_mu)) {
         m_mu_s = "constant";
         mu_specified = true;
     }
-    if (pp.query("mu_function(x,y,z)", m_str_mu_function) ) {
+    if (pp_macroscopic.query("mu_function(x,y,z)", m_str_mu_function) ) {
         m_mu_s = "parse_mu_function";
         mu_specified = true;
     }
@@ -78,7 +78,7 @@ MacroscopicProperties::ReadParameters ()
 
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
-        Store_parserString(pp, "mu_function(x,y,z)", m_str_mu_function);
+        Store_parserString(pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
         m_mu_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_mu_function,{"x","y","z"}));
     }

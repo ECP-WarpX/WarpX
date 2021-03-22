@@ -21,8 +21,14 @@ public:
      * (for performance, it is recommended to allocate pinned host memory).
      */
     AMREX_GPU_DEVICE
-    KernelTimer (const bool do_timing, amrex::Real* cost)
-        : m_do_timing(do_timing), m_cost(cost) {
+    KernelTimer
+#if (defined AMREX_USE_GPU)
+    (const bool do_timing, amrex::Real* cost)
+        : m_do_timing(do_timing), m_cost(cost)
+#else
+    (const bool, amrex::Real*)
+#endif
+    {
 #if (defined AMREX_USE_GPU)
     if (do_timing && cost) {
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
@@ -53,6 +59,7 @@ public:
 #endif
     }
 
+#if (defined AMREX_USE_GPU)
 private:
     //! Stores whether kernel timer is active.
     bool m_do_timing;
@@ -62,6 +69,7 @@ private:
 
     //! Store the time difference (cost) from a single thread.
     long long int m_wt;
+#endif
 };
 
 #endif

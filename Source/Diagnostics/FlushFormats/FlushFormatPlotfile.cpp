@@ -377,7 +377,7 @@ WriteZeroRawMF( const MultiFab& F, const DistributionMapping& dm,
                 const std::string& filename,
                 const std::string& level_prefix,
                 const std::string& field_name,
-                const int lev, const int ng )
+                const int lev, const IntVect ng )
 {
     std::string prefix = amrex::MultiFabFileFullPrefix(lev,
                             filename, level_prefix, field_name);
@@ -405,8 +405,8 @@ WriteCoarseVector( const std::string field_name,
     const std::string& level_prefix,
     const int lev, const bool plot_guards )
 {
-    int ng = 0;
-    if (plot_guards) ng = Fx_fp->nGrow();
+    IntVect ng(0);
+    if (plot_guards) ng = Fx_fp->nGrowVect();
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab
@@ -442,8 +442,8 @@ WriteCoarseScalar( const std::string field_name,
     const int lev, const bool plot_guards,
     const int icomp )
 {
-    int ng = 0;
-    if (plot_guards) ng = F_fp->nGrow();
+    IntVect ng(0);
+    if (plot_guards) ng = F_fp->nGrowVect();
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab

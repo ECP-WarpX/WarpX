@@ -37,28 +37,28 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
 
-    ParmParse pp(rd_name);
+    ParmParse pp_rd_name(rd_name);
 
     // read species
     std::string selected_species_name;
-    pp.get("species",selected_species_name);
+    pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    pp.get("bin_number",m_bin_num);
-    getWithParser(pp, "bin_max",   m_bin_max);
-    getWithParser(pp, "bin_min",   m_bin_min);
+    pp_rd_name.get("bin_number",m_bin_num);
+    getWithParser(pp_rd_name, "bin_max",   m_bin_max);
+    getWithParser(pp_rd_name, "bin_min",   m_bin_min);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
 
     // read histogram function
     std::string function_string = "";
-    Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
+    Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
     m_parser = std::make_unique<ParserWrapper<m_nvars>>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
     std::string norm_string = "default";
-    pp.query("normalization",norm_string);
+    pp_rd_name.query("normalization",norm_string);
 
     // set normalization type
     if ( norm_string == "default" ) {
@@ -91,10 +91,10 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 
     // Read optional filter
     std::string buf;
-    m_do_parser_filter = pp.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
+    m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
     if (m_do_parser_filter) {
         std::string filter_string = "";
-        Store_parserString(pp,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
+        Store_parserString(pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
         m_parser_filter = std::make_unique<ParserWrapper<m_nvars>>(
                                      makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
     }

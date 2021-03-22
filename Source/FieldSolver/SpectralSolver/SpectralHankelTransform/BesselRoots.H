@@ -32,7 +32,10 @@
 !                                          (www.jpmoreau.fr)
 ! ------------------------------------------------------------------------ */
 
-using amrex::operator""_rt;
+#include <AMReX_REAL.H>
+
+#include <cmath>
+
 
 void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int *ier);
 
@@ -52,6 +55,8 @@ void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int
  *    handbook of mathematical functions
  */
 void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vector<int> &ier)  {
+    using namespace amrex::literals;
+
     amrex::Real zeroj;
     int ierror, ik, k;
 
@@ -125,6 +130,7 @@ void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vec
 }
 
 void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int *ier) {
+    using namespace amrex::literals;
 
     amrex::Real p0, p1, q0, q1, dp, p;
     amrex::Real c[2];

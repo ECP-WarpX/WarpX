@@ -247,7 +247,7 @@ WarpX::GetCellCenteredData() {
 
     WARPX_PROFILE("WarpX::GetCellCenteredData()");
 
-    const int ng =  1;
+    const amrex::IntVect ng(1);
     const int nc = 10;
 
     Vector<std::unique_ptr<MultiFab> > cc(finest_level+1);

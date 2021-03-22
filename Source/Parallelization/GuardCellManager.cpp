@@ -132,10 +132,10 @@ guardCellManager::Init (
         int ngFFt_y = do_nodal ? noy_fft : noy_fft / 2;
         int ngFFt_z = do_nodal ? noz_fft : noz_fft / 2;
 
-        ParmParse pp("psatd");
-        pp.query("nx_guard", ngFFt_x);
-        pp.query("ny_guard", ngFFt_y);
-        pp.query("nz_guard", ngFFt_z);
+        ParmParse pp_psatd("psatd");
+        pp_psatd.query("nx_guard", ngFFt_x);
+        pp_psatd.query("ny_guard", ngFFt_y);
+        pp_psatd.query("nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
