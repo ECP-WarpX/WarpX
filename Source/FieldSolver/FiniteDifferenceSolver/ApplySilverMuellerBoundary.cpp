@@ -11,7 +11,7 @@
 #include <AMReX_Gpu.H>
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
+#endif
 
 using namespace amrex;
 
@@ -100,8 +100,6 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
             }
         );
     }
-
-    // amrex::Abort("The Silver-Mueller boundary conditions cannot be used in RZ geometry.");
 #else
 
     // Calculate relevant coefficients
