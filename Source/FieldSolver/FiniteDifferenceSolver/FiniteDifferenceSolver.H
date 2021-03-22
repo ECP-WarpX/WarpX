@@ -52,12 +52,6 @@ class FiniteDifferenceSolver
                        int const rhocomp,
                        amrex::Real const dt );
 
-        void ApplySilverMuellerBoundary(
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-            amrex::Box domain_box,
-            amrex::Real const dt );
-
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 
@@ -145,6 +139,13 @@ class FiniteDifferenceSolver
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
 
+        template< typename T_Algo >
+        void ApplySilverMuellerBoundary(
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            amrex::Box domain_box,
+            amrex::Real const dt );
+
 #else
         template< typename T_Algo >
         void EvolveBCartesian (
@@ -201,6 +202,12 @@ class FiniteDifferenceSolver
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt );
+
+        void ApplySilverMuellerBoundary(
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            amrex::Box domain_box,
+            amrex::Real const dt );
 
 #endif
 

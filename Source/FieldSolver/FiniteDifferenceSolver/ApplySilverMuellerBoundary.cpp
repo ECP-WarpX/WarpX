@@ -18,6 +18,9 @@ using namespace amrex;
 /**
  * \brief Update the B field at the boundary, using the Silver-Mueller condition
  */
+#ifdef WARPX_DIM_RZ
+template<typename T_Algo>
+#endif
 void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
@@ -34,7 +37,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
 #ifdef WARPX_DIM_RZ
     // Calculate relevant coefficients
-    amrex::Real const cdt = PhysConst::c*dt
+    amrex::Real const cdt = PhysConst::c*dt;
     amrex::Real const cdt_over_dr = cdt*m_stencil_coefs_r[0];
     amrex::Real const cdt_over_dz = cdt*m_stencil_coefs_z[0];
     amrex::Real const coef1_r = (1._rt - cdt_over_dr)/(1._rt + cdt_over_dr);
@@ -63,15 +66,15 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        Box const& tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
-        Box const& tbt  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
-        Box const& tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
+        Box tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
+        Box tbt  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
+        Box tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
 
         // We will modify the first (i.e. innermost) guard cell
         // (if it is outside of the physical domain)
         // Thus, the tileboxes here are grown by 1 guard cell
-        tbx.grow(1);
-        tby.grow(1);
+        tbr.grow(1);
+        tbt.grow(1);
         tbz.grow(1);
 
         // Loop over the cells
