@@ -170,8 +170,6 @@ WarpX::Evolve (int numsteps)
             // B : guard cells are NOT up-to-date
         }
 
-        if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
-
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
             UpdateAuxilaryData();
@@ -185,8 +183,6 @@ WarpX::Evolve (int numsteps)
             }
             is_synchronized = true;
         }
-
-        if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 
         for (int lev = 0; lev <= max_level; ++lev) {
             ++istep[lev];
@@ -336,6 +332,8 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
 
+    if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
+
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -391,6 +389,8 @@ WarpX::OneStep_nosub (Real cur_time)
         if (safe_guard_cells)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
+
+    if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 }
 
 /* /brief Perform one PIC iteration, with subcycling

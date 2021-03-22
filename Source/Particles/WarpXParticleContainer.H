@@ -226,7 +226,8 @@ public:
                                 int thread_num,
                                 int lev,
                                 int depos_lev,
-                                amrex::Real dt);
+                                amrex::Real dt,
+                                amrex::Real relative_time);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and

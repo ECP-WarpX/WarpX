@@ -198,8 +198,15 @@ private:
             amrex::ParticleReal const charge,
             amrex::ParticleReal const mass) const;
 
-  // no need for ts in the name, openPMD  handles it
-  void GetFileName (std::string& filename);
+  /** Get the openPMD-api filename for openPMD::Series
+   *
+   * No need for ts in the file name, openPMD handles steps (iterations).
+   *
+   * @param[inout] filepath the path and filename for openPMD::Series
+   *               passes a prefix path in and appends the filename
+   * @return pure filename w/o path
+   */
+  std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
 
