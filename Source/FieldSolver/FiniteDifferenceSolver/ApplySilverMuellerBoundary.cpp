@@ -9,6 +9,9 @@
 #include "FiniteDifferenceSolver.H"
 #include "Utils/WarpXConst.H"
 #include <AMReX_Gpu.H>
+#ifdef WARPX_DIM_RZ
+#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#else
 
 using namespace amrex;
 
