@@ -20,11 +20,11 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 2,
                                      "Pair wise Coulomb must have exactly two species.");
 
-    amrex::ParmParse pp(collision_name);
+    amrex::ParmParse pp_collision_name(collision_name);
 
     // default Coulomb log, if < 0, will be computed automatically
     m_CoulombLog = -1.0_rt;
-    queryWithParser(pp, "CoulombLog", m_CoulombLog);
+    queryWithParser(pp_collision_name, "CoulombLog", m_CoulombLog);
 
     if (m_species_names[0] == m_species_names[1])
         m_isSameSpecies = true;
@@ -36,7 +36,6 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
 void
 PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
 {
-
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
@@ -50,13 +49,28 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
     // Loop over refinement levels
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
         // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
         info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (amrex::MFIter mfi = species1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            amrex::Real wt = amrex::second();
+
             doCoulombCollisionsWithinTile( lev, mfi, species1, species2 );
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+            }
         }
     }
 }
@@ -116,13 +130,13 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
 
         const amrex::Real dt = WarpX::GetInstance().getdt(lev);
         amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-        amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
-        const auto lo = lbound(cbx);
-        const auto hi = ubound(cbx);
-        int nz = hi.y-lo.y+1;
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
+        amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
+        const auto lo = lbound(cbx);
+        const auto hi = ubound(cbx);
+        int const nz = hi.y-lo.y+1;
         auto dr = geom.CellSize(0);
         auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
@@ -140,28 +154,23 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
 
                 // Do not collide if there is only one particle in the cell
-                if ( cell_stop_1 - cell_start_1 >= 2 )
-                {
-                    // shuffle
-                    ShuffleFisherYates(
-                        indices_1, cell_start_1, cell_half_1, engine );
+                if ( cell_stop_1 - cell_start_1 <= 1 ) return;
 
+                // shuffle
+                ShuffleFisherYates(
+                    indices_1, cell_start_1, cell_half_1, engine );
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
-#else
-                    amrex::ignore_unused(nz);
+                int ri = (i_cell - i_cell%nz) / nz;
+                auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
-
-                    // Call the function in order to perform collisions
-                    ElasticCollisionPerez(
-                        cell_start_1, cell_half_1,
-                        cell_half_1, cell_stop_1,
-                        indices_1, indices_1,
-                        ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
-                        q1, q1, m1, m1, amrex::Real(-1.0), amrex::Real(-1.0),
-                        dt*ndt, CoulombLog, dV, engine );
-                }
+                // Call the function in order to perform collisions
+                ElasticCollisionPerez(
+                    cell_start_1, cell_half_1,
+                    cell_half_1, cell_stop_1,
+                    indices_1, indices_1,
+                    ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
+                    q1, q1, m1, m1, amrex::Real(-1.0), amrex::Real(-1.0),
+                    dt*ndt, CoulombLog, dV, engine );
             }
         );
     }
@@ -206,13 +215,13 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
 
         const amrex::Real dt = WarpX::GetInstance().getdt(lev);
         amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
+#if defined WARPX_DIM_XZ
+        auto dV = geom.CellSize(0) * geom.CellSize(1);
+#elif defined WARPX_DIM_RZ
         amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
         const auto lo = lbound(cbx);
         const auto hi = ubound(cbx);
         int nz = hi.y-lo.y+1;
-#if defined WARPX_DIM_XZ
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined WARPX_DIM_RZ
         auto dr = geom.CellSize(0);
         auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
@@ -236,28 +245,23 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 // cell_start_1 (inclusive) and cell_start_2 (exclusive)
 
                 // Do not collide if one species is missing in the cell
-                if ( cell_stop_1 - cell_start_1 >= 1 &&
-                     cell_stop_2 - cell_start_2 >= 1 )
-                {
-                    // shuffle
-                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
-                    ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
+                if ( cell_stop_1 - cell_start_1 < 1 ||
+                     cell_stop_2 - cell_start_2 < 1 ) return;
 
+                // shuffle
+                ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
+                ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
-#else
-                    amrex::ignore_unused(nz);
+                int ri = (i_cell - i_cell%nz) / nz;
+                auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
-
-                    // Call the function in order to perform collisions
-                    ElasticCollisionPerez(
-                        cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
-                        indices_1, indices_2,
-                        ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
-                        q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
-                        dt*ndt, CoulombLog, dV, engine );
-                }
+                // Call the function in order to perform collisions
+                ElasticCollisionPerez(
+                    cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
+                    indices_1, indices_2,
+                    ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
+                    q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
+                    dt*ndt, CoulombLog, dV, engine );
             }
         );
     } // end if ( m_isSameSpecies)

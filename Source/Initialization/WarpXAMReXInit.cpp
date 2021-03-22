@@ -18,12 +18,12 @@ namespace {
     void
     overwrite_amrex_parser_defaults()
     {
-        amrex::ParmParse pp("amrex");
+        amrex::ParmParse pp_amrex("amrex");
 
         // https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters
         bool abort_on_out_of_gpu_memory = true; // AMReX' default: false
-        pp.query("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
-        pp.add("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
+        pp_amrex.query("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
+        pp_amrex.add("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
 
         // Work-around:
         // If warpx.numprocs is used for the domain decomposition, we will not use blocking factor

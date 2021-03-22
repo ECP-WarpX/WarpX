@@ -27,6 +27,7 @@ using namespace amrex;
 namespace {
     void
     PushPSATDSinglePatch (
+        const int lev,
 #ifdef WARPX_DIM_RZ
         SpectralSolverRZ& solver,
 #else
@@ -47,33 +48,36 @@ namespace {
 
         // Perform forward Fourier transform
 #ifdef WARPX_DIM_RZ
-        solver.ForwardTransform(*Efield[0], Idx::Ex,
+        solver.ForwardTransform(lev,
+                                *Efield[0], Idx::Ex,
                                 *Efield[1], Idx::Ey);
 #else
-        solver.ForwardTransform(*Efield[0], Idx::Ex);
-        solver.ForwardTransform(*Efield[1], Idx::Ey);
+        solver.ForwardTransform(lev, *Efield[0], Idx::Ex);
+        solver.ForwardTransform(lev, *Efield[1], Idx::Ey);
 #endif
-        solver.ForwardTransform(*Efield[2], Idx::Ez);
+        solver.ForwardTransform(lev, *Efield[2], Idx::Ez);
 #ifdef WARPX_DIM_RZ
-        solver.ForwardTransform(*Bfield[0], Idx::Bx,
+        solver.ForwardTransform(lev,
+                                *Bfield[0], Idx::Bx,
                                 *Bfield[1], Idx::By);
 #else
-        solver.ForwardTransform(*Bfield[0], Idx::Bx);
-        solver.ForwardTransform(*Bfield[1], Idx::By);
+        solver.ForwardTransform(lev, *Bfield[0], Idx::Bx);
+        solver.ForwardTransform(lev, *Bfield[1], Idx::By);
 #endif
-        solver.ForwardTransform(*Bfield[2], Idx::Bz);
+        solver.ForwardTransform(lev, *Bfield[2], Idx::Bz);
 #ifdef WARPX_DIM_RZ
-        solver.ForwardTransform(*current[0], Idx::Jx,
+        solver.ForwardTransform(lev,
+                                *current[0], Idx::Jx,
                                 *current[1], Idx::Jy);
 #else
-        solver.ForwardTransform(*current[0], Idx::Jx);
-        solver.ForwardTransform(*current[1], Idx::Jy);
+        solver.ForwardTransform(lev, *current[0], Idx::Jx);
+        solver.ForwardTransform(lev, *current[1], Idx::Jy);
 #endif
-        solver.ForwardTransform(*current[2], Idx::Jz);
+        solver.ForwardTransform(lev, *current[2], Idx::Jz);
 
         if (rho) {
-            solver.ForwardTransform(*rho, Idx::rho_old, 0);
-            solver.ForwardTransform(*rho, Idx::rho_new, 1);
+            solver.ForwardTransform(lev, *rho, Idx::rho_old, 0);
+            solver.ForwardTransform(lev, *rho, Idx::rho_new, 1);
         }
 #ifdef WARPX_DIM_RZ
         if (WarpX::use_kspace_filter) {
@@ -86,31 +90,33 @@ namespace {
         solver.pushSpectralFields();
         // Perform backward Fourier Transform
 #ifdef WARPX_DIM_RZ
-        solver.BackwardTransform(*Efield[0], Idx::Ex,
+        solver.BackwardTransform(lev,
+                                 *Efield[0], Idx::Ex,
                                  *Efield[1], Idx::Ey);
 #else
-        solver.BackwardTransform(*Efield[0], Idx::Ex);
-        solver.BackwardTransform(*Efield[1], Idx::Ey);
+        solver.BackwardTransform(lev, *Efield[0], Idx::Ex);
+        solver.BackwardTransform(lev, *Efield[1], Idx::Ey);
 #endif
-        solver.BackwardTransform(*Efield[2], Idx::Ez);
+        solver.BackwardTransform(lev, *Efield[2], Idx::Ez);
 #ifdef WARPX_DIM_RZ
-        solver.BackwardTransform(*Bfield[0], Idx::Bx,
+        solver.BackwardTransform(lev,
+                                 *Bfield[0], Idx::Bx,
                                  *Bfield[1], Idx::By);
 #else
-        solver.BackwardTransform(*Bfield[0], Idx::Bx);
-        solver.BackwardTransform(*Bfield[1], Idx::By);
+        solver.BackwardTransform(lev, *Bfield[0], Idx::Bx);
+        solver.BackwardTransform(lev, *Bfield[1], Idx::By);
 #endif
-        solver.BackwardTransform(*Bfield[2], Idx::Bz);
+        solver.BackwardTransform(lev, *Bfield[2], Idx::Bz);
 
 #ifndef WARPX_DIM_RZ
         if (WarpX::fft_do_time_averaging){
-            solver.BackwardTransform(*Efield_avg[0], Idx::Ex_avg);
-            solver.BackwardTransform(*Efield_avg[1], Idx::Ey_avg);
-            solver.BackwardTransform(*Efield_avg[2], Idx::Ez_avg);
+            solver.BackwardTransform(lev, *Efield_avg[0], Idx::Ex_avg);
+            solver.BackwardTransform(lev, *Efield_avg[1], Idx::Ey_avg);
+            solver.BackwardTransform(lev, *Efield_avg[2], Idx::Ez_avg);
 
-            solver.BackwardTransform(*Bfield_avg[0], Idx::Bx_avg);
-            solver.BackwardTransform(*Bfield_avg[1], Idx::By_avg);
-            solver.BackwardTransform(*Bfield_avg[2], Idx::Bz_avg);
+            solver.BackwardTransform(lev, *Bfield_avg[0], Idx::Bx_avg);
+            solver.BackwardTransform(lev, *Bfield_avg[1], Idx::By_avg);
+            solver.BackwardTransform(lev, *Bfield_avg[2], Idx::Bz_avg);
         }
 #endif
     }
@@ -131,7 +137,7 @@ WarpX::PushPSATD (amrex::Real a_dt)
 
         // Evolve the fields in the PML boxes
         if (do_pml && pml[lev]->ok()) {
-            pml[lev]->PushPSATD();
+            pml[lev]->PushPSATD(lev);
         }
     }
 #endif
@@ -149,10 +155,10 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
                                          "WarpX::PushPSATD: only supported for PSATD solver.");
     }
     // Update the fields on the fine and coarse patch
-    PushPSATDSinglePatch( *spectral_solver_fp[lev],
+    PushPSATDSinglePatch( lev, *spectral_solver_fp[lev],
         Efield_fp[lev], Bfield_fp[lev], Efield_avg_fp[lev], Bfield_avg_fp[lev], current_fp[lev], rho_fp[lev] );
     if (spectral_solver_cp[lev]) {
-        PushPSATDSinglePatch( *spectral_solver_cp[lev],
+        PushPSATDSinglePatch( lev, *spectral_solver_cp[lev],
              Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
     }
     if (use_damp_fields_in_z_guard) {
@@ -186,9 +192,9 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveB( Bfield_fp[lev], Efield_fp[lev], a_dt );
+        m_fdtd_solver_fp[lev]->EvolveB( Bfield_fp[lev], Efield_fp[lev], lev, a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveB( Bfield_cp[lev], Efield_cp[lev], a_dt );
+        m_fdtd_solver_cp[lev]->EvolveB( Bfield_cp[lev], Efield_cp[lev], lev, a_dt );
     }
 
     // Evolve B field in PML cells
@@ -202,6 +208,13 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
         }
     }
 
+}
+
+void
+WarpX::ApplySilverMuellerBoundary (amrex::Real a_dt) {
+    // Only apply to level 0
+    m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
+        Efield_fp[0], Bfield_fp[0], Geom(0).Domain(), a_dt );
 }
 
 void
@@ -230,10 +243,10 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     // Evolve E field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
-                                      current_fp[lev], F_fp[lev], a_dt );
+                    current_fp[lev], F_fp[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( Efield_cp[lev], Bfield_cp[lev],
-                                      current_cp[lev], F_cp[lev], a_dt );
+                    current_cp[lev], F_cp[lev], lev, a_dt );
     }
 
     // Evolve E field in PML cells

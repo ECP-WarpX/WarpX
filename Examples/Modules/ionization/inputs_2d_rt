@@ -43,7 +43,7 @@ laser1.profile      = Gaussian
 laser1.position     = 0. 0. 3.e-6
 laser1.direction    = 0. 0. 1.
 laser1.polarization = 1. 0. 0.
-laser1.e_max        = 7.224e12 # a0=1.8
+laser1.a0           = 1.8
 laser1.profile_waist = 1.e10
 laser1.profile_duration = 26.685e-15
 laser1.profile_t_peak = 60.e-15

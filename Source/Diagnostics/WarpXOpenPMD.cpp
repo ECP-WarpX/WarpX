@@ -12,6 +12,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <AMReX_AmrParticles.H>
+#include <AMReX_ParallelDescriptor.H>
 
 #include <algorithm>
 #include <cstdint>
@@ -21,6 +22,7 @@
 #include <tuple>
 #include <utility>
 #include <iostream>
+#include <fstream>
 
 
 namespace detail
@@ -222,21 +224,20 @@ WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
   }
 }
 
-
-//
-//
-//
-void WarpXOpenPMDPlot::GetFileName(std::string& filename)
+std::string
+WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 {
-  filename.append("/openpmd");
+  filepath.append("/");
+  std::string filename = "openpmd";
   //
   // OpenPMD supports timestepped names
   //
   if (m_OneFilePerTS)
       filename = filename.append("_%06T");
   filename.append(".").append(m_OpenPMDFileType);
+  filepath.append(filename);
+  return filename;
 }
-
 
 void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix,
                                 bool isBTD)
@@ -277,8 +278,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
 
     // either for the next ts file,
     // or init a single file for all ts
-    std::string filename = filePrefix;
-    GetFileName(filename);
+    std::string filepath = filePrefix;
+    std::string const filename = GetFileName(filepath);
 
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
@@ -287,8 +288,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-            filename, access,
-            amrex::ParallelDescriptor::Communicator()
+                filepath, access,
+                amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -296,9 +297,17 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
     } else {
-        m_Series = std::make_unique<openPMD::Series>(filename, access);
+        m_Series = std::make_unique<openPMD::Series>(filepath, access);
         m_MPISize = 1;
         m_MPIRank = 1;
+    }
+
+    // create a little helper file for ParaView 5.9+
+    if (amrex::ParallelDescriptor::IOProcessor())
+    {
+        std::ofstream pv_helper_file(filePrefix + "/paraview.pmd");
+        pv_helper_file << filename << std::endl;
+        pv_helper_file.close();
     }
 
     // input file / simulation setup author

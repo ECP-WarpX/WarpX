@@ -38,23 +38,36 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     mass = std::numeric_limits<Real>::max();
     do_back_transformed_diagnostics = 0;
 
-    ParmParse pp(m_laser_name);
+    ParmParse pp_laser_name(m_laser_name);
 
     // Parse the type of laser profile and set the corresponding flag `profile`
     std::string laser_type_s;
-    pp.get("profile", laser_type_s);
+    pp_laser_name.get("profile", laser_type_s);
     std::transform(laser_type_s.begin(), laser_type_s.end(), laser_type_s.begin(), ::tolower);
 
     // Parse the properties of the antenna
-    pp.getarr("position", m_position);
-    pp.getarr("direction", m_nvec);
-    pp.getarr("polarization", m_p_X);
+    pp_laser_name.getarr("position", m_position);
+    pp_laser_name.getarr("direction", m_nvec);
+    pp_laser_name.getarr("polarization", m_p_X);
 
-    pp.query("pusher_algo", m_pusher_algo);
-    getWithParser(pp, "wavelength", m_wavelength);
-    getWithParser(pp, "e_max", m_e_max);
-    pp.query("do_continuous_injection", do_continuous_injection);
-    pp.query("min_particles_per_mode", m_min_particles_per_mode);
+    pp_laser_name.query("pusher_algo", m_pusher_algo);
+    getWithParser(pp_laser_name, "wavelength", m_wavelength);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_wavelength > 0, "The laser wavelength must be >0.");
+    const bool e_max_is_specified = queryWithParser(pp_laser_name, "e_max", m_e_max);
+    Real a0;
+    const bool a0_is_specified = queryWithParser(pp_laser_name, "a0", a0);
+    if (a0_is_specified){
+        Real omega = 2._rt*MathConst::pi*PhysConst::c/m_wavelength;
+        m_e_max = PhysConst::m_e * omega * PhysConst::c * a0 / PhysConst::q_e;
+    }
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        e_max_is_specified ^ a0_is_specified,
+        "Exactly one of e_max or a0 must be specified for the laser.\n"
+        );
+
+    pp_laser_name.query("do_continuous_injection", do_continuous_injection);
+    pp_laser_name.query("min_particles_per_mode", m_min_particles_per_mode);
 
     if (m_e_max == amrex::Real(0.)){
         amrex::Print() << m_laser_name << " with zero amplitude disabled.\n";
@@ -114,10 +127,10 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     m_laser_injection_box= Geom(0).ProbDomain();
     {
         Vector<Real> lo, hi;
-        if (pp.queryarr("prob_lo", lo)) {
+        if (pp_laser_name.queryarr("prob_lo", lo)) {
             m_laser_injection_box.setLo(lo);
         }
-        if (pp.queryarr("prob_hi", hi)) {
+        if (pp_laser_name.queryarr("prob_hi", hi)) {
             m_laser_injection_box.setHi(hi);
         }
     }
@@ -162,7 +175,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     common_params.e_max = m_e_max;
     common_params.p_X = m_p_X;
     common_params.nvec = m_nvec;
-    m_up_laser_profile->init(pp, ParmParse{"my_constants"}, common_params);
+    m_up_laser_profile->init(pp_laser_name, ParmParse{"my_constants"}, common_params);
 }
 
 /* \brief Check if laser particles enter the box, and inject if necessary.
@@ -503,14 +516,14 @@ LaserParticleContainer::Evolve (int lev,
                 int* ion_lev = nullptr;
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
-                               lev, lev, dt);
+                               lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
 
                 bool has_buffer = cjx;
                 if (has_buffer){
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt);
+                                   lev, lev-1, dt, -0.5_rt); // Deposit current at t_{n+1/2}
                 }
             }
 

@@ -7,7 +7,6 @@
 #ifndef KERNELTIMER_H_
 #define KERNELTIMER_H_
 
-#ifdef AMREX_USE_GPU
 #include <limits.h>
 
 /**
@@ -22,8 +21,15 @@ public:
      * (for performance, it is recommended to allocate pinned host memory).
      */
     AMREX_GPU_DEVICE
-    KernelTimer (const bool do_timing, amrex::Real* cost)
-        : m_do_timing(do_timing), m_cost(cost) {
+    KernelTimer
+#if (defined AMREX_USE_GPU)
+    (const bool do_timing, amrex::Real* cost)
+        : m_do_timing(do_timing), m_cost(cost)
+#else
+    (const bool, amrex::Real*)
+#endif
+    {
+#if (defined AMREX_USE_GPU)
     if (do_timing && cost) {
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
             // Start the timer
@@ -35,11 +41,13 @@ public:
                                               "KernelTimer not yet supported for this hardware." );
 #endif
     }
+#endif
     }
 
     //! Destructor.
     AMREX_GPU_DEVICE
     ~KernelTimer () {
+#if (defined AMREX_USE_GPU)
     if (m_do_timing && m_cost) {
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
             m_wt = clock64() - m_wt;
@@ -48,8 +56,10 @@ public:
             // To be updated
 #endif
     }
+#endif
     }
 
+#if (defined AMREX_USE_GPU)
 private:
     //! Stores whether kernel timer is active.
     bool m_do_timing;
@@ -59,7 +69,7 @@ private:
 
     //! Store the time difference (cost) from a single thread.
     long long int m_wt;
+#endif
 };
 
-#endif
 #endif

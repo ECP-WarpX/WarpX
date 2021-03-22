@@ -46,7 +46,8 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
          *                           the three components of the current density
          * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection (SpectralFieldData& field_data,
+        virtual void CurrentCorrection (const int lev,
+                                        SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                         const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
@@ -61,7 +62,8 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          */
-        virtual void VayDeposition (SpectralFieldData& field_data,
+        virtual void VayDeposition (const int lev,
+                                    SpectralFieldData& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:

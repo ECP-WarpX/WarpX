@@ -21,12 +21,12 @@ using namespace amrex;
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
-    ParmParse pp("warpx");
-    queryWithParser(pp, "gamma_boost", gamma_boost);
+    ParmParse pp_warpx("warpx");
+    queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
         beta_boost = std::sqrt(1.-1./pow(gamma_boost,2));
         std::string s;
-        pp.get("boost_direction", s);
+        pp_warpx.get("boost_direction", s);
         if (s == "x" || s == "X") {
             boost_direction[0] = 1;
         }
@@ -65,14 +65,14 @@ void ConvertLabParamsToBoost()
     Vector<Real> slice_lo(AMREX_SPACEDIM);
     Vector<Real> slice_hi(AMREX_SPACEDIM);
 
-    ParmParse pp_geom("geometry");
-    ParmParse pp_wpx("warpx");
+    ParmParse pp_geometry("geometry");
+    ParmParse pp_warpx("warpx");
     ParmParse pp_amr("amr");
     ParmParse pp_slice("slice");
 
-    pp_geom.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
+    pp_geometry.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
-    pp_geom.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
+    pp_geometry.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
     pp_slice.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
@@ -83,8 +83,8 @@ void ConvertLabParamsToBoost()
 
     pp_amr.query("max_level", max_level);
     if (max_level > 0){
-      pp_wpx.getarr("fine_tag_lo", fine_tag_lo);
-      pp_wpx.getarr("fine_tag_hi", fine_tag_hi);
+      pp_warpx.getarr("fine_tag_lo", fine_tag_lo);
+      pp_warpx.getarr("fine_tag_hi", fine_tag_hi);
     }
 
 
@@ -112,11 +112,11 @@ void ConvertLabParamsToBoost()
         }
     }
 
-    pp_geom.addarr("prob_lo", prob_lo);
-    pp_geom.addarr("prob_hi", prob_hi);
+    pp_geometry.addarr("prob_lo", prob_lo);
+    pp_geometry.addarr("prob_hi", prob_hi);
     if (max_level > 0){
-      pp_wpx.addarr("fine_tag_lo", fine_tag_lo);
-      pp_wpx.addarr("fine_tag_hi", fine_tag_hi);
+      pp_warpx.addarr("fine_tag_lo", fine_tag_lo);
+      pp_warpx.addarr("fine_tag_hi", fine_tag_hi);
     }
 
     pp_slice.addarr("dom_lo",slice_lo);
@@ -195,12 +195,12 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
 {
     WarpXParser parser(parse_function);
     parser.registerVariables(varnames);
-    ParmParse pp("my_constants");
+    ParmParse pp_my_constants("my_constants");
     std::set<std::string> symbols = parser.symbols();
     for (auto const& v : varnames) symbols.erase(v.c_str());
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
-        if (pp.query(it->c_str(), v)) {
+        if (pp_my_constants.query(it->c_str(), v)) {
             parser.setConstant(*it, v);
             it = symbols.erase(it);
         } else if (std::strcmp(it->c_str(), "q_e") == 0) {
@@ -275,8 +275,8 @@ void CheckGriddingForRZSpectral ()
     amrex::Abort("CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
 #else
 
-    ParmParse pp("algo");
-    int maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+    ParmParse pp_algo("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
     // only check for PSATD in RZ
     if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
@@ -347,6 +347,70 @@ void CheckGriddingForRZSpectral ()
     }
     pp_amr.addarr("max_grid_size_y", mg);
 #endif
+}
+
+
+void ReadBCParams ()
+{
+
+    amrex::Vector<std::string> field_BC_lo(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> field_BC_hi(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
+    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
+    ParmParse pp_geometry("geometry");
+    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
+        return;
+        // When all boundary conditions are supported, the abort statement below will be introduced
+        //amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
+    }
+    // particle boundary may not be explicitly specified for some applications
+    bool particle_boundary_specified = false;
+    ParmParse pp_boundary("boundary");
+    pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
+    pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
+    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
+        particle_boundary_specified = true;
+    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM))
+        particle_boundary_specified = true;
+    AMREX_ALWAYS_ASSERT(field_BC_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(field_BC_hi.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
+
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        // Get field boundary type
+        WarpX::field_boundary_lo[idim] = GetBCTypeInteger(field_BC_lo[idim], true);
+        WarpX::field_boundary_hi[idim] = GetBCTypeInteger(field_BC_hi[idim], true);
+        // Get particle boundary type
+        WarpX::particle_boundary_lo[idim] = GetBCTypeInteger(particle_BC_lo[idim], false);
+        WarpX::particle_boundary_hi[idim] = GetBCTypeInteger(particle_BC_hi[idim], false);
+
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic ||
+            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ||
+            WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic ||
+            WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic ) {
+            geom_periodicity[idim] = 1;
+            // to ensure both lo and hi are set to periodic consistently for both field and particles.
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[idim]  == FieldBoundaryType::Periodic) &&
+                (WarpX::field_boundary_hi[idim]  == FieldBoundaryType::Periodic),
+            "field boundary must be consistenly periodic in both lo and hi");
+            if (particle_boundary_specified) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic) &&
+                    (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic),
+               "field and particle boundary must be periodic in both lo and hi");
+            } else {
+                // set particle boundary to periodic
+                WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
+                WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
+            }
+
+        }
+    }
+
+    pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 
 namespace WarpXUtilMsg{

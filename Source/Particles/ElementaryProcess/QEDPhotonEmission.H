@@ -89,7 +89,7 @@ public:
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
         int const opt_depth_runtime_comp,
         QuantumSynchrotronPhotonEmission const emission_functor,
-        const WarpXParIter& a_pti, int lev, int ngE,
+        const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
         amrex::FArrayBox const& exfab,
         amrex::FArrayBox const& eyfab,
         amrex::FArrayBox const& ezfab,

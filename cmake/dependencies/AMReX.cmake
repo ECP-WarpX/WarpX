@@ -55,10 +55,10 @@ macro(find_amrex)
 
         if(WarpX_PRECISION STREQUAL "DOUBLE")
             set(AMReX_PRECISION "DOUBLE" CACHE INTERNAL "")
-            set(AMReX_PRECISION_PARTICLES "DOUBLE" CACHE INTERNAL "")
+            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PRECISION "SINGLE" CACHE INTERNAL "")
-            set(AMReX_PRECISION_PARTICLES "SINGLE" CACHE INTERNAL "")
+            set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
         set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
@@ -74,6 +74,11 @@ macro(find_amrex)
         # shared libs, i.e. for Python bindings, need relocatable code
         if(WarpX_LIB)
             set(AMReX_PIC ON CACHE INTERNAL "")
+        endif()
+
+        # IPO/LTO
+        if(WarpX_IPO)
+            set(AMReX_IPO ON CACHE INTERNAL "")
         endif()
 
         if(WarpX_DIMS STREQUAL RZ)
@@ -187,7 +192,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "2fb82bf64838aba949f7a641988a0c58774e5a88"
+set(WarpX_amrex_branch "384ca2341889a8f1db78e87cb4b1735bd2d58554"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

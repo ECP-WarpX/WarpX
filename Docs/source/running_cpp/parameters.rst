@@ -181,6 +181,19 @@ Setting up the field mesh
     When using the RZ version, this is the number of azimuthal modes.
 
 .. _running-cpp-parameters-parallelization:
+Domain Boundary Conditions
+--------------------------
+
+* ``boundary.field_lo`` and ``boundary_field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+    Boundary conditions applied to field at the lower and upper domain boundaries.
+    Options are:
+    * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+
+* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+    Options are:
+    * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+
+.. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
@@ -366,7 +379,7 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
-* ``particles.do_tiling`` (`bool`) optional (default `true` if WarpX is compiled for GPUs, `false` otherwise)
+* ``particles.do_tiling`` (`bool`) optional (default `false` if WarpX is compiled for GPUs, `true` otherwise)
     Controls whether tiling ('cache blocking') transformation is used for particles.
     Tiling should be on when using OpenMP and off when using GPUs.
 
@@ -718,12 +731,12 @@ Laser initialization
     in this documentation we use `<laser_name>` as a placeholder. The parameters below
     must be provided for each laser pulse.
 
-* ```<laser_name>`.position`` (`3 floats in 3D and 2D` ; in meters)
+* ``<laser_name>.position`` (`3 floats in 3D and 2D` ; in meters)
     The coordinates of one of the point of the antenna that will emit the laser.
     The plane of the antenna is entirely defined by ``<laser_name>.position``
     and ``<laser_name>.direction``.
 
-    ```<laser_name>`.position`` also corresponds to the origin of the coordinates system
+    ``<laser_name>.position`` also corresponds to the origin of the coordinates system
     for the laser tranverse profile. For instance, for a Gaussian laser profile,
     the peak of intensity will be at the position given by ``<laser_name>.position``.
     This variable can thus be used to shift the position of the laser pulse
@@ -746,7 +759,7 @@ Laser initialization
         Even in 2D, all the 3 components of this vectors are important (i.e.
         the polarization can be orthogonal to the plane of the simulation).
 
-*  ``<laser_name>.direction`` (`3 floats in 3D`)
+* ``<laser_name>.direction`` (`3 floats in 3D`)
     The coordinates of a vector that points in the propagation direction of
     the laser. The norm of this vector is unimportant, only its direction matters.
 
@@ -765,11 +778,16 @@ Laser initialization
 
     .. math::
 
-        E_{max} = a_0 \frac{2 \pi m_e c}{e\lambda} = a_0 \times (4.0 \cdot 10^{12} \;V.m^{-1})
+        E_{max} = a_0 \frac{2 \pi m_e c^2}{e\lambda} = a_0 \times (4.0 \cdot 10^{12} \;V.m^{-1})
 
     When running a **boosted-frame simulation**, provide the value of ``<laser_name>.e_max``
     in the laboratory frame, and use ``warpx.gamma_boost`` to automatically
     perform the conversion to the boosted frame.
+
+* ``<laser_name>.a0`` (`float` ; dimensionless)
+    Peak normalized amplitude of the laser field (given in the lab frame, just as ``e_max`` above).
+    See the description of ``<laser_name>.e_max`` for the conversion between ``a0`` and ``e_max``.
+    Exactly one of ``a0`` and ``e_max`` must be specified.
 
 * ``<laser_name>.wavelength`` (`float`; in meters)
     The wavelength of the laser in vacuum.
@@ -829,7 +847,7 @@ Laser initialization
       A file at this format can be generated from Python, see an example at ``Examples/Modules/laser_injection_from_file``
 
 
-*  ``<laser_name>.profile_t_peak`` (`float`; in seconds)
+* ``<laser_name>.profile_t_peak`` (`float`; in seconds)
     The time at which the laser reaches its peak intensity, at the position
     given by ``<laser_name>.position`` (only used for the ``"gaussian"`` profile)
 
@@ -837,8 +855,7 @@ Laser initialization
     ``<laser_name>.profile_t_peak`` in the laboratory frame, and use ``warpx.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
-*  ``<laser_name>.profile_duration`` (`float` ; in seconds)
-
+* ``<laser_name>.profile_duration`` (`float` ; in seconds)
     The duration of the laser pulse, defined as :math:`\tau` below:
 
     - For the ``"gaussian"`` profile:
@@ -876,7 +893,7 @@ Laser initialization
     ``<laser_name>.profile_focal_distance`` in the laboratory frame, and use ``warpx.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
-*  ``<laser_name>.phi0`` (`float`; in radians)
+* ``<laser_name>.phi0`` (`float`; in radians)
     The Carrier Envelope Phase, i.e. the phase of the laser oscillation, at the
     position where the laser envelope is maximum (only used for the ``"gaussian"`` profile)
 
@@ -949,7 +966,8 @@ Laser initialization
     For example, if ``warpx.Bx_external_grid_function(x,y,z)=Bo*x + delta*(y + z)``
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
-    input file. For a two-dimensional simulation, it is assumed that the first dimension     is `x` and the second dimension in `z`, and the value of `y` is set to zero.
+    input file. For a two-dimensional simulation, it is assumed that the first dimension
+    is `x` and the second dimension in `z`, and the value of `y` is set to zero.
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
 
@@ -986,47 +1004,47 @@ Laser initialization
     the field solver. In particular, do not use any other boundary condition
     than periodic.
 
-*  ``particles.B_ext_particle_init_style`` (string) optional (default is "default")
-     This parameter determines the type of initialization for the external
-     magnetic field that is applied directly to the particles at every timestep.
-     The "default" style sets the external B-field (Bx,By,Bz) to (0.0,0.0,0.0).
-     The string can be set to "constant" if a constant external B-field is applied
-     every timestep. If this parameter is set to "constant", then an additional
-     parameter, namely, ``particles.B_external_particle`` must be specified in
-     the input file.
-     To parse a mathematical function for the external B-field, use the option
-     ``parse_B_ext_particle_function``. This option requires additional parameters
-     in the input file, namely,
-     ``particles.Bx_external_particle_function(x,y,z,t)``,
-     ``particles.By_external_particle_function(x,y,z,t)``,
-     ``particles.Bz_external_particle_function(x,y,z,t)`` to apply the external B-field
-     on the particles. Constants required in the mathematical expression can be set
-     using ``my_constants``. For a two-dimensional simulation, it is assumed that
-     the first and second dimensions are `x` and `z`, respectively, and the
-     value of the `By` component is set to zero.
-     Note that the current implementation of the parser for B-field on particles
-     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
+* ``particles.B_ext_particle_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the external
+    magnetic field that is applied directly to the particles at every timestep.
+    The "default" style sets the external B-field (Bx,By,Bz) to (0.0,0.0,0.0).
+    The string can be set to "constant" if a constant external B-field is applied
+    every timestep. If this parameter is set to "constant", then an additional
+    parameter, namely, ``particles.B_external_particle`` must be specified in
+    the input file.
+    To parse a mathematical function for the external B-field, use the option
+    ``parse_B_ext_particle_function``. This option requires additional parameters
+    in the input file, namely,
+    ``particles.Bx_external_particle_function(x,y,z,t)``,
+    ``particles.By_external_particle_function(x,y,z,t)``,
+    ``particles.Bz_external_particle_function(x,y,z,t)`` to apply the external B-field
+    on the particles. Constants required in the mathematical expression can be set
+    using ``my_constants``. For a two-dimensional simulation, it is assumed that
+    the first and second dimensions are `x` and `z`, respectively, and the
+    value of the `By` component is set to zero.
+    Note that the current implementation of the parser for B-field on particles
+    is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
 
-*    ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
-     This parameter determines the type of initialization for the external
-     electric field that is applied directly to the particles at every timestep.
-     The "default" style set the external E-field (Ex,Ey,Ez) to (0.0,0.0,0.0).
-     The string can be set to "constant" if a constant external E-field is to be
-     used in the simulation at every timestep. If this parameter is set to "constant",
-     then an additional parameter, namely, ``particles.E_external_particle`` must be
-     specified in the input file.
-     To parse a mathematical function for the external E-field, use the option
-     ``parse_E_ext_particle_function``. This option requires additional
-     parameters in the input file, namely,
-     ``particles.Ex_external_particle_function(x,y,z,t)``,
-     ``particles.Ey_external_particle_function(x,y,z,t)``,
-     ``particles.Ez_external_particle_function(x,y,z,t)`` to apply the external E-field
-     on the particles. Constants required in the mathematical expression can be set
-     using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
-     it is assumed that the first and second dimensions are `x` and `z`, respectively,
-     and the value of the `Ey` component is set to zero.
-     The current implementation of the parser for B-field on particles
-     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
+* ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the external
+    electric field that is applied directly to the particles at every timestep.
+    The "default" style set the external E-field (Ex,Ey,Ez) to (0.0,0.0,0.0).
+    The string can be set to "constant" if a constant external E-field is to be
+    used in the simulation at every timestep. If this parameter is set to "constant",
+    then an additional parameter, namely, ``particles.E_external_particle`` must be
+    specified in the input file.
+    To parse a mathematical function for the external E-field, use the option
+    ``parse_E_ext_particle_function``. This option requires additional
+    parameters in the input file, namely,
+    ``particles.Ex_external_particle_function(x,y,z,t)``,
+    ``particles.Ey_external_particle_function(x,y,z,t)``,
+    ``particles.Ez_external_particle_function(x,y,z,t)`` to apply the external E-field
+    on the particles. Constants required in the mathematical expression can be set
+    using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
+    it is assumed that the first and second dimensions are `x` and `z`, respectively,
+    and the value of the `Ey` component is set to zero.
+    The current implementation of the parser for B-field on particles
+    is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
 
 * ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
     Two separate parameters which add an externally applied uniform E-field or
@@ -1386,22 +1404,22 @@ Numerics and algorithms
     Note that this option can only be used with the PSATD build. Furthermore,
     warpx.do_nodal must be set to `1` which is not its default value.
 
- * ``warpx.quantum_xi`` (`float`; default: 1.3050122.e-52)
+* ``warpx.quantum_xi`` (`float`; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
- * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+* ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
- * ``warpx.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+* ``warpx.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
      Using the `Intervals parser`_ syntax, this string defines the timesteps at which particles are
      sorted by bin.
      If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
- * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
+* ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
@@ -1439,6 +1457,12 @@ Boundary conditions
 
 * ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
+
+* ``warpx.do_silver_mueller`` (`0` or `1`; default: 1)
+    Whether to use the Silver-Mueller absorbing boundary conditions. These
+    boundary conditions are simpler and less computationally expensive than
+    the PML, but are also less effective at absorbing the field. They only
+    work with the Yee Maxwell solver.
 
 .. _running-cpp-parameters-diagnostics:
 
@@ -1499,12 +1523,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     example: ``diag1.format = openpmd``.
 
 * ``<diag_name>.sensei_config`` (`string`)
-  Only read if ``<diag_name>.format = sensei``.
-  Points to the SENSEI XML file which selects and configures the desired back end.
+    Only read if ``<diag_name>.format = sensei``.
+    Points to the SENSEI XML file which selects and configures the desired back end.
 
 * ``<diag_name>.sensei_pin_mesh`` (`integer`; 0 by default)
-  Only read if ``<diag_name>.format = sensei``.
-  When 1 lower left corner of the mesh is pinned to 0.,0.,0.
+    Only read if ``<diag_name>.format = sensei``.
+    When 1 lower left corner of the mesh is pinned to 0.,0.,0.
 
 * ``<diag_name>.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional, only used if ``<diag_name>.format = openpmd``
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
@@ -1562,7 +1586,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output is disabled.
 
 * ``<diag_name>.write_species`` (`0` or `1`) optional (default `1`)
-   Whether to write species output or not. For checkpoint format, always set this parameter to 1.
+    Whether to write species output or not. For checkpoint format, always set this parameter to 1.
 
 * ``<diag_name>.species`` (list of `string`, default all physical species in the simulation)
     Which species dumped in this diagnostics.
