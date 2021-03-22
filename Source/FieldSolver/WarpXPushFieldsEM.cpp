@@ -70,6 +70,7 @@ namespace {
 }
 
 using Idx = SpectralAvgFieldIndex;
+using LinJIdx = SpectralFieldIndexLinearInJ;
 
 void
 WarpX::PSATDForwardTransformEB () {
@@ -114,10 +115,18 @@ WarpX::PSATDBackwardTransformEBavg () {
 
 void
 WarpX::PSATDForwardTransformJ () {
+    int idx_jx = Idx::Jx;
+    int idx_jy = Idx::Jy;
+    int idx_jz = Idx::Jz;
+    if (WarpX::psatd_linear_in_J) {
+        idx_jx = LinJIdx::Jx_new;
+        idx_jy = LinJIdx::Jy_new;
+        idx_jz = LinJIdx::Jz_new;
+    }
     for (int lev = 0; lev <= finest_level; ++lev) {
-        ForwardTransformVect( lev, *spectral_solver_fp[lev], current_fp[lev], Idx::Jx, Idx::Jy, Idx::Jz );
+        ForwardTransformVect( lev, *spectral_solver_fp[lev], current_fp[lev], idx_jx, idx_jy, idx_jz );
         if (spectral_solver_cp[lev]) {
-            ForwardTransformVect( lev, *spectral_solver_cp[lev], current_cp[lev], Idx::Jx, Idx::Jy, Idx::Jz );
+            ForwardTransformVect( lev, *spectral_solver_cp[lev], current_cp[lev], idx_jx, idx_jy, idx_jz );
         }
     }
 #ifdef WARPX_DIM_RZ
@@ -178,6 +187,19 @@ WarpX::PSATDMoveRhoNewToRhoOld () {
     }
 }
 
+void
+WarpX::PSATDMoveJNewToJOld () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        spectral_solver_fp[lev]->CopySpectralDataComp( LinJIdx::Jx_new, LinJIdx::Jx_old );
+        spectral_solver_fp[lev]->CopySpectralDataComp( LinJIdx::Jy_new, LinJIdx::Jy_old );
+        spectral_solver_fp[lev]->CopySpectralDataComp( LinJIdx::Jz_new, LinJIdx::Jz_old );
+        if (spectral_solver_cp[lev]) {
+            spectral_solver_cp[lev]->CopySpectralDataComp( LinJIdx::Jx_new, LinJIdx::Jx_old );
+            spectral_solver_cp[lev]->CopySpectralDataComp( LinJIdx::Jy_new, LinJIdx::Jy_old );
+            spectral_solver_cp[lev]->CopySpectralDataComp( LinJIdx::Jz_new, LinJIdx::Jz_old );
+        }
+    }
+}
 #endif
 
 void

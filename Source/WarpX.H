@@ -201,6 +201,7 @@ public:
     static int do_subcycling;
     static int do_multij;
     static int multij_n_depose;
+    static int psatd_linear_in_J;
 
     static bool do_device_synchronize_before_profile;
     static bool safe_guard_cells;
@@ -970,6 +971,7 @@ private:
     void PSATDForwardTransformJ ();
     void PSATDForwardTransformRho (int const icomp);
     void PSATDMoveRhoNewToRhoOld ();
+    void PSATDMoveJNewToJOld ();
     void PSATDPushSpectralFields (amrex::Real dt);
 #endif
 

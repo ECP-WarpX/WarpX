@@ -132,6 +132,7 @@ int WarpX::self_fields_max_iters = 200;
 int WarpX::do_subcycling = 0;
 int WarpX::do_multij = 0;
 int WarpX::multij_n_depose = 1;
+int WarpX::psatd_linear_in_J = 0;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
