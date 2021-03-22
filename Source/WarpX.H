@@ -969,6 +969,7 @@ private:
     void PSATDBackwardTransformEBavg ();
     void PSATDForwardTransformJ ();
     void PSATDForwardTransformRho (int const icomp);
+    void PSATDMoveRhoNewToRhoOld ();
     void PSATDPushSpectralFields (amrex::Real dt);
 #endif
 

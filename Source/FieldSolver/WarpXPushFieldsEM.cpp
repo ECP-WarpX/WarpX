@@ -68,9 +68,7 @@ namespace {
         solver.BackwardTransform(lev, *vector_field[2], compz);
     }
 }
-#endif
 
-#ifdef WARPX_USE_PSATD
 using Idx = SpectralAvgFieldIndex;
 
 void
@@ -169,6 +167,17 @@ WarpX::PSATDPushSpectralFields (amrex::Real a_dt) {
         }
     }
 }
+
+void
+WarpX::PSATDMoveRhoNewToRhoOld () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        spectral_solver_fp[lev]->CopySpectralDataComp( Idx::rho_new, Idx::rho_old );
+        if (spectral_solver_cp[lev]) {
+            spectral_solver_cp[lev]->CopySpectralDataComp( Idx::rho_new, Idx::rho_old );
+        }
+    }
+}
+
 #endif
 
 void

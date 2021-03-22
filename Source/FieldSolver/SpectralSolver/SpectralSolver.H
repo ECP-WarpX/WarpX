@@ -105,6 +105,12 @@ class SpectralSolver
             algorithm->VayDeposition(lev, field_data, current);
         }
 
+        // TODO: documentation
+        void CopySpectralDataComp (const int src_comp, const int dest_comp)
+        {
+            Copy( field_data.fields, field_data.fields, src_comp, dest_comp, 1, 0 );
+        }
+
     private:
         void ReadParameters ();
 

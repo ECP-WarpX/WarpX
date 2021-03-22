@@ -411,20 +411,23 @@ WarpX::OneStep_multiJ (Real cur_time)
     bool const skip_deposition = true;
     PushParticlesandDepose(cur_time, skip_deposition);
 
-    // Prepare E, B fields in spectral space
+    // Initialize multi-J loop:
+    // - Prepare E, B fields in spectral space
     PSATDForwardTransformEB();
+    // - Deposit rho (in rho_new, since it will be moved during the loop)
+    if (WarpX::update_with_rho) {
+        mypc->DepositCharge( rho_fp, -dt[0], 1 );
+        SyncRho(); // Filter, exchange boundary, and interpolate across levels
+        PSATDForwardTransformRho(1); // rho new
+    }
 
     // Loop over mutiple j deposition
     int const n_depose = WarpX::multij_n_depose;
     Real const sub_dt = dt[0]/n_depose;
     for (int i_depose=0; i_depose<n_depose; i_depose++) {
 
-        // Deposit rho^{n}
-        if (WarpX::update_with_rho) {
-            mypc->DepositCharge( rho_fp, (i_depose-n_depose)*sub_dt, 0 );
-            SyncRho(); // Filter, exchange boundary, and interpolate across levels
-            PSATDForwardTransformRho(0); // rho old
-        }
+        // Move previously deposited rho^{n+1} to rho^{n}
+        PSATDMoveRhoNewToRhoOld();
 
         // Deposit J^{n+1/2}
         mypc->DepositCurrent( current_fp, dt[0], (i_depose-n_depose+0.5)*sub_dt );
