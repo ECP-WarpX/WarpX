@@ -38,6 +38,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Real const coef2_r = 2._rt*cdt_over_dr/(1._rt + cdt_over_dr) / PhysConst::c;
     amrex::Real const coef3_r = cdt/(1._rt + cdt_over_dr) / PhysConst::c;
 
+    // Extract stencil coefficients
+    Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+    int const n_coefs_z = m_stencil_coefs_z.size();
+
     // tiling is usually set by TilingIfNotGPU()
     // but here, we set it to false because of potential race condition,
     // since we grow the tiles by one guard cell after creating them.
