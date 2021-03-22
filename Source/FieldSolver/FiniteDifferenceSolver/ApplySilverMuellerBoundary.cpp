@@ -80,6 +80,13 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                         + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0));
                     Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0)
                         - coef3_r*Et(i,j,0,0)/r;
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        // Real part
+                        Bt(i,j,0,2*m-1) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m-1) 
+                        + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1));
+                        // Imaginary part
+                        Bt(i,j,0,2*m) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m) 
+                        + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m));
                     }
                 }
             }
