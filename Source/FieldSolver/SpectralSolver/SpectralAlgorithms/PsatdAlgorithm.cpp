@@ -160,7 +160,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             const     amrex::Real kz = modified_kz_arr[j];
 #endif
             // Physical constants and imaginary unit
-            constexpr amrex::Real c2 = std::pow(PhysConst::c, 2);
+            const amrex::Real c2 = std::pow(PhysConst::c, 2);
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // These coefficients are initialized in the function InitializeSpectralCoefficients
@@ -326,11 +326,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2 = std::pow(c, 2);
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
-            // Auxiliary coefficients used when update_with_rho=false
+            const amrex::Real c2 = std::pow(c, 2);
             const amrex::Real dt2 = std::pow(dt, 2);
             const amrex::Real dt3 = std::pow(dt, 3);
 
@@ -491,10 +490,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
         const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
         const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
-        // Coefficients always allocated
-        amrex::Array4<amrex::Real> C = C_coef[mfi].array();
-        amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
-
         // Coefficients allocated only with averaged Galilean PSATD
         amrex::Array4<Complex> Psi1 = Psi1_coef[mfi].array();
         amrex::Array4<Complex> Psi2 = Psi2_coef[mfi].array();
@@ -523,11 +518,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2 = std::pow(c, 2);
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
-            // Auxiliary coefficients used when update_with_rho=false
+            const amrex::Real c2 = std::pow(c, 2);
             const amrex::Real dt2 = std::pow(dt, 2);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
@@ -550,7 +544,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
             const Complex theta_c  = amrex::exp(I * w_c * dt * 0.5_rt);
             const Complex theta2_c = amrex::exp(I * w_c * dt);
             const Complex theta3_c = amrex::exp(I * w_c * dt * 1.5_rt);
-            const Complex theta4_c = amrex::exp(I * w_c * dt * 2.0_rt);
             const Complex theta5_c = amrex::exp(I * w_c * dt * 2.5_rt);
 
             // C1,C3
