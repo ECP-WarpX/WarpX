@@ -20,15 +20,15 @@ PsatdAlgorithm::PsatdAlgorithm(
     const int norder_y,
     const int norder_z,
     const bool nodal,
-    const Array<Real,3>& v_galilean,
-    const Real dt,
+    const amrex::Array<amrex::Real,3>& v_galilean,
+    const amrex::Real dt,
     const bool update_with_rho,
     const bool time_averaging)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
-    // Initialize the centered finite-order modified k vectors: these are computed
-    // always with the assumption of centered grids (argument nodal = true),
-    // for both nodal and staggered simulations
+    // Initialize the centered finite-order modified k vectors:
+    // these are computed always with the assumption of centered grids
+    // (argument nodal = true), for both nodal and staggered simulations
     modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, true)),
 #if (AMREX_SPACEDIM == 3)
     modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, true)),
@@ -41,7 +41,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     m_update_with_rho(update_with_rho),
     m_time_averaging(time_averaging)
 {
-    const BoxArray& ba = spectral_kspace.spectralspace_ba;
+    const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     m_is_galilean = (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.);
 
@@ -84,20 +84,20 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi)
     {
-        const Box& bx = f.fields[mfi].box();
+        const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = f.fields[mfi].array();
+        amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // These coefficients are always allocated
-        Array4<const Real> C_arr = C_coef[mfi].array();
-        Array4<const Real> S_ck_arr = S_ck_coef[mfi].array();
-        Array4<const Complex> X1_arr = X1_coef[mfi].array();
-        Array4<const Complex> X2_arr = X2_coef[mfi].array();
-        Array4<const Complex> X3_arr = X3_coef[mfi].array();
+        amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
+        amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
+        amrex::Array4<const Complex> X1_arr = X1_coef[mfi].array();
+        amrex::Array4<const Complex> X2_arr = X2_coef[mfi].array();
+        amrex::Array4<const Complex> X3_arr = X3_coef[mfi].array();
 
-        Array4<const Complex> X4_arr;
-        Array4<const Complex> T2_arr;
+        amrex::Array4<const Complex> X4_arr;
+        amrex::Array4<const Complex> T2_arr;
         if (is_galilean)
         {
             X4_arr = X4_coef[mfi].array();
@@ -105,12 +105,12 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         }
 
         // These coefficients are allocated only with averaged Galilean PSATD
-        Array4<const Complex> Psi1_arr;
-        Array4<const Complex> Psi2_arr;
-        Array4<const Complex> A1_arr;
-        Array4<const Complex> Cnew_arr;
-        Array4<const Complex> Cold_arr;
-        Array4<const Complex> J_arr;
+        amrex::Array4<const Complex> Psi1_arr;
+        amrex::Array4<const Complex> Psi2_arr;
+        amrex::Array4<const Complex> A1_arr;
+        amrex::Array4<const Complex> Cnew_arr;
+        amrex::Array4<const Complex> Cold_arr;
+        amrex::Array4<const Complex> J_arr;
 
         if (time_averaging)
         {
@@ -123,11 +123,11 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         }
 
         // Extract pointers for the k vectors
-        const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
 #if (AMREX_SPACEDIM == 3)
-        const Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
-        const Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -151,22 +151,22 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             const Complex rho_new = fields(i,j,k,Idx::rho_new);
 
             // k vector values
-            const Real kx = modified_kx_arr[i];
+            const amrex::Real kx = modified_kx_arr[i];
 #if (AMREX_SPACEDIM == 3)
-            const Real ky = modified_ky_arr[j];
-            const Real kz = modified_kz_arr[k];
+            const amrex::Real ky = modified_ky_arr[j];
+            const amrex::Real kz = modified_kz_arr[k];
 #else
-            constexpr Real ky = 0._rt;
-            const     Real kz = modified_kz_arr[j];
+            constexpr amrex::Real ky = 0._rt;
+            const     amrex::Real kz = modified_kz_arr[j];
 #endif
             // Physical constants and imaginary unit
-            constexpr Real c2 = PhysConst::c * PhysConst::c;
-            constexpr Real inv_ep0 = 1._rt / PhysConst::ep0;
+            constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
+            constexpr amrex::Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // These coefficients are initialized in the function InitializeSpectralCoefficients
-            const Real C = C_arr(i,j,k);
-            const Real S_ck = S_ck_arr(i,j,k);
+            const amrex::Real C = C_arr(i,j,k);
+            const amrex::Real S_ck = S_ck_arr(i,j,k);
             const Complex X1 = X1_arr(i,j,k);
             const Complex X2 = X2_arr(i,j,k);
             const Complex X3 = X3_arr(i,j,k);
