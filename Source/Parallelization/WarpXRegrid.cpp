@@ -188,13 +188,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                            lev,
                                            realspace_ba,
                                            dm,
-                                           n_rz_azimuthal_modes,
-                                           noz_fft,
-                                           do_nodal,
-                                           m_v_galilean,
-                                           dx_vect,
-                                           dt[lev],
-                                           update_with_rho);
+                                           dx_vect);
 #   else
                 if ( fft_periodic_single_box == false ) {
                     realspace_ba.grow(ngE);   // add guard cells
@@ -204,18 +198,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                          lev,
                                          realspace_ba,
                                          dm,
-                                         nox_fft,
-                                         noy_fft,
-                                         noz_fft,
-                                         do_nodal,
-                                         m_v_galilean,
-                                         m_v_comoving,
                                          dx_vect,
-                                         dt[lev],
-                                         pml_flag_false,
-                                         fft_periodic_single_box,
-                                         update_with_rho,
-                                         fft_do_time_averaging);
+                                         pml_flag_false);
 #   endif
             }
         }
@@ -314,13 +298,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                lev,
                                                c_realspace_ba,
                                                dm,
-                                               n_rz_azimuthal_modes,
-                                               noz_fft,
-                                               do_nodal,
-                                               m_v_galilean,
-                                               cdx_vect,
-                                               dt[lev],
-                                               update_with_rho);
+                                               cdx_vect);
 #   else
                     c_realspace_ba.grow(ngE);
                     bool const pml_flag_false = false;
@@ -328,18 +306,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                              lev,
                                              c_realspace_ba,
                                              dm,
-                                             nox_fft,
-                                             noy_fft,
-                                             noz_fft,
-                                             do_nodal,
-                                             m_v_galilean,
-                                             m_v_comoving,
                                              cdx_vect,
-                                             dt[lev],
-                                             pml_flag_false,
-                                             fft_periodic_single_box,
-                                             update_with_rho,
-                                             fft_do_time_averaging);
+                                             pml_flag_false);
 #   endif
                 }
             }

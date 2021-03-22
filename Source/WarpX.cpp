@@ -1290,13 +1290,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                    lev,
                                    realspace_ba,
                                    dm,
-                                   n_rz_azimuthal_modes,
-                                   noz_fft,
-                                   do_nodal,
-                                   m_v_galilean,
-                                   dx_vect,
-                                   dt[lev],
-                                   update_with_rho);
+                                   dx_vect);
 #   else
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(ngE);   // add guard cells
@@ -1306,18 +1300,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                  lev,
                                  realspace_ba,
                                  dm,
-                                 nox_fft,
-                                 noy_fft,
-                                 noz_fft,
-                                 do_nodal,
-                                 m_v_galilean,
-                                 m_v_comoving,
                                  dx_vect,
-                                 dt[lev],
-                                 pml_flag_false,
-                                 fft_periodic_single_box,
-                                 update_with_rho,
-                                 fft_do_time_averaging);
+                                 pml_flag_false);
 #   endif
 #endif
     } // MaxwellSolverAlgo::PSATD
@@ -1442,13 +1426,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                        lev,
                                        c_realspace_ba,
                                        dm,
-                                       n_rz_azimuthal_modes,
-                                       noz_fft,
-                                       do_nodal,
-                                       m_v_galilean,
-                                       cdx_vect,
-                                       dt[lev],
-                                       update_with_rho);
+                                       cdx_vect);
 #   else
             c_realspace_ba.grow(ngE);
             bool const pml_flag_false = false;
@@ -1456,18 +1434,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                      lev,
                                      c_realspace_ba,
                                      dm,
-                                     nox_fft,
-                                     noy_fft,
-                                     noz_fft,
-                                     do_nodal,
-                                     m_v_galilean,
-                                     m_v_comoving,
                                      cdx_vect,
-                                     dt[lev],
-                                     pml_flag_false,
-                                     fft_periodic_single_box,
-                                     update_with_rho,
-                                     fft_do_time_averaging);
+                                     pml_flag_false);
 #   endif
 #endif
         } // MaxwellSolverAlgo::PSATD
@@ -1542,24 +1510,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
  * \param[in] realspace_ba         Box array that corresponds to the decomposition of the fields in real space
  *                                 (cell-centered; includes guard cells)
  * \param[in] dm                   Indicates which MPI proc owns which box, in realspace_ba
- * \param[in] n_rz_azimuthal_modes Number of azimuthal modes
- * \param[in] norder_z             Order of accuracy of the spatial derivatives along z
- * \param[in] nodal                Whether the solver is applied to a nodal or staggered grid
- * \param[in] v_galilean           Galilean velocity
  * \param[in] dx                   Cell size along each dimension
- * \param[in] a_dt                 Time step for level
- * \param[in] a_update_with_rho    Whether the update equation for the electric field is expressed in terms
- *                                 of both the current density and the charge density
  */
 void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
                                         const int lev,
                                         amrex::BoxArray const & realspace_ba,
                                         amrex::DistributionMapping const & dm,
-                                        int const n_rz_azimuthal_modes,
-                                        int const norder_z, bool const nodal,
-                                        const amrex::Array<amrex::Real,3>& v_galilean,
-                                        amrex::RealVect const dx, amrex::Real const a_dt,
-                                        bool const a_update_with_rho)
+                                        amrex::RealVect const dx)
 {
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
@@ -1587,36 +1544,15 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
  * \param[in] realspace_ba          Box array that corresponds to the decomposition of the fields in real space
  *                                  (cell-centered; includes guard cells)
  * \param[in] dm                    Indicates which MPI proc owns which box, in realspace_ba
- * \param[in] norder_x              Order of accuracy of the spatial derivatives along x
- * \param[in] norder_y              Order of accuracy of the spatial derivatives along y
- * \param[in] norder_z              Order of accuracy of the spatial derivatives along z
- * \param[in] nodal                 Whether the solver is applied to a nodal or staggered grid
- * \param[in] v_galilean            Galilean velocity
- * \param[in] v_comoving            Comoving velocity in comoving PSATD scheme
  * \param[in] dx                    Cell size along each dimension
- * \param[in] a_dt                  Time step for level
  * \param[in] pml_flag              Whether the boxes in which the solver is applied are PML boxes
- * \param[in] periodic_single_box   Whether the full simulation domain consists of a single periodic box (i.e.
- *                                  the global domain is not MPI parallelized)
- * \param[in] a_update_with_rho     Whether the update equation for the electric field is expressed in terms
- *                                  of both the current density and the charge density
- * \param[in] fft_do_time_averaging Whether averaged Galilean PSATD algorithm or standard Galilean PSATD is
- *                                  used
  */
 void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
                                       const int lev,
                                       const amrex::BoxArray& realspace_ba,
                                       const amrex::DistributionMapping& dm,
-                                      const int norder_x, const int norder_y,
-                                      const int norder_z, const bool nodal,
-                                      const amrex::Array<amrex::Real,3>& v_galilean,
-                                      const amrex::Array<amrex::Real,3>& v_comoving,
                                       const amrex::RealVect dx,
-                                      const amrex::Real a_dt,
-                                      const bool pml_flag,
-                                      const bool periodic_single_box,
-                                      const bool a_update_with_rho,
-                                      const bool fft_do_time_averaging)
+                                      const bool pml_flag)
 {
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
