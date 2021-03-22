@@ -292,35 +292,39 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                     const Complex X5 = X5_arr(i,j,k);
                     const Complex X6 = X6_arr(i,j,k);
 
-                    fields(i,j,k,IdxLin::Ex_avg) = S_ck * Ex_old
+                    // TODO: Here the code is *accumulating* the average,
+                    // because it is meant to be used with sub-cycling
+                    // maybe this should be made more generic
+
+                    fields(i,j,k,IdxLin::Ex_avg) += S_ck * Ex_old
                         + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
                         + I * X5 * rho_old * kx + I * X6 * rho_new * kx
-                        + X3/c2 * Jx - X2/c2 * Jx_new + I * c2 * ep0 * X1 * F_old * kx;
+                        + X3/c2 * Jx - X2/c2 * Jx_new; // + I * c2 * ep0 * X1 * F_old * kx;
 
-                    fields(i,j,k,IdxLin::Ey_avg) = S_ck * Ey_old
+                    fields(i,j,k,IdxLin::Ey_avg) += S_ck * Ey_old
                         + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
                         + I * X5 * rho_old * ky + I * X6 * rho_new * ky
-                        + X3/c2 * Jy - X2/c2 * Jy_new + I * c2 * ep0 * X1 * F_old * ky;
+                        + X3/c2 * Jy - X2/c2 * Jy_new; // + I * c2 * ep0 * X1 * F_old * ky;
 
-                    fields(i,j,k,IdxLin::Ez_avg) = S_ck * Ez_old
+                    fields(i,j,k,IdxLin::Ez_avg) += S_ck * Ez_old
                         + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
                         + I * X5 * rho_old * kz + I * X6 * rho_new * kz
-                        + X3/c2 * Jz - X2/c2 * Jz_new + I * c2 * ep0 * X1 * F_old * kz;
+                        + X3/c2 * Jz - X2/c2 * Jz_new; // + I * c2 * ep0 * X1 * F_old * kz;
 
-                    fields(i,j,k,IdxLin::Bx_avg) = S_ck * Bx_old
+                    fields(i,j,k,IdxLin::Bx_avg) += S_ck * Bx_old
                         - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
-                        - I * X5/c2 * (ky * Jz - kz * Jy) - I * X6/c2 * (ky * Jz_new - kz * Jy_new)
-                        + I * c2 * ep0 * X1 * G_old * kx;
+                        - I * X5/c2 * (ky * Jz - kz * Jy) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
+                        //+ I * c2 * ep0 * X1 * G_old * kx;
 
-                    fields(i,j,k,IdxLin::By_avg) = S_ck * By_old
+                    fields(i,j,k,IdxLin::By_avg) += S_ck * By_old
                         - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
-                        - I * X5/c2 * (kz * Jx - kx * Jz) - I * X6/c2 * (kz * Jx_new - kx * Jz_new)
-                        + I * c2 * ep0 * X1 * G_old * ky;
+                        - I * X5/c2 * (kz * Jx - kx * Jz) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
+                        //+ I * c2 * ep0 * X1 * G_old * ky;
 
-                    fields(i,j,k,IdxLin::Bz_avg) = S_ck * Bz_old
+                    fields(i,j,k,IdxLin::Bz_avg) += S_ck * Bz_old
                         - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
-                        - I * X5/c2 * (kx * Jy - ky * Jx) - I * X6/c2 * (kx * Jy_new - ky * Jx_new)
-                        + I * c2 * ep0 * X1 * G_old * kz;
+                        - I * X5/c2 * (kx * Jy - ky * Jx) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
+                        //+ I * c2 * ep0 * X1 * G_old * kz;
                 }
             }
 

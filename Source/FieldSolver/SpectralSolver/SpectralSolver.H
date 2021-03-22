@@ -112,6 +112,18 @@ class SpectralSolver
             Copy( field_data.fields, field_data.fields, src_comp, dest_comp, 1, 0 );
         }
 
+        // TODO: documentation
+        void ZeroOutDataComp (const int icomp)
+        {
+            field_data.fields.setVal(0, icomp, 1);
+        }
+
+        // TODO: documentation
+        void ScaleDataComp (const int icomp, const amrex::Real scale_factor)
+        {
+            field_data.fields.mult(scale_factor, icomp, 1);
+        }
+
     private:
         void ReadParameters ();
 

@@ -200,6 +200,47 @@ WarpX::PSATDMoveJNewToJOld () {
         }
     }
 }
+
+void
+WarpX::PSATDEraseAverageFields () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        spectral_solver_fp[lev]->ZeroOutDataComp( Idx::Ex_avg );
+        spectral_solver_fp[lev]->ZeroOutDataComp( Idx::Ey_avg );
+        spectral_solver_fp[lev]->ZeroOutDataComp( Idx::Ez_avg );
+        spectral_solver_fp[lev]->ZeroOutDataComp( Idx::Bx_avg );
+        spectral_solver_fp[lev]->ZeroOutDataComp( Idx::By_avg );
+        spectral_solver_fp[lev]->ZeroOutDataComp( Idx::Bz_avg );
+        if (spectral_solver_cp[lev]) {
+            spectral_solver_cp[lev]->ZeroOutDataComp( Idx::Ex_avg );
+            spectral_solver_cp[lev]->ZeroOutDataComp( Idx::Ey_avg );
+            spectral_solver_cp[lev]->ZeroOutDataComp( Idx::Ez_avg );
+            spectral_solver_cp[lev]->ZeroOutDataComp( Idx::Bx_avg );
+            spectral_solver_cp[lev]->ZeroOutDataComp( Idx::By_avg );
+            spectral_solver_cp[lev]->ZeroOutDataComp( Idx::Bz_avg );
+        }
+    }
+}
+
+void
+WarpX::PSATDScaleAverageFields (amrex::Real const scale_factor) {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        spectral_solver_fp[lev]->ScaleDataComp( Idx::Ex_avg, scale_factor );
+        spectral_solver_fp[lev]->ScaleDataComp( Idx::Ey_avg, scale_factor );
+        spectral_solver_fp[lev]->ScaleDataComp( Idx::Ez_avg, scale_factor );
+        spectral_solver_fp[lev]->ScaleDataComp( Idx::Bx_avg, scale_factor );
+        spectral_solver_fp[lev]->ScaleDataComp( Idx::By_avg, scale_factor );
+        spectral_solver_fp[lev]->ScaleDataComp( Idx::Bz_avg, scale_factor );
+        if (spectral_solver_cp[lev]) {
+            spectral_solver_cp[lev]->ScaleDataComp( Idx::Ex_avg, scale_factor );
+            spectral_solver_cp[lev]->ScaleDataComp( Idx::Ey_avg, scale_factor );
+            spectral_solver_cp[lev]->ScaleDataComp( Idx::Ez_avg, scale_factor );
+            spectral_solver_cp[lev]->ScaleDataComp( Idx::Bx_avg, scale_factor );
+            spectral_solver_cp[lev]->ScaleDataComp( Idx::By_avg, scale_factor );
+            spectral_solver_cp[lev]->ScaleDataComp( Idx::Bz_avg, scale_factor );
+        }
+    }
+}
+
 #endif
 
 void

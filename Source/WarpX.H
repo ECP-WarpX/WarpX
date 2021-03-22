@@ -973,6 +973,8 @@ private:
     void PSATDMoveRhoNewToRhoOld ();
     void PSATDMoveJNewToJOld ();
     void PSATDPushSpectralFields (amrex::Real dt);
+    void PSATDScaleAverageFields (amrex::Real const scale_factor);
+    void PSATDEraseAverageFields ();
 #endif
 
 

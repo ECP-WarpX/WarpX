@@ -414,6 +414,8 @@ WarpX::OneStep_multiJ (Real cur_time)
     // Initialize multi-J loop:
     // - Prepare E, B fields in spectral space
     PSATDForwardTransformEB();
+    // - Set the averaged fields to zero
+    if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
     // - Deposit rho (in rho_new, since it will be moved during the loop)
     if (WarpX::update_with_rho) {
         mypc->DepositCharge( rho_fp, -dt[0], 1 );
@@ -430,15 +432,16 @@ WarpX::OneStep_multiJ (Real cur_time)
     // Loop over mutiple j deposition
     int const n_depose = WarpX::multij_n_depose;
     Real const sub_dt = dt[0]/n_depose;
-    for (int i_depose=0; i_depose<n_depose; i_depose++) {
+    int const n_loop = (WarpX::fft_do_time_averaging)? 2*n_depose : n_depose;
+    for (int i_depose=0; i_depose<n_loop; i_depose++) {
 
-        // Move previously deposited rho^{n+1} to rho^{n}
+        // Move previously deposited rho and J
         PSATDMoveRhoNewToRhoOld();
         if (WarpX::psatd_linear_in_J) PSATDMoveJNewToJOld();
 
         // Deposit the new J
-        Real t_depose = (i_depose-n_depose+0.5)*sub_dt;
-        if (WarpX::psatd_linear_in_J) t_depose = (i_depose-n_depose+1)*sub_dt;
+        Real const t_depose = (WarpX::psatd_linear_in_J)?
+            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5)*sub_dt;
         mypc->DepositCurrent( current_fp, dt[0], t_depose );
         SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
         PSATDForwardTransformJ(); // Transform to k space
@@ -450,14 +453,19 @@ WarpX::OneStep_multiJ (Real cur_time)
             PSATDForwardTransformRho(1); // rho new
         }
 
-        // Advance E and B fields in time
+        // Advance E and B fields in time and update the average fields
         PSATDPushSpectralFields( dt[0] ); // Push fields in k space
+
+        // Transform non-average fields after n_depose pushes
+        if (i_depose == n_depose-1) PSATDBackwardTransformEB();
 
     }
 
     // Bring fields to real space and exchange guards
-    PSATDBackwardTransformEB();
-    if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
+    if (WarpX::fft_do_time_averaging) {
+        PSATDScaleAverageFields(1./n_loop);
+        PSATDBackwardTransformEBavg();
+    }
     FillBoundaryE(guard_cells.ng_alloc_EB);
     FillBoundaryB(guard_cells.ng_alloc_EB);
 }
