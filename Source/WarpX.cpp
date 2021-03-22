@@ -1522,12 +1522,12 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   realspace_ba,
                                                   dm,
                                                   n_rz_azimuthal_modes,
-                                                  norder_z,
-                                                  nodal,
-                                                  v_galilean,
+                                                  noz_fft,
+                                                  do_nodal,
+                                                  m_v_galilean,
                                                   dx,
-                                                  a_dt,
-                                                  a_update_with_rho);
+                                                  dt[lev],
+                                                  update_with_rho);
     spectral_solver[lev] = std::move(pss);
 
     if (use_kspace_filter) {
@@ -1557,17 +1557,17 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
                                                 dm,
-                                                norder_x,
-                                                norder_y,
-                                                norder_z,
-                                                nodal,
-                                                v_galilean,
-                                                v_comoving,
+                                                nox_fft,
+                                                noy_fft,
+                                                noz_fft,
+                                                do_nodal,
+                                                m_v_galilean,
+                                                m_v_comoving,
                                                 dx,
-                                                a_dt,
+                                                dt[lev],
                                                 pml_flag,
-                                                periodic_single_box,
-                                                a_update_with_rho,
+                                                fft_periodic_single_box,
+                                                update_with_rho,
                                                 fft_do_time_averaging);
     spectral_solver[lev] = std::move(pss);
 }
