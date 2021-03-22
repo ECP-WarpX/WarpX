@@ -1536,19 +1536,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   ifdef WARPX_DIM_RZ
 /* \brief Allocate spectral Maxwell solver (RZ dimensions) at a level
  *
- * \param[in, out] spectral_solver Vector of pointer to SpectralSolver, to point to allocated spectral Maxwell 
+ * \param[in, out] spectral_solver Vector of pointer to SpectralSolver, to point to allocated spectral Maxwell
  *                                 solver at a given level
  * \param[in] lev                  Level at which to allocate spectral Maxwell solver
- * \param[in] realspace_ba         Box array that corresponds to the decomposition of the fields in real space 
+ * \param[in] realspace_ba         Box array that corresponds to the decomposition of the fields in real space
  *                                 (cell-centered; includes guard cells)
- * \param[in] dm                   Indicates which MPI proc owns which box, in realspace_ba            
+ * \param[in] dm                   Indicates which MPI proc owns which box, in realspace_ba
  * \param[in] n_rz_azimuthal_modes Number of azimuthal modes
  * \param[in] norder_z             Order of accuracy of the spatial derivatives along z
  * \param[in] nodal                Whether the solver is applied to a nodal or staggered grid
  * \param[in] v_galilean           Galilean velocity
  * \param[in] dx                   Cell size along each dimension
  * \param[in] a_dt                 Time step for level
- * \param[in] a_update_with_rho    Whether the update equation for the electric field is expressed in terms 
+ * \param[in] a_update_with_rho    Whether the update equation for the electric field is expressed in terms
  *                                 of both the current density and the charge density
  */
 void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
@@ -1581,10 +1581,10 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
 #   else
 /* \brief Allocate spectral Maxwell solver at a level
  *
- * \param[in, out] spectral_solver  Vector of pointer to SpectralSolver, to point to allocated spectral Maxwell 
+ * \param[in, out] spectral_solver  Vector of pointer to SpectralSolver, to point to allocated spectral Maxwell
  *                                  solver at a given level
  * \param[in] lev                   Level at which to allocate spectral Maxwell solver
- * \param[in] realspace_ba          Box array that corresponds to the decomposition of the fields in real space 
+ * \param[in] realspace_ba          Box array that corresponds to the decomposition of the fields in real space
  *                                  (cell-centered; includes guard cells)
  * \param[in] dm                    Indicates which MPI proc owns which box, in realspace_ba
  * \param[in] norder_x              Order of accuracy of the spatial derivatives along x
@@ -1596,11 +1596,11 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
  * \param[in] dx                    Cell size along each dimension
  * \param[in] a_dt                  Time step for level
  * \param[in] pml_flag              Whether the boxes in which the solver is applied are PML boxes
- * \param[in] periodic_single_box   Whether the full simulation domain consists of a single periodic box (i.e. 
+ * \param[in] periodic_single_box   Whether the full simulation domain consists of a single periodic box (i.e.
  *                                  the global domain is not MPI parallelized)
- * \param[in] a_update_with_rho     Whether the update equation for the electric field is expressed in terms 
+ * \param[in] a_update_with_rho     Whether the update equation for the electric field is expressed in terms
  *                                  of both the current density and the charge density
- * \param[in] fft_do_time_averaging Whether averaged Galilean PSATD algorithm or standard Galilean PSATD is 
+ * \param[in] fft_do_time_averaging Whether averaged Galilean PSATD algorithm or standard Galilean PSATD is
  *                                  used
  */
 void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
