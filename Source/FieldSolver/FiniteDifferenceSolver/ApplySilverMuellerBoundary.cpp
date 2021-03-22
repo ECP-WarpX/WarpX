@@ -71,18 +71,9 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                     // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
-                    // Ensure that Br remains 0 on axis (except for m=1)
-                    Br(i, j, 0, 0) = 0.; // Mode m=0
-                    for (int m=1; m<nmodes; m++) { // Higher-order modes
-                        if (m == 1){
-                            // For m==1, Ez is linear in r, for small r
-                            // Therefore, the formula below regularizes the singularity
-                            Br(i, j, 0, 2*m-1) =
-                        } else {
-                            Br(i, j, 0, 2*m-1) = 0.;
-                            Br(i, j, 0, 2*m  ) = 0.;
-                        }
-                    }
+                    // Mode 0
+                    Bt(i,j,0,0) = coef1_r*Bt(i,j,0,0) - coef2_r*Ez(i,j,0,0) + 
+                        coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0));
                 }
             }
         );
