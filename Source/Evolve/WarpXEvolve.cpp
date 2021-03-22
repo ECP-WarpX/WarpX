@@ -420,6 +420,12 @@ WarpX::OneStep_multiJ (Real cur_time)
         SyncRho(); // Filter, exchange boundary, and interpolate across levels
         PSATDForwardTransformRho(1); // rho new
     }
+    // - Deposit J if needed
+    if (WarpX::psatd_linear_in_J) {
+        mypc->DepositCurrent( current_fp, dt[0],  -dt[0] );
+        SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
+        PSATDForwardTransformJ(); // Transform to k space
+    }
 
     // Loop over mutiple j deposition
     int const n_depose = WarpX::multij_n_depose;
@@ -428,13 +434,16 @@ WarpX::OneStep_multiJ (Real cur_time)
 
         // Move previously deposited rho^{n+1} to rho^{n}
         PSATDMoveRhoNewToRhoOld();
+        if (WarpX::psatd_linear_in_J) PSATDMoveJNewToJOld();
 
-        // Deposit J^{n+1/2}
-        mypc->DepositCurrent( current_fp, dt[0], (i_depose-n_depose+0.5)*sub_dt );
+        // Deposit the new J
+        Real t_depose = (i_depose-n_depose+0.5)*sub_dt;
+        if (WarpX::psatd_linear_in_J) t_depose = (i_depose-n_depose+1)*sub_dt;
+        mypc->DepositCurrent( current_fp, dt[0], t_depose );
         SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
         PSATDForwardTransformJ(); // Transform to k space
 
-        // Deposit rho^{n+1}
+        // Deposit the new rho
         if (WarpX::update_with_rho) {
             mypc->DepositCharge( rho_fp, (i_depose-n_depose+1)*sub_dt, 1 );
             SyncRho(); // Filter, exchange boundary, and interpolate across levels

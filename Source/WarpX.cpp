@@ -813,6 +813,7 @@ WarpX::ReadParameters ()
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("v_comoving", m_v_comoving);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
+        pp_psatd.query("linear_in_J", psatd_linear_in_J);
 
         if (!fft_periodic_single_box && current_correction)
             amrex::Abort(
@@ -875,6 +876,13 @@ WarpX::ReadParameters ()
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
         }
+
+        if (psatd_linear_in_J) {
+          AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
+              "psatd.update_with_rho must be equal to 1 for linear-in-J PSATD");
+          AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
+              "warpx.do_dive_cleaning must be equal to 1 for linear-in-J PSATD");
+        };
 
 #   ifdef WARPX_DIM_RZ
         if (!Geom(0).isPeriodic(1)) {
@@ -1298,7 +1306,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (WarpX::do_multij) solver_dt /= WarpX::multij_n_depose;
         spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, solver_dt,
-            pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
+            pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging, psatd_linear_in_J );
 #   endif
 #endif
     } // MaxwellSolverAlgo::PSATD
@@ -1431,7 +1439,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             if (WarpX::do_multij) solver_dt /= WarpX::multij_n_depose;
             spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( lev, c_realspace_ba, dm,
                 nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, solver_dt,
-                pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
+                pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging, psatd_linear_in_J );
 #   endif
 #endif
         } // MaxwellSolverAlgo::PSATD

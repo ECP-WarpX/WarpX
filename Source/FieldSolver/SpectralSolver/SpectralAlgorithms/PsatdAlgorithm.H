@@ -29,7 +29,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Real dt,
             const bool update_with_rho,
             const bool time_averaging,
-            const bool linear_in_J = false);
+            const bool linear_in_J);
 
         // TODO Add Doxygen docs
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
