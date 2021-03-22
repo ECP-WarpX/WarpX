@@ -48,6 +48,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     // Extract cylindrical specific parameters
     Real const dr = m_dr;
     int const nmodes = m_nmodes;
+    Real const rmin = m_rmin;
 
     // tiling is usually set by TilingIfNotGPU()
     // but here, we set it to false because of potential race condition,
