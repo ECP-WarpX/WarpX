@@ -21,6 +21,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Box domain_box,
     amrex::Real const dt ) {
 
+    // Ensure that we are using the Yee solver
+    if (m_fdtd_algo != MaxwellSolverAlgo::Yee) {
+        amrex::Abort("The Silver-Mueller boundary conditions can only be used with the Yee solver.");
+    }
+
+    // Ensure that we are using the cells the domain
+    domain_box.enclosedCells();
+
 #ifdef WARPX_DIM_RZ
     // tiling is usually set by TilingIfNotGPU()
     // but here, we set it to false because of potential race condition,
@@ -70,14 +78,6 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
     // amrex::Abort("The Silver-Mueller boundary conditions cannot be used in RZ geometry.");
 #else
-
-    // Ensure that we are using the Yee solver
-    if (m_fdtd_algo != MaxwellSolverAlgo::Yee) {
-        amrex::Abort("The Silver-Mueller boundary conditions can only be used with the Yee solver.");
-    }
-
-    // Ensure that we are using the cells the domain
-    domain_box.enclosedCells();
 
     // Calculate relevant coefficients
     amrex::Real const cdt_over_dx = PhysConst::c*dt*m_stencil_coefs_x[0];
