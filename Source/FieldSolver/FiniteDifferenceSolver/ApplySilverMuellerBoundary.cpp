@@ -57,7 +57,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        Array4<Real> const& Br = Bfield[0]->array(mfi);
+        // Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
@@ -75,19 +75,9 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
         // Loop over the cells
         amrex::ParallelFor(tbr, tbt, tbz,
+            [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/){},
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
-                if ( i==domain_box.bigEnd(0)+1 ){
-                    // Mode 0
-                    Br(i,j,0,0) = Br(i,j,0,0);
-                    for (int m=1; m<nmodes; m++) { // Higher-order modes
-                        // Real part
-                        Br(i,j,0,2*m-1) = Br(i,j,0,2*m-1);
-                        // Imaginary part
-                        Br(i,j,0,2*m) = Br(i,j,0,2*m);
-                    }
-                }
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+
                 // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Mode 0
@@ -104,6 +94,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 }
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+
                 Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
                 // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
