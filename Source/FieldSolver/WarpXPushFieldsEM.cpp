@@ -114,6 +114,26 @@ WarpX::PSATDBackwardTransformEBavg () {
 }
 
 void
+WarpX::PSATDForwardTransformF () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        if (F_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *F_fp[lev], LinJIdx::F);
+        if (spectral_solver_cp[lev]) {
+            if (F_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *F_cp[lev], LinJIdx::F);
+        }
+    }
+}
+
+void
+WarpX::PSATDBackwardTransformF () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], LinJIdx::F);
+        if (spectral_solver_cp[lev]) {
+            if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], LinJIdx::F);
+        }
+    }
+}
+
+void
 WarpX::PSATDForwardTransformJ () {
     int idx_jx = Idx::Jx;
     int idx_jy = Idx::Jy;

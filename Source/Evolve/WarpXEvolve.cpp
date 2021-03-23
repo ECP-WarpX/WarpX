@@ -412,8 +412,9 @@ WarpX::OneStep_multiJ (Real cur_time)
     PushParticlesandDepose(cur_time, skip_deposition);
 
     // Initialize multi-J loop:
-    // - Prepare E, B fields in spectral space
+    // - Prepare E, B, F fields in spectral space
     PSATDForwardTransformEB();
+    PSATDForwardTransformF();
     // - Set the averaged fields to zero
     if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
     // - Deposit rho (in rho_new, since it will be moved during the loop)
@@ -457,7 +458,10 @@ WarpX::OneStep_multiJ (Real cur_time)
         PSATDPushSpectralFields( dt[0] ); // Push fields in k space
 
         // Transform non-average fields after n_depose pushes
-        if (i_depose == n_depose-1) PSATDBackwardTransformEB();
+        if (i_depose == n_depose-1) {
+            PSATDBackwardTransformEB();
+            PSATDBackwardTransformF();
+        }
 
     }
 
@@ -469,6 +473,7 @@ WarpX::OneStep_multiJ (Real cur_time)
     }
     FillBoundaryE(guard_cells.ng_alloc_EB);
     FillBoundaryB(guard_cells.ng_alloc_EB);
+    FillBoundaryF(guard_cells.ng_alloc_EB);
 }
 
 /* /brief Perform one PIC iteration, with subcycling

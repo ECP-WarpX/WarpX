@@ -972,6 +972,8 @@ private:
     void PSATDForwardTransformRho (int const icomp);
     void PSATDMoveRhoNewToRhoOld ();
     void PSATDMoveJNewToJOld ();
+    void PSATDForwardTransformF ();
+    void PSATDBackwardTransformF ();
     void PSATDPushSpectralFields (amrex::Real dt);
     void PSATDScaleAverageFields (amrex::Real const scale_factor);
     void PSATDEraseAverageFields ();

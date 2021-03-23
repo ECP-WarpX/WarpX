@@ -262,11 +262,11 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex F_old = fields(i,j,k,IdxLin::F);
                 const Complex G_old = fields(i,j,k,IdxLin::G);
 
-                fields(i,j,k,Idx::Ex) += -X1 * (Jx_new - Jx) / dt;// + I * c2 * S_ck * F_old * kx;
+                fields(i,j,k,Idx::Ex) += -X1 * (Jx_new - Jx) / dt + I * c2 * S_ck * F_old * kx;
 
-                fields(i,j,k,Idx::Ey) += -X1 * (Jy_new - Jy) / dt;// + I * c2 * S_ck * F_old * ky;
+                fields(i,j,k,Idx::Ey) += -X1 * (Jy_new - Jy) / dt + I * c2 * S_ck * F_old * ky;
 
-                fields(i,j,k,Idx::Ez) += -X1 * (Jz_new - Jz) / dt;// + I * c2 * S_ck * F_old * kz;
+                fields(i,j,k,Idx::Ez) += -X1 * (Jz_new - Jz) / dt + I * c2 * S_ck * F_old * kz;
 
                 fields(i,j,k,Idx::Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
                 //    + I * c2 * S_ck * G_old * kx;
@@ -299,17 +299,17 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                     fields(i,j,k,IdxLin::Ex_avg) += S_ck * Ex_old
                         + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
                         + I * X5 * rho_old * kx + I * X6 * rho_new * kx
-                        + X3/c2 * Jx - X2/c2 * Jx_new; // + I * c2 * ep0 * X1 * F_old * kx;
+                        + X3/c2 * Jx - X2/c2 * Jx_new + I * c2 * ep0 * X1 * F_old * kx;
 
                     fields(i,j,k,IdxLin::Ey_avg) += S_ck * Ey_old
                         + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
                         + I * X5 * rho_old * ky + I * X6 * rho_new * ky
-                        + X3/c2 * Jy - X2/c2 * Jy_new; // + I * c2 * ep0 * X1 * F_old * ky;
+                        + X3/c2 * Jy - X2/c2 * Jy_new + I * c2 * ep0 * X1 * F_old * ky;
 
                     fields(i,j,k,IdxLin::Ez_avg) += S_ck * Ez_old
                         + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
                         + I * X5 * rho_old * kz + I * X6 * rho_new * kz
-                        + X3/c2 * Jz - X2/c2 * Jz_new; // + I * c2 * ep0 * X1 * F_old * kz;
+                        + X3/c2 * Jz - X2/c2 * Jz_new + I * c2 * ep0 * X1 * F_old * kz;
 
                     fields(i,j,k,IdxLin::Bx_avg) += S_ck * Bx_old
                         - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
