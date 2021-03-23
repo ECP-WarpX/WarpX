@@ -174,11 +174,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 realspace_ba.enclosedCells(); // Make it cell-centered
                 auto ngE = getngE();
                 auto dx = CellSize(lev);
-#   if (AMREX_SPACEDIM == 3)
-                RealVect dx_vect(dx[0], dx[1], dx[2]);
-#   elif (AMREX_SPACEDIM == 2)
-                RealVect dx_vect(dx[0], dx[2]);
-#   endif
 
 #   ifdef WARPX_DIM_RZ
                 if ( fft_periodic_single_box == false ) {
@@ -188,7 +183,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                            lev,
                                            realspace_ba,
                                            dm,
-                                           dx_vect);
+                                           dx);
 #   else
                 if ( fft_periodic_single_box == false ) {
                     realspace_ba.grow(ngE);   // add guard cells
@@ -198,7 +193,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                          lev,
                                          realspace_ba,
                                          dm,
-                                         dx_vect,
+                                         dx,
                                          pml_flag_false);
 #   endif
             }
@@ -281,11 +276,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                     cba.coarsen(refRatio(lev-1));
                     std::array<Real,3> cdx = CellSize(lev-1);
 
-#   if (AMREX_SPACEDIM == 3)
-                    RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-#   elif (AMREX_SPACEDIM == 2)
-                    RealVect cdx_vect(cdx[0], cdx[2]);
-#   endif
                     // Get the cell-centered box
                     BoxArray c_realspace_ba = cba;  // Copy box
                     c_realspace_ba.enclosedCells(); // Make it cell-centered
@@ -298,7 +288,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                lev,
                                                c_realspace_ba,
                                                dm,
-                                               cdx_vect);
+                                               cdx);
 #   else
                     c_realspace_ba.grow(ngE);
                     bool const pml_flag_false = false;
@@ -306,7 +296,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                              lev,
                                              c_realspace_ba,
                                              dm,
-                                             cdx_vect,
+                                             cdx,
                                              pml_flag_false);
 #   endif
                 }

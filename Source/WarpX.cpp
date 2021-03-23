@@ -1259,11 +1259,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
 
-#   if (AMREX_SPACEDIM == 3)
-        RealVect dx_vect(dx[0], dx[1], dx[2]);
-#   elif (AMREX_SPACEDIM == 2)
-        RealVect dx_vect(dx[0], dx[2]);
-#   endif
         // Check whether the option periodic, single box is valid here
         if (fft_periodic_single_box) {
 #   ifdef WARPX_DIM_RZ
@@ -1290,7 +1285,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                    lev,
                                    realspace_ba,
                                    dm,
-                                   dx_vect);
+                                   dx);
 #   else
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(ngE);   // add guard cells
@@ -1300,7 +1295,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                  lev,
                                  realspace_ba,
                                  dm,
-                                 dx_vect,
+                                 dx,
                                  pml_flag_false);
 #   endif
 #endif
@@ -1411,11 +1406,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
 
-#   if (AMREX_SPACEDIM == 3)
-            RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-#   elif (AMREX_SPACEDIM == 2)
-            RealVect cdx_vect(cdx[0], cdx[2]);
-#   endif
             // Get the cell-centered box, with guard cells
             BoxArray c_realspace_ba = cba;// Copy box
             c_realspace_ba.enclosedCells(); // Make it cell-centered
@@ -1426,7 +1416,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                        lev,
                                        c_realspace_ba,
                                        dm,
-                                       cdx_vect);
+                                       cdx);
 #   else
             c_realspace_ba.grow(ngE);
             bool const pml_flag_false = false;
@@ -1434,7 +1424,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                      lev,
                                      c_realspace_ba,
                                      dm,
-                                     cdx_vect,
+                                     cdx,
                                      pml_flag_false);
 #   endif
 #endif
@@ -1514,10 +1504,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
  */
 void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
                                         const int lev,
-                                        amrex::BoxArray const & realspace_ba,
-                                        amrex::DistributionMapping const & dm,
-                                        amrex::RealVect const dx)
+                                        const amrex::BoxArray& realspace_ba,
+                                        const amrex::DistributionMapping& dm,
+                                        const std::array<Real,3> dx)
 {
+#if (AMREX_SPACEDIM == 3)
+    RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+    RealVect dx_vect(dx[0], dx[2]);
+#endif
+    
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
                                                   dm,
@@ -1525,7 +1521,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   noz_fft,
                                                   do_nodal,
                                                   m_v_galilean,
-                                                  dx,
+                                                  dx_vect,
                                                   dt[lev],
                                                   update_with_rho);
     spectral_solver[lev] = std::move(pss);
@@ -1551,9 +1547,15 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                       const int lev,
                                       const amrex::BoxArray& realspace_ba,
                                       const amrex::DistributionMapping& dm,
-                                      const amrex::RealVect dx,
+                                      const std::array<Real,3> dx,
                                       const bool pml_flag)
 {
+#if (AMREX_SPACEDIM == 3)
+    RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+    RealVect dx_vect(dx[0], dx[2]);
+#endif
+    
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
                                                 dm,
@@ -1563,7 +1565,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 do_nodal,
                                                 m_v_galilean,
                                                 m_v_comoving,
-                                                dx,
+                                                dx_vect,
                                                 dt[lev],
                                                 pml_flag,
                                                 fft_periodic_single_box,

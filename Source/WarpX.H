@@ -772,15 +772,15 @@ private:
 #   ifdef WARPX_DIM_RZ
     void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
                                      const int lev,
-                                     amrex::BoxArray const & realspace_ba,
-                                     amrex::DistributionMapping const & dm,
-                                     amrex::RealVect const dx);
+                                     const amrex::BoxArray& realspace_ba,
+                                     const amrex::DistributionMapping& dm,
+                                     const std::array<Real,3>& dx);
 #   else
     void AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
                                    const int lev,
                                    const amrex::BoxArray& realspace_ba,
                                    const amrex::DistributionMapping& dm,
-                                   const amrex::RealVect dx,
+                                   const std::array<Real,3> dx,
                                    const bool pml_flag=false);
 #   endif
 #endif
