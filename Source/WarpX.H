@@ -774,13 +774,13 @@ private:
                                      const int lev,
                                      const amrex::BoxArray& realspace_ba,
                                      const amrex::DistributionMapping& dm,
-                                     const std::array<Real,3>& dx);
+                                     const std::array<amrex::Real,3>& dx);
 #   else
     void AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
                                    const int lev,
                                    const amrex::BoxArray& realspace_ba,
                                    const amrex::DistributionMapping& dm,
-                                   const std::array<Real,3> dx,
+                                   const std::array<amrex::Real,3> dx,
                                    const bool pml_flag=false);
 #   endif
 #endif
