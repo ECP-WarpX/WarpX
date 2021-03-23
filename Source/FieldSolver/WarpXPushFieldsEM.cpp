@@ -210,10 +210,6 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 
 }
 
-#ifdef WARPX_DIM_RZ
-void
-WarpX::ApplySilverMuellerBoundary <CylindricalYeeAlgorithm> (amrex::Real a_dt) {
-#else
 void
 WarpX::ApplySilverMuellerBoundary (amrex::Real a_dt) {
 #endif

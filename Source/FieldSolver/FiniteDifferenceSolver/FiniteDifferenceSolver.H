@@ -52,9 +52,6 @@ class FiniteDifferenceSolver
                        int const rhocomp,
                        amrex::Real const dt );
 
-#ifdef WARPX_DIM_RZ
-        template<typename T_Algo>
-#endif
         void ApplySilverMuellerBoundary(
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,

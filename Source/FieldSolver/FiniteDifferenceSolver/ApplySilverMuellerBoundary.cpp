@@ -18,9 +18,6 @@ using namespace amrex;
 /**
  * \brief Update the B field at the boundary, using the Silver-Mueller condition
  */
-#ifdef WARPX_DIM_RZ
-template<typename T_Algo>
-#endif
 void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
@@ -85,18 +82,23 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Mode 0
                     Bt(i,j,0,0) = coef1_r*Bt(i,j,0,0) - coef2_r*Ez(i,j,0,0)
-                        + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0));
+                        + coef3_r*CylindricalYeeAlgorithm::UpwardDz(
+                            Er, coefs_z, n_coefs_z, i, j, 0, 0));
                     Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0)
                         - coef3_r*Et(i,j,0,0)/r;
                     for (int m=1; m<nmodes; m++) { // Higher-order modes
                         // Real part
-                        Bt(i,j,0,2*m-1) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m-1)
-                            + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1));
-                        Bz(i,j,0,2*m-1) = coef1_r*Bz(i,j,0,2*m-1) - coef2_r*Et(i+1,j,0,2*m-1)
+                        Bt(i,j,0,2*m-1) = coef1_r*Bt(i,j,0,2*m-1)
+                        - coef2_r*Ez(i,j,0,2*m-1)
+                            + coef3_r*CylindricalYeeAlgorithm::UpwardDz(
+                                Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1));
+                        Bz(i,j,0,2*m-1) = coef1_r*Bz(i,j,0,2*m-1)
+                        - coef2_r*Et(i+1,j,0,2*m-1)
                             + coef3_r/r*(Er(i,j,0,2*m) - Et(i,j,0,2*m-1));
                         // Imaginary part
                         Bt(i,j,0,2*m) = coef1_r*Bt(i,j,0,2*m) - coef2_r*Ez(i,j,0,2*m)
-                            + coef3_r*T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m));
+                            + coef3_r*CylindricalYeeAlgorithm::UpwardDz(
+                                Er, coefs_z, n_coefs_z, i, j, 0, 2*m));
                         Bz(i,j,0,2*m) = coef1_r*Bz(i,j,0,2*m) - coef2_r*Et(i+1,j,0,2*m)
                             + coef3_r/r*(Er(i,j,0,2*m-1) - Et(i,j,0,2*m));
                     }
