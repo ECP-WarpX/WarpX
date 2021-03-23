@@ -1513,7 +1513,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
 #elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
 #endif
-    
+
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
                                                   dm,
@@ -1555,7 +1555,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 #elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
 #endif
-    
+
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
                                                 dm,
