@@ -45,6 +45,7 @@ private:
     amrex::Vector< MCCProcess > m_scattering_processes;
 
     bool init_flag = false;
+    bool ionization_flag = false;
 
     amrex::Real m_mass1;
 
