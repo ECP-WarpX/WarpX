@@ -212,7 +212,6 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 
 void
 WarpX::ApplySilverMuellerBoundary (amrex::Real a_dt) {
-#endif
     // Only apply to level 0
     m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
         Efield_fp[0], Bfield_fp[0], Geom(0).Domain(), a_dt );
