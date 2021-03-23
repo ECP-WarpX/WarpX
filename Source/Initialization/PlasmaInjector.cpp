@@ -206,6 +206,34 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             xmin, xmax, ymin, ymax, zmin, zmax);
         parseDensity(pp_species_name);
         parseMomentum(pp_species_name);
+    } else if (part_pos_s == "nfluxpercell") {
+        surface_flux = true;
+        pp_species_name.query("num_particles_per_cell", num_particles_per_cell_real);
+#if WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
+            "Error: For accurate use of WarpX cylindrical gemoetry the number "
+            "of particles should be at least two times n_rz_azimuthal_modes "
+            "(Please visit PR#765 for more information.)");
+#endif
+        pp_species_name.get("surface_flux_pos", surface_flux_pos);
+        pp_species_name.get("flux_normal_axis", flux_normal_axis);
+        pp_species_name.get("flux_direction", flux_direction);
+        // Constrain the injection box to be the one cell in front of
+        // (or behind) the injection plane
+        amrex::Real dd = geom.CellSize(flux_normal_axis);
+        amrex::Real pos_min = (flux_direction > 0 ? surface_flux_pos : surface_flux_pos - dd);
+        amrex::Real pos_max = (flux_direction > 0 ? surface_flux_pos + dd : surface_flux_pos);
+        if (flux_normal_axis == 0) {xmin = pos_min; xmax = pos_max;}
+        if (flux_normal_axis == 1) {ymin = pos_min; ymax = pos_max;}
+        if (flux_normal_axis == 2) {zmin = pos_min; zmax = pos_max;}
+        // Construct InjectorPosition with InjectorPositionRandom.
+        h_inj_pos = std::make_unique<InjectorPosition>(
+            (InjectorPositionRandomPlane*)nullptr,
+            xmin, xmax, ymin, ymax, zmin, zmax,
+            flux_normal_axis);
+        parseDensity(pp_species_name);
+        parseMomentum(pp_species_name);
     } else if (part_pos_s == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
@@ -446,6 +474,25 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumGaussian.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussian*)nullptr,
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th));
+    } else if (mom_dist_s == "gaussianflux") {
+        Real ux_m = 0.;
+        Real uy_m = 0.;
+        Real uz_m = 0.;
+        Real ux_th = 0.;
+        Real uy_th = 0.;
+        Real uz_th = 0.;
+        queryWithParser(pp, "ux_m", ux_m);
+        queryWithParser(pp, "uy_m", uy_m);
+        queryWithParser(pp, "uz_m", uz_m);
+        queryWithParser(pp, "ux_th", ux_th);
+        queryWithParser(pp, "uy_th", uy_th);
+        queryWithParser(pp, "uz_th", uz_th);
+        pp.get("flux_normal_axis", flux_normal_axis);
+        pp.get("flux_direction", flux_direction);
+        // Construct InjectorMomentum with InjectorMomentumGaussianFlux.
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussianFlux*)nullptr,
+                                             ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
+                                             flux_normal_axis, flux_direction));
     } else if (mom_dist_s == "maxwell_boltzmann"){
         Real beta = 0.;
         Real theta = 10.;

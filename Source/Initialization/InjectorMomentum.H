@@ -76,6 +76,54 @@ private:
     amrex::Real m_ux_th, m_uy_th, m_uz_th;
 };
 
+
+// struct whose getMomentum returns momentum for 1 particle, from random
+// gaussian flux distribution in the specified direction.
+// Along the normal axis, the distribution is v*Gaussian,
+// with the sign set by flux_direction.
+struct InjectorMomentumGaussianFlux
+{
+    InjectorMomentumGaussianFlux (amrex::Real a_ux_m, amrex::Real a_uy_m,
+                                  amrex::Real a_uz_m, amrex::Real a_ux_th,
+                                  amrex::Real a_uy_th, amrex::Real a_uz_th,
+                                  int a_flux_normal_axis, int a_flux_direction) noexcept
+        : m_ux_m(a_ux_m), m_uy_m(a_uy_m), m_uz_m(a_uz_m),
+          m_ux_th(a_ux_th), m_uy_th(a_uy_th), m_uz_th(a_uz_th),
+          m_flux_normal_axis(a_flux_normal_axis),
+          m_flux_direction(a_flux_direction)
+        {}
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
+    {
+        using namespace amrex::literals;
+        amrex::Real ux = amrex::RandomNormal(m_ux_m, m_ux_th, engine);
+        amrex::Real uy = amrex::RandomNormal(m_uy_m, m_uy_th, engine);
+        amrex::Real uz = amrex::RandomNormal(m_uz_m, m_uz_th, engine);
+        amrex::Real const urand = 1._rt - amrex::Random(engine);
+        amrex::Real const ur = std::sqrt(2._rt*std::log(1._rt/urand))*m_flux_direction;
+        if (m_flux_normal_axis == 0) ux = m_ux_th*ur;
+        if (m_flux_normal_axis == 1) uy = m_uy_th*ur;
+        if (m_flux_normal_axis == 2) uz = m_uz_th*ur;
+        return amrex::XDim3{ux, uy, uz};
+    }
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    {
+        return amrex::XDim3{m_ux_m, m_uy_m, m_uz_m};
+    }
+
+private:
+    amrex::Real m_ux_m, m_uy_m, m_uz_m;
+    amrex::Real m_ux_th, m_uy_th, m_uz_th;
+    int m_flux_normal_axis;
+    int m_flux_direction;
+};
+
 // struct whose getMomentum returns momentum for 1 particle with relativistic
 // drift velocity beta, from the Maxwell-Boltzmann distribution.
 struct InjectorMomentumBoltzmann
@@ -299,6 +347,7 @@ struct InjectorMomentumParser
 // instance of:
 // - InjectorMomentumConstant       : to generate constant density;
 // - InjectorMomentumGaussian       : to generate gaussian distribution;
+// - InjectorMomentumGaussianFlux   : to generate v*gaussian distribution;
 // - InjectorMomentumRadialExpansion: to generate radial expansion;
 // - InjectorMomentumParser         : to generate momentum from parser;
 // The choice is made at runtime, depending in the constructor called.
@@ -327,6 +376,15 @@ struct InjectorMomentum
                       amrex::Real a_ux_th, amrex::Real a_uy_th, amrex::Real a_uz_th)
         : type(Type::gaussian),
           object(t,a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th)
+    { }
+
+    // This constructor stores a InjectorMomentumGaussianFlux in union object.
+    InjectorMomentum (InjectorMomentumGaussianFlux* t,
+                      amrex::Real a_ux_m, amrex::Real a_uy_m, amrex::Real a_uz_m,
+                      amrex::Real a_ux_th, amrex::Real a_uy_th, amrex::Real a_uz_th,
+                      int a_flux_normal_axis, int a_flux_direction)
+        : type(Type::gaussian),
+          object(t,a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction)
     { }
 
     InjectorMomentum (InjectorMomentumBoltzmann* t,
@@ -473,6 +531,12 @@ private:
                 amrex::Real a_uz_m, amrex::Real a_ux_th,
                 amrex::Real a_uy_th, amrex::Real a_uz_th) noexcept
             : gaussian(a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th) {}
+        Object (InjectorMomentumGaussianFlux*,
+                amrex::Real a_ux_m, amrex::Real a_uy_m,
+                amrex::Real a_uz_m, amrex::Real a_ux_th,
+                amrex::Real a_uy_th, amrex::Real a_uz_th,
+                int a_flux_normal_axis, int a_flux_direction) noexcept
+            : gaussianflux(a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction) {}
         Object (InjectorMomentumBoltzmann*,
                 amrex::Real t, amrex::Real b, int dir) noexcept
             : boltzmann(t,b,dir) {}
@@ -490,6 +554,7 @@ private:
         InjectorMomentumConstant constant;
         InjectorMomentumCustom   custom;
         InjectorMomentumGaussian gaussian;
+        InjectorMomentumGaussianFlux gaussianflux;
         InjectorMomentumBoltzmann boltzmann;
         InjectorMomentumJuttner juttner;
         InjectorMomentumRadialExpansion radial_expansion;
