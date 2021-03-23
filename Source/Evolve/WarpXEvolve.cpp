@@ -463,7 +463,8 @@ WarpX::OneStep_multiJ (Real cur_time)
 
     // Bring fields to real space and exchange guards
     if (WarpX::fft_do_time_averaging) {
-        PSATDScaleAverageFields(1./n_loop);
+        // We summed the integral of the field over 2*dt
+        PSATDScaleAverageFields( 1./(2*dt[0]) );
         PSATDBackwardTransformEBavg();
     }
     FillBoundaryE(guard_cells.ng_alloc_EB);
