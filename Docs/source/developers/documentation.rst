@@ -6,11 +6,13 @@ Documentation
 Doxygen documentation
 ---------------------
 
-WarpX uses a Doxygen documentation. Whenever you create a new class, please document it where it is declared (typically in the header file):
+WarpX uses a `Doxygen documentation <https://www.doxygen.nl/manual/docblocks.html>`__.
+Whenever you create a new class, please document it where it is declared (typically in the header file):
 
 .. code-block:: cpp
 
-   /**
+   /** A brief title
+    *
     * few-line description explaining the purpose of my_class.
     *
     * If you are kind enough, also quickly explain how things in my_class work.
@@ -23,15 +25,17 @@ Doxygen reads this docstring, so please be accurate with the syntax! See `Doxyge
 
 .. code-block:: cpp
 
-  /**
+  /** A brief title
+   *
    * few-line description explaining the purpose of my_function.
    *
    * \param[in,out] my_int a pointer to an integer variable on which
    *                       my_function will operate.
+   * \return what is the meaning and value range of the returned value
    */
-  void my_class::my_function(int* my_int);
+  int my_class::my_function(int* my_int);
 
-A HTML rendered version of the Doxygen documentation `is located here <../_static/doxyhtml/index.html>`_.
+An online version of this documentation is :ref:`linked here <development-doxygen>`.
 
 Breathe documentation
 ---------------------
@@ -45,18 +49,23 @@ For instance, the following line will get the Doxygen documentation for ``WarpXP
 Building the documentation
 --------------------------
 
-To build the documentation on your local computer, you will need to install Doxygen as well as the Python module `breathe`. On MacOS this can by done by
+To build the documentation on your local computer, you will need to install Doxygen as well as the Python module `breathe`.
+First, change into ``Docs/`` and install the Python requirements:
 
 .. code-block:: sh
 
-    brew install doxygen
-    pip install breathe
+    cd Docs/
+    pip install -r requirements.txt
+
+You will also need Doxygen (macOS: ``brew install doxygen``; Ubuntu: ``sudo apt install doxygen``).
 
 Then, to compile the documentation, use
 
 .. code-block:: sh
 
-    cd Docs/
     make html
     # This will first compile the Doxygen documentation (execute doxygen)
     # and then build html pages from rst files using sphinx and breathe.
+
+Open the created ``build/html/index.html`` file with your favorite browser.
+Rebuild and refresh as needed.
