@@ -36,7 +36,6 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     // Calculate relevant coefficients
     amrex::Real const cdt = PhysConst::c*dt;
     amrex::Real const cdt_over_dr = cdt*m_stencil_coefs_r[0];
-    amrex::Real const cdt_over_dz = cdt*m_stencil_coefs_z[0];
     amrex::Real const coef1_r = (1._rt - cdt_over_dr)/(1._rt + cdt_over_dr);
     amrex::Real const coef2_r = 2._rt*cdt_over_dr/(1._rt + cdt_over_dr) / PhysConst::c;
     amrex::Real const coef3_r = cdt/(1._rt + cdt_over_dr) / PhysConst::c;
@@ -58,7 +57,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        // Array4<Real> const& Br = Bfield[0]->array(mfi);
+        Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
@@ -77,30 +76,46 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         // Loop over the cells
         amrex::ParallelFor(tbr, tbt, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
-                Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
-                    // At the +r boundary (innermost guard cell)
+                if ( i==domain_box.bigEnd(0)+1 ){
+                    // Mode 0
+                    Br(i,j,0,0) = Br(i,j,0,0);
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        // Real part
+                        Br(i,j,0,2*m-1) = Br(i,j,0,2*m-1);
+                        // Imaginary part
+                        Br(i,j,0,2*m) = Br(i,j,0,2*m);
+                    }
+                }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Mode 0
                     Bt(i,j,0,0) = coef1_r*Bt(i,j,0,0) - coef2_r*Ez(i,j,0,0)
-                        + coef3_r*CylindricalYeeAlgorithm::UpwardDz(
-                            Er, coefs_z, n_coefs_z, i, j, 0, 0));
-                    Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0)
-                        - coef3_r*Et(i,j,0,0)/r;
+                        + coef3_r*CylindricalYeeAlgorithm::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0);
                     for (int m=1; m<nmodes; m++) { // Higher-order modes
                         // Real part
-                        Bt(i,j,0,2*m-1) = coef1_r*Bt(i,j,0,2*m-1)
-                        - coef2_r*Ez(i,j,0,2*m-1)
-                            + coef3_r*CylindricalYeeAlgorithm::UpwardDz(
-                                Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1));
-                        Bz(i,j,0,2*m-1) = coef1_r*Bz(i,j,0,2*m-1)
-                        - coef2_r*Et(i+1,j,0,2*m-1)
-                            + coef3_r/r*(Er(i,j,0,2*m) - Et(i,j,0,2*m-1));
+                        Bt(i,j,0,2*m-1) = coef1_r*Bt(i,j,0,2*m-1) - coef2_r*Ez(i,j,0,2*m-1)
+                            + coef3_r*CylindricalYeeAlgorithm::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1);
                         // Imaginary part
                         Bt(i,j,0,2*m) = coef1_r*Bt(i,j,0,2*m) - coef2_r*Ez(i,j,0,2*m)
-                            + coef3_r*CylindricalYeeAlgorithm::UpwardDz(
-                                Er, coefs_z, n_coefs_z, i, j, 0, 2*m));
+                            + coef3_r*CylindricalYeeAlgorithm::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m);
+                    }
+                }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
+                // At the +r boundary (innermost guard cell)
+                if ( i==domain_box.bigEnd(0)+1 ){
+                    // Mode 0
+                    Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0) - coef3_r*Et(i,j,0,0)/r;
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        // Real part
+                        Bz(i,j,0,2*m-1) = coef1_r*Bz(i,j,0,2*m-1)
+                            - coef2_r*Et(i+1,j,0,2*m-1) + coef3_r/r*(m*Er(i,j,0,2*m) - Et(i,j,0,2*m-1));
+                        // Imaginary part
                         Bz(i,j,0,2*m) = coef1_r*Bz(i,j,0,2*m) - coef2_r*Et(i+1,j,0,2*m)
-                            + coef3_r/r*(Er(i,j,0,2*m-1) - Et(i,j,0,2*m));
+                            + coef3_r/r*(m*Er(i,j,0,2*m-1) - Et(i,j,0,2*m));
                     }
                 }
             }
