@@ -1506,7 +1506,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                         const int lev,
                                         const amrex::BoxArray& realspace_ba,
                                         const amrex::DistributionMapping& dm,
-                                        const std::array<Real,3> dx)
+                                        const std::array<Real,3>& dx)
 {
 #if (AMREX_SPACEDIM == 3)
     RealVect dx_vect(dx[0], dx[1], dx[2]);
@@ -1547,7 +1547,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                       const int lev,
                                       const amrex::BoxArray& realspace_ba,
                                       const amrex::DistributionMapping& dm,
-                                      const std::array<Real,3> dx,
+                                      const std::array<Real,3>& dx,
                                       const bool pml_flag)
 {
 #if (AMREX_SPACEDIM == 3)
