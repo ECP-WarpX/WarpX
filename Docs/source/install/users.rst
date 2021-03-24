@@ -119,8 +119,8 @@ After installing the :ref:`WarpX dependencies <install-dependencies>`, you can a
 .. code-block:: bash
 
    # get the source code
-   git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   cd warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   cd $HOME/src/warpx
 
    # configure
    cmake -S . -B build

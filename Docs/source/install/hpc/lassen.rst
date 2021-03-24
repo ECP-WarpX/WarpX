@@ -80,9 +80,10 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
+   cd $HOME/src/warpx
    rm -rf build
 
-   cmake -B build -DWarpX_COMPUTE=CUDA -DWarpX_OPENPMD=ON
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_OPENPMD=ON
    cmake --build build -j 10
 
 This will build an executable in ``build/bin/``.

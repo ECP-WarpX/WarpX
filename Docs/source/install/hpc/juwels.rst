@@ -27,12 +27,7 @@ Use the following commands to download the WarpX source code and switch to the c
 
 .. code-block:: bash
 
-   mkdir ~/src
-   cd ~/src
-
-   git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone https://github.com/ECP-WarpX/picsar.git
-   git clone https://github.com/AMReX-Codes/amrex.git
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
 We use the following modules and environments on the system.
 
@@ -45,6 +40,7 @@ We use the following modules and environments on the system.
    module load GCC
    module load OpenMPI
    module load CUDA
+   module load HDF5
    module load Python
 
    # JUWELS' job scheduler may not map ranks to GPUs,
@@ -69,9 +65,25 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
-   make -j 16 COMP=gcc USE_GPU=TRUE MPI_THREAD_MULTIPLE=FALSE
+   cd $HOME/src/warpx
+   rm -rf build
+
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_OPENPMD=ON -DWarpX_MPI_THREAD_MULTIPLE=OFF
+   cmake --build build -j 16
 
 The other :ref:`general compile-time options <install-developers>` apply as usual.
+
+The executable will be generated in ``build/bin/``.
+
+.. note::
+
+   Currently, if you want to use HDF5 output with openPMD, you need to add
+
+   .. code-block:: bash
+
+      export OMPI_MCA_io=romio321
+
+   in your job scripts, before running the ``srun`` command.
 
 Running
 -------
@@ -89,29 +101,4 @@ Queue: batch (2 x Intel Xeon Platinum 8168 CPUs, 24 Cores + 24 Hyperthreads/CPU)
 
 *todo*
 
-See :ref:`yt <dataanalysis-yt>` for more information on how to visualize the simulation results.
-
-Using openPMD
--------------
-
-In order to compile for openPMD output and HDF5 format, please use (in addition to modules above)
-
-.. code-block:: bash
-
-   module load HDF5
-
-and use CMake for the compilation: in the WarpX repo
-
-.. code-block:: bash
-
-   rm -rf build # clean previous build
-   mkdir build
-   cd build
-   cmake .. -DWarpX_COMPUTE=CUDA -DWarpX_MPI_THREAD_MULTIPLE=OFF -DWarpX_OPENPMD=ON
-   make -j 16
-
-This will take a while. The executable will be generated in ``<WarpX repo>/build/bin/``.
-
-.. note::
-
-   Currently, you need to add ``OMPI_MCA_io=romio321 `` at the beginning of your ``srun`` command to use HDF5 output.
+See the :ref:`data analysis section <dataanalysis-formats>` for more information on how to visualize the simulation results.

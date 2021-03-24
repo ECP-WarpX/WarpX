@@ -25,10 +25,7 @@ Use the following commands to download the WarpX source code and switch to the c
 
 .. code-block:: bash
 
-   mkdir ~/src
-   cd ~/src
-
-   git clone https://github.com/ECP-WarpX/WarpX.git warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
 We use the following modules and environments on the system (``$HOME/warpx.profile``).
 
@@ -125,9 +122,10 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
+   cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S build -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
