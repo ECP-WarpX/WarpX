@@ -220,9 +220,6 @@ jobs:
      # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
      # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
-  # MPI_C is broken since HIP 4.1
-  # https://gitlab.kitware.com/cmake/cmake/-/issues/21968
-  # https://github.com/ROCm-Developer-Tools/HIP/issues/2246
   build_hip:
     name: HIP SP [Linux]
     runs-on: ubuntu-20.04
@@ -237,14 +234,14 @@ jobs:
         source /etc/profile.d/rocm.sh
         hipcc --version
         export CXX=$(which hipcc)
-        export CC=$(which hipcc)
+        export CC=$(which clang)
 
         cmake -S . -B build_sp \
           -DCMAKE_VERBOSE_MAKEFILE=ON \
           -DAMReX_AMD_ARCH=gfx900     \
           -DWarpX_COMPUTE=HIP         \
           -DWarpX_LIB=ON              \
-          -DWarpX_MPI=OFF             \
+          -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \
           -DWarpX_PRECISION=SINGLE    \
           -DWarpX_PSATD=ON
