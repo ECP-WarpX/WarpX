@@ -79,6 +79,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
 ``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support
+``WarpX_GPUCLOCK``            ON/**OFF**                                   Add GPU kernel timers (cost function)
 ``WarpX_IPO``                 ON/**OFF**                                   Compile WarpX with interprocedural optimization (aka LTO)
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
