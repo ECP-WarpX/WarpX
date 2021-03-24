@@ -19,7 +19,7 @@ filename = sys.argv[1]
 ############################
 ### INITIAL LASER ENERGY ###
 ############################
-energy_start = 7.297301362346945e-08 # electromagnetic energy at iteration 50
+energy_start = 7.297324456269243e-08 # electromagnetic energy at iteration 50
 
 # Check consistency of field energy diagnostics with initial energy above
 ds = yt.load('pml_x_psatd_plt00050')

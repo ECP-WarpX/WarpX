@@ -338,6 +338,11 @@ WarpX::OneStep_nosub (Real cur_time)
                 FillBoundaryE(guard_cells.ng_alloc_EB);
             }
             PushPSATD(dt[0]);
+
+            // Synchronize E and B fields on nodal points
+            NodalSyncE();
+            NodalSyncB();
+
             FillBoundaryE(guard_cells.ng_alloc_EB);
             FillBoundaryB(guard_cells.ng_alloc_EB);
 
@@ -346,10 +351,6 @@ WarpX::OneStep_nosub (Real cur_time)
                 WarpX::Hybrid_QED_Push(dt);
                 FillBoundaryE(guard_cells.ng_alloc_EB);
             }
-
-            // Synchronize E and B fields on nodal points
-            NodalSyncE();
-            NodalSyncB();
 
             if (do_pml) {
                 DampPML();
