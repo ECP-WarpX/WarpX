@@ -24,10 +24,7 @@ Use the following commands to download the WarpX source code and switch to the c
 
 .. code-block:: bash
 
-   mkdir ~/src
-   cd ~/src
-
-   git clone https://github.com/ECP-WarpX/WarpX.git warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
 KNL
 ^^^
@@ -137,6 +134,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
+   cd $HOME/src/warpx
    rm -rf build
 
    #                           append if you target GPUs:    -DWarpX_COMPUTE=CUDA
