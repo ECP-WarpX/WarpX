@@ -145,7 +145,7 @@ If you also want to select a CUDA compiler:
    export CUDACXX=$(which nvcc)
    export CUDAHOSTCXX=$(which clang++)
 
-.. note:
+.. note::
 
    Please clean your build directory with ``rm -rf build/`` after changing the compiler.
    Now call ``cmake -S . -B build`` (+ further options) again to re-initialize the build configuration.
