@@ -110,6 +110,7 @@ BTDiagnostics::ReadParameters ()
     pp_diag_name.query("file_prefix", m_file_prefix);
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
+    pp_diag_name.query("btd_buffer_size", m_buffer_size);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
 
     pp_diag_name.get("num_snapshots_lab", m_num_snapshots_lab);
