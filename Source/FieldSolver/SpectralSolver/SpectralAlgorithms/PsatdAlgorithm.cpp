@@ -38,6 +38,7 @@ PsatdAlgorithm::PsatdAlgorithm(
 #endif
     m_v_galilean(v_galilean),
     m_dt(dt),
+    m_nodal(nodal),
     m_update_with_rho(update_with_rho),
     m_time_averaging(time_averaging)
 {
@@ -787,11 +788,21 @@ PsatdAlgorithm::VayDeposition (
     using Idx = SpectralFieldIndex;
 
     // Forward Fourier transform of D (temporarily stored in current):
-    // D is nodal and does not match the staggering of J, therefore we pass the
-    // actual staggering of D (IntVect(1)) to the ForwardTransform function
-    field_data.ForwardTransform(lev, *current[0], Idx::Jx, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[1], Idx::Jy, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0, IntVect(1));
+    // D is nodal and does not match the staggering of J, hence we pass the
+    // actual staggering of D (IntVect(1)) to the ForwardTransform function,
+    // unless all quantities are cell-centered (warpx.do_nodal = 1)
+    if (m_nodal)
+    {
+        field_data.ForwardTransform(lev, *current[0], Idx::Jx, 0, amrex::IntVect::TheCellVector());
+        field_data.ForwardTransform(lev, *current[1], Idx::Jy, 0, amrex::IntVect::TheCellVector());
+        field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0, amrex::IntVect::TheCellVector());
+    }
+    else
+    {
+        field_data.ForwardTransform(lev, *current[0], Idx::Jx, 0, amrex::IntVect::TheNodeVector());
+        field_data.ForwardTransform(lev, *current[1], Idx::Jy, 0, amrex::IntVect::TheNodeVector());
+        field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0, amrex::IntVect::TheNodeVector());
+    }
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi)

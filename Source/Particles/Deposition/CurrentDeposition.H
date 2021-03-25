@@ -661,6 +661,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                             const amrex::Dim3 lo,
                             const amrex::Real q,
                             const int n_rz_azimuthal_modes,
+                            const int do_nodal,
                             amrex::Real* cost,
                             const long load_balance_costs_update_algo)
 {
@@ -762,7 +763,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         double const z_new = (zp - zmin) * dzi;
         double const z_old = z_new - vz * dt * dzi;
 
-        // Shape factor arrays for current and old positions (nodal)
+        // Shape factor arrays for current and old positions
         // Keep these double to avoid bug in single precision.
         double sx_new[depos_order+1] = {0.};
         double sx_old[depos_order+1] = {0.};
@@ -780,29 +781,35 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         // i_new leftmost grid point in x that the particle touches
         // sx_new shape factor along x for the centering of each current
         Compute_shape_factor< depos_order > const compute_shape_factor;
-        const int i_new = compute_shape_factor(sx_new, x_new);
+        const int i_new = (do_nodal) ? compute_shape_factor(sx_new, x_new - 0.5_rt)
+                                     : compute_shape_factor(sx_new, x_new);
 #if (defined WARPX_DIM_3D)
         // j_new leftmost grid point in y that the particle touches
         // sy_new shape factor along y for the centering of each current
-        const int j_new = compute_shape_factor(sy_new, y_new);
+        const int j_new = (do_nodal) ? compute_shape_factor(sy_new, y_new - 0.5_rt)
+                                     : compute_shape_factor(sy_new, y_new);
 #endif
         // k_new leftmost grid point in z that the particle touches
         // sz_new shape factor along z for the centering of each current
-        const int k_new = compute_shape_factor(sz_new, z_new);
+        const int k_new = (do_nodal) ? compute_shape_factor(sz_new, z_new - 0.5_rt)
+                                     : compute_shape_factor(sz_new, z_new);
 
         // Compute shape factors for old positions
 
         // i_old leftmost grid point in x that the particle touches
         // sx_old shape factor along x for the centering of each current
-        const int i_old = compute_shape_factor(sx_old, x_old);
+        const int i_old = (do_nodal) ? compute_shape_factor(sx_old, x_old - 0.5_rt)
+                                     : compute_shape_factor(sx_old, x_old);
 #if (defined WARPX_DIM_3D)
         // j_old leftmost grid point in y that the particle touches
         // sy_old shape factor along y for the centering of each current
-        const int j_old = compute_shape_factor(sy_old, y_old);
+        const int j_old = (do_nodal) ? compute_shape_factor(sy_old, y_old - 0.5_rt)
+                                     : compute_shape_factor(sy_old, y_old);
 #endif
         // k_old leftmost grid point in z that the particle touches
         // sz_old shape factor along z for the centering of each current
-        const int k_old = compute_shape_factor(sz_old, z_old);
+        const int k_old = (do_nodal) ? compute_shape_factor(sz_old, z_old - 0.5_rt)
+                                     : compute_shape_factor(sz_old, z_old);
 
         // Deposit current into jx_arr, jy_arr and jz_arr
 #if (defined WARPX_DIM_XZ)

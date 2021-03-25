@@ -140,6 +140,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         // Other member variables
         amrex::Array<amrex::Real,3> m_v_galilean;
         amrex::Real m_dt;
+        bool m_nodal;
         bool m_update_with_rho;
         bool m_time_averaging;
         bool m_is_galilean;
