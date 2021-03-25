@@ -16,8 +16,8 @@ LoadBalanceEfficiency::LoadBalanceEfficiency (std::string rd_name)
 {
     // read number of levels
     int nLevel = 0;
-    ParmParse pp("amr");
-    pp.query("max_level", nLevel);
+    ParmParse pp_amr("amr");
+    pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
     // resize data array

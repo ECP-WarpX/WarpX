@@ -939,7 +939,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             {
                 MultiFab::Add(*current_buf[lev+1][idim],
                                *current_cp [lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
-                               current_cp[lev+1][idim]->nGrow());
+                               current_cp[lev+1][idim]->nGrowVect());
                 mf.ParallelAdd(*current_buf[lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
                                current_buf[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
                                period);
@@ -1051,7 +1051,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
         {
             MultiFab::Add(*charge_buf[lev+1],
                            *rho_cp[lev+1], icomp, icomp, ncomp,
-                           rho_cp[lev+1]->nGrow());
+                           rho_cp[lev+1]->nGrowVect());
             mf.ParallelAdd(*charge_buf[lev+1], icomp, 0,
                            ncomp,
                            charge_buf[lev+1]->nGrowVect(), IntVect::TheZeroVector(),

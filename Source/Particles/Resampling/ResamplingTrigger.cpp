@@ -10,13 +10,13 @@
 
 ResamplingTrigger::ResamplingTrigger (const std::string species_name)
 {
-    amrex::ParmParse pprt(species_name);
+    amrex::ParmParse pp_species_name(species_name);
 
     std::vector<std::string> resampling_trigger_int_string_vec = {"0"};
-    pprt.queryarr("resampling_trigger_intervals", resampling_trigger_int_string_vec);
+    pp_species_name.queryarr("resampling_trigger_intervals", resampling_trigger_int_string_vec);
     m_resampling_intervals = IntervalsParser(resampling_trigger_int_string_vec);
 
-    queryWithParser(pprt, "resampling_trigger_max_avg_ppc", m_max_avg_ppc);
+    queryWithParser(pp_species_name, "resampling_trigger_max_avg_ppc", m_max_avg_ppc);
 }
 
 bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_numparts) const

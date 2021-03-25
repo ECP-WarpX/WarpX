@@ -31,13 +31,13 @@ Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
 
-    amrex::ParmParse pp(m_diag_name);
+    amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
-    pp.query("file_prefix", m_file_prefix);
-    pp.query("format", m_format);
+    pp_diag_name.query("file_prefix", m_file_prefix);
+    pp_diag_name.query("format", m_format);
 
     // Query list of grid fields to write to output
-    bool varnames_specified = pp.queryarr("fields_to_plot", m_varnames);
+    bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
     if (!varnames_specified){
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
@@ -74,14 +74,14 @@ Diagnostics::BaseReadParameters ()
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
 
-    bool lo_specified = pp.queryarr("diag_lo", m_lo);
+    bool lo_specified = pp_diag_name.queryarr("diag_lo", m_lo);
 
     if (!lo_specified) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    bool hi_specified = pp.queryarr("diag_hi", m_hi);
+    bool hi_specified = pp_diag_name.queryarr("diag_hi", m_hi);
     if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
@@ -107,7 +107,7 @@ Diagnostics::BaseReadParameters ()
     // Initialize cr_ratio with default value of 1 for each dimension.
     amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
-    bool cr_specified = pp.queryarr("coarsening_ratio", cr_ratio);
+    bool cr_specified = pp_diag_name.queryarr("coarsening_ratio", cr_ratio);
     if (cr_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
@@ -115,7 +115,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Names of species to write to output
-    bool species_specified = pp.queryarr("species", m_output_species_names);
+    bool species_specified = pp_diag_name.queryarr("species", m_output_species_names);
 
     // Names of all species in the simulation
     m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
@@ -184,9 +184,9 @@ Diagnostics::InitData ()
     // When particle buffers, m_particle_buffers are included, they will be initialized here
     InitializeParticleBuffer();
 
-    amrex::ParmParse pp(m_diag_name);
+    amrex::ParmParse pp_diag_name(m_diag_name);
     amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
-    if ( pp.queryarr("diag_lo", dummy_val) || pp.queryarr("diag_hi", dummy_val) ) {
+    if ( pp_diag_name.queryarr("diag_lo", dummy_val) || pp_diag_name.queryarr("diag_hi", dummy_val) ) {
         // set geometry filter for particle-diags to true when the diagnostic domain-extent
         // is specified by the user
         for (int i = 0; i < m_output_species.size(); ++i) {
@@ -201,7 +201,7 @@ Diagnostics::InitData ()
 
     // default for writing species output is 1
     int write_species = 1;
-    pp.query("write_species", write_species);
+    pp_diag_name.query("write_species", write_species);
     if (write_species == 0) {
         if (m_format == "checkpoint"){
             amrex::Abort("For checkpoint format, write_species flag must be 1.");

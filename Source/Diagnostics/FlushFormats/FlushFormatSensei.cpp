@@ -18,10 +18,10 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
 #ifndef BL_USE_SENSEI_INSITU
     amrex::ignore_unused(m_insitu_pin_mesh, m_insitu_bridge, m_amr_mesh, diag_name);
 #else
-    amrex::ParmParse pp(diag_name);
+    amrex::ParmParse pp_diag_name(diag_name);
 
-    pp.query("sensei_config", m_insitu_config);
-    pp.query("sensei_pin_mesh", m_insitu_pin_mesh);
+    pp_diag_name.query("sensei_config", m_insitu_config);
+    pp_diag_name.query("sensei_pin_mesh", m_insitu_pin_mesh);
 
     m_insitu_bridge = new amrex::AmrMeshInSituBridge;
     m_insitu_bridge->setEnabled(true);

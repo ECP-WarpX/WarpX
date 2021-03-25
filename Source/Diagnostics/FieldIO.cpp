@@ -110,7 +110,7 @@ void
 AverageAndPackVectorField( MultiFab& mf_avg,
                            const std::array< std::unique_ptr<MultiFab>, 3 >& vector_field,
                            const DistributionMapping& dm,
-                           const int dcomp, const int ngrow )
+                           const int dcomp, const IntVect ngrow )
 {
 #ifndef WARPX_DIM_RZ
     (void)dm;
@@ -150,7 +150,7 @@ void
 AverageAndPackScalarField (MultiFab& mf_avg,
                            const MultiFab & scalar_field,
                            const DistributionMapping& dm,
-                           const int dcomp, const int ngrow )
+                           const int dcomp, const IntVect ngrow )
 {
 
 #ifdef WARPX_DIM_RZ
