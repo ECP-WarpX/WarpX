@@ -708,7 +708,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         is_PSATD_RZ = true;
 #endif
-    if( !is_PSATD_RZ )
+    if( !is_PSATD_RZ && !WarpX::do_nodal )
         nba.surroundingNodes();
 
     // Number of guard cells for local deposition of rho

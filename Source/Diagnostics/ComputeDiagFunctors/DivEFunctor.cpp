@@ -20,14 +20,16 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
-    // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
-    amrex::IntVect cell_type = amrex::IntVect::TheNodeVector();
+    amrex::IntVect cell_type;
 #ifdef WARPX_DIM_RZ
     // For RZ spectral, all quantities are cell centered.
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         cell_type = amrex::IntVect::TheCellVector();
 #endif
+    // For staggered calculations, divE is computed on the nodes.
+    // Instead, if warpx.do_nodal = 1, all quantities are cell-centered.
+    cell_type = (warpx.do_nodal) ? amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev), cell_type);
     amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );
     warpx.ComputeDivE(divE, m_lev);
