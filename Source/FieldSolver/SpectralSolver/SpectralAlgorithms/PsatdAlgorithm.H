@@ -47,7 +47,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             else {
                 return SpectralFieldIndex::n_fields;
             }
-        };
+        }
 
         // TODO Add Doxygen docs
         void InitializeSpectralCoefficients (

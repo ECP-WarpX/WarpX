@@ -516,14 +516,14 @@ LaserParticleContainer::Evolve (int lev,
                 int* ion_lev = nullptr;
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, 0, np_current, thread_num,
-                               lev, lev, dt);
+                               lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
 
                 bool has_buffer = cjx;
                 if (has_buffer){
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    0, np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt);
+                                   lev, lev-1, dt, -0.5_rt); // Deposit current at t_{n+1/2}
                 }
             }
 

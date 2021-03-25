@@ -362,7 +362,7 @@ void ReadBCParams ()
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
         return;
         // When all boundary conditions are supported, the abort statement below will be introduced
-        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
+        //amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
     }
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
