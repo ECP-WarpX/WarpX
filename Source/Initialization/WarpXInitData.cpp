@@ -67,6 +67,10 @@ void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
+    Print() << "WarpX (" << WarpX::Version() << ")\n";
+#ifdef WARPX_QED
+    Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
+#endif
 
     if (restart_chkfile.empty())
     {
@@ -265,18 +269,18 @@ void
 WarpX::InitLevelData (int lev, Real /*time*/)
 {
 
-    ParmParse pp("warpx");
+    ParmParse pp_warpx("warpx");
 
     // default values of E_external_grid and B_external_grid
     // are used to set the E and B field when "constant" or
     // "parser" is not explicitly used in the input.
-    pp.query("B_ext_grid_init_style", B_ext_grid_s);
+    pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s);
     std::transform(B_ext_grid_s.begin(),
                    B_ext_grid_s.end(),
                    B_ext_grid_s.begin(),
                    ::tolower);
 
-    pp.query("E_ext_grid_init_style", E_ext_grid_s);
+    pp_warpx.query("E_ext_grid_init_style", E_ext_grid_s);
     std::transform(E_ext_grid_s.begin(),
                    E_ext_grid_s.end(),
                    E_ext_grid_s.begin(),
@@ -285,17 +289,17 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
-        pp.getarr("B_external_grid", B_external_grid);
+        pp_warpx.getarr("B_external_grid", B_external_grid);
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (E_ext_grid_s == "constant")
-        pp.getarr("E_external_grid", E_external_grid);
+        pp_warpx.getarr("E_external_grid", E_external_grid);
 
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
-    ParmParse ppsatd("psatd");
-    ppsatd.query("do_time_averaging", fft_do_time_averaging );
+    ParmParse pp_psatd("psatd");
+    pp_psatd.query("do_time_averaging", fft_do_time_averaging );
 
     for (int i = 0; i < 3; ++i) {
         current_fp[lev][i]->setVal(0.0);
@@ -352,11 +356,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Bx_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
                                                     str_Bx_ext_grid_function);
-       Store_parserString(pp, "By_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
                                                     str_By_ext_grid_function);
-       Store_parserString(pp, "Bz_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
                                                     str_Bz_ext_grid_function);
        Bxfield_parser = std::make_unique<ParserWrapper<3>>(
                                 makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
@@ -400,11 +404,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Ex_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
                                                     str_Ex_ext_grid_function);
-       Store_parserString(pp, "Ey_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
                                                     str_Ey_ext_grid_function);
-       Store_parserString(pp, "Ez_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
                                                     str_Ez_ext_grid_function);
 
        Exfield_parser = std::make_unique<ParserWrapper<3>>(

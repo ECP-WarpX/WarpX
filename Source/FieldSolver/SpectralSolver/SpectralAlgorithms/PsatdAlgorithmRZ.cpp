@@ -299,7 +299,7 @@ PsatdAlgorithmRZ::CurrentCorrection (const int lev,
 }
 
 void
-PsatdAlgorithmRZ::VayDeposition (const int lev /**/,
+PsatdAlgorithmRZ::VayDeposition (const int /* lev */,
                                  SpectralFieldDataRZ& /*field_data*/,
                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {

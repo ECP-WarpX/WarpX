@@ -85,6 +85,18 @@ public:
                         const amrex::MultiFab& /*Bz*/) override {}
 
 
+    // DepositCharge should do nothing for photons
+    virtual void DepositCharge (WarpXParIter& /*pti*/,
+                                RealVector& /*wp*/,
+                                const int * const /*ion_lev*/,
+                                amrex::MultiFab* /*rho*/,
+                                int /*icomp*/,
+                                const long /*offset*/,
+                                const long /*np_to_depose*/,
+                                int /*thread_num*/,
+                                int /*lev*/,
+                                int /*depos_lev*/) override {}
+
     // DepositCurrent should do nothing for photons
     virtual void DepositCurrent(WarpXParIter& /*pti*/,
                                 RealVector& /*wp*/,
@@ -100,7 +112,8 @@ public:
                                 int /*thread_num*/,
                                 int /*lev*/,
                                 int /*depos_lev*/,
-                                amrex::Real /*dt*/) override {}
+                                amrex::Real /*dt*/,
+                                amrex::Real /*relative_time*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_
