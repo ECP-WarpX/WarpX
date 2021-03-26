@@ -23,12 +23,24 @@ It supports many features including Perfectly-Matched Layers (PML), mesh refinem
 
 ## Documentation
 
+[![PICMI](https://img.shields.io/static/v1?label="works%20with"&message="PICMI"&color="blueviolet")](https://picmi-standard.github.io)
+[![openPMD](https://img.shields.io/static/v1?label="works%20with"&message="openPMD"&color="blueviolet")](https://www.openPMD.org)
+[![yt-project](https://img.shields.io/static/v1?label="works%20with"&message="yt"&color="blueviolet")](https://yt-project.org)
+
 In order to learn how to install and run the code, please see the online documentation:
 https://warpx.readthedocs.io
 
 To contact the developers, feel free to open an issue on this repo, or visit our Gitter room at https://gitter.im/ECP-WarpX/community
 
 ## Contributing
+
+[![AMReX](https://img.shields.io/static/v1?label="runs%20on"&message="AMReX"&color="blueviolet")](https://amrex-codes.github.io/)
+[![PICSAR](https://img.shields.io/static/v1?label="runs%20on"&message="PICSAR"&color="blueviolet")](https://picsar.net)
+[![openPMD-api](https://img.shields.io/static/v1?label="runs%20on"&message="openPMD-api"&color="blueviolet")](https://openpmd-api.readthedocs.io)
+[![ADIOS](https://img.shields.io/static/v1?label="runs%20on"&message="ADIOS"&color="blueviolet")](https://csmd.ornl.gov/adios)
+[![HDF5](https://img.shields.io/static/v1?label="runs%20on"&message="HDF5"&color="blueviolet")](https://www.hdfgroup.org/)
+[![Ascent](https://img.shields.io/static/v1?label="runs%20on"&message="Ascent"&color="blueviolet")](http://www.ascent-dav.org)
+[![SENSEI](https://img.shields.io/static/v1?label="runs%20on"&message="SENSEI"&color="blueviolet")](https://sensei-insitu.org)
 
 Our workflow is described in [CONTRIBUTING.rst](CONTRIBUTING.rst).
 
