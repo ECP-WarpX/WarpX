@@ -179,35 +179,10 @@ private:
      *  z slice location.
      */
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_cell_centered_data;
-    /** Name of the output directories where the lab-frame data
-     *  is dumped out in a custom format.
-     *  This is a TMP variable, which may not be required after including
-     *  OpenPMD and plotfile formats.
-     */
-    std::vector<std::string> m_file_name;
     /** Vector of pointers to compute cell-centered data, per level, per component
      *  using the coarsening-ratio provided by the user.
      */
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
-    /** Customized (temporary) function to flush out back-transformed data */
-    void TMP_writeMetaData ();
-    /** Customized (temporary) functions creating lab-frame directories
-     *  to flush out back-transformed data
-     * \param[in] i_buffer, index of the buffer data that is being flushed out
-     * \param[in] lev, level of the buffer data.
-     *  (Currently only single-level data is supported.)
-     */
-    void TMP_createLabFrameDirectories (int i_buffer, int lev);
-    /** Customized (temporary) functions creating header files
-     *  to flush out back-transformed data for the ith buffer
-     * \param[in] i_buffer, ith buffer storing data for the ith snapshot
-     */
-    void TMP_writeLabFrameHeader (int i_buffer);
-    /** Customized (temporary) output format for flushing out lab-frame data stored in
-     *  the output buffer, m_mf_output.
-     * \param[in] i_buffer, ith buffer for which the lab-farme data is flushed out.
-     */
-    void TMP_FlushLabFrameData ( int i_buffer );
     /** Define the cell-centered multi-component MultiFab at level, lev.
      *  This function is called when the buffer counter for a snapshot is zero,
      *  or when the buffer is empty. Checked using `buffer_empty(i_buffer)`
@@ -299,9 +274,18 @@ private:
     /** Temporarily clear species output for BTD until particle buffer is added */
     void TMP_ClearSpeciesDataForBTD() override;
 
+    /** Merge the lab-frame buffer multifabs so it can be visualized as
+     *  a single plotfile
+     */
     void MergeBuffersForPlotfile (int i_snapshot);
+    /** Interleave lab-frame meta-data of the buffers to be consistent
+     *  with the merged plotfile lab-frame data.
+     */
     void InterleaveBufferAndSnapshotHeader ( std::string buffer_Header,
                                              std::string snapshot_Header);
+    /** Interleave meta-data of the buffer multifabs to be consistent
+     *  with the merged plotfile lab-frame data.
+     */
     void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
                                    std::string snapshot_FabHeaderFilename,
                                    std::string newsnapshot_FabFilename);

@@ -47,24 +47,27 @@ class SpectralFieldData
 {
 
     public:
-        SpectralFieldData( const amrex::BoxArray& realspace_ba,
+        SpectralFieldData( const int lev,
+                           const amrex::BoxArray& realspace_ba,
                            const SpectralKSpace& k_space,
                            const amrex::DistributionMapping& dm,
                            const int n_field_required,
-                           const bool periodic_single_box );
+                           const bool periodic_single_box);
         SpectralFieldData() = default; // Default constructor
         SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
         ~SpectralFieldData();
 
-        void ForwardTransform (const amrex::MultiFab& mf, const int field_index,
+        void ForwardTransform (const int lev,
+                               const amrex::MultiFab& mf, const int field_index,
                                const int i_comp, const amrex::IntVect& stag);
         AMREX_FORCE_INLINE
-        void ForwardTransform (const amrex::MultiFab& mf, const int field_index, const int i_comp)
+        void ForwardTransform (const int lev,
+                               const amrex::MultiFab& mf, const int field_index, const int i_comp)
         {
-            ForwardTransform(mf, field_index, i_comp, mf.ixType().toIntVect());
+            ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
         }
 
-        void BackwardTransform (amrex::MultiFab& mf, const int field_index, const int i_comp);
+        void BackwardTransform (const int lev, amrex::MultiFab& mf, const int field_index, const int i_comp);
 
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;

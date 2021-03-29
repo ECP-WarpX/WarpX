@@ -34,8 +34,6 @@ void BTDiagnostics::DerivedInitData ()
     // and then sliced+back-transformed+filled_to_buffer.
     // The number of levels to be output is nlev_output.
     nlev_output = 1;
-    // temporary function related to customized output from previous BTD to verify accuracy
-    TMP_writeMetaData();
 
     // allocate vector of m_t_lab with m_num_buffers;
     m_t_lab.resize(m_num_buffers);
@@ -57,8 +55,6 @@ void BTDiagnostics::DerivedInitData ()
     m_buffer_counter.resize(m_num_buffers);
     // allocate vector of num_Cells in the lab-frame
     m_snapshot_ncells_lab.resize(m_num_buffers);
-    // allocate vector of file names for each buffer
-    m_file_name.resize(m_num_buffers);
     // allocate vector of cell centered multifabs for nlevels
     m_cell_centered_data.resize(nmax_lev);
     // allocate vector of cell-center functors for nlevels
@@ -75,10 +71,6 @@ void BTDiagnostics::DerivedInitData ()
         m_geom_snapshot[i].resize(nmax_lev);
     }
 
-    for (int i = 0; i < m_num_buffers; ++i) {
-        // TMP variable name for customized BTD output to verify accuracy
-        m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
-    }
     for (int lev = 0; lev < nmax_lev; ++lev) {
         // Define cell-centered multifab over the whole domain with
         // user-defined crse_ratio for nlevels
@@ -112,25 +104,21 @@ BTDiagnostics::ReadParameters ()
         );
 
     // Read list of back-transform diag parameters requested by the user //
-    amrex::ParmParse pp(m_diag_name);
+    amrex::ParmParse pp_diag_name(m_diag_name);
 
-    if (m_format == "openpmd") {
-        m_file_prefix = "diags/" + m_diag_name;
-    } else {
-        m_file_prefix = "diags/lab_frame_data/" + m_diag_name;
-    }
-    pp.query("file_prefix", m_file_prefix);
-    pp.query("do_back_transformed_fields", m_do_back_transformed_fields);
-    pp.query("do_back_transformed_particles", m_do_back_transformed_particles);
+    m_file_prefix = "diags/" + m_diag_name;
+    pp_diag_name.query("file_prefix", m_file_prefix);
+    pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
+    pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
 
-    pp.get("num_snapshots_lab", m_num_snapshots_lab);
+    pp_diag_name.get("num_snapshots_lab", m_num_snapshots_lab);
     m_num_buffers = m_num_snapshots_lab;
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
-    snapshot_interval_is_specified = queryWithParser(pp, "dt_snapshots_lab", m_dt_snapshots_lab);
-    if ( queryWithParser(pp, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
+    snapshot_interval_is_specified = queryWithParser(pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
+    if ( queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }
@@ -138,36 +126,6 @@ BTDiagnostics::ReadParameters ()
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
     // For BTD, we always need rho to perform Lorentz Transform of current-density
     if (WarpXUtilStr::is_in(m_cellcenter_varnames, "rho")) warpx.setplot_rho(true);
-}
-
-void
-BTDiagnostics::TMP_writeMetaData ()
-{
-    // This function will have the same functionality as writeMetaData in
-    // previously used BackTransformedDiagnostics class to write
-    // back-transformed data in a customized format
-
-    if (amrex::ParallelDescriptor::IOProcessor()) {
-        const std::string fullpath = m_file_prefix + "/snapshots";
-        if (!amrex::UtilCreateDirectory(fullpath, 0755)) amrex::CreateDirectoryFailed(fullpath);
-
-        amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
-        std::ofstream HeaderFile;
-        HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
-        std::string HeaderFileName(m_file_prefix + "/snapshots/Header");
-        HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
-                                                std::ofstream::trunc |
-                                                std::ofstream::binary);
-        if (!HeaderFile.good()) amrex::FileOpenFailed( HeaderFileName );
-
-        HeaderFile.precision(17);
-        HeaderFile << m_num_snapshots_lab << "\n";
-        HeaderFile << m_dt_snapshots_lab << "\n";
-        HeaderFile << m_gamma_boost << "\n";
-        HeaderFile << m_beta_boost << "\n";
-
-    }
-
 }
 
 bool
@@ -323,8 +281,6 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 #else
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
 #endif
-    // Call funtion to create directories for customized output format
-    TMP_createLabFrameDirectories(i_buffer, lev);
 }
 
 void
@@ -395,26 +351,6 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
             m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
         }
     }
-
-}
-
-// Temporary function only to debug the current implementation.
-// Will be replaced with plotfile/OpenPMD functionality
-void
-BTDiagnostics::TMP_createLabFrameDirectories(int i_buffer, int lev)
-{
-    // This is a creates lab-frame directories for writing out customized BTD output.
-    if (amrex::ParallelDescriptor::IOProcessor())
-    {
-        if ( !amrex::UtilCreateDirectory (m_file_name[i_buffer], 0755) )
-            amrex::CreateDirectoryFailed(m_file_name[i_buffer]);
-
-        const std::string &fullpath = amrex::LevelFullPath(lev, m_file_name[i_buffer]);
-        if ( !amrex::UtilCreateDirectory(fullpath, 0755) )
-            amrex::CreateDirectoryFailed(fullpath);
-    }
-    amrex::ParallelDescriptor::Barrier();
-    TMP_writeLabFrameHeader(i_buffer);
 
 }
 
@@ -529,7 +465,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         m_mf_output[i_buffer][lev] = amrex::MultiFab ( buffer_ba, buffer_dmap,
                                                   m_varnames.size(), ngrow ) ;
 
-        // TMP
         amrex::IntVect ref_ratio = amrex::IntVect(1);
         if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -637,58 +572,12 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 }
 
 void
-BTDiagnostics::TMP_writeLabFrameHeader (int i_buffer)
-{
-    if (amrex::ParallelDescriptor::IOProcessor() )
-    {
-        amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
-        std::ofstream HeaderFile;
-        HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
-        std::string HeaderFileName(m_file_name[i_buffer] + "/Header");
-        HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out    |
-                                                std::ofstream::trunc  |
-                                                std::ofstream::binary );
-
-        if ( !HeaderFile.good() ) amrex::FileOpenFailed( HeaderFileName );
-
-        HeaderFile.precision(17);
-
-        HeaderFile << m_t_lab[i_buffer] << "\n";
-        // Write buffer number of cells
-        HeaderFile << m_snapshot_ncells_lab[i_buffer][0] << ' '
-#if ( AMREX_SPACEDIM==3 )
-                   << m_snapshot_ncells_lab[i_buffer][1] << ' '
-#endif
-                   << m_snapshot_ncells_lab[i_buffer][m_moving_window_dir] << "\n";
-        // Write physical boundary of the buffer
-        // Lower bound
-        HeaderFile << m_snapshot_domain_lab[i_buffer].lo(0) << ' '
-#if ( AMREX_SPACEDIM == 3 )
-                   << m_snapshot_domain_lab[i_buffer].lo(1) << ' '
-#endif
-                   << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << "\n";
-        // Higher bound
-        HeaderFile << m_snapshot_domain_lab[i_buffer].hi(0) << ' '
-#if ( AMREX_SPACEDIM == 3 )
-                   << m_snapshot_domain_lab[i_buffer].hi(1) << ' '
-#endif
-                   << m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
-        // List of fields to flush to file
-        for (int i = 0; i < m_varnames.size(); ++i)
-        {
-            HeaderFile << m_varnames[i] << ' ';
-        }
-        HeaderFile << "\n";
-    }
-}
-
-void
 BTDiagnostics::Flush (int i_buffer)
 {
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
-        file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
+        file_name = amrex::Concatenate(m_file_prefix,i_buffer,5);
         file_name = file_name+"/buffer";
     }
     bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
@@ -705,44 +594,9 @@ BTDiagnostics::Flush (int i_buffer)
         MergeBuffersForPlotfile(i_buffer);
     }
 
-    TMP_FlushLabFrameData (i_buffer);
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
     IncrementBufferFlushCounter(i_buffer);
-}
-
-void
-BTDiagnostics::TMP_FlushLabFrameData ( int i_buffer )
-{
-    // customized output format for writing data stored in buffers to the disk.
-    amrex::VisMF::Header::Version current_version = amrex::VisMF::GetHeaderVersion();
-    amrex::VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
-
-    if ( ! buffer_empty(i_buffer) ) {
-        for ( int lev = 0; lev < nlev_output; ++lev) {
-            const int k_lab = k_index_zlab (i_buffer, lev);
-            const amrex::BoxArray& ba = m_mf_output[i_buffer][lev].boxArray();
-            const int hi = ba[0].bigEnd(m_moving_window_dir);
-            const int lo = hi - m_buffer_counter[i_buffer] + 1;
-
-            amrex::Box buffer_box = m_buffer_box[i_buffer];
-            buffer_box.setSmall(m_moving_window_dir, lo);
-            buffer_box.setBig(m_moving_window_dir, hi);
-            amrex::BoxArray buffer_ba(buffer_box);
-            buffer_ba.maxSize(m_max_box_size);
-            amrex::DistributionMapping buffer_dm(buffer_ba);
-
-            amrex::MultiFab tmp (buffer_ba, buffer_dm, m_varnames.size(), 0);
-            tmp.copy(m_mf_output[i_buffer][lev], 0, 0, m_varnames.size());
-
-            std::stringstream ss;
-            ss << m_file_name[i_buffer] << "/Level_0/"
-               << amrex::Concatenate("buffer", k_lab, 5);
-            amrex::VisMF::Write(tmp, ss.str());
-
-       }
-    }
-    amrex::VisMF::SetHeaderVersion(current_version);
 }
 
 void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
@@ -757,7 +611,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
     const amrex::Vector<int> iteration = warpx.getistep();
     if (amrex::ParallelContext::IOProcessorSub()) {
         // Path to final snapshot plotfiles
-        std::string snapshot_path = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_snapshot,5);
+        std::string snapshot_path = amrex::Concatenate(m_file_prefix,i_snapshot,5);
         // BTD plotfile have only one level, Level0.
         std::string snapshot_Level0_path = snapshot_path + "/Level_0";
         std::string snapshot_Header_filename = snapshot_path + "/Header";
@@ -889,3 +743,4 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
     snapshot_FabHeader.WriteMultiFabHeader();
 
 }
+

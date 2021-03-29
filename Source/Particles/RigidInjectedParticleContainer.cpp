@@ -37,12 +37,12 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
-    getWithParser(pp, "zinject_plane", zinject_plane);
-    pp.query("projected", projected);
-    pp.query("focused", focused);
-    pp.query("rigid_advance", rigid_advance);
+    getWithParser(pp_species_name, "zinject_plane", zinject_plane);
+    pp_species_name.query("projected", projected);
+    pp_species_name.query("focused", focused);
+    pp_species_name.query("rigid_advance", rigid_advance);
 
 }
 
@@ -235,7 +235,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         amrex::FArrayBox const * bxfab,
                                         amrex::FArrayBox const * byfab,
                                         amrex::FArrayBox const * bzfab,
-                                        const int ngE, const int e_is_nodal,
+                                        const amrex::IntVect ngE, const int e_is_nodal,
                                         const long offset,
                                         const long np_to_push,
                                         int lev, int gather_lev,
@@ -399,7 +399,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             amrex::Box box = pti.tilebox();
-            box.grow(Ex.nGrow());
+            box.grow(Ex.nGrowVect());
 
             const long np = pti.numParticles();
 
@@ -487,27 +487,22 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 getExternalE(ip, Exp, Eyp, Ezp);
                 getExternalB(ip, Bxp, Byp, Bzp);
 
+                amrex::Real qp = q;
+                if (ion_lev) { qp *= ion_lev[ip]; }
+
                 if (do_crr) {
-                    amrex::Real qp = q;
-                    if (ion_lev) { qp *= ion_lev[ip]; }
                     UpdateMomentumBorisWithRadiationReaction(uxpp[ip], uypp[ip], uzpp[ip],
                                                              Exp, Eyp, Ezp, Bxp,
                                                              Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::Boris) {
-                    amrex::Real qp = q;
-                    if (ion_lev) { qp *= ion_lev[ip]; }
                     UpdateMomentumBoris( uxpp[ip], uypp[ip], uzpp[ip],
                                          Exp, Eyp, Ezp, Bxp,
                                          Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::Vay) {
-                    amrex::Real qp = q;
-                    if (ion_lev){ qp *= ion_lev[ip]; }
                     UpdateMomentumVay( uxpp[ip], uypp[ip], uzpp[ip],
                                        Exp, Eyp, Ezp, Bxp,
                                        Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::HigueraCary) {
-                    amrex::Real qp = q;
-                    if (ion_lev){ qp *= ion_lev[ip]; }
                     UpdateMomentumHigueraCary( uxpp[ip], uypp[ip], uzpp[ip],
                                                Exp, Eyp, Ezp, Bxp,
                                                Byp, Bzp, qp, m, dt);

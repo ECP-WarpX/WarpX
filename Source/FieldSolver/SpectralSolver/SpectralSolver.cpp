@@ -7,8 +7,6 @@
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
-#include "SpectralAlgorithms/GalileanAlgorithm.H"
-#include "SpectralAlgorithms/AvgGalileanAlgorithm.H"
 #include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
 #include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
 #include "WarpX.H"
@@ -35,6 +33,7 @@
  * \param periodic_single_box Whether the full simulation domain consists of a single periodic box (i.e. the global domain is not MPI parallelized)
  */
 SpectralSolver::SpectralSolver(
+                const int lev,
                 const amrex::BoxArray& realspace_ba,
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
@@ -61,51 +60,42 @@ SpectralSolver::SpectralSolver(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt);
     }
     else {
-        if (fft_do_time_averaging){
-            algorithm = std::make_unique<AvgGalileanAlgorithm>(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt);
+        // Comoving PSATD algorithm
+        if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
+            algorithm = std::make_unique<ComovingPsatdAlgorithm>(
+                k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
         }
+        // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
-            // Galilean PSATD algorithm
-            if (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.) {
-                algorithm = std::make_unique<GalileanAlgorithm>(
-                    k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho);
-            }
-            // Comoving PSATD algorithm
-            else if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
-                algorithm = std::make_unique<ComovingPsatdAlgorithm>(
-                    k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
-            }
-            // Standard PSATD algorithm
-            else {
-                algorithm = std::make_unique<PsatdAlgorithm>(
-                    k_space, dm, norder_x, norder_y, norder_z, nodal, dt, update_with_rho);
-            }
+            algorithm = std::make_unique<PsatdAlgorithm>(
+                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging);
         }
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans
-    field_data = SpectralFieldData( realspace_ba, k_space, dm,
-            algorithm->getRequiredNumberOfFields(), periodic_single_box );
+    field_data = SpectralFieldData( lev, realspace_ba, k_space, dm,
+                    algorithm->getRequiredNumberOfFields(), periodic_single_box);
 
 }
 
 void
-SpectralSolver::ForwardTransform( const amrex::MultiFab& mf,
+SpectralSolver::ForwardTransform( const int lev,
+                                  const amrex::MultiFab& mf,
                                   const int field_index,
                                   const int i_comp )
 {
     WARPX_PROFILE("SpectralSolver::ForwardTransform");
-    field_data.ForwardTransform( mf, field_index, i_comp );
+    field_data.ForwardTransform( lev, mf, field_index, i_comp );
 }
 
 void
-SpectralSolver::BackwardTransform( amrex::MultiFab& mf,
+SpectralSolver::BackwardTransform( const int lev,
+                                   amrex::MultiFab& mf,
                                    const int field_index,
                                    const int i_comp )
 {
     WARPX_PROFILE("SpectralSolver::BackwardTransform");
-    field_data.BackwardTransform( mf, field_index, i_comp );
+    field_data.BackwardTransform( lev, mf, field_index, i_comp );
 }
 
 void

@@ -55,7 +55,7 @@ numparts_final = w.shape[0]
 expected_numparts_final = numparts_init/t_r**2
 error = np.abs(numparts_final - expected_numparts_final)
 std_numparts_final = np.sqrt(numparts_init/t_r**2*(1.-1./t_r**2))
-# 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
+# 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
 print("difference between expected and actual final number of particles (1st species): " + str(error))
 print("tolerance: " + str(5*std_numparts_final))
 assert(error<5*std_numparts_final)
@@ -89,7 +89,7 @@ expected_mean_initial_weight = 2.*np.sqrt(2.)
 error = np.abs(mean_initial_weight - expected_mean_initial_weight)
 expected_std_initial_weight = 1./np.sqrt(2.)
 std_mean_initial_weight = expected_std_initial_weight/np.sqrt(numparts_init)
-# 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
+# 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
 print("difference between expected and actual mean initial weight (2nd species): " + str(error))
 print("tolerance: " + str(5*std_mean_initial_weight))
 assert(error<5*std_mean_initial_weight)
@@ -99,7 +99,7 @@ variance_initial_weight = np.var(w0)
 expected_variance_initial_weight = 0.5
 error = np.abs(variance_initial_weight - expected_variance_initial_weight)
 std_variance_initial_weight = expected_variance_initial_weight*np.sqrt(2./numparts_init)
-# 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
+# 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
 print("difference between expected and actual variance of initial weight (2nd species): " + str(error))
 print("tolerance: " + str(5*std_variance_initial_weight))
 
@@ -122,7 +122,7 @@ std_numparts_leveled = np.sqrt(expected_numparts_leveled - numparts_init/np.sqrt
                        (2.*expected_mean_initial_weight**2+1.)*(1.-erf(expected_mean_initial_weight* \
                        (t_r-1.)))-0.5*np.exp(-(expected_mean_initial_weight*(t_r-1.))**2* \
                        (expected_mean_initial_weight*(t_r+1.)))))
-# 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
+# 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
 print("difference between expected and actual number of leveled particles (2nd species): " + str(error))
 print("tolerance: " + str(5*std_numparts_leveled))
 

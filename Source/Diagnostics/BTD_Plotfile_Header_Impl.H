@@ -44,22 +44,12 @@ public:
      */
     amrex::Real probhi (int dim) const noexcept {return m_prob_hi[dim]; }
 
-    //amrex::Array<amrex::Real, AMREX_SPACEDIM> probLo () const noexcept { return m_prob_lo; }
-    //amrex::Array<amrex::Real, AMREX_SPACEDIM> probHo () const noexcept { return m_prob_hi; }
-    //amrex::Array<amrex::Real, AMREX_SPACEDIM> cellsize () const noexcept {return m_cell_size; }
     /** Returns the bounding box of the domain spanned in the plotfile */
     amrex::Box probDomain () const noexcept {return m_prob_domain; }
     /** Returns timestep at which the plotfile was written */
     int timestep () const noexcept {return m_timestep; }
-    ///** Returns the type of coordinate system */
-    //int coordsys () const noexcept {return m_coordsys; }
-
-    //int bwidth () const noexcept {return m_bwidth; }
-    //int cur_level () const noexcept {return m_cur_level; }
     int numFabs () const noexcept {return m_numFabs; }
 
-   // const amrex::Vector<amrex::Array<amrex::Real, AMREX_SPACEDIM> >& glo () const noexcept {return m_glo; }
-   // const amrex::Vector<amrex::Array<amrex::Real, AMREX_SPACEDIM> >& ghi () const noexcept {return m_ghi; }
     /** Returns physical co-ordinates of the lower-corner for the i-th Fab.
      *  \param[in] iFab, id of the ith Fab in the list of Multifabs
      *  \param[out] Array of lower-corner physical co-ordinates corresponding to the ith Fab

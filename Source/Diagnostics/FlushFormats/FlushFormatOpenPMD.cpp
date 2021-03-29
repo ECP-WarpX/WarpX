@@ -8,13 +8,13 @@ using namespace amrex;
 
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
-    ParmParse pp(diag_name);
+    ParmParse pp_diag_name(diag_name);
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
     // one file per timestep (or one file for all steps)
     bool openpmd_tspf = true;
-    pp.query("openpmd_backend", openpmd_backend);
-    pp.query("openpmd_tspf", openpmd_tspf);
+    pp_diag_name.query("openpmd_backend", openpmd_backend);
+    pp_diag_name.query("openpmd_tspf", openpmd_tspf);
     auto & warpx = WarpX::GetInstance();
     m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(
         openpmd_tspf, openpmd_backend, warpx.getPMLdirections()

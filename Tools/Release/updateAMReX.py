@@ -100,9 +100,9 @@ run_test_path = str(REPO_DIR.joinpath("run_test.sh"))
 with open(run_test_path, encoding='utf-8') as f:
     run_test_content = f.read()
     #   branch/commit/tag (git fetcher) version
-    #     git clone --branch development https://github.com/AMReX-Codes/amrex.git
+    #     cd amrex && git checkout COMMIT_TAG_OR_BRANCH && cd -
     run_test_content = re.sub(
-        r'(.*git\s+clone\s+\-\-branch\s+)(.+)(\s+https://github\.com/AMReX\-Codes/amrex\.git)',
+        r'(.*cd\s+amrex.+git checkout\s+)(.+)(\s+&&\s.*)',
         r'\g<1>{}\g<3>'.format(amrex_new_branch),
         run_test_content, flags = re.MULTILINE)
 

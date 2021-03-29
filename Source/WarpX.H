@@ -93,9 +93,8 @@ public:
     MultiParticleContainer& GetPartContainer () { return *mypc; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                         int num_shift, int dir, amrex::IntVect ng_extra,
-                         amrex::Real external_field=0.0, bool useparser = false,
-                         HostDeviceParser<3> const& field_parser={});
+                         int num_shift, int dir, amrex::Real external_field=0.0,
+                         bool useparser = false, HostDeviceParser<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -137,6 +136,14 @@ public:
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
+    static amrex::Vector<int> field_boundary_lo;
+    static amrex::Vector<int> field_boundary_hi;
+    static amrex::Vector<int> particle_boundary_lo;
+    static amrex::Vector<int> particle_boundary_hi;
+
+
+    // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
+    static bool do_current_centering;
 
     // PSATD: If true (overwritten by the user in the input file), the current correction
     // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
@@ -154,11 +161,15 @@ public:
     static long noy;
     static long noz;
 
-    // For momentum-conserving field gathering, order of interpolation from the
-    // staggered positions to the grid nodes
-    static int field_gathering_nox;
-    static int field_gathering_noy;
-    static int field_gathering_noz;
+    // Order of finite-order centering of fields (staggered to nodal)
+    static int field_centering_nox;
+    static int field_centering_noy;
+    static int field_centering_noz;
+
+    // Order of finite-order centering of currents (nodal to staggered)
+    static int current_centering_nox;
+    static int current_centering_noy;
+    static int current_centering_noz;
 
     // Number of modes for the RZ multimode version
     static int n_rz_azimuthal_modes;
@@ -328,6 +339,7 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void ApplySilverMuellerBoundary (amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -436,18 +448,28 @@ public:
     void UpdateAuxilaryDataStagToNodal ();
     void UpdateAuxilaryDataSameType ();
 
+    /**
+     * \brief This function is called if \c warpx.do_current_centering = 1 and
+     * it centers the currents from a nodal grid to a staggered grid (Yee) using
+     * finite-order interpolation based on the Fornberg coefficients.
+     *
+     * \param[in,out] dst destination \c MultiFab where the results of the finite-order centering are stored
+     * \param[in] src source \c MultiFab that contains the values of the nodal current to be centered
+     */
+    void UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src);
+
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryB   (amrex::IntVect ng);
+    void FillBoundaryE   (amrex::IntVect ng);
+    void FillBoundaryB_avg   (amrex::IntVect ng);
+    void FillBoundaryE_avg   (amrex::IntVect ng);
 
     void FillBoundaryF   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryE   (int lev, amrex::IntVect ng);
+    void FillBoundaryB   (int lev, amrex::IntVect ng);
+    void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
+    void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
     void FillBoundaryF   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
@@ -476,7 +498,7 @@ public:
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
-        amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
+        amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
 
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
@@ -523,13 +545,12 @@ public:
 
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                              const std::array<const amrex::MultiFab* const, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int const ngrow);
+                             const std::array<amrex::Real,3>& dx, amrex::IntVect const ngrow);
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; }
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
-    const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
@@ -551,6 +572,17 @@ public:
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
                      const int max_iters=200) const;
+    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
@@ -590,13 +622,14 @@ public:
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
 #ifdef WARPX_USE_PSATD
-    // Host and device vectors for Fornberg stencil coefficients used for finite-order centering
-    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
-    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
-    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
-    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_x;
-    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_y;
-    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_z;
+    // Device vectors of stencil coefficients used for finite-order centering of fields
+    amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_z;
+    // Device vectors of stencil coefficients used for finite-order centering of currents
+    amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
 #endif
 
 protected:
@@ -745,10 +778,58 @@ private:
         return gather_buffer_masks[lev].get();
     }
 
+#ifdef WARPX_USE_PSATD
+    /**
+     * \brief Re-orders the Fornberg coefficients so that they can be used more conveniently for
+     * finite-order centering operations. For example, for finite-order centering of order 6,
+     * the Fornberg coefficients \c (c_0,c_1,c_2) are re-ordered as \c (c_2,c_1,c_0,c_0,c_1,c_2).
+     *
+     * \param[in,out] ordered_coeffs host vector where the re-ordered Fornberg coefficients will be stored
+     * \param[in] unordered_coeffs host vector storing the original sequence of Fornberg coefficients
+     * \param[in] order order of the finite-order centering along a given direction
+     */
+    void ReorderFornbergCoefficients (amrex::Vector<amrex::Real>& ordered_coeffs,
+                                      amrex::Vector<amrex::Real>& unordered_coeffs,
+                                      const int order);
+    /**
+     * \brief Allocates and initializes the stencil coefficients used for the finite-order centering
+     * of fields and currents, and stores them in the given device vectors.
+     *
+     * \param[in,out] device_centering_stencil_coeffs_x device vector where the stencil coefficients along x will be stored
+     * \param[in,out] device_centering_stencil_coeffs_y device vector where the stencil coefficients along y will be stored
+     * \param[in,out] device_centering_stencil_coeffs_z device vector where the stencil coefficients along z will be stored
+     * \param[in] centering_nox order of the finite-order centering along x
+     * \param[in] centering_noy order of the finite-order centering along y
+     * \param[in] centering_noz order of the finite-order centering along z
+     */
+    void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
+                                        amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
+                                        amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
+                                        const int centering_nox,
+                                        const int centering_noy,
+                                        const int centering_noz);
+#endif
+
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
-                        const amrex::IntVect& ngextra, const bool aux_is_nodal);
+                        const bool aux_is_nodal);
+#ifdef WARPX_USE_PSATD
+#   ifdef WARPX_DIM_RZ
+    void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
+                                     const int lev,
+                                     const amrex::BoxArray& realspace_ba,
+                                     const amrex::DistributionMapping& dm,
+                                     const std::array<amrex::Real,3>& dx);
+#   else
+    void AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
+                                   const int lev,
+                                   const amrex::BoxArray& realspace_ba,
+                                   const amrex::DistributionMapping& dm,
+                                   const std::array<amrex::Real,3>& dx,
+                                   const bool pml_flag=false);
+#   endif
+#endif
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
@@ -786,6 +867,9 @@ private:
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
+    // Nodal MultiFab for nodal current deposition if warpx.do_current_centering = 1
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> current_fp_nodal;
+
     // Coarse patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_cp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp;
@@ -807,6 +891,7 @@ private:
 
     // PML
     int do_pml = 1;
+    int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
     int pml_has_particles = 0;
