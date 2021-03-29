@@ -17,7 +17,20 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
 {
     public:
 
-        // TODO Add Doxygen docs
+        /**
+         * \brief Constructor of the class PsatdAlgorithm
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
+         * \param[in] norder_x order of the spectral solver along x
+         * \param[in] norder_y order of the spectral solver along y
+         * \param[in] norder_z order of the spectral solver along z
+         * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
+         * \param[in] v_galilean Galilean velocity (three-dimensional array)
+         * \param[in] dt time step of the simulation
+         * \param[in] update_with_rho whether the update equation for E uses rho or not
+         * \param[in] time_averaging whether to use time averaging for large time steps
+         */
         PsatdAlgorithm (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
@@ -30,10 +43,16 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const bool update_with_rho,
             const bool time_averaging);
 
-        // TODO Add Doxygen docs
+        /**
+         * \brief Updates the E and B fields in spectral space, according to the relevant PSATD equations
+         *
+         * \param[in,out] f all the fields in spectral space
+         */
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
 
-        // TODO Add Doxygen docs
+        /**
+         * \brief Returns the number of fields stored in spectral space
+         */
         virtual int getRequiredNumberOfFields () const override final
         {
             if (m_time_averaging) {
@@ -43,8 +62,27 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             }
         }
 
-        // TODO Add Doxygen docs
+        /**
+         * \brief Initializes the coefficients used in \c pushSpectralFields to update the E and B fields
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
+         * \param[in] dt time step of the simulation
+         */
         void InitializeSpectralCoefficients (
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm,
+            const amrex::Real dt);
+
+        /**
+         * \brief Initializes additional coefficients used in \c pushSpectralFields to update the E and B fields,
+         *        required only when using time averaging with large time steps
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
+         * \param[in] dt time step of the simulation
+         */
+        void InitializeSpectralCoefficientsAveraging (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
@@ -90,9 +128,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
-        SpectralRealCoefficients C1_coef, C3_coef, S1_coef, S3_coef;
-        SpectralComplexCoefficients Psi1_coef, Psi2_coef, Psi3_coef, Psi4_coef,
-                                    A1_coef, A2_coef, Rhoold_coef, Rhonew_coef, Jcoef_coef;
+        SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
 
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;
