@@ -197,6 +197,7 @@ WarpX::InitPML ()
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
+            amrex::IntVect do_pml_Hi_MR = amrex::IntVect::TheUnitVector();
 #ifdef WARPX_DIM_RZ
             //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
             if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
@@ -209,7 +210,7 @@ WarpX::InitPML ()
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_dive_cleaning, do_moving_window,
                                    pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
+                                   do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
 }
