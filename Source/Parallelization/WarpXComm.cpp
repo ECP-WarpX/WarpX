@@ -368,7 +368,6 @@ WarpX::UpdateAuxilaryDataSameType ()
     }
 }
 
-// TODO Add Doxygen
 void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src)
 {
     // If source and destination MultiFabs have the same index type, a simple copy is enough
