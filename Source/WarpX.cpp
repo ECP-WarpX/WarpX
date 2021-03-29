@@ -651,6 +651,11 @@ WarpX::ReadParameters ()
         {
             do_current_centering = false;
         }
+
+        if ((maxLevel() > 0) && do_current_centering)
+        {
+            amrex::Abort("\nFinite-order centering of currents is not implemented with mesh refinement");
+        }
     }
 
     {
@@ -734,11 +739,11 @@ WarpX::ReadParameters ()
                 pp_interpolation.query("current_centering_noz", current_centering_noz);
             }
 
-            // TODO Is centering of currents implemented with mesh refinement?
-            if (maxLevel() > 0) {
+            if (maxLevel() > 0)
+            {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
-                    "High-order interpolation (order > 2) is not implemented with mesh refinement");
+                    "High-order centering of fields (order > 2) is not implemented with mesh refinement");
             }
 
             if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving)
