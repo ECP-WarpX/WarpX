@@ -814,6 +814,22 @@ private:
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const bool aux_is_nodal);
+#ifdef WARPX_USE_PSATD
+#   ifdef WARPX_DIM_RZ
+    void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
+                                     const int lev,
+                                     const amrex::BoxArray& realspace_ba,
+                                     const amrex::DistributionMapping& dm,
+                                     const std::array<amrex::Real,3>& dx);
+#   else
+    void AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
+                                   const int lev,
+                                   const amrex::BoxArray& realspace_ba,
+                                   const amrex::DistributionMapping& dm,
+                                   const std::array<amrex::Real,3>& dx,
+                                   const bool pml_flag=false);
+#   endif
+#endif
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

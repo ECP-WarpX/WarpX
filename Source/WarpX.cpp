@@ -1068,6 +1068,13 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
+#ifdef WARPX_USE_PSATD
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        spectral_solver_fp[lev].reset();
+        spectral_solver_cp[lev].reset();
+    }
+#endif
+
     costs[lev].reset();
     load_balance_efficiency[lev] = -1;
 }
@@ -1277,11 +1284,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
 
-#   if (AMREX_SPACEDIM == 3)
-        RealVect dx_vect(dx[0], dx[1], dx[2]);
-#   elif (AMREX_SPACEDIM == 2)
-        RealVect dx_vect(dx[0], dx[2]);
-#   endif
         // Check whether the option periodic, single box is valid here
         if (fft_periodic_single_box) {
 #   ifdef WARPX_DIM_RZ
@@ -1304,19 +1306,22 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         }
-        spectral_solver_fp[lev] = std::make_unique<SpectralSolverRZ>( lev, realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], update_with_rho );
-        if (use_kspace_filter) {
-            spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
-        }
+        AllocLevelSpectralSolverRZ(spectral_solver_fp,
+                                   lev,
+                                   realspace_ba,
+                                   dm,
+                                   dx);
 #   else
         if ( fft_periodic_single_box == false ) {
-            realspace_ba.grow(ngE); // add guard cells
+            realspace_ba.grow(ngE);   // add guard cells
         }
         bool const pml_flag_false = false;
-        spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, dt[lev],
-            pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
+        AllocLevelSpectralSolver(spectral_solver_fp,
+                                 lev,
+                                 realspace_ba,
+                                 dm,
+                                 dx,
+                                 pml_flag_false);
 #   endif
 #endif
     } // MaxwellSolverAlgo::PSATD
@@ -1426,28 +1431,26 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
 
-#   if (AMREX_SPACEDIM == 3)
-            RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-#   elif (AMREX_SPACEDIM == 2)
-            RealVect cdx_vect(cdx[0], cdx[2]);
-#   endif
             // Get the cell-centered box, with guard cells
             BoxArray c_realspace_ba = cba;// Copy box
             c_realspace_ba.enclosedCells(); // Make it cell-centered
             // Define spectral solver
-#   ifdef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
             c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-            spectral_solver_cp[lev] = std::make_unique<SpectralSolverRZ>( lev, c_realspace_ba, dm,
-                n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], update_with_rho );
-            if (use_kspace_filter) {
-                spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
-            }
+            AllocLevelSpectralSolverRZ(spectral_solver_cp,
+                                       lev,
+                                       c_realspace_ba,
+                                       dm,
+                                       cdx);
 #   else
-            c_realspace_ba.grow(ngE); // add guard cells
+            c_realspace_ba.grow(ngE);
             bool const pml_flag_false = false;
-            spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( lev, c_realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, dt[lev],
-                pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
+            AllocLevelSpectralSolver(spectral_solver_cp,
+                                     lev,
+                                     c_realspace_ba,
+                                     dm,
+                                     cdx,
+                                     pml_flag_false);
 #   endif
 #endif
         } // MaxwellSolverAlgo::PSATD
@@ -1511,6 +1514,92 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         load_balance_efficiency[lev] = -1;
     }
 }
+
+#ifdef WARPX_USE_PSATD
+#   ifdef WARPX_DIM_RZ
+/* \brief Allocate spectral Maxwell solver (RZ dimensions) at a level
+ *
+ * \param[in, out] spectral_solver Vector of pointer to SpectralSolver, to point to allocated spectral Maxwell
+ *                                 solver at a given level
+ * \param[in] lev                  Level at which to allocate spectral Maxwell solver
+ * \param[in] realspace_ba         Box array that corresponds to the decomposition of the fields in real space
+ *                                 (cell-centered; includes guard cells)
+ * \param[in] dm                   Indicates which MPI proc owns which box, in realspace_ba
+ * \param[in] dx                   Cell size along each dimension
+ */
+void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
+                                        const int lev,
+                                        const amrex::BoxArray& realspace_ba,
+                                        const amrex::DistributionMapping& dm,
+                                        const std::array<Real,3>& dx)
+{
+#if (AMREX_SPACEDIM == 3)
+    RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+    RealVect dx_vect(dx[0], dx[2]);
+#endif
+
+    auto pss = std::make_unique<SpectralSolverRZ>(lev,
+                                                  realspace_ba,
+                                                  dm,
+                                                  n_rz_azimuthal_modes,
+                                                  noz_fft,
+                                                  do_nodal,
+                                                  m_v_galilean,
+                                                  dx_vect,
+                                                  dt[lev],
+                                                  update_with_rho);
+    spectral_solver[lev] = std::move(pss);
+
+    if (use_kspace_filter) {
+        spectral_solver[lev]->InitFilter(filter_npass_each_dir,
+                                         use_filter_compensation);
+    }
+}
+#   else
+/* \brief Allocate spectral Maxwell solver at a level
+ *
+ * \param[in, out] spectral_solver  Vector of pointer to SpectralSolver, to point to allocated spectral Maxwell
+ *                                  solver at a given level
+ * \param[in] lev                   Level at which to allocate spectral Maxwell solver
+ * \param[in] realspace_ba          Box array that corresponds to the decomposition of the fields in real space
+ *                                  (cell-centered; includes guard cells)
+ * \param[in] dm                    Indicates which MPI proc owns which box, in realspace_ba
+ * \param[in] dx                    Cell size along each dimension
+ * \param[in] pml_flag              Whether the boxes in which the solver is applied are PML boxes
+ */
+void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolver>>& spectral_solver,
+                                      const int lev,
+                                      const amrex::BoxArray& realspace_ba,
+                                      const amrex::DistributionMapping& dm,
+                                      const std::array<Real,3>& dx,
+                                      const bool pml_flag)
+{
+#if (AMREX_SPACEDIM == 3)
+    RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+    RealVect dx_vect(dx[0], dx[2]);
+#endif
+
+    auto pss = std::make_unique<SpectralSolver>(lev,
+                                                realspace_ba,
+                                                dm,
+                                                nox_fft,
+                                                noy_fft,
+                                                noz_fft,
+                                                do_nodal,
+                                                m_v_galilean,
+                                                m_v_comoving,
+                                                dx_vect,
+                                                dt[lev],
+                                                pml_flag,
+                                                fft_periodic_single_box,
+                                                update_with_rho,
+                                                fft_do_time_averaging);
+    spectral_solver[lev] = std::move(pss);
+}
+#   endif
+#endif
 
 std::array<Real,3>
 WarpX::CellSize (int lev)
