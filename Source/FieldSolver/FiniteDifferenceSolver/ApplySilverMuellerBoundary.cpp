@@ -95,14 +95,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 if ( i==domain_box.bigEnd(0)+1 ){
                     Real const r = rmin + (i + 0.5_rt)*dr; // r on nodal point (Bz is cell-centered in r)
                     // Mode 0
-                    Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0) - coef3_r*Et(i,j,0,0)/r;
+                    Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) + coef2_r*Et(i,j,0,0) - coef3_r*Et(i,j,0,0)/r;
                     for (int m=1; m<nmodes; m++) { // Higher-order modes
                         // Real part
-                        Bz(i,j,0,2*m-1) = coef1_r*Bz(i,j,0,2*m-1)
-                            - coef2_r*Et(i+1,j,0,2*m-1) + coef3_r/r*(m*Er(i,j,0,2*m) - Et(i,j,0,2*m-1));
+                        Bz(i,j,0,2*m-1) = coef1_r*Bz(i,j,0,2*m-1) + coef2_r*Et(i,j,0,2*m-1)
+                            - coef3_r/r*(Et(i,j,0,2*m-1) - m*Er(i,j,0,2*m));
                         // Imaginary part
-                        Bz(i,j,0,2*m) = coef1_r*Bz(i,j,0,2*m) - coef2_r*Et(i+1,j,0,2*m)
-                            + coef3_r/r*(m*Er(i,j,0,2*m-1) - Et(i,j,0,2*m));
+                        Bz(i,j,0,2*m) = coef1_r*Bz(i,j,0,2*m) + coef2_r*Et(i,j,0,2*m)
+                            - coef3_r/r*(Et(i,j,0,2*m) + m*Er(i,j,0,2*m-1));
                     }
                 }
             }
