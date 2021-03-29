@@ -780,6 +780,17 @@ WarpX::SyncCurrent ()
 {
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
+    // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
+    if (WarpX::do_current_centering)
+    {
+        for (int lev = 0; lev <= finest_level; lev++)
+        {
+            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][0], *current_fp_nodal[lev][0]);
+            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][1], *current_fp_nodal[lev][1]);
+            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][2], *current_fp_nodal[lev][2]);
+        }
+    }
+
     // Restrict fine patch current onto the coarse patch, before
     // summing the guard cells of the fine patch
     for (int lev = 1; lev <= finest_level; ++lev)

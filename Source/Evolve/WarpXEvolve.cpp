@@ -303,17 +303,6 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
 
-    // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
-    if (WarpX::do_current_centering)
-    {
-        for (int lev = 0; lev <= finest_level; lev++)
-        {
-            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][0], *current_fp_nodal[lev][0]);
-            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][1], *current_fp_nodal[lev][1]);
-            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][2], *current_fp_nodal[lev][2]);
-        }
-    }
-
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 
     // Synchronize J and rho
