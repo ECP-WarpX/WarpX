@@ -91,9 +91,9 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
-                Real const r = rmin + (i + 0.5_rt)*dr; // r on nodal point (Bz is cell-centered in r)
                 // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
+                    Real const r = rmin + (i + 0.5_rt)*dr; // r on nodal point (Bz is cell-centered in r)
                     // Mode 0
                     Bz(i,j,0,0) = coef1_r*Bz(i,j,0,0) - coef2_r*Et(i+1,j,0,0) - coef3_r*Et(i,j,0,0)/r;
                     for (int m=1; m<nmodes; m++) { // Higher-order modes
