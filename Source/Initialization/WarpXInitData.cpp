@@ -198,6 +198,17 @@ WarpX::InitPML ()
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
             amrex::IntVect do_pml_Hi_MR = amrex::IntVect::TheUnitVector();
+            // check if fine patch edges co-incide with domain boundary
+            amrex::Box levelBox = boxArray(lev).minimalBox();
+            // Domain box at level, lev
+            amrex::Box DomainBox = Geom(lev).Domain();
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
+                    do_pml_Lo_MR[idim] = do_pml_Lo[idim];
+                if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
+                    do_pml_Hi_MR[idim] = do_pml_Hi[idim];
+            }
+
 #ifdef WARPX_DIM_RZ
             //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
             if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
