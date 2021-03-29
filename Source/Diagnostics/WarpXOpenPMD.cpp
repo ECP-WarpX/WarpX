@@ -358,14 +358,14 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     }
 
 #ifdef WARPX_QED
-      if( pc->has_breit_wheeler() ) {
-            real_names.push_back("optical_depth_BW");
-            tmp.AddRealComp(false);
-        }
-        if( pc->has_quantum_sync() ) {
-            real_names.push_back("optical_depth_QSR");
-            tmp.AddRealComp(false);
-        }
+    if( pc->has_breit_wheeler() ) {
+        real_names.push_back("opticalDepthBW");
+        tmp.AddRealComp(false);
+    }
+    if( pc->has_quantum_sync() ) {
+        real_names.push_back("opticalDepthQSR");
+        tmp.AddRealComp(false);
+    }
 #endif
 
       pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
