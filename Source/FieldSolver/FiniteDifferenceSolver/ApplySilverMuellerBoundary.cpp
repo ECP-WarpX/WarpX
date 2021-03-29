@@ -57,25 +57,21 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        // Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        Box tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
         Box tbt  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
         Box tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
 
         // We will modify the first (i.e. innermost) guard cell
         // (if it is outside of the physical domain)
         // Thus, the tileboxes here are grown by 1 guard cell
-        tbr.grow(1);
         tbt.grow(1);
         tbz.grow(1);
 
         // Loop over the cells
-        amrex::ParallelFor(tbr, tbt, tbz,
-            [=] AMREX_GPU_DEVICE (int /*i*/, int /*j*/, int /*k*/){},
+        amrex::ParallelFor(tbt, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
                 // At the +r boundary (innermost guard cell)
@@ -95,7 +91,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
-                Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
+                Real const r = rmin + (i + 0.5_rt)*dr; // r on nodal point (Bz is cell-centered in r)
                 // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Mode 0
