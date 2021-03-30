@@ -1065,6 +1065,9 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     This is then used in the rest of the input deck;
     in this documentation we use ``<collision_name>`` as a placeholder.
 
+* ``<collision_name>.type`` (`string`)
+    Set to ``pairwisecoulomb`` for pairwise Coulomb collisions.
+
 * ``<collision_name>.species`` (`strings`, two species names separated by spaces)
     The names of two species, between which the collision will be considered.
     The number of provided ``<collision_name>.species`` should match
@@ -1085,6 +1088,60 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
 * ``<collision_name>.ndt`` (`int`) optional
     Execute collision every # time steps.
     The default value is 1.
+
+A non-relativistic Monte Carlo treatment for particles colliding with a neutral,
+uniform background gas is also available. The implementation follows the so-called
+null collision strategy discussed for example in `Birdsall (IEEE Transactions on
+Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+
+* ``collisions.collision_names`` (`strings`, separated by spaces)
+    The name of each collision type.
+    This is then used in the rest of the input deck;
+    in this documentation we use ``<collision_name>`` as a placeholder.
+
+* ``<collision_name>.type`` (`string`)
+    Set to ``background_mcc`` for collisions between particles and a neutral
+    background.
+
+* ``<collision_name>.species`` (`string`, species names)
+    The names of the species for which collision will be considered. Only one
+    species name should be given.
+
+* ``<collision_name>.background_density`` (`float`)
+    The density of the neutral background gas in :math:`m^{-3}`.
+
+* ``<collision_name>.background_temperature`` (`float`)
+    The temperature of the neutral background gas in Kelvin.
+
+* ``<collision_name>.background_mass`` (`float`) optional
+    The mass of the background gas in kg. If not given the mass of the colliding
+    species will be used unless ionization is included in which case the mass
+    of the product species will be used.
+
+* ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
+    The MCC scattering processes that should be included. Available options are
+    ``elastic``, ``back`` & ``charge_exchange`` for ions and ``elastic``,
+    ``excitationX`` & ``ionization`` for electrons. Multiple excitation events
+    can be included for electrons corresponding to excitation to different
+    levels, the ``X`` above can be changed to a unique identifier for each
+    excitation process. For each scattering process specified a path to a cross-
+    section data file must  also be given. We use ``<scattering_process>`` as a
+    placeholder going forward.
+
+* ``<collision_name>.<scattering_process>_cross_section`` (`string`)
+    Path to the file containing cross-section data for the given scattering
+    processes. The cross-section file must have exactly 2 columns of data, the
+    first containing equally spaced energies in eV and the second the
+    corresponding cross-section in :math:`m^2`.
+
+* ``<collision_name>.<scattering_process>_energy`` (`float`)
+    If the scattering process is either ``excitationX`` or ``ionization`` the
+    energy cost of that process must be given in eV.
+
+* ``<collision_name>.ionization_species`` (`float`)
+    If the scattering process is ``ionization`` the produced species must also
+    be given. For example if argon properties is used for the background gas,
+    a species of argon ions should be specified here.
 
 .. _running-cpp-parameters-numerics:
 
