@@ -7,8 +7,15 @@
 #ifndef WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_
 #define WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_
 
+#include "MCCProcess.H"
 #include "Utils/WarpXConst.H"
 #include <AMReX_Random.H>
+
+/** @file
+ *
+ * This file contains the implementation of the scattering processes available
+ * in the MCC handling.
+ */
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
@@ -23,35 +30,54 @@ void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
     y = xy * std::sin(theta);
 }
 
-/** \brief Function to perform elastic scattering of a particle in the lab
- * frame. The particle velocities transformed to the COM frame where a hard
- * sphere collision occurs. The resulting particle velocities are transformed
- * back to the lab frame and the input particle's velocity is updated.
- * @param[in/out] ux, uy, uz colliding particle's velocity
- * @param[in] uCOM_x, uCOM_y, uCOM_z velocity of the center of momentum frame.
- * @param[in] engine random number generator.
- */
 
+/** \brief Function to perform scattering of a particle that results in a
+ * random velocity vector with given magnitude. This is used in excitation and
+ * ionization events.
+ *
+ * @param[in/out] ux, uy, uz colliding particle's velocity
+ * @param[in] vp velocity magnitude of the colliding particle after collision.
+ */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
-                         amrex::ParticleReal& uz, amrex::ParticleReal uCOM_x,
-                         amrex::ParticleReal uCOM_y, amrex::ParticleReal uCOM_z,
+void RandomizeVelocity ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
+                         amrex::ParticleReal& uz,
+                         const amrex::ParticleReal vp,
                          amrex::RandomEngine const& engine )
 {
     amrex::Real x, y, z;
     // generate random unit vector for the new velocity direction
     getRandomVector(x, y, z, engine);
 
+    // scale new vector to have the desired magnitude
+    ux = x * vp;
+    uy = y * vp;
+    uz = z * vp;
+}
+
+
+/** \brief Function to perform elastic scattering of a particle in the lab
+ * frame. The particle velocities transformed to the COM frame where a hard
+ * sphere collision occurs. The resulting particle velocities are transformed
+ * back to the lab frame and the input particle's velocity is updated.
+ *
+ * @param[in/out] ux, uy, uz colliding particle's velocity
+ * @param[in] uCOM_x, uCOM_y, uCOM_z velocity of the center of momentum frame.
+ * @param[in] engine random number generator.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
+                         amrex::ParticleReal& uz, amrex::ParticleReal uCOM_x,
+                         amrex::ParticleReal uCOM_y, amrex::ParticleReal uCOM_z,
+                         amrex::RandomEngine const& engine )
+{
     // transform to center of momentum frame
     ux -= uCOM_x;
     uy -= uCOM_y;
     uz -= uCOM_z;
 
-    // scale new vector to have the same magnitude as the original velocity
+    // istropically scatter the particle
     amrex::Real mag = std::sqrt(ux*ux + uy*uy + uz*uz);
-    ux = x * mag;
-    uy = y * mag;
-    uz = z * mag;
+    RandomizeVelocity(ux, uy, uz, mag, engine);
 
     // transform back to lab frame
     ux += uCOM_x;
@@ -64,10 +90,10 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
  * frame. The particle velocity is transformed to the COM frame where it is
  * reversed. The resulting particle velocities are then transformed back to the
  * lab frame and the input particle's velocity is updated.
+ *
  * @param[in/out] ux, uy, uz colliding particle's velocity
  * @param[in] uCOM_x, uCOM_y, uCOM_z velocity of the center of momentum frame.
  */
-
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
                       amrex::ParticleReal& uz,
@@ -84,10 +110,10 @@ void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 
 /** \brief Function to perform charge exchange of an ion with a neutral
  * particle.
+ *
  * @param[in/out] ux, uy, uz colliding particle's velocity
  * @param[in] ua_x, ua_y, ua_z velocity of the neutral particle.
  */
-
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void ChargeExchange ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
                       amrex::ParticleReal& uz,
@@ -102,27 +128,169 @@ void ChargeExchange ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 }
 
 
-/** \brief Function to perform scattering of an electron from an excitation
- * event. The target neutral is assumed stationary and the excited particle
- * is not tracked.
- * @param[in/out] ux, uy, uz colliding particle's velocity
- * @param[in] vp velocity magnitude of the colliding particle after collision.
+/**
+ * \brief Filter functor for impact ionization
  */
-
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void Excitation ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
-                  amrex::ParticleReal& uz,
-                  const amrex::ParticleReal vp,
-                  amrex::RandomEngine const& engine )
+class ImpactIonizationFilterFunc
 {
-    amrex::Real x, y, z;
-    // generate random unit vector for the new velocity direction
-    getRandomVector(x, y, z, engine);
+public:
 
-    // scale new vector to have the desired magnitude
-    ux = x * vp;
-    uy = y * vp;
-    uz = z * vp;
-}
+    /**
+    * \brief Constructor of the ImpactIonizationFilterFunc functor.
+    *
+    * This function sample a random number and compares it to the total
+    * collision probability to see if the given particle should be considered
+    * for an ionization event. If the particle passes this stage the collision
+    * cross-section is calculated given its energy and another random number
+    * is used to determine whether it actually collides.
+    *
+    * @param[in] mcc_process an MCCProcess object associated with the ionization
+    * @param[in] mass colliding particle's mass (could also assume electron)
+    * @param[in] total_collision_prob total probability for a collision to occur
+    * @param[in] nu_max_norm normalized maximum collision frequency, normalized
+    *            by the neutral density.
+    */
+    ImpactIonizationFilterFunc(
+        MCCProcess mcc_process,
+        amrex::Real const mass,
+        amrex::Real const total_collision_prob,
+        amrex::Real const nu_max_norm
+    ) : m_mcc_process(mcc_process), m_mass(mass),
+        m_total_collision_prob(total_collision_prob),
+        m_nu_max_norm(nu_max_norm){ }
 
+    /**
+    * \brief Functor call. This method determines if a given (electron) particle
+    * should undergo an ionization collision.
+    *
+    * @param[in] ptd particle tile data
+    * @param[in] i particle index
+    * @return true if a collision occurs, false otherwise
+    */
+    template <typename PData>
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    bool operator() (
+        const PData& ptd, int const i, amrex::RandomEngine const& engine
+    ) const noexcept
+    {
+        using namespace amrex;
+
+        // determine if this particle should collide
+        if (Random(engine) > m_total_collision_prob) return false;
+
+        // get the particle velocity
+        const ParticleReal ux = ptd.m_rdata[PIdx::ux][i];
+        const ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
+        const ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
+
+        // calculate kinetic energy
+        const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
+        const ParticleReal E_coll = 0.5 * m_mass * v_coll2 / PhysConst::q_e;
+        const ParticleReal v_coll = std::sqrt(v_coll2);
+
+        // get collision cross-section
+        const Real sigma_E = m_mcc_process.getCrossSection(E_coll);
+
+        // calculate normalized collision frequency
+        const Real nu_i = sigma_E * v_coll / m_nu_max_norm;
+
+        // check if this collision should be performed
+        return (Random(engine) <= nu_i);
+    }
+
+private:
+    MCCProcess m_mcc_process;
+    amrex::Real m_mass;
+    amrex::Real m_total_collision_prob = 0;
+    amrex::Real m_nu_max_norm;
+};
+
+
+/**
+ * \brief Transform functor for impact ionization
+ */
+class ImpactIonizationTransformFunc
+{
+public:
+
+    /**
+    * \brief Constructor of the ImpactIonizationTransformFunc functor.
+    *
+    * The transform is responsible for appropriately decreasing the kinetic
+    * energy of the colliding particle and assigning appropriate velocities
+    * to the two newly created particles. To this end the energy cost of
+    * ionization is passed to the constructor as well as the mass of the
+    * colliding species and the standard deviation of the ion velocity
+    * (normalized temperature).
+    *
+    * @param[in] energy_cost energy cost of ionization
+    * @param[in] mass1 mass of the colliding species
+    */
+    ImpactIonizationTransformFunc(
+        amrex::Real energy_cost, amrex::Real mass1, amrex::Real ion_vel_std
+    ) :  m_energy_cost(energy_cost), m_mass1(mass1),
+         m_ion_vel_std(ion_vel_std) { }
+
+    /**
+    * \brief Functor call. It determines the properties of the generated pair
+    * and decreases the kinetic energy of the colliding particle. Inputs are
+    * standard from the FilterCopyTransfrom::filterCopyTransformParticles
+    * function.
+    *
+    * @param[in,out] dst1 target species 1 (either electrons or positrons)
+    * @param[in,out] dst2 target species 2 (either electrons or positrons)
+    * @param[in] src source species (photons)
+    * @param[in] i_src particle index of the source species
+    * @param[in] i_dst1 particle index of target species 1
+    * @param[in] i_dst2 particle index of target species 2
+    * @param[in] engine random number generator engine
+    */
+    template <typename DstData, typename SrcData>
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void operator() (DstData& dst1, DstData& dst2, SrcData& src,
+        int const i_src, int const i_dst1, int const i_dst2,
+        amrex::RandomEngine const& engine) const noexcept
+    {
+        using namespace amrex;
+
+        // get references to the original particle's velocity
+        auto& ux = src.m_rdata[PIdx::ux][i_src];
+        auto& uy = src.m_rdata[PIdx::uy][i_src];
+        auto& uz = src.m_rdata[PIdx::uz][i_src];
+
+        // get references to the new particles' velocities
+        auto& e_ux = dst1.m_rdata[PIdx::ux][i_dst1];
+        auto& e_uy = dst1.m_rdata[PIdx::uy][i_dst1];
+        auto& e_uz = dst1.m_rdata[PIdx::uz][i_dst1];
+        auto& i_ux = dst2.m_rdata[PIdx::ux][i_dst2];
+        auto& i_uy = dst2.m_rdata[PIdx::uy][i_dst2];
+        auto& i_uz = dst2.m_rdata[PIdx::uz][i_dst2];
+
+        // calculate kinetic energy
+        const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
+        const ParticleReal E_coll = 0.5 * m_mass1 * v_coll2 / PhysConst::q_e;
+
+        // get the left over energy
+        amrex::Real E_remaining = E_coll - m_energy_cost;
+
+        // each electron gets half the energy (could change this later)
+        amrex::Real vp = std::sqrt(
+            2.0 / m_mass1 * PhysConst::q_e * E_remaining / 2.0
+        );
+
+        // isotropically scatter electrons
+        RandomizeVelocity(ux, uy, uz, vp, engine);
+        RandomizeVelocity(e_ux, e_uy, e_uz, vp, engine);
+
+        // get velocities for the ion from a Maxwellian distribution
+        i_ux = m_ion_vel_std * RandomNormal(0, 1.0, engine);
+        i_uy = m_ion_vel_std * RandomNormal(0, 1.0, engine);
+        i_uz = m_ion_vel_std * RandomNormal(0, 1.0, engine);
+    }
+
+private:
+    amrex::Real m_energy_cost;
+    amrex::Real m_mass1;
+    amrex::Real m_ion_vel_std;
+};
 #endif // WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_

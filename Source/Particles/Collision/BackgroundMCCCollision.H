@@ -19,7 +19,7 @@ public:
 
     BackgroundMCCCollision (std::string collision_name);
 
-    amrex::Real get_nu_max ( );
+    amrex::Real get_nu_max ( amrex::Vector<MCCProcess> mcc_processes );
 
     /** Perform the collisions
      *
@@ -29,20 +29,30 @@ public:
      */
     void doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc) override;
 
-    /** Perform all background collisions within a tile
+    /** Perform particle conserving MCC collisions within a tile
      *
      * @param pti particle iterator
-     * @param species1 pointer to species container
      *
      */
-    void doBackgroundCollisionsWithinTile (
-        WarpXParIter& pti,
+    void doBackgroundCollisionsWithinTile ( WarpXParIter& pti );
+
+    /** Perform MCC ionization interactions
+     *
+     * @param pti particle iterator
+     * @param species1/2 reference to species container used to inject new
+              particles
+     *
+     */
+    void doBackgroundIonization (
+        int lev,
         WarpXParticleContainer& species1,
-        WarpXParticleContainer& species2);
+        WarpXParticleContainer& species2
+    );
 
 private:
 
     amrex::Vector< MCCProcess > m_scattering_processes;
+    amrex::Vector< MCCProcess > m_ionization_processes;
 
     bool init_flag = false;
     bool ionization_flag = false;
@@ -53,7 +63,9 @@ private:
     amrex::Real m_background_density;
     amrex::Real m_background_mass;
     amrex::Real m_total_collision_prob;
+    amrex::Real m_total_collision_prob_ioniz;
     amrex::Real m_nu_max;
+    amrex::Real m_nu_max_ioniz;
 
 };
 

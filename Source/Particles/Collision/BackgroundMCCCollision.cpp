@@ -31,7 +31,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     pp.query("background_mass", m_background_mass);
 
     // query for a list of collision processes
-    // these could be ionization, elastic, charge_exchange, back, etc.
+    // these could be elastic, excitation, charge_exchange, back, etc.
     amrex::Vector<std::string> scattering_process_names;
     pp.queryarr("scattering_processes", scattering_process_names);
 
@@ -59,6 +59,10 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         }
 
         // if the scattering process is ionization get the secondary species
+        // only one ionization process is supported, the vector
+        // m_ionization_processes is only used to make it simple to calculate
+        // the maximum collision frequency with the same function used for
+        // particle conserving processes
         if (scattering_process == "ionization")
         {
             ionization_flag = true;
@@ -66,11 +70,17 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             std::string secondary_species;
             pp.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);
-        }
 
-        m_scattering_processes.push_back(
-            MCCProcess(scattering_process, cross_section_file, energy)
-        );
+            m_ionization_processes.push_back(
+                MCCProcess(scattering_process, cross_section_file, energy)
+            );
+        }
+        else
+        {
+            m_scattering_processes.push_back(
+                MCCProcess(scattering_process, cross_section_file, energy)
+            );
+        }
     }
 }
 
@@ -78,7 +88,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
  *  ranges from 1e-4 to 5000 eV in 0.2 eV increments
  */
 amrex::Real
-BackgroundMCCCollision::get_nu_max()
+BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> mcc_processes)
 {
     amrex::Real nu, nu_max = 0.0;
 
@@ -87,7 +97,7 @@ BackgroundMCCCollision::get_nu_max()
         amrex::Real sigma_E = 0.0;
 
         // loop through all collision pathways
-        for (auto scattering_process : m_scattering_processes){
+        for (auto scattering_process : mcc_processes){
             // get collision cross-section
             sigma_E += scattering_process.getCrossSection(E);
         }
@@ -126,8 +136,8 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     {
         m_mass1 = species1.getMass();
 
-        // calculate maximum collision frequency
-        m_nu_max = get_nu_max();
+        // calculate maximum collision frequency without ionization
+        m_nu_max = get_nu_max(m_scattering_processes);
 
         // calculate total collision probability
         auto coll_n = m_nu_max * dt;
@@ -147,9 +157,16 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             "Setting up collisions for " << m_species_names[0] << " with total "
             "collision probability: " << m_total_collision_prob << "\n";
 
-        // if an ionization process is included the secondary species mass is
-        // taken as the background mass
-        if (m_species_names.size() == 2){
+        if (ionization_flag){
+            // calculate maximum collision frequency for ionization
+            m_nu_max_ioniz = get_nu_max(m_ionization_processes);
+
+            // calculate total ionization probability
+            auto coll_n_ioniz = m_nu_max_ioniz * dt;
+            m_total_collision_prob_ioniz = 1.0 - std::exp(-coll_n_ioniz);
+
+            // if an ionization process is included the secondary species mass
+            // is taken as the background mass
             m_background_mass = species2.getMass();
         }
         // if no neutral species mass was specified and ionization is not
@@ -162,48 +179,34 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
         init_flag = true;
     }
 
-    // Enable tiling
-    // amrex::MFItInfo info;
-    // if (amrex::Gpu::notInLaunchRegion()) info.EnableTiling(species1.tile_size);
-
     // Loop over refinement levels
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
+    // firstly loop over particles box by box and do all particle conserving
+    // scattering
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        // Loop over particles, box by box
         for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti)
         {
-            doBackgroundCollisionsWithinTile(pti, species1, species2);
+            doBackgroundCollisionsWithinTile(pti);
         }
 
-        /*
-        // Loop over all grids/tiles at this level
-#ifdef AMREX_USE_OMP
-        info.SetDynamic(true);
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-        for (amrex::MFIter mfi = species1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
-            doBackgroundCollisionsWithinTile( lev, mfi, species1 );
+        // secondly perform ionization through the SmartCopyFactory if needed
+        if (ionization_flag){
+            doBackgroundIonization(lev, species1, species2);
         }
-        */
     }
 }
 
 
-// using namespace ParticleUtils;
-
-/** Perform all MCC collisions within a tile
+/** Perform all particle conserving MCC collisions within a tile
  *
  * @param pti particle iterator
- * @param species1/2 pointer to species container used to inject new particles
-          from ionization events
  *
  */
 void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
-    ( WarpXParIter& pti, WarpXParticleContainer& species1,
-      WarpXParticleContainer& species2)
+    ( WarpXParIter& pti )
 {
     // get particle count
     const long np = pti.numParticles();
@@ -227,7 +230,6 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
     amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-    amrex::ParticleReal* const AMREX_RESTRICT wp = attribs[PIdx::w].dataPtr();
 
     amrex::ParallelForRNG(np,
         [=] AMREX_GPU_DEVICE (long ip, amrex::RandomEngine const& engine)
@@ -239,9 +241,6 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
             amrex::Real col_select = amrex::Random(engine);
             amrex::ParticleReal ua_x, ua_y, ua_z;
             amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
-
-            // FIXME we really should be consistent in using stationary
-            // targets for electron collisions.
 
             // get velocities of gas particles from a Maxwellian distribution
             ua_x = vel_std * amrex::RandomNormal(0, 1.0, engine);
@@ -257,7 +256,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
             // the colliding particle is an ion. For electron collisions we
             // cannot use the relative velocity since that allows the
             // possibility where the electron kinetic energy in the lab frame
-            // is insufficient to cause ionization but not in the COM frame -
+            // is insufficient to cause excitation but not in the COM frame -
             // for energy to balance this situation requires the neutral to
             // lose energy during the collision which we don't currently
             // account for.
@@ -284,7 +283,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                 // get collision cross-section
                 sigma_E = scattering_process.getCrossSection(E_coll);
 
-                // calculate collision frequency
+                // calculate normalized collision frequency
                 nu_i += n_a * sigma_E * v_coll / nu_max;
 
                 // check if this collision should be performed and call
@@ -311,138 +310,64 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                         2.0 / mass1 * PhysConst::q_e
                         * (E_coll - scattering_process.energy_penalty)
                     );
-                    Excitation(ux[ip], uy[ip], uz[ip], vp, engine);
+                    RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
                 }
-//                else if (scattering_process.name == "ionization"){
-//                    // get the left over energy
-//                    amrex::Real E_remaining = (
-//                        E_coll - scattering_process.energy_penalty
-//                    );
-//                    // each electron gets half the energy
-//                    // (we could change this later)
-//                    amrex::Real vp = std::sqrt(
-//                        2.0 / mass1 * PhysConst::q_e * E_remaining / 2.0
-//                    );
-//
-//                    // primary electron undergoes scattering same as with
-//                    // excitation event
-//                    Excitation(ux[ip], uy[ip], uz[ip], vp, engine);
-//
-//                    // get velocity vector of the secondary electron
-//                    amrex::ParticleReal ux_sec, uy_sec, uz_sec;
-//                    Excitation(ux_sec, uy_sec, uz_sec, vp, engine);
-//
-//                    // get the particle position
-//                    amrex::ParticleReal xp, yp, zp;
-//                    getPosition(ip, xp, yp, zp);
-//
-//                }
                 break;
             }
         }
     );
+}
 
 
-    // until I can figure out how to add particles from within the GPU
-    // (compatible) loop above I'm going to just run the ionization as a
-    // separate routine
-    if (ionization_flag)
+/** Perform MCC ionization interactions
+ *
+ * @param pti particle iterator
+ * @param species1/2 reference to species container used to inject new
+          particles from ionization events
+ *
+ */
+void BackgroundMCCCollision::doBackgroundIonization
+    ( int lev, WarpXParticleContainer& species1,
+      WarpXParticleContainer& species2)
+{
+    WARPX_PROFILE("BackgroundMCCCollision::doBackgroundIonization()");
+
+    SmartCopyFactory copy_factory_elec(species1, species1);
+    SmartCopyFactory copy_factory_ion(species1, species2);
+    const auto CopyElec = copy_factory_elec.getSmartCopy();
+    const auto CopyIon = copy_factory_ion.getSmartCopy();
+
+    const auto Filter = ImpactIonizationFilterFunc(
+        m_ionization_processes[0],
+        m_mass1, m_total_collision_prob_ioniz,
+        m_nu_max_ioniz / m_background_density
+    );
+
+    amrex::Real vel_std = std::sqrt(
+        PhysConst::kb * m_background_temperature / m_background_mass
+    );
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti)
     {
-        amrex::RandomEngine const engine;
+        auto& elec_tile = species1.ParticlesAt(lev, pti);
+        auto& ion_tile = species2.ParticlesAt(lev, pti);
 
-        // get particle position identifier
-        GetParticlePosition getPosition = GetParticlePosition(pti);
+        const auto np_elec = elec_tile.numParticles();
+        const auto np_ion = ion_tile.numParticles();
 
-        // vectors to store new particle information in
-        std::vector<amrex::ParticleReal> x, y, z, w, ux1, uy1, uz1, ux2, uy2, uz2;
-
-        for (int ip = 0; ip < np; ip++)
-        {
-            // determine if this particle should collide
-            if (amrex::Random(engine) > total_collision_prob) continue; //return;
-
-            amrex::Real v_coll, v_coll2, E_coll, sigma_E, nu_i = 0;
-            amrex::Real col_select = amrex::Random(engine);
-            amrex::ParticleReal ua_x, ua_y, ua_z;
-            amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
-
-            // FIXME we really should be consistent in using stationary
-            // targets for electron collisions.
-
-            v_coll2 = ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip];
-            E_coll = 0.5 * mass1 * v_coll2 / PhysConst::q_e;
-
-            v_coll = std::sqrt(v_coll2);
-
-            // loop through all collision pathways
-            for (auto scattering_process : scattering_processes){
-
-                if (scattering_process.name != "ionization") continue;
-
-                // get collision cross-section
-                sigma_E = scattering_process.getCrossSection(E_coll);
-
-                // calculate collision frequency
-                nu_i += n_a * sigma_E * v_coll / nu_max;
-
-                // check if this collision should be performed and call
-                // the appropriate scattering function
-                //if (col_select > nu_i) continue;
-                if (col_select < nu_i){
-                    // get the left over energy
-                    amrex::Real E_remaining = (
-                        E_coll - scattering_process.energy_penalty
-                    );
-
-                    // each electron gets half the energy (could change this later)
-                    amrex::Real vp = std::sqrt(
-                        2.0 / mass1 * PhysConst::q_e * E_remaining / 2.0
-                    );
-                    Excitation(ux[ip], uy[ip], uz[ip], vp, engine);
-
-                    // get velocity vector of secondary electron
-                    amrex::ParticleReal vx, vy, vz;
-                    Excitation(vx, vy, vz, vp, engine);
-
-                    // get velocities for the ion from a Maxwellian distribution
-                    ua_x = vel_std * amrex::RandomNormal(0, 1.0, engine);
-                    ua_y = vel_std * amrex::RandomNormal(0, 1.0, engine);
-                    ua_z = vel_std * amrex::RandomNormal(0, 1.0, engine);
-
-                    // get the particle position
-                    amrex::ParticleReal xp, yp, zp;
-                    getPosition(ip, xp, yp, zp);
-
-                    // save the new particle information
-                    x.push_back(xp);
-                    y.push_back(yp);
-                    z.push_back(zp);
-                    w.push_back(wp[ip]);
-                    ux1.push_back(vx);
-                    uy1.push_back(vy);
-                    uz1.push_back(vz);
-                    ux2.push_back(ua_x);
-                    uy2.push_back(ua_y);
-                    uz2.push_back(ua_z);
-
-                }
-            }
-        }
-
-        // add the new particles
-        int n_new = x.size();
-
-        amrex::MFIter::allowMultipleMFIters(true);
-        species1.AddNParticles(
-            //, new_pidx, x, y, z, vx1, vy1, vz1, 1, w1, 1
-            pti.GetLevel(), n_new, &x[0], &y[0], &z[0],
-            &ux1[0], &uy1[0], &uz1[0], 1, &w[0], 1
+        auto Transform = ImpactIonizationTransformFunc(
+            m_ionization_processes[0].energy_penalty, m_mass1, vel_std
         );
-        species2.AddNParticles(
-            pti.GetLevel(), n_new, &x[0], &y[0], &z[0],
-            &ux2[0], &uy2[0], &uz2[0], 1, &w[0], 1
+
+        const auto num_added = filterCopyTransformParticles<1>(
+            elec_tile, ion_tile, elec_tile, np_elec, np_ion,
+            Filter, CopyElec, CopyIon, Transform
         );
-        amrex::MFIter::allowMultipleMFIters(false);
+
+        setNewParticleIDs(elec_tile, np_elec, num_added);
+        setNewParticleIDs(ion_tile, np_ion, num_added);
     }
-
 }
