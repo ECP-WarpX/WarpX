@@ -391,20 +391,21 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
         if (tilebox.smallEnd(zdir) < 0) {
 
             // Apply damping factor in guards cells below the lower end of the domain
-            int const nz_guard = -tilebox.smallEnd(zdir);
+            int const nz_guard = zero_fields_nz + damp_fields_nz; // -tilebox.smallEnd(zdir);
 
             // Set so the box only covers the lower half of the guard cells
-            tilebox.setBig(zdir, -nz_guard/2-1);
+            tilebox.setBig(zdir, nz_guard-1);
 
             amrex::ParallelFor(tilebox, Efield[0]->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
 #if (AMREX_SPACEDIM == 3)
-                amrex::Real zcell = static_cast<amrex::Real>(k + nz_guard);
+                amrex::Real zcell = static_cast<amrex::Real>(k - zero_fields_nz);
 #else
-                amrex::Real zcell = static_cast<amrex::Real>(j + nz_guard);
+                amrex::Real zcell = static_cast<amrex::Real>(j - zero_fields_nz);
 #endif
-                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                if (zcell < 0._rt) zcell = 0._rt;
+                const amrex::Real phase = 0.5_rt*MathConst::pi*zcell/damp_fields_nz;
                 const amrex::Real sin_phase = std::sin(phase);
                 const amrex::Real damp_factor = sin_phase*sin_phase;
 
@@ -421,20 +422,21 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
         else if (nz_tile > nz_domain) {
 
             // Apply damping factor in guards cells above the upper end of the domain
-            int nz_guard = nz_tile - nz_domain;
+            int nz_guard = damp_fields_nz + zero_fields_nz; //nz_tile - nz_domain;
 
             // Set so the box only covers the upper half of the guard cells
-            tilebox.setSmall(zdir, nz_domain + nz_guard/2 + 1);
+            tilebox.setSmall(zdir, nz_domain - nz_guard + 1);
 
             amrex::ParallelFor(tilebox, Efield[0]->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
 #if (AMREX_SPACEDIM == 3)
-                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - k);
+                amrex::Real zcell = static_cast<amrex::Real>(nz_domain - k - zero_fields_nz);
 #else
-                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - j);
+                amrex::Real zcell = static_cast<amrex::Real>(nz_domain - j - zero_fields_nz);
 #endif
-                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                if (zcell < 0._rt) zcell = 0._rt;
+                const amrex::Real phase = 0.5_rt*MathConst::pi*zcell/damp_fields_nz;
                 const amrex::Real sin_phase = std::sin(phase);
                 const amrex::Real damp_factor = sin_phase*sin_phase;
 

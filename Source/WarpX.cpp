@@ -103,6 +103,8 @@ bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
 bool WarpX::use_damp_fields_in_z_guard = false;
+bool WarpX::damp_fields_nz = 32;
+bool WarpX::zero_fields_nz = 32;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -876,6 +878,8 @@ WarpX::ReadParameters ()
             use_damp_fields_in_z_guard = true;
         }
         pp_psatd.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
+        pp_psatd.query("damp_fields_nz", damp_fields_nz);
+        pp_psatd.query("zero_fields_nz", zero_fields_nz);
 #   endif
 
     }
