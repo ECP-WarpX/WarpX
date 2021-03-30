@@ -584,10 +584,11 @@ WarpX::ReadParameters ()
 #endif
         // setting default to 0
         Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,0);
-        // Switching pml lo to 1 when do_pml = 1
+        // Switching pml lo to 1 when do_pml = 1 and if domain is non-periodic
+        // Note to remove this code when new BC API is fully functional
         if (do_pml == 1) {
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                parse_do_pml_Lo[idim] = 1;
+                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Lo[idim] = 1;
             }
         }
         pp_warpx.queryarr("do_pml_Lo", parse_do_pml_Lo);
@@ -598,10 +599,11 @@ WarpX::ReadParameters ()
 #endif
         // setting default to 0
         Vector<int> parse_do_pml_Hi(AMREX_SPACEDIM,0);
-        // Switching pml hi to 1 when do_pml = 1
+        // Switching pml hi to 1 when do_pml = 1 and if domain is non-periodic
+        // Note to remove this code when new BC API is fully functional
         if (do_pml == 1) {
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                parse_do_pml_Hi[idim] = 1;
+                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Hi[idim] = 1;
             }
         }
         pp_warpx.queryarr("do_pml_Hi", parse_do_pml_Hi);
