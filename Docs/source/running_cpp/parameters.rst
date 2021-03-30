@@ -816,7 +816,7 @@ Laser initialization
       function, they still have to be specified as they are used for numerical purposes.
     - ``"from_txye_file"``: the electric field of the laser is read from an external binary file
       whose format is explained below. It requires to provide the name of the binary file
-      setting the additional parameter ``<laser_name>.txye_file_name`` (``string`). It accepts an
+      setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
       optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
       time_chunk_size timesteps from the binary file. New timesteps are read as soon as they are needed.
       The default value is automatically set to the number of timesteps contained in the binary file
