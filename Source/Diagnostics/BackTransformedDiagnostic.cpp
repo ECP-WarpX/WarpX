@@ -1373,13 +1373,10 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
 #endif
     for (MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       Box& bx = m_buff_box_;
        const Box& bx_bf = mfi.tilebox();
-       bx.setSmall(AMREX_SPACEDIM-1,bx_bf.smallEnd(AMREX_SPACEDIM-1));
-       bx.setBig(AMREX_SPACEDIM-1,bx_bf.bigEnd(AMREX_SPACEDIM-1));
        Array4<Real> tmp_arr = tmp[mfi].array();
        Array4<Real> buf_arr = buf[mfi].array();
-       ParallelFor(bx, ncomp_to_dump,
+       ParallelFor(bx_bf, ncomp_to_dump,
            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
            {
               const int icomp = field_map_ptr[n];
