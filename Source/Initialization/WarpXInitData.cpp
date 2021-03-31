@@ -341,7 +341,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Efield_aux[lev][i]->setVal(E_external_grid[i]);
               Efield_cp[lev][i]->setVal(E_external_grid[i]);
               if (fft_do_time_averaging) {
-                Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
+                  Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
               }
            }
         }
