@@ -212,7 +212,14 @@ def _read_header(header_file):
         version = int(f.readline())
         how = int(f.readline())
         ncomp = int(f.readline())
-        nghost = int(f.readline())
+        # If the number of ghost cells is the same in all directions,
+        # s is a string of the form '16\n'.
+        # If the number of ghost cells varies depending on the direction,
+        # s is a string of the form '(9,8)\n' in 2D or '(9,8,9)\n' in 3D.
+        s = f.readline()
+        s = s.replace('(', '') # remove left  parenthesis '(', if any
+        s = s.replace(')', '') # remove right parenthesis ')', if any
+        nghost = np.fromstring(s, dtype = int, sep = ',') # convert from string to numpy array
 
         header = HeaderInfo(version, how, ncomp, nghost)
 
@@ -268,7 +275,7 @@ def _read_field(raw_file, field_name):
                 f.readline()  # skip the first line
             arr = np.fromfile(f, 'float64', np.product(shape))
             arr = arr.reshape(shape, order='F')
-            data[[slice(l,h+1) for l, h in zip(lo, hi)]] = arr
+            data[tuple(slice(l,h+1) for l, h in zip(lo, hi))] = arr
 
     return data
 
