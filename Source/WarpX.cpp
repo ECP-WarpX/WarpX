@@ -80,8 +80,8 @@ int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::particle_boundary_lo(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::particle_boundary_hi(AMREX_SPACEDIM,0);
+amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
+amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
 bool WarpX::do_current_centering = false;
 

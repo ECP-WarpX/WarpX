@@ -7,9 +7,7 @@
 #ifndef PARTICLEBOUNDARIES_H_
 #define PARTICLEBOUNDARIES_H_
 
-#include "Utils/WarpXUtil.H"
-
-enum struct ParticleBC { none=0, absorbing, reflecting };
+#include "Utils/WarpXAlgorithmSelection.H"
 
 /**
  *  This allows a different boundary condition on each edge of the grid.
@@ -19,21 +17,18 @@ struct ParticleBoundaries
 
     ParticleBoundaries () noexcept
     {
-        SetAll("none");
+        SetAll(ParticleBoundaryType::Absorbing);
+        reflect_all_velocities = false;
     }
 
-    std::map<std::string, ParticleBC> m_BCname_to_enum = {
-        {"none", ParticleBC::none},
-        {"absorbing", ParticleBC::absorbing},
-        {"reflecting", ParticleBC::reflecting}
-    };
+    void
+    Set_reflect_all_velocities(bool flag)
+    {
+        reflect_all_velocities = flag;
+    }
 
     void
-    SetAll (std::string bc_name) {
-        auto it = m_BCname_to_enum.find(bc_name);
-        WarpXUtilMsg::AlwaysAssert(it != m_BCname_to_enum.end(),
-                                   "ERROR: unknown particle boundary type '" + bc_name + "'");
-        ParticleBC bc = it->second;
+    SetAll (ParticleBoundaryType bc) {
         xmin_bc = bc;
         xmax_bc = bc;
         ymin_bc = bc;
@@ -43,97 +38,86 @@ struct ParticleBoundaries
     }
 
     void
-    SetBoundsX(std::vector<std::string> bc_names) { SetBounds(bc_names, xmin_bc, xmax_bc); }
+    SetBoundsX(ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi) { xmin_bc = bc_lo; xmax_bc = bc_hi; }
     void
-    SetBoundsY(std::vector<std::string> bc_names) { SetBounds(bc_names, ymin_bc, ymax_bc); }
+    SetBoundsY(ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi) { ymin_bc = bc_lo; ymax_bc = bc_hi; }
     void
-    SetBoundsZ(std::vector<std::string> bc_names) { SetBounds(bc_names, zmin_bc, zmax_bc); }
+    SetBoundsZ(ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi) { zmin_bc = bc_lo; zmax_bc = bc_hi; }
 
     bool
-    AllNone () {
-        return (xmin_bc == ParticleBC::none && xmax_bc == ParticleBC::none
-             && ymin_bc == ParticleBC::none && ymax_bc == ParticleBC::none
-             && zmin_bc == ParticleBC::none && zmax_bc == ParticleBC::none);
+    CheckAll (ParticleBoundaryType bc) {
+        return (xmin_bc == bc && xmax_bc == bc
+             && ymin_bc == bc && ymax_bc == bc
+             && zmin_bc == bc && zmax_bc == bc);
     }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static void
-    apply_boundary_x (amrex::ParticleReal& x, amrex::ParticleReal& v, bool& particle_lost,
-                      amrex::Real xmin, amrex::Real xmax, ParticleBoundaries const& boundaries)
+    apply_boundaries (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
+#ifdef WARPX_DIM_3D
+                      amrex::ParticleReal& y, amrex::Real ymin, amrex::Real ymax,
+#endif
+                      amrex::ParticleReal& z, amrex::Real zmin, amrex::Real zmax,
+                      amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
+                      bool& particle_lost,
+                      ParticleBoundaries const& boundaries)
     {
-        apply_boundary(x, v, particle_lost, xmin, xmax, boundaries.xmin_bc, boundaries.xmax_bc);
+        bool change_sign_ux = false;
+        bool change_sign_uy = false;
+        bool change_sign_uz = false;
+
+        apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost, boundaries.xmin_bc, boundaries.xmax_bc);
+#ifdef WARPX_DIM_3D
+        apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost, boundaries.ymin_bc, boundaries.ymax_bc);
+#endif
+        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost, boundaries.zmin_bc, boundaries.zmax_bc);
+
+        if (boundaries.reflect_all_velocities && (change_sign_ux | change_sign_uy | change_sign_uz)) {
+            change_sign_ux = true;
+            change_sign_uy = true;
+            change_sign_uz = true;
+        }
+        if (change_sign_ux) ux = -ux;
+        if (change_sign_uy) uy = -uy;
+        if (change_sign_uz) uz = -uz;
     }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static void
-    apply_boundary_y (amrex::ParticleReal& y, amrex::ParticleReal& v, bool& particle_lost,
-                      amrex::Real ymin, amrex::Real ymax, ParticleBoundaries const& boundaries)
-    {
-        apply_boundary(y, v, particle_lost, ymin, ymax, boundaries.ymin_bc, boundaries.ymax_bc);
-    }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    static void
-    apply_boundary_z (amrex::ParticleReal& z, amrex::ParticleReal& v, bool& particle_lost,
-                      amrex::Real zmin, amrex::Real zmax, ParticleBoundaries const& boundaries)
-    {
-        apply_boundary(z, v, particle_lost, zmin, zmax, boundaries.zmin_bc, boundaries.zmax_bc);
-    }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    static void
-    apply_boundary (amrex::ParticleReal& x, amrex::ParticleReal& v, bool& particle_lost,
-                    amrex::Real xmin, amrex::Real xmax,
-                    ParticleBC xmin_bc, ParticleBC xmax_bc)
+    apply_boundary (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
+                    bool& change_sign_ux, bool& particle_lost,
+                    ParticleBoundaryType xmin_bc, ParticleBoundaryType xmax_bc)
     {
         if (x < xmin) {
-            if (xmin_bc == ParticleBC::absorbing) {
+            if (xmin_bc == ParticleBoundaryType::Absorbing || xmin_bc == ParticleBoundaryType::Open) {
                 particle_lost = true;
             }
-            else if (xmin_bc == ParticleBC::reflecting) {
+            else if (xmin_bc == ParticleBoundaryType::Reflecting) {
                 x = 2*xmin - x;
-                v = -v;
+                change_sign_ux = true;
             }
         }
         else if (x > xmax) {
-            if (xmax_bc == ParticleBC::absorbing) {
+            if (xmax_bc == ParticleBoundaryType::Absorbing || xmin_bc == ParticleBoundaryType::Open) {
                 particle_lost = true;
             }
-            else if (xmax_bc == ParticleBC::reflecting) {
+            else if (xmax_bc == ParticleBoundaryType::Reflecting) {
                 x = 2*xmax - x;
-                v = -v;
+                change_sign_ux = true;
             }
         }
     }
 
 private:
 
-    void
-    SetBounds(std::vector<std::string> bc_names, ParticleBC& min_bc, ParticleBC& max_bc) {
-        if (bc_names.size() == 0) return;
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(bc_names.size() <= 2,
-                                         "ERROR: Too many particle bounderies specified");
+    ParticleBoundaryType xmin_bc;
+    ParticleBoundaryType xmax_bc;
+    ParticleBoundaryType ymin_bc;
+    ParticleBoundaryType ymax_bc;
+    ParticleBoundaryType zmin_bc;
+    ParticleBoundaryType zmax_bc;
 
-        auto it = m_BCname_to_enum.find(bc_names[0]);
-        WarpXUtilMsg::AlwaysAssert(it != m_BCname_to_enum.end(),
-                                   "ERROR: unknown particle boundary type '" + bc_names[0] + "'");
-        min_bc = it->second;
-        if (bc_names.size() == 1) {
-            max_bc = min_bc;
-        } else {
-            auto it2 = m_BCname_to_enum.find(bc_names[1]);
-            WarpXUtilMsg::AlwaysAssert(it2 != m_BCname_to_enum.end(),
-                                       "ERROR: unknown particle boundary type '" + bc_names[1] + "'");
-            max_bc = it2->second;
-        }
-    }
-
-    ParticleBC xmin_bc;
-    ParticleBC xmax_bc;
-    ParticleBC ymin_bc;
-    ParticleBC ymax_bc;
-    ParticleBC zmin_bc;
-    ParticleBC zmax_bc;
+    bool reflect_all_velocities;
 
 };
 #endif /*PARTICLEBOUNDARIES_H_*/

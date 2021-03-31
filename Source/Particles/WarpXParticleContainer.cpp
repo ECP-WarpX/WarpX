@@ -1005,7 +1005,7 @@ void
 WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
 
-    if (boundary_conditions.AllNone()) return;
+    if (boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
@@ -1027,9 +1027,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
 
             auto& soa = ptile.GetStructOfArrays();
             amrex::ParticleReal * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
-#ifdef WARPX_DIM_3D
             amrex::ParticleReal * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
-#endif
             amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
 
             // Loop over particles and apply BC to each particle
@@ -1042,11 +1040,14 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
                     bool particle_lost = false;
-                    ParticleBoundaries::apply_boundary_x(x, ux[i], particle_lost, xmin, xmax, boundary_conditions);
+                    ParticleBoundaries::apply_boundaries(x, xmin, xmax,
 #ifdef WARPX_DIM_3D
-                    ParticleBoundaries::apply_boundary_y(y, uy[i], particle_lost, ymin, ymax, boundary_conditions);
+                                                         y, ymin, ymax,
 #endif
-                    ParticleBoundaries::apply_boundary_z(z, uz[i], particle_lost, zmin, zmax, boundary_conditions);
+                                                         z, zmin, zmax,
+                                                         ux[i], uy[i], uz[i], particle_lost,
+                                                         boundary_conditions);
+
                     if (particle_lost) {
                         p.id() = -1;
                     } else {

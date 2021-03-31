@@ -242,21 +242,21 @@ MultiParticleContainer::ReadParameters ()
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
 
-        std::string boundary_conditions = "none";
-        pp_particles.query("boundary_conditions", boundary_conditions);
-        m_boundary_conditions.SetAll(boundary_conditions);
-
-        std::vector<std::string> boundary_conditions_x;
-        pp_particles.queryarr("boundary_conditions_x", boundary_conditions_x);
-        m_boundary_conditions.SetBoundsX(boundary_conditions_x);
+        // The boundary conditions are read in in ReadBCParams
+        m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
 #ifdef WARPX_DIM_3D
-        std::vector<std::string> boundary_conditions_y;
-        pp_particles.queryarr("boundary_conditions_y", boundary_conditions_y);
-        m_boundary_conditions.SetBoundsY(boundary_conditions_y);
+        m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
+#else
+        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
 #endif
-        std::vector<std::string> boundary_conditions_z;
-        pp_particles.queryarr("boundary_conditions_z", boundary_conditions_z);
-        m_boundary_conditions.SetBoundsZ(boundary_conditions_z);
+
+        {
+            ParmParse pp_boundary("boundary");
+            bool flag = false;
+            pp_boundary.query("reflect_all_velocities", flag);
+            m_boundary_conditions.Set_reflect_all_velocities(flag);
+        }
 
         ParmParse pp_lasers("lasers");
         pp_lasers.queryarr("names", lasers_names);
