@@ -240,7 +240,19 @@ wp_call_f2 (enum wp_f2_t type, T a, T b)
     case WP_HEAVISIDE:
         return (a < 0.0) ? amrex::Real(0.0) : ((a > 0.0) ? amrex::Real(1.0) : b);
     case WP_JN:
+#ifdef AMREX_USE_DPCPP
+        // neither jn(f) nor std::cyl_bessel_j work yet
+        // https://github.com/oneapi-src/oneAPI-spec/issues/308
+        AMREX_DEVICE_PRINTF("wp_call_f2: Parser does not implement jn (%d) for SYCL/DPC++ yet\n", type);
+        amrex::Abort();
+        return 0.0;
+#else
+#   ifdef AMREX_USE_FLOAT
+        return jnf(a, b);
+#   else
         return jn(a, b);
+#   endif
+#endif
     case WP_MIN:
         return (a < b) ? a : b;
     case WP_MAX:
