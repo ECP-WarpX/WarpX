@@ -43,9 +43,7 @@ public:
         amrex::Vector<amrex::Real>& sigmas
     );
 
-    void sanityCheckEnergyGrid (
-        const amrex::Vector<amrex::Real> energies
-    );
+    void sanityCheckEnergyGrid ( );
 
     std::string name;
     amrex::Real energy_penalty;

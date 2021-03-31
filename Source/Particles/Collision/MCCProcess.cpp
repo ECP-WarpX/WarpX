@@ -20,9 +20,6 @@ MCCProcess::MCCProcess (
     // read the cross-section data file into memory
     readCrossSectionFile(cross_section_file, m_energies, m_sigmas);
 
-    // sanity check cross-section energy grid
-    // sanityCheckEnergyGrid(m_energies);
-
     // save energy grid parameters for easy use
     m_grid_size = m_energies.size();
     m_energy_lo = m_energies[0];
@@ -32,6 +29,9 @@ MCCProcess::MCCProcess (
     m_dE = m_energies[1] - m_energies[0];
 
     energy_penalty = energy;
+
+    // sanity check cross-section energy grid
+    sanityCheckEnergyGrid();
 }
 
 amrex::Real
@@ -76,10 +76,14 @@ MCCProcess::readCrossSectionFile (
 }
 
 void
-MCCProcess::sanityCheckEnergyGrid (
-    const amrex::Vector<amrex::Real> energies )
+MCCProcess::sanityCheckEnergyGrid ( )
 {
-    // TODO insert sanity checking logic specifically checking
-    // for constant dE between points
-    amrex::Print() << energies[0] << " sanity checking data\n";
+    // confirm that the input data for the cross-section was provided with
+    // equal energy steps, otherwise the linear interpolation will fail
+    for (unsigned i = 1; i < m_energies.size(); i++) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (std::abs(m_energies[i] - m_energies[i-1] - m_dE) < m_dE / 100.0),
+            "Energy grid not evenly spaced."
+        );
+    }
 }

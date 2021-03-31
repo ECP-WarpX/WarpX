@@ -1066,7 +1066,8 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`)
-    Set to ``pairwisecoulomb`` for pairwise Coulomb collisions.
+    Set to ``pairwisecoulomb`` for pairwise Coulomb collisions. This is the
+    default to maintain backward compatibility.
 
 * ``<collision_name>.species`` (`strings`, two species names separated by spaces)
     The names of two species, between which the collision will be considered.
