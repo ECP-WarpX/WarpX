@@ -221,9 +221,6 @@ WarpX::WarpX ()
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
 
-    Efield_avg_aux.resize(nlevs_max);
-    Bfield_avg_aux.resize(nlevs_max);
-
     F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
     phi_fp.resize(nlevs_max);
@@ -1344,27 +1341,26 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[x]"));
         Efield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[z]"));
+    } else if (lev == 0) {
+        if (!WarpX::fft_do_time_averaging) {
+            // In this case, the aux grid is simply an alias of the fp grid
+            Efield_aux[lev][0] = std::make_unique<MultiFab>(*Efield_fp[lev][0], amrex::make_alias, 0, ncomps);
+            Efield_aux[lev][1] = std::make_unique<MultiFab>(*Efield_fp[lev][1], amrex::make_alias, 0, ncomps);
+            Efield_aux[lev][2] = std::make_unique<MultiFab>(*Efield_fp[lev][2], amrex::make_alias, 0, ncomps);
 
-        Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Efield_aux[lev][0], amrex::make_alias, 0, ncomps);
-        Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Efield_aux[lev][1], amrex::make_alias, 0, ncomps);
-        Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Efield_aux[lev][2], amrex::make_alias, 0, ncomps);
+            Bfield_aux[lev][0] = std::make_unique<MultiFab>(*Bfield_fp[lev][0], amrex::make_alias, 0, ncomps);
+            Bfield_aux[lev][1] = std::make_unique<MultiFab>(*Bfield_fp[lev][1], amrex::make_alias, 0, ncomps);
+            Bfield_aux[lev][2] = std::make_unique<MultiFab>(*Bfield_fp[lev][2], amrex::make_alias, 0, ncomps);
+        } else {
+            Efield_aux[lev][0] = std::make_unique<MultiFab>(*Efield_avg_fp[lev][0], amrex::make_alias, 0, ncomps);
+            Efield_aux[lev][1] = std::make_unique<MultiFab>(*Efield_avg_fp[lev][1], amrex::make_alias, 0, ncomps);
+            Efield_aux[lev][2] = std::make_unique<MultiFab>(*Efield_avg_fp[lev][2], amrex::make_alias, 0, ncomps);
 
-        Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Bfield_aux[lev][0], amrex::make_alias, 0, ncomps);
-        Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Bfield_aux[lev][1], amrex::make_alias, 0, ncomps);
-        Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Bfield_aux[lev][2], amrex::make_alias, 0, ncomps);
-    }
-    else if (lev == 0)
-    {
-        for (int idir = 0; idir < 3; ++idir) {
-            Efield_aux[lev][idir] = std::make_unique<MultiFab>(*Efield_fp[lev][idir], amrex::make_alias, 0, ncomps);
-            Bfield_aux[lev][idir] = std::make_unique<MultiFab>(*Bfield_fp[lev][idir], amrex::make_alias, 0, ncomps);
-
-            Efield_avg_aux[lev][idir] = std::make_unique<MultiFab>(*Efield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps);
-            Bfield_avg_aux[lev][idir] = std::make_unique<MultiFab>(*Bfield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps);
+            Bfield_aux[lev][0] = std::make_unique<MultiFab>(*Bfield_avg_fp[lev][0], amrex::make_alias, 0, ncomps);
+            Bfield_aux[lev][1] = std::make_unique<MultiFab>(*Bfield_avg_fp[lev][1], amrex::make_alias, 0, ncomps);
+            Bfield_aux[lev][2] = std::make_unique<MultiFab>(*Bfield_avg_fp[lev][2], amrex::make_alias, 0, ncomps);
         }
-    }
-    else
-    {
+    } else {
         Bfield_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_aux[x]"));
         Bfield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_aux[y]"));
         Bfield_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE,tag("Bfield_aux[z]"));
@@ -1372,14 +1368,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE,tag("Efield_aux[x]"));
         Efield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_aux[z]"));
-
-        Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[x]"));
-        Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[y]"));
-        Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_aux[z]"));
-
-        Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[x]"));
-        Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[y]"));
-        Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_aux[z]"));
     }
 
     //

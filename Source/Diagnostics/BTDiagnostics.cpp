@@ -85,8 +85,6 @@ BTDiagnostics::ReadParameters ()
     BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ( warpx.do_back_transformed_diagnostics==true),
-        "the do_back_transformed_diagnostics flag must be set to true for BTDiagnostics");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.gamma_boost > 1.0_rt,
         "gamma_boost must be > 1 to use the back-transformed diagnostics");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.boost_direction[2] == 1,
