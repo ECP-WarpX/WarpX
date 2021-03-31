@@ -10,8 +10,8 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
+#include "Parallelization/KernelTimer.H"
 #include "Utils/WarpX_Complex.H"
-#include "Utils/KernelTimer.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
