@@ -427,7 +427,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
 
                     for (int idim=0; idim<AMREX_SPACEDIM; idim++){
                         // check if the boundary in this dimension should be set
-                        if (!dirichlet_flag[idim]) return;
+                        if (!dirichlet_flag[idim]) continue;
 
                         if (idim == 0){
                             idx = i;
