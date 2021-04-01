@@ -48,9 +48,9 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     using Idx = SpectralAvgFieldIndex;
     if (WarpX::use_kspace_filter) {
         auto & solver = warpx.get_spectral_solver_fp(m_lev);
-        solver.ForwardTransform(*rho, Idx::rho_new);
+        solver.ForwardTransform(m_lev, *rho, Idx::rho_new);
         solver.ApplyFilter(Idx::rho_new);
-        solver.BackwardTransform(*rho, Idx::rho_new);
+        solver.BackwardTransform(m_lev, *rho, Idx::rho_new);
     }
 #endif
 
@@ -76,7 +76,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 #else
     // In Cartesian geometry, coarsen and interpolate from temporary MultiFab rho
     // to output diagnostic MultiFab mf_dst
-    CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio );
+    CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio );
     amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

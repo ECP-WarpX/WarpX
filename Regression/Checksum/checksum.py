@@ -130,10 +130,18 @@ class Checksum:
                 if not passed:
                     print("ERROR: Benchmark and plotfile checksum have "
                           "different value for key [%s,%s]" % (key1, key2))
-                    print("Benchmark: [%s,%s] %.40f"
+                    print("Benchmark: [%s,%s] %.15e"
                           % (key1, key2, ref_benchmark.data[key1][key2]))
-                    print("Plotfile : [%s,%s] %.40f"
+                    print("Plotfile : [%s,%s] %.15e"
                           % (key1, key2, self.data[key1][key2]))
                     checksums_differ = True
+                    # Print absolute and relative error for each failing key
+                    x = ref_benchmark.data[key1][key2]
+                    y = self.data[key1][key2]
+                    abs_err = np.abs(x - y)
+                    print("Absolute error: {:.2e}".format(abs_err))
+                    if (np.abs(x) != 0.):
+                        rel_err = abs_err / np.abs(x)
+                        print("Relative error: {:.2e}".format(rel_err))
         if checksums_differ:
             sys.exit(1)

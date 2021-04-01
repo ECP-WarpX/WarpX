@@ -29,12 +29,14 @@ namespace QedUtils{
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     amrex::Real chi_photon(
-        const amrex::Real px, const amrex::Real py, const amrex::Real pz,
-        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-        const amrex::Real bx, const amrex::Real by, const amrex::Real bz)
+        const amrex::ParticleReal px, const amrex::ParticleReal py,
+        const amrex::ParticleReal pz, const amrex::ParticleReal ex,
+        const amrex::ParticleReal ey, const amrex::ParticleReal ez,
+        const amrex::ParticleReal bx, const amrex::ParticleReal by,
+        const amrex::ParticleReal bz)
     {
         namespace pxr_p = picsar::multi_physics::phys;
-        return pxr_p::chi_photon<amrex::Real, pxr_p::unit_system::SI>(
+        return pxr_p::chi_photon<amrex::ParticleReal, pxr_p::unit_system::SI>(
             px, py, pz, ex, ey, ez, bx, by, bz);
     }
 
@@ -49,12 +51,14 @@ namespace QedUtils{
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     amrex::Real chi_ele_pos(
-        const amrex::Real px, const amrex::Real py, const amrex::Real pz,
-        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-        const amrex::Real bx, const amrex::Real by, const amrex::Real bz)
+        const amrex::ParticleReal px, const amrex::ParticleReal py,
+        const amrex::ParticleReal pz, const amrex::ParticleReal ex,
+        const amrex::ParticleReal ey, const amrex::ParticleReal ez,
+        const amrex::ParticleReal bx, const amrex::ParticleReal by,
+        const amrex::ParticleReal bz)
     {
             namespace pxr_p = picsar::multi_physics::phys;
-            return pxr_p::chi_ele_pos<amrex::Real, pxr_p::unit_system::SI>(
+            return pxr_p::chi_ele_pos<amrex::ParticleReal, pxr_p::unit_system::SI>(
                 px, py, pz, ex, ey, ez, bx, by, bz);
     }
     //_________

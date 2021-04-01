@@ -40,21 +40,35 @@ warpx.use_filter = 1          # bilinear current/charge filter
 #################################
 # Performance Tuning
 #
-amr.max_grid_size = 64
-amr.blocking_factor = 64
-warpx.do_dynamic_scheduling = 0
+# simple tuning:
+#   the numprocs product must be equal to the number of MPI ranks and splits
+#   the domain on the coarsest level equally into grids;
+#   slicing in the 2nd dimension is preferred for ideal performance
+warpx.numprocs = 1 2   # 2 MPI ranks
+#warpx.numprocs = 1 4  # 4 MPI ranks
+
+# detail tuning instead of warpx.numprocs:
+#   It is important to have enough cells in a block & grid, otherwise
+#   performance will suffer.
+#   Use larger values for GPUs, try to fill a GPU well with memory and place
+#   few large grids on each device (you can go as low as 1 large grid / device
+#   if you do not need load balancing).
+#   Slicing in the 2nd dimension is preferred for ideal performance
+#amr.blocking_factor = 64
+#amr.max_grid_size_x = 2688
+#amr.max_grid_size_y = 128  # this is confusingly named and means z in 2D
 
 # load balancing
+#   The grid & block parameters above are needed for load balancing:
+#   an average of ~10 grids per MPI rank (and device) are a good granularity
+#   to allow efficient load-balancing as the simulation evolves
 algo.load_balance_intervals = 10
-algo.load_balance_with_sfc = 0
-#algo.load_balance_efficiency_ratio_threshold = 1.1
 algo.load_balance_costs_update = Heuristic
-#algo.costs_heuristic_particles_wt = 0.9
-#algo.costs_heuristic_cells_wt = 0.1
 
 # particle bin-sorting on GPU (ideal defaults not investigated in 2D)
-#warpx.sort_intervals = 4
-#warpx.sort_bin_size = 4 4 4
+#   Try larger values than the defaults below and report back! :)
+#warpx.sort_intervals = 4    # default on CPU: -1 (off); on GPU: 4
+#warpx.sort_bin_size = 1 1 1
 
 
 #################################
@@ -153,7 +167,7 @@ lasers.names        = laser1
 laser1.position     = 0. 0. -4.0e-6     # point the laser plane (antenna)
 laser1.direction    = 0. 0. 1.          # the plane's (antenna's) normal direction
 laser1.polarization = 1. 0. 0.          # the main polarization vector
-laser1.e_max        = 64.e12            # maximum amplitude of the laser field [V/m]
+laser1.a0           = 16.0              # maximum amplitude of the laser field [V/m]
 laser1.wavelength   = 0.8e-6            # central wavelength of the laser pulse [m]
 laser1.profile      = Gaussian
 laser1.profile_waist = 4.e-6            # beam waist (E(w_0)=E_0/e) [m]
@@ -161,8 +175,8 @@ laser1.profile_duration = 30.e-15       # pulse length (E(tau)=E_0/e; tau=tau_E=
 laser1.profile_t_peak = 50.e-15         # time until peak intensity reached at the laser plane [s]
 laser1.profile_focal_distance = 4.0e-6  # focal distance from the antenna [m]
 
-# E_0 = a_0 * 3.211e12 / lambda_0[mu]
-#   a_0 = 16, lambda_0 = 0.8mu -> E_0 = 64.22 TV/m
+# e_max = a0 * 3.211e12 / lambda_0[mu]
+#   a0 = 16, lambda_0 = 0.8mu -> e_max = 64.22 TV/m
 
 
 #################################

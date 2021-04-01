@@ -41,21 +41,20 @@ MultiDiagnostics::InitializeFieldFunctors ( int lev )
 void
 MultiDiagnostics::ReadParameters ()
 {
-    ParmParse pp("diagnostics");
+    ParmParse pp_diagnostics("diagnostics");
 
     int enable_diags = 1;
-    pp.query("enable", enable_diags);
+    pp_diagnostics.query("enable", enable_diags);
     if (enable_diags == 1) {
-        pp.queryarr("diags_names", diags_names);
+        pp_diagnostics.queryarr("diags_names", diags_names);
         ndiags = diags_names.size();
-        Print()<<"ndiags "<<ndiags<<'\n';
     }
 
     diags_types.resize( ndiags );
     for (int i=0; i<ndiags; i++){
-        ParmParse ppd(diags_names[i]);
+        ParmParse pp_diag_name(diags_names[i]);
         std::string diag_type_str;
-        ppd.get("diag_type", diag_type_str);
+        pp_diag_name.get("diag_type", diag_type_str);
         if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
         if (diag_type_str == "BackTransformed") diags_types[i] = DiagTypes::BackTransformed;
     }

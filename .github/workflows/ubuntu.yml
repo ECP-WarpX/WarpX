@@ -180,9 +180,7 @@ jobs:
         export OMP_NUM_THREADS=2
         Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
 
-# disabled on 2020-02-25 because DPC++ got too large and we run out CI disk space
   build_dpcc:
-    if: false
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-20.04
     steps:
@@ -201,6 +199,7 @@ jobs:
         export CC=$(which clang)
 
         cmake -S . -B build_sp         \
+          -DBUILD_SHARED_LIBS=ON       \
           -DCMAKE_CXX_COMPILER_ID="Clang"                \
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
@@ -212,10 +211,11 @@ jobs:
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
-        python3 -m pip install *.whl
+     # Skip this as it will copy the binary artifacts and we are tight on disk space
+     #   python3 -m pip install --upgrade pip
+     #   python3 -m pip install --upgrade setuptools wheel
+     #   PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+     #   python3 -m pip install *.whl
      # note: setting the CXX compiler ID is a work-around for
      # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
      # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
@@ -234,7 +234,7 @@ jobs:
         source /etc/profile.d/rocm.sh
         hipcc --version
         export CXX=$(which hipcc)
-        export CC=$(which hipcc)
+        export CC=$(which clang)
 
         cmake -S . -B build_sp \
           -DCMAKE_VERBOSE_MAKEFILE=ON \
@@ -247,6 +247,6 @@ jobs:
           -DWarpX_PSATD=ON
         cmake --build build_sp -j 2
 
-        export WarpX_MPI=ON
+        export WarpX_MPI=OFF
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
         python3 -m pip install *.whl

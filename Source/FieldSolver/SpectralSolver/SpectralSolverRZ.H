@@ -25,35 +25,35 @@ class SpectralSolverRZ
         // underlying classes `SpectralFieldData` and `PsatdAlgorithm`
 
         // Constructor
-        SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
+        SpectralSolverRZ (const int lev,
+                          amrex::BoxArray const & realspace_ba,
                           amrex::DistributionMapping const & dm,
                           int const n_rz_azimuthal_modes,
                           int const norder_z, bool const nodal,
                           const amrex::Array<amrex::Real,3>& v_galilean,
                           amrex::RealVect const dx, amrex::Real const dt,
-                          int const lev,
                           bool const update_with_rho);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
          *  (in the spectral field specified by `field_index`) */
-        void ForwardTransform (amrex::MultiFab const & field_mf, int const field_index,
+        void ForwardTransform (const int lev, amrex::MultiFab const & field_mf, int const field_index,
                                int const i_comp=0);
 
         /* \brief Transform the two MultiFabs `field_mf1` and `field_mf2`
          *  to spectral space, and store the corresponding results internally
          *  (in the spectral field specified by `field_index1` and `field_index2`) */
-        void ForwardTransform (amrex::MultiFab const & field_mf1, int const field_index1,
+        void ForwardTransform (const int lev, amrex::MultiFab const & field_mf1, int const field_index1,
                                amrex::MultiFab const & field_mf2, int const field_index2);
 
         /* \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `field_mf` */
-        void BackwardTransform (amrex::MultiFab& field_mf, int const field_index,
+        void BackwardTransform (const int lev, amrex::MultiFab& field_mf, int const field_index,
                                 int const i_comp=0);
 
         /* \brief Transform spectral fields specified by `field_index1` and `field_index2`
          * back to real space, and store it in `field_mf1` and `field_mf2`*/
-        void BackwardTransform (amrex::MultiFab& field_mf1, int const field_index1,
+        void BackwardTransform (const int lev, amrex::MultiFab& field_mf1, int const field_index1,
                                 amrex::MultiFab& field_mf2, int const field_index2);
 
         /* \brief Update the fields in spectral space, over one timestep */
@@ -82,7 +82,7 @@ class SpectralSolverRZ
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
           */
-        void ComputeSpectralDivE (const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+        void ComputeSpectralDivE (const int lev, const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                   amrex::MultiFab& divE);
 
         /**
@@ -95,7 +95,7 @@ class SpectralSolverRZ
          *                        storing the three components of the current density
          * \param[in]     rho     unique pointer to MultiFab storing the charge density
          */
-        void CurrentCorrection (std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+        void CurrentCorrection (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                 const std::unique_ptr<amrex::MultiFab>& rho);
 
         /**
@@ -107,7 +107,7 @@ class SpectralSolverRZ
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          * the three components of the current density
          */
-        void VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current);
+        void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current);
 
     private:
 

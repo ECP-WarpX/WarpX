@@ -22,7 +22,6 @@ guardCellManager::Init (
     const bool do_fdtd_nci_corr,
     const bool do_nodal,
     const bool do_moving_window,
-    const bool aux_is_nodal,
     const int moving_window_dir,
     const int nox,
     const int nox_fft, const int noy_fft, const int noz_fft,
@@ -133,10 +132,10 @@ guardCellManager::Init (
         int ngFFt_y = do_nodal ? noy_fft : noy_fft / 2;
         int ngFFt_z = do_nodal ? noz_fft : noz_fft / 2;
 
-        ParmParse pp("psatd");
-        pp.query("nx_guard", ngFFt_x);
-        pp.query("ny_guard", ngFFt_y);
-        pp.query("nz_guard", ngFFt_z);
+        ParmParse pp_psatd("psatd");
+        pp_psatd.query("nx_guard", ngFFt_x);
+        pp_psatd.query("ny_guard", ngFFt_y);
+        pp_psatd.query("nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
@@ -160,8 +159,6 @@ guardCellManager::Init (
         }
         ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
     }
-
-    ng_Extra = IntVect(static_cast<int>(aux_is_nodal and !do_nodal));
 
     // Compute number of cells required for Field Solver
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -189,10 +186,6 @@ guardCellManager::Init (
         // Compute number of cells required for Field Gather
         int FGcell[4] = {0,1,1,2}; // Index is nox
         IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell[nox],FGcell[nox],FGcell[nox]));
-        // Add one cell if momentum_conserving gather in a staggered-field simulation
-        ng_FieldGather_noNCI += ng_Extra;
-        // Not sure why, but need one extra guard cell when using MR
-        if (max_level >= 1) ng_FieldGather_noNCI += ng_Extra;
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();

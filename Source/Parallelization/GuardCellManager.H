@@ -42,7 +42,6 @@ public:
         const bool do_fdtd_nci_corr,
         const bool do_nodal,
         const bool do_moving_window,
-        const bool aux_is_nodal,
         const int moving_window_dir,
         const int nox,
         const int nox_fft, const int noy_fft, const int noz_fft,
@@ -75,12 +74,6 @@ public:
     amrex::IntVect ng_UpdateAux = amrex::IntVect::TheZeroVector();
     // Number of guard cells of all MultiFabs that must exchanged before moving window
     amrex::IntVect ng_MovingWindow = amrex::IntVect::TheZeroVector();
-
-    // When the auxiliary grid is nodal but the field solver is staggered
-    // (typically with momentum-conserving gather with FDTD Yee solver),
-    // An extra guard cell is needed on the fine grid to do the interpolation
-    // for E and B.
-    amrex::IntVect ng_Extra = amrex::IntVect::TheZeroVector();
 
     // Number of guard cells for local deposition of J and rho
     amrex::IntVect ng_depos_J   = amrex::IntVect::TheZeroVector();

@@ -24,7 +24,7 @@ class CopyPreBuild(build):
         build.run(self)
 
         # matches: libwarpx.(2d|3d|rz).(so|pyd)
-        re_libprefix = re.compile(r"libwarpx\...\.(?:so|pyd)")
+        re_libprefix = re.compile(r"libwarpx\...\.(?:so|dll)")
         libs_found = []
         for lib_name in os.listdir(PYWARPX_LIB_DIR):
             if re_libprefix.match(lib_name):
@@ -233,7 +233,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.02',
+    version = '21.03',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

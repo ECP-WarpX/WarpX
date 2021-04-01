@@ -110,7 +110,7 @@ public:
      */
     BreitWheelerEvolveOpticalDepth (
         const BW_dndt_table_view table_view,
-        const amrex::ParticleReal bw_minimum_chi_phot):
+        const amrex::Real bw_minimum_chi_phot):
         m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{}
 
     /**
@@ -130,10 +130,12 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
-        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-        const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-        const amrex::Real dt, amrex::Real& opt_depth) const noexcept
+        const amrex::ParticleReal ux, const amrex::ParticleReal uy,
+        const amrex::ParticleReal uz, const amrex::ParticleReal ex,
+        const amrex::ParticleReal ey, const amrex::ParticleReal ez,
+        const amrex::ParticleReal bx, const amrex::ParticleReal by,
+        const amrex::ParticleReal bz, const amrex::Real dt,
+        amrex::ParticleReal& opt_depth) const noexcept
     {
         namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
@@ -165,7 +167,7 @@ public:
 
 private:
     BW_dndt_table_view m_table_view;
-    amrex::ParticleReal m_bw_minimum_chi_phot;
+    amrex::Real m_bw_minimum_chi_phot;
 };
 
 /**
@@ -209,11 +211,14 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-    const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
-    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-    amrex::Real& e_ux, amrex::Real& e_uy, amrex::Real& e_uz,
-    amrex::Real& p_ux, amrex::Real& p_uy, amrex::Real& p_uz,
+    const amrex::ParticleReal ux, const amrex::ParticleReal uy,
+    const amrex::ParticleReal uz, const amrex::ParticleReal ex,
+    const amrex::ParticleReal ey, const amrex::ParticleReal ez,
+    const amrex::ParticleReal bx, const amrex::ParticleReal by,
+    const amrex::ParticleReal bz, amrex::ParticleReal& e_ux,
+    amrex::ParticleReal& e_uy, amrex::ParticleReal& e_uz,
+    amrex::ParticleReal& p_ux, amrex::ParticleReal& p_uy,
+    amrex::ParticleReal& p_uz,
     amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
@@ -235,12 +240,12 @@ public:
         const auto chi_photon = QedUtils::chi_photon(
             px, py, pz, ex, ey, ez, bx, by, bz);
 
-        const auto momentum_photon = pxr_m::vec3<amrex::Real>{px, py, pz};
-        auto momentum_ele = pxr_m::vec3<amrex::Real>();
-        auto momentum_pos = pxr_m::vec3<amrex::Real>();
+        const auto momentum_photon = pxr_m::vec3<amrex::ParticleReal>{px, py, pz};
+        auto momentum_ele = pxr_m::vec3<amrex::ParticleReal>();
+        auto momentum_pos = pxr_m::vec3<amrex::ParticleReal>();
 
         const auto is_out = pxr_bw::generate_breit_wheeler_pairs<
-            amrex::Real,
+            amrex::ParticleReal,
             BW_pair_prod_table_view,
             pxr_p::unit_system::SI>(
                 chi_photon, momentum_photon,
