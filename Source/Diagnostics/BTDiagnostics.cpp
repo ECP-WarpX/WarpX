@@ -462,6 +462,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         int ngrow = 0;
         m_mf_output[i_buffer][lev] = amrex::MultiFab ( buffer_ba, buffer_dmap,
                                                   m_varnames.size(), ngrow ) ;
+        m_mf_output[i_buffer][lev].setVal(0.);
 
         amrex::IntVect ref_ratio = amrex::IntVect(1);
         if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
