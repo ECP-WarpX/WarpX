@@ -185,7 +185,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     // firstly loop over particles box by box and do all particle conserving
     // scattering
 #ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti)
         {
@@ -348,7 +348,7 @@ void BackgroundMCCCollision::doBackgroundIonization
     );
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti)
     {
