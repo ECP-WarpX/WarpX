@@ -1228,8 +1228,14 @@ Numerics and algorithms
         The default behavior should not normally be changed.
         At present, this parameter is intended mainly for testing and development purposes.
 
-* ``interpolation.field_gathering_nox``, ``interpolation.field_gathering_noy``, ``interpolation.field_gathering_noz`` (default: ``2`` in all directions)
-    The order of the interpolation used with staggered grids (``warpx.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This arbitrary-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+* ``interpolation.field_centering_nox``, ``interpolation.field_centering_noy``, ``interpolation.field_centering_noz`` (default: ``2`` in all directions)
+    The order of interpolation used with staggered grids (``warpx.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+
+* ``interpolation.current_centering_nox``, ``interpolation.current_centering_noy``, ``interpolation.current_centering_noz`` (default: ``2`` in all directions)
+    The order of interpolation used to center the currents from nodal to staggered grids (if ``warpx.do_current_centering = 1``), before pushing the Maxwell fields on staggered grids. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+
+* ``warpx.do_current_centering`` (`0` or `1` ; default: 0)
+    If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation. If ``warpx.do_nodal = 1``, the Maxwell fields are pushed on a nodal grid, it is not necessary to center the currents to a staggered grid, and we set therefore ``warpx.do_current_centering = 0`` automatically, overwriting the user-defined input.
 
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate

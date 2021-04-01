@@ -1,10 +1,10 @@
 #include "FlushFormatOpenPMD.H"
 #include "WarpX.H"
-#include "Utils/Interpolate.H"
 
-#include <AMReX_buildInfo.H>
+#include <memory>
 
 using namespace amrex;
+
 
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
@@ -16,9 +16,9 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     pp_diag_name.query("openpmd_backend", openpmd_backend);
     pp_diag_name.query("openpmd_tspf", openpmd_tspf);
     auto & warpx = WarpX::GetInstance();
-    m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(
+    m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
         openpmd_tspf, openpmd_backend, warpx.getPMLdirections()
-        );
+    );
 }
 
 void
@@ -58,8 +58,4 @@ FlushFormatOpenPMD::WriteToFile (
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);
-}
-
-FlushFormatOpenPMD::~FlushFormatOpenPMD (){
-    delete m_OpenPMDPlotWriter;
 }
