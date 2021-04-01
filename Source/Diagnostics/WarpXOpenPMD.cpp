@@ -239,10 +239,12 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   return filename;
 }
 
-void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix,
+void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
                                 bool isBTD)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
+
+    m_dirPrefix = dirPrefix;
 
     if( ! isBTD ) {
         if (m_CurrentStep >= ts) {
@@ -255,7 +257,7 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix,
         }
     }
     m_CurrentStep = ts;
-    Init(openPMD::Access::CREATE, filePrefix, isBTD);
+    Init(openPMD::Access::CREATE, isBTD);
 }
 
 void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
@@ -267,19 +269,31 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     if (callClose) {
         if (m_Series)
             m_Series->iterations[m_CurrentStep].close();
+
+        // create a little helper file for ParaView 5.9+
+        if (amrex::ParallelDescriptor::IOProcessor())
+        {
+            // see Init()
+            std::string filepath = m_dirPrefix;
+            std::string const filename = GetFileName(filepath);
+
+            std::ofstream pv_helper_file(m_dirPrefix + "/paraview.pmd");
+            pv_helper_file << filename << std::endl;
+            pv_helper_file.close();
+        }
     }
 }
 
 void
-WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, bool isBTD)
+WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 {
     if( isBTD && m_Series != nullptr )
         return; // already open for this snapshot (aka timestep in lab frame)
 
     // either for the next ts file,
     // or init a single file for all ts
-    std::string filepath = filePrefix;
-    std::string const filename = GetFileName(filepath);
+    std::string filepath = m_dirPrefix;
+    GetFileName(filepath);
 
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
@@ -300,14 +314,6 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
         m_Series = std::make_unique<openPMD::Series>(filepath, access);
         m_MPISize = 1;
         m_MPIRank = 1;
-    }
-
-    // create a little helper file for ParaView 5.9+
-    if (amrex::ParallelDescriptor::IOProcessor())
-    {
-        std::ofstream pv_helper_file(filePrefix + "/paraview.pmd");
-        pv_helper_file << filename << std::endl;
-        pv_helper_file.close();
     }
 
     // input file / simulation setup author
