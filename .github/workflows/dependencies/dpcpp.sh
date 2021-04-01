@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2020 The WarpX Community
+# Copyright 2020-2021 The WarpX Community
 #
 # License: BSD-3-Clause-LBNL
 # Authors: Axel Huebl
@@ -25,14 +25,19 @@ sudo apt-get install -y --no-install-recommends \
     intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel \
     g++ gfortran    \
     libopenmpi-dev  \
-    openmpi-bin     && \
+    openmpi-bin  && \
+sudo apt-get clean
+
 du -sh /opt/intel/oneapi/
 du -sh /opt/intel/oneapi/*/*
-sudo rm -rf /opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sycl.a \
-            /opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.a \
-            /opt/intel/oneapi/mkl/latest/lib/intel64/*.a           \
+echo "+++ REDUCING oneAPI install size +++"
+sudo rm -rf /opt/intel/oneapi/mkl/latest/lib/intel64/*.a           \
             /opt/intel/oneapi/compiler/latest/linux/lib/oclfpga    \
-            /opt/intel/oneapi/compiler/latest/linux/lib/emu
+            /opt/intel/oneapi/compiler/latest/linux/lib/emu        \
+            /opt/intel/oneapi/compiler/latest/linux/bin/intel64    \
+            /opt/intel/oneapi/compiler/latest/linux/bin/lld        \
+            /opt/intel/oneapi/compiler/latest/linux/bin/lld-link   \
+            /opt/intel/oneapi/compiler/latest/linux/bin/wasm-ld
 du -sh /opt/intel/oneapi/
 du -sh /opt/intel/oneapi/*/*
 df -h

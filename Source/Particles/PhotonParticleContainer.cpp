@@ -31,22 +31,22 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
                                                   const std::string& name)
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
 #ifdef WARPX_QED
         //Find out if Breit Wheeler process is enabled
-        pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+        pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
 
         //If Breit Wheeler process is enabled, look for the target electron and positron
         //species
         if(m_do_qed_breit_wheeler){
-            pp.get("qed_breit_wheeler_ele_product_species", m_qed_breit_wheeler_ele_product_name);
-            pp.get("qed_breit_wheeler_pos_product_species", m_qed_breit_wheeler_pos_product_name);
+            pp_species_name.get("qed_breit_wheeler_ele_product_species", m_qed_breit_wheeler_ele_product_name);
+            pp_species_name.get("qed_breit_wheeler_pos_product_species", m_qed_breit_wheeler_pos_product_name);
         }
 
         //Check for processes which do not make sense for photons
         bool test_quantum_sync = false;
-        pp.query("do_qed_quantum_sync", test_quantum_sync);
+        pp_species_name.query("do_qed_quantum_sync", test_quantum_sync);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         test_quantum_sync == 0,
         "ERROR: do_qed_quantum_sync can be 1 for species NOT listed in particles.photon_species only!");
@@ -71,7 +71,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                  amrex::FArrayBox const * bxfab,
                                  amrex::FArrayBox const * byfab,
                                  amrex::FArrayBox const * bzfab,
-                                 const int ngE, const int /*e_is_nodal*/,
+                                 const amrex::IntVect ngE, const int /*e_is_nodal*/,
                                  const long offset,
                                  const long np_to_push,
                                  int lev, int gather_lev,
@@ -193,8 +193,6 @@ void
 PhotonParticleContainer::Evolve (int lev,
                                  const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                  const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                 const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
-                                 const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                  MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                  MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                  MultiFab* rho, MultiFab* crho,
@@ -207,8 +205,6 @@ PhotonParticleContainer::Evolve (int lev,
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
-                                       Ex_avg, Ey_avg, Ez_avg,
-                                       Bx_avg, By_avg, Bz_avg,
                                        jx, jy, jz,
                                        cjx, cjy, cjz,
                                        rho, crho,

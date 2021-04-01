@@ -565,10 +565,9 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     // Query fields to dump
     std::vector<std::string> user_fields_to_dump;
-    ParmParse pp("warpx");
+    ParmParse pp_warpx("warpx");
     bool do_user_fields;
-    do_user_fields = pp.queryarr("back_transformed_diag_fields",
-                                 user_fields_to_dump);
+    do_user_fields = pp_warpx.queryarr("back_transformed_diag_fields", user_fields_to_dump);
     // If user specifies fields to dump, overwrite ncomp_to_dump,
     // map_actual_fields_to_dump and mesh_field_names.
     for (int i = 0; i < 10; ++i)
@@ -1374,13 +1373,10 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
 #endif
     for (MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       Box& bx = m_buff_box_;
        const Box& bx_bf = mfi.tilebox();
-       bx.setSmall(AMREX_SPACEDIM-1,bx_bf.smallEnd(AMREX_SPACEDIM-1));
-       bx.setBig(AMREX_SPACEDIM-1,bx_bf.bigEnd(AMREX_SPACEDIM-1));
        Array4<Real> tmp_arr = tmp[mfi].array();
        Array4<Real> buf_arr = buf[mfi].array();
-       ParallelFor(bx, ncomp_to_dump,
+       ParallelFor(bx_bf, ncomp_to_dump,
            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
            {
               const int icomp = field_map_ptr[n];

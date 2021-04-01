@@ -85,8 +85,6 @@ BTDiagnostics::ReadParameters ()
     BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ( warpx.do_back_transformed_diagnostics==true),
-        "the do_back_transformed_diagnostics flag must be set to true for BTDiagnostics");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.gamma_boost > 1.0_rt,
         "gamma_boost must be > 1 to use the back-transformed diagnostics");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.boost_direction[2] == 1,
@@ -104,21 +102,21 @@ BTDiagnostics::ReadParameters ()
         );
 
     // Read list of back-transform diag parameters requested by the user //
-    amrex::ParmParse pp(m_diag_name);
+    amrex::ParmParse pp_diag_name(m_diag_name);
 
     m_file_prefix = "diags/" + m_diag_name;
-    pp.query("file_prefix", m_file_prefix);
-    pp.query("do_back_transformed_fields", m_do_back_transformed_fields);
-    pp.query("do_back_transformed_particles", m_do_back_transformed_particles);
+    pp_diag_name.query("file_prefix", m_file_prefix);
+    pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
+    pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
 
-    pp.get("num_snapshots_lab", m_num_snapshots_lab);
+    pp_diag_name.get("num_snapshots_lab", m_num_snapshots_lab);
     m_num_buffers = m_num_snapshots_lab;
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
-    snapshot_interval_is_specified = queryWithParser(pp, "dt_snapshots_lab", m_dt_snapshots_lab);
-    if ( queryWithParser(pp, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
+    snapshot_interval_is_specified = queryWithParser(pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
+    if ( queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }

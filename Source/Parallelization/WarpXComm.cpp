@@ -56,6 +56,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     const amrex::IntVect& Ey_stag = Emf[0][1]->ixType().toIntVect();
     const amrex::IntVect& Ez_stag = Emf[0][2]->ixType().toIntVect();
 
+    // Destination MultiFab (aux) always has nodal index type when this function is called
+    const amrex::IntVect& dst_stag = amrex::IntVect::TheNodeVector();
+
     // For level 0, we only need to do the average.
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -82,44 +85,49 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Box bx = mfi.fabbox();
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+
 #ifdef WARPX_USE_PSATD
-            const int fg_nox = WarpX::field_gathering_nox;
-            const int fg_noy = WarpX::field_gathering_noy;
-            const int fg_noz = WarpX::field_gathering_noz;
-            // Device vectors for Fornberg stencil coefficients used for finite-order centering
-            amrex::Real const * stencil_coeffs_x = WarpX::device_centering_stencil_coeffs_x.data();
-            amrex::Real const * stencil_coeffs_y = WarpX::device_centering_stencil_coeffs_y.data();
-            amrex::Real const * stencil_coeffs_z = WarpX::device_centering_stencil_coeffs_z.data();
+
+            // Order of finite-order centering of fields
+            const int fg_nox = WarpX::field_centering_nox;
+            const int fg_noy = WarpX::field_centering_noy;
+            const int fg_noz = WarpX::field_centering_noz;
+
+            // Device vectors of stencil coefficients used for finite-order centering of fields
+            amrex::Real const * stencil_coeffs_x = WarpX::device_field_centering_stencil_coeffs_x.data();
+            amrex::Real const * stencil_coeffs_y = WarpX::device_field_centering_stencil_coeffs_y.data();
+            amrex::Real const * stencil_coeffs_z = WarpX::device_field_centering_stencil_coeffs_z.data();
+
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp<true>(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, bx_aux, bx_fp, dst_stag, Bx_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp<true>(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, by_aux, by_fp, dst_stag, By_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp<true>(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, bz_aux, bz_fp, dst_stag, Bz_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp<true>(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ex_aux, ex_fp, dst_stag, Ex_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp<true>(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ey_aux, ey_fp, dst_stag, Ey_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp<true>(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp<true>(j, k, l, ez_aux, ez_fp, dst_stag, Ez_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
 #endif
         } else { // FDTD
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag);
-                warpx_interp(j, k, l, by_aux, by_fp, By_stag);
-                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag);
-                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag);
-                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag);
-                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag);
+                warpx_interp(j, k, l, bx_aux, bx_fp, dst_stag, Bx_stag);
+                warpx_interp(j, k, l, by_aux, by_fp, dst_stag, By_stag);
+                warpx_interp(j, k, l, bz_aux, bz_fp, dst_stag, Bz_stag);
+                warpx_interp(j, k, l, ex_aux, ex_fp, dst_stag, Ex_stag);
+                warpx_interp(j, k, l, ey_aux, ey_fp, dst_stag, Ey_stag);
+                warpx_interp(j, k, l, ez_aux, ez_fp, dst_stag, Ez_stag);
             });
         }
     }
@@ -356,6 +364,67 @@ WarpX::UpdateAuxilaryDataSameType ()
                     warpx_interp(j, k, l, ez_aux, ez_fp, ez_c, Ez_stag, refinement_ratio);
                 });
             }
+        }
+    }
+}
+
+void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src)
+{
+    // If source and destination MultiFabs have the same index type, a simple copy is enough
+    // (for example, this happens with the current along y in 2D, which is always fully nodal)
+    if (dst.ixType() == src.ixType())
+    {
+        amrex::MultiFab::Copy(dst, src, 0, 0, dst.nComp(), dst.nGrowVect());
+        return;
+    }
+
+    amrex::IntVect const& dst_stag = dst.ixType().toIntVect();
+
+    // Source MultiFab always has nodal index type when this function is called
+    amrex::IntVect const& src_stag = amrex::IntVect::TheNodeVector();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+
+    for (MFIter mfi(dst); mfi.isValid(); ++mfi)
+    {
+        // Loop over full box including ghost cells
+        // (input arrays will be padded with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations)
+        Box bx = mfi.fabbox();
+
+        amrex::Array4<amrex::Real const> const& src_arr = src.const_array(mfi);
+        amrex::Array4<amrex::Real>       const& dst_arr = dst.array(mfi);
+
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        {
+#ifdef WARPX_USE_PSATD
+
+            // Order of finite-order centering of currents
+            const int cc_nox = WarpX::current_centering_nox;
+            const int cc_noy = WarpX::current_centering_noy;
+            const int cc_noz = WarpX::current_centering_noz;
+
+            // Device vectors of stencil coefficients used for finite-order centering of currents
+            amrex::Real const * stencil_coeffs_x = WarpX::device_current_centering_stencil_coeffs_x.data();
+            amrex::Real const * stencil_coeffs_y = WarpX::device_current_centering_stencil_coeffs_y.data();
+            amrex::Real const * stencil_coeffs_z = WarpX::device_current_centering_stencil_coeffs_z.data();
+
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                warpx_interp<true>(j, k, l, dst_arr, src_arr, dst_stag, src_stag, cc_nox, cc_noy, cc_noz,
+                                   stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+            });
+#endif
+        }
+
+        else // FDTD
+        {
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                warpx_interp<false>(j, k, l, dst_arr, src_arr, dst_stag, src_stag);
+            });
         }
     }
 }
@@ -710,6 +779,17 @@ WarpX::SyncCurrent ()
 {
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
+    // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
+    if (WarpX::do_current_centering)
+    {
+        for (int lev = 0; lev <= finest_level; lev++)
+        {
+            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][0], *current_fp_nodal[lev][0]);
+            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][1], *current_fp_nodal[lev][1]);
+            WarpX::UpdateCurrentNodalToStag(*current_fp[lev][2], *current_fp_nodal[lev][2]);
+        }
+    }
+
     // Restrict fine patch current onto the coarse patch, before
     // summing the guard cells of the fine patch
     for (int lev = 1; lev <= finest_level; ++lev)
@@ -869,7 +949,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             {
                 MultiFab::Add(*current_buf[lev+1][idim],
                                *current_cp [lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
-                               current_cp[lev+1][idim]->nGrow());
+                               current_cp[lev+1][idim]->nGrowVect());
                 mf.ParallelAdd(*current_buf[lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
                                current_buf[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
                                period);
@@ -981,7 +1061,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
         {
             MultiFab::Add(*charge_buf[lev+1],
                            *rho_cp[lev+1], icomp, icomp, ncomp,
-                           rho_cp[lev+1]->nGrow());
+                           rho_cp[lev+1]->nGrowVect());
             mf.ParallelAdd(*charge_buf[lev+1], icomp, 0,
                            ncomp,
                            charge_buf[lev+1]->nGrowVect(), IntVect::TheZeroVector(),

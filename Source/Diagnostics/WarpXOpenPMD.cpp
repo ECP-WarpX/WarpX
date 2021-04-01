@@ -12,6 +12,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <AMReX_AmrParticles.H>
+#include <AMReX_ParallelDescriptor.H>
 
 #include <algorithm>
 #include <cstdint>
@@ -21,6 +22,7 @@
 #include <tuple>
 #include <utility>
 #include <iostream>
+#include <fstream>
 
 
 namespace detail
@@ -222,26 +224,27 @@ WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
   }
 }
 
-
-//
-//
-//
-void WarpXOpenPMDPlot::GetFileName(std::string& filename)
+std::string
+WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 {
-  filename.append("/openpmd");
+  filepath.append("/");
+  std::string filename = "openpmd";
   //
   // OpenPMD supports timestepped names
   //
   if (m_OneFilePerTS)
       filename = filename.append("_%06T");
   filename.append(".").append(m_OpenPMDFileType);
+  filepath.append(filename);
+  return filename;
 }
 
-
-void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix,
+void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
                                 bool isBTD)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
+
+    m_dirPrefix = dirPrefix;
 
     if( ! isBTD ) {
         if (m_CurrentStep >= ts) {
@@ -254,7 +257,7 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix,
         }
     }
     m_CurrentStep = ts;
-    Init(openPMD::Access::CREATE, filePrefix, isBTD);
+    Init(openPMD::Access::CREATE, isBTD);
 }
 
 void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
@@ -266,19 +269,31 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     if (callClose) {
         if (m_Series)
             m_Series->iterations[m_CurrentStep].close();
+
+        // create a little helper file for ParaView 5.9+
+        if (amrex::ParallelDescriptor::IOProcessor())
+        {
+            // see Init()
+            std::string filepath = m_dirPrefix;
+            std::string const filename = GetFileName(filepath);
+
+            std::ofstream pv_helper_file(m_dirPrefix + "/paraview.pmd");
+            pv_helper_file << filename << std::endl;
+            pv_helper_file.close();
+        }
     }
 }
 
 void
-WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, bool isBTD)
+WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 {
     if( isBTD && m_Series != nullptr )
         return; // already open for this snapshot (aka timestep in lab frame)
 
     // either for the next ts file,
     // or init a single file for all ts
-    std::string filename = filePrefix;
-    GetFileName(filename);
+    std::string filepath = m_dirPrefix;
+    GetFileName(filepath);
 
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
@@ -287,7 +302,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-                filename, access,
+                filepath, access,
                 amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
@@ -296,7 +311,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
     } else {
-        m_Series = std::make_unique<openPMD::Series>(filename, access);
+        m_Series = std::make_unique<openPMD::Series>(filepath, access);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
@@ -349,14 +364,14 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     }
 
 #ifdef WARPX_QED
-      if( pc->has_breit_wheeler() ) {
-            real_names.push_back("optical_depth_BW");
-            tmp.AddRealComp(false);
-        }
-        if( pc->has_quantum_sync() ) {
-            real_names.push_back("optical_depth_QSR");
-            tmp.AddRealComp(false);
-        }
+    if( pc->has_breit_wheeler() ) {
+        real_names.push_back("opticalDepthBW");
+        tmp.AddRealComp(false);
+    }
+    if( pc->has_quantum_sync() ) {
+        real_names.push_back("opticalDepthQSR");
+        tmp.AddRealComp(false);
+    }
 #endif
 
       pc->ConvertUnits(ConvertDirection::WarpX_to_SI);

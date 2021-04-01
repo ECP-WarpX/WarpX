@@ -9,7 +9,7 @@ namespace Interpolate
     getInterpolatedScalar(
         const MultiFab& F_cp, const MultiFab& F_fp,
         const DistributionMapping& dm, const int r_ratio,
-        const Real* /*dx*/, const int ngrow )
+        const Real* /*dx*/, const IntVect ngrow )
     {
         // Prepare the structure that will contain the returned fields
         std::unique_ptr<MultiFab> interpolated_F;
@@ -56,7 +56,7 @@ namespace Interpolate
         const MultiFab* Fy_fp,
         const MultiFab* Fz_fp,
         const DistributionMapping& dm, const int r_ratio,
-        const Real* /*dx*/, const int ngrow )
+        const Real* /*dx*/, const IntVect ngrow )
     {
 
         // Prepare the structure that will contain the returned fields

@@ -76,6 +76,11 @@ macro(find_amrex)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
+        # IPO/LTO
+        if(WarpX_IPO)
+            set(AMReX_IPO ON CACHE INTERNAL "")
+        endif()
+
         if(WarpX_DIMS STREQUAL RZ)
             set(AMReX_SPACEDIM 2 CACHE INTERNAL "")
         else()
@@ -187,7 +192,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "e5b06d59e3a6cf55c40c6498e42eafe940203cb9"
+set(WarpX_amrex_branch "92945ad3a3560031c43fe7f02b9cc252f8330708"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

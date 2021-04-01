@@ -36,8 +36,8 @@ warpx.use_filter = 1
 warpx.serialize_ics = 1
 warpx.verbose = 1
 
-interpolation.field_gathering_nox = 8
-interpolation.field_gathering_noz = 8
+interpolation.field_centering_nox = 8
+interpolation.field_centering_noz = 8
 
 particles.species_names = electrons ions beam
 particles.use_fdtd_nci_corr = 0
