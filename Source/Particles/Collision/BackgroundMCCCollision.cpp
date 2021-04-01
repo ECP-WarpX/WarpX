@@ -38,12 +38,9 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     // create a vector of MCCProcess objects from each scattering
     // process name
     for (auto scattering_process : scattering_process_names) {
-        std::string temp = scattering_process;
-        temp.append("_cross_section");
-        char kw[temp.length() + 1];
-        std::strcpy(kw, temp.c_str());
+        std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
-        pp.query(kw, cross_section_file);
+        pp.query(kw_cross_section.c_str(), cross_section_file);
 
         amrex::Real energy = 0.0;
         // if the scattering process is excitation or ionization get the
@@ -51,11 +48,8 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos)
         {
-            std::string temp = scattering_process;
-            temp.append("_energy");
-            char kw[temp.length() + 1];
-            std::strcpy(kw, temp.c_str());
-            pp.get(kw, energy);
+            std::string kw_energy = scattering_process + "_energy";
+            pp.get(kw_energy.c_str(), energy);
         }
 
         // if the scattering process is ionization get the secondary species
