@@ -1684,6 +1684,19 @@ Back-Transformed Diagnostics
     ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
     are dumped.
 
+* ``warpx.buffer_size`` (`integer`)
+    The default size of the back transformed diagnostic buffers used to generate lab-frame
+    data is 256. That is, when the multifab with lab-frame data has 256 z-slices,
+    the data will be flushed out. However, if many lab-frame snapshots are required for
+    diagnostics and visualization, the GPU may run out of memory with many large boxes with
+    a size of 256 in the z-direction. This input parameter can then be used to set a
+    smaller buffer-size, preferably multiples of 8, such that, a large number of
+    lab-frame snapshot data can be generated without running out of gpu memory.
+    The downside to using a small buffer size, is that the I/O time may increase due
+    to frequent flushes of the lab-frame data. The other option is to keep the default
+    value for buffer size and use slices to reduce the memory footprint and maintain
+    optimum I/O performance.
+
 * ``slice.num_slice_snapshots_lab`` (`integer`)
     Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
     The number of back-transformed field and particle data that
