@@ -247,7 +247,7 @@ wp_call_f2 (enum wp_f2_t type, T a, T b)
         amrex::Abort();
         return 0.0;
 #else
-#   ifdef AMREX_USE_FLOAT
+#   if defined(AMREX_USE_FLOAT) && !defined(__APPLE__)
         return jnf(a, b);
 #   else
         return jn(a, b);
