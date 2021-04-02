@@ -48,7 +48,7 @@ public:
         }
 #   else // WARPX_USE_GPUCLOCK
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_timing == false,
-                                          "`algo.load_balance_costs_update = gpuclock` requires to compile with `USE_GPUCLOCK = TRUE`.");
+                                          "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
 #   endif // WARPX_USE_GPUCLOCK
 #endif // AMREX_USE_GPU
     }
