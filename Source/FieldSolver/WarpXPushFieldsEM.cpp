@@ -144,8 +144,7 @@ WarpX::PushPSATD (amrex::Real a_dt)
 }
 
 void
-WarpX::PushPSATD (int lev, amrex::Real /* dt */)
-{
+WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
 #ifndef WARPX_USE_PSATD
     amrex::ignore_unused(lev);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
@@ -155,16 +154,12 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                          "WarpX::PushPSATD: only supported for PSATD solver.");
     }
-
-    // Update the fields on the fine patch
-    PushPSATDSinglePatch(lev, *spectral_solver_fp[lev], Efield_fp[lev], Bfield_fp[lev],
-        Efield_avg_fp[lev], Bfield_avg_fp[lev], current_fp[lev], rho_fp[lev]);
-
-    // Update the fields on the coarse patch
-    if (spectral_solver_cp[lev])
-    {
-        PushPSATDSinglePatch(lev, *spectral_solver_cp[lev], Efield_cp[lev], Bfield_cp[lev],
-            Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev]);
+    // Update the fields on the fine and coarse patch
+    PushPSATDSinglePatch( lev, *spectral_solver_fp[lev],
+        Efield_fp[lev], Bfield_fp[lev], Efield_avg_fp[lev], Bfield_avg_fp[lev], current_fp[lev], rho_fp[lev] );
+    if (spectral_solver_cp[lev]) {
+        PushPSATDSinglePatch( lev, *spectral_solver_cp[lev],
+             Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
     }
 
     // Damp the fields in the guard cells along z
