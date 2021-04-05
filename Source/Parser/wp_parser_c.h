@@ -11,6 +11,7 @@
 #include <AMReX.H>
 
 #include <cassert>
+#include <cmath>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -271,6 +272,27 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
         amrex::AllPrint() << "wp_ast_eval: unknown node type " << node->type << "\n";
 #endif
     }
+    }
+
+    // check for NaN & Infs, e.g. if individual terms invalidate the whole
+    // expression in piecewise constructed functions, etc.
+    if
+#if __cplusplus >= 201703L
+    constexpr
+#endif
+    (Depth == 0)
+    {
+        if (!std::isfinite(result))
+        {
+            constexpr char const * const err_msg =
+                "wp_ast_eval: function parser encountered an invalid result value (NaN or Inf)!";
+#if AMREX_DEVICE_COMPILE
+            AMREX_DEVICE_PRINTF("%d\n", err_msg);
+#else
+            amrex::AllPrint() << err_msg << "\n";
+#endif
+            amrex::Abort(err_msg);
+        }
     }
 
     return result;
