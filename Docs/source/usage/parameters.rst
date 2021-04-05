@@ -277,8 +277,9 @@ Distribution across MPI ranks and parallelization
 
     If this is `timers`: costs are updated according to in-code timers.
 
-    If this is `gpuclock`: costs are measured as (max-over-threads) time spent in
-    current deposition routine (only applies when running on GPUs).
+    If this is `gpuclock`: [**requires to compile with option** ``-DWarpX_GPUCLOCK=ON``]
+    costs are measured as (max-over-threads) time spent in current deposition
+    routine (only applies when running on GPUs).
 
 * ``algo.costs_heuristic_particles_wt`` (`float`) optional
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,

@@ -69,9 +69,9 @@ or by adding arguments with ``-D<OPTION>=<VALUE>`` to the CMake call, e.g.:
 Build Options
 -------------
 
-============================= ============================================ ========================================================
+============================= ============================================ =========================================================
 CMake Option                  Default & Values                             Description
-============================= ============================================ ========================================================
+============================= ============================================ =========================================================
 ``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
 ``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
@@ -79,6 +79,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
 ``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support
+``WarpX_GPUCLOCK``            **ON**/OFF                                   Add GPU kernel timers (cost function, +4 registers/kernel)
 ``WarpX_IPO``                 ON/**OFF**                                   Compile WarpX with interprocedural optimization (aka LTO)
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
@@ -89,7 +90,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
-============================= ============================================ ========================================================
+============================= ============================================ =========================================================
 
 WarpX can be configured in further detail with options from AMReX, which are `documented in the AMReX manual <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options>`_.
 
