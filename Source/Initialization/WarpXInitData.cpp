@@ -109,6 +109,26 @@ WarpX::InitData ()
         printGridSummary(std::cout, 0, finestLevel());
     }
 
+    // Abort if the number of guard cells is larger than or equal to the number of valid cells
+    // (example: box with 16 valid cells and 32 guard cells in z).
+    // Note that we use Ex on level 0 and use the AMReX function IntVect::allGT to check this.
+    for (amrex::MFIter mfi(*Efield_fp[0][0]); mfi.isValid(); ++mfi)
+    {
+        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+        const amrex::IntVect gc = Efield_fp[0][0]->nGrowVect();
+        if (vc.allGT(gc) == false)
+        {
+            std::stringstream ss;
+            ss << "\nThe number of guard cells "
+               << gc
+               << " is larger than or equal to the number of valid cells "
+               << vc
+               << ":\nplease reduce the number of guard cells"
+               << " or increase the grid size by changing domain decomposition";
+            amrex::Abort(ss.str());
+        }
+    }
+
     if (restart_chkfile.empty())
     {
         multi_diags->FilterComputePackFlush( -1, true );
