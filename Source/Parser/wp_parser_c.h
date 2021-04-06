@@ -6,6 +6,7 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_GpuPrint.H>
 #include <AMReX_Extension.H>
+#include <AMReX_Math.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Print.H>
 #include <AMReX.H>
@@ -282,7 +283,7 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
 #endif
     (Depth == 0)
     {
-        if (!std::isfinite(result))
+        if (!amrex::Math::isfinite(result))
         {
             constexpr char const * const err_msg =
                 "wp_ast_eval: function parser encountered an invalid result value (NaN or Inf)!";
