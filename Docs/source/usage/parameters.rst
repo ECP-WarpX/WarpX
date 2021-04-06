@@ -336,8 +336,8 @@ For example:
 
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
-* ``my_constants.ion_mass = 0.1*m_p``
-* ``my_constants.ion2_mass = 2.*ion_mass``
+* ``my_constants.n0 = 1.e22``
+* ``my_constants.wp = sqrt(n0*q_e**2/(epsilon0*m_e))``
 
 Coordinates
 ^^^^^^^^^^^
