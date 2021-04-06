@@ -475,29 +475,30 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
         amrex::ParallelFor(
             tex, Efield[0]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Ex_arr, i, j, k, icomp, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
+                damp_field(Ex_arr, i, j, k, icomp, zdir, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
             },
             tey, Efield[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Ey_arr, i, j, k, icomp, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
+                damp_field(Ey_arr, i, j, k, icomp, zdir, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
             },
             tez, Efield[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Ez_arr, i, j, k, icomp, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
+                damp_field(Ez_arr, i, j, k, icomp, zdir, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
             }
         );
+
         amrex::ParallelFor(
             tbx, Bfield[0]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Bx_arr, i, j, k, icomp, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
+                damp_field(Bx_arr, i, j, k, icomp, zdir, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
             },
             tby, Bfield[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(By_arr, i, j, k, icomp, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
+                damp_field(By_arr, i, j, k, icomp, zdir, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
             },
             tbz, Bfield[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Bz_arr, i, j, k, icomp, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
+                damp_field(Bz_arr, i, j, k, icomp, zdir, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
             }
         );
     }

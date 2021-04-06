@@ -959,7 +959,7 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
         }
 
-        constexpr int zdir = (AMREX_SPACEDIM == 2) ? 1 : 2;
+        constexpr int zdir = AMREX_SPACEDIM - 1;
         if (!Geom(0).isPeriodic(zdir))
         {
             use_damp_fields_in_z_guard = true;
