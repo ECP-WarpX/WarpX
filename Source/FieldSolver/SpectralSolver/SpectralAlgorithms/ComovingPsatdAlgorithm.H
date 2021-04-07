@@ -87,7 +87,6 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
         // Additional member variables
         amrex::Array<amrex::Real,3> m_v_comoving;
         amrex::Real m_dt;
-        bool m_update_with_rho;
 };
 
 #endif // WARPX_USE_PSATD
