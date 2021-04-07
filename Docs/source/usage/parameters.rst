@@ -1564,25 +1564,15 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
-    When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
+    When ``<diag_name>.plot_raw_fields = 1``, then the raw (i.e. non-averaged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
     See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
     in the yt documentation for more details on how to view raw fields.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
-    Only used when ``warpx.plot_raw_fields`` is ``1``.
+    Only used when ``<diag_name>.plot_raw_fields = 1``.
     Whether to include the guard cells in the output of the raw fields.
-    Only works with ``<diag_name>.format = plotfile``.
-
-* ``<diag_name>.plot_finepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the fine patch, in the plot files.
-    Only works with ``<diag_name>.format = plotfile``.
-
-* ``<diag_name>.plot_crsepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the coarse patch, in the plot files.
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
