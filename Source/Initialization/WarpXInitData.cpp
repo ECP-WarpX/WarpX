@@ -86,6 +86,13 @@ WarpX::InitData ()
         PostRestart();
     }
 
+#ifdef AMREX_USE_EB
+    ComputeEdgeLengths();
+    ComputeFaceAreas();
+    ScaleEdges();
+    ScaleAreas();
+#endif
+
     ComputePMLFactors();
 
     if (WarpX::use_fdtd_nci_corr) {
