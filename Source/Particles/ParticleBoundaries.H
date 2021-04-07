@@ -47,7 +47,9 @@ struct ParticleBoundaries
     bool
     CheckAll (ParticleBoundaryType bc) {
         return (xmin_bc == bc && xmax_bc == bc
+#ifdef WARPX_DIM_3D
              && ymin_bc == bc && ymax_bc == bc
+#endif
              && zmin_bc == bc && zmax_bc == bc);
     }
 
