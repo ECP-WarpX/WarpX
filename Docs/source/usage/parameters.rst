@@ -1572,16 +1572,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Whether to include the guard cells in the output of the raw fields.
     Only works with ``<diag_name>.format = plotfile``.
 
-* ``<diag_name>.plot_finepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``<diag_name>.plot_raw_fields = 1``.
-    Whether to output the data of the fine patch, in the plot files.
-    Only works with ``<diag_name>.format = plotfile``.
-
-* ``<diag_name>.plot_crsepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``<diag_name>.plot_raw_fields`` is ``1``.
-    Whether to output the data of the coarse patch, in the plot files.
-    Only works with ``<diag_name>.format = plotfile``.
-
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
     Reduce size of the field output by this ratio in each dimension.
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).

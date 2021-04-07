@@ -1,5 +1,5 @@
 Advanced Visualization of Plotfiles With yt (for developers)
-=========================================================
+============================================================
 
 This sections contains yt commands for advanced users. The Particle-In-Cell methods uses a
 staggered grid (see :ref:`particle-in-cell theory <theory-pic>`), so that the x, y, and z components of the
@@ -12,25 +12,17 @@ fine and auxiliary, see :ref:`the theory <theory>` for more details), and it is 
 them (regular output return the auxiliary grid only). This page provides information to read
 raw data of all grids.
 
-Dump Additional Data
---------------------
+Write Raw Data
+--------------
 
-In order to dump additional data in WarpX (mostly for debugging purpose), run the simulation
-with parameters (``warpx.plot_rho`` only when using back-transformed diagnostics)
-
-.. code-block:: python
-
-    warpx.plot_finepatch = 1
-    warpx.plot_crsepatch = 1
-    warpx.plot_dive = 1
-    warpx.plot_rho = 1
-
-see :ref:`the input parameter section <running-cpp-parameters>` for more information.
+For a given diagnostic the user has the option to write the raw data by setting ``<diag_name>.plot_raw_fields = 1``.
+Moreover, the user has the option to write also the values of the fields in the guard cells by setting ``<diag_name>.plot_raw_fields_guards = 1``.
+Please refer to :ref:`Input Parameters <running-cpp-parameters>` for more information.
 
 Read Raw Data
 -------------
 
-Meta-data relevant to this topic (number and locations of grids in the simulation) are accessed to with
+Meta-data relevant to this topic (for example, number and locations of grids in the simulation) are accessed with
 
 .. code-block:: python
 
@@ -47,8 +39,7 @@ Meta-data relevant to this topic (number and locations of grids in the simulatio
     # List available fields
     ds.field_list
 
-When ``<diag_name>.plot_raw_fields = 1`` and ``<diag_name>.plot_finepatch = 1``, here are some useful
-commands to access properties of a grid and the Ex field on the fine patch:
+When ``<diag_name>.plot_raw_fields = 1``, here are some useful commands to access properties of a grid and the Ex field on the fine patch:
 
 .. code-block:: python
 
@@ -82,22 +73,23 @@ way, i.e., ``my_grid['raw', 'Ey_aux']`` or ``my_grid['raw', 'Bz_cp']`` are valid
 Read Raw Data With Guard Cells
 ------------------------------
 
-For a given diagnostic the user has the option to output the raw data together with the values of the fields in the guard cells by setting both ``<diag_name>.plot_raw_fields = 1`` and ``<diag_name>.plot_raw_fields_guards = 1``.
-
-When the output includes the data in the guard cells, the user can read such data using the post-processing tool ``read_raw_data.py`` available in ``Tools/PostProcessing/`` as illustrated in the following example:
+When the output includes the data in the guard cells, the user can read such data using the post-processing tool ``read_raw_data.py``, available in ``Tools/PostProcessing/``, as illustrated in the following example:
 
 .. code-block:: python
 
     from read_raw_data import read_data
 
     # Load all data saved in a given path
-    path = './diags/'
+    path = './diags/diag00200/'
     data = read_data(path)
 
     # Load Ex_fp on mesh refinement level 0
     level = 0
     field = 'Ex_fp'
-    my_field = data[level][field] # this is a numpy array
+    # data[level] is a dictionary, data[level][field] is a numpy array
+    my_field = data[level][field]
+
+Note that a list of all available raw fields written to output, that is, a list of all valid strings that the variable ``field`` in the example above can be assigned to, can be obtained by calling ``data[level].keys()``.
 
 In order to plot a 2D slice of the data with methods like ``matplotlib.axes.Axes.imshow``, one might want to pass the correct ``extent`` (the bounding box in data coordinates that the image will fill), including the guard cells. One way to set the correct ``extent`` is illustrated in the following example (case of a 2D slice in the ``(x,z)`` plane):
 
@@ -109,13 +101,14 @@ In order to plot a 2D slice of the data with methods like ``matplotlib.axes.Axes
     from read_raw_data import read_data
 
     # Load all data saved in a given path
-    path = './diags/'
+    path = './diags/diag00200/'
     data = read_data(path)
 
     # Load Ex_fp on mesh refinement level 0
     level = 0
     field = 'Ex_fp'
-    my_field = data[level][field] # this is a numpy array
+    # data[level] is a dictionary, data[level][field] is a numpy array
+    my_field = data[level][field]
 
     # Set the number of cells in the valid domain
     # by loading the standard output data with yt
