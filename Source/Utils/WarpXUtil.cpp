@@ -363,10 +363,10 @@ void ReadBCParams ()
         // set default field and particle boundary appropriately
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (geom_periodicity[idim] == 1) {
-                field_BC_lo[idim] = 1;
-                field_BC_hi[idim] = 1;
-                particle_BC_lo[idim] = 1;
-                particle_BC_hi[idim] = 1;
+                WarpX::field_boundary_lo[idim] = 1;
+                WarpX::field_boundary_hi[idim] = 1;
+                WarpX::particle_boundary_lo[idim] = 1;
+                WarpX::particle_boundary_hi[idim] = 1;
             }
         }
         return;
