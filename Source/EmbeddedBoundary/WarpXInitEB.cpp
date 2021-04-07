@@ -72,12 +72,12 @@ WarpX::ComputeFaceAreas () {
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-          	auto const &face = area_frac[idim]->const_array(mfi);
-          	auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
-          	amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
-							 [=](int i, int j, int k) {
+              auto const &face = area_frac[idim]->const_array(mfi);
+              auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
+              amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
+                             [=](int i, int j, int k) {
                              face_areas_dim(i, j, k) = face(i, j, k);
-          	});
+              });
         }
     }
 }
@@ -94,13 +94,13 @@ WarpX::ScaleEdges () {
         const auto lo = amrex::lbound(box);
         const auto hi = amrex::ubound(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-          	auto const &edge = edge_centroid[1]->const_array(mfi);
-          	auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
-          	for(int i = lo.x; i <= hi.x; ++i) {
-          	  	for(int j = lo.y; j <= hi.y; ++j) {
-          	    	edge_lengths_dim(i,j,hi.z/2) *= cell_size[idim];
-          	  	}
-          	}
+              auto const &edge = edge_centroid[1]->const_array(mfi);
+              auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
+              for(int i = lo.x; i <= hi.x; ++i) {
+                    for(int j = lo.y; j <= hi.y; ++j) {
+                      edge_lengths_dim(i,j,hi.z/2) *= cell_size[idim];
+                    }
+              }
         }
     }
 }
@@ -121,20 +121,20 @@ WarpX::ScaleAreas() {
         const auto lo = amrex::lbound(box);
         const auto hi = amrex::ubound(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-          	if (idim == 0) {
-            	full_area = cell_size[1]*cell_size[2];
-          	} else if (idim == 1) {
-          	  	full_area = cell_size[0]*cell_size[2];
-          	} else {
-          	  	full_area = cell_size[0]*cell_size[1];
-          	}
-          	auto const &face = area_frac[idim]->const_array(mfi);
-          	auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
-          	for(int i = lo.x; i <= hi.x; ++i) {
-          	  	for(int j = lo.y; j <= hi.y; ++j) {
-          	    	face_areas_dim(i,j,hi.z/2) *= full_area;
-          	  	}
-          	}
+              if (idim == 0) {
+                full_area = cell_size[1]*cell_size[2];
+              } else if (idim == 1) {
+                    full_area = cell_size[0]*cell_size[2];
+              } else {
+                    full_area = cell_size[0]*cell_size[1];
+              }
+              auto const &face = area_frac[idim]->const_array(mfi);
+              auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
+              for(int i = lo.x; i <= hi.x; ++i) {
+                    for(int j = lo.y; j <= hi.y; ++j) {
+                      face_areas_dim(i,j,hi.z/2) *= full_area;
+                    }
+              }
         }
     }
 }

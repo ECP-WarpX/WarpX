@@ -23,54 +23,54 @@ WarpX::AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Re
 
 void
 WarpX::InitEMFieldSphere (){
-  	amrex::Real r_sphere;
-  	amrex::ParmParse pp_eb2("eb2");
-  	amrex::ParmParse pp_geometry("geometry");
-  	pp_eb2.get("sphere_radius", r_sphere);
-  	amrex::RealArray prob_lo;
-  	pp_geometry.get("prob_lo", prob_lo);
-  	auto &Bfield = Bfield_fp[maxLevel()];
-  	auto &Efield = Efield_fp[maxLevel()];
+      amrex::Real r_sphere;
+      amrex::ParmParse pp_eb2("eb2");
+      amrex::ParmParse pp_geometry("geometry");
+      pp_eb2.get("sphere_radius", r_sphere);
+      amrex::RealArray prob_lo;
+      pp_geometry.get("prob_lo", prob_lo);
+      auto &Bfield = Bfield_fp[maxLevel()];
+      auto &Efield = Efield_fp[maxLevel()];
 
-  	auto &face_areas_0 = m_face_areas[maxLevel()];
-  	for (amrex::MFIter mfi(*Bfield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-    	amrex::Array4<amrex::Real> const &Bx = Bfield[0]->array(mfi);
-		amrex::Array4<amrex::Real> const &By = Bfield[1]->array(mfi);
-		amrex::Array4<amrex::Real> const &Bz = Bfield[2]->array(mfi);
-		amrex::Array4<amrex::Real> const &Sx = face_areas_0[0]->array(mfi);
-		amrex::Array4<amrex::Real> const &Sy = face_areas_0[1]->array(mfi);
-		amrex::Array4<amrex::Real> const &Sz = face_areas_0[2]->array(mfi);
-		amrex::Box const &box = mfi.validbox();
-		const auto hi = amrex::ubound(box);
-		amrex::Real x, y, z;
-		for (int i = 0; i < hi.x; i++) {
-	  		for (int j = 0; j < hi.y; j++) {
-				for (int k = 0; k < hi.z; k++) {
-		  			if (Sx(i, j, k) > 0) {
-						x = (i + 0.5) * CellSize(maxLevel())[0] + prob_lo[0];
-						y = (j + 0.5) * CellSize(maxLevel())[1] + prob_lo[1];
-						z = k * CellSize(maxLevel())[2] + prob_lo[2];
+      auto &face_areas_0 = m_face_areas[maxLevel()];
+      for (amrex::MFIter mfi(*Bfield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        amrex::Array4<amrex::Real> const &Bx = Bfield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const &By = Bfield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const &Bz = Bfield[2]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sx = face_areas_0[0]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sy = face_areas_0[1]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sz = face_areas_0[2]->array(mfi);
+        amrex::Box const &box = mfi.validbox();
+        const auto hi = amrex::ubound(box);
+        amrex::Real x, y, z;
+        for (int i = 0; i < hi.x; i++) {
+              for (int j = 0; j < hi.y; j++) {
+                for (int k = 0; k < hi.z; k++) {
+                      if (Sx(i, j, k) > 0) {
+                        x = (i + 0.5) * CellSize(maxLevel())[0] + prob_lo[0];
+                        y = (j + 0.5) * CellSize(maxLevel())[1] + prob_lo[1];
+                        z = k * CellSize(maxLevel())[2] + prob_lo[2];
 
-						Bx(i, j, k) = AnalyticSolSphere(x, y, z, 0., r_sphere)[0];
-		  			}
+                        Bx(i, j, k) = AnalyticSolSphere(x, y, z, 0., r_sphere)[0];
+                      }
 
-		  			if (Sy(i, j, k) > 0) {
-						x = (i + 0.5) * CellSize(maxLevel())[0] + prob_lo[0];
-						y = j * CellSize(maxLevel())[1] + prob_lo[1];
-						z = (k + 0.5) * CellSize(maxLevel())[2] + prob_lo[2];
+                      if (Sy(i, j, k) > 0) {
+                        x = (i + 0.5) * CellSize(maxLevel())[0] + prob_lo[0];
+                        y = j * CellSize(maxLevel())[1] + prob_lo[1];
+                        z = (k + 0.5) * CellSize(maxLevel())[2] + prob_lo[2];
 
-						By(i, j, k) = AnalyticSolSphere(x, y, z, 0., r_sphere)[1];
-		  			}
+                        By(i, j, k) = AnalyticSolSphere(x, y, z, 0., r_sphere)[1];
+                      }
 
-		  			if (Sz(i, j, k) > 0){
-						x = i * CellSize(maxLevel())[0] + prob_lo[0];
-						y = (j + 0.5) * CellSize(maxLevel())[1] + prob_lo[1];
-						z = (k + 0.5) * CellSize(maxLevel())[2] + prob_lo[2];
+                      if (Sz(i, j, k) > 0){
+                        x = i * CellSize(maxLevel())[0] + prob_lo[0];
+                        y = (j + 0.5) * CellSize(maxLevel())[1] + prob_lo[1];
+                        z = (k + 0.5) * CellSize(maxLevel())[2] + prob_lo[2];
 
-						Bz(i, j, k) = AnalyticSolSphere(x, y, z, 0., r_sphere)[2];
-		  			}
-				}
-	  		}
-		}
-  	}
+                        Bz(i, j, k) = AnalyticSolSphere(x, y, z, 0., r_sphere)[2];
+                      }
+                }
+              }
+        }
+      }
 }
