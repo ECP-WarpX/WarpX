@@ -150,8 +150,6 @@ WarpX::MoveWindow (bool move_j)
                 if (fft_do_time_averaging) {
                     shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, B_external_grid[dim], use_Bparser, Bfield_parser);
                     shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, E_external_grid[dim], use_Eparser, Efield_parser);
-                    shiftMF(*Bfield_avg_aux[lev][dim], geom[lev], num_shift, dir);
-                    shiftMF(*Efield_avg_aux[lev][dim], geom[lev], num_shift, dir);
                 }
                 if (move_j) {
                     shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir);

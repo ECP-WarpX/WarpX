@@ -28,7 +28,7 @@ function(find_picsar)
 
         # Always disable tests
         set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
-        
+
         if(WarpX_COMPUTE STREQUAL SYCL)
             set (PXRMP_DPCPP_FIX ON CACHE INTERNAL "")
         endif()
@@ -38,6 +38,7 @@ function(find_picsar)
                 ${WarpX_picsar_src}/multi_physics/QED
                 _deps/localpicsar-build/
             )
+            get_source_version(PXRMP_QED ${WarpX_picsar_src})
         else()
             FetchContent_Declare(fetchedpicsar
                 GIT_REPOSITORY ${WarpX_picsar_repo}
@@ -52,6 +53,10 @@ function(find_picsar)
                     ${fetchedpicsar_SOURCE_DIR}/multi_physics/QED
                     ${fetchedpicsar_BINARY_DIR}
                 )
+            endif()
+            get_source_version(PXRMP_QED ${fetchedpicsar_SOURCE_DIR})
+            if(NOT PXRMP_QED_GIT_VERSION)
+                set(PXRMP_QED_GIT_VERSION "${WarpX_picsar_branch}" CACHE INTERNAL "")
             endif()
 
             # advanced fetch options
@@ -77,7 +82,7 @@ function(find_picsar)
         #message(STATUS "PICSAR: Using version '${PICSAR_VERSION}'")
     else()
         # not supported by PICSAR (yet)
-        #find_package(PICSAR 21.03 CONFIG REQUIRED QED)
+        #find_package(PICSAR 21.04 CONFIG REQUIRED QED)
         #message(STATUS "PICSAR: Found version '${PICSAR_VERSION}'")
         message(FATAL_ERROR "PICSAR: Cannot be used as externally installed "
             "library yet. "
@@ -98,7 +103,7 @@ if(WarpX_QED)
     set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-    set(WarpX_picsar_branch "b35f07243c51ac35d47857fe36f0aafb6b517955"
+    set(WarpX_picsar_branch "348830b444c65ca305aa3f89cd72fef7c65abd7d"
         CACHE STRING
         "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 

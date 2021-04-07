@@ -77,17 +77,10 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 #endif
         for (amrex::MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            // Box spanning the user-defined index-space for diagnostic, mf_dst
-            amrex::Box bx = m_buffer_box[i_buffer];
-            // Box of tmp_slice_ptr spanning full domain in x,y and z_boost
-            // of the respective buffer , i_buffer
             const Box& tbx = mfi.tilebox();
-            // Modify bx, such that the z-index is equal to the sliced tmp_mf
-            bx.setSmall( moving_window_dir, tbx.smallEnd( moving_window_dir ) );
-            bx.setBig( moving_window_dir, tbx.bigEnd( moving_window_dir ) );
             amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
-            amrex::ParallelFor( bx, ncomp_dst,
+            amrex::ParallelFor( tbx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {
                     const int icomp = field_map_ptr[n];
@@ -109,13 +102,15 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
                           bool ZSliceInDomain, amrex::Real current_z_boost,
-                          amrex::Box buffer_box, const int k_index_zlab )
+                          amrex::Box buffer_box, const int k_index_zlab,
+                          const int max_box_size )
 {
     m_buffer_box[i_buffer] = buffer_box;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
     if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
+    m_max_box_size = max_box_size;
 }
 
 void
