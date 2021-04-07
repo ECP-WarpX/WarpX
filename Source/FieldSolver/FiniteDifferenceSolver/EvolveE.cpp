@@ -97,9 +97,9 @@ void FiniteDifferenceSolver::EvolveECartesian (
         Array4<Real> const& jz = Jfield[2]->array(mfi);
 
 #ifdef AMREX_USE_EB
-        Array4<Real> const& lx = edge_lengths[0]->array(mfi);
-        Array4<Real> const& ly = edge_lengths[1]->array(mfi);
-        Array4<Real> const& lz = edge_lengths[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
 #endif
 
         // Extract stencil coefficients

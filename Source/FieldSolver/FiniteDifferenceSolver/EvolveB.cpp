@@ -87,9 +87,9 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         Array4<Real> const& Ez = Efield[2]->array(mfi);
 
 #ifdef AMREX_USE_EB
-        Array4<Real> const& Sx = face_areas[0]->array(mfi);
-        Array4<Real> const& Sy = face_areas[1]->array(mfi);
-        Array4<Real> const& Sz = face_areas[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
 #endif
 
         // Extract stencil coefficients
