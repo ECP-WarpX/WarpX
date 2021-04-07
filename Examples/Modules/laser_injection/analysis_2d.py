@@ -18,6 +18,7 @@
 # central frequency of the Fourier transform is the expected one.
 
 import yt
+import os
 import sys
 import matplotlib
 matplotlib.use('Agg')
@@ -193,8 +194,16 @@ def main():
 
     check_laser(filename_end)
 
+    # Reset benchmark?
+    reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+              ['true', '1', 't', 'y', 'yes', 'on'] )
+
+    # Run checksum regression test or reset
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, filename_end)
+    if reset:
+        checksumAPI.reset_benchmark(test_name, filename_end)
+    else:
+        checksumAPI.evaluate_checksum(test_name, filename_end)
 
 if __name__ == "__main__":
     main()

@@ -21,6 +21,7 @@
 
 # Possible running time: ~ 2 s
 
+import os
 import sys
 import yt
 import numpy as np
@@ -161,5 +162,13 @@ assert(max_diffrhomax < 1.0e-18)
 assert(max_diff_number < 0.5)
 assert(max_diff_sum_weight < 0.5)
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+if reset:
+    checksumAPI.reset_benchmark(test_name, fn)
+else:
+    checksumAPI.evaluate_checksum(test_name, fn)

@@ -9,6 +9,7 @@
 
 import yt
 import numpy as np
+import os
 import sys
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -104,8 +105,16 @@ def check():
 
     assert ((max(disc_pos) <= tol_pos) and (max(disc_mom) <= tol_mom))
 
+    # Reset benchmark?
+    reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+              ['true', '1', 't', 'y', 'yes', 'on'] )
+
+    # Run checksum regression test or reset
     test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, filename)
+    if reset:
+        checksumAPI.reset_benchmark(test_name, filename)
+    else:
+        checksumAPI.evaluate_checksum(test_name, filename)
 
 # This function generates the input file to test the photon pusher.
 def generate():

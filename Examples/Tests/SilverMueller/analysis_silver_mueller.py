@@ -11,6 +11,7 @@ A laser pulse is emitted and propagates towards the boundaries ; the
 test check that the reflected field at the boundary is negligible.
 """
 
+import os
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
@@ -31,5 +32,13 @@ assert np.all( abs(Ex) < max_reflection_amplitude )
 assert np.all( abs(Ey) < max_reflection_amplitude )
 assert np.all( abs(Ez) < max_reflection_amplitude )
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+if reset:
+    checksumAPI.reset_benchmark(test_name, filename)
+else:
+    checksumAPI.evaluate_checksum(test_name, filename)

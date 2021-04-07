@@ -11,6 +11,7 @@ This script checks the space-charge initialization routine, by
 verifying that the space-charge field of a Gaussian beam corresponds to
 the expected theoretical field.
 """
+import os
 import sys
 import matplotlib
 matplotlib.use('Agg')
@@ -101,5 +102,13 @@ check( Ey_array, Ey_th, 'Ey' )
 if ds.dimensionality == 3:
     check( Ez_array, Ez_th, 'Ez' )
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename, do_particles=0)
+if reset:
+    checksumAPI.reset_benchmark(test_name, filename)
+else:
+    checksumAPI.evaluate_checksum(test_name, filename, do_particles=False)

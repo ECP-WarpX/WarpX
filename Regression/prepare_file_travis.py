@@ -71,7 +71,7 @@ text = re.sub('runtime_params =',
               text)
 
 # Use only 2 cores for compiling
-text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = 2', text )
+text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = 6', text )
 # Use only 1 OMP thread for running
 text = re.sub( 'numthreads = \d+', 'numthreads = 1', text)
 # Prevent emails from being sent

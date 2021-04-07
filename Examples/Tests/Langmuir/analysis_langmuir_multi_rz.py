@@ -14,6 +14,7 @@
 # $$ E_z = -\partial_z \phi = - \epsilon \,\frac{mc^2}{e} k_0 \exp\left(-\frac{r^2}{w_0^2}\right) \cos(k_0 z) \sin(\omega_p t)
 # Unrelated to the Langmuir waves, we also test the plotfile particle filter function in this
 # analysis script.
+import os
 import sys
 import re
 import matplotlib
@@ -153,4 +154,12 @@ random_fraction = 0.66
 post_processing_utils.check_random_filter(fn, random_filter_fn, random_fraction,
                                           dim, species_name)
 
-checksumAPI.evaluate_checksum(test_name, fn)
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
+if reset:
+    checksumAPI.reset_benchmark(test_name, fn)
+else:
+    checksumAPI.evaluate_checksum(test_name, fn)

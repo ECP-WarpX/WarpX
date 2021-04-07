@@ -14,6 +14,7 @@
 # $$ E_x = \epsilon \,\frac{m_e c^2 k_x}{q_e}\sin(k_x x)\cos(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_y = \epsilon \,\frac{m_e c^2 k_y}{q_e}\cos(k_x x)\sin(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\cos(k_x x)\cos(k_y y)\sin(k_z z)\sin( \omega_p t)$$
+import os
 import sys
 import re
 import matplotlib
@@ -142,9 +143,15 @@ if current_correction or vay_deposition:
     print("tolerance = {}".format(tolerance))
     assert( error_rel < tolerance )
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
 
-if re.search( 'single_precision', fn ):
+if reset:
+    checksumAPI.reset_benchmark(test_name, fn)
+elif re.search( 'single_precision', fn ):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)
 else:
     checksumAPI.evaluate_checksum(test_name, fn)

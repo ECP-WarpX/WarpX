@@ -7,6 +7,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
+import os
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
@@ -60,5 +61,13 @@ print("reflectivity_max = " + str(reflectivity_max))
 
 assert(reflectivity < reflectivity_max)
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+if reset:
+    checksumAPI.reset_benchmark(test_name, filename)
+else:
+    checksumAPI.evaluate_checksum(test_name, filename)

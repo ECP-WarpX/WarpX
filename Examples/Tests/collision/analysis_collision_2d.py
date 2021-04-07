@@ -23,6 +23,7 @@
 # tolerance: 0.001
 # Possible running time: ~ 30.0 s
 
+import os
 import sys
 import yt
 import math
@@ -99,5 +100,13 @@ random_fraction = 0.77
 post_processing_utils.check_random_filter(last_fn, random_filter_fn, random_fraction,
                                           dim, species_name)
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
 test_name = last_fn[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
+if reset:
+    checksumAPI.reset_benchmark(test_name, filename)
+else:
+    checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)

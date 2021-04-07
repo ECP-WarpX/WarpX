@@ -20,6 +20,7 @@ case rigid injection is OFF (i.e., the beam starts expanding from -5 microns),
 in which case a warning is raised.
 '''
 
+import os
 import sys
 import yt
 import numpy as np
@@ -82,5 +83,13 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+if reset:
+    checksumAPI.reset_benchmark(test_name, filename)
+else:
+    checksumAPI.evaluate_checksum(test_name, filename)
