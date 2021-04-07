@@ -355,6 +355,13 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
+        self.potential_xmin = 0
+        self.potential_xmax = 0
+        self.potential_ymin = kw.pop('warpx_potential_zmin', 0)
+        self.potential_ymax = kw.pop('warpx_potential_zmax', 0)
+        self.potential_zmin = 0
+        self.potential_zmax = 0
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -398,6 +405,13 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
+        self.potential_xmin = kw.pop('warpx_potential_xmin', 0)
+        self.potential_xmax = kw.pop('warpx_potential_xmax', 0)
+        self.potential_ymin = kw.pop('warpx_potential_ymin', 0)
+        self.potential_ymax = kw.pop('warpx_potential_ymax', 0)
+        self.potential_zmin = 0
+        self.potential_zmax = 0
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -436,6 +450,13 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+
+        self.potential_xmin = kw.pop('warpx_potential_xmin', 0)
+        self.potential_xmax = kw.pop('warpx_potential_xmax', 0)
+        self.potential_ymin = kw.pop('warpx_potential_ymin', 0)
+        self.potential_ymax = kw.pop('warpx_potential_ymax', 0)
+        self.potential_zmin = kw.pop('warpx_potential_zmin', 0)
+        self.potential_zmax = kw.pop('warpx_potential_zmax', 0)
 
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
@@ -546,10 +567,12 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.self_fields_required_precision = self.required_precision
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
             pywarpx.boundary.potential_lo = [
-                self.grid.potential_xmin, self.grid.potential_ymin
+                self.grid.potential_xmin, self.grid.potential_ymin,
+                self.grid.potential_zmax
             ]
             pywarpx.boundary.potential_hi = [
-                self.grid.potential_xmax, self.grid.potential_ymax
+                self.grid.potential_xmax, self.grid.potential_ymax,
+                self.grid.potential_zmax
             ]
 
 

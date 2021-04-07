@@ -20,8 +20,9 @@ import glob
 
 files = sorted(glob.glob('dirichletbc_plt*'))[1:]
 
-times = np.zeros(len(files))
-potentials = np.zeros(len(files))
+times = np.ones(len(files))
+potentials_lo = np.zeros(len(files))
+potentials_hi = np.zeros(len(files))
 
 for ii, file in enumerate(files):
     ds = yt.load( file )
@@ -31,7 +32,11 @@ for ii, file in enumerate(files):
     data = ds.covering_grid(
         level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
     )
-    potentials[ii] = np.mean(data['phi'].to_ndarray()[-1][:])
+    potentials_lo[ii] = np.mean(data['phi'].to_ndarray()[0])
+    potentials_hi[ii] = np.mean(data['phi'].to_ndarray()[-1])
 
-expected_potentials = 450.0 * np.sin(2.0 * np.pi * 13.56e6 * times)
-assert np.allclose(potentials, expected_potentials, rtol=0.01)
+expected_potentials_lo = 150.0 * np.sin(2.0 * np.pi * 6.78e6 * times)
+expected_potentials_hi = 450.0 * np.sin(2.0 * np.pi * 13.56e6 * times)
+
+assert np.allclose(potentials_lo, expected_potentials_lo, rtol=0.1)
+assert np.allclose(potentials_hi, expected_potentials_hi, rtol=0.1)

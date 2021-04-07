@@ -406,6 +406,10 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
     }
     if (!has_Dirichlet) return;
 
+    amrex::Box const& domain = Geom(0).Domain();
+    const auto lo = lbound(domain);
+    const auto hi = ubound(domain);
+
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
 
@@ -418,9 +422,6 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
             // Extract tileboxes for which to loop
             const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
 
-            const auto lo = lbound(phi_arr);
-            const auto hi = ubound(phi_arr);
-
             amrex::ParallelFor( tb,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     int idx, idx_lo, idx_hi;
@@ -431,18 +432,18 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
 
                         if (idim == 0){
                             idx = i;
-                            idx_lo = lo.x + 1;
-                            idx_hi = hi.x - 1;
+                            idx_lo = lo.x;
+                            idx_hi = hi.x + 1;
                         }
                         if (idim == 1){
                             idx = j;
-                            idx_lo = lo.y + 1;
-                            idx_hi = hi.y - 1;
+                            idx_lo = lo.y;
+                            idx_hi = hi.y + 1;
                         }
                         if (idim == 2){
                             idx = k;
-                            idx_lo = lo.z + 1;
-                            idx_hi = hi.z - 1;
+                            idx_lo = lo.z;
+                            idx_hi = hi.z + 1;
                         }
 
                         if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
