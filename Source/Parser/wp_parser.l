@@ -6,6 +6,7 @@
 %}
 
 %option nounput
+%option noinput
 %option prefix="wxparser"
 
  /* Tokens NUMBER, SYMBOL, F1, POW, F2, etc. are defined in wp_parser.y. */
