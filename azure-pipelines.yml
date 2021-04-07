@@ -10,7 +10,7 @@ trigger:
 - nightly
 
 schedules:
-- cron: "0 0 * * *"
+- cron: "0 5 * * *"
   displayName: Daily midnight build
   branches:
     include:
