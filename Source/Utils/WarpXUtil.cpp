@@ -360,6 +360,15 @@ void ReadBCParams ()
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
     ParmParse pp_geometry("geometry");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
+        // set default field and particle boundary appropriately
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (geom_periodicity[idim] == 1) {
+                field_BC_lo[idim] = 1;
+                field_BC_hi[idim] = 1;
+                particle_BC_lo[idim] = 1;
+                particle_BC_hi[idim] = 1;
+            }
+        }
         return;
         // When all boundary conditions are supported, the abort statement below will be introduced
         //amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
