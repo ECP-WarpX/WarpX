@@ -40,9 +40,11 @@ warpx.do_dive_cleaning = 1
 
 # Parameters for the plasma wave
 my_constants.epsilon = 0.01
-my_constants.kp = 266125.0928256017
-my_constants.k0 = 314159.2653589793
-my_constants.w0 = 5.e-6
+my_constants.n0 = 2.e24  # electron density, #/m^3
+my_constants.wp = sqrt(n0*q_e**2/(epsilon0*m_e))  # plasma frequency
+my_constants.kp = wp/clight  # plasma wavenumber
+my_constants.k0 = 2.*pi/20.e-6  # longitudianl perturbation wavenumber
+my_constants.w0 = 5.e-6  # transverse perturbation length
 # Note: kp is calculated in SI for a density of 2e24
 # k0 is calculated so as to have 2 periods within the 40e-6 wide box.
 
@@ -59,7 +61,7 @@ electrons.zmin = -20.e-6
 electrons.zmax = +20.e-6
 
 electrons.profile = constant
-electrons.density = 2.e24   # number of electrons per m^3
+electrons.density = n0   # number of electrons per m^3
 electrons.momentum_distribution_type = parse_momentum_function
 electrons.momentum_function_ux(x,y,z) = "epsilon/kp*2*x/w0**2*exp(-(x**2+y**2)/w0**2)*sin(k0*z)"
 electrons.momentum_function_uy(x,y,z) = "epsilon/kp*2*y/w0**2*exp(-(x**2+y**2)/w0**2)*sin(k0*z)"
@@ -76,7 +78,7 @@ ions.zmin = -20.e-6
 ions.zmax = +20.e-6
 
 ions.profile = constant
-ions.density = 2.e24   # number of ions per m^3
+ions.density = n0   # number of ions per m^3
 ions.momentum_distribution_type = constant
 ions.ux = 0.
 ions.uy = 0.

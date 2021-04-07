@@ -328,13 +328,16 @@ User-defined constants
 
 Users can define their own constants in the input file.
 These constants can be used for any parameter that consists in one real number.
-User-defined constants can contain only letters, numbers and the character ``_``.
+User-defined constant names can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
-For example, parameters ``a0`` and ``z_plateau`` can be specified with:
+The values of the constants can include the predefined WarpX constants listed above as well as other user-defined constants.
+For example:
 
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
+* ``my_constants.n0 = 1.e22``
+* ``my_constants.wp = sqrt(n0*q_e**2/(epsilon0*m_e))``
 
 Coordinates
 ^^^^^^^^^^^
