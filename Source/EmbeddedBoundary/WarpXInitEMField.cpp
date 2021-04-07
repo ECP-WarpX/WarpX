@@ -1,29 +1,35 @@
 
 #include "WarpX.H"
+
+#ifdef AMREX_USE_EB
 #include <boost/math/special_functions/bessel.hpp>
+#endif
 
 amrex::RealArray
 WarpX::AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere) {
-  amrex::Real k=2.7437/r_sphere;
-  amrex::Real r = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
-  amrex::Real theta = atan2(sqrt(pow(x, 2) + pow(y, 2)), z);
-  amrex::Real phi = atan2(y, x);
-  amrex::Real H_r = 0;
-  amrex::Real H_theta = 0;
-  amrex::Real mu_r = PhysConst::mu0;
+	amrex::Real k=2.7437/r_sphere;
+  	amrex::Real r = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
+  	amrex::Real theta = atan2(sqrt(pow(x, 2) + pow(y, 2)), z);
+  	amrex::Real phi = atan2(y, x);
+  	amrex::Real H_r = 0;
+  	amrex::Real H_theta = 0;
+  	amrex::Real mu_r = PhysConst::mu0;
+#ifdef AMREX_USE_EB
+  	amrex::Real H_phi = k / (r_sphere * mu_r) * boost::math::sph_bessel(1, k*r) * sin(theta) * cos(k * PhysConst::c * t);
+#else
+  	amrex::Real H_phi = 0;
+#endif
+  	amrex::Real H_x = H_r * sin(theta) * cos(phi) + H_theta * cos(theta) * cos(phi) - H_phi * sin(phi);
+  	amrex::Real H_y = H_r * cos(theta) * cos(phi) + H_theta * cos(theta) * sin(phi) + H_phi * cos(phi);
+  	amrex::Real H_z = H_r * cos(theta) - H_theta * sin(theta);
 
-  amrex::Real H_phi = k / (r_sphere * mu_r) * boost::math::sph_bessel(1, k*r) * sin(theta) * cos(k * PhysConst::c * t);
-
-  amrex::Real H_x = H_r * sin(theta) * cos(phi) + H_theta * cos(theta) * cos(phi) - H_phi * sin(phi);
-  amrex::Real H_y = H_r * cos(theta) * cos(phi) + H_theta * cos(theta) * sin(phi) + H_phi * cos(phi);
-  amrex::Real H_z = H_r * cos(theta) - H_theta * sin(theta);
-
-  return {PhysConst::mu0*H_x/1e6, PhysConst::mu0*H_y/1e6, PhysConst::mu0*H_z/1e6};
+    return {PhysConst::mu0*H_x/1e6, PhysConst::mu0*H_y/1e6, PhysConst::mu0*H_z/1e6};
 }
 
 void
 WarpX::InitEMFieldSphere (){
-      amrex::Real r_sphere;
+#ifdef AMREX_USE_EB
+	  amrex::Real r_sphere;
       amrex::ParmParse pp_eb2("eb2");
       amrex::ParmParse pp_geometry("geometry");
       pp_eb2.get("sphere_radius", r_sphere);
@@ -73,4 +79,5 @@ WarpX::InitEMFieldSphere (){
               }
         }
       }
+#endif
 }
