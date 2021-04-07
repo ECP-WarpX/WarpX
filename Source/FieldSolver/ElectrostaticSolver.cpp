@@ -406,7 +406,8 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
     }
     if (!has_Dirichlet) return;
 
-    amrex::Box const& domain = Geom(0).Domain();
+    amrex::Box domain = Geom(0).Domain();
+    domain.surroundingNodes();
     const auto lo = lbound(domain);
     const auto hi = ubound(domain);
 
@@ -433,17 +434,17 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                         if (idim == 0){
                             idx = i;
                             idx_lo = lo.x;
-                            idx_hi = hi.x + 1;
+                            idx_hi = hi.x;
                         }
                         if (idim == 1){
                             idx = j;
                             idx_lo = lo.y;
-                            idx_hi = hi.y + 1;
+                            idx_hi = hi.y;
                         }
                         if (idim == 2){
                             idx = k;
                             idx_lo = lo.z;
-                            idx_hi = hi.z + 1;
+                            idx_hi = hi.z;
                         }
 
                         if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
