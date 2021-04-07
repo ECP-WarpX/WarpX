@@ -14,6 +14,8 @@
 
 #include <cmath>
 #include <fstream>
+#include <set>
+#include <string>
 
 
 using namespace amrex;
@@ -193,6 +195,10 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
 
 WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
 {
+    // Since queryWithParser recursively calls this routine, keep track of symbols
+    // in case an infinite recursion is found (a symbol's value depending on itself).
+    static std::set<std::string> recursive_symbols;
+
     WarpXParser parser(parse_function);
     parser.registerVariables(varnames);
     ParmParse pp_my_constants("my_constants");
@@ -200,7 +206,13 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
     for (auto const& v : varnames) symbols.erase(v.c_str());
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
-        if (pp_my_constants.query(it->c_str(), v)) {
+
+        WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
+        recursive_symbols.insert(*it);
+        const bool is_input = queryWithParser(pp_my_constants, it->c_str(), v);
+        recursive_symbols.erase(*it);
+
+        if (is_input) {
             parser.setConstant(*it, v);
             it = symbols.erase(it);
         } else if (std::strcmp(it->c_str(), "q_e") == 0) {

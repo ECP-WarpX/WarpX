@@ -480,20 +480,21 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         // Increase the number of guard cells, in order to fit the extent
         // of the stencil for the spectral solver
-        IntVect ngFFT;
-        if (do_nodal) {
-#if (AMREX_SPACEDIM==3)
-            ngFFT = IntVect(nox_fft, noy_fft, noz_fft);
-#else
-            ngFFT = IntVect(nox_fft, noz_fft);
+        int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
+        int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
+        int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
+
+        ParmParse pp_psatd("psatd");
+        pp_psatd.query("nx_guard", ngFFt_x);
+        pp_psatd.query("ny_guard", ngFFt_y);
+        pp_psatd.query("nz_guard", ngFFt_z);
+
+#if (AMREX_SPACEDIM == 3)
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+#elif (AMREX_SPACEDIM == 2)
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #endif
-        } else {
-#if (AMREX_SPACEDIM==3)
-            ngFFT = IntVect(nox_fft / 2, noy_fft / 2, noz_fft / 2);
-#else
-            ngFFT = IntVect(nox_fft / 2, noz_fft / 2);
-#endif
-        }
+
         // Set the number of guard cells to the maximum of each field
         // (all fields should have the same number of guard cells)
         ngFFT = ngFFT.max(nge);

@@ -317,10 +317,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if (lev == 0) {
             Bfield_aux[lev][i]->setVal(0.0);
             Efield_aux[lev][i]->setVal(0.0);
-            if (fft_do_time_averaging) {
-                Bfield_avg_aux[lev][i]->setVal(0.0);
-                Efield_avg_aux[lev][i]->setVal(0.0);
-            }
+        }
+
+        if (WarpX::do_current_centering)
+        {
+            current_fp_nodal[lev][i]->setVal(0.0);
         }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
@@ -333,7 +334,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Bfield_aux[lev][i]->setVal(B_external_grid[i]);
               Bfield_cp[lev][i]->setVal(B_external_grid[i]);
               if (fft_do_time_averaging) {
-                  Bfield_avg_aux[lev][i]->setVal(B_external_grid[i]);
                   Bfield_avg_cp[lev][i]->setVal(B_external_grid[i]);
               }
            }
@@ -348,7 +348,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Efield_aux[lev][i]->setVal(E_external_grid[i]);
               Efield_cp[lev][i]->setVal(E_external_grid[i]);
               if (fft_do_time_averaging) {
-                  Efield_avg_aux[lev][i]->setVal(E_external_grid[i]);
                   Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
               }
            }
