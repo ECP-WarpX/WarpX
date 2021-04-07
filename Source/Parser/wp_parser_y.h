@@ -248,9 +248,9 @@ wp_call_f2 (enum wp_f2_t type, T a, T b)
         return 0.0;
 #else
 #   if defined(AMREX_USE_FLOAT) && !defined(__APPLE__)
-        return jnf(a, b);
+        return jnf(int(a), b);
 #   else
-        return jn(a, b);
+        return jn(int(a), b);
 #   endif
 #endif
     case WP_MIN:
