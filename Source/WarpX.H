@@ -867,11 +867,9 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
-#ifdef AMREX_USE_EB
     //EB grid info
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
-#endif
 
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
@@ -1032,7 +1030,6 @@ private:
 
     void InitEB ();
 
-#ifdef AMREX_USE_EB
     void ComputeEdgeLengths ();
     void ComputeFaceAreas ();
     void ScaleEdges ();
@@ -1040,7 +1037,6 @@ private:
 
     static amrex::RealArray AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere);
     void InitEMFieldSphere ();
-#endif
 
 private:
     // void EvolvePSATD (int numsteps);

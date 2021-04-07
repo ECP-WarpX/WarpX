@@ -24,6 +24,7 @@ WarpX::InitEB ()
 
 void
 WarpX::ComputeEdgeLengths () {
+#ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
 
     auto const eb_fact = fieldEBFactory(maxLevel());
@@ -57,11 +58,13 @@ WarpX::ComputeEdgeLengths () {
             });
         }
     }
+#endif
 }
 
 
 void
 WarpX::ComputeFaceAreas () {
+#ifdef AMREX_USE_EB
     BL_PROFILE("ComputeFaceAreas");
 
     auto const eb_fact = fieldEBFactory(maxLevel());
@@ -80,10 +83,12 @@ WarpX::ComputeFaceAreas () {
               });
         }
     }
+#endif
 }
 
 void
 WarpX::ScaleEdges () {
+#ifdef AMREX_USE_EB
     auto const& cell_size = CellSize(maxLevel());
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
@@ -103,11 +108,13 @@ WarpX::ScaleEdges () {
               }
         }
     }
+#endif
 }
 
 
 void
 WarpX::ScaleAreas() {
+#ifdef AMREX_USE_EB
     auto const& cell_size = CellSize(maxLevel());
     amrex::Real full_area;
 
@@ -137,5 +144,6 @@ WarpX::ScaleAreas() {
               }
         }
     }
+#endif
 }
 
