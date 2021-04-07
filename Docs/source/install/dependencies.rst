@@ -45,10 +45,19 @@ Spack (macOS/Linux)
    spack add mpi
    spack add pkgconfig  # for fftw
    # optional:
+   # spack add python
+   # spack add py-pip
    # spack add cuda
    spack install
 
 (in new terminals, re-activate the environment with ``spack env activate warpx-dev`` again)
+
+If you also want to run runtime tests and added Python above, install also these additional Python packages in the active Spack environment:
+
+.. code-block:: bash
+
+   python -m pip install matplotlib==3.2.2 yt scipy numpy
+
 
 Brew (macOS/Linux)
 ^^^^^^^^^^^^^^^^^^
@@ -65,11 +74,32 @@ Brew (macOS/Linux)
    brew install pkg-config  # for fftw
    brew install open-mpi
 
+
+Conda (Linux/macOS/Windows)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Without MPI:
+
+.. code-block:: bash
+
+   conda create -n warpx-dev -c conda-forge ccache cmake compilers git openpmd-api python numpy scipy yt fftw matplotlib mamba ninja
+   conda activate warpx-dev
+
+   # compile WarpX with -DWarpX_MPI=OFF
+
+With MPI (only Linux/macOS):
+
+.. code-block:: bash
+
+   conda create -n warpx-dev -c conda-forge ccache cmake compilers git openpmd-api=*=mpi_openmpi* python numpy scipy yt fftw=*=mpi_openmpi* matplotlib mamba ninja openmpi
+   conda activate warpx-dev
+
+
 Apt (Debian/Ubuntu)
 ^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
    sudo apt update
-   sudo apt install build-essential ccache cmake g++ libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config
+   sudo apt install build-essential ccache cmake g++ libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-scipy
 
