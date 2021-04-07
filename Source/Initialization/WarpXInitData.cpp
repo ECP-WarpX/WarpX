@@ -109,6 +109,10 @@ WarpX::InitData ()
         printGridSummary(std::cout, 0, finestLevel());
     }
 
+    // Check that the number of guard cells is smaller than the number of valid cells for all MultiFabs
+    // (example: a box with 16 valid cells and 32 guard cells in z will not be considered valid)
+    CheckGuardCells();
+
     if (restart_chkfile.empty())
     {
         multi_diags->FilterComputePackFlush( -1, true );
@@ -576,4 +580,82 @@ WarpX::PerformanceHints ()
     // TODO: check MPI-rank to GPU ratio (should be 1:1)
     // TODO: check memory per MPI rank, especially if GPUs are underutilized
     // TODO: CPU tiling hints with OpenMP
+}
+
+void WarpX::CheckGuardCells()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        for (int dim = 0; dim < 3; ++dim)
+        {
+            CheckGuardCells(*Efield_fp[lev][dim]);
+            CheckGuardCells(*Bfield_fp[lev][dim]);
+            CheckGuardCells(*current_fp[lev][dim]);
+
+            if (WarpX::fft_do_time_averaging)
+            {
+                CheckGuardCells(*Efield_avg_fp[lev][dim]);
+                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+            }
+        }
+
+        if (rho_fp[lev])
+        {
+            CheckGuardCells(*rho_fp[lev]);
+        }
+
+        if (F_fp[lev])
+        {
+            CheckGuardCells(*F_fp[lev]);
+        }
+
+        // MultiFabs on coarse patch
+        if (lev > 0)
+        {
+            for (int dim = 0; dim < 3; ++dim)
+            {
+                CheckGuardCells(*Efield_cp[lev][dim]);
+                CheckGuardCells(*Bfield_cp[lev][dim]);
+                CheckGuardCells(*current_cp[lev][dim]);
+
+                if (WarpX::fft_do_time_averaging)
+                {
+                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
+                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                }
+            }
+
+            if (rho_cp[lev])
+            {
+                CheckGuardCells(*rho_cp[lev]);
+            }
+
+            if (F_cp[lev])
+            {
+                CheckGuardCells(*F_cp[lev]);
+            }
+        }
+    }
+}
+
+void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
+{
+    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
+    {
+        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+        const amrex::IntVect gc = mf.nGrowVect();
+        if (vc.allGT(gc) == false)
+        {
+            std::stringstream ss;
+            ss << "\nMultiFab "
+               << mf.tags()[1]
+               << ":\nthe number of guard cells "
+               << gc
+               << " is larger than or equal to the number of valid cells "
+               << vc
+               << ",\nplease reduce the number of guard cells"
+               << " or increase the grid size by changing domain decomposition";
+            amrex::Abort(ss.str());
+        }
+    }
 }
