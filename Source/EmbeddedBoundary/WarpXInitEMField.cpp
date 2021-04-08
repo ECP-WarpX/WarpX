@@ -1,9 +1,6 @@
 
 #include "WarpX.H"
-
-#ifdef AMREX_USE_EB
-#include <boost/math/special_functions/bessel.hpp>
-#endif
+#include <cmath>
 
 amrex::RealArray
 WarpX::AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere) {
@@ -14,11 +11,8 @@ WarpX::AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Re
   	amrex::Real H_r = 0;
   	amrex::Real H_theta = 0;
   	amrex::Real mu_r = PhysConst::mu0;
-#ifdef AMREX_USE_EB
-  	amrex::Real H_phi = k / (r_sphere * mu_r) * boost::math::sph_bessel(1, k*r) * sin(theta) * cos(k * PhysConst::c * t);
-#else
-  	amrex::Real H_phi = 0;
-#endif
+    amrex::Real H_phi = k / (r_sphere * mu_r) * std::sph_bessel(1, k*r) * sin(theta) * cos(k * PhysConst::c * t);
+
   	amrex::Real H_x = H_r * sin(theta) * cos(phi) + H_theta * cos(theta) * cos(phi) - H_phi * sin(phi);
   	amrex::Real H_y = H_r * cos(theta) * cos(phi) + H_theta * cos(theta) * sin(phi) + H_phi * cos(phi);
   	amrex::Real H_z = H_r * cos(theta) - H_theta * sin(theta);
