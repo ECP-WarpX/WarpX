@@ -568,7 +568,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
             pywarpx.boundary.potential_lo = [
                 self.grid.potential_xmin, self.grid.potential_ymin,
-                self.grid.potential_zmax
+                self.grid.potential_zmin
             ]
             pywarpx.boundary.potential_hi = [
                 self.grid.potential_xmax, self.grid.potential_ymax,
