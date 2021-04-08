@@ -371,8 +371,8 @@ void ReadBCParams ()
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
             } else {
                 // if non-periodic and do_pml=0, then set default boundary to PEC
-                int pml_input;
-                pp_warpx.query("do_pml", temp_pml_input);
+                int pml_input = 1;
+                pp_warpx.query("do_pml", pml_input);
                 if (pml_input == 0) {
                     WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
                     WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
