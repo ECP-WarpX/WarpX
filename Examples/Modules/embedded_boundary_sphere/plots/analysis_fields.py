@@ -55,4 +55,4 @@ for i in range(0, N_dirs):
     p._setup_plots()
 
     fig.set_size_inches(13,5)
-    p.save(str(i))
+    p.save(str(i).zfill(4))
