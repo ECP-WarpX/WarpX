@@ -92,14 +92,12 @@ WarpX::ScaleEdges () {
     auto const& cell_size = CellSize(maxLevel());
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
-    auto const &edge_centroid = eb_fact.getEdgeCent();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
         const auto lo = amrex::lbound(box);
         const auto hi = amrex::ubound(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-              auto const &edge = edge_centroid[1]->const_array(mfi);
               auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
               for(int i = lo.x; i <= hi.x; ++i) {
                     for(int j = lo.y; j <= hi.y; ++j) {
@@ -121,7 +119,6 @@ WarpX::ScaleAreas() {
     auto const eb_fact = fieldEBFactory(maxLevel());
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
-    auto const &area_frac = eb_fact.getAreaFrac();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
@@ -135,7 +132,6 @@ WarpX::ScaleAreas() {
               } else {
                     full_area = cell_size[0]*cell_size[1];
               }
-              auto const &face = area_frac[idim]->const_array(mfi);
               auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
               for(int i = lo.x; i <= hi.x; ++i) {
                     for(int j = lo.y; j <= hi.y; ++j) {

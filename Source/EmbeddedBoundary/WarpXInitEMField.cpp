@@ -30,7 +30,6 @@ WarpX::InitEMFieldSphere (){
       amrex::RealArray prob_lo;
       pp_geometry.get("prob_lo", prob_lo);
       auto &Bfield = Bfield_fp[maxLevel()];
-      auto &Efield = Efield_fp[maxLevel()];
 
       auto &face_areas_0 = m_face_areas[maxLevel()];
       for (amrex::MFIter mfi(*Bfield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
