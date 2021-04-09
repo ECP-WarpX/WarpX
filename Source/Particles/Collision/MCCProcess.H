@@ -8,14 +8,23 @@
 #define WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
 
 #include <AMReX_Vector.H>
+#include <AMReX_RandomEngine.H>
+
+enum class MCCProcessType {
+  INVALID,
+  ELASTIC,
+  BACK,
+  CHARGE_EXCHANGE,
+  EXCITATION,
+};
 
 class MCCProcess
 {
 public:
 
     MCCProcess (
-        const std::string scattering_process,
-        const std::string cross_section_file,
+        const std::string& scattering_process,
+        const std::string& cross_section_file,
         const amrex::Real energy
     );
 
@@ -26,7 +35,14 @@ public:
      * @param E_coll collision energy in eV
      *
      */
-    amrex::Real getCrossSection (amrex::Real E_coll) const;
+    AMREX_GPU_DEVICE
+    virtual amrex::Real getCrossSection (amrex::Real E_coll) const;
+
+    AMREX_GPU_DEVICE
+    virtual void scatter(amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
+			 amrex::Real uCOM_x, amrex::Real uCOM_y, amrex::Real uCOM_z,
+			 amrex::Real uax, amrex::Real uay, amrex::Real uaz,
+			 amrex::RandomEngine const& engine) const;
 
     /** Read the given cross-section data file to memory.
      *
@@ -45,7 +61,7 @@ public:
 
     void sanityCheckEnergyGrid ( );
 
-    std::string name;
+    MCCProcessType type;
     amrex::Real energy_penalty;
 
 private:

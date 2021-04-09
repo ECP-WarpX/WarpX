@@ -8,14 +8,24 @@
 #include "WarpX.H"
 
 MCCProcess::MCCProcess (
-        const std::string scattering_process,
-        const std::string cross_section_file,
+        const std::string& scattering_process,
+        const std::string& cross_section_file,
         const amrex::Real energy )
 {
     amrex::Print() << "Reading file " << cross_section_file << " for "
         << scattering_process << " scattering cross-sections.\n";
 
-    name = scattering_process;
+    if (scattering_process == "elastic") {
+      type = MCCProcessType::ELASTIC;
+    } else if (scattering_process == "back") {
+      type = MCCProcessType::BACK;
+    } else if (scattering_process == "charge_exchange") {
+      type = MCCProcessType::CHARGE_EXCHANGE;
+    } else if (scattering_process.find("excitation") != std::string::npos) {
+      type = MCCProcessType::EXCITATION;
+    } else {
+      type = MCCProcessType::INVALID;
+    }
 
     // read the cross-section data file into memory
     readCrossSectionFile(cross_section_file, m_energies, m_sigmas);
@@ -34,6 +44,7 @@ MCCProcess::MCCProcess (
     sanityCheckEnergyGrid();
 }
 
+AMREX_GPU_DEVICE
 amrex::Real
 MCCProcess::getCrossSection ( amrex::Real E_coll ) const
 {
