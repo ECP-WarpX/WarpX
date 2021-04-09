@@ -184,7 +184,7 @@ WarpX::InitPML ()
     } else {
         // setting do_pml = 0 as default and turning it on only when user-input is set to PML.
         do_pml = 0;
-        do_pml_Lo = amrex::IntVect::TheZeroVector(); 
+        do_pml_Lo = amrex::IntVect::TheZeroVector();
         do_pml_Hi = amrex::IntVect::TheZeroVector();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
