@@ -120,8 +120,6 @@ WarpX::ScaleAreas() {
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
-        const auto lo = amrex::lbound(box);
-        const auto hi = amrex::ubound(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
