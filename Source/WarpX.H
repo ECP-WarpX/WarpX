@@ -890,15 +890,15 @@ private:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
     // PML
-    int do_pml = 0;
+    int do_pml = 1;
     int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
+    amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
+    amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
