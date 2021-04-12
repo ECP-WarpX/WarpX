@@ -243,7 +243,118 @@ Diagnostics::InitBaseData ()
         m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
     } else if (m_format == "ascent"){
         m_flush_format = std::make_unique<FlushFormatAscent>();
-    } else if (m_format == "sensei"){
+        std::cout<< " m_diag_name " <<m_diag_name<<std::endl;
+        amrex::ParmParse pp_diag_viz(m_diag_name);
+        int write_yaml_file = 0;
+        pp_diag_viz.query("viz", write_yaml_file);
+        if (write_yaml_file){
+          std::ofstream yaml_file("ascent_actions.yaml");
+          // This block is data pipelines
+          // Pipelines allow users to compose filters that transform the published input data into new meshes.
+          // Each entry in pipelines: executes a series of functions from top to bottom,
+          // Results of prior functions can be used in later calls of the same pipeline
+          yaml_file<<"#   This block are data pipelines"<<std::endl;
+          yaml_file<<"#   Each entry in pipelines: executes a series of functions from top to bottom,"<<std::endl;
+          yaml_file<<"#   Results of prior functions can be used in later calls of the same pipeline"<<std::endl;
+
+          yaml_file<<"-"<<std::endl;
+          yaml_file<<"  action: \"add_pipelines\"" <<std::endl;
+          yaml_file<<"  pipelines:" << std::endl;
+
+          // clipped volume
+          yaml_file<<"    clipped_volume:"<<std::endl;
+          yaml_file<<"      f0:"<<std::endl;
+          yaml_file<<"        type: \"contour\""<<std::endl;
+          yaml_file<<"        params:"<<std::endl;
+          yaml_file<<"          field: \"Ez\""<<std::endl;
+          yaml_file<<"          levels: 2"<<std::endl;
+          yaml_file<<"      f1:"<<std::endl;
+          yaml_file<<"        type: \"clip\""<<std::endl;
+          yaml_file<<"        params:"<<std::endl;
+          yaml_file<<"          topology: topo # name of the amr mesh"<<std::endl;
+          yaml_file<<"          multi_plane:"<<std::endl;
+          yaml_file<<"            point1:  {x: 0.0, y:  0.0, z: 0.0}"<<std::endl;
+          yaml_file<<"            normal1: {x: 1.0, y:  -1.0, z: 0.0}"<<std::endl;
+          yaml_file<<"            point2:  {x: 0.0, y:  0.0, z: 0.0}"<<std::endl;
+          yaml_file<<"            normal2: {x: -0.7, y: -0.7, z: 0.0}"<<std::endl;
+          yaml_file<<""<<std::endl;
+
+          // sampled_particles
+          yaml_file<<"    sampled_particles:"<<std::endl;
+          yaml_file<<"      f1:"<<std::endl;
+          yaml_file<<"        type: histsampling"<<std::endl;
+          yaml_file<<"        params:"<<std::endl;
+          yaml_file<<"          field: particle_electrons_uz"<<std::endl;
+          yaml_file<<"          bins: 64"<<std::endl;
+          yaml_file<<"          sample_rate: 0.90"<<std::endl;
+          yaml_file<<"      f2:"<<std::endl;
+          yaml_file<<"        type: \"clip\""<<std::endl;
+          yaml_file<<"        params:"<<std::endl;
+          yaml_file<<"          topology: particle_electrons # particle data"<<std::endl;
+          yaml_file<<"          multi_plane:"<<std::endl;
+          yaml_file<<"            point1:  {x: 0.0, y:  0.0, z: 0.0}"<<std::endl;
+          yaml_file<<"            normal1: {x: 0.0, y:  -1.0, z: 0.0}"<<std::endl;
+          yaml_file<<"            point2:  {x: 0.0, y:  0.0, z: 0.0}"<<std::endl;
+          yaml_file<<"            normal2: {x: -0.7, y: -0.7, z: 0.0}"<<std::endl;
+          yaml_file<<""<<std::endl;
+
+          // This block is define Scenes
+          // A scene encapsulates the information required to generate one or more images.
+          // contour plot
+          int contour = 0;
+          pp_diag_viz.query("viz_contour", contour);
+          if (contour){
+            std::string contour_field = "Ez";
+            std::string image_name = "image";
+            int contour_levels = 2;
+            // add field range array here
+            pp_diag_viz.query("viz_contour_field", contour_field);
+            pp_diag_viz.query("viz_contour_levels", contour_levels);
+            pp_diag_viz.query("viz_image_name", image_name);
+            
+            // will add field range later .....
+            
+            yaml_file<<"-"<<std::endl;
+            yaml_file<<"  action: \"add_scenes\""<<std::endl;
+            yaml_file<<"  scenes:"<<std::endl;
+            yaml_file<<"    s1:"<<std::endl;
+            yaml_file<<"      plots:"<<std::endl;
+            yaml_file<<"        p0:"<<std::endl;
+            yaml_file<<"          type: \"pseudocolor\""<<std::endl;
+            yaml_file<<"          field: \"particle_electrons_uz\""<<std::endl;
+            yaml_file<<"          pipeline: \"sampled_particles\""<<std::endl;
+
+            yaml_file<<"        p1:"<<std::endl;
+            yaml_file<<"          type: \"pseudocolor\""<<std::endl;
+            yaml_file<<"          pipeline: \"clipped_volume\""<<std::endl;
+            yaml_file<<"          field: \""<<contour_field<<"\""<<std::endl;
+            yaml_file<<"      renders:"<<std::endl;
+            yaml_file<<"        image1:"<<std::endl;
+            yaml_file<<"          bg_color: [1.0, 1.0, 1.0]"<<std::endl;
+            yaml_file<<"          fg_color: [0.0, 0.0, 0.0]"<<std::endl;
+            yaml_file<<"          image_prefix: \""<<image_name<<"%04d\""<<std::endl;
+            yaml_file<<"          camera:"<<std::endl;
+            yaml_file<<"            azimuth: 20"<<std::endl;
+            yaml_file<<"            elevation: 30"<<std::endl;
+            yaml_file<<"            zoom: 1.5"<<std::endl;
+          }
+          
+
+          /*
+          yaml_file<<""<<std::endl;
+          yaml_file<<""<<std::endl;
+          yaml_file<<""<<std::endl;
+          yaml_file<<""<<std::endl;
+*/
+
+          yaml_file.close();
+       }
+
+
+
+
+          
+} else if (m_format == "sensei"){
 #ifdef BL_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
