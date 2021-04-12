@@ -39,14 +39,6 @@ public:
     AMREX_GPU_HOST_DEVICE
     amrex::Real getCrossSection (amrex::Real E_coll) const;
 
-#if 0
-    AMREX_GPU_HOST_DEVICE
-    virtual void scatter(amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
-			 amrex::Real uCOM_x, amrex::Real uCOM_y, amrex::Real uCOM_z,
-			 amrex::Real uax, amrex::Real uay, amrex::Real uaz,
-			 amrex::RandomEngine const& engine) const { }
-#endif
-
     /** Read the given cross-section data file to memory.
      *
      * @param cross_section_file the path to the file containing the cross-
