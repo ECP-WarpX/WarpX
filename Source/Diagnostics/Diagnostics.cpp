@@ -311,9 +311,7 @@ Diagnostics::InitBaseData ()
             pp_diag_viz.query("viz_contour_field", contour_field);
             pp_diag_viz.query("viz_contour_levels", contour_levels);
             pp_diag_viz.query("viz_image_name", image_name);
-            
             // will add field range later .....
-            
             yaml_file<<"-"<<std::endl;
             yaml_file<<"  action: \"add_scenes\""<<std::endl;
             yaml_file<<"  scenes:"<<std::endl;
@@ -338,7 +336,6 @@ Diagnostics::InitBaseData ()
             yaml_file<<"            elevation: 30"<<std::endl;
             yaml_file<<"            zoom: 1.5"<<std::endl;
           }
-          
 
           /*
           yaml_file<<""<<std::endl;
@@ -353,7 +350,6 @@ Diagnostics::InitBaseData ()
 
 
 
-          
 } else if (m_format == "sensei"){
 #ifdef BL_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
