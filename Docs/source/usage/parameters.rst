@@ -186,7 +186,7 @@ Domain Boundary Conditions
     Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
-    * ``pml``: This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for `do_pml`. See the :ref:`PML theory section <theory-bc>` for more details.
+    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for `do_pml`. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
