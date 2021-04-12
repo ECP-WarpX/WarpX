@@ -363,6 +363,10 @@ private:
         int last_time_index;
         /** Field data */
         amrex::Gpu::DeviceVector<amrex::Real> E_data;
+        /** This parameter is subtracted to simulation time before interpolating field data in txye file.
+        *   If t_delay > 0, the laser is delayed, otherwise it is anticipated. */
+        amrex::Real t_delay = amrex::Real(0.0);
+
     } m_params;
 
     CommonLaserParameters m_common_params;

@@ -288,7 +288,7 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
             constexpr char const * const err_msg =
                 "wp_ast_eval: function parser encountered an invalid result value (NaN or Inf)!";
 #if AMREX_DEVICE_COMPILE
-            AMREX_DEVICE_PRINTF("%d\n", err_msg);
+            AMREX_DEVICE_PRINTF("%s\n", err_msg);
 #else
             amrex::AllPrint() << err_msg << "\n";
 #endif
