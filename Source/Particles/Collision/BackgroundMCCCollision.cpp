@@ -91,7 +91,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> mcc_processes)
         amrex::Real sigma_E = 0.0;
 
         // loop through all collision pathways
-        for (auto scattering_process : mcc_processes){
+        for (const auto &scattering_process : mcc_processes){
             // get collision cross-section
             sigma_E += scattering_process.getCrossSection(E);
         }
@@ -228,7 +228,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
     amrex::ParallelForRNG(np,
-        [=] AMREX_GPU_DEVICE (long ip, amrex::RandomEngine const& engine)
+        [=] AMREX_GPU_HOST_DEVICE (long ip, amrex::RandomEngine const& engine)
         {
             // determine if this particle should collide
             if (amrex::Random(engine) > total_collision_prob) return;
@@ -275,10 +275,10 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
             // loop through all collision pathways
             for (size_t i = 0; i < process_count; i++){
-	      auto scattering_process = scattering_processes + i;
-	      
+	        auto const& scattering_process = *scattering_processes[i];
+
                 // get collision cross-section
-                sigma_E = scattering_process->getCrossSection(E_coll);
+                sigma_E = scattering_process.getCrossSection(E_coll);
 
                 // calculate normalized collision frequency
                 nu_i += n_a * sigma_E * v_coll / nu_max;
@@ -287,30 +287,32 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                 // the appropriate scattering function
                 if (col_select > nu_i) continue;
 
-		scattering_process->scatter(ux[ip], uy[ip], uz[ip],
+#if 0
+		scattering_process.scatter(ux[ip], uy[ip], uz[ip],
 					    uCOM_x, uCOM_y, uCOM_z,
 					    ua_x, ua_y, ua_z,
 					    engine);
-		
-                if (scattering_process->type == MCCProcessType::ELASTIC) {
+#endif
+
+                if (scattering_process.type == MCCProcessType::ELASTIC) {
                     ElasticScattering(
                         ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z, engine
                     );
                 }
-                else if (scattering_process->type == MCCProcessType::BACK) {
+                else if (scattering_process.type == MCCProcessType::BACK) {
                     BackScattering(
                         ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z
                     );
                 }
-                else if (scattering_process->type == MCCProcessType::CHARGE_EXCHANGE) {
+                else if (scattering_process.type == MCCProcessType::CHARGE_EXCHANGE) {
                     ChargeExchange(ux[ip], uy[ip], uz[ip], ua_x, ua_y, ua_z);
                 }
-                else if (scattering_process->type == MCCProcessType::EXCITATION)
+                else if (scattering_process.type == MCCProcessType::EXCITATION)
                 {
                     // get the new velocity magnitude
                     amrex::Real vp = std::sqrt(
                         2.0 / mass1 * PhysConst::q_e
-                        * (E_coll - scattering_process->energy_penalty)
+                        * (E_coll - scattering_process.energy_penalty)
                     );
                     RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
                 }
@@ -374,6 +376,7 @@ void BackgroundMCCCollision::doBackgroundIonization
     }
 }
 
+#if 0
 class Elastic : public MCCProcess
 {
 public:
@@ -381,13 +384,14 @@ public:
     : MCCProcess("elastic", cross_section_file, energy)
   { }
 
-  AMREX_GPU_DEVICE amrex::Real getCrossSection(amrex::Real E_coll) const override
+  AMREX_GPU_HOST_DEVICE
+  amrex::Real getCrossSection(amrex::Real E_coll) const override
   {
     return 0.0;
   }
 
   
-  AMREX_GPU_DEVICE
+  AMREX_GPU_HOST_DEVICE
   void scatter(amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
 	       amrex::Real uCOM_x, amrex::Real uCOM_y, amrex::Real uCOM_z,
 	       amrex::Real uax, amrex::Real uay, amrex::Real uaz,
@@ -405,12 +409,13 @@ public:
     : MCCProcess("back", cross_section_file, energy)
   { }
 
-  AMREX_GPU_DEVICE amrex::Real getCrossSection(amrex::Real E_coll) const override
+  AMREX_GPU_HOST_DEVICE
+  amrex::Real getCrossSection(amrex::Real E_coll) const override
   {
     return 0.0;
   }
   
-  AMREX_GPU_DEVICE
+  AMREX_GPU_HOST_DEVICE
   void scatter(amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
 		       amrex::Real uCOM_x, amrex::Real uCOM_y, amrex::Real uCOM_z,
 		       amrex::Real uax, amrex::Real uay, amrex::Real uaz,
@@ -428,12 +433,13 @@ public:
     : MCCProcess("charge_exchange", cross_section_file, energy)
   { }
 
-  AMREX_GPU_DEVICE amrex::Real getCrossSection(amrex::Real E_coll) const override
+  AMREX_GPU_HOST_DEVICE
+  amrex::Real getCrossSection(amrex::Real E_coll) const override
   {
     return 0.0;
   }
   
-  AMREX_GPU_DEVICE
+  AMREX_GPU_HOST_DEVICE
   void scatter(amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
 		       amrex::Real uCOM_x, amrex::Real uCOM_y, amrex::Real uCOM_z,
 		       amrex::Real uax, amrex::Real uay, amrex::Real uaz,
@@ -451,12 +457,13 @@ public:
     : MCCProcess("excitation", cross_section_file, energy)
   { }
 
-  AMREX_GPU_DEVICE amrex::Real getCrossSection(amrex::Real E_coll) const override
+  AMREX_GPU_HOST_DEVICE
+  amrex::Real getCrossSection(amrex::Real E_coll) const override
   {
     return 0.0;
   }
   
-  AMREX_GPU_DEVICE
+  AMREX_GPU_HOST_DEVICE
   void scatter(amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
 		       amrex::Real uCOM_x, amrex::Real uCOM_y, amrex::Real uCOM_z,
 		       amrex::Real uax, amrex::Real uay, amrex::Real uaz,
@@ -466,3 +473,4 @@ public:
   }
   
 };
+#endif

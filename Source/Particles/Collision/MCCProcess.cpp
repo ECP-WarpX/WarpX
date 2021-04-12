@@ -29,6 +29,8 @@ MCCProcess::MCCProcess (
 
     // read the cross-section data file into memory
     readCrossSectionFile(cross_section_file, m_energies, m_sigmas);
+    m_energies_data = m_energies.data();
+    m_sigmas_data = m_sigmas.data();
 
     // save energy grid parameters for easy use
     m_grid_size = m_energies.size();
@@ -44,7 +46,7 @@ MCCProcess::MCCProcess (
     sanityCheckEnergyGrid();
 }
 
-AMREX_GPU_DEVICE
+AMREX_GPU_HOST_DEVICE
 amrex::Real
 MCCProcess::getCrossSection ( amrex::Real E_coll ) const
 {
@@ -66,7 +68,7 @@ MCCProcess::getCrossSection ( amrex::Real E_coll ) const
         // linearly interpolate to the given energy value
         temp -= idx_1;
         return (
-            m_sigmas[idx_1] + (m_sigmas[idx_2] - m_sigmas[idx_1]) * temp
+            m_sigmas_data[idx_1] + (m_sigmas_data[idx_2] - m_sigmas_data[idx_1]) * temp
         );
     }
 }
@@ -74,8 +76,8 @@ MCCProcess::getCrossSection ( amrex::Real E_coll ) const
 void
 MCCProcess::readCrossSectionFile (
     const std::string cross_section_file,
-    amrex::Vector<amrex::Real>& energies,
-    amrex::Vector<amrex::Real>& sigmas )
+    amrex::Gpu::DeviceVector<amrex::Real>& energies,
+    amrex::Gpu::DeviceVector<amrex::Real>& sigmas )
 {
     std::ifstream infile(cross_section_file);
     double energy, sigma;

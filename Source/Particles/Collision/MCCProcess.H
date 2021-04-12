@@ -9,6 +9,7 @@
 
 #include <AMReX_Vector.H>
 #include <AMReX_RandomEngine.H>
+#include <AMReX_GpuContainers.H>
 
 enum class MCCProcessType {
   INVALID,
@@ -35,14 +36,16 @@ public:
      * @param E_coll collision energy in eV
      *
      */
-    AMREX_GPU_DEVICE
-    virtual amrex::Real getCrossSection (amrex::Real E_coll) const;
+    AMREX_GPU_HOST_DEVICE
+    amrex::Real getCrossSection (amrex::Real E_coll) const;
 
-    AMREX_GPU_DEVICE
+#if 0
+    AMREX_GPU_HOST_DEVICE
     virtual void scatter(amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
 			 amrex::Real uCOM_x, amrex::Real uCOM_y, amrex::Real uCOM_z,
 			 amrex::Real uax, amrex::Real uay, amrex::Real uaz,
-			 amrex::RandomEngine const& engine) const;
+			 amrex::RandomEngine const& engine) const { }
+#endif
 
     /** Read the given cross-section data file to memory.
      *
@@ -55,8 +58,8 @@ public:
 
     void readCrossSectionFile (
         const std::string cross_section_file,
-        amrex::Vector<amrex::Real>& energies,
-        amrex::Vector<amrex::Real>& sigmas
+        amrex::Gpu::DeviceVector<amrex::Real>& energies,
+        amrex::Gpu::DeviceVector<amrex::Real>& sigmas
     );
 
     void sanityCheckEnergyGrid ( );
@@ -66,8 +69,10 @@ public:
 
 private:
 
-    amrex::Vector<amrex::Real> m_energies;
-    amrex::Vector<amrex::Real> m_sigmas;
+    amrex::Gpu::DeviceVector<amrex::Real> m_energies;
+    amrex::Real* m_energies_data;
+    amrex::Gpu::DeviceVector<amrex::Real> m_sigmas;
+    amrex::Real* m_sigmas_data;
 
     int m_grid_size;
     amrex::Real m_energy_lo, m_energy_hi, m_sigma_lo, m_sigma_hi, m_dE;
