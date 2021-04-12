@@ -1405,10 +1405,12 @@ Numerics and algorithms
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
-    synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
-    Since the grid nodes at the interface between two neighbor boxes are duplicated in both
-    boxes, an instability can occur if they have too different values.
+    synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
+    boundaries is performed. Since the grid nodes at the interface between two neighbor boxes are
+    duplicated in both boxes, an instability can occur if they have too different values.
     This option makes sure that they are synchronized periodically.
+    Note that if Perfectly Matched Layers (PML) are used, synchronization of the `E` and `B` fields
+    is performed at every timestep regardless of this parameter.
 
 * ``warpx.use_hybrid_QED`` (`bool`; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
