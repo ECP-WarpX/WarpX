@@ -168,6 +168,7 @@ struct CartesianCKCAlgorithm {
         Real const betayz = coefs_y[2];
         Real const betayx = coefs_y[3];
         Real const gammay = coefs_y[4];
+        amrex::ignore_unused(n_coefs_y);
         return alphay * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp))
              + betayx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
                       +  F(i-1,j+1,k  ,ncomp) - F(i-1,j  ,k  ,ncomp))
@@ -177,7 +178,6 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j  ,k+1,ncomp)
                       +  F(i+1,j+1,k-1,ncomp) - F(i+1,j  ,k-1,ncomp)
                        +  F(i-1,j+1,k-1,ncomp) - F(i-1,j  ,k-1,ncomp));
-        amrex::ignore_unused(n_coefs_y);
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -200,8 +200,8 @@ struct CartesianCKCAlgorithm {
         using namespace amrex;
 #if defined WARPX_DIM_3D
         amrex::Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
         amrex::ignore_unused(n_coefs_y);
+        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -240,7 +240,6 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k+1,ncomp) - F(i+1,j-1,k  ,ncomp)
                       +  F(i-1,j-1,k+1,ncomp) - F(i-1,j-1,k  ,ncomp));
-        amrex::ignore_unused(n_coefs_z);
 #elif (defined WARPX_DIM_XZ)
         return alphaz * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp))
              + betazx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
