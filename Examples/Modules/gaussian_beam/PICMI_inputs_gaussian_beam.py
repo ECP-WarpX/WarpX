@@ -31,7 +31,6 @@ grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
 
 solver = picmi.ElectromagneticSolver(grid = grid,
                                      cfl = 1.,
-                                     warpx_do_pml = True,
                                      stencil_order=[em_order,em_order,em_order])
 
 electron_beam = picmi.GaussianBunchDistribution(n_physical_particles = total_charge/constants.q_e,
@@ -73,4 +72,3 @@ sim.add_diagnostic(part_diag1)
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()
-

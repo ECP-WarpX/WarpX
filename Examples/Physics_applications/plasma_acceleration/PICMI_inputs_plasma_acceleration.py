@@ -28,7 +28,7 @@ grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
                              moving_window_velocity = moving_window_velocity,
                              warpx_max_grid_size=32)
 
-solver = picmi.ElectromagneticSolver(grid=grid, cfl=1, warpx_do_pml = True)
+solver = picmi.ElectromagneticSolver(grid=grid, cfl=1)
 
 beam_distribution = picmi.UniformDistribution(density = 1.e23,
                                               lower_bound = [-20.e-6, -20.e-6, -150.e-6],
@@ -72,4 +72,3 @@ sim.add_diagnostic(part_diag)
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()
-
