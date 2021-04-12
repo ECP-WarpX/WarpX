@@ -275,7 +275,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
             // loop through all collision pathways
             for (size_t i = 0; i < process_count; i++){
-	        auto const& scattering_process = *scattering_processes[i];
+	        auto const& scattering_process = *(scattering_processes + i);
 
                 // get collision cross-section
                 sigma_E = scattering_process.getCrossSection(E_coll);
