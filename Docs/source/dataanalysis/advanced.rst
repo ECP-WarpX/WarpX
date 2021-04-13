@@ -1,5 +1,5 @@
-Advanced yt visualization, for developers (for plotfiles)
-=========================================================
+Advanced Visualization of Plotfiles With yt (for developers)
+============================================================
 
 This sections contains yt commands for advanced users. The Particle-In-Cell methods uses a
 staggered grid (see :ref:`particle-in-cell theory <theory-pic>`), so that the x, y, and z components of the
@@ -12,28 +12,17 @@ fine and auxiliary, see :ref:`the theory <theory>` for more details), and it is 
 them (regular output return the auxiliary grid only). This page provides information to read
 raw data of all grids.
 
-Dump additional data
---------------------
+Write Raw Data
+--------------
 
-In order to dump additional data in WarpX (mostly for debugging purpose), run the simulation
-with parameters (``warpx.plot_rho`` only when using back-transformed diagnostics)
+For a given diagnostic the user has the option to write the raw data by setting ``<diag_name>.plot_raw_fields = 1``.
+Moreover, the user has the option to write also the values of the fields in the guard cells by setting ``<diag_name>.plot_raw_fields_guards = 1``.
+Please refer to :ref:`Input Parameters <running-cpp-parameters>` for more information.
 
-.. code-block:: python
-
-    warpx.plot_raw_fields = 1
-    warpx.plot_finepatch = 1
-    warpx.plot_crsepatch = 1
-    warpx.plot_dive = 1
-    warpx.plot_rho = 1
-
-see :ref:`the input parameter section <running-cpp-parameters>` for more information.
-
-Read raw data
+Read Raw Data
 -------------
 
-Meta-data
-relevant to this topic (number and locations of grids in the simulation) are accessed to
-with
+Meta-data relevant to this topic (for example, number and locations of grids in the simulation) are accessed with
 
 .. code-block:: python
 
@@ -50,8 +39,7 @@ with
     # List available fields
     ds.field_list
 
-When ``warpx.plot_raw_fields=1`` and ``warpx.plot_finepatch=1``, here are some useful
-commands to access properties of a grid and the Ex field on the fine patch:
+When ``<diag_name>.plot_raw_fields = 1``, here are some useful commands to access properties of a grid and the Ex field on the fine patch:
 
 .. code-block:: python
 
@@ -81,3 +69,61 @@ In the case of ``Ex_fp``, the staggering is on direction ``x``, so that
 All combinations of the fields (``E`` or ``B``), the component (``x``, ``y`` or ``z``) and the
 grid (``_fp`` for fine, ``_cp`` for coarse and ``_aux`` for auxiliary) can be accessed in this
 way, i.e., ``my_grid['raw', 'Ey_aux']`` or ``my_grid['raw', 'Bz_cp']`` are valid queries.
+
+Read Raw Data With Guard Cells
+------------------------------
+
+When the output includes the data in the guard cells, the user can read such data using the post-processing tool ``read_raw_data.py``, available in ``Tools/PostProcessing/``, as illustrated in the following example:
+
+.. code-block:: python
+
+    from read_raw_data import read_data
+
+    # Load all data saved in a given path
+    path = './diags/diag00200/'
+    data = read_data(path)
+
+    # Load Ex_fp on mesh refinement level 0
+    level = 0
+    field = 'Ex_fp'
+    # data[level] is a dictionary, data[level][field] is a numpy array
+    my_field = data[level][field]
+
+Note that a list of all available raw fields written to output, that is, a list of all valid strings that the variable ``field`` in the example above can be assigned to, can be obtained by calling ``data[level].keys()``.
+
+In order to plot a 2D slice of the data with methods like ``matplotlib.axes.Axes.imshow``, one might want to pass the correct ``extent`` (the bounding box in data coordinates that the image will fill), including the guard cells. One way to set the correct ``extent`` is illustrated in the following example (case of a 2D slice in the ``(x,z)`` plane):
+
+.. code-block:: python
+
+    import yt
+    import numpy as np
+
+    from read_raw_data import read_data
+
+    # Load all data saved in a given path
+    path = './diags/diag00200/'
+    data = read_data(path)
+
+    # Load Ex_fp on mesh refinement level 0
+    level = 0
+    field = 'Ex_fp'
+    # data[level] is a dictionary, data[level][field] is a numpy array
+    my_field = data[level][field]
+
+    # Set the number of cells in the valid domain
+    # by loading the standard output data with yt
+    ncells = yt.load(path).domain_dimensions
+
+    # Set the number of dimensions automatically (2D or 3D)
+    dim = 2 if (ncells[2] == 1) else 3
+
+    xdir = 0
+    zdir = 1 if (dim == 2) else 2
+
+    # Set the extent (bounding box in data coordinates, including guard cells)
+    # to be passed to matplotlib.axes.Axes.imshow
+    left_edge_x  = 0            - (my_field.shape[xdir] - ncells[xdir]) // 2
+    right_edge_x = ncells[xdir] + (my_field.shape[xdir] - ncells[xdir]) // 2
+    left_edge_z  = 0            - (my_field.shape[zdir] - ncells[zdir]) // 2
+    right_edge_z = ncells[zdir] + (my_field.shape[zdir] - ncells[zdir]) // 2
+    extent = np.array([left_edge_z, right_edge_z, left_edge_x, right_edge_x])

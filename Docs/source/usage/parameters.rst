@@ -818,11 +818,13 @@ Laser initialization
       function, they still have to be specified as they are used for numerical purposes.
     - ``"from_txye_file"``: the electric field of the laser is read from an external binary file
       whose format is explained below. It requires to provide the name of the binary file
-      setting the additional parameter ``<laser_name>.txye_file_name`` (string). It accepts an
-      optional parameter ``<laser_name>.time_chunk_size`` (int). This allows to read only
+      setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
+      optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
       time_chunk_size timesteps from the binary file. New timesteps are read as soon as they are needed.
       The default value is automatically set to the number of timesteps contained in the binary file
       (i.e. only one read is performed at the beginning of the simulation).
+      It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
+      delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
       The external binary file should provide E(x,y,t) on a rectangular (but non necessarily uniform)
       grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
       values. x,y,t are meant to be in S.I. units, while the field value is meant to be multiplied by
@@ -1405,10 +1407,12 @@ Numerics and algorithms
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
-    synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
-    Since the grid nodes at the interface between two neighbor boxes are duplicated in both
-    boxes, an instability can occur if they have too different values.
+    synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
+    boundaries is performed. Since the grid nodes at the interface between two neighbor boxes are
+    duplicated in both boxes, an instability can occur if they have too different values.
     This option makes sure that they are synchronized periodically.
+    Note that if Perfectly Matched Layers (PML) are used, synchronization of the `E` and `B` fields
+    is performed at every timestep regardless of this parameter.
 
 * ``warpx.use_hybrid_QED`` (`bool`; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
@@ -1564,25 +1568,15 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
-    When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
+    When ``<diag_name>.plot_raw_fields = 1``, then the raw (i.e. non-averaged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
     See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
     in the yt documentation for more details on how to view raw fields.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
-    Only used when ``warpx.plot_raw_fields`` is ``1``.
+    Only used when ``<diag_name>.plot_raw_fields = 1``.
     Whether to include the guard cells in the output of the raw fields.
-    Only works with ``<diag_name>.format = plotfile``.
-
-* ``<diag_name>.plot_finepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the fine patch, in the plot files.
-    Only works with ``<diag_name>.format = plotfile``.
-
-* ``<diag_name>.plot_crsepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the coarse patch, in the plot files.
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
