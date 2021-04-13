@@ -252,4 +252,4 @@ diag1.pos2.variables = ux uy uz w
 diag1.pos3.variables = ux uy uz w
 diag1.pos4.variables = ux uy uz w
 
-diag1.format = yt
+diag1.format = plotfile
