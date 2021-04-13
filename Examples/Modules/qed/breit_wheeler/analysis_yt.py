@@ -44,15 +44,10 @@ def main():
         data["w"] = all_data_end[spec_name,"particle_weighting"].v
 
         if is_photon :
-            try:
-                data["opt"] =  all_data_end[spec_name,"particle_optical_depth_BW"].v
-            except:
-                pass
+            data["opt"] =  all_data_end[spec_name,"particle_optical_depth_BW"].v
         else:
-            try:
-                data["opt"] = all_data_end[spec_name,"particle_optical_depth_QSR"].v
-            except:
-                pass
+            data["opt"] = all_data_end[spec_name,"particle_optical_depth_QSR"].v
+
         particle_data[spec_name] = data
 
     ac.check(sim_time, particle_data)
