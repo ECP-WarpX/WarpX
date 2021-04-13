@@ -102,13 +102,15 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
                           bool ZSliceInDomain, amrex::Real current_z_boost,
-                          amrex::Box buffer_box, const int k_index_zlab )
+                          amrex::Box buffer_box, const int k_index_zlab,
+                          const int max_box_size )
 {
     m_buffer_box[i_buffer] = buffer_box;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
     if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
+    m_max_box_size = max_box_size;
 }
 
 void

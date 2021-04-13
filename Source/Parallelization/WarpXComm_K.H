@@ -73,6 +73,12 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 {
     using namespace amrex;
 
+    // Pad Bxf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Bxf_zeropad = [Bxf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Bxf.contains(jj,kk,ll) ? Bxf(jj,kk,ll) : 0.0_rt;
+    };
+
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
@@ -97,7 +103,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy * Bxc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bxf(j,k-1,0) + Bxf(j,k,0));
+    Real bf = 0.5_rt*(Bxf_zeropad(j,k-1,0) + Bxf_zeropad(j,k,0));
 
 #else
 
@@ -128,7 +134,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy *  wz * Bxc(jg+1,kg-1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
+    Real bf = 0.25_rt*(Bxf_zeropad(j,k-1,l-1) + Bxf_zeropad(j,k,l-1) + Bxf_zeropad(j,k-1,l) + Bxf_zeropad(j,k,l));
 #endif
 
     Bxa(j,k,l) = bg + (bf-bc);
@@ -142,6 +148,12 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Byg)
 {
     using namespace amrex;
+
+    // Pad Byf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Byf_zeropad = [Byf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Byf.contains(jj,kk,ll) ? Byf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -168,7 +180,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy * Byc(jg-1,kg-1,0);
 
     // interp form fine stagger (cell-centered for By) to fine nodal
-    Real bf = 0.25_rt*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
+    Real bf = 0.25_rt*(Byf_zeropad(j,k,0) + Byf_zeropad(j-1,k,0) + Byf_zeropad(j,k-1,0) + Byf_zeropad(j-1,k-1,0));
 
 #else
 
@@ -199,7 +211,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy *  wz * Byc(jg-1,kg+1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
+    Real bf = 0.25_rt*(Byf_zeropad(j-1,k,l-1) + Byf_zeropad(j,k,l-1) + Byf_zeropad(j-1,k,l) + Byf_zeropad(j,k,l));
 
 #endif
 
@@ -214,6 +226,12 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Bzg)
 {
     using namespace amrex;
+
+    // Pad Bzf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Bzf_zeropad = [Bzf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Bzf.contains(jj,kk,ll) ? Bzf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -239,7 +257,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy * Bzc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bzf(j-1,k,0) + Bzf(j,k,0));
+    Real bf = 0.5_rt*(Bzf_zeropad(j-1,k,0) + Bzf_zeropad(j,k,0));
 
 #else
 
@@ -270,7 +288,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy *  wz * Bzc(jg-1,kg-1,lg+1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
+    Real bf = 0.25_rt*(Bzf_zeropad(j-1,k-1,l) + Bzf_zeropad(j,k-1,l) + Bzf_zeropad(j-1,k,l) + Bzf_zeropad(j,k,l));
 
 #endif
 
@@ -285,6 +303,12 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Exg)
 {
     using namespace amrex;
+
+    // Pad Exf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Exf_zeropad = [Exf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Exf.contains(jj,kk,ll) ? Exf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -310,7 +334,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy * Exc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf(j-1,k,0) + Exf(j,k,0));
+    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,0) + Exf_zeropad(j,k,0));
 
 #else
 
@@ -340,7 +364,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy *  wz * Exc(jg-1,kg+1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf(j-1,k,l) + Exf(j,k,l));
+    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,l) + Exf_zeropad(j,k,l));
 
 #endif
 
@@ -355,6 +379,12 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Eyg)
 {
     using namespace amrex;
+
+    // Pad Eyf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Eyf_zeropad = [Eyf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Eyf.contains(jj,kk,ll) ? Eyf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -379,7 +409,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +      wx *  wy * Eyc(jg+1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = Eyf(j,k,0);
+    Real ef = Eyf_zeropad(j,k,0);
 
 #else
 
@@ -409,7 +439,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +      wx *  wy *  wz * Eyc(jg+1,kg-1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Eyf(j,k-1,l) + Eyf(j,k,l));
+    Real ef = 0.5_rt*(Eyf_zeropad(j,k-1,l) + Eyf_zeropad(j,k,l));
 
 #endif
 
@@ -424,6 +454,12 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Ezg)
 {
     using namespace amrex;
+
+    // Pad Ezf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Ezf_zeropad = [Ezf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Ezf.contains(jj,kk,ll) ? Ezf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -449,7 +485,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy * Ezc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf(j,k-1,0) + Ezf(j,k,0));
+    Real ef = 0.5_rt*(Ezf_zeropad(j,k-1,0) + Ezf_zeropad(j,k,0));
 
 #else
 
@@ -479,7 +515,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy *  wz * Ezc(jg+1,kg+1,lg-1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf(j,k,l-1) + Ezf(j,k,l));
+    Real ef = 0.5_rt*(Ezf_zeropad(j,k,l-1) + Ezf_zeropad(j,k,l));
 
 #endif
 

@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 21.03)
+project(WarpX VERSION 21.04)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -45,6 +45,7 @@ set_default_install_dirs()
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
+option(WarpX_GPUCLOCK      "Add GPU kernel timers (cost function)"      ON)
 option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
@@ -263,6 +264,10 @@ elseif(WarpX_DIMS STREQUAL 2)
     target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ)
 elseif(WarpX_DIMS STREQUAL RZ)
     target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ)
+endif()
+
+if(WarpX_GPUCLOCK)
+    target_compile_definitions(WarpX PUBLIC WARPX_USE_GPUCLOCK)
 endif()
 
 if(WarpX_OPENPMD)

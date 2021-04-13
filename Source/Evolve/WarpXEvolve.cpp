@@ -346,6 +346,11 @@ WarpX::OneStep_nosub (Real cur_time)
                 WarpX::Hybrid_QED_Push(dt);
                 FillBoundaryE(guard_cells.ng_alloc_EB);
             }
+
+            // Synchronize E and B fields on nodal points
+            NodalSyncE();
+            NodalSyncB();
+
             if (do_pml) {
                 DampPML();
                 NodalSyncPML();
@@ -371,6 +376,11 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryE(guard_cells.ng_FieldSolver);
             EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
             EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
+
+            // Synchronize E and B fields on nodal points
+            NodalSyncE();
+            NodalSyncB();
+
             if (do_pml) {
                 FillBoundaryF(guard_cells.ng_alloc_F);
                 DampPML();
