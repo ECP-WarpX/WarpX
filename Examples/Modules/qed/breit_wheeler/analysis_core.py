@@ -6,7 +6,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import sys
 import scipy.special as spe
 import scipy.integrate as integ
 import scipy.stats as st
