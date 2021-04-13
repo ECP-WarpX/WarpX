@@ -38,7 +38,11 @@ struct InjectorPositionRandomPlane
     {
         using namespace amrex::literals;
         if (dir == 0) return amrex::XDim3{0._rt, amrex::Random(engine), amrex::Random(engine)};
+#if (defined WARPX_DIM_RZ)
+        if (dir == 1) return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
+#else
         if (dir == 1) return amrex::XDim3{amrex::Random(engine), 0._rt, amrex::Random(engine)};
+#endif
         else          return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), 0._rt};
     }
 private:

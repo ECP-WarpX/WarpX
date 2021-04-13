@@ -99,14 +99,15 @@ struct InjectorMomentumGaussianFlux
                  amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
-        amrex::Real ux = amrex::RandomNormal(m_ux_m, m_ux_th, engine);
-        amrex::Real uy = amrex::RandomNormal(m_uy_m, m_uy_th, engine);
-        amrex::Real uz = amrex::RandomNormal(m_uz_m, m_uz_th, engine);
+        // Generate the v*Gaussian distribution.
         amrex::Real const urand = 1._rt - amrex::Random(engine);
-        amrex::Real const ur = std::sqrt(2._rt*std::log(1._rt/urand))*m_flux_direction;
-        if (m_flux_normal_axis == 0) ux = m_ux_th*ur;
-        if (m_flux_normal_axis == 1) uy = m_uy_th*ur;
-        if (m_flux_normal_axis == 2) uz = m_uz_th*ur;
+        amrex::Real ur = std::sqrt(2._rt*std::log(1._rt/urand));
+        if (m_flux_direction < 0) ur = -ur;
+
+        // Note that in 2D, with m_flux_normal_axis == 1, uy is out of the plane and so Gaussian and uz is v*Gaussian
+        amrex::Real ux = (m_flux_normal_axis == 0 ? m_ux_th*ur : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
+        amrex::Real uy = (m_flux_normal_axis == 1 && AMREX_SPACEDIM==3 ? m_uy_th*ur : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
+        amrex::Real uz = (m_flux_normal_axis == AMREX_SPACEDIM-1 ? m_uz_th*ur : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
         return amrex::XDim3{ux, uy, uz};
     }
 
@@ -383,7 +384,7 @@ struct InjectorMomentum
                       amrex::Real a_ux_m, amrex::Real a_uy_m, amrex::Real a_uz_m,
                       amrex::Real a_ux_th, amrex::Real a_uy_th, amrex::Real a_uz_th,
                       int a_flux_normal_axis, int a_flux_direction)
-        : type(Type::gaussian),
+        : type(Type::gaussianflux),
           object(t,a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction)
     { }
 
@@ -440,6 +441,10 @@ struct InjectorMomentum
         {
             return object.gaussian.getMomentum(x,y,z,engine);
         }
+        case Type::gaussianflux:
+        {
+            return object.gaussianflux.getMomentum(x,y,z,engine);
+        }
         case Type::boltzmann:
         {
             return object.boltzmann.getMomentum(x,y,z,engine);
@@ -484,6 +489,10 @@ struct InjectorMomentum
         {
             return object.gaussian.getBulkMomentum(x,y,z);
         }
+        case Type::gaussianflux:
+        {
+            return object.gaussianflux.getBulkMomentum(x,y,z);
+        }
         case Type::boltzmann:
         {
             return object.boltzmann.getBulkMomentum(x,y,z);
@@ -513,7 +522,7 @@ struct InjectorMomentum
     }
 
 private:
-    enum struct Type { constant, custom, gaussian, boltzmann, juttner, radial_expansion, parser};
+    enum struct Type { constant, custom, gaussian, gaussianflux, boltzmann, juttner, radial_expansion, parser};
     Type type;
 
     // An instance of union Object constructs and stores any one of

@@ -950,14 +950,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
     WARPX_PROFILE("PhysicalParticleContainer::AddPlasmaFlux()");
 
     const Geometry& geom = Geom(lev);
-    const amrex::RealBox& prob_domain = geom.ProbDomain();
-    const amrex::RealBox part_realbox(
-        {AMREX_D_DECL(std::max(plasma_injector->xmin, prob_domain.lo(0)),
-                      std::max(plasma_injector->ymin, prob_domain.lo(1)),
-                      std::max(plasma_injector->zmin, prob_domain.lo(2)))},
-        {AMREX_D_DECL(std::min(plasma_injector->xmax, prob_domain.hi(0)),
-                      std::min(plasma_injector->ymax, prob_domain.hi(1)),
-                      std::min(plasma_injector->zmax, prob_domain.hi(2)))});
+    const amrex::RealBox& part_realbox = geom.ProbDomain();
 
     amrex::Real num_ppc_real = plasma_injector->num_particles_per_cell_real;
 #ifdef WARPX_DIM_RZ
@@ -967,12 +960,10 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
 
-    Real scale_fac;
-#if AMREX_SPACEDIM==3
-    scale_fac = dx[0]*dx[1]/num_ppc_real;
-#elif AMREX_SPACEDIM==2
-    scale_fac = dx[0]/num_ppc_real;
-#endif
+    Real scale_fac = 0._rt;
+    if (dx[plasma_injector->flux_normal_axis]*num_ppc_real != 0._rt) {
+        scale_fac = AMREX_D_TERM(dx[0], *dx[1], *dx[2])/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
+    }
 
     defineAllParticleTiles();
 
@@ -1292,7 +1283,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 #endif
 
                 // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
-                Real weight = dens * scale_fac;
+                Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
                 if (radially_weighted) {
                     weight *= 2._rt*MathConst::pi*xb;
