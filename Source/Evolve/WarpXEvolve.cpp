@@ -251,6 +251,19 @@ WarpX::Evolve (int numsteps)
             myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
         }
 
+
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
+        if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
+            // perform BTD, force_flush=true, BackTransform=true
+            multi_diags->FilterComputePackFlush( step, true, true );
+        } else {
+            // perform BTD, force_flush=false, BackTransform=true
+            multi_diags->FilterComputePackFlush( step, false, true );
+        }
+
         bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
