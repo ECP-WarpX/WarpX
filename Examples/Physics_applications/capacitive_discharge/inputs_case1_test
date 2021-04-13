@@ -79,8 +79,7 @@ coll_elec.ionization_energy = 24.60
 coll_elec.ionization_cross_section = cross_sections_He/ionization.dat
 coll_elec.ionization_species = he_ions
 
-diagnostics.diags_names = diags
-diags.diag_type = Full
-diags.intervals = 50
-diags.fields_to_plot = rho_electrons rho_he_ions
-diags.file_prefix = ./diags_test
+diagnostics.diags_names = diag1
+diag1.diag_type = Full
+diag1.intervals = 50
+diag1.fields_to_plot = rho_electrons rho_he_ions

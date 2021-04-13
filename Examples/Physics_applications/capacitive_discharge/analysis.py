@@ -17,7 +17,7 @@
 import numpy as np
 import yt
 
-ds = yt.load('diags_test00050')
+ds = yt.load('background_mcc_plt00050')
 
 data = ds.covering_grid(
     level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
