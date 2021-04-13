@@ -585,12 +585,12 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (do_pml_Lo[idim]){
                 // ncell is divided by refinement ratio to ensure that the
-                // physical width of the PML region is equal is fine and coarse patch
+                // physical width of the PML region is equal in fine and coarse patch
                 domain1.growLo(idim, -ncell/ref_ratio[idim]);
             }
             if (do_pml_Hi[idim]){
                 // ncell is divided by refinement ratio to ensure that the
-                // physical width of the PML region is equal is fine and coarse patch
+                // physical width of the PML region is equal in fine and coarse patch
                 domain1.growHi(idim, -ncell/ref_ratio[idim]);
             }
         }
