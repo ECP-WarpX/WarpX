@@ -19,7 +19,7 @@ import analysis_core as ac
 # in analysis_core.py (please refer to this file for
 # a full description). It reads output files in yt
 # format and extracts the data needed for
-# the analysis routines. 
+# the analysis routines.
 yt
 def main():
     print("Opening yt output")
@@ -28,7 +28,7 @@ def main():
 
     # get simulation time
     sim_time = data_set_end.current_time.to_value()
-    
+
     # get particle data
     all_data_end = data_set_end.all_data()
     particle_data = {}
@@ -54,7 +54,7 @@ def main():
             except:
                 pass
         particle_data[spec_name] = data
-    
+
     ac.check(sim_time, particle_data)
 
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]

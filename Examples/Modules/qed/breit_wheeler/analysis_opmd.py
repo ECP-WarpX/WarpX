@@ -19,7 +19,7 @@ import analysis_core as ac
 # in analysis_core.py (please refer to this file for
 # a full description). It reads output files in openPMD
 # format and extracts the data needed for
-# the analysis routines. 
+# the analysis routines.
 
 def main():
     print("Opening openPMD output")
@@ -29,7 +29,7 @@ def main():
 
     # get simulation time
     sim_time = data_set_end.time
-    
+
     # get particle data
     particle_data = {}
 
@@ -64,7 +64,7 @@ def main():
         data["opt"] = opt
 
         particle_data[spec_name] = data
-    
+
     ac.check(sim_time, particle_data)
 
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]

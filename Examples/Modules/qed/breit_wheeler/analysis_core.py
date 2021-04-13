@@ -78,7 +78,7 @@ NNS = [128,128,128,128] #bins for energy distribution comparison.
 def get_all_species_names_and_types():
     names = spec_names_phot + spec_names_ele + spec_names_pos
     types = [True]*len(spec_names_phot) + [False]*(len(spec_names_ele)+len(spec_names_pos))
-    return names, types    
+    return names, types
 
 def calc_chi_gamma(p, E, B):
     pnorm = np.linalg.norm(p)
