@@ -328,16 +328,18 @@ MultiParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                 const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                Real t, Real dt, DtType a_dt_type)
+                                Real t, Real dt, DtType a_dt_type, bool skip_deposition)
 {
-    jx.setVal(0.0);
-    jy.setVal(0.0);
-    jz.setVal(0.0);
-    if (cjx) cjx->setVal(0.0);
-    if (cjy) cjy->setVal(0.0);
-    if (cjz) cjz->setVal(0.0);
-    if (rho) rho->setVal(0.0);
-    if (crho) crho->setVal(0.0);
+    if (! skip_deposition) {
+        jx.setVal(0.0);
+        jy.setVal(0.0);
+        jz.setVal(0.0);
+        if (cjx) cjx->setVal(0.0);
+        if (cjy) cjy->setVal(0.0);
+        if (cjz) cjz->setVal(0.0);
+        if (rho) rho->setVal(0.0);
+        if (crho) crho->setVal(0.0);
+    }
     for (auto& pc : allcontainers) {
         pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type);

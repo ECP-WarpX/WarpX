@@ -198,7 +198,7 @@ PhotonParticleContainer::Evolve (int lev,
                                  MultiFab* rho, MultiFab* crho,
                                  const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                 Real t, Real dt, DtType /*a_dt_type*/)
+                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition)
 {
     // This does gather, push and depose.
     // Push and depose have been re-written for photons
@@ -210,6 +210,6 @@ PhotonParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt);
+                                       t, dt, a_dt_type, skip_deposition);
 
 }

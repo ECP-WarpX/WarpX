@@ -953,7 +953,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                    MultiFab* rho, MultiFab* crho,
                                    const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                   Real /*t*/, Real dt, DtType a_dt_type)
+                                   Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition)
 {
 
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
@@ -1055,7 +1055,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const long np_current = (cjx) ? nfine_current : np;
 
-            if (rho) {
+            if (rho && ! skip_deposition) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
                 int* AMREX_RESTRICT ion_lev;
                 if (do_field_ionization){
@@ -1125,9 +1125,9 @@ PhysicalParticleContainer::Evolve (int lev,
                 WARPX_PROFILE_VAR_STOP(blp_fg);
 
                 //
-                // Current Deposition (only needed for electromagnetic solver)
+                // Current Deposition
                 //
-                if (WarpX::do_electrostatic == ElectrostaticSolverAlgo::None) {
+                if (! skip_deposition) {
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
                         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
@@ -1147,7 +1147,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
 
-            if (rho) {
+            if (rho && ! skip_deposition) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
                 if (WarpX::do_electrostatic == ElectrostaticSolverAlgo::None) {
