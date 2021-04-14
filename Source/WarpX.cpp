@@ -620,9 +620,17 @@ WarpX::ReadParameters ()
         // for both div(E) and div(B) cleaning
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                do_pml_dive_cleaning == do_pml_divb_cleaning,
-                "Not implemented: warpx.do_pml_dive_cleaning and warpx.do_pml_divb_cleaning must be equal");
+            if (do_pml_dive_cleaning != do_pml_divb_cleaning)
+            {
+                std::stringstream ss;
+                ss << "\nwarpx.do_pml_dive_cleaning = "
+                   << do_pml_dive_cleaning
+                   << " and warpx.do_pml_divb_cleaning = "
+                   << do_pml_divb_cleaning
+                   << ":\nthis case is not implemented yet,"
+                   << " please set both parameters to the same value";
+                amrex::Abort(ss.str());
+            }
         }
 
 #ifdef WARPX_DIM_RZ
