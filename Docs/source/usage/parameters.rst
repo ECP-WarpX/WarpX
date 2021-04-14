@@ -76,14 +76,14 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
-* ``self_fields_required_precision`` (`float`, default: 1.e-11)
+* ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
     This solver can fail to reach the default precision within a reasonable
     This only applies when warpx.do_electrostatic = labframe.
 
-* ``self_fields_max_iters`` (`integer`, default: 200)
+* ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
     fields calculation. In case if MLMG converges but fails to reach the desired
     ``self_fields_required_precision``, this parameter may be increased.
