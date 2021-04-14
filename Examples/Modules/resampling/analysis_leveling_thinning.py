@@ -11,6 +11,7 @@
 
 import yt
 import numpy as np
+import os
 import sys
 from scipy.special import erf
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -134,5 +135,13 @@ assert(numparts_unaffected == numparts_unaffected_anticipated)
 # Check that particles with weight higher than level weight are unaffected by resampling.
 assert(np.all(w[-numparts_unaffected:] == w0[-numparts_unaffected:]))
 
+# Reset benchmark?
+reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+          ['true', '1', 't', 'y', 'yes', 'on'] )
+
+# Run checksum regression test or reset
 test_name = fn_final[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn_final)
+if reset:
+    checksumAPI.reset_benchmark(test_name, fn_final)
+else:
+    checksumAPI.evaluate_checksum(test_name, fn_final)

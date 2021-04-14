@@ -10,6 +10,7 @@
 
 import yt
 import numpy as np
+import os
 import sys
 import scipy.special as spe
 import scipy.integrate as integ
@@ -288,8 +289,16 @@ def check():
 
         print("*************\n")
 
+    # Reset benchmark?
+    reset = ( os.getenv('CHECKSUM_RESET', 'False').lower() in
+              ['true', '1', 't', 'y', 'yes', 'on'] )
+
+    # Run checksum regression test or reset
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, filename_end)
+    if reset:
+        checksumAPI.reset_benchmark(test_name, filename_end)
+    else:
+        checksumAPI.evaluate_checksum(test_name, filename_end)
 
 def main():
     check()

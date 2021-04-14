@@ -20,8 +20,14 @@
 # select only the tests that correspond to this dimension
 # Use `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order
 # to run the tests on CPU or GPU respectively.
+#
+# Another environment variable is CHECKSUM_RESET=TRUE to reset the checksums of
+# the tests that are executed.
 
 set -eu -o pipefail
+
+# WarpX source directory
+warpx_src_dir=$PWD
 
 # Parse command line arguments: if test names are given as command line arguments,
 # store them in variable tests_arg and define new command line argument to call
@@ -77,3 +83,7 @@ if [[ ! -z "${tests_arg}" ]]; then
 else
   python regtest.py ../rt-WarpX/travis-tests.ini --no_update all
 fi
+cd ..
+
+# Copy test checksums back: update if reset
+cp warpx/Regression/Checksum/benchmarks_json/*json ${warpx_src_dir}/Regression/Checksum/benchmarks_json/

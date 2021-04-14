@@ -61,3 +61,21 @@ Since this will automatically change the JSON file stored on the repo, make a se
 
    git add <test name>.json
    git commit -m "reset benchmark for <test name> because ..." --author="Tools <warpx@lbl.gov>"
+
+Automated reset of a list of test benchmarks
+--------------------------------------------
+
+You can set the environment variable ``export CHECKSUM_RESET=ON`` before running the ``run_test.sh`` script to reset a series of tests.
+
+Note that in CI, these tests are also additionally run with ``export OMP_NUM_THREADS=1``.
+A convenient way to reset a few selected tests could be:
+
+.. code-block:: bash
+
+   export OMP_NUM_THREADS=1
+   export WARPX_CI_CCACHE=TRUE
+   export CHECKSUM_RESET=ON
+
+   ./run_test.sh Langmuir_multi_2d_nodal Langmuir_multi_nodal Langmuir_multi_psatd Langmuir_multi_psatd_current_correction Langmuir_multi_psatd_current_correction_nodal Langmuir_multi_psatd_momentum_conserving Langmuir_multi_psatd_nodal Langmuir_multi Langmuir_multi_psatd_single_precision
+
+   # ... check and commit changes
