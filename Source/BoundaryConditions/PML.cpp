@@ -1198,8 +1198,8 @@ PushPMLPSATDSinglePatch (
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B,
     std::unique_ptr<amrex::MultiFab>& pml_F,
-    std::unique_ptr<amrex::MultiFab>& pml_G) {
-
+    std::unique_ptr<amrex::MultiFab>& pml_G)
+{
     using SpIdx = SpectralPMLIndex;
 
     // Perform forward Fourier transforms
@@ -1258,7 +1258,6 @@ PushPMLPSATDSinglePatch (
     // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
-        // TODO Which fields need to be transformed back to real space?
         solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exx, PMLComp::xx);
         solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyy, PMLComp::yy);
         solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezz, PMLComp::zz);
@@ -1270,7 +1269,6 @@ PushPMLPSATDSinglePatch (
     // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
-        // TODO Which fields need to be transformed back to real space?
         solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxx, PMLComp::xx);
         solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byy, PMLComp::yy);
         solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzz, PMLComp::zz);
