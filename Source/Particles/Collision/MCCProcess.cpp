@@ -60,10 +60,12 @@ MCCProcess::getCrossSection ( amrex::Real E_coll ) const
     }
     else
     {
+        using std::floor;
+        using std::ceil;
         // calculate index of bounding energy pairs
         amrex::Real temp = (E_coll - m_energy_lo) / m_dE;
-        int idx_1 = std::floor(temp);
-        int idx_2 = std::ceil(temp);
+        int idx_1 = floor(temp);
+        int idx_2 = ceil(temp);
 
         // linearly interpolate to the given energy value
         temp -= idx_1;

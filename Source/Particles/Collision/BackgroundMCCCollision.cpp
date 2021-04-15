@@ -52,6 +52,11 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             pp.get(kw_energy.c_str(), energy);
         }
 
+#ifdef AMREX_USE_CUDA
+	MCCProcess *mcc;
+	cudaMallocManaged(&mcc, sizeof(MCCProcess));
+	cudaDeviceSynchronize();
+#endif
         // if the scattering process is ionization get the secondary species
         // only one ionization process is supported, the vector
         // m_ionization_processes is only used to make it simple to calculate
@@ -66,15 +71,26 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             m_species_names.push_back(secondary_species);
 
             m_ionization_processes.push_back(
-                MCCProcess(scattering_process, cross_section_file, energy)
-            );
+					     new
+#ifdef AMREX_USE_CUDA
+					     (mcc)
+#endif
+					     MCCProcess(scattering_process, cross_section_file, energy)
+					     );
         }
         else
         {
             m_scattering_processes.push_back(
-                MCCProcess(scattering_process, cross_section_file, energy)
+					     new
+#ifdef AMREX_USE_CUDA
+					     (mcc)
+#endif
+					     MCCProcess(scattering_process, cross_section_file, energy)
             );
         }
+#ifdef AMREX_USE_CUDA
+	cudaDeviceSynchronize();
+#endif
     }
 }
 
@@ -82,7 +98,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
  *  ranges from 1e-4 to 5000 eV in 0.2 eV increments
  */
 amrex::Real
-BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> mcc_processes)
+BackgroundMCCCollision::get_nu_max(amrex::Gpu::ManagedVector<MCCProcess*> const& mcc_processes)
 {
     amrex::Real nu, nu_max = 0.0;
 
@@ -93,7 +109,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> mcc_processes)
         // loop through all collision pathways
         for (const auto &scattering_process : mcc_processes){
             // get collision cross-section
-            sigma_E += scattering_process.getCrossSection(E);
+            sigma_E += scattering_process->getCrossSection(E);
         }
 
         // calculate collision frequency
@@ -202,6 +218,9 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
 void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     ( WarpXParIter& pti )
 {
+    // So that CUDA code gets its intrinsic, not the host-only C++ library version
+    using std::sqrt;
+
     // get particle count
     const long np = pti.numParticles();
 
@@ -212,7 +231,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     amrex::Real n_a = m_background_density;
     amrex::Real T_a = m_background_temperature;
     amrex::Real mass_a = m_background_mass;
-    amrex::Real vel_std = std::sqrt(PhysConst::kb * T_a / mass_a);
+    amrex::Real vel_std = sqrt(PhysConst::kb * T_a / mass_a);
 
     // get collision parameters
     auto scattering_processes = m_scattering_processes.data();
@@ -271,11 +290,11 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                     / PhysConst::q_e
                 );
             }
-            v_coll = std::sqrt(v_coll2);
+            v_coll = sqrt(v_coll2);
 
             // loop through all collision pathways
             for (size_t i = 0; i < process_count; i++){
-	        auto const& scattering_process = *(scattering_processes + i);
+	        auto const& scattering_process = **(scattering_processes + i);
 
                 // get collision cross-section
                 sigma_E = scattering_process.getCrossSection(E_coll);
@@ -303,7 +322,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                 else if (scattering_process.type == MCCProcessType::EXCITATION)
                 {
                     // get the new velocity magnitude
-                    amrex::Real vp = std::sqrt(
+                    amrex::Real vp = sqrt(
                         2.0 / mass1 * PhysConst::q_e
                         * (E_coll - scattering_process.energy_penalty)
                     );
@@ -335,7 +354,7 @@ void BackgroundMCCCollision::doBackgroundIonization
     const auto CopyIon = copy_factory_ion.getSmartCopy();
 
     const auto Filter = ImpactIonizationFilterFunc(
-        m_ionization_processes[0],
+        *m_ionization_processes[0],
         m_mass1, m_total_collision_prob_ioniz,
         m_nu_max_ioniz / m_background_density
     );
@@ -356,7 +375,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         const auto np_ion = ion_tile.numParticles();
 
         auto Transform = ImpactIonizationTransformFunc(
-            m_ionization_processes[0].energy_penalty, m_mass1, vel_std
+            m_ionization_processes[0]->energy_penalty, m_mass1, vel_std
         );
 
         const auto num_added = filterCopyTransformParticles<1>(
