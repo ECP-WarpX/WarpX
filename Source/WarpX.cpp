@@ -637,15 +637,30 @@ WarpX::ReadParameters ()
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
             "PML are not implemented in RZ geometry ; please set `warpx.do_pml=0`");
 #endif
-
-        Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,1);
+        // setting default to 0
+        Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,0);
+        // Switching pml lo to 1 when do_pml = 1 and if domain is non-periodic
+        // Note to remove this code when new BC API is fully functional
+        if (do_pml == 1) {
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Lo[idim] = 1;
+            }
+        }
         pp_warpx.queryarr("do_pml_Lo", parse_do_pml_Lo);
         do_pml_Lo[0] = parse_do_pml_Lo[0];
         do_pml_Lo[1] = parse_do_pml_Lo[1];
 #if (AMREX_SPACEDIM == 3)
         do_pml_Lo[2] = parse_do_pml_Lo[2];
 #endif
-        Vector<int> parse_do_pml_Hi(AMREX_SPACEDIM,1);
+        // setting default to 0
+        Vector<int> parse_do_pml_Hi(AMREX_SPACEDIM,0);
+        // Switching pml hi to 1 when do_pml = 1 and if domain is non-periodic
+        // Note to remove this code when new BC API is fully functional
+        if (do_pml == 1) {
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Hi[idim] = 1;
+            }
+        }
         pp_warpx.queryarr("do_pml_Hi", parse_do_pml_Hi);
         do_pml_Hi[0] = parse_do_pml_Hi[0];
         do_pml_Hi[1] = parse_do_pml_Hi[1];
