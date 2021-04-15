@@ -23,8 +23,8 @@ import analysis_core as ac
 
 def main():
     print("Opening openPMD output")
-    filename_end = sys.argv[1]
-    series = io.Series(filename_end[:-9]+"%T.h5", io.Access.read_only)
+    prefix = sys.argv[1]
+    series = io.Series(prefix+"/openpmd_%T.h5", io.Access.read_only)
     data_set_end = series.iterations[1]
 
     # get simulation time
