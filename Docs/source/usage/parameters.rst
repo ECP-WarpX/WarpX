@@ -76,14 +76,14 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
-* ``self_fields_required_precision`` (`float`, default: 1.e-11)
+* ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
     This solver can fail to reach the default precision within a reasonable
     This only applies when warpx.do_electrostatic = labframe.
 
-* ``self_fields_max_iters`` (`integer`, default: 200)
+* ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
     fields calculation. In case if MLMG converges but fails to reach the desired
     ``self_fields_required_precision``, this parameter may be increased.
@@ -183,9 +183,12 @@ Domain Boundary Conditions
 --------------------------
 
 * ``boundary.field_lo`` and ``boundary_field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
-    Boundary conditions applied to field at the lower and upper domain boundaries.
+    Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
+
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
+    Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:

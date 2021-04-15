@@ -52,7 +52,8 @@ public:
                          const amrex::MultiFab* cBz,
                          amrex::Real t,
                          amrex::Real dt,
-                         DtType a_dt_type=DtType::Full) override;
+                         DtType a_dt_type=DtType::Full,
+                         bool skip_deposition=false) override;
 
     virtual void PushPX(WarpXParIter& pti,
                         amrex::FArrayBox const * exfab,
