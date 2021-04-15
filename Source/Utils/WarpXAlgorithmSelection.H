@@ -96,9 +96,9 @@ struct LoadBalanceCostsUpdateAlgo {
  */
 struct FieldBoundaryType {
     enum {
-        PEC = 0,     //!< perfect electric conductor (PEC) with E_tangential=0
+        PML = 0,
         Periodic = 1,
-        PML = 2,
+        PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
         PMC = 3      //!< perfect magnetic conductor (PMC) with B_tangential=0
     };
 };
