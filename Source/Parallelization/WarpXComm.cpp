@@ -738,22 +738,13 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
 void
 WarpX::FillBoundaryAux (IntVect ng)
 {
-    for (int lev = 0; lev <= finest_level-1; ++lev)
-    {
-        FillBoundaryAux(lev, ng);
-    }
-}
+    // Launch asynchronous MPI communications
+    WarpX::FillBoundary_nowait( Efield_aux, ng, PatchType::fine );
+    WarpX::FillBoundary_nowait( Bfield_aux, ng, PatchType::fine );
 
-void
-WarpX::FillBoundaryAux (int lev, IntVect ng)
-{
-    const auto& period = Geom(lev).periodicity();
-    Efield_aux[lev][0]->FillBoundary(ng, period);
-    Efield_aux[lev][1]->FillBoundary(ng, period);
-    Efield_aux[lev][2]->FillBoundary(ng, period);
-    Bfield_aux[lev][0]->FillBoundary(ng, period);
-    Bfield_aux[lev][1]->FillBoundary(ng, period);
-    Bfield_aux[lev][2]->FillBoundary(ng, period);
+    // Finalize MPI communications
+    WarpX::FillBoundary_finish( Efield_aux );
+    WarpX::FillBoundary_finish( Bfield_aux );
 }
 
 void

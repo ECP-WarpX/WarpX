@@ -479,11 +479,7 @@ public:
     void FillBoundaryAux (amrex::IntVect ng);
     void FillBoundaryE   (int lev, amrex::IntVect ng);
     void FillBoundaryB   (int lev, amrex::IntVect ng);
-    void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
-    void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
-
     void FillBoundaryF   (int lev, amrex::IntVect ng);
-    void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     void SyncCurrent ();
     void SyncRho ();
