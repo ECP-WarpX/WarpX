@@ -468,6 +468,13 @@ public:
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
+    void FillBoundary_nowait(
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& vector_mf,
+        amrex::IntVect ng, PatchType patch_type );
+    void FillBoundary_finish(
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& vector_mf );
+
+
     void FillBoundaryF   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
     void FillBoundaryE   (int lev, amrex::IntVect ng);
