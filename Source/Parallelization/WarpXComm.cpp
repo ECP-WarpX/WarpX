@@ -453,8 +453,8 @@ WarpX::FillBoundaryB (IntVect ng)
     WarpX::FillBoundary_nowait( Bfield_cp, ng, PatchType::coarse );
 
     // Finalize MPI communications
-    WarpX::FillBoundary_finish( Bfield_fp );
-    WarpX::FillBoundary_finish( Bfield_cp );
+    WarpX::FillBoundary_finish( Bfield_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Bfield_cp, PatchType::coarse );
 }
 
 void
@@ -481,8 +481,8 @@ WarpX::FillBoundaryE (IntVect ng)
     WarpX::FillBoundary_nowait( Efield_cp, ng, PatchType::coarse );
 
     // Finalize MPI communications
-    WarpX::FillBoundary_finish( Efield_fp );
-    WarpX::FillBoundary_finish( Efield_cp );
+    WarpX::FillBoundary_finish( Efield_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Efield_cp, PatchType::coarse );
 }
 
 void
@@ -498,7 +498,7 @@ WarpX::FillBoundary_nowait(
         // Loop over vector components
         for (int idim=0; idim < 3; ++idim) {
             // Check that MultiFab exists at this level
-            if (vector_mf[lev][idim]) {
+            if ( patch_type==PatchType::fine || lev > 0 ) {
                 // Launch asynchronous MPI communication
                 if ( safe_guard_cells ){
                     vector_mf[lev][idim]->FillBoundary_nowait(period);
@@ -514,14 +514,16 @@ WarpX::FillBoundary_nowait(
 }
 
 void
-WarpX::FillBoundary_finish( Vector<std::array< std::unique_ptr<MultiFab>, 3 > >& vector_mf )
+WarpX::FillBoundary_finish(
+    Vector<std::array< std::unique_ptr<MultiFab>, 3 > >& vector_mf,
+    PatchType patch_type )
 {
     // Loop through levels
     for (int lev = 0; lev <= finest_level; ++lev) {
         // Loop over vector components
         for (int idim=0; idim < 3; ++idim) {
             // Check that MultiFab exists at this level
-            if (vector_mf[lev][idim]) {
+            if ( patch_type==PatchType::fine || lev > 0 ) {
                 // Finalize asynchronous MPI communication
                 vector_mf[lev][idim]->FillBoundary_finish();
             }
@@ -546,8 +548,8 @@ WarpX::FillBoundaryB_avg (IntVect ng)
     WarpX::FillBoundary_nowait( Bfield_avg_cp, ng, PatchType::coarse );
 
     // Finalize MPI communications
-    WarpX::FillBoundary_finish( Bfield_avg_fp );
-    WarpX::FillBoundary_finish( Bfield_avg_cp );
+    WarpX::FillBoundary_finish( Bfield_avg_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Bfield_avg_cp, PatchType::coarse );
 }
 
 void
@@ -558,8 +560,8 @@ WarpX::FillBoundaryE_avg (IntVect ng)
     WarpX::FillBoundary_nowait( Efield_avg_cp, ng, PatchType::coarse );
 
     // Finalize MPI communications
-    WarpX::FillBoundary_finish( Efield_avg_fp );
-    WarpX::FillBoundary_finish( Efield_avg_cp );
+    WarpX::FillBoundary_finish( Efield_avg_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Efield_avg_cp, PatchType::coarse );
 }
 
 
@@ -743,8 +745,8 @@ WarpX::FillBoundaryAux (IntVect ng)
     WarpX::FillBoundary_nowait( Bfield_aux, ng, PatchType::fine );
 
     // Finalize MPI communications
-    WarpX::FillBoundary_finish( Efield_aux );
-    WarpX::FillBoundary_finish( Bfield_aux );
+    WarpX::FillBoundary_finish( Efield_aux, PatchType::fine );
+    WarpX::FillBoundary_finish( Bfield_aux, PatchType::fine );
 }
 
 void

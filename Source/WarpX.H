@@ -472,7 +472,8 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& vector_mf,
         amrex::IntVect ng, PatchType patch_type );
     void FillBoundary_finish(
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& vector_mf );
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& vector_mf,
+        PatchType patch_type );
 
 
     void FillBoundaryF   (amrex::IntVect ng);
