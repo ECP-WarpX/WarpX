@@ -24,7 +24,7 @@ struct SchwingerFilterFunc
      *
      * \tparam FABs the src array of Array4 type
      *
-     * @param[in] src_FABs Array of 6 Array4 that contain the EM field in the tile.
+     * @param[in] src_FABs A class with 6 named Array4 that contain the EM field in the tile.
      * @param[in] i index of the cell in the first direction.
      * @param[in] j index of the cell in the second direction.
      * @param[in] k index of the cell in the third direction.
@@ -35,12 +35,12 @@ struct SchwingerFilterFunc
                             const int i, const int j, const int k,
                             amrex::RandomEngine const& engine) const noexcept
     {
-        const auto& arrEx = src_FABs[0];
-        const auto& arrEy = src_FABs[1];
-        const auto& arrEz = src_FABs[2];
-        const auto& arrBx = src_FABs[3];
-        const auto& arrBy = src_FABs[4];
-        const auto& arrBz = src_FABs[5];
+        const auto& arrEx = src_FABs.Ex;
+        const auto& arrEy = src_FABs.Ey;
+        const auto& arrEz = src_FABs.Ez;
+        const auto& arrBx = src_FABs.Bx;
+        const auto& arrBy = src_FABs.By;
+        const auto& arrBz = src_FABs.Bz;
 
         return getSchwingerProductionNumber( m_dV, m_dt,
                     arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),

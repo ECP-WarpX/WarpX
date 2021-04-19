@@ -769,6 +769,9 @@ wp_ast_print_f2 (struct wp_f2* f2)
     case WP_HEAVISIDE:
         std::printf("HEAVISIDE\n");
         break;
+    case WP_JN:
+        std::printf("JN\n");
+        break;
     case WP_MIN:
         std::printf("MIN\n");
         break;

@@ -7,13 +7,14 @@
 #include <AMReX_Math.H>
 #include <AMReX_Print.H>
 
+#include <cmath>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <type_traits>
 
-enum wp_f1_t {  // Bulit-in functions with one argument
+enum wp_f1_t {  // Built-in functions with one argument
     WP_SQRT = 1,
     WP_EXP,
     WP_LOG,
@@ -47,6 +48,7 @@ enum wp_f2_t {  // Built-in functions with two arguments
     WP_AND,
     WP_OR,
     WP_HEAVISIDE,
+    WP_JN,
     WP_MIN,
     WP_MAX
 };
@@ -237,6 +239,20 @@ wp_call_f2 (enum wp_f2_t type, T a, T b)
         return ((a != T(0)) || (b != T(0))) ? 1.0 : 0.0;
     case WP_HEAVISIDE:
         return (a < 0.0) ? amrex::Real(0.0) : ((a > 0.0) ? amrex::Real(1.0) : b);
+    case WP_JN:
+#ifdef AMREX_USE_DPCPP
+        // neither jn(f) nor std::cyl_bessel_j work yet
+        // https://github.com/oneapi-src/oneAPI-spec/issues/308
+        AMREX_DEVICE_PRINTF("wp_call_f2: Parser does not implement jn (%d) for SYCL/DPC++ yet\n", type);
+        amrex::Abort();
+        return 0.0;
+#else
+#   if defined(AMREX_USE_FLOAT) && !defined(__APPLE__)
+        return jnf(int(a), b);
+#   else
+        return jn(int(a), b);
+#   endif
+#endif
     case WP_MIN:
         return (a < b) ? a : b;
     case WP_MAX:
