@@ -7,6 +7,7 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Utils/CoarsenIO.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -67,6 +68,7 @@ void BTDiagnostics::DerivedInitData ()
     m_current_z_lab.resize(m_num_buffers);
     // allocate vector of m_num_buffers
     m_current_z_boost.resize(m_num_buffers);
+    m_old_z_boost.resize(m_num_buffers);
     // allocate vector of m_buff_counter to counter number of slices filled in the buffer
     m_buffer_counter.resize(m_num_buffers);
     // allocate vector of num_Cells in the lab-frame
@@ -98,6 +100,14 @@ void BTDiagnostics::DerivedInitData ()
         DefineCellCenteredMultiFab(lev);
     }
 
+    /** Allocate vector of particle buffer vectors for each snapshot */
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // If not specified, dump all species
+    if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
+    m_particles_buffer.resize(m_num_buffers);
+    for (int i = 0; i < m_num_buffers; ++i) {
+        m_particles_buffer[i].resize(m_output_species_names.size());
+    }
 }
 
 void
@@ -281,6 +291,8 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     m_buffer_counter[i_buffer] = 0;
     m_current_z_lab[i_buffer] = 0._rt;
     m_current_z_boost[i_buffer] = 0._rt;
+    // store old z boost before updated zboost position
+    m_old_z_boost[i_buffer] = m_current_z_boost[i_buffer];
     // Now Update Current Z Positions
     m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
                                                               warpx.gett_new(lev) );
@@ -434,6 +446,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         {
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
             {
+                m_old_z_boost[i_buffer] = m_current_z_boost[i_buffer];
                 // Update z-boost and z-lab positions
                 m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
                                                                       warpx.gett_new(lev) );
@@ -656,8 +669,12 @@ BTDiagnostics::Flush (int i_buffer)
 
 void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 {
-    m_output_species.clear();
-    m_output_species_names.clear();
+    amrex::Print() << " m output species size : " << m_output_species_names.size() << "\n";
+    for (int i = 0; i < m_output_species_names.size(); ++i) {
+        amrex::Print() << " m_name : " << m_output_species_names[i] << "\n";
+    }
+//    m_output_species.clear();
+//    m_output_species_names.clear();
 }
 
 void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
@@ -803,4 +820,49 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
 
     snapshot_FabHeader.WriteMultiFabHeader();
 
+}
+
+
+void
+BTDiagnostics::InitializeParticleFunctors ()
+{
+    amrex::Print() << " p functors : \n";
+    auto & warpx = WarpX::GetInstance();
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // allocate with total number of species diagnostics
+    m_all_particle_functors.resize(m_output_species_names.size());
+    // Create an object of class BackTransformParticleFunctor
+    for (int i = 0; i < m_all_particle_functors.size(); ++i)
+    {
+        // species id corresponding to ith diag species
+        const int idx = mpc.getSpeciesID(m_output_species_names[i]);
+        m_all_particle_functors[i] = std::make_unique<BackTransformParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i], m_num_buffers);
+    }
+
+}
+
+void
+BTDiagnostics::InitializeParticleBuffer ()
+{
+    amrex::Print() << " init part buffer \n";
+    for (int i = 0; i < m_num_buffers; ++i) {
+        for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
+            m_particles_buffer[i][isp] = std::make_unique<ParticleContainer>(&WarpX::GetInstance());
+        }
+    }
+    
+}
+
+void
+BTDiagnostics::PrepareParticleDataForOutput()
+{
+    for (int i = 0; i < m_all_particle_functors.size(); ++i)
+    {
+        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
+        {
+            m_all_particle_functors[i]->PrepareFunctorData (
+                                         i_buffer, m_old_z_boost[i_buffer],
+                                         m_current_z_boost[i_buffer], m_t_lab[i_buffer]);
+        }
+    }
 }

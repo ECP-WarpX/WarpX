@@ -4,11 +4,14 @@
 #include "ParticleDiag/ParticleDiag.H"
 
 #include "ComputeDiagFunctors/ComputeDiagFunctor_fwd.H"
+#include "ComputeDiagFunctors/ComputeParticleDiagFunctor.H"
 #include "FlushFormats/FlushFormat_fwd.H"
+#include "Particles/WarpXParticleContainer.H"
 
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_AmrParticles.H>
 
 #include <AMReX_BaseFwd.H>
 
@@ -58,6 +61,7 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev) = 0;
+    virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
@@ -82,6 +86,8 @@ public:
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** Whether the last timestep is always dumped */
     bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
+
+    using ParticleContainer = typename amrex::AmrParticleContainer<0,0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
 protected:
     /** Read Parameters of the base Diagnostics class */
@@ -109,6 +115,7 @@ protected:
      * \param[in] step current time step
      */
     virtual void MovingWindowAndGalileanDomainShift (int step) { amrex::ignore_unused(step); }
+    virtual void PrepareParticleDataForOutput() {}
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
@@ -175,6 +182,10 @@ protected:
     amrex::Vector<int> m_rho_per_species_index;
     /** Temporarily clear species output for BTD until particle buffer is added */
     virtual void TMP_ClearSpeciesDataForBTD() {}
+    /** Vector of particle buffer vectors for each snapshot */
+    amrex::Vector< amrex::Vector<std::unique_ptr<ParticleContainer> > > m_particles_buffer;
+    /** Vector of pointers to functors to compute particle output per species*/
+    amrex::Vector <std::unique_ptr<ComputeParticleDiagFunctor > > m_all_particle_functors;
 };
 
 #endif // WARPX_DIAGNOSTICS_H_

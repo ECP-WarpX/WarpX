@@ -445,6 +445,7 @@ public:
                                        TmpIdx::nattribs>;
     using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
+    TmpParticles getTmpParticleData () const noexcept {return tmp_particle_data;}
 protected:
     TmpParticles tmp_particle_data;
 

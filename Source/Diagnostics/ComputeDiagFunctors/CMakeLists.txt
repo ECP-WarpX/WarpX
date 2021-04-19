@@ -7,4 +7,5 @@ target_sources(WarpX
     PartPerCellFunctor.cpp
     PartPerGridFunctor.cpp
     BackTransformFunctor.cpp
+    BackTransformParticleFunctor.cpp
 )

@@ -69,7 +69,7 @@ private:
      * This is currently an empty function:
      * The particle containers required for this must be added to populate this function.
      */
-    void InitializeParticleBuffer () override {}
+    void InitializeParticleBuffer () override;
     /** The cell-centered data for all fields, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is computed and stored in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
@@ -78,6 +78,7 @@ private:
      *  is sliced, back-transformed, and stored in the output multifab, m_mf_output.
      */
     void PrepareFieldDataForOutput () override;
+    void PrepareParticleDataForOutput() override;
 
     /** whether z-slice that corresponds to the buffer, i_buffer, is within the
      *  boosted-domain and lab-frame domains at level, lev.
@@ -158,6 +159,7 @@ private:
     /** Vector of boosted-frame z co-ordinate corresponding to each back-transformed
         snapshot at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_boost;
+    amrex::Vector<amrex::Real> m_old_z_boost;
     /** Geometry that defines the domain attributes corresponding to the
      *  full snapshot in the back-transformed lab-frame.
      *  Specifically, the user-defined physical co-ordinates for the diagnostics
@@ -317,6 +319,7 @@ private:
     void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
                                    std::string snapshot_FabHeaderFilename,
                                    std::string newsnapshot_FabFilename);
-};
 
+    void InitializeParticleFunctors () override;
+};
 #endif // WARPX_BTDIAGNOSTICS_H_
