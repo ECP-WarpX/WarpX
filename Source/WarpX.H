@@ -153,8 +153,8 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
-    // div E cleaning
-    static int do_dive_cleaning;
+    // div(E) cleaning
+    static bool do_dive_cleaning;
 
     // Interpolation order
     static long nox;
@@ -941,6 +941,8 @@ private:
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
+    bool do_pml_dive_cleaning; // default set in WarpX.cpp
+    bool do_pml_divb_cleaning; // default set in WarpX.cpp
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
     amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
     amrex::Vector<std::unique_ptr<PML> > pml;

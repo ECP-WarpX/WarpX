@@ -1142,6 +1142,7 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
         const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
         const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+        const auto& pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
 
         // Always synchronize nodal points
         const auto& period = Geom(lev).periodicity();
@@ -1153,6 +1154,9 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
         pml_B[2]->OverrideSync(period);
         if (pml_F) {
             pml_F->OverrideSync(period);
+        }
+        if (pml_G) {
+            pml_G->OverrideSync(period);
         }
     }
 }

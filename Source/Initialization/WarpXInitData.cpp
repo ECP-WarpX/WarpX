@@ -212,8 +212,8 @@ WarpX::InitPML ()
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
-                             do_dive_cleaning, do_moving_window,
-                             pml_has_particles, do_pml_in_domain,
+                             do_moving_window, pml_has_particles, do_pml_in_domain,
+                             do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
@@ -240,8 +240,8 @@ WarpX::InitPML ()
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
-                                   do_dive_cleaning, do_moving_window,
-                                   pml_has_particles, do_pml_in_domain,
+                                   do_moving_window, pml_has_particles, do_pml_in_domain,
+                                   do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
