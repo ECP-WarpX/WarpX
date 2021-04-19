@@ -57,8 +57,6 @@ WarpX::Evolve (int numsteps)
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
         if (cost) {
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-                amrex::Abort("LoadBalance for PSATD: TODO");
             if (step > 0 && load_balance_intervals.contains(step+1))
             {
                 LoadBalance();
