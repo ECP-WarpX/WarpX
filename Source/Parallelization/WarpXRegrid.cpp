@@ -33,11 +33,13 @@ WarpX::LoadBalance ()
 
     // By default, do not do a redistribute; this toggles to true if RemakeLevel
     // is called for any level
-    int doLoadBalance = 0;
+    int loadBalancedAnyLevel = 0;
 
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
+        int doLoadBalance = 0;
+
         // Compute the new distribution mapping
         DistributionMapping newdm;
         const amrex::Real nboxes = costs[lev]->size();
@@ -92,8 +94,10 @@ WarpX::LoadBalance ()
             // Record the load balance efficiency
             setLoadBalanceEfficiency(lev, proposedEfficiency);
         }
+
+        loadBalancedAnyLevel = loadBalancedAnyLevel || doLoadBalance;
     }
-    if (doLoadBalance)
+    if (loadBalancedAnyLevel)
     {
         mypc->Redistribute();
         mypc->defineAllParticleTiles();
