@@ -33,12 +33,12 @@ WarpX::LoadBalance ()
 
     // By default, do not do a redistribute; this toggles to true if RemakeLevel
     // is called for any level
-    int loadBalancedAnyLevel = 0;
+    int loadBalancedAnyLevel = false;
 
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
-        int doLoadBalance = 0;
+        int doLoadBalance = false;
 
         // Compute the new distribution mapping
         DistributionMapping newdm;
