@@ -52,7 +52,8 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          *                           the three components of the current density
          * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection (SpectralFieldData& field_data,
+        virtual void CurrentCorrection (const int lev,
+                                        SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                         const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
@@ -66,7 +67,8 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          */
-        virtual void VayDeposition (SpectralFieldData& field_data,
+        virtual void VayDeposition (const int lev,
+                                    SpectralFieldData& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
@@ -85,7 +87,6 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
         // Additional member variables
         amrex::Array<amrex::Real,3> m_v_comoving;
         amrex::Real m_dt;
-        bool m_update_with_rho;
 };
 
 #endif // WARPX_USE_PSATD

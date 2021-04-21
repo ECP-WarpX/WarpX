@@ -26,6 +26,11 @@ void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boos
 void ConvertLabParamsToBoost();
 
 /**
+ * Reads the user-defined field and particle boundary condition parameters
+ */
+void ReadBCParams ();
+
+/**
  * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
  */
 void CheckGriddingForRZSpectral();

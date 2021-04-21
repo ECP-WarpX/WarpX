@@ -1,3 +1,5 @@
+.. _theory-boostedframe:
+
 Moving window and optimal Lorentz boosted frame
 ===============================================
 
@@ -107,6 +109,8 @@ Finally, in the frame of the wake, i.e. when :math:`\gamma=\gamma_w`, assuming t
 Since :math:`\eta` and :math:`\xi` are of order unity, and the practical regimes of most interest satisfy :math:`\gamma_w^2>>1`, the speedup that is obtained by using the frame of the wake will be near the maximum obtainable value given by Eq.(\ `[Eq_scaling_gamma_inf] <#Eq_scaling_gamma_inf>`__).
 
 Note that without the use of a moving window, the relativistic effects that are at play in the time domain would also be at play in the spatial domain (Vay 2007), and the :math:`\gamma^2` scaling would transform to :math:`\gamma^4`. Hence, it is important to use a moving window even in simulations in a Lorentz boosted frame. For very high values of the boosted frame, the optimal velocity of the moving window may vanish (i.e. no moving window) or even reverse.
+
+.. _theory-boostedframe-galilean:
 
 Numerical Stability and alternate formulation in a Galilean frame
 -----------------------------------------------------------------

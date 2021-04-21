@@ -36,23 +36,23 @@ class SpectralFieldDataRZ
 
         using BinomialFilter = amrex::LayoutData<SpectralBinomialFilter>;
 
-        SpectralFieldDataRZ (const amrex::BoxArray& realspace_ba,
+        SpectralFieldDataRZ (const int lev,
+                             const amrex::BoxArray& realspace_ba,
                              const SpectralKSpaceRZ& k_space,
                              const amrex::DistributionMapping& dm,
                              const int n_field_required,
-                             const int n_modes,
-                             const int lev);
+                             const int n_modes);
         SpectralFieldDataRZ () = default; // Default constructor
         SpectralFieldDataRZ& operator=(SpectralFieldDataRZ&& field_data) = default;
         ~SpectralFieldDataRZ ();
 
-        void ForwardTransform (const amrex::MultiFab& mf, const int field_index,
+        void ForwardTransform (const int lev, const amrex::MultiFab& mf, const int field_index,
                                const int i_comp=0);
-        void ForwardTransform (const amrex::MultiFab& mf_r, const int field_index_r,
+        void ForwardTransform (const int lev, const amrex::MultiFab& mf_r, const int field_index_r,
                                const amrex::MultiFab& mf_t, const int field_index_t);
-        void BackwardTransform (amrex::MultiFab& mf, const int field_index,
+        void BackwardTransform (const int lev, amrex::MultiFab& mf, const int field_index,
                                 const int i_comp=0);
-        void BackwardTransform (amrex::MultiFab& mf_r, const int field_index_r,
+        void BackwardTransform (const int lev, amrex::MultiFab& mf_r, const int field_index_r,
                                 amrex::MultiFab& mf_t, const int field_index_t);
 
         void FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box const & realspace_bx,

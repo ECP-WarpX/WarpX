@@ -7,6 +7,9 @@ macro(set_ccache)
         if(WarpX_COMPUTE STREQUAL CUDA)
             set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
         endif()
+        message(STATUS "Found CCache: ${CCACHE_PROGRAM}")
+    else()
+        message(STATUS "Could NOT find CCache")
     endif()
     mark_as_advanced(CCACHE_PROGRAM)
 endmacro()
@@ -133,9 +136,17 @@ endfunction()
 function(make_third_party_includes_system imported_target propagated_name)
     add_library(WarpX::thirdparty::${propagated_name} INTERFACE IMPORTED)
     target_link_libraries(WarpX::thirdparty::${propagated_name} INTERFACE ${imported_target})
-    get_target_property(ALL_INCLUDES ${imported_target} INCLUDE_DIRECTORIES)
-    set_target_properties(WarpX::thirdparty::${propagated_name} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
-    target_include_directories(WarpX::thirdparty::${propagated_name} SYSTEM INTERFACE ${ALL_INCLUDES})
+
+    if(TARGET ${imported_target})
+        get_target_property(imported_target_type ${imported_target} TYPE)
+        if(NOT imported_target_type STREQUAL INTERFACE_LIBRARY)
+            get_target_property(ALL_INCLUDES ${imported_target} INCLUDE_DIRECTORIES)
+            if(ALL_INCLUDES)
+                set_target_properties(WarpX::thirdparty::${propagated_name} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
+                target_include_directories(WarpX::thirdparty::${propagated_name} SYSTEM INTERFACE ${ALL_INCLUDES})
+            endif()
+        endif()
+    endif()
 endfunction()
 
 
@@ -260,12 +271,40 @@ function(configure_mpiexec num_ranks)
 endfunction()
 
 
+# FUNCTION: get_source_version
+#
+# Retrieves source version info and sets internal cache variables
+# ${NAME}_GIT_VERSION and ${NAME}_PKG_VERSION
+#
+function(get_source_version NAME SOURCE_DIR)
+    find_package(Git QUIET)
+    set(_tmp "")
+
+    # Try to inquire software version from git
+    if(EXISTS ${SOURCE_DIR}/.git AND ${GIT_FOUND})
+        execute_process(COMMAND git describe --abbrev=12 --dirty --always --tags
+            WORKING_DIRECTORY ${SOURCE_DIR}
+            OUTPUT_VARIABLE _tmp)
+        string( STRIP ${_tmp} _tmp)
+    endif()
+
+    # Is there a CMake project version?
+    # For deployed releases that build from tarballs, this is what we want to pick
+    if(NOT _tmp AND ${NAME}_VERSION)
+        set(_tmp "${${NAME}_VERSION}-nogit")
+    endif()
+
+    set(${NAME}_GIT_VERSION "${_tmp}" CACHE INTERNAL "")
+    unset(_tmp)
+endfunction ()
+
+
 # Prints a summary of WarpX options at the end of the CMake configuration
 #
 function(warpx_print_summary)
     message("")
     message("WarpX build configuration:")
-    message("  Version: ${WarpX_VERSION}")
+    message("  Version: ${WarpX_VERSION} (${WarpX_GIT_VERSION})")
     message("  C++ Compiler: ${CMAKE_CXX_COMPILER_ID} "
                             "${CMAKE_CXX_COMPILER_VERSION} "
                             "${CMAKE_CXX_COMPILER_WRAPPER}")
@@ -281,11 +320,14 @@ function(warpx_print_summary)
     endif()
     message("")
     message("  Build type: ${CMAKE_BUILD_TYPE}")
-    #if(BUILD_SHARED_LIBS)
-    #    message("  Library: shared")
-    #else()
-    #    message("  Library: static")
-    #endif()
+    set(LIB_TYPE "")
+    if(WarpX_LIB)
+        if(BUILD_SHARED_LIBS)
+            set(LIB_TYPE " (shared)")
+        else()
+            set(LIB_TYPE " (static)")
+        endif()
+    endif()
     #message("  Testing: ${BUILD_TESTING}")
     #message("  Invasive Tests: ${WarpX_USE_INVASIVE_TESTS}")
     #message("  Internal VERIFY: ${WarpX_USE_VERIFY}")
@@ -295,7 +337,9 @@ function(warpx_print_summary)
     message("    COMPUTE: ${WarpX_COMPUTE}")
     message("    DIMS: ${WarpX_DIMS}")
     message("    Embedded Boundary: ${WarpX_EB}")
-    message("    LIB: ${WarpX_LIB}")
+    message("    GPU clock timers: ${WarpX_GPUCLOCK}")
+    message("    IPO/LTO: ${WarpX_IPO}")
+    message("    LIB: ${WarpX_LIB}${LIB_TYPE}")
     message("    MPI: ${WarpX_MPI}")
     if(MPI)
         message("    MPI (thread multiple): ${WarpX_MPI_THREAD_MULTIPLE}")

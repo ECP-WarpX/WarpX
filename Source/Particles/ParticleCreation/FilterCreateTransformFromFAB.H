@@ -132,8 +132,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
  * \param[in,out] dst1 the first destination tile
  * \param[in,out] dst2 the second destination tile
  * \param[in] box the box where the particles are created
- * \param[in] src_FABs An Array of Array4 (e.g. EM fields) defined on box on which
- *            the filter operation is applied/
+ * \param[in] src_FABs A collection of source data, e.g. a class with Array4 to the EM fields,
+ *            defined on box on which the filter operation is applied
  * \param[in] dst1_index the location at which to starting writing the result to dst1
  * \param[in] dst2_index the location at which to starting writing the result to dst2
  * \param[in] filter a callable returning a value > 0 if particles are to be created

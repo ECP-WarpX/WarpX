@@ -20,11 +20,11 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 2,
                                      "Pair wise Coulomb must have exactly two species.");
 
-    amrex::ParmParse pp(collision_name);
+    amrex::ParmParse pp_collision_name(collision_name);
 
     // default Coulomb log, if < 0, will be computed automatically
     m_CoulombLog = -1.0_rt;
-    queryWithParser(pp, "CoulombLog", m_CoulombLog);
+    queryWithParser(pp_collision_name, "CoulombLog", m_CoulombLog);
 
     if (m_species_names[0] == m_species_names[1])
         m_isSameSpecies = true;
@@ -48,7 +48,6 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
 void
 PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
 {
-
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
@@ -62,13 +61,28 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
     // Loop over refinement levels
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
         // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
         info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (amrex::MFIter mfi = species1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            amrex::Real wt = amrex::second();
+
             doCoulombCollisionsWithinTile( lev, mfi, species1, species2 );
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+            }
         }
     }
 }
@@ -128,10 +142,10 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
 
         const amrex::Real dt = WarpX::GetInstance().getdt(lev);
         amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-        amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
+        amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
         const auto lo = lbound(cbx);
         const auto hi = ubound(cbx);
         int const nz = hi.y-lo.y+1;
@@ -213,10 +227,10 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
 
         const amrex::Real dt = WarpX::GetInstance().getdt(lev);
         amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-        amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
+        amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
         const auto lo = lbound(cbx);
         const auto hi = ubound(cbx);
         int nz = hi.y-lo.y+1;

@@ -36,6 +36,7 @@ txye_laser.wavelength = 1.0e-6         # The wavelength of the laser (in meters)
 txye_laser.profile      = from_txye_file
 txye_laser.txye_file_name = "gauss_2d_unf.txye"
 txye_laser.time_chunk_size = 50
+txye_laser.delay = 0.0
 
 # Diagnostics
 diagnostics.diags_names = diag1

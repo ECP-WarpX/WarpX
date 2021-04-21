@@ -7,6 +7,7 @@ CEXE_sources += MacroscopicEvolveE.cpp
 CEXE_sources += EvolveBPML.cpp
 CEXE_sources += EvolveEPML.cpp
 CEXE_sources += EvolveFPML.cpp
+CEXE_sources += ApplySilverMuellerBoundary.cpp
 
 include $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/Make.package
 

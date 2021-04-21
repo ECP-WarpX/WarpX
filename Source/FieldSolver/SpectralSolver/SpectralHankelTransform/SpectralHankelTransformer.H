@@ -22,7 +22,7 @@ class SpectralHankelTransformer
 {
     public:
 
-        SpectralHankelTransformer () {};
+        SpectralHankelTransformer () {}
 
         SpectralHankelTransformer (const int nr,
                                    const int n_rz_azimuthal_modes,
