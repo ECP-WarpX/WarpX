@@ -42,6 +42,45 @@ namespace PEC {
     }
 
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetTangentialEfield (const int icomp, const amrex::IntVect & dom_lo,
+                                const amrex::IntVect &dom_hi,
+                                const amrex::IntVect &ijk_vec,
+                                const amrex::IntVect &shape_factor,
+                                amrex::Array4<amrex::Real> const& Efield,
+                                const amrex::IntVect& stag )
+    {
+        // Fields in guard cells set equal and opposite to valid cells
+        amrex::IntVect ijk_guard = ijk_vec;
+        amrex::IntVect ijk_valid = ijk_vec;
+        for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+            // index of dimension
+            const int dir = ( ( (icomp+idim)<AMREX_SPACEDIM)? (icomp+idim) : ( (icomp+idim) - AMREX_SPACEDIM));
+            // loop over sides , iside = 0 (lo), iside = 1 (hi)
+            for (int iside = 0; iside < 2; ++iside) {
+                const int ibndry = dir + iside*AMREX_SPACEDIM;
+                const int bndry_cell = ( (ibndry < AMREX_SPACEDIM) ? 
+                    (ijk_vec[dir] == dom_lo[dir]) : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
+                const int is_tangent_to_PEC =
+                    ( ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(dir) : is_hi_PEC(dir) );
+                // if boundary is PEC, guard cells must be equal and opposite to valid cells
+                if ( bndry_cell == 1 && is_tangent_to_PEC==1) {
+                    for (int is = 0; is < shape_factor[dir]; ++is) {
+                        // guard cell outside the domain by "is" number cells
+                        ijk_guard[dir] = ( (ibndry < AMREX_SPACEDIM) ?
+                            (ijk_vec[dir] - is) : (ijk_vec[dir] + is));
+                        // valid cell inside the domain by "is" number of cells
+                        ijk_valid[dir] = ( (ibndry < AMREX_SPACEDIM) ?
+                            (ijk_vec[dir] + is) : (ijk_vec[dir] - is));
+                        // setting the guard cell Efield tangential to PEC boundary
+                        Efield(ijk_guard) = - Efield(ijk_valid);                        
+                    }
+                    Efield(ijk_vec) = 0.;
+                }
+            }
+        }            
+    }
+
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void ZeroNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
                            const amrex::IntVect & ijk_vec,
@@ -59,6 +98,42 @@ namespace PEC {
         }
         if (setfield == 1) Bfield = 0.;
     }
+
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
+                           const amrex::IntVect & dom_hi,
+                           const amrex::IntVect & ijk_vec,
+                           const amrex::IntVect &shape_factor,
+                           amrex::Array4<amrex::Real> const& Bfield,
+                           const amrex::IntVect & stag)
+    {
+        amrex::IntVect ijk_guard = ijk_vec;
+        amrex::IntVect ijk_valid = ijk_vec;
+        const int dir = icomp;
+        for (int iside = 0; iside < 2; ++iside) {
+            const int ibndry = dir + iside * AMREX_SPACEDIM;
+            const int bndry_cell = ( ibndry < AMREX_SPACEDIM ) ?
+                ( ijk_vec[dir] == dom_lo[dir]) : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]);
+            const int is_normal_to_PEC = (
+                ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(dir) : is_hi_PEC(dir) );
+            if (bndry_cell == 1 && is_normal_to_PEC == 1 )
+            {
+                for (int is = 0; is < shape_factor[dir]; ++is) {
+                    // guard cell outside the domain by "is" number cells
+                    ijk_guard[dir] = ( (ibndry < AMREX_SPACEDIM) ?
+                        (ijk_vec[dir] - is) : (ijk_vec[dir] + is));
+                    // valid cell inside the domain by "is" number of cells
+                    ijk_valid[dir] = ( (ibndry < AMREX_SPACEDIM) ?
+                        (ijk_vec[dir] + is) : (ijk_vec[dir] - is));
+                    // setting the guard cell Efield tangential to PEC boundary
+                    Bfield(ijk_guard) = - Bfield(ijk_valid);                        
+                }
+                Bfield(ijk_vec) = 0.;
+            }
+        }
+    }
+
+    
 
 
     bool isAnyBoundaryPEC();

@@ -28,6 +28,10 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
+    amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
+#if (AMREX_SPACEDIM == 2)
+    shape_factor[1] = WarpX::noz; 
+#endif    
     amrex::Print() << " domain box : " << domain_box << "\n";
     amrex::Print() << " domain_lo : " << domain_lo[0] << " " << domain_lo[1] << " " << domain_lo[2] << "\n";
     amrex::Print() << " domain_hi : " << domain_hi[0] << " " << domain_hi[1] << " " << domain_hi[2] << "\n";
@@ -53,17 +57,23 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ex(i,j,k), Ex_stag);
+//                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ex(i,j,k), Ex_stag);
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                                           Ex, Ex_stag);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ey(i,j,k), Ey_stag);
+//                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ey(i,j,k), Ey_stag);
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                                           Ey, Ey_stag);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ez(i,j,k), Ez_stag);
+//                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ez(i,j,k), Ez_stag);
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                                           Ez, Ez_stag);
             }
         );
 
@@ -84,6 +94,10 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
+    amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
+#if (AMREX_SPACEDIM == 2)
+    shape_factor[1] = WarpX::noz; 
+#endif    
     amrex::Print() << " domain box : " << domain_box << "\n";
     amrex::Print() << " domain_lo : " << domain_lo[0] << " " << domain_lo[1] << " " << domain_lo[2] << "\n";
     amrex::Print() << " domain_hi : " << domain_hi[0] << " " << domain_hi[1] << " " << domain_hi[2] << "\n";
@@ -110,17 +124,23 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, Bx(i,j,k), Bx_stag);
+                //PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, Bx(i,j,k), Bx_stag);
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                                     Bx, Bx_stag);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, By(i,j,k), By_stag);
+                //PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, By(i,j,k), By_stag);
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                                     By, By_stag);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, Bz(i,j,k), Bz_stag);
+                //PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, Bz(i,j,k), Bz_stag);
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                                     Bz, Bz_stag);
             }
         );
 
