@@ -148,11 +148,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Real const coef2_x = 2._rt*cdt_over_dx/(1._rt + cdt_over_dx) / PhysConst::c;
 #ifdef WARPX_DIM_3D
     amrex::Real const cdt_over_dy = PhysConst::c*dt*m_stencil_coefs_y[0];
-    amrex::Real const coef1_y = (1._rt - cdt_over_dy)/(1._rt + cdt_over_dx);
+    amrex::Real const coef1_y = (1._rt - cdt_over_dy)/(1._rt + cdt_over_dy);
     amrex::Real const coef2_y = 2._rt*cdt_over_dy/(1._rt + cdt_over_dy) / PhysConst::c;
 #endif
     amrex::Real const cdt_over_dz = PhysConst::c*dt*m_stencil_coefs_z[0];
-    amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dx);
+    amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
     amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
