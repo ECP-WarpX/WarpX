@@ -458,8 +458,10 @@ void ReadBCParams ()
             } else {
                 // if non-periodic and do_pml=0, then set default boundary to PEC
                 int pml_input = 1;
+                int silverMueller_input = 1;
                 pp_warpx.query("do_pml", pml_input);
-                if (pml_input == 0) {
+                pp_warpx.query("do_silver_mueller", silverMueller_input);
+                if (pml_input == 0 and silverMueller_input == 0) {
                     WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
                     WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
                 }
