@@ -8,46 +8,25 @@
 namespace PEC {
 
 
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    int is_lo_PEC (int dir) {
-        return int( WarpX::field_boundary_lo[dir] == FieldBoundaryType::PEC);
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    int is_lo_PEC (amrex::GpuArray<int, 3> const& fboundary_lo, int dir) {
+        return int( fboundary_lo[dir] == FieldBoundaryType::PEC);
     }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    int is_hi_PEC (int dir) {
-        return int( WarpX::field_boundary_hi[dir] == FieldBoundaryType::PEC);
+    
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    int is_hi_PEC (amrex::GpuArray<int, 3> const& fboundary_hi, int dir) {
+        return int( fboundary_hi[dir] == FieldBoundaryType::PEC);
     }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void ZeroTangentialEfield ( const int icomp, const amrex::IntVect & dom_lo,
-                                const amrex::IntVect & dom_hi,
-                                const amrex::IntVect & ijk_vec,
-                                amrex::Real& Efield, const amrex::IntVect& stag )
-    {
-        int setfield = 0;
-        for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
-            // index of dimension
-            const int dir = ( ( (icomp+idim)<AMREX_SPACEDIM)? (icomp+idim) : ( (icomp+idim) - AMREX_SPACEDIM));
-            // loop over sides , iside = 0 (lo), iside = 1 (hi)
-            for (int iside = 0; iside < 2; ++iside) {
-                const int ibndry = dir + iside*AMREX_SPACEDIM;
-                const int bndry_cell = ( (ibndry < AMREX_SPACEDIM) ?
-                    (ijk_vec[dir] == dom_lo[dir]) : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
-                const int is_tangent_to_PEC =
-                    ( ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(dir) : is_hi_PEC(dir) );
-                if ( bndry_cell == 1 && is_tangent_to_PEC==1) setfield = 1;
-            }
-        }
-        if (setfield == 1) Efield = 0.;
-    }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetTangentialEfield (const int icomp, const amrex::IntVect & dom_lo,
                                 const amrex::IntVect &dom_hi,
                                 const amrex::IntVect &ijk_vec,
                                 const amrex::IntVect &shape_factor,
                                 amrex::Array4<amrex::Real> const& Efield,
-                                const amrex::IntVect& stag )
+                                const amrex::IntVect& stag,
+                                amrex::GpuArray<int, 3> const& fbndry_lo,
+                                amrex::GpuArray<int, 3> const& fbndry_hi )
     {
         // Fields in guard cells set equal and opposite to valid cells
         amrex::IntVect ijk_guard = ijk_vec;
@@ -61,7 +40,8 @@ namespace PEC {
                 const int bndry_cell = ( (ibndry < AMREX_SPACEDIM) ? 
                     (ijk_vec[dir] == dom_lo[dir]) : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
                 const int is_tangent_to_PEC =
-                    ( ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(dir) : is_hi_PEC(dir) );
+                    ( ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(fbndry_lo, dir)
+                                                 : is_hi_PEC(fbndry_hi, dir) );
                 // if boundary is PEC, guard cells must be equal and opposite to valid cells
                 if ( bndry_cell == 1 && is_tangent_to_PEC==1) {
                     for (int is = 0; is < shape_factor[dir]; ++is) {
@@ -79,33 +59,16 @@ namespace PEC {
             }
         }            
     }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void ZeroNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
-                           const amrex::IntVect & dom_hi,
-                           const amrex::IntVect & ijk_vec,
-                           amrex::Real& Bfield, const amrex::IntVect & stag)
-    {
-        int setfield = 0;
-        const int dir = icomp;
-        for (int iside = 0; iside < 2; ++iside) {
-            const int ibndry = dir + iside * AMREX_SPACEDIM;
-            const int bndry_cell = ( ibndry < AMREX_SPACEDIM ) ?
-                ( ijk_vec[dir] == dom_lo[dir]) : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]);
-            const int is_normal_to_PEC = (
-                ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(dir) : is_hi_PEC(dir) );
-            if (bndry_cell == 1 && is_normal_to_PEC == 1 ) setfield = 1;
-        }
-        if (setfield == 1) Bfield = 0.;
-    }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
                            const amrex::IntVect & ijk_vec,
                            const amrex::IntVect &shape_factor,
                            amrex::Array4<amrex::Real> const& Bfield,
-                           const amrex::IntVect & stag)
+                           const amrex::IntVect & stag,
+                           amrex::GpuArray<int, 3> const& fbndry_lo,
+                           amrex::GpuArray<int, 3> const& fbndry_hi )
     {
         amrex::IntVect ijk_guard = ijk_vec;
         amrex::IntVect ijk_valid = ijk_vec;
@@ -115,7 +78,8 @@ namespace PEC {
             const int bndry_cell = ( ibndry < AMREX_SPACEDIM ) ?
                 ( ijk_vec[dir] == dom_lo[dir]) : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]);
             const int is_normal_to_PEC = (
-                ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(dir) : is_hi_PEC(dir) );
+                ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(fbndry_lo, dir)
+                                           : is_hi_PEC(fbndry_hi, dir) );
             if (bndry_cell == 1 && is_normal_to_PEC == 1 )
             {
                 for (int is = 0; is < shape_factor[dir]; ++is) {
@@ -132,10 +96,7 @@ namespace PEC {
             }
         }
     }
-
     
-
-
     bool isAnyBoundaryPEC();
     void ApplyPECtoEfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                             const int lev, PatchType patch_type);
