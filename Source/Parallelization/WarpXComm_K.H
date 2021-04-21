@@ -73,6 +73,12 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 {
     using namespace amrex;
 
+    // Pad Bxf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Bxf_zeropad = [Bxf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Bxf.contains(jj,kk,ll) ? Bxf(jj,kk,ll) : 0.0_rt;
+    };
+
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
@@ -97,7 +103,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy * Bxc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bxf(j,k-1,0) + Bxf(j,k,0));
+    Real bf = 0.5_rt*(Bxf_zeropad(j,k-1,0) + Bxf_zeropad(j,k,0));
 
 #else
 
@@ -128,7 +134,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy *  wz * Bxc(jg+1,kg-1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
+    Real bf = 0.25_rt*(Bxf_zeropad(j,k-1,l-1) + Bxf_zeropad(j,k,l-1) + Bxf_zeropad(j,k-1,l) + Bxf_zeropad(j,k,l));
 #endif
 
     Bxa(j,k,l) = bg + (bf-bc);
@@ -142,6 +148,12 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Byg)
 {
     using namespace amrex;
+
+    // Pad Byf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Byf_zeropad = [Byf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Byf.contains(jj,kk,ll) ? Byf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -168,7 +180,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy * Byc(jg-1,kg-1,0);
 
     // interp form fine stagger (cell-centered for By) to fine nodal
-    Real bf = 0.25_rt*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
+    Real bf = 0.25_rt*(Byf_zeropad(j,k,0) + Byf_zeropad(j-1,k,0) + Byf_zeropad(j,k-1,0) + Byf_zeropad(j-1,k-1,0));
 
 #else
 
@@ -199,7 +211,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy *  wz * Byc(jg-1,kg+1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
+    Real bf = 0.25_rt*(Byf_zeropad(j-1,k,l-1) + Byf_zeropad(j,k,l-1) + Byf_zeropad(j-1,k,l) + Byf_zeropad(j,k,l));
 
 #endif
 
@@ -214,6 +226,12 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Bzg)
 {
     using namespace amrex;
+
+    // Pad Bzf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Bzf_zeropad = [Bzf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Bzf.contains(jj,kk,ll) ? Bzf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -239,7 +257,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy * Bzc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bzf(j-1,k,0) + Bzf(j,k,0));
+    Real bf = 0.5_rt*(Bzf_zeropad(j-1,k,0) + Bzf_zeropad(j,k,0));
 
 #else
 
@@ -270,7 +288,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy *  wz * Bzc(jg-1,kg-1,lg+1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
+    Real bf = 0.25_rt*(Bzf_zeropad(j-1,k-1,l) + Bzf_zeropad(j,k-1,l) + Bzf_zeropad(j-1,k,l) + Bzf_zeropad(j,k,l));
 
 #endif
 
@@ -285,6 +303,12 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Exg)
 {
     using namespace amrex;
+
+    // Pad Exf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Exf_zeropad = [Exf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Exf.contains(jj,kk,ll) ? Exf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -310,7 +334,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy * Exc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf(j-1,k,0) + Exf(j,k,0));
+    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,0) + Exf_zeropad(j,k,0));
 
 #else
 
@@ -340,7 +364,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy *  wz * Exc(jg-1,kg+1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf(j-1,k,l) + Exf(j,k,l));
+    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,l) + Exf_zeropad(j,k,l));
 
 #endif
 
@@ -355,6 +379,12 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Eyg)
 {
     using namespace amrex;
+
+    // Pad Eyf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Eyf_zeropad = [Eyf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Eyf.contains(jj,kk,ll) ? Eyf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -379,7 +409,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +      wx *  wy * Eyc(jg+1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = Eyf(j,k,0);
+    Real ef = Eyf_zeropad(j,k,0);
 
 #else
 
@@ -409,7 +439,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +      wx *  wy *  wz * Eyc(jg+1,kg-1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Eyf(j,k-1,l) + Eyf(j,k,l));
+    Real ef = 0.5_rt*(Eyf_zeropad(j,k-1,l) + Eyf_zeropad(j,k,l));
 
 #endif
 
@@ -424,6 +454,12 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real const> const& Ezg)
 {
     using namespace amrex;
+
+    // Pad Ezf with zeros beyond ghost cells for out-of-bound accesses
+    const auto Ezf_zeropad = [Ezf] (const int jj, const int kk, const int ll) noexcept
+    {
+        return Ezf.contains(jj,kk,ll) ? Ezf(jj,kk,ll) : 0.0_rt;
+    };
 
     int jg = amrex::coarsen(j,2);
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
@@ -449,7 +485,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy * Ezc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf(j,k-1,0) + Ezf(j,k,0));
+    Real ef = 0.5_rt*(Ezf_zeropad(j,k-1,0) + Ezf_zeropad(j,k,0));
 
 #else
 
@@ -479,7 +515,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy *  wz * Ezc(jg+1,kg+1,lg-1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf(j,k,l-1) + Ezf(j,k,l));
+    Real ef = 0.5_rt*(Ezf_zeropad(j,k,l-1) + Ezf_zeropad(j,k,l));
 
 #endif
 
@@ -487,24 +523,24 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 }
 
 /**
- * \brief Arbitrary-order interpolation function used to interpolate a given field from the Yee grid
- * to the nodal grid, before gathering the field from the nodes to the particle positions
- * (momentum-conserving field gathering). With the FDTD solver, this performs simple linear interpolation.
+ * \brief Arbitrary-order interpolation function used to center a given MultiFab between two grids
+ * with different staggerings. With the FDTD solver, this performs simple linear interpolation.
  * With the PSATD solver, this performs arbitrary-order interpolation based on the Fornberg coefficients.
- * The result is stored in the output array \c arr_aux, allocated on the \c aux patch.
+ * The result is stored in the output array \c dst_arr.
  *
  * \param[in] j index along x of the output array
  * \param[in] k index along y (in 3D) or z (in 2D) of the output array
  * \param[in] l index along z (in 3D, \c l = 0 in 2D) of the output array
- * \param[in,out] dst_arr output array allocated on the \c aux patch where interpolated values are stored
- * \param[in] src_arr input array allocated on the fine patch
- * \param[in] src_stag \c IndexType of the input array (Yee staggering)
- * \param[in] nox order of finite-order interpolation along x
- * \param[in] noy order of finite-order interpolation along y
- * \param[in] noz order of finite-order interpolation along z
- * \param[in] stencil_coeffs_x array of ordered Fornberg coefficients for finite-order interpolation stencil along x
- * \param[in] stencil_coeffs_y array of ordered Fornberg coefficients for finite-order interpolation stencil along y
- * \param[in] stencil_coeffs_z array of ordered Fornberg coefficients for finite-order interpolation stencil along z
+ * \param[in,out] dst_arr output array where interpolated values are stored
+ * \param[in] src_arr input array storing the values used for interpolation
+ * \param[in] dst_stag \c IndexType of the output array
+ * \param[in] src_stag \c IndexType of the input array
+ * \param[in] nox order of finite-order centering along x
+ * \param[in] noy order of finite-order centering along y
+ * \param[in] noz order of finite-order centering along z
+ * \param[in] stencil_coeffs_x array of ordered Fornberg coefficients for finite-order centering stencil along x
+ * \param[in] stencil_coeffs_y array of ordered Fornberg coefficients for finite-order centering stencil along y
+ * \param[in] stencil_coeffs_z array of ordered Fornberg coefficients for finite-order centering stencil along z
  */
 template< bool IS_PSATD = false >
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
@@ -513,6 +549,7 @@ void warpx_interp (const int j,
                    const int l,
                    amrex::Array4<amrex::Real      > const& dst_arr,
                    amrex::Array4<amrex::Real const> const& src_arr,
+                   const amrex::IntVect& dst_stag,
                    const amrex::IntVect& src_stag,
                    const int nox = 2,
                    const int noy = 2,
@@ -540,11 +577,18 @@ void warpx_interp (const int j,
     amrex::ignore_unused(stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 #endif
 
+    // If dst_nodal = true , we are centering from a staggered grid to a nodal grid
+    // If dst_nodal = false, we are centering from a nodal grid to a staggered grid
+    const bool dst_nodal = (dst_stag == amrex::IntVect::TheNodeVector());
+
+    // See 1D examples below to understand the meaning of this integer shift
+    const int shift = (dst_nodal) ? 0 : 1;
+
     // Staggering (s = 0 if cell-centered, s = 1 if nodal)
-    const int sj = src_stag[0];
-    const int sk = src_stag[1];
+    const int sj = (dst_nodal) ? src_stag[0] : dst_stag[0];
+    const int sk = (dst_nodal) ? src_stag[1] : dst_stag[1];
 #if (AMREX_SPACEDIM == 3)
-    const int sl = src_stag[2];
+    const int sl = (dst_nodal) ? src_stag[2] : dst_stag[2];
 #endif
 
     // Interpolate along j,k,l only if source MultiFab is staggered along j,k,l
@@ -572,12 +616,12 @@ void warpx_interp (const int j,
 #endif
 
     // Min and max for interpolation loop along j
-    const int jmin = (interp_j) ? j - noj/2 : j;
-    const int jmax = (interp_j) ? j + noj/2 - 1 : j;
+    const int jmin = (interp_j) ? j - noj/2 + shift     : j;
+    const int jmax = (interp_j) ? j + noj/2 + shift - 1 : j;
 
     // Min and max for interpolation loop along k
-    const int kmin = (interp_k) ? k - nok/2 : k;
-    const int kmax = (interp_k) ? k + nok/2 - 1 : k;
+    const int kmin = (interp_k) ? k - nok/2 + shift     : k;
+    const int kmax = (interp_k) ? k + nok/2 + shift - 1 : k;
 
     // Min and max for interpolation loop along l
 #if   (AMREX_SPACEDIM == 2)
@@ -585,44 +629,73 @@ void warpx_interp (const int j,
     const int lmin = l;
     const int lmax = l;
 #elif (AMREX_SPACEDIM == 3)
-    const int lmin = (interp_l) ? l - nol/2 : l;
-    const int lmax = (interp_l) ? l + nol/2 - 1 : l;
+    const int lmin = (interp_l) ? l - nol/2 + shift     : l;
+    const int lmax = (interp_l) ? l + nol/2 + shift - 1 : l;
 #endif
+
+    // Number of interpolation points
+    const int nj = jmax - jmin;
+    const int nk = kmax - kmin;
+    const int nl = lmax - lmin;
+
+    // Example of 1D centering from nodal grid to nodal grid (simple copy):
+    //
+    //         j
+    // --o-----o-----o--  result(j) = f(j)
+    // --o-----o-----o--
+    //  j-1    j    j+1
+    //
+    // Example of 1D linear centering from staggered grid to nodal grid:
+    //
+    //         j
+    // --o-----o-----o--  result(j) = (f(j-1) + f(j)) / 2
+    // -----x-----x-----
+    //     j-1    j
+    //
+    // Example of 1D linear centering from nodal grid to staggered grid:
+    // (note the shift of +1 in the indices with respect to the case above, see variable "shift")
+    //
+    //         j
+    // --x-----x-----x--  result(j) = (f(j) + f(j+1)) / 2
+    // -----o-----o-----
+    //      j    j+1
+    //
+    // Example of 1D finite-order centering from staggered grid to nodal grid:
+    //
+    //                     j
+    // --o-----o-----o-----o-----o-----o-----o--  result(j) = c_0 * (f(j-1) + f(j)  ) / 2
+    // -----x-----x-----x-----x-----x-----x-----            + c_1 * (f(j-2) + f(j+1)) / 2
+    //     j-3   j-2   j-1    j    j+1   j+2                + c_2 * (f(j-3) + f(j+2)) / 2
+    //     c_2   c_1   c_0   c_0   c_1   c_2                + ...
+    //
+    // Example of 1D finite-order centering from nodal grid to staggered grid:
+    // (note the shift of +1 in the indices with respect to the case above, see variable "shift")
+    //
+    //                     j
+    // --x-----x-----x-----x-----x-----x-----x--  result(j) = c_0 * (f(j)   + f(j+1)) / 2
+    // -----o-----o-----o-----o-----o-----o-----            + c_1 * (f(j-1) + f(j+2)) / 2
+    //     j-2   j-1    j    j+1   j+2   j+3                + c_2 * (f(j-2) + f(j+3)) / 2
+    //     c_2   c_1   c_0   c_0   c_1   c_2                + ...
 
     amrex::Real res = 0.0_rt;
 
-    // FDTD (linear interpolation)
-    if( !IS_PSATD ) {
-        // Example of 1D linear interpolation from nodal grid to nodal grid:
-        //
-        //         j
-        // --o-----o-----o--  result(j) = f(j)
-        // --o-----o-----o--
-        //  j-1    j    j+1
-        //
-        // Example of 1D linear interpolation from staggered grid to nodal grid:
-        //
-        //         j
-        // --o-----o-----o--  result(j) = (f(j-1) + f(j)) / 2
-        // -----x-----x-----
-        //     j-1    j
-
-        for (int ll = lmin; ll <= lmax; ll++)
+    if( !IS_PSATD ) // FDTD (linear interpolation)
+    {
+        for (int ll = 0; ll <= nl; ll++)
         {
-            for (int kk = kmin; kk <= kmax; kk++)
+            for (int kk = 0; kk <= nk; kk++)
             {
-                for (int jj = jmin; jj <= jmax; jj++)
+                for (int jj = 0; jj <= nj; jj++)
                 {
-                    res += src_arr_zeropad(jj,kk,ll);
+                    res += src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
                 }
             }
         }
-    // PSATD (finite-order interpolation)
-    } else {
-        const int nj = jmax - jmin;
-        const int nk = kmax - kmin;
-        const int nl = lmax - lmin;
 
+    }
+
+    else // PSATD (finite-order interpolation)
+    {
         amrex::Real cj = 1.0_rt;
         amrex::Real ck = 1.0_rt;
         amrex::Real cl = 1.0_rt;
@@ -634,21 +707,6 @@ void warpx_interp (const int j,
         amrex::Real const* sck = stencil_coeffs_y;
         amrex::Real const* scl = stencil_coeffs_z;
 #endif
-
-        // Example of 1D finite-order interpolation from nodal grid to nodal grid:
-        //
-        //         j
-        // --o-----o-----o--  result(j) = f(j)
-        // --o-----o-----o--
-        //  j-1    j    j+1
-        //
-        // Example of 1D finite-order interpolation from staggered grid to nodal grid:
-        //
-        //                     j
-        // --o-----o-----o-----o-----o-----o-----o--  result(j) = c_0 * (f(j-1) + f(j)  ) / 2
-        // -----x-----x-----x-----x-----x-----x-----            + c_1 * (f(j-2) + f(j+1)) / 2
-        //     j-3   j-2   j-1    j    j+1   j+2                + c_2 * (f(j-3) + f(j+2)) / 2
-        //     c_2   c_1   c_0   c_0   c_1   c_2                + ...
 
         for (int ll = 0; ll <= nl; ll++)
         {
@@ -667,7 +725,7 @@ void warpx_interp (const int j,
                 }
             }
         }
-    } // PSATD (finite-order interpolation)
+    }
 
     dst_arr(j,k,l) = wj * wk * wl * res;
 }

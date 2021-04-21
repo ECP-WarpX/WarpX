@@ -565,10 +565,12 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     // Query fields to dump
     std::vector<std::string> user_fields_to_dump;
-    ParmParse pp("warpx");
+    ParmParse pp_warpx("warpx");
     bool do_user_fields;
-    do_user_fields = pp.queryarr("back_transformed_diag_fields",
-                                 user_fields_to_dump);
+    do_user_fields = pp_warpx.queryarr("back_transformed_diag_fields", user_fields_to_dump);
+    if (pp_warpx.query("buffer_size", m_num_buffer_)) {
+        if (m_max_box_size_ < m_num_buffer_) m_max_box_size_ = m_num_buffer_;
+    }
     // If user specifies fields to dump, overwrite ncomp_to_dump,
     // map_actual_fields_to_dump and mesh_field_names.
     for (int i = 0; i < 10; ++i)
@@ -601,7 +603,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                 m_inv_gamma_boost_, m_inv_beta_boost_, m_dz_lab_,
                                 prob_domain_lab, prob_ncells_lab,
                                 m_ncomp_to_dump, m_mesh_field_names, prob_domain_lab,
-                                diag_box, i);
+                                diag_box, i, m_max_box_size_, m_num_buffer_);
     }
 
 
@@ -681,7 +683,8 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                 m_inv_gamma_boost_, m_inv_beta_boost_, m_dz_lab_,
                                 prob_domain_lab, slice_ncells_lab,
                                 m_ncomp_to_dump, m_mesh_field_names, slice_dom_lab,
-                                slicediag_box, i, m_particle_slice_width_lab_);
+                                slicediag_box, i, m_particle_slice_width_lab_,
+                                m_max_box_size_, m_num_buffer_);
     }
     // sort diags based on their respective t_lab
     std::stable_sort(m_LabFrameDiags_.begin(), m_LabFrameDiags_.end(), compare_tlab_uptr);
@@ -1122,7 +1125,8 @@ LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
                  Real inv_beta_boost_in, Real dz_lab_in, RealBox prob_domain_lab,
                  IntVect prob_ncells_lab, int ncomp_to_dump,
                  std::vector<std::string> mesh_field_names,
-                 amrex::RealBox diag_domain_lab, Box diag_box, int file_num_in)
+                 amrex::RealBox diag_domain_lab, Box diag_box, int file_num_in,
+                 const int max_box_size, const int num_buffer)
 {
    m_t_lab = t_lab_in;
    m_dz_lab_ = dz_lab_in;
@@ -1144,6 +1148,8 @@ LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
                            m_file_num, 5);
    createLabFrameDirectories();
    m_buff_counter_ = 0;
+   m_max_box_size = max_box_size;
+   m_num_buffer_ = num_buffer;
    if (WarpX::do_back_transformed_fields) m_data_buffer_.reset(nullptr);
 }
 
@@ -1291,7 +1297,8 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
                  IntVect prob_ncells_lab, int ncomp_to_dump,
                  std::vector<std::string> mesh_field_names,
                  RealBox diag_domain_lab, Box diag_box, int file_num_in,
-                 amrex::Real particle_slice_dx_lab)
+                 amrex::Real particle_slice_dx_lab, const int max_box_size,
+                 const int num_buffer)
 {
     m_t_lab = t_lab_in;
     m_dz_lab_ = dz_lab_in;
@@ -1313,6 +1320,8 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
     createLabFrameDirectories();
     m_buff_counter_ = 0;
     m_particle_slice_dx_lab_ = particle_slice_dx_lab;
+    m_max_box_size = max_box_size;
+    m_num_buffer_ = num_buffer;
 
     if (WarpX::do_back_transformed_fields) m_data_buffer_.reset(nullptr);
 }
@@ -1374,13 +1383,10 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
 #endif
     for (MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       Box& bx = m_buff_box_;
        const Box& bx_bf = mfi.tilebox();
-       bx.setSmall(AMREX_SPACEDIM-1,bx_bf.smallEnd(AMREX_SPACEDIM-1));
-       bx.setBig(AMREX_SPACEDIM-1,bx_bf.bigEnd(AMREX_SPACEDIM-1));
        Array4<Real> tmp_arr = tmp[mfi].array();
        Array4<Real> buf_arr = buf[mfi].array();
-       ParallelFor(bx, ncomp_to_dump,
+       ParallelFor(bx_bf, ncomp_to_dump,
            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
            {
               const int icomp = field_map_ptr[n];

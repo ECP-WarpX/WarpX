@@ -20,11 +20,11 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 2,
                                      "Pair wise Coulomb must have exactly two species.");
 
-    amrex::ParmParse pp(collision_name);
+    amrex::ParmParse pp_collision_name(collision_name);
 
     // default Coulomb log, if < 0, will be computed automatically
     m_CoulombLog = -1.0_rt;
-    queryWithParser(pp, "CoulombLog", m_CoulombLog);
+    queryWithParser(pp_collision_name, "CoulombLog", m_CoulombLog);
 
     if (m_species_names[0] == m_species_names[1])
         m_isSameSpecies = true;

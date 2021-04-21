@@ -19,7 +19,7 @@ filename = sys.argv[1]
 ############################
 ### INITIAL LASER ENERGY ###
 ############################
-energy_start = 7.297301362346945e-08 # electromagnetic energy at iteration 50
+energy_start = 7.297324456269243e-08 # electromagnetic energy at iteration 50
 
 # Check consistency of field energy diagnostics with initial energy above
 ds = yt.load('pml_x_psatd_plt00050')
@@ -35,6 +35,9 @@ energyB = np.sum(0.5 / scc.mu_0 * (Bx**2 + By**2 + Bz**2))
 energy_start_diags = energyE + energyB
 error = abs(energy_start - energy_start_diags) / energy_start
 tolerance = 1e-14
+print("energy_start expected = " + str(energy_start))
+print("energy_start_diags    = " + str(energy_start_diags))
+print("relative error    = " + str(error))
 assert (error < tolerance)
 
 ##########################

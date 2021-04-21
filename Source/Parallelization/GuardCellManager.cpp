@@ -40,9 +40,12 @@ guardCellManager::Init (
     int ngy_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
     int ngz_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
 
+    const bool galilean = (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.);
+    const bool comoving = (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.);
+
     // Add one guard cell in the case of the Galilean or comoving algorithms
-    if (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0. ||
-        v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0. ) {
+    if (galilean || comoving)
+    {
       ngx_tmp += 1;
       ngy_tmp += 1;
       ngz_tmp += 1;
@@ -119,23 +122,32 @@ guardCellManager::Init (
     if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        // All boxes should have the same number of guard cells
-        // (to avoid temporary parallel copies)
-        // Thus take the max of the required number of guards for each field
-        // Also: the number of guard cell should be enough to contain
-        // the stencil of the FFT solver. Here, this number (`ngFFT`)
-        // is determined *empirically* to be the order of the solver
-        // for nodal, and half the order of the solver for staggered.
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    {
+        // The number of guard cells should be enough to contain the stencil of the FFT solver.
+        //
+        // Here, this number (ngFFT) is determined empirically to be the order of the solver or
+        // half the order of the solver, depending on other various numerical parameters.
+        //
+        // With the standard PSATD algorithm, simulations on staggered grids usually work fine
+        // with a number of guard cells equal to half the number of guard cells that would be
+        // used on nodal grids, in all directions x, y and z.
+        //
+        // On the other hand, with the Galilean PSATD or averaged Galilean PSATD algorithms,
+        // with a Galilean coordinate transformation directed only in z, it seems more robust
+        // to set the same number of guard cells in z, irrespective of whether the simulation
+        // runs on nodal grids or staggered grids (typically with centering of fields and/or
+        // currents in the latter case). This does not seem to be necessary in x and y,
+        // where it still seems fine to set half the number of guard cells of the nodal case.
 
         int ngFFt_x = do_nodal ? nox_fft : nox_fft / 2;
         int ngFFt_y = do_nodal ? noy_fft : noy_fft / 2;
-        int ngFFt_z = do_nodal ? noz_fft : noz_fft / 2;
+        int ngFFt_z = (do_nodal || galilean) ? noz_fft : noz_fft / 2;
 
-        ParmParse pp("psatd");
-        pp.query("nx_guard", ngFFt_x);
-        pp.query("ny_guard", ngFFt_y);
-        pp.query("nz_guard", ngFFt_z);
+        ParmParse pp_psatd("psatd");
+        pp_psatd.query("nx_guard", ngFFt_x);
+        pp_psatd.query("ny_guard", ngFFt_y);
+        pp_psatd.query("nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
@@ -143,6 +155,8 @@ guardCellManager::Init (
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #endif
 
+        // All boxes should have the same number of guard cells, to avoid temporary parallel copies:
+        // thus we take the maximum of the required number of guard cells over all available fields.
         for (int i_dim = 0; i_dim < AMREX_SPACEDIM; i_dim++) {
             int ng_required = ngFFT[i_dim];
             // Get the max

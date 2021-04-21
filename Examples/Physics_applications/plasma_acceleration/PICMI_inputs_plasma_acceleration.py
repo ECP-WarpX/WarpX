@@ -72,4 +72,3 @@ sim.add_diagnostic(part_diag)
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()
-
