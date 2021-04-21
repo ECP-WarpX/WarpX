@@ -257,7 +257,6 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
             amrex::Real* n1 = n1_vec.data();
             amrex::Real* n2 = n2_vec.data();
             amrex::Real* n12 = n12_vec.data();
-            // (do we need a synchronize to avoid that these arrays go out of scope?)
             // Local copies for GPU kernel
             amrex::Real const L=m_CoulombLog;
             bool const neglect_feedback_on_species_2 = m_neglect_feedback_on_species_2;
@@ -335,6 +334,9 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                         neglect_feedback_on_species_2);
                 }
             );
+            // Synchronization, to avoid that temporary arrays (n1, n2, etc)
+            // go out of scope before the GPU kernels finish.
+            amrex::Gpu::streamSynchronize();
 
         } else {
             // Take into account full feedback (regular algorithm)
