@@ -140,10 +140,10 @@ WarpX::PushPSATD (amrex::Real a_dt)
         if (do_pml && pml[lev]->ok()) {
             pml[lev]->PushPSATD(lev);
         }
-        ApplyEfieldBoundary(lev,PatchType::fine)
-        if (lev > 0) ApplyEfieldBoundary(lev,PatchType::coarse)
-        ApplyBfieldBoundary(lev,PatchType::fine)
-        if (lev > 0) ApplyBfieldBoundary(lev,PatchType::coarse)
+        ApplyEfieldBoundary(lev,PatchType::fine);
+        if (lev > 0) ApplyEfieldBoundary(lev,PatchType::coarse);
+        ApplyBfieldBoundary(lev,PatchType::fine);
+        if (lev > 0) ApplyBfieldBoundary(lev,PatchType::coarse);
     }
 #endif
 }
