@@ -1319,10 +1319,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_fp[y]"));
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_fp[z]"));
 
-    bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
+    bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics) || (do_electrostatic != ElectrostaticSolverAlgo::None);
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
-                         || update_with_rho || current_correction;
+        deposit_charge = deposit_charge || update_with_rho || current_correction;
     }
     if (deposit_charge)
     {
