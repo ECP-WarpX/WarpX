@@ -33,7 +33,7 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
 
     // Check if the user wants to neglect feedback on species 2
     m_neglect_feedback_on_species_2 = false;
-    pp.query("neglect_feedback_on_species_2", m_neglect_feedback_on_species_2);
+    pp_collision_name.query("neglect_feedback_on_species_2", m_neglect_feedback_on_species_2);
     if (m_neglect_feedback_on_species_2) {
         if (m_isSameSpecies) {
             amrex::Abort("You cannot select to neglect feedback on species 2 for intra-species collisions.");
