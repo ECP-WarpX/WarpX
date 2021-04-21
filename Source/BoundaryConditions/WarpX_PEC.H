@@ -8,17 +8,17 @@
 namespace PEC {
 
 
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int is_lo_PEC (int dir) {
         return int( WarpX::field_boundary_lo[dir] == FieldBoundaryType::PEC);
     }
 
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int is_hi_PEC (int dir) {
         return int( WarpX::field_boundary_hi[dir] == FieldBoundaryType::PEC);
     }
 
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void ZeroTangentialEfield ( const int icomp, const amrex::IntVect & dom_lo,
                                 const amrex::IntVect & dom_hi,
                                 const amrex::IntVect & ijk_vec,
@@ -41,7 +41,7 @@ namespace PEC {
         if (setfield == 1) Efield = 0.;
     }
 
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void SetTangentialEfield (const int icomp, const amrex::IntVect & dom_lo,
                                 const amrex::IntVect &dom_hi,
                                 const amrex::IntVect &ijk_vec,
@@ -80,7 +80,7 @@ namespace PEC {
         }            
     }
 
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void ZeroNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
                            const amrex::IntVect & ijk_vec,
@@ -99,7 +99,7 @@ namespace PEC {
         if (setfield == 1) Bfield = 0.;
     }
 
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void SetNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
                            const amrex::IntVect & ijk_vec,
