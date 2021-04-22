@@ -30,8 +30,8 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
     amrex::IntVect domain_hi = domain_box.bigEnd();
     amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
 #if (AMREX_SPACEDIM == 2)
-    shape_factor[1] = WarpX::noz; 
-#endif    
+    shape_factor[1] = WarpX::noz;
+#endif
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -102,8 +102,8 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
     amrex::IntVect domain_hi = domain_box.bigEnd();
     amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
 #if (AMREX_SPACEDIM == 2)
-    shape_factor[1] = WarpX::noz; 
-#endif    
+    shape_factor[1] = WarpX::noz;
+#endif
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {

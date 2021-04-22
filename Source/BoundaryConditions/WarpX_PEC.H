@@ -12,12 +12,12 @@ namespace PEC {
     int is_lo_PEC (amrex::GpuArray<int, 3> const& fboundary_lo, int dir) {
         return int( fboundary_lo[dir] == FieldBoundaryType::PEC);
     }
-    
+
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     int is_hi_PEC (amrex::GpuArray<int, 3> const& fboundary_hi, int dir) {
         return int( fboundary_hi[dir] == FieldBoundaryType::PEC);
     }
-    
+
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetTangentialEfield (const int icomp, const amrex::IntVect & dom_lo,
                                 const amrex::IntVect &dom_hi,
@@ -37,7 +37,7 @@ namespace PEC {
             // loop over sides , iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 const int ibndry = dir + iside*AMREX_SPACEDIM;
-                const int bndry_cell = ( (ibndry < AMREX_SPACEDIM) ? 
+                const int bndry_cell = ( (ibndry < AMREX_SPACEDIM) ?
                     (ijk_vec[dir] == dom_lo[dir]) : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
                 const int is_tangent_to_PEC =
                     ( ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(fbndry_lo, dir)
@@ -52,14 +52,14 @@ namespace PEC {
                         ijk_valid[dir] = ( (ibndry < AMREX_SPACEDIM) ?
                             (ijk_vec[dir] + is) : (ijk_vec[dir] - is));
                         // setting the guard cell Efield tangential to PEC boundary
-                        Efield(ijk_guard) = - Efield(ijk_valid);                        
+                        Efield(ijk_guard) = - Efield(ijk_valid);
                     }
                     Efield(ijk_vec) = 0.;
                 }
             }
-        }            
+        }
     }
-    
+
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
@@ -90,13 +90,13 @@ namespace PEC {
                     ijk_valid[dir] = ( (ibndry < AMREX_SPACEDIM) ?
                         (ijk_vec[dir] + is) : (ijk_vec[dir] - is));
                     // setting the guard cell Efield tangential to PEC boundary
-                    Bfield(ijk_guard) = - Bfield(ijk_valid);                        
+                    Bfield(ijk_guard) = - Bfield(ijk_valid);
                 }
                 Bfield(ijk_vec) = 0.;
             }
         }
     }
-    
+
     bool isAnyBoundaryPEC();
     void ApplyPECtoEfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                             const int lev, PatchType patch_type);
