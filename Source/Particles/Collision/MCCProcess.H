@@ -89,6 +89,8 @@ private:
     static
     MCCProcessType parseProcessType(const std::string& process);
 
+    void init();
+
     VectorType<amrex::Real> m_energies;
     amrex::Real* m_energies_data;
     VectorType<amrex::Real> m_sigmas;
