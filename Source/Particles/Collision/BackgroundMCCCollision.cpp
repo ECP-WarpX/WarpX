@@ -52,11 +52,8 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             pp.get(kw_energy.c_str(), energy);
         }
 
-#ifdef AMREX_USE_CUDA
-	MCCProcess *mcc;
-	cudaMallocManaged(&mcc, sizeof(MCCProcess));
-	cudaDeviceSynchronize();
-#endif
+	auto mcc = amrex::The_Managed_Arena()->alloc(sizeof(MCCProcess));
+
         // if the scattering process is ionization get the secondary species
         // only one ionization process is supported, the vector
         // m_ionization_processes is only used to make it simple to calculate
@@ -70,27 +67,13 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             pp.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);
 
-            m_ionization_processes.push_back(
-					     new
-#ifdef AMREX_USE_CUDA
-					     (mcc)
-#endif
-					     MCCProcess(scattering_process, cross_section_file, energy)
-					     );
+            m_ionization_processes.push_back(new (mcc) MCCProcess(scattering_process, cross_section_file, energy));
         }
         else
         {
-            m_scattering_processes.push_back(
-					     new
-#ifdef AMREX_USE_CUDA
-					     (mcc)
-#endif
-					     MCCProcess(scattering_process, cross_section_file, energy)
-            );
+            m_scattering_processes.push_back(new (mcc) MCCProcess(scattering_process, cross_section_file, energy));
         }
-#ifdef AMREX_USE_CUDA
-	cudaDeviceSynchronize();
-#endif
+	amrex::Gpu::synchronize();
     }
 }
 

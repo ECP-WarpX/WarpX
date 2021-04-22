@@ -21,13 +21,17 @@ AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
                        amrex::RandomEngine const& engine )
 {
+  using std::sqrt;
+  using std::cos;
+  using std::sin;
+  
     // generate random unit vector in 3 dimensions
     // https://math.stackexchange.com/questions/44689/how-to-find-a-random-axis-or-unit-vector-in-3d
     amrex::Real theta = amrex::Random(engine) * 2.0 * MathConst::pi;
     z = 2.0 * amrex::Random(engine) - 1.0;
-    amrex::Real xy = std::sqrt(1 - z*z);
-    x = xy * std::cos(theta);
-    y = xy * std::sin(theta);
+    amrex::Real xy = sqrt(1 - z*z);
+    x = xy * cos(theta);
+    y = xy * sin(theta);
 }
 
 
@@ -70,13 +74,15 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
                          amrex::ParticleReal uCOM_y, amrex::ParticleReal uCOM_z,
                          amrex::RandomEngine const& engine )
 {
+  using std::sqrt;
+  
     // transform to center of momentum frame
     ux -= uCOM_x;
     uy -= uCOM_y;
     uz -= uCOM_z;
 
     // istropically scatter the particle
-    amrex::Real mag = std::sqrt(ux*ux + uy*uy + uz*uz);
+    amrex::Real mag = sqrt(ux*ux + uy*uy + uz*uz);
     RandomizeVelocity(ux, uy, uz, mag, engine);
 
     // transform back to lab frame
@@ -174,6 +180,7 @@ public:
     ) const noexcept
     {
         using namespace amrex;
+	using std::sqrt;
 
         // determine if this particle should collide
         if (Random(engine) > m_total_collision_prob) return false;
@@ -186,7 +193,7 @@ public:
         // calculate kinetic energy
         const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
         const ParticleReal E_coll = 0.5 * m_mass * v_coll2 / PhysConst::q_e;
-        const ParticleReal v_coll = std::sqrt(v_coll2);
+        const ParticleReal v_coll = sqrt(v_coll2);
 
         // get collision cross-section
         const Real sigma_E = m_mcc_process.getCrossSection(E_coll);
@@ -252,6 +259,7 @@ public:
         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
+	using std::sqrt;
 
         // get references to the original particle's velocity
         auto& ux = src.m_rdata[PIdx::ux][i_src];
@@ -274,7 +282,7 @@ public:
         amrex::Real E_remaining = E_coll - m_energy_cost;
 
         // each electron gets half the energy (could change this later)
-        amrex::Real vp = std::sqrt(
+        amrex::Real vp = sqrt(
             2.0 / m_mass1 * PhysConst::q_e * E_remaining / 2.0
         );
 

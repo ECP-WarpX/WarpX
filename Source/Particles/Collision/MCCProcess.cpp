@@ -78,8 +78,8 @@ MCCProcess::getCrossSection ( amrex::Real E_coll ) const
 void
 MCCProcess::readCrossSectionFile (
     const std::string cross_section_file,
-    amrex::Gpu::DeviceVector<amrex::Real>& energies,
-    amrex::Gpu::DeviceVector<amrex::Real>& sigmas )
+    amrex::Gpu::ManagedVector<amrex::Real>& energies,
+    amrex::Gpu::ManagedVector<amrex::Real>& sigmas )
 {
     std::ifstream infile(cross_section_file);
     double energy, sigma;

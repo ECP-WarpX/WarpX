@@ -50,8 +50,8 @@ public:
 
     void readCrossSectionFile (
         const std::string cross_section_file,
-        amrex::Gpu::DeviceVector<amrex::Real>& energies,
-        amrex::Gpu::DeviceVector<amrex::Real>& sigmas
+        amrex::Gpu::ManagedVector<amrex::Real>& energies,
+        amrex::Gpu::ManagedVector<amrex::Real>& sigmas
     );
 
     void sanityCheckEnergyGrid ( );
@@ -61,9 +61,9 @@ public:
 
 private:
 
-    amrex::Gpu::DeviceVector<amrex::Real> m_energies;
+    amrex::Gpu::ManagedVector<amrex::Real> m_energies;
     amrex::Real* m_energies_data;
-    amrex::Gpu::DeviceVector<amrex::Real> m_sigmas;
+    amrex::Gpu::ManagedVector<amrex::Real> m_sigmas;
     amrex::Real* m_sigmas_data;
 
     int m_grid_size;
