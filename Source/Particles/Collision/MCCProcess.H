@@ -20,8 +20,9 @@ enum class MCCProcessType {
     IONIZATION,
 };
 
-struct MCCProcess
+class MCCProcess
 {
+public:
     template <typename T>
     using VectorType = amrex::Gpu::ManagedVector<T>;
 
