@@ -68,14 +68,18 @@ struct MCCProcess
      * @param sigmas vector storing cross-section values
      *
      */
-
+    static
     void readCrossSectionFile (
                                const std::string cross_section_file,
                                VectorType<amrex::Real>& energies,
                                VectorType<amrex::Real>& sigmas
                                );
 
-    void sanityCheckEnergyGrid ( );
+    static
+    void sanityCheckEnergyGrid (
+                                const VectorType<amrex::Real>& energies,
+                                amrex::Real dE
+                                );
 
     MCCProcessType type;
     amrex::Real energy_penalty;
