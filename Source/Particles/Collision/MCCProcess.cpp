@@ -49,8 +49,8 @@ MCCProcess::MCCProcess (
 void
 MCCProcess::readCrossSectionFile (
                                   const std::string cross_section_file,
-                                  amrex::Gpu::ManagedVector<amrex::Real>& energies,
-                                  amrex::Gpu::ManagedVector<amrex::Real>& sigmas )
+                                  MCCProcess::VectorType<amrex::Real>& energies,
+                                  MCCProcess::VectorType<amrex::Real>& sigmas )
 {
     std::ifstream infile(cross_section_file);
     double energy, sigma;

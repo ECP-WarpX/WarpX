@@ -19,9 +19,10 @@ enum class MCCProcessType {
     EXCITATION,
 };
 
-class MCCProcess
+struct MCCProcess
 {
-public:
+    template <typename T>
+    using VectorType = amrex::Gpu::ManagedVector<T>;
 
     MCCProcess (
                 const std::string& scattering_process,
@@ -70,8 +71,8 @@ public:
 
     void readCrossSectionFile (
                                const std::string cross_section_file,
-                               amrex::Gpu::ManagedVector<amrex::Real>& energies,
-                               amrex::Gpu::ManagedVector<amrex::Real>& sigmas
+                               VectorType<amrex::Real>& energies,
+                               VectorType<amrex::Real>& sigmas
                                );
 
     void sanityCheckEnergyGrid ( );
@@ -81,9 +82,9 @@ public:
 
 private:
 
-    amrex::Gpu::ManagedVector<amrex::Real> m_energies;
+    VectorType<amrex::Real> m_energies;
     amrex::Real* m_energies_data;
-    amrex::Gpu::ManagedVector<amrex::Real> m_sigmas;
+    VectorType<amrex::Real> m_sigmas;
     amrex::Real* m_sigmas_data;
 
     int m_grid_size;
