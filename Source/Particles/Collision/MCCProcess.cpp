@@ -40,6 +40,18 @@ MCCProcess::MCCProcess (
     init();
 }
 
+void*
+MCCProcess::operator new ( std::size_t count )
+{
+    return amrex::The_Managed_Arena()->alloc(count);
+}
+
+void
+MCCProcess::operator delete ( void* ptr )
+{
+    amrex::The_Managed_Arena()->free(ptr);
+}
+
 void
 MCCProcess::init()
 {

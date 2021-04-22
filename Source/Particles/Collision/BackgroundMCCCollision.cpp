@@ -51,7 +51,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             pp.get(kw_energy.c_str(), energy);
         }
 
-        auto mcc = amrex::The_Managed_Arena()->alloc(sizeof(MCCProcess));
+        auto mcc = new MCCProcess(scattering_process, cross_section_file, energy);
 
         // if the scattering process is ionization get the secondary species
         // only one ionization process is supported, the vector
@@ -65,9 +65,9 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             pp.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);
 
-            m_ionization_processes.push_back(new (mcc) MCCProcess(scattering_process, cross_section_file, energy));
+            m_ionization_processes.push_back(mcc);
         } else {
-            m_scattering_processes.push_back(new (mcc) MCCProcess(scattering_process, cross_section_file, energy));
+            m_scattering_processes.push_back(mcc);
         }
         amrex::Gpu::synchronize();
     }

@@ -38,6 +38,9 @@ struct MCCProcess
                 const amrex::Real energy
                 );
 
+    void* operator new  ( std::size_t count );
+    void operator delete (void* ptr);
+
     /** Get the collision cross-section using a simple linear interpolator. If
      * the energy value is lower (higher) than the given energy range the
      * first (last) cross-section value is used.
