@@ -1035,9 +1035,6 @@ private:
     void ScaleEdges ();
     void ScaleAreas ();
 
-    static amrex::RealArray AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere);
-    void InitEMFieldSphere ();
-
 private:
     // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
