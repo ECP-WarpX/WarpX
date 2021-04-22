@@ -22,6 +22,10 @@ WarpX::InitEB ()
 #endif
 }
 
+/**
+ * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
+ *        An edge of length 0 is fully covered.
+ */
 void
 WarpX::ComputeEdgeLengths () {
 #ifdef AMREX_USE_EB
@@ -34,26 +38,19 @@ WarpX::ComputeEdgeLengths () {
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
         amrex::Box const &box = mfi.validbox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
-            auto const &edge = edge_centroid[idim]->const_array(mfi);
+            auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
-            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge).ixType()),
+            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_cent).ixType()),
                             [=](int i, int j, int k) {
-                if (edge(i, j, k) == amrex::Real(-1.0)) {
+                if (edge_cent(i, j, k) == amrex::Real(-1.0)) {
                     // This edge is all covered
                     edge_lengths_dim(i, j, k) = 0.;
-                } else if (edge(i, j, k) == amrex::Real(1.0)) {
+                } else if (edge_cent(i, j, k) == amrex::Real(1.0)) {
                     // This edge is all open
                     edge_lengths_dim(i, j, k) = 1.;
                 } else {
                     // This edge is cut.
-                    amrex::Real edge_cent = edge(i, j, k); // edge centroid: (-0.5,0.5)
-                    if (edge_cent < amrex::Real(0.0)) {
-                        // The right side is covered.
-                        edge_lengths_dim(i, j, k) = amrex::Real(2.0) * edge_cent + amrex::Real(0.5) + 0.5; // (0, 1)
-                    } else {
-                        // The left side is covered
-                        edge_lengths_dim(i, j, k) = 0.5 - amrex::Real(2.0) * edge_cent - amrex::Real(0.5); // (0, 1)
-                    }
+                    edge_lengths_dim(i, j, k) = 1 - abs(amrex::Real(2.0)*edge_cent(i, j, k));
                 }
             });
         }
@@ -61,7 +58,10 @@ WarpX::ComputeEdgeLengths () {
 #endif
 }
 
-
+/**
+ * \brief Compute the ara of the mesh faces. Here the area is a value in [0, 1].
+ *        An edge of area 0 is fully covered.
+ */
 void
 WarpX::ComputeFaceAreas () {
 #ifdef AMREX_USE_EB
@@ -85,10 +85,13 @@ WarpX::ComputeFaceAreas () {
 #endif
 }
 
+/**
+ * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
+ */
 void
 WarpX::ScaleEdges () {
 #ifdef AMREX_USE_EB
-    auto const& cell_size = CellSize(maxLevel());
+    auto const &cell_size = CellSize(maxLevel());
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
@@ -107,7 +110,9 @@ WarpX::ScaleEdges () {
 #endif
 }
 
-
+/**
+ * \brief Scale the edges areas by the mesh width to obtain the real areas.
+ */
 void
 WarpX::ScaleAreas() {
 #ifdef AMREX_USE_EB
