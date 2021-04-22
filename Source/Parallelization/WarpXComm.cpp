@@ -492,13 +492,13 @@ WarpX::FillBoundary_nowait(
 {
     // Loop through levels
     for (int lev = 0; lev <= finest_level; ++lev) {
-        // Extract periodicity
-        const auto& period = (patch_type==PatchType::coarse)?
-            Geom(lev-1).periodicity() :  Geom(lev).periodicity();
-        // Loop over vector components
-        for (int idim=0; idim < 3; ++idim) {
-            // Check that MultiFab exists at this level
-            if ( patch_type==PatchType::fine || lev > 0 ) {
+        // Check that MultiFab exists at this level
+        if ( patch_type==PatchType::fine || lev > 0 ) {
+            // Extract periodicity
+            const auto& period = (patch_type==PatchType::coarse)?
+                Geom(lev-1).periodicity() :  Geom(lev).periodicity();
+            // Loop over vector components
+            for (int idim=0; idim < 3; ++idim) {
                 // Launch asynchronous MPI communication
                 if ( safe_guard_cells ){
                     vector_mf[lev][idim]->FillBoundary_nowait(period);
@@ -520,10 +520,10 @@ WarpX::FillBoundary_finish(
 {
     // Loop through levels
     for (int lev = 0; lev <= finest_level; ++lev) {
-        // Loop over vector components
-        for (int idim=0; idim < 3; ++idim) {
-            // Check that MultiFab exists at this level
-            if ( patch_type==PatchType::fine || lev > 0 ) {
+        // Check that MultiFab exists at this level
+        if ( patch_type==PatchType::fine || lev > 0 ) {
+            // Loop over vector components
+            for (int idim=0; idim < 3; ++idim) {
                 // Finalize asynchronous MPI communication
                 vector_mf[lev][idim]->FillBoundary_finish();
             }
