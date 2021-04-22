@@ -88,7 +88,6 @@ MCCProcess::parseProcessType(const std::string& scattering_process)
     }
 }
 
-
 void
 MCCProcess::readCrossSectionFile (
                                   const std::string cross_section_file,

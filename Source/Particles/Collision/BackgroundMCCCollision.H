@@ -12,13 +12,16 @@
 #include "MCCProcess.H"
 #include <AMReX_ParmParse.H>
 
-struct BackgroundMCCCollision
+class BackgroundMCCCollision
     : public CollisionBase
 {
+public:
     template <typename T>
     using VectorType = amrex::Gpu::ManagedVector<T>;
 
     BackgroundMCCCollision (std::string collision_name);
+
+    void addProcess(MCCProcess* process);
 
     amrex::Real get_nu_max ( VectorType<MCCProcess*> const& mcc_processes );
 
