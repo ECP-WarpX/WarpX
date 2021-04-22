@@ -12,6 +12,7 @@
 #include "ParticleEnergy.H"
 #include "ParticleExtrema.H"
 #include "FieldEnergy.H"
+#include "FieldMomentum.H"
 #include "FieldMaximum.H"
 #include "RhoMaximum.H"
 #include "ParticleNumber.H"
@@ -45,6 +46,7 @@ MultiReducedDiags::MultiReducedDiags ()
         std::map<std::string, std::function<std::unique_ptr<ReducedDiags>(CS)>>{
             {"ParticleEnergy",        [](CS s){return std::make_unique<ParticleEnergy>(s);}},
             {"FieldEnergy",           [](CS s){return std::make_unique<FieldEnergy>(s);}},
+            {"FieldMomentum",         [](CS s){return std::make_unique<FieldMomentum>(s);}},
             {"FieldMaximum",          [](CS s){return std::make_unique<FieldMaximum>(s);}},
             {"FieldReduction",        [](CS s){return std::make_unique<FieldReduction>(s);}},
             {"RhoMaximum",            [](CS s){return std::make_unique<RhoMaximum>(s);}},
