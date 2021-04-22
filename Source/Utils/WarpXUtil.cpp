@@ -371,7 +371,26 @@ void ReadBCParams ()
     amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
     ParmParse pp_geometry("geometry");
+    ParmParse pp_warpx("warpx");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
+        // set default field and particle boundary appropriately
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (geom_periodicity[idim] == 1) {
+                // set boundary to periodic based on user-defined periodicity
+                WarpX::field_boundary_lo[idim] = FieldBoundaryType::Periodic;
+                WarpX::field_boundary_hi[idim] = FieldBoundaryType::Periodic;
+                WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
+                WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
+            } else {
+                // if non-periodic and do_pml=0, then set default boundary to PEC
+                int pml_input = 1;
+                pp_warpx.query("do_pml", pml_input);
+                if (pml_input == 0) {
+                    WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
+                    WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
+                }
+            }
+        }
         return;
         // When all boundary conditions are supported, the abort statement below will be introduced
         //amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");

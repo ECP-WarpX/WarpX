@@ -1142,6 +1142,7 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
         const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
         const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+        const auto& pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
 
         // Always synchronize nodal points
         const auto& period = Geom(lev).periodicity();
@@ -1154,5 +1155,74 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
         if (pml_F) {
             pml_F->OverrideSync(period);
         }
+        if (pml_G) {
+            pml_G->OverrideSync(period);
+        }
+    }
+}
+
+void WarpX::NodalSyncE ()
+{
+    if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
+
+    for (int lev = 0; lev <= finest_level; lev++) {
+        NodalSyncE(lev);
+    }
+}
+
+void WarpX::NodalSyncE (int lev)
+{
+    NodalSyncE(lev, PatchType::fine);
+    if (lev > 0) NodalSyncE(lev, PatchType::coarse);
+}
+
+void WarpX::NodalSyncE (int lev, PatchType patch_type)
+{
+    if (patch_type == PatchType::fine)
+    {
+        const auto& period = Geom(lev).periodicity();
+        Efield_fp[lev][0]->OverrideSync(period);
+        Efield_fp[lev][1]->OverrideSync(period);
+        Efield_fp[lev][2]->OverrideSync(period);
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        const auto& cperiod = Geom(lev-1).periodicity();
+        Efield_cp[lev][0]->OverrideSync(cperiod);
+        Efield_cp[lev][1]->OverrideSync(cperiod);
+        Efield_cp[lev][2]->OverrideSync(cperiod);
+    }
+}
+
+void WarpX::NodalSyncB ()
+{
+    if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
+
+    for (int lev = 0; lev <= finest_level; lev++) {
+        NodalSyncB(lev);
+    }
+}
+
+void WarpX::NodalSyncB (int lev)
+{
+    NodalSyncB(lev, PatchType::fine);
+    if (lev > 0) NodalSyncB(lev, PatchType::coarse);
+}
+
+void WarpX::NodalSyncB (int lev, PatchType patch_type)
+{
+    if (patch_type == PatchType::fine)
+    {
+        const auto& period = Geom(lev).periodicity();
+        Bfield_fp[lev][0]->OverrideSync(period);
+        Bfield_fp[lev][1]->OverrideSync(period);
+        Bfield_fp[lev][2]->OverrideSync(period);
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        const auto& cperiod = Geom(lev-1).periodicity();
+        Bfield_cp[lev][0]->OverrideSync(cperiod);
+        Bfield_cp[lev][1]->OverrideSync(cperiod);
+        Bfield_cp[lev][2]->OverrideSync(cperiod);
     }
 }

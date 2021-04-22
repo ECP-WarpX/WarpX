@@ -153,8 +153,8 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
-    // div E cleaning
-    static int do_dive_cleaning;
+    // div(E) cleaning
+    static bool do_dive_cleaning;
 
     // Interpolation order
     static long nox;
@@ -443,8 +443,8 @@ public:
     void doQEDEvents (int lev);
 #endif
 
-    void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
-    void PushParticlesandDepose (         amrex::Real cur_time);
+    void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false);
+    void PushParticlesandDepose (         amrex::Real cur_time, bool skip_current=false);
 
     // This function does aux(lev) = fp(lev) + I(aux(lev-1)-cp(lev)).
     // Caller must make sure fp and cp have ghost cells filled.
@@ -711,6 +711,36 @@ private:
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
+    /**
+     * \brief Synchronize the nodal points of the electric field MultiFabs
+     */
+    void NodalSyncE ();
+
+    /**
+     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level
+     */
+    void NodalSyncE (int lev);
+
+    /**
+     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level and patch
+     */
+    void NodalSyncE (int lev, PatchType patch_type);
+
+    /**
+     * \brief Synchronize the nodal points of the magnetic field MultiFabs
+     */
+    void NodalSyncB ();
+
+    /**
+     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level
+     */
+    void NodalSyncB (int lev);
+
+    /**
+     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level and patch
+     */
+    void NodalSyncB (int lev, PatchType patch_type);
+
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
 
@@ -766,6 +796,18 @@ private:
     void InitDiagnostics ();
 
     void InitNCICorrector ();
+
+    /**
+     * \brief Check that the number of guard cells is smaller than the number of valid cells,
+     * for all available MultiFabs, and abort otherwise.
+     */
+    void CheckGuardCells();
+
+    /**
+     * \brief Check that the number of guard cells is smaller than the number of valid cells,
+     * for a given MultiFab, and abort otherwise.
+     */
+    void CheckGuardCells(amrex::MultiFab const& mf);
 
     /** Check the requested resources and write performance hints */
     void PerformanceHints ();
@@ -904,6 +946,8 @@ private:
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
+    bool do_pml_dive_cleaning; // default set in WarpX.cpp
+    bool do_pml_divb_cleaning; // default set in WarpX.cpp
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
     amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
     amrex::Vector<std::unique_ptr<PML> > pml;

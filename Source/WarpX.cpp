@@ -75,7 +75,7 @@ long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
 int WarpX::maxwell_solver_id;
 long WarpX::load_balance_costs_update_algo;
-int WarpX::do_dive_cleaning = 0;
+bool WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
@@ -579,19 +579,92 @@ WarpX::ReadParameters ()
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
+
+        // div(E) cleaning not implemented for PSATD solver
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_dive_cleaning == 0,
+                "warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
+        }
+
+        // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
+        // false for FDTD solver, true for PSATD solver.
+        if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        {
+            do_pml_dive_cleaning = 0;
+            do_pml_divb_cleaning = 0;
+        }
+        else
+        {
+            do_pml_dive_cleaning = 1;
+            do_pml_divb_cleaning = 1;
+        }
+
+        // If WarpX::do_dive_cleaning = 1, set also WarpX::do_pml_dive_cleaning = 1
+        // (possibly overwritten by users in the input file, see query below)
+        if (do_dive_cleaning)
+        {
+            do_pml_dive_cleaning = 1;
+        }
+
+        // Query input parameters to use div(E) and div(B) cleaning in PMLs
+        pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
+        pp_warpx.query("do_pml_divb_cleaning", do_pml_divb_cleaning);
+
+        // div(B) cleaning in PMLs not implemented for FDTD solver
+        if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_pml_divb_cleaning == 0,
+                "warpx.do_pml_divb_cleaning = 1 not implemented for FDTD solver");
+        }
+
+        // Divergence cleaning in PMLs for PSATD solver implemented only
+        // for both div(E) and div(B) cleaning
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        {
+            if (do_pml_dive_cleaning != do_pml_divb_cleaning)
+            {
+                std::stringstream ss;
+                ss << "\nwarpx.do_pml_dive_cleaning = "
+                   << do_pml_dive_cleaning
+                   << " and warpx.do_pml_divb_cleaning = "
+                   << do_pml_divb_cleaning
+                   << ":\nthis case is not implemented yet,"
+                   << " please set both parameters to the same value";
+                amrex::Abort(ss.str());
+            }
+        }
+
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
             "PML are not implemented in RZ geometry ; please set `warpx.do_pml=0`");
 #endif
-
-        Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,1);
+        // setting default to 0
+        Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,0);
+        // Switching pml lo to 1 when do_pml = 1 and if domain is non-periodic
+        // Note to remove this code when new BC API is fully functional
+        if (do_pml == 1) {
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Lo[idim] = 1;
+            }
+        }
         pp_warpx.queryarr("do_pml_Lo", parse_do_pml_Lo);
         do_pml_Lo[0] = parse_do_pml_Lo[0];
         do_pml_Lo[1] = parse_do_pml_Lo[1];
 #if (AMREX_SPACEDIM == 3)
         do_pml_Lo[2] = parse_do_pml_Lo[2];
 #endif
-        Vector<int> parse_do_pml_Hi(AMREX_SPACEDIM,1);
+        // setting default to 0
+        Vector<int> parse_do_pml_Hi(AMREX_SPACEDIM,0);
+        // Switching pml hi to 1 when do_pml = 1 and if domain is non-periodic
+        // Note to remove this code when new BC API is fully functional
+        if (do_pml == 1) {
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Hi[idim] = 1;
+            }
+        }
         pp_warpx.queryarr("do_pml_Hi", parse_do_pml_Hi);
         do_pml_Hi[0] = parse_do_pml_Hi[0];
         do_pml_Hi[1] = parse_do_pml_Hi[1];
@@ -1290,6 +1363,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_fp"));
     }
+
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
@@ -1424,10 +1498,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)) {
             rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_cp"));
         }
+
         if (do_dive_cleaning)
         {
             F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_cp"));
         }
+
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
             // Allocate and initialize the spectral solver

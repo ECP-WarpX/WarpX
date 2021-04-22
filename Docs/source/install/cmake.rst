@@ -60,7 +60,7 @@ You can inspect and modify build options after running ``cmake -S . -B build`` w
 
    ccmake build
 
-or by adding arguments with ``-D<OPTION>=<VALUE>`` to the CMake call, e.g.:
+or by adding arguments with ``-D<OPTION>=<VALUE>`` to the first CMake call, e.g.:
 
 .. code-block:: bash
 
@@ -74,6 +74,7 @@ CMake Option                  Default & Values                             Descr
 ============================= ============================================ =========================================================
 ``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
 ``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
+``CMAKE_VERBOSE_MAKEFILES``   ON/**OFF**                                   Print all compiler commands to the terminal during build
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
@@ -102,7 +103,7 @@ CMake Option                  Default & Values                               Des
 ============================= ============================================== ===========================================================
 ``WarpX_amrex_src``           *None*                                         Path to AMReX source directory (preferred if set)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git``   Repository URI to pull and build AMReX from
-``WarpX_amrex_branch``        ``development``                                Repository branch for ``WarpX_amrex_repo``
+``WarpX_amrex_branch``        *we set and maintain a compatible commit*      Repository branch for ``WarpX_amrex_repo``
 ``WarpX_amrex_internal``      **ON**/OFF                                     Needs a pre-installed AMReX library if set to ``OFF``
 ``WarpX_openpmd_src``         *None*                                         Path to openPMD-api source directory (preferred if set)
 ``WarpX_openpmd_repo``        ``https://github.com/openPMD/openPMD-api.git`` Repository URI to pull and build openPMD-api from
@@ -110,7 +111,7 @@ CMake Option                  Default & Values                               Des
 ``WarpX_openpmd_internal``    **ON**/OFF                                     Needs a pre-installed openPMD-api library if set to ``OFF``
 ``WarpX_picsar_src``          *None*                                         Path to PICSAR source directory (preferred if set)
 ``WarpX_picsar_repo``         ``https://github.com/ECP-WarpX/picsar.git``    Repository URI to pull and build PICSAR from
-``WarpX_picsar_branch``       ``development``                                Repository branch for ``WarpX_picsar_repo``
+``WarpX_picsar_branch``       *we set and maintain a compatible commit*      Repository branch for ``WarpX_picsar_repo``
 ``WarpX_picsar_internal``     **ON**/OFF                                     Needs a pre-installed PICSAR library if set to ``OFF``
 ============================= ============================================== ===========================================================
 

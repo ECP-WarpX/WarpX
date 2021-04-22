@@ -103,7 +103,7 @@ if(WarpX_QED)
     set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-    set(WarpX_picsar_branch "348830b444c65ca305aa3f89cd72fef7c65abd7d"
+    set(WarpX_picsar_branch "3a948c4eb74b5355727b27eb0a7b2a215be69610"
         CACHE STRING
         "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 

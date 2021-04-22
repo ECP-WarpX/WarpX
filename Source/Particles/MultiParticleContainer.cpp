@@ -27,6 +27,15 @@
 
 using namespace amrex;
 
+namespace
+{
+    /** A little collection to transport six Array4 that point to the EM fields */
+    struct MyFieldList
+    {
+        Array4< amrex::Real const > const Ex, Ey, Ez, Bx, By, Bz;
+    };
+}
+
 MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 {
 
@@ -319,16 +328,18 @@ MultiParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                 const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                Real t, Real dt, DtType a_dt_type)
+                                Real t, Real dt, DtType a_dt_type, bool skip_deposition)
 {
-    jx.setVal(0.0);
-    jy.setVal(0.0);
-    jz.setVal(0.0);
-    if (cjx) cjx->setVal(0.0);
-    if (cjy) cjy->setVal(0.0);
-    if (cjz) cjz->setVal(0.0);
-    if (rho) rho->setVal(0.0);
-    if (crho) crho->setVal(0.0);
+    if (! skip_deposition) {
+        jx.setVal(0.0);
+        jy.setVal(0.0);
+        jz.setVal(0.0);
+        if (cjx) cjx->setVal(0.0);
+        if (cjy) cjy->setVal(0.0);
+        if (cjz) cjz->setVal(0.0);
+        if (rho) rho->setVal(0.0);
+        if (crho) crho->setVal(0.0);
+    }
     for (auto& pc : allcontainers) {
         pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type);
@@ -1138,15 +1149,9 @@ MultiParticleContainer::doQEDSchwinger ()
         if (!box.intersects(global_schwinger_box)) {continue;}
         box &= global_schwinger_box;
 
-        const auto& arrEx = Ex[mfi].array();
-        const auto& arrEy = Ey[mfi].array();
-        const auto& arrEz = Ez[mfi].array();
-        const auto& arrBx = Bx[mfi].array();
-        const auto& arrBy = By[mfi].array();
-        const auto& arrBz = Bz[mfi].array();
-
-        const Array4<const amrex::Real> array_EMFAB [] = {arrEx,arrEy,arrEz,
-                                           arrBx,arrBy,arrBz};
+        const MyFieldList fieldsEB = {
+            Ex[mfi].array(), Ey[mfi].array(), Ez[mfi].array(),
+            Bx[mfi].array(), By[mfi].array(), Bz[mfi].array()};
 
         auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
         auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);
@@ -1167,9 +1172,9 @@ MultiParticleContainer::doQEDSchwinger ()
                             ParticleStringNames::to_index.find("w")->second};
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
-                              dst_pos_tile, box, array_EMFAB, np_ele_dst,
+                               dst_pos_tile, box, fieldsEB, np_ele_dst,
                                np_pos_dst,Filter, CreateEle, CreatePos,
-                                Transform);
+                               Transform);
 
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);

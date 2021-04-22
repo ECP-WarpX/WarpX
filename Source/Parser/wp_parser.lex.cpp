@@ -779,6 +779,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #include "wp_parser_y.h"
 #include "wp_parser.tab.h"
+#define YY_NO_INPUT 1
  /* Tokens NUMBER, SYMBOL, F1, POW, F2, etc. are defined in wp_parser.y. */
  /* Types WP_SQRT, WP_SQRT, etc. are defined in wp_parser_y.h. */
  /* Used leater to define NUMBER */

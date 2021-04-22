@@ -21,7 +21,9 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
                          const amrex::DistributionMapping& dm,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
-                         const amrex::Real dt);
+                         const amrex::Real dt,
+                         const bool dive_cleaning,
+                         const bool divb_cleaning);
 
         void InitializeSpectralCoefficients(
             const SpectralKSpace& spectral_kspace,
@@ -69,6 +71,8 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;
         amrex::Real m_dt;
+        bool m_dive_cleaning;
+        bool m_divb_cleaning;
 };
 
 #endif // WARPX_USE_PSATD
