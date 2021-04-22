@@ -37,7 +37,33 @@ public:
      *
      */
     AMREX_GPU_HOST_DEVICE
-    amrex::Real getCrossSection (amrex::Real E_coll) const;
+    amrex::Real getCrossSection (amrex::Real E_coll) const
+    {
+      if (E_coll < m_energy_lo)
+	{
+	  return m_sigma_lo;
+	}
+      else if (E_coll > m_energy_hi)
+	{
+	  return m_sigma_hi;
+	}
+      else
+	{
+	  using std::floor;
+	  using std::ceil;
+	  // calculate index of bounding energy pairs
+	  amrex::Real temp = (E_coll - m_energy_lo) / m_dE;
+	  int idx_1 = floor(temp);
+	  int idx_2 = ceil(temp);
+
+	  // linearly interpolate to the given energy value
+	  temp -= idx_1;
+	  return (
+		  m_sigmas_data[idx_1] + (m_sigmas_data[idx_2] - m_sigmas_data[idx_1]) * temp
+		  );
+	}
+    }
+
 
     /** Read the given cross-section data file to memory.
      *
