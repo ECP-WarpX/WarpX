@@ -39,15 +39,15 @@ public:
     /** Perform MCC ionization interactions
      *
      * @param pti particle iterator
-     * @param species1/2 reference to species container used to inject new
-              particles
+     * @param species1/2 reference to species container used to inject
+     * new particles
      *
      */
     void doBackgroundIonization (
-        int lev,
-        WarpXParticleContainer& species1,
-        WarpXParticleContainer& species2
-    );
+                                 int lev,
+                                 WarpXParticleContainer& species1,
+                                 WarpXParticleContainer& species2
+                                 );
 
 private:
 
@@ -66,7 +66,6 @@ private:
     amrex::Real m_total_collision_prob_ioniz;
     amrex::Real m_nu_max;
     amrex::Real m_nu_max_ioniz;
-
 };
 
 #endif // WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_

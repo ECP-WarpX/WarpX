@@ -12,11 +12,11 @@
 #include <AMReX_GpuContainers.H>
 
 enum class MCCProcessType {
-  INVALID,
-  ELASTIC,
-  BACK,
-  CHARGE_EXCHANGE,
-  EXCITATION,
+    INVALID,
+    ELASTIC,
+    BACK,
+    CHARGE_EXCHANGE,
+    EXCITATION,
 };
 
 class MCCProcess
@@ -24,10 +24,10 @@ class MCCProcess
 public:
 
     MCCProcess (
-        const std::string& scattering_process,
-        const std::string& cross_section_file,
-        const amrex::Real energy
-    );
+                const std::string& scattering_process,
+                const std::string& cross_section_file,
+                const amrex::Real energy
+                );
 
     /** Get the collision cross-section using a simple linear interpolator. If
      * the energy value is lower (higher) than the given energy range the
@@ -39,31 +39,25 @@ public:
     AMREX_GPU_HOST_DEVICE
     amrex::Real getCrossSection (amrex::Real E_coll) const
     {
-      if (E_coll < m_energy_lo)
-	{
-	  return m_sigma_lo;
-	}
-      else if (E_coll > m_energy_hi)
-	{
-	  return m_sigma_hi;
-	}
-      else
-	{
-	  using std::floor;
-	  using std::ceil;
-	  // calculate index of bounding energy pairs
-	  amrex::Real temp = (E_coll - m_energy_lo) / m_dE;
-	  int idx_1 = floor(temp);
-	  int idx_2 = ceil(temp);
+        if (E_coll < m_energy_lo) {
+            return m_sigma_lo;
+        } else if (E_coll > m_energy_hi) {
+            return m_sigma_hi;
+        } else {
+            using std::floor;
+            using std::ceil;
+            // calculate index of bounding energy pairs
+            amrex::Real temp = (E_coll - m_energy_lo) / m_dE;
+            int idx_1 = floor(temp);
+            int idx_2 = ceil(temp);
 
-	  // linearly interpolate to the given energy value
-	  temp -= idx_1;
-	  return (
-		  m_sigmas_data[idx_1] + (m_sigmas_data[idx_2] - m_sigmas_data[idx_1]) * temp
-		  );
-	}
+            // linearly interpolate to the given energy value
+            temp -= idx_1;
+            return (
+                    m_sigmas_data[idx_1] + (m_sigmas_data[idx_2] - m_sigmas_data[idx_1]) * temp
+                    );
+        }
     }
-
 
     /** Read the given cross-section data file to memory.
      *
@@ -75,10 +69,10 @@ public:
      */
 
     void readCrossSectionFile (
-        const std::string cross_section_file,
-        amrex::Gpu::ManagedVector<amrex::Real>& energies,
-        amrex::Gpu::ManagedVector<amrex::Real>& sigmas
-    );
+                               const std::string cross_section_file,
+                               amrex::Gpu::ManagedVector<amrex::Real>& energies,
+                               amrex::Gpu::ManagedVector<amrex::Real>& sigmas
+                               );
 
     void sanityCheckEnergyGrid ( );
 

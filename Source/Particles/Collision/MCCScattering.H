@@ -24,7 +24,7 @@ void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
   using std::sqrt;
   using std::cos;
   using std::sin;
-  
+
     // generate random unit vector in 3 dimensions
     // https://math.stackexchange.com/questions/44689/how-to-find-a-random-axis-or-unit-vector-in-3d
     amrex::Real theta = amrex::Random(engine) * 2.0 * MathConst::pi;
@@ -75,7 +75,7 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
                          amrex::RandomEngine const& engine )
 {
   using std::sqrt;
-  
+
     // transform to center of momentum frame
     ux -= uCOM_x;
     uy -= uCOM_y;
@@ -180,7 +180,7 @@ public:
     ) const noexcept
     {
         using namespace amrex;
-	using std::sqrt;
+    using std::sqrt;
 
         // determine if this particle should collide
         if (Random(engine) > m_total_collision_prob) return false;
@@ -259,7 +259,7 @@ public:
         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
-	using std::sqrt;
+    using std::sqrt;
 
         // get references to the original particle's velocity
         auto& ux = src.m_rdata[PIdx::ux][i_src];
