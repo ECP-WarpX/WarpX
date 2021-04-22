@@ -79,6 +79,8 @@ MCCProcess::parseProcessType(const std::string& scattering_process)
         return MCCProcessType::BACK;
     } else if (scattering_process == "charge_exchange") {
         return MCCProcessType::CHARGE_EXCHANGE;
+    } else if (scattering_process == "ionization") {
+        return MCCProcessType::IONIZATION;
     } else if (scattering_process.find("excitation") != std::string::npos) {
         return MCCProcessType::EXCITATION;
     } else {

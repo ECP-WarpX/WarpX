@@ -17,6 +17,7 @@ enum class MCCProcessType {
     BACK,
     CHARGE_EXCHANGE,
     EXCITATION,
+    IONIZATION,
 };
 
 struct MCCProcess
