@@ -281,25 +281,25 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   // the appropriate scattering function
                                   if (col_select > nu_i) continue;
 
-                                  if (scattering_process.type == MCCProcessType::ELASTIC) {
+                                  if (scattering_process.m_type == MCCProcessType::ELASTIC) {
                                       ElasticScattering(
                                                         ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z, engine
                                                         );
                                   }
-                                  else if (scattering_process.type == MCCProcessType::BACK) {
+                                  else if (scattering_process.m_type == MCCProcessType::BACK) {
                                       BackScattering(
                                                      ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z
                                                      );
                                   }
-                                  else if (scattering_process.type == MCCProcessType::CHARGE_EXCHANGE) {
+                                  else if (scattering_process.m_type == MCCProcessType::CHARGE_EXCHANGE) {
                                       ChargeExchange(ux[ip], uy[ip], uz[ip], ua_x, ua_y, ua_z);
                                   }
-                                  else if (scattering_process.type == MCCProcessType::EXCITATION)
+                                  else if (scattering_process.m_type == MCCProcessType::EXCITATION)
                                       {
                                           // get the new velocity magnitude
                                           amrex::Real vp = sqrt(
                                                                 2.0 / mass1 * PhysConst::q_e
-                                                                * (E_coll - scattering_process.energy_penalty)
+                                                                * (E_coll - scattering_process.m_energy_penalty)
                                                                 );
                                           RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
                                       }
@@ -349,7 +349,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         const auto np_ion = ion_tile.numParticles();
 
         auto Transform = ImpactIonizationTransformFunc(
-                                                       m_ionization_processes[0]->energy_penalty, m_mass1, vel_std
+                                                       m_ionization_processes[0]->m_energy_penalty, m_mass1, vel_std
                                                        );
 
         const auto num_added = filterCopyTransformParticles<1>(

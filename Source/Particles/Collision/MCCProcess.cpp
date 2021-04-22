@@ -11,7 +11,7 @@ MCCProcess::MCCProcess (
                         const std::string& scattering_process,
                         const std::string& cross_section_file,
                         const amrex::Real energy )
-    : type(parseProcessType(scattering_process))
+    : m_type(parseProcessType(scattering_process))
 {
     amrex::Print() << "Reading file " << cross_section_file << " for "
                    << scattering_process << " scattering cross-sections.\n";
@@ -29,7 +29,7 @@ MCCProcess::MCCProcess (
     m_sigma_hi = m_sigmas[m_grid_size-1];
     m_dE = m_energies[1] - m_energies[0];
 
-    energy_penalty = energy;
+    m_energy_penalty = energy;
 
     // sanity check cross-section energy grid
     sanityCheckEnergyGrid(m_energies, m_dE);

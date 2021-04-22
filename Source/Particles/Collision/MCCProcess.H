@@ -81,8 +81,8 @@ struct MCCProcess
                                 amrex::Real dE
                                 );
 
-    MCCProcessType type;
-    amrex::Real energy_penalty;
+    MCCProcessType m_type;
+    amrex::Real m_energy_penalty;
 
 private:
 
