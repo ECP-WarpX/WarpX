@@ -11,21 +11,10 @@ MCCProcess::MCCProcess (
                         const std::string& scattering_process,
                         const std::string& cross_section_file,
                         const amrex::Real energy )
+    : type(parseProcessType(scattering_process))
 {
     amrex::Print() << "Reading file " << cross_section_file << " for "
                    << scattering_process << " scattering cross-sections.\n";
-
-    if (scattering_process == "elastic") {
-        type = MCCProcessType::ELASTIC;
-    } else if (scattering_process == "back") {
-        type = MCCProcessType::BACK;
-    } else if (scattering_process == "charge_exchange") {
-        type = MCCProcessType::CHARGE_EXCHANGE;
-    } else if (scattering_process.find("excitation") != std::string::npos) {
-        type = MCCProcessType::EXCITATION;
-    } else {
-        type = MCCProcessType::INVALID;
-    }
 
     // read the cross-section data file into memory
     readCrossSectionFile(cross_section_file, m_energies, m_sigmas);
@@ -45,6 +34,23 @@ MCCProcess::MCCProcess (
     // sanity check cross-section energy grid
     sanityCheckEnergyGrid(m_energies, m_dE);
 }
+
+MCCProcessType
+MCCProcess::parseProcessType(const std::string& scattering_process)
+{
+    if (scattering_process == "elastic") {
+        return MCCProcessType::ELASTIC;
+    } else if (scattering_process == "back") {
+        return MCCProcessType::BACK;
+    } else if (scattering_process == "charge_exchange") {
+        return MCCProcessType::CHARGE_EXCHANGE;
+    } else if (scattering_process.find("excitation") != std::string::npos) {
+        return MCCProcessType::EXCITATION;
+    } else {
+        return MCCProcessType::INVALID;
+    }
+}
+
 
 void
 MCCProcess::readCrossSectionFile (
