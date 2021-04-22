@@ -30,6 +30,14 @@ struct MCCProcess
                 const amrex::Real energy
                 );
 
+    template <typename InputVector>
+    MCCProcess (
+                const std::string& scattering_process,
+                const InputVector&& energies,
+                const InputVector&& sigmas,
+                const amrex::Real energy
+                );
+
     /** Get the collision cross-section using a simple linear interpolator. If
      * the energy value is lower (higher) than the given energy range the
      * first (last) cross-section value is used.

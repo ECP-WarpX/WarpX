@@ -23,6 +23,23 @@ MCCProcess::MCCProcess (
     init();
 }
 
+template <typename InputVector>
+MCCProcess::MCCProcess (
+                        const std::string& scattering_process,
+                        const InputVector&& energies,
+                        const InputVector&& sigmas,
+                        const amrex::Real energy )
+    : m_type(parseProcessType(scattering_process))
+    , m_energy_penalty(energy)
+{
+    using std::begin;
+    using std::end;
+    m_energies.insert(m_energies.begin(), begin(energies), end(energies));
+    m_sigmas  .insert(m_sigmas.begin(),   begin(sigmas),   end(sigmas));
+
+    init();
+}
+
 void
 MCCProcess::init()
 {
