@@ -74,8 +74,7 @@ for i in range(ncells[0]):
 
 
 # Open the right plot file
-filename = 'diags/diag00208/'
-
+filename = sys.argv[1]
 ds = yt.load(filename)
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 
