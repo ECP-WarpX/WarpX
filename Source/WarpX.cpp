@@ -229,10 +229,8 @@ WarpX::WarpX ()
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
 
-#ifdef AMREX_USE_EB
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
-#endif
 
     current_store.resize(nlevs_max);
 
