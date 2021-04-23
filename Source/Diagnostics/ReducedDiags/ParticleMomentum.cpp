@@ -126,7 +126,9 @@ void ParticleMomentum::ComputeDiags (int step)
         const auto & myspc = mypc.GetParticleContainer(i_s);
 
         // Get mass
-        const amrex::Real m = myspc.getMass();
+        // (photons must be treated as a special case: they have zero mass,
+        // but ux, uy, uz are calculated assuming a mass equal to the electron mass)
+        const amrex::Real m = (myspc.AmIA<PhysicalSpecies::photon>()) ? PhysConst::m_e : myspc.getMass();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
@@ -136,51 +138,24 @@ void ParticleMomentum::ComputeDiags (int step)
         amrex::Real Py = 0.0_rt;
         amrex::Real Pz = 0.0_rt;
 
-        if(myspc.AmIA<PhysicalSpecies::photon>())
+        Px = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
-            // Photons have zero mass, but ux, uy and uz are calculated
-            // assuming a mass equal to the electron mass.
-            constexpr amrex::Real me = PhysConst::m_e;
-            Px = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-            {
-                const amrex::Real w  = p.rdata(PIdx::w);
-                const amrex::Real ux = p.rdata(PIdx::ux);
-                return ux * me * w;
-            });
-            Py = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-            {
-                const amrex::Real w  = p.rdata(PIdx::w);
-                const amrex::Real uy = p.rdata(PIdx::uy);
-                return uy * me * w;
-            });
-            Pz = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-            {
-                const amrex::Real w  = p.rdata(PIdx::w);
-                const amrex::Real uz = p.rdata(PIdx::uz);
-                return uz * me * w;
-            });
-        }
-        else // particles other than photons
+            const amrex::Real w  = p.rdata(PIdx::w);
+            const amrex::Real ux = p.rdata(PIdx::ux);
+            return ux * m * w;
+        });
+        Py = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
-            Px = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-            {
-                const amrex::Real w  = p.rdata(PIdx::w);
-                const amrex::Real ux = p.rdata(PIdx::ux);
-                return ux * m * w;
-            });
-            Py = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-            {
-                const amrex::Real w  = p.rdata(PIdx::w);
-                const amrex::Real uy = p.rdata(PIdx::uy);
-                return uy * m * w;
-            });
-            Pz = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-            {
-                const amrex::Real w  = p.rdata(PIdx::w);
-                const amrex::Real uz = p.rdata(PIdx::uz);
-                return uz * m * w;
-            });
-        }
+            const amrex::Real w  = p.rdata(PIdx::w);
+            const amrex::Real uy = p.rdata(PIdx::uy);
+            return uy * m * w;
+        });
+        Pz = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        {
+            const amrex::Real w  = p.rdata(PIdx::w);
+            const amrex::Real uz = p.rdata(PIdx::uz);
+            return uz * m * w;
+        });
 
         // Use amrex::ReduceSum to compute the sum of the weights of all particles held by
         // the current MPI rank for this species (loop over all boxes held by this MPI rank)
