@@ -407,6 +407,8 @@ Particle initialization
 
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
+    The number of macro-particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are then immediately moved to a refined path.
+
     The options are:
 
     * ``NUniformPerCell``: injection with a fixed number of evenly-spaced particles per cell.
@@ -459,6 +461,12 @@ Particle initialization
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
     number of particles per theta is at least two times the number of azimuthal modes requested.
     (It is recommended to do a convergence scan of the number of particles per theta)
+
+* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
+    Split particles of the species when crossing the boundary from a lower
+    resolution domain to a higher resolution domain.
+    
+    Currently implemented on CPU only.
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
@@ -613,10 +621,6 @@ Particle initialization
 * ``<species_name>.do_backward_propagation`` (`bool`)
     Inject a backward-propagating beam to reduce the effect of charge-separation
     fields when running in the boosted frame. See examples.
-
-* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
-    Split particles of the species when crossing the boundary from a lower
-    resolution domain to a higher resolution domain.
 
 * ``<species_name>.split_type`` (`int`) optional (default `0`)
     Splitting technique. When `0`, particles are split along the simulation
