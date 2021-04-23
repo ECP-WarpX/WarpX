@@ -464,6 +464,9 @@ void ReadBCParams ()
                 if (pml_input == 0 and silverMueller_input == 0) {
                     WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
                     WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
+#ifdef WARPX_DIM_RZ
+                    amrex::Abort(" PEC boundary is not yet supported in RZ. TO DO!\n");
+#endif
                 }
             }
         }
@@ -530,7 +533,13 @@ void ReadBCParams ()
                 WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
             }
-
+        }
+        // Ensure code aborts if PEC is specified for RZ
+        if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ||
+             WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC) {
+#ifdef WARPX_DIM_RZ
+            amrex::Abort(" PEC boundary is not yet supported in RZ. TO DO!\n");
+#endif
         }
     }
 
