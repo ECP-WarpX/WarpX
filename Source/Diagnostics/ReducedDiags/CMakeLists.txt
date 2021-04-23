@@ -7,6 +7,7 @@ target_sources(WarpX
     LoadBalanceEfficiency.cpp
     MultiReducedDiags.cpp
     ParticleEnergy.cpp
+    ParticleMomentum.cpp
     ParticleHistogram.cpp
     ReducedDiags.cpp
     FieldMaximum.cpp

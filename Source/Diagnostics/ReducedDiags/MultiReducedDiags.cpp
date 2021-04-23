@@ -10,6 +10,7 @@
 #include "ParticleHistogram.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
+#include "ParticleMomentum.H"
 #include "ParticleExtrema.H"
 #include "FieldEnergy.H"
 #include "FieldMomentum.H"
@@ -45,6 +46,7 @@ MultiReducedDiags::MultiReducedDiags ()
     const auto reduced_diags_dictionary =
         std::map<std::string, std::function<std::unique_ptr<ReducedDiags>(CS)>>{
             {"ParticleEnergy",        [](CS s){return std::make_unique<ParticleEnergy>(s);}},
+            {"ParticleMomentum",      [](CS s){return std::make_unique<ParticleMomentum>(s);}},
             {"FieldEnergy",           [](CS s){return std::make_unique<FieldEnergy>(s);}},
             {"FieldMomentum",         [](CS s){return std::make_unique<FieldMomentum>(s);}},
             {"FieldMaximum",          [](CS s){return std::make_unique<FieldMaximum>(s);}},
