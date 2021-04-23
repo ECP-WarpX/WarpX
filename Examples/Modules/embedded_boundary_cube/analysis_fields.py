@@ -72,16 +72,6 @@ for i in range(ncells[0]):
                                                              np.cos(np.sqrt(2) *
                                                                     np.pi / Lx * c * t))
 
-# Compute the analytic solution
-path, dirs, files = next(os.walk("diags/"))
-tsteps = np.zeros_like(dirs, dtype=int)
-for i, d in enumerate(dirs):
-    # Strip off diags
-    d = d[4:]
-    # Strip off leading zeros
-    while d[0] == 0:
-        d = d[1:]
-    tsteps[i] = int(d)
 
 # Open the right plot file
 filename = 'diags/diag00208/'
