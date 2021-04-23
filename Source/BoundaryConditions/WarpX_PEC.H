@@ -7,17 +7,38 @@
 
 namespace PEC {
 
-
+    /**
+     * \brief Determines if the field boundary condition stored in fboundary is PEC
+     *        in direction, dir, is PEC.
+     *
+     * \param[in] fboundary  Value containing boundary type
+     * \param[in] dir        direction
+     *
+     * \param[out] 1 if the boundary type is PEC else 0
+     */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    int is_lo_PEC (amrex::GpuArray<int, 3> const& fboundary_lo, int dir) {
-        return int( fboundary_lo[dir] == FieldBoundaryType::PEC);
+    int is_boundary_PEC (amrex::GpuArray<int, 3> const& fboundary, int dir) {
+        return int( fboundary[dir] == FieldBoundaryType::PEC);
     }
 
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    int is_hi_PEC (amrex::GpuArray<int, 3> const& fboundary_hi, int dir) {
-        return int( fboundary_hi[dir] == FieldBoundaryType::PEC);
-    }
-
+    /**
+     * \brief Sets the electric field value tangential to the PEC boundary to zero. The
+     *        field value of the guard cells outside the domain boundary are set equal
+     *        and opposite to the field in the valid cells at their mirrored locations.
+     *        The number or depth of guard cells updated is equal to the shape factor of
+     *        particles in each dimension.
+     *
+     * \param[in] icomp        component of the Efield being updated
+                               (0=x, 1=y, 2=z in 3D) and (0=x, 1=z in 2D)
+     * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
+     * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
+     * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of Efield Array4
+     * \param[in] shape_factor particle shape factor in each dimension
+     * \param[in] Efield       field data to be updated if (ijk) is at the boundary or a guard cell
+     * \param[in] stag         staggering of the field data being updated.
+     * \param[in] fbndry_lo    Field boundary type at the lower boundaries
+     * \param[in] fbndry_hi    Field boundary type at the upper boundaries
+     */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetTangentialEfield (const int icomp, const amrex::IntVect & dom_lo,
                                 const amrex::IntVect &dom_hi,
@@ -40,8 +61,8 @@ namespace PEC {
                 const int bndry_cell = ( (ibndry < AMREX_SPACEDIM) ?
                     (ijk_vec[dir] == dom_lo[dir]) : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
                 const int is_tangent_to_PEC =
-                    ( ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(fbndry_lo, dir)
-                                                 : is_hi_PEC(fbndry_hi, dir) );
+                    ( ( ibndry < AMREX_SPACEDIM) ? is_boundary_PEC(fbndry_lo, dir)
+                                                 : is_boundary_PEC(fbndry_hi, dir) );
                 // if boundary is PEC, guard cells must be equal and opposite to valid cells
                 if ( bndry_cell == 1 && is_tangent_to_PEC==1) {
                     for (int is = 0; is < shape_factor[dir]; ++is) {
@@ -60,6 +81,25 @@ namespace PEC {
         }
     }
 
+    /**
+     * \brief Sets the magnetic field value normal to the PEC boundary to zero. The
+     *        field value of the guard cells outside the domain boundary are set equal
+     *        and opposite to the field in the valid cells at their mirrored locations.
+     *        The number or depth of guard cells updated is equal to the shape factor of
+     *        particles in each dimension.
+     *
+     * \param[in] icomp        component of the Efield being updated
+                               (0=x, 1=y, 2=z in 3D) and (0=x, 1=z in 2D)
+     * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
+     * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
+     * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of Efield Array4
+     * \param[in] shape_factor particle shape factor in each dimension
+     * \param[in] Bfield       field data to be updated if (ijk) is at the boundary
+                               or a guard cell
+     * \param[in] stag         staggering of the field data being updated.
+     * \param[in] fbndry_lo    Field boundary type at the lower boundaries
+     * \param[in] fbndry_hi    Field boundary type at the upper boundaries
+     */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
@@ -78,8 +118,8 @@ namespace PEC {
             const int bndry_cell = ( ibndry < AMREX_SPACEDIM ) ?
                 ( ijk_vec[dir] == dom_lo[dir]) : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]);
             const int is_normal_to_PEC = (
-                ( ibndry < AMREX_SPACEDIM) ? is_lo_PEC(fbndry_lo, dir)
-                                           : is_hi_PEC(fbndry_hi, dir) );
+                ( ibndry < AMREX_SPACEDIM) ? is_boundary_PEC(fbndry_lo, dir)
+                                           : is_boundary_PEC(fbndry_hi, dir) );
             if (bndry_cell == 1 && is_normal_to_PEC == 1 )
             {
                 for (int is = 0; is < shape_factor[dir]; ++is) {
@@ -97,9 +137,28 @@ namespace PEC {
         }
     }
 
+    /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
     bool isAnyBoundaryPEC();
+    /**
+     * \brief Sets the tangential electric field at the PEC boundary to zero.
+     *        The guard cell values are set equal and opposite to the valid cell
+     *        field value at the respective mirror locations.
+     *
+     * \param[in,out] Efield     Boundary values of tangential Efield are set to zero.
+     * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
+     */
     void ApplyPECtoEfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                             const int lev, PatchType patch_type);
+    /**
+     * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
+     *        The guard cell values are set equal and opposite to the valid cell
+     *        field value at the respective mirror locations.
+     *
+     * \param[in,out] Bfield     Boundary values of normal Bfield are set to zero.
+     * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
+     */
     void ApplyPECtoBfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
                             const int lev, PatchType patch_type);
 }
