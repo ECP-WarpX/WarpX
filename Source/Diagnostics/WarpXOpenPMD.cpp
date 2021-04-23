@@ -267,9 +267,10 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     // close BTD file only when isLastBTDFlush is true
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
-        if (m_Series)
-            m_Series->iterations[m_CurrentStep].close();
-
+        if (m_Series) {
+            auto iterations = m_Series->writeIterations();
+            iterations[m_CurrentStep].close();
+        }
         // create a little helper file for ParaView 5.9+
         if (amrex::ParallelDescriptor::IOProcessor())
         {
@@ -295,15 +296,29 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     std::string filepath = m_dirPrefix;
     GetFileName(filepath);
 
+    std::string useSteps = R"(
+    {
+        "adios2": {
+            "engine": {
+                "type": "bp4",
+                "usesteps": true
+             }
+        }
+    }
+    )";
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
-    m_Series = nullptr;
+    if (m_OneFilePerTS)
+        m_Series = nullptr;
+    else if (m_Series != nullptr)
+        return;
 
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
                 filepath, access,
-                amrex::ParallelDescriptor::Communicator()
+                amrex::ParallelDescriptor::Communicator(),
+                useSteps
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -311,7 +326,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
     } else {
-        m_Series = std::make_unique<openPMD::Series>(filepath, access);
+        m_Series = std::make_unique<openPMD::Series>(filepath, access, useSteps);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
@@ -430,7 +445,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
   WarpXParticleCounter counter(pc);
 
-  openPMD::Iteration currIteration = m_Series->iterations[iteration];
+  openPMD::WriteIterations iterations = m_Series->writeIterations();
+  auto currIteration = iterations[iteration];
+
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
   currSpecies.setAttribute( "particleShape", double( WarpX::noz ) );
@@ -811,7 +828,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
   auto const dataset = openPMD::Dataset(datatype, global_size);
 
   // meta data
-  auto series_iteration = m_Series->iterations[iteration];
+  openPMD::WriteIterations iterations = m_Series->writeIterations();
+  auto series_iteration = iterations[iteration];
+
   auto meshes = series_iteration.meshes;
   if( first_write_to_iteration ) {
       series_iteration.setTime( time );
