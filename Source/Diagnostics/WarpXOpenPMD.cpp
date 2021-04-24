@@ -321,8 +321,11 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     }
 
     if ( m_OpenPMDFileType.compare("bp") == 0 )
+#if OPENPMDAPI_VERSION_GE(0, 14, 0)
         m_Series->setIterationEncoding( openPMD::IterationEncoding::variableBased );
-
+#else
+        m_Series->setIterationEncoding( openPMD::IterationEncoding::groupBased );
+#endif
 
     // input file / simulation setup author
     if( WarpX::authors.size() > 0u )
