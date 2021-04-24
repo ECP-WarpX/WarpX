@@ -296,16 +296,6 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     std::string filepath = m_dirPrefix;
     GetFileName(filepath);
 
-    std::string useSteps = R"(
-    {
-        "adios2": {
-            "engine": {
-                "type": "bp4",
-                "usesteps": true
-             }
-        }
-    }
-    )";
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
     if (m_OneFilePerTS)
@@ -317,8 +307,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
                 filepath, access,
-                amrex::ParallelDescriptor::Communicator(),
-                useSteps
+                amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -326,10 +315,14 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
     } else {
-        m_Series = std::make_unique<openPMD::Series>(filepath, access, useSteps);
+        m_Series = std::make_unique<openPMD::Series>(filepath, access);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
+
+    if ( m_OpenPMDFileType.compare("bp") == 0 )
+        m_Series->setIterationEncoding( openPMD::IterationEncoding::variableBased );
+
 
     // input file / simulation setup author
     if( WarpX::authors.size() > 0u )
