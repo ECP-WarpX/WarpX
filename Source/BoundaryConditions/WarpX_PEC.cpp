@@ -38,9 +38,6 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
         fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
         fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
     }
-    amrex::Print() << " domain box : " << domain_box << "\n";
-    amrex::Print() << " domain_lo : " << domain_lo[0] << " " << domain_lo[1] << " " << domain_lo[2] << "\n";
-    amrex::Print() << " domain_hi : " << domain_hi[0] << " " << domain_hi[1] << " " << domain_hi[2] << "\n";
     amrex::IntVect Ex_stag = Efield[0]->ixType().toIntVect();
     amrex::IntVect Ey_stag = Efield[1]->ixType().toIntVect();
     amrex::IntVect Ez_stag = Efield[2]->ixType().toIntVect();
@@ -110,9 +107,6 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
         fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
         fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
     }
-    amrex::Print() << " domain box : " << domain_box << "\n";
-    amrex::Print() << " domain_lo : " << domain_lo[0] << " " << domain_lo[1] << " " << domain_lo[2] << "\n";
-    amrex::Print() << " domain_hi : " << domain_hi[0] << " " << domain_hi[1] << " " << domain_hi[2] << "\n";
     amrex::IntVect Bx_stag = Bfield[0]->ixType().toIntVect();
     amrex::IntVect By_stag = Bfield[1]->ixType().toIntVect();
     amrex::IntVect Bz_stag = Bfield[2]->ixType().toIntVect();
