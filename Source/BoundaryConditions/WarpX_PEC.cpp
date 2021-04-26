@@ -60,21 +60,18 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-//                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ex(i,j,k), Ex_stag);
                 PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
                                            Ex, Ex_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-//                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ey(i,j,k), Ey_stag);
                 PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
                                            Ey, Ey_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-//                PEC::ZeroTangentialEfield(icomp, domain_lo, domain_hi, iv, Ez(i,j,k), Ez_stag);
                 PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
                                            Ez, Ez_stag, fbndry_lo, fbndry_hi);
             }
@@ -130,14 +127,12 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                //PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, Bx(i,j,k), Bx_stag);
                 PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
                                      Bx, Bx_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                //PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, By(i,j,k), By_stag);
                 PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
                                      By, By_stag, fbndry_lo, fbndry_hi);
             },
