@@ -110,8 +110,8 @@ values_yt['maximum of |E|'] = np.amax(np.sqrt(Ex**2 + Ey**2 + Ez**2))
 values_yt['maximum of |B|'] = np.amax(np.sqrt(Bx**2 + By**2 + Bz**2))
 values_yt['maximum of rho'] = np.amax(rho)
 values_yt['minimum of rho'] = np.amin(rho)
-values_yt['electrons: maximum of rho'] = np.amax(np.abs(rho_electrons))
-values_yt['protons: maximum of rho'] = np.amax(np.abs(rho_protons))
+values_yt['electrons: maximum of |rho|'] = np.amax(np.abs(rho_electrons))
+values_yt['protons: maximum of |rho|'] = np.amax(np.abs(rho_protons))
 
 #--------------------------------------------------------------------------------------------------
 # Part 2: get results from reduced diagnostics (label '_rd')
@@ -121,11 +121,11 @@ values_yt['protons: maximum of rho'] = np.amax(np.abs(rho_protons))
 values_rd = dict()
 
 # Load data from output files
-EFdata = np.genfromtxt('./diags/reducedfiles/EF.txt')
-EPdata = np.genfromtxt('./diags/reducedfiles/EP.txt')
-MFdata = np.genfromtxt('./diags/reducedfiles/MF.txt')
-MRdata = np.genfromtxt('./diags/reducedfiles/MR.txt')
-NPdata = np.genfromtxt('./diags/reducedfiles/NP.txt')
+EFdata = np.genfromtxt('./diags/reducedfiles/EF.txt')  # Field energy
+EPdata = np.genfromtxt('./diags/reducedfiles/EP.txt')  # Particle energy
+MFdata = np.genfromtxt('./diags/reducedfiles/MF.txt')  # Field maximum
+MRdata = np.genfromtxt('./diags/reducedfiles/MR.txt')  # Rho maximum
+NPdata = np.genfromtxt('./diags/reducedfiles/NP.txt')  # Particle number
 
 # First index "1" points to the values written at the last time step
 values_rd['field energy'] = EFdata[1][2]
@@ -140,8 +140,8 @@ values_rd['maximum of Bz'] = MFdata[1][8]
 values_rd['maximum of |B|'] = MFdata[1][9]
 values_rd['maximum of rho'] = MRdata[1][2]
 values_rd['minimum of rho'] = MRdata[1][3]
-values_rd['electrons: maximum of rho'] = MRdata[1][4]
-values_rd['protons: maximum of rho'] = MRdata[1][5]
+values_rd['electrons: maximum of |rho|'] = MRdata[1][4]
+values_rd['protons: maximum of |rho|'] = MRdata[1][5]
 values_rd['number of particles'] = NPdata[1][2]
 values_rd['electrons: number of particles'] = NPdata[1][3]
 values_rd['protons: number of particles'] = NPdata[1][4]
@@ -157,20 +157,20 @@ values_rd['photons: sum of weights'] = NPdata[1][9]
 
 error = dict()
 tolerance = 1e-12
+field_energy_tolerance = 0.3
 
-print()
+# The comparison of field energies requires a large tolerance,
+# possibly because the field energy from the plotfiles is computed from cell-centered data,
+# while the field energy from the reduced diagnostics is computed from (Yee) staggered data.
 for k in values_yt.keys():
+    print()
     print('values_yt[' + k + '] = ', values_yt[k])
     print('values_rd[' + k + '] = ', values_rd[k])
     error[k] = abs(values_yt[k] - values_rd[k]) / abs(values_yt[k])
     print('relative error = ', error[k])
-    print()
-    # The comparison of field energies requires a large tolerance,
-    # possibly because the field energy from the plotfiles is computed from cell-centered data,
-    # while the field energy from the reduced diagnostics is computed from (Yee) staggered data.
-    # NOTE The current relative error in this case is around 25%: might need further investigation.
-    tol = 0.3 if (k == 'field energy') else tolerance
+    tol = field_energy_tolerance if (k == 'field energy') else tolerance
     assert(error[k] < tol)
+print()
 
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)
