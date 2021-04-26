@@ -139,7 +139,6 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                //PEC::ZeroNormalBfield(icomp, domain_lo, domain_hi, iv, Bz(i,j,k), Bz_stag);
                 PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
                                      Bz, Bz_stag, fbndry_lo, fbndry_hi);
             }
