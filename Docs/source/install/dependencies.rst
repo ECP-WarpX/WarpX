@@ -52,11 +52,11 @@ Spack (macOS/Linux)
 
 (in new terminals, re-activate the environment with ``spack env activate warpx-dev`` again)
 
-If you also want to run runtime tests and added Python above, install also these additional Python packages in the active Spack environment:
+If you also want to run runtime tests and added Python (``spack add python``) above, install also these additional Python packages in the active Spack environment:
 
 .. code-block:: bash
 
-   python -m pip install matplotlib==3.2.2 yt scipy numpy
+   python -m pip install matplotlib==3.2.2 yt scipy numpy openpmd-api
 
 
 Brew (macOS/Linux)
