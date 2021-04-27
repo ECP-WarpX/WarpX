@@ -6,7 +6,6 @@ from scipy.constants import mu_0, pi, c
 import numpy as np
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-import matplotlib.pyplot as plt
 
 # This is a script that analyses the simulation results from
 # the script `inputs_3d`. This simulates a TMmnp mode in a PEC cubic resonator.
