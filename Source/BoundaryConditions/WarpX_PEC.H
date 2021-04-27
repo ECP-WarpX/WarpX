@@ -33,7 +33,6 @@ namespace PEC {
      * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
      * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
      * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of Efield Array4
-     * \param[in] shape_factor particle shape factor in each dimension
      * \param[in] Efield       field data to be updated if (ijk) is at the boundary or a guard cell
      * \param[in] stag         staggering of the field data being updated.
      * \param[in] fbndry_lo    Field boundary type at the lower boundaries
@@ -43,7 +42,6 @@ namespace PEC {
     void SetTangentialEfield (const int icomp, const amrex::IntVect & dom_lo,
                                 const amrex::IntVect &dom_hi,
                                 const amrex::IntVect &ijk_vec,
-                                const amrex::IntVect &shape_factor,
                                 amrex::Array4<amrex::Real> const& Efield,
                                 const amrex::IntVect& stag,
                                 amrex::GpuArray<int, 3> const& fbndry_lo,
@@ -59,25 +57,29 @@ namespace PEC {
             for (int iside = 0; iside < 2; ++iside) {
                 const int bndry_cell = ( (iside == 0)
                                      ? (ijk_vec[dir] == dom_lo[dir])
-                                     : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
+                                     : (ijk_vec[dir] == (dom_hi[dir] + stag[dir]) ) );
                 const int is_tangent_to_PEC = ( ( iside == 0 )
                                             ? is_boundary_PEC(fbndry_lo, dir)
                                             : is_boundary_PEC(fbndry_hi, dir) );
                 // if boundary is PEC, guard cells must be equal and opposite to valid cells
                 if ( bndry_cell == 1 && is_tangent_to_PEC==1) {
-                    for (int is = 0; is < shape_factor[dir]; ++is) {
-                        // guard cell outside the domain by "is" number cells
-                        ijk_guard[dir] = ( ( iside == 0 )
-                                       ? (ijk_vec[dir] - is)
-                                       : (ijk_vec[dir] + is) );
-                        // valid cell inside the domain by "is" number of cells
-                        ijk_valid[dir] = ( ( iside == 0)
-                                       ? (ijk_vec[dir] + is)
-                                       : (ijk_vec[dir] - is));
-                        // setting the guard cell Efield tangential to PEC boundary
-                        Efield(ijk_guard) = - Efield(ijk_valid);
-                    }
                     Efield(ijk_vec) = 0.;
+                }
+                const int guard_cell = ( (iside == 0)
+                                     ? (ijk_vec[dir] < dom_lo[dir])
+                                     : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
+                if ( guard_cell == 1 && is_tangent_to_PEC == 1) {
+                    // guard cell outside the domain by "ig" number of cells
+                    const int ig = ( (iside == 0)
+                                 ? (dom_lo[dir] - ijk_vec[dir])
+                                 : (ijk_vec[dir] - dom_hi[dir]) );
+
+                    // valid cell inside the domain by "ig" number of cells
+                    ijk_valid[dir] = ( ( iside == 0)
+                                   ? (dom_lo[dir] + ig)
+                                   : (dom_hi[dir] - ig));
+                    // setting the guard cell Efield tangential to PEC boundary
+                    Efield(ijk_vec) = - Efield(ijk_valid);
                 }
             }
         }
@@ -95,7 +97,6 @@ namespace PEC {
      * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
      * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
      * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of Efield Array4
-     * \param[in] shape_factor particle shape factor in each dimension
      * \param[in] Bfield       field data to be updated if (ijk) is at the boundary
                                or a guard cell
      * \param[in] stag         staggering of the field data being updated.
@@ -106,7 +107,6 @@ namespace PEC {
     void SetNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
                            const amrex::IntVect & ijk_vec,
-                           const amrex::IntVect &shape_factor,
                            amrex::Array4<amrex::Real> const& Bfield,
                            const amrex::IntVect & stag,
                            amrex::GpuArray<int, 3> const& fbndry_lo,
@@ -124,19 +124,23 @@ namespace PEC {
                                        : is_boundary_PEC(fbndry_hi, dir) );
             if (bndry_cell == 1 && is_normal_to_PEC == 1 )
             {
-                for (int is = 0; is < shape_factor[dir]; ++is) {
-                    // guard cell outside the domain by "is" number cells
-                    ijk_guard[dir] = ( (iside == 0)
-                                   ? (ijk_vec[dir] - is)
-                                   : (ijk_vec[dir] + is) );
-                    // valid cell inside the domain by "is" number of cells
-                    ijk_valid[dir] = ( (iside == 0)
-                                   ? (ijk_vec[dir] + is)
-                                   : (ijk_vec[dir] - is));
-                    // setting the guard cell Efield tangential to PEC boundary
-                    Bfield(ijk_guard) = - Bfield(ijk_valid);
-                }
                 Bfield(ijk_vec) = 0.;
+            }
+            const int guard_cell = ( (iside == 0)
+                                 ? (ijk_vec[dir] < dom_lo[dir])
+                                 : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
+            if ( guard_cell == 1 && is_normal_to_PEC == 1 ) {
+                // guard cell outside the domain by "ig" number cells
+                const int ig = ( (iside == 0)
+                               ? (dom_lo[dir] - ijk_vec[dir])
+                               : (ijk_vec[dir] - dom_hi[dir]) );
+
+                // valid cell inside the domain by "ig" number of cells
+                ijk_valid[dir] = ( (iside == 0)
+                               ? (dom_lo[dir] + ig)
+                               : (dom_hi[dir] - ig));
+                // setting the guard cell Efield tangential to PEC boundary
+                Bfield(ijk_guard) = - Bfield(ijk_valid);
             }
         }
     }

@@ -51,28 +51,28 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
         amrex::Array4<amrex::Real> const& Ez = Efield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        amrex::Box const& tex = mfi.tilebox(Efield[0]->ixType().toIntVect());
-        amrex::Box const& tey = mfi.tilebox(Efield[1]->ixType().toIntVect());
-        amrex::Box const& tez = mfi.tilebox(Efield[2]->ixType().toIntVect());
+        amrex::Box const& tex = mfi.tilebox(Efield[0]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tey = mfi.tilebox(Efield[1]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tez = mfi.tilebox(Efield[2]->ixType().toIntVect(), shape_factor);
 
         // loop over cells and update fields
         amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
                                            Ex, Ex_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
                                            Ey, Ey_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
                                            Ez, Ez_stag, fbndry_lo, fbndry_hi);
             }
         );
@@ -118,28 +118,28 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
         amrex::Array4<amrex::Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect());
-        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect());
-        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect());
+        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), shape_factor);
 
         // loop over cells and update fields
         amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
                                      Bx, Bx_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
                                      By, By_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, shape_factor,
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
                                      Bz, Bz_stag, fbndry_lo, fbndry_hi);
             }
         );
