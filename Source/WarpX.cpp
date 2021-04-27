@@ -179,7 +179,6 @@ WarpX::WarpX ()
     InitEB();
 
     // Geometry on all levels has been defined already.
-
     // No valid BoxArray and DistributionMapping have been defined.
     // But the arrays for them have been resized.
 
@@ -229,6 +228,9 @@ WarpX::WarpX ()
     Bfield_fp.resize(nlevs_max);
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
+
+    m_edge_lengths.resize(nlevs_max);
+    m_face_areas.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
 
@@ -1318,6 +1320,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_fp[x]"));
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_fp[y]"));
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_fp[z]"));
+
+#ifdef AMREX_USE_EB
+    // EB info are needed only at the coarsest level
+    if (lev == maxLevel())
+    {
+      m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
+      m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
+      m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
+      m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
+      m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
+      m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
+    }
+#endif
 
     bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
