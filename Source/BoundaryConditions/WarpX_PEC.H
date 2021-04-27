@@ -58,26 +58,19 @@ namespace PEC {
                                             ? is_boundary_PEC(fbndry_lo, dir)
                                             : is_boundary_PEC(fbndry_hi, dir) );
                 if (is_tangent_to_PEC == 1) {
-                    const int bndry_cell = ( (iside == 0)
-                                         ? (ijk_vec[dir] == dom_lo[dir])
-                                         : (ijk_vec[dir] == (dom_hi[dir] + stag[dir]) ) );
-                    // if boundary is PEC, guard cells must be equal and opposite to valid cells
-                    if ( bndry_cell == 1) Efield(ijk_vec) = 0.;
+                    // guard cell outside the domain by "ig" number of cells
+                    const int ig = ( (iside == 0)
+                                 ? (dom_lo[dir] - ijk_vec[dir])
+                                 : (ijk_vec[dir] - (dom_hi[dir]) + stag[dir]) );
 
-                    const int guard_cell = ( (iside == 0)
-                                         ? (ijk_vec[dir] < dom_lo[dir])
-                                         : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
+                    if ( ig == 0) Efield(ijk_vec) = 0.;
 
-                    if ( guard_cell == 1 ) {
-                        // guard cell outside the domain by "ig" number of cells
-                        const int ig = ( (iside == 0)
-                                     ? (dom_lo[dir] - ijk_vec[dir])
-                                     : (ijk_vec[dir] - dom_hi[dir]) );
+                    if ( ig > 0 ) {
 
                         // valid cell inside the domain by "ig" number of cells
                         ijk_valid[dir] = ( ( iside == 0)
                                        ? (dom_lo[dir] + ig)
-                                       : (dom_hi[dir] - ig));
+                                       : (dom_hi[dir] + stag[dir] - ig));
                         // setting the guard cell Efield tangential to PEC boundary
                         Efield(ijk_vec) = - Efield(ijk_valid);
                     }
@@ -120,26 +113,20 @@ namespace PEC {
                                        ? is_boundary_PEC(fbndry_lo, dir)
                                        : is_boundary_PEC(fbndry_hi, dir) );
             if (is_normal_to_PEC == 1) {
-                const int bndry_cell = ( (iside == 0)
-                                     ? ( ijk_vec[dir] == dom_lo[dir])
-                                     : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]) );
+                // guard cell outside the domain by "ig" number cells
+                const int ig = ( (iside == 0)
+                               ? (dom_lo[dir] - ijk_vec[dir])
+                               : (ijk_vec[dir] - (dom_hi[dir]) + stag[dir]) );
 
-                if (bndry_cell == 1 ) Bfield(ijk_vec) = 0.;
+                if ( ig == 0 ) Bfield(ijk_vec) = 0.;
 
-                const int guard_cell = ( (iside == 0)
-                                     ? (ijk_vec[dir] < dom_lo[dir])
-                                     : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
-
-                if ( guard_cell == 1 ) {
-                    // guard cell outside the domain by "ig" number cells
-                    const int ig = ( (iside == 0)
-                                   ? (dom_lo[dir] - ijk_vec[dir])
-                                   : (ijk_vec[dir] - dom_hi[dir]) );
+                if ( ig > 0 ) {
 
                     // valid cell inside the domain by "ig" number of cells
                     ijk_valid[dir] = ( (iside == 0)
                                    ? (dom_lo[dir] + ig)
-                                   : (dom_hi[dir] - ig));
+                                   : (dom_hi[dir] + stag[dir] - ig));
+
                     // setting the guard cell Efield tangential to PEC boundary
                     Bfield(ijk_vec) = - Bfield(ijk_valid);
                 }
