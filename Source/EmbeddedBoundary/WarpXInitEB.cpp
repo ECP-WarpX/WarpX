@@ -51,7 +51,7 @@ WarpX::ComputeEdgeLengths () {
                 // every cell in box is all covered
                 amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
                                  [=](int i, int j, int k) {
-                    edge_lengths_dim(i, j, k) = 1.;
+                    edge_lengths_dim(i, j, k) = 0.;
                 });
             } else {
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
