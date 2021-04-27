@@ -54,31 +54,33 @@ namespace PEC {
             const int dir = ( ( (icomp+idim)<AMREX_SPACEDIM)? (icomp+idim) : ( (icomp+idim) - AMREX_SPACEDIM));
             // loop over sides , iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
-                const int bndry_cell = ( (iside == 0)
-                                     ? (ijk_vec[dir] == dom_lo[dir])
-                                     : (ijk_vec[dir] == (dom_hi[dir] + stag[dir]) ) );
                 const int is_tangent_to_PEC = ( ( iside == 0 )
                                             ? is_boundary_PEC(fbndry_lo, dir)
                                             : is_boundary_PEC(fbndry_hi, dir) );
-                // if boundary is PEC, guard cells must be equal and opposite to valid cells
-                if ( bndry_cell == 1 && is_tangent_to_PEC==1) {
-                    Efield(ijk_vec) = 0.;
-                }
-                const int guard_cell = ( (iside == 0)
-                                     ? (ijk_vec[dir] < dom_lo[dir])
-                                     : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
-                if ( guard_cell == 1 && is_tangent_to_PEC == 1) {
-                    // guard cell outside the domain by "ig" number of cells
-                    const int ig = ( (iside == 0)
-                                 ? (dom_lo[dir] - ijk_vec[dir])
-                                 : (ijk_vec[dir] - dom_hi[dir]) );
+                if (is_tangent_to_PEC == 1) {
+                    const int bndry_cell = ( (iside == 0)
+                                         ? (ijk_vec[dir] == dom_lo[dir])
+                                         : (ijk_vec[dir] == (dom_hi[dir] + stag[dir]) ) );
+                    // if boundary is PEC, guard cells must be equal and opposite to valid cells
+                    if ( bndry_cell == 1) Efield(ijk_vec) = 0.;
+ 
+                    const int guard_cell = ( (iside == 0)
+                                         ? (ijk_vec[dir] < dom_lo[dir])
+                                         : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
 
-                    // valid cell inside the domain by "ig" number of cells
-                    ijk_valid[dir] = ( ( iside == 0)
-                                   ? (dom_lo[dir] + ig)
-                                   : (dom_hi[dir] - ig));
-                    // setting the guard cell Efield tangential to PEC boundary
-                    Efield(ijk_vec) = - Efield(ijk_valid);
+                    if ( guard_cell == 1 ) {
+                        // guard cell outside the domain by "ig" number of cells
+                        const int ig = ( (iside == 0)
+                                     ? (dom_lo[dir] - ijk_vec[dir])
+                                     : (ijk_vec[dir] - dom_hi[dir]) );
+
+                        // valid cell inside the domain by "ig" number of cells
+                        ijk_valid[dir] = ( ( iside == 0)
+                                       ? (dom_lo[dir] + ig)
+                                       : (dom_hi[dir] - ig));
+                        // setting the guard cell Efield tangential to PEC boundary
+                        Efield(ijk_vec) = - Efield(ijk_valid);
+                    }
                 }
             }
         }
@@ -114,31 +116,33 @@ namespace PEC {
         amrex::IntVect ijk_valid = ijk_vec;
         const int dir = icomp;
         for (int iside = 0; iside < 2; ++iside) {
-            const int bndry_cell = ( (iside == 0)
-                                 ? ( ijk_vec[dir] == dom_lo[dir])
-                                 : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]) );
             const int is_normal_to_PEC = ( ( iside == 0 )
                                        ? is_boundary_PEC(fbndry_lo, dir)
                                        : is_boundary_PEC(fbndry_hi, dir) );
-            if (bndry_cell == 1 && is_normal_to_PEC == 1 )
-            {
-                Bfield(ijk_vec) = 0.;
-            }
-            const int guard_cell = ( (iside == 0)
-                                 ? (ijk_vec[dir] < dom_lo[dir])
-                                 : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
-            if ( guard_cell == 1 && is_normal_to_PEC == 1 ) {
-                // guard cell outside the domain by "ig" number cells
-                const int ig = ( (iside == 0)
-                               ? (dom_lo[dir] - ijk_vec[dir])
-                               : (ijk_vec[dir] - dom_hi[dir]) );
+            if (is_normal_to_PEC == 1) {
+                const int bndry_cell = ( (iside == 0)
+                                     ? ( ijk_vec[dir] == dom_lo[dir])
+                                     : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]) );
 
-                // valid cell inside the domain by "ig" number of cells
-                ijk_valid[dir] = ( (iside == 0)
-                               ? (dom_lo[dir] + ig)
-                               : (dom_hi[dir] - ig));
-                // setting the guard cell Efield tangential to PEC boundary
-                Bfield(ijk_vec) = - Bfield(ijk_valid);
+                if (bndry_cell == 1 ) Bfield(ijk_vec) = 0.;
+
+                const int guard_cell = ( (iside == 0)
+                                     ? (ijk_vec[dir] < dom_lo[dir])
+                                     : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
+
+                if ( guard_cell == 1 ) {
+                    // guard cell outside the domain by "ig" number cells
+                    const int ig = ( (iside == 0)
+                                   ? (dom_lo[dir] - ijk_vec[dir])
+                                   : (ijk_vec[dir] - dom_hi[dir]) );
+
+                    // valid cell inside the domain by "ig" number of cells
+                    ijk_valid[dir] = ( (iside == 0)
+                                   ? (dom_lo[dir] + ig)
+                                   : (dom_hi[dir] - ig));
+                    // setting the guard cell Efield tangential to PEC boundary
+                    Bfield(ijk_vec) = - Bfield(ijk_valid);
+                }
             }
         }
     }
