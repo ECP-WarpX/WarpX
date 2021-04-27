@@ -6,6 +6,7 @@ from scipy.constants import mu_0, pi, c
 import numpy as np
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
+import matplotlib.pyplot as plt
 
 # This is a script that analyses the simulation results from
 # the script `inputs_3d`. This simulates a TMmnp mode in a PEC cubic resonator.
@@ -42,57 +43,44 @@ for i in range(ncells[0]):
     for j in range(ncells[1]):
         for k in range(ncells[2]):
             x = i*dx + lo[0]
-            y = j*dy + lo[1]
+            y = (j+0.5)*dy + lo[1]
             z = k*dz + lo[2]
-
-            Bx_th[i, j, k] = -2/h_2*mu_0*(m * pi/Lx)*(p * pi/Lz) * (np.sin(m * pi/Lx * (x - Lx/2)) *
-                                                                    np.sin(n * pi/Ly * (y - Ly/2)) *
-                                                                    np.cos(p * pi/Lz * (z - Lz/2)) *
-                                                                    (-Lx/2 < x < Lx/2) *
-                                                                    (-Ly/2 < y < Ly/2) *
-                                                                    (-Lz/2 < z < Lz/2) *
-                                                                    np.cos(np.sqrt(2) *
-                                                                           np.pi / Lx * c * t))
 
             By_th[i, j, k] = -2/h_2*mu_0*(n * pi/Ly)*(p * pi/Lz) * (np.cos(m * pi/Lx * (x - Lx/2)) *
                                                                     np.sin(n * pi/Ly * (y - Ly/2)) *
                                                                     np.cos(p * pi/Lz * (z - Lz/2)) *
-                                                                    (-Lx/2 < x < Lx/2) *
-                                                                    (-Ly/2 < y < Ly/2) *
-                                                                    (-Lz/2 < z < Lz/2) *
+                                                                    (-Lx/2 <= x < Lx/2) *
+                                                                    (-Ly/2 <= y < Ly/2) *
+                                                                    (-Lz/2 <= z < Lz/2) *
                                                                     np.cos(np.sqrt(2) *
                                                                     np.pi / Lx * c * t))
 
-            Bz_th[i, j, k] = mu_0*(n * pi/Ly)*(p * pi/Lz) * (np.cos(m * pi/Lx * (x - Lx/2)) *
-                                                             np.cos(n * pi/Ly * (y - Ly/2)) *
-                                                             np.sin(p * pi/Lz * (z - Lz/2)) *
-                                                             (-Lx/2 < x < Lx/2) *
-                                                             (-Ly/2 < y < Ly/2) *
-                                                             (-Lz/2 < z < Lz/2) *
-                                                             np.cos(np.sqrt(2) *
-                                                                    np.pi / Lx * c * t))
-
+            x = i*dx + lo[0]
+            y = j*dy + lo[1]
+            z = (k+0.5)*dz + lo[2]
+            Bz_th[i, j, k] = mu_0*(np.cos(m * pi/Lx * (x - Lx/2)) *
+                                   np.cos(n * pi/Ly * (y - Ly/2)) *
+                                   np.sin(p * pi/Lz * (z - Lz/2)) *
+                                   (-Lx/2 <= x < Lx/2) *
+                                   (-Ly/2 <= y < Ly/2) *
+                                   (-Lz/2 <= z < Lz/2) *
+                                   np.cos(np.sqrt(2) * np.pi / Lx * c * t))
 
 # Open the right plot file
 filename = sys.argv[1]
 ds = yt.load(filename)
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 
-tol_err = 1e-5
+rel_tol_err = 1e-1
 
-# Compute l^2 error on Bx
-Bx_sim = data['Bx'].to_ndarray()
-err_x = np.sqrt(np.sum(np.square(Bx_sim - Bx_th))*dx*dy*dz)
-assert(err_x < tol_err)
-# Compute l^2 error on By
+# Compute relative l^2 error on By
 By_sim = data['By'].to_ndarray()
-err_y = np.sqrt(np.sum(np.square(By_sim - By_th))*dx*dy*dz)
-assert(err_y < tol_err)
-
-# Compute l^2 error on Bz
+rel_err_y = np.sqrt( np.sum(np.square(By_sim - By_th)) / np.sum(np.square(By_th)))
+assert(rel_err_y < rel_tol_err)
+# Compute relative l^2 error on Bz
 Bz_sim = data['Bz'].to_ndarray()
-err_z = np.sqrt(np.sum(np.square(Bz_sim - Bz_th))*dx*dy*dz)
-assert(err_z < tol_err)
+rel_err_z = np.sqrt( np.sum(np.square(Bz_sim - Bz_th)) / np.sum(np.square(Bz_th)))
+assert(rel_err_z < rel_tol_err)
 
 test_name = os.path.split(os.getcwd())[1]
 
