@@ -36,8 +36,6 @@ warpx.cfl = 0.9
 
 my_constants.z1 = -2.e-6
 my_constants.z2 = 2.e-6
-my_constants.pi = 3.14159265359
-my_constants.c = 299792458.
 my_constants.wavelength = 1.e-6
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
 warpx.Ez_external_grid_function(x,y,z) = "0."
@@ -45,7 +43,7 @@ warpx.Ex_external_grid_function(x,y,z) = "0."
 warpx.Ey_external_grid_function(x,y,z) = "((1.e5*sin(2*pi*(z)/wavelength)) * (z<z2) * (z>z1))"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "(((-1.e5*sin(2*pi*(z)/wavelength))/c))*(z<z2) * (z>z1) "
+warpx.Bx_external_grid_function(x,y,z)= "(((-1.e5*sin(2*pi*(z)/wavelength))/clight))*(z<z2) * (z>z1) "
 warpx.By_external_grid_function(x,y,z)= "0."
 warpx.Bz_external_grid_function(x,y,z) = "0."
 
