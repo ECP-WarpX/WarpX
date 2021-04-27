@@ -6,7 +6,7 @@
 
 
 namespace PEC {
-
+using namespace amrex;
     /**
      * \brief Determines if the field boundary condition stored in fboundary is PEC
      *        in direction, dir, is PEC.
@@ -61,12 +61,11 @@ namespace PEC {
                     // guard cell outside the domain by "ig" number of cells
                     const int ig = ( (iside == 0)
                                  ? (dom_lo[dir] - ijk_vec[dir])
-                                 : (ijk_vec[dir] - (dom_hi[dir]) + stag[dir]) );
+                                 : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
                     if ( ig == 0) Efield(ijk_vec) = 0.;
 
                     if ( ig > 0 ) {
-
                         // valid cell inside the domain by "ig" number of cells
                         ijk_valid[dir] = ( ( iside == 0)
                                        ? (dom_lo[dir] + ig)
@@ -116,12 +115,11 @@ namespace PEC {
                 // guard cell outside the domain by "ig" number cells
                 const int ig = ( (iside == 0)
                                ? (dom_lo[dir] - ijk_vec[dir])
-                               : (ijk_vec[dir] - (dom_hi[dir]) + stag[dir]) );
+                               : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
                 if ( ig == 0 ) Bfield(ijk_vec) = 0.;
 
                 if ( ig > 0 ) {
-
                     // valid cell inside the domain by "ig" number of cells
                     ijk_valid[dir] = ( (iside == 0)
                                    ? (dom_lo[dir] + ig)
