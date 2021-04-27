@@ -48,7 +48,6 @@ namespace PEC {
                                 amrex::GpuArray<int, 3> const& fbndry_hi )
     {
         // Fields in guard cells set equal and opposite to valid cells
-        amrex::IntVect ijk_guard = ijk_vec;
         amrex::IntVect ijk_valid = ijk_vec;
         for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
             // index of dimension
@@ -112,7 +111,6 @@ namespace PEC {
                            amrex::GpuArray<int, 3> const& fbndry_lo,
                            amrex::GpuArray<int, 3> const& fbndry_hi )
     {
-        amrex::IntVect ijk_guard = ijk_vec;
         amrex::IntVect ijk_valid = ijk_vec;
         const int dir = icomp;
         for (int iside = 0; iside < 2; ++iside) {
@@ -140,7 +138,7 @@ namespace PEC {
                                ? (dom_lo[dir] + ig)
                                : (dom_hi[dir] - ig));
                 // setting the guard cell Efield tangential to PEC boundary
-                Bfield(ijk_guard) = - Bfield(ijk_valid);
+                Bfield(ijk_vec) = - Bfield(ijk_valid);
             }
         }
     }
