@@ -21,17 +21,6 @@
     "jy": 43090052.266495675,
     "jz": 0.0
   },
-  "nbody": {
-    "particle_cpu": 0.0,
-    "particle_id": 3.0,
-    "particle_momentum_x": 6.522474316920865e-31,
-    "particle_momentum_y": 1.0028788756154036e-18,
-    "particle_momentum_z": 2.1781623086053195e-47,
-    "particle_position_x": 6.399600000000274e-05,
-    "particle_position_y": 6.57267069006222e-06,
-    "particle_position_z": 1.1474448611896297e-34,
-    "particle_weight": 2.0
-  },
   "proton": {
     "particle_cpu": 0.0,
     "particle_id": 2.0,
