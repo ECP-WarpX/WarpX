@@ -57,21 +57,23 @@ namespace PEC {
             const int dir = ( ( (icomp+idim)<AMREX_SPACEDIM)? (icomp+idim) : ( (icomp+idim) - AMREX_SPACEDIM));
             // loop over sides , iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
-                const int ibndry = dir + iside*AMREX_SPACEDIM;
-                const int bndry_cell = ( (ibndry < AMREX_SPACEDIM) ?
-                    (ijk_vec[dir] == dom_lo[dir]) : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
-                const int is_tangent_to_PEC =
-                    ( ( ibndry < AMREX_SPACEDIM) ? is_boundary_PEC(fbndry_lo, dir)
-                                                 : is_boundary_PEC(fbndry_hi, dir) );
+                const int bndry_cell = ( (iside == 0)
+                                     ? (ijk_vec[dir] == dom_lo[dir])
+                                     : (ijk_vec[dir] == dom_hi[dir] + stag[dir]));
+                const int is_tangent_to_PEC = ( ( iside == 0 )
+                                            ? is_boundary_PEC(fbndry_lo, dir)
+                                            : is_boundary_PEC(fbndry_hi, dir) );
                 // if boundary is PEC, guard cells must be equal and opposite to valid cells
                 if ( bndry_cell == 1 && is_tangent_to_PEC==1) {
                     for (int is = 0; is < shape_factor[dir]; ++is) {
                         // guard cell outside the domain by "is" number cells
-                        ijk_guard[dir] = ( (ibndry < AMREX_SPACEDIM) ?
-                            (ijk_vec[dir] - is) : (ijk_vec[dir] + is));
+                        ijk_guard[dir] = ( ( iside == 0 )
+                                       ? (ijk_vec[dir] - is)
+                                       : (ijk_vec[dir] + is) );
                         // valid cell inside the domain by "is" number of cells
-                        ijk_valid[dir] = ( (ibndry < AMREX_SPACEDIM) ?
-                            (ijk_vec[dir] + is) : (ijk_vec[dir] - is));
+                        ijk_valid[dir] = ( ( iside == 0)
+                                       ? (ijk_vec[dir] + is)
+                                       : (ijk_vec[dir] - is));
                         // setting the guard cell Efield tangential to PEC boundary
                         Efield(ijk_guard) = - Efield(ijk_valid);
                     }
@@ -114,21 +116,23 @@ namespace PEC {
         amrex::IntVect ijk_valid = ijk_vec;
         const int dir = icomp;
         for (int iside = 0; iside < 2; ++iside) {
-            const int ibndry = dir + iside * AMREX_SPACEDIM;
-            const int bndry_cell = ( ibndry < AMREX_SPACEDIM ) ?
-                ( ijk_vec[dir] == dom_lo[dir]) : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]);
-            const int is_normal_to_PEC = (
-                ( ibndry < AMREX_SPACEDIM) ? is_boundary_PEC(fbndry_lo, dir)
-                                           : is_boundary_PEC(fbndry_hi, dir) );
+            const int bndry_cell = ( (iside == 0)
+                                 ? ( ijk_vec[dir] == dom_lo[dir])
+                                 : ( ijk_vec[dir] == dom_hi[dir]+stag[dir]) );
+            const int is_normal_to_PEC = ( ( iside == 0 )
+                                       ? is_boundary_PEC(fbndry_lo, dir)
+                                       : is_boundary_PEC(fbndry_hi, dir) );
             if (bndry_cell == 1 && is_normal_to_PEC == 1 )
             {
                 for (int is = 0; is < shape_factor[dir]; ++is) {
                     // guard cell outside the domain by "is" number cells
-                    ijk_guard[dir] = ( (ibndry < AMREX_SPACEDIM) ?
-                        (ijk_vec[dir] - is) : (ijk_vec[dir] + is));
+                    ijk_guard[dir] = ( (iside == 0)
+                                   ? (ijk_vec[dir] - is)
+                                   : (ijk_vec[dir] + is) );
                     // valid cell inside the domain by "is" number of cells
-                    ijk_valid[dir] = ( (ibndry < AMREX_SPACEDIM) ?
-                        (ijk_vec[dir] + is) : (ijk_vec[dir] - is));
+                    ijk_valid[dir] = ( (iside == 0)
+                                   ? (ijk_vec[dir] + is)
+                                   : (ijk_vec[dir] - is));
                     // setting the guard cell Efield tangential to PEC boundary
                     Bfield(ijk_guard) = - Bfield(ijk_valid);
                 }
