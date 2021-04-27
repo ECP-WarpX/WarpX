@@ -63,7 +63,7 @@ namespace PEC {
                                          : (ijk_vec[dir] == (dom_hi[dir] + stag[dir]) ) );
                     // if boundary is PEC, guard cells must be equal and opposite to valid cells
                     if ( bndry_cell == 1) Efield(ijk_vec) = 0.;
- 
+
                     const int guard_cell = ( (iside == 0)
                                          ? (ijk_vec[dir] < dom_lo[dir])
                                          : (ijk_vec[dir] > (dom_hi[dir] + stag[dir]) ) );
