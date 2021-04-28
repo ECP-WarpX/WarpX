@@ -71,6 +71,10 @@ void FiniteDifferenceSolver::EvolveECartesian (
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
+
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     Real constexpr c2 = PhysConst::c * PhysConst::c;
 
