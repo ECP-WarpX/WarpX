@@ -465,7 +465,7 @@ void ReadBCParams ()
                     WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
                     WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
 #ifdef WARPX_DIM_RZ
-                    amrex::Abort(" PEC boundary is not yet supported in RZ. TO DO!\n");
+                    if (idim == 0) WarpX::field_boundary_lo[idim] = FieldBoundaryType::None;
 #endif
                 }
             }
