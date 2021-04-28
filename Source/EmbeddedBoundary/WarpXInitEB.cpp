@@ -32,11 +32,13 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
                            int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
-    int lev_here = lev;
+
+    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    int lev_loc = lev;
     if(flag_cp and lev > 0){
-        lev_here = lev -1;
+        lev_loc = lev -1;
     }
-    auto const eb_fact = fieldEBFactory(lev_here);
+    auto const eb_fact = fieldEBFactory(lev_loc);
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
@@ -82,12 +84,14 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
                          int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeFaceAreas");
-    int lev_here = lev;
+
+    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    int lev_loc = lev;
     if(flag_cp and lev > 0){
-        lev_here = lev -1;
+        lev_loc = lev -1;
     }
 
-    auto const eb_fact = fieldEBFactory(lev_here);
+    auto const eb_fact = fieldEBFactory(lev_loc);
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &area_frac = eb_fact.getAreaFrac();
 
@@ -126,13 +130,14 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleEdges");
 
-    int lev_here = lev;
+    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    int lev_loc = lev;
     if(flag_cp and lev > 0){
-        lev_here = lev -1;
+        lev_loc = lev -1;
     }
 
-    auto const &cell_size = CellSize(lev_here);
-    auto const eb_fact = fieldEBFactory(lev_here);
+    auto const &cell_size = CellSize(lev_loc);
+    auto const eb_fact = fieldEBFactory(lev_loc);
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*edge_lengths[idim]); mfi.isValid(); ++mfi) {
@@ -155,15 +160,16 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleAreas");
 
-    int lev_here = lev;
+    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    int lev_loc = lev;
     if(flag_cp and lev > 0){
-        lev_here = lev -1;
+        lev_loc = lev -1;
     }
 
-    auto const& cell_size = CellSize(lev_here);
+    auto const& cell_size = CellSize(lev_loc);
     amrex::Real full_area;
 
-    auto const eb_fact = fieldEBFactory(lev_here);
+    auto const eb_fact = fieldEBFactory(lev_loc);
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*face_areas[idim]); mfi.isValid(); ++mfi) {
