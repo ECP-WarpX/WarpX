@@ -130,7 +130,7 @@ void FieldMomentum::ComputeDiags (int step)
 #endif
 
         // Compute E x B (including sum over cells)
-        const bool local = true;
+        const bool local = false;
         const amrex::Real ExB_x = amrex::MultiFab::Dot(Ey_cc, 0, Bz_cc, 0, 1, 0, local)
                                 - amrex::MultiFab::Dot(Ez_cc, 0, By_cc, 0, 1, 0, local);
         const amrex::Real ExB_y = amrex::MultiFab::Dot(Ez_cc, 0, Bx_cc, 0, 1, 0, local)

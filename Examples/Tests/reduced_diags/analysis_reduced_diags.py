@@ -43,6 +43,9 @@ p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
 values_yt['particle energy'] += np.sum((np.sqrt(p2 * c**2 + m_e**2 * c**4) - m_e * c**2) * w)
+values_yt['electrons: particle momentum in x'] = np.sum(px * w)
+values_yt['electrons: particle momentum in y'] = np.sum(py * w)
+values_yt['electrons: particle momentum in z'] = np.sum(pz * w)
 values_yt['electrons: number of particles'] = w.shape[0]
 values_yt['electrons: sum of weights'] = np.sum(w)
 
@@ -55,6 +58,9 @@ p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
 values_yt['particle energy'] += np.sum((np.sqrt(p2 * c**2 + m_p**2 * c**4) - m_p * c**2) * w)
+values_yt['protons: particle momentum in x'] = np.sum(px * w)
+values_yt['protons: particle momentum in y'] = np.sum(py * w)
+values_yt['protons: particle momentum in z'] = np.sum(pz * w)
 values_yt['protons: number of particles'] = w.shape[0]
 values_yt['protons: sum of weights'] = np.sum(w)
 
@@ -67,18 +73,33 @@ p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
 values_yt['particle energy'] += np.sum(np.sqrt(p2 * c**2) * w)
+values_yt['photons: particle momentum in x'] = np.sum(px * w)
+values_yt['photons: particle momentum in y'] = np.sum(py * w)
+values_yt['photons: particle momentum in z'] = np.sum(pz * w)
 values_yt['photons: number of particles'] = w.shape[0]
 values_yt['photons: sum of weights'] = np.sum(w)
 
-# Accumulate number of particles
-values_yt['number of particles'] = values_yt['electrons: number of particles'] \
-                                 + values_yt['protons: number of particles'] \
-                                 + values_yt['photons: number of particles']
+# Accumulate total particle diagnostics
 
-# Accumulate sum of weights
+values_yt['particle momentum in x'] = values_yt['electrons: particle momentum in x'] \
+                                      + values_yt['protons: particle momentum in x'] \
+                                      + values_yt['photons: particle momentum in x']
+
+values_yt['particle momentum in y'] = values_yt['electrons: particle momentum in y'] \
+                                      + values_yt['protons: particle momentum in y'] \
+                                      + values_yt['photons: particle momentum in y']
+
+values_yt['particle momentum in z'] = values_yt['electrons: particle momentum in z'] \
+                                      + values_yt['protons: particle momentum in z'] \
+                                      + values_yt['photons: particle momentum in z']
+
+values_yt['number of particles'] = values_yt['electrons: number of particles'] \
+                                   + values_yt['protons: number of particles'] \
+                                   + values_yt['photons: number of particles']
+
 values_yt['sum of weights'] = values_yt['electrons: sum of weights'] \
-                            + values_yt['protons: sum of weights'] \
-                            + values_yt['photons: sum of weights']
+                              + values_yt['protons: sum of weights'] \
+                              + values_yt['photons: sum of weights']
 
 # Load 3D data from plotfiles
 ad = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
@@ -101,6 +122,9 @@ B2 = np.sum(Bx**2) + np.sum(By**2) + np.sum(Bz**2)
 N  = np.array(ds.domain_width / ds.domain_dimensions)
 dV = N[0] * N[1] * N[2]
 values_yt['field energy'] = 0.5 * dV * (E2 * eps0 + B2 / mu0)
+values_yt['field momentum in x'] = eps0 * np.sum(Ey * Bz - Ez * By) * dV
+values_yt['field momentum in y'] = eps0 * np.sum(Ez * Bx - Ex * Bz) * dV
+values_yt['field momentum in z'] = eps0 * np.sum(Ex * By - Ey * Bx) * dV
 
 # Field energy in quarter of simulation domain
 E2 = np.sum((Ex**2 + Ey**2 + Ez**2)*(y > 0)*(z < 0))
@@ -133,6 +157,8 @@ values_rd = dict()
 # Load data from output files
 EFdata = np.genfromtxt('./diags/reducedfiles/EF.txt')  # Field energy
 EPdata = np.genfromtxt('./diags/reducedfiles/EP.txt')  # Particle energy
+PFdata = np.genfromtxt('./diags/reducedfiles/PF.txt')  # Field momentum
+PPdata = np.genfromtxt('./diags/reducedfiles/PP.txt')  # Particle momentum
 MFdata = np.genfromtxt('./diags/reducedfiles/MF.txt')  # Field maximum
 MRdata = np.genfromtxt('./diags/reducedfiles/MR.txt')  # Rho maximum
 NPdata = np.genfromtxt('./diags/reducedfiles/NP.txt')  # Particle number
@@ -144,6 +170,21 @@ FR_Integraldata = np.genfromtxt('./diags/reducedfiles/FR_Integral.txt')  # Field
 values_rd['field energy'] = EFdata[1][2]
 values_rd['field energy in quarter of simulation domain'] = FR_Integraldata[1][2]
 values_rd['particle energy'] = EPdata[1][2]
+values_rd['field momentum in x'] = PFdata[1][2]
+values_rd['field momentum in y'] = PFdata[1][3]
+values_rd['field momentum in z'] = PFdata[1][4]
+values_rd['particle momentum in x'] = PPdata[1][2]
+values_rd['particle momentum in y'] = PPdata[1][3]
+values_rd['particle momentum in z'] = PPdata[1][4]
+values_rd['electrons: particle momentum in x'] = PPdata[1][5]
+values_rd['electrons: particle momentum in y'] = PPdata[1][6]
+values_rd['electrons: particle momentum in z'] = PPdata[1][7]
+values_rd['protons: particle momentum in x'] = PPdata[1][8]
+values_rd['protons: particle momentum in y'] = PPdata[1][9]
+values_rd['protons: particle momentum in z'] = PPdata[1][10]
+values_rd['photons: particle momentum in x'] = PPdata[1][11]
+values_rd['photons: particle momentum in y'] = PPdata[1][12]
+values_rd['photons: particle momentum in z'] = PPdata[1][13]
 values_rd['maximum of |Ex|'] = MFdata[1][2]
 values_rd['maximum of |Ey|'] = MFdata[1][3]
 values_rd['maximum of |Ez|'] = MFdata[1][4]
