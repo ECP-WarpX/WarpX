@@ -910,9 +910,10 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
     //EB grid info
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
-
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas_cp;
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
@@ -1072,12 +1073,16 @@ private:
     }
 #endif
 
-    void InitEB ();
+    void InitEB (int lev);
 
-    void ComputeEdgeLengths ();
-    void ComputeFaceAreas ();
-    void ScaleEdges ();
-    void ScaleAreas ();
+    void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                             int lev, bool flag_cp);
+    void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                           int lev, bool flag_cp);
+    void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                     int lev, bool flag_cp);
+    void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                     int lev, bool flag_cp);
 
 private:
     // void EvolvePSATD (int numsteps);
