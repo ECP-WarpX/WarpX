@@ -167,9 +167,9 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
     auto const eb_fact = fieldEBFactory(lev_here);
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (amrex::MFIter mfi(*face_areas[idim]); mfi.isValid(); ++mfi) {
         amrex::Box box = mfi.validbox();
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
             } else if (idim == 1) {
