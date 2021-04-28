@@ -124,8 +124,7 @@ guardCellManager::Init (
 
     // Used if warpx.do_divb_cleaning = 1
     int ng_alloc_G_int = (do_moving_window) ? 2 : 1;
-    // TODO CKC solver requires one additional guard cell?
-    //if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_G_int = std::max(ng_alloc_G_int, 1);
+    // TODO Does the CKC solver require one additional guard cell (as for F)?
     ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)

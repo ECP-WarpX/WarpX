@@ -145,7 +145,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
             // Extract field data for this grid/tile
             Array4<Real> G = Gfield->array(mfi);
 
-            // Loop over the cells and update the fields
+            // Loop over cells and update G
             amrex::ParallelFor(tbx, tby, tbz,
 
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)

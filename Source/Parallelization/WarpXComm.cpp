@@ -775,7 +775,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine && G_fp[lev])
     {
-        // TODO Exchange G field in PML cells
+        // TODO Exchange in PML cells will go here
 
         const auto& period = Geom(lev).periodicity();
 
@@ -793,7 +793,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse && G_cp[lev])
     {
-        // TODO Exchange G field in PML cells
+        // TODO Exchange in PML cells will go here
 
         const auto& cperiod = Geom(lev-1).periodicity();
 

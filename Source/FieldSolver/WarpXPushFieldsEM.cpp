@@ -363,7 +363,7 @@ WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_t
         m_fdtd_solver_cp[lev]->EvolveG(G_cp[lev], Bfield_cp[lev], a_dt);
     }
 
-    // TODO Evolve G field in PML cells
+    // TODO Evolution in PML cells will go here
 }
 
 void
