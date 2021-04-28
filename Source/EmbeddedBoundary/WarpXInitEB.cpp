@@ -133,7 +133,6 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
 
     auto const &cell_size = CellSize(lev_here);
     auto const eb_fact = fieldEBFactory(lev_here);
-    auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*edge_lengths[idim]); mfi.isValid(); ++mfi) {
@@ -165,7 +164,6 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
     amrex::Real full_area;
 
     auto const eb_fact = fieldEBFactory(lev_here);
-    auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*face_areas[idim]); mfi.isValid(); ++mfi) {
