@@ -25,6 +25,8 @@
 #include "Utils/IntervalsParser.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
@@ -912,6 +914,19 @@ private:
     //EB grid info
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_int_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_unst_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_avail_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_stab;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_red;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_enl;
+    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_lending;
+    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
+
+    //This is just needed for the ECT solver
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Vfield;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Rhofield;
 
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
@@ -1073,11 +1088,18 @@ private:
 #endif
 
     void InitEB ();
-
     void ComputeEdgeLengths ();
     void ComputeFaceAreas ();
     void ScaleEdges ();
     void ScaleAreas ();
+    void MarkCells();
+    void ComputeAreaStab();
+    int CountExtFaces();
+    void ComputeFaceExtensions();
+    amrex::Array1D<int, 0, 5> ComputeOneWayExtensions();
+    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 5> temp_inds);
+    static amrex::RealArray AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere);
+    void InitEMFieldSphere ();
 
 private:
     // void EvolvePSATD (int numsteps);

@@ -91,6 +91,12 @@ WarpX::InitData ()
     ComputeFaceAreas();
     ScaleEdges();
     ScaleAreas();
+
+    if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+        MarkCells();
+        ComputeFaceExtensions();
+    }
+
 #endif
 
     ComputePMLFactors();

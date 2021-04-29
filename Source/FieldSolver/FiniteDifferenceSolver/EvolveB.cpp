@@ -25,7 +25,16 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Vfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
     int lev, amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -48,6 +57,11 @@ void FiniteDifferenceSolver::EvolveB (
 
         EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, face_areas, lev, dt );
 
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+
+        EvolveRhoCartesianECT( Efield, edge_lengths, face_areas, Rhofield, lev );
+        EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, area_stab, Rhofield,
+                             flag_unst_cell, borrowing, lending, lev, dt);
 #endif
     } else {
         amrex::Abort("EvolveB: Unknown algorithm");
@@ -143,6 +157,211 @@ void FiniteDifferenceSolver::EvolveBCartesian (
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
+    }
+}
+
+void FiniteDifferenceSolver::EvolveRhoCartesianECT (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, int lev ) {
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Rhofield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        // Extract field data for this grid/tile
+        Array4<Real> const &Ex = Efield[0]->array(mfi);
+        Array4<Real> const &Ey = Efield[1]->array(mfi);
+        Array4<Real> const &Ez = Efield[2]->array(mfi);
+        Array4<Real> const &Rhox = Rhofield[0]->array(mfi);
+        Array4<Real> const &Rhoy = Rhofield[1]->array(mfi);
+        Array4<Real> const &Rhoz = Rhofield[2]->array(mfi);
+        amrex::Array4<amrex::Real> const &lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const &ly = edge_lengths[1]->array(mfi);
+        amrex::Array4<amrex::Real> const &lz = edge_lengths[2]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sx = face_areas[0]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sy = face_areas[1]->array(mfi);
+        amrex::Array4<amrex::Real> const &Sz = face_areas[2]->array(mfi);
+
+        // Extract tileboxes for which to loop
+        Box const &trhox = mfi.tilebox(Rhofield[0]->ixType().toIntVect());
+        Box const &trhoy = mfi.tilebox(Rhofield[1]->ixType().toIntVect());
+        Box const &trhoz = mfi.tilebox(Rhofield[2]->ixType().toIntVect());
+
+        amrex::ParallelFor(trhox, trhoy, trhoz,
+
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+                if (Sx(i, j, k) <= 0 or isnan(Sx(i, j, k))) return;
+
+                Rhox(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
+                    Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k)) / Sx(i, j, k);
+
+            },
+
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+                if (Sy(i, j, k) <= 0 or isnan(Sy(i, j, k))) return;
+
+                Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
+                    Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
+
+            },
+
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+                if (Sz(i, j, k) <= 0 or isnan(Sz(i, j, k))) return;
+
+                Rhoz(i, j, k) =  (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
+                    Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
+
+            }
+
+        );
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+    }
+
+}
+
+void FiniteDifferenceSolver::EvolveBCartesianECT (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
+    int lev, amrex::Real const dt ) {
+
+    amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(*Bfield[0]); mfi.isValid(); ++mfi) {
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            // Extract field data for this grid/tile
+            Array4<Real> const &B = Bfield[idim]->array(mfi);
+            Array4<Real> const &Rho = Rhofield[idim]->array(mfi);
+            amrex::Array4<int> const &flag_unst_cell_dim = flag_unst_cell[idim]->array(mfi);
+            amrex::Array4<Real> const &S = face_areas[idim]->array(mfi);
+            amrex::Array4<Real> const &S_enl = area_enl[idim]->array(mfi);
+            amrex::Array4<Real> const &S_red = area_red[idim]->array(mfi);
+            amrex::Array4<Real> const &S_stab = area_stab[idim]->array(mfi);
+
+            auto &lending_dim = (*lending[idim])[mfi];
+            auto &borrowing_dim = (*borrowing[idim])[mfi];
+
+            auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.array();
+            auto const &lending_inds = (*lending[idim])[mfi].inds.array();
+
+            // Extract tileboxes for which to loop
+            Box const &tb = mfi.tilebox(Bfield[idim]->ixType().toIntVect());
+
+            //Take care of the unstable cells
+            amrex::LoopOnCpu(tb,
+
+            [=, &borrowing_dim, &lending_dim] (int i, int j, int k) {
+
+                if (S(i, j, k) <= 0 or isnan(S(i, j, k))) return;
+
+                if (!flag_unst_cell_dim(i, j, k))
+                    return;
+
+                amrex::Real V_enl = Rho(i, j, k) * S(i, j, k);
+                amrex::Real rho_enl;
+                if (borrowing_inds(i, j, k).size() == 0) {
+                    amrex::Abort("EvolveBCartesianECT: face ("
+                                + std::to_string(i) + ", "
+                                + std::to_string(j) + ", "
+                                + std::to_string(k)
+                                + ") wasn't extended correctly");
+                }
+                // First we compute the rho of the enlarged face
+                for (int ind : borrowing_inds(i, j, k)) {
+                    int ip = borrowing_dim.i_face[ind];
+                    int jp = borrowing_dim.j_face[ind];
+                    int kp = borrowing_dim.k_face[ind];
+                    V_enl += Rho(ip, jp, kp) * borrowing_dim.area[ind];
+                }
+
+                rho_enl = V_enl / S_enl(i, j, k);
+
+                //Now we have to insert the computed rho_enl in the lending FaceInfoBox in the correct
+                // position
+                for (int ind : borrowing_inds(i, j, k)) {
+                    int ip = borrowing_dim.i_face[ind];
+                    int jp = borrowing_dim.j_face[ind];
+                    int kp = borrowing_dim.k_face[ind];
+                    for (int ind2 : lending_inds(ip, jp, kp)) {
+                        int ip2 = lending_dim.i_face[ind2];
+                        int jp2 = lending_dim.j_face[ind2];
+                        int kp2 = lending_dim.k_face[ind2];
+                        if (ip2 == i and jp2 == j and kp2 == k) {
+                            lending_dim.rho_face[ind2] = rho_enl;
+                        }
+                    }
+                }
+
+                B(i, j, k) = B(i, j, k) - dt * rho_enl;
+
+            });
+
+            //Take care of the stable cells
+            amrex::ParallelFor(tb,
+
+            [=, &lending_dim] AMREX_GPU_DEVICE(int i, int j, int k) {
+                if (S(i, j, k) <= 0 or isnan(S(i, j, k))) return;
+
+                if (flag_unst_cell_dim(i, j, k))
+                    return;
+
+                if (lending_inds(i, j, k).size()  == 0) {
+                    //Stable cell which hasn't been intruded
+                    B(i, j, k) = B(i, j, k) - dt * Rho(i, j, k);
+                } else {
+
+                    //Stable cell which has been intruded
+                    amrex::Real Venl = Rho(i, j, k) * S_red(i, j, k);
+
+                    for (int ind : lending_inds(i, j, k)) {
+                        Venl += lending_dim.rho_face[ind] * lending_dim.area[ind];
+                    }
+
+                    B(i, j, k) = B(i, j, k) - dt * Venl / S(i, j, k);
+                }
+
+            });
+
+        }
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+
     }
 }
 

@@ -11,6 +11,7 @@
 #include <AMReX_MultiFab.H>
 #include "MacroscopicProperties/MacroscopicProperties.H"
 #include "BoundaryConditions/PML.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 
 /**
  * \brief Top-level class for the electromagnetic finite-difference solver
@@ -38,7 +39,16 @@ class FiniteDifferenceSolver
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Vfield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+                       std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+                       std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
                        int lev, amrex::Real const dt );
 
         void EvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
@@ -171,6 +181,25 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             int const rhocomp,
             amrex::Real const dt );
+
+        void EvolveRhoCartesianECT (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, int lev);
+
+        void EvolveBCartesianECT (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+            std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+            std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+            std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
+            int lev, amrex::Real const dt
+        );
 
         template< typename T_Algo >
         void ComputeDivECartesian (
