@@ -200,7 +200,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         amrex::ParallelFor(trhox, trhoy, trhoz,
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                if (Sx(i, j, k) <= 0 or isnan(Sx(i, j, k))) return;
+                if (Sx(i, j, k) <= 0 or amrex::isnan(Sx(i, j, k))) return;
 
                 Rhox(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
                     Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k)) / Sx(i, j, k);
@@ -208,7 +208,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                if (Sy(i, j, k) <= 0 or isnan(Sy(i, j, k))) return;
+                if (Sy(i, j, k) <= 0 or amrex::isnan(Sy(i, j, k))) return;
 
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
@@ -216,7 +216,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                if (Sz(i, j, k) <= 0 or isnan(Sz(i, j, k))) return;
+                if (Sz(i, j, k) <= 0 or amrex::isnan(Sz(i, j, k))) return;
 
                 Rhoz(i, j, k) =  (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
                     Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
@@ -284,7 +284,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
             [=, &borrowing_dim, &lending_dim] (int i, int j, int k) {
 
-                if (S(i, j, k) <= 0 or isnan(S(i, j, k))) return;
+                if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
                 if (!flag_unst_cell_dim(i, j, k))
                     return;
@@ -332,7 +332,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             amrex::ParallelFor(tb,
 
             [=, &lending_dim] AMREX_GPU_DEVICE(int i, int j, int k) {
-                if (S(i, j, k) <= 0 or isnan(S(i, j, k))) return;
+                if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
                 if (flag_unst_cell_dim(i, j, k))
                     return;

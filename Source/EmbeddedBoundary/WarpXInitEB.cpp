@@ -195,7 +195,7 @@ WarpX::MarkCells(){
                 flag_int_face(i, j, k) = int(S(i, j, k) > 0);
                 // This face is unstable if it has less area than area_stab
                 flag_unst_face(i, j, k) = int((S(i, j, k) < area_stab(i, j, k))
-                                            and !isnan(S(i, j, k)) and S(i, j, k) > 0);
+                                            and !amrex::isnan(S(i, j, k)) and S(i, j, k) > 0);
                 // Does this face need to be extended? This is the same as flag_unst_face here,
                 // but it is modified later to keep track o which faces still need to be extended
                 flag_ext_face(i, j, k) = flag_unst_face(i, j, k);
