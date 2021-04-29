@@ -29,7 +29,7 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
     amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
-#if (AMREX_SPACEDIM == 2)
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
     shape_factor[1] = WarpX::noz;
 #endif
     amrex::GpuArray<int, 3> fbndry_lo;
@@ -58,18 +58,27 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
         // loop over cells and update fields
         amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#if (defined WARPX_DIM_RZ)
+                k = 0;
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
                                            Ex, Ex_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#if (defined WARPX_DIM_RZ)
+                k = 0;
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
                                            Ey, Ey_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#if (defined WARPX_DIM_RZ)
+                k = 0;
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
@@ -95,7 +104,7 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
     amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
-#if (AMREX_SPACEDIM == 2)
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
     shape_factor[1] = WarpX::noz;
 #endif
     amrex::GpuArray<int, 3> fbndry_lo;
@@ -125,18 +134,27 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
         // loop over cells and update fields
         amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#if (defined WARPX_DIM_RZ)
+                k = 0;
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
                                      Bx, Bx_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#if (defined WARPX_DIM_RZ)
+                k = 0;
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
                                      By, By_stag, fbndry_lo, fbndry_hi);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#if (defined WARPX_DIM_RZ)
+                k = 0;
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
