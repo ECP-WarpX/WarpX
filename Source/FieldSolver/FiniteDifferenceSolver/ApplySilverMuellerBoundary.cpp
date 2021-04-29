@@ -39,6 +39,9 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Real const coef1_r = (1._rt - cdt_over_dr)/(1._rt + cdt_over_dr);
     amrex::Real const coef2_r = 2._rt*cdt_over_dr/(1._rt + cdt_over_dr) / PhysConst::c;
     amrex::Real const coef3_r = cdt/(1._rt + cdt_over_dr) / PhysConst::c;
+    amrex::Real const cdt_over_dz = cdt*m_stencil_coefs_z[0];
+    amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
+    amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
 
     // Extract stencil coefficients
     Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
@@ -57,23 +60,50 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         Array4<Real> const& Er = Efield[0]->array(mfi);
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real> const& Br = Bfield[0]->array(mfi);
         Array4<Real> const& Bt = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
+        Box tbr  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
         Box tbt  = mfi.tilebox(Bfield[1]->ixType().toIntVect());
         Box tbz  = mfi.tilebox(Bfield[2]->ixType().toIntVect());
 
         // We will modify the first (i.e. innermost) guard cell
         // (if it is outside of the physical domain)
         // Thus, the tileboxes here are grown by 1 guard cell
+        tbr.grow(1);
         tbt.grow(1);
         tbz.grow(1);
 
         // Loop over the cells
-        amrex::ParallelFor(tbt, tbz,
+        amrex::ParallelFor(tbr, tbt, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
+                // At the +z boundary (innermost guard cell)
+                if ( j==domain_box.bigEnd(1)+1 ){
+                    for (int m=0; m<2*nmodes-1; m++)
+                        Br(i,j,0,m) = coef1_z*Br(i,j,0,m) - coef2_z*Et(i,j,0,m);
+                }
+                // At the -z boundary (innermost guard cell)
+                if ( j==domain_box.smallEnd(1)-1 ){
+                    for (int m=0; m<2*nmodes-1; m++)
+                        Br(i,j,0,m) = coef1_z*Br(i,j,0,m) + coef2_z*Et(i,j+1,0,m);
+                }
+
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+
+                // At the +z boundary (innermost guard cell)
+                if ( j==domain_box.bigEnd(1)+1 ){
+                    for (int m=0; m<2*nmodes-1; m++)
+                        Bt(i,j,0,m) = coef1_z*Bt(i,j,0,m) + coef2_z*Er(i,j,0,m);
+                }
+                // At the -z boundary (innermost guard cell)
+                if ( j==domain_box.smallEnd(1)-1 ){
+                    for (int m=0; m<2*nmodes-1; m++)
+                        Bt(i,j,0,m) = coef1_z*Bt(i,j,0,m) - coef2_z*Er(i,j+1,0,m);
+                }
                 // At the +r boundary (innermost guard cell)
                 if ( i==domain_box.bigEnd(0)+1 ){
                     // Mode 0
@@ -88,6 +118,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                             + coef3_r*CylindricalYeeAlgorithm::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m);
                     }
                 }
+
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 
@@ -105,6 +136,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                             - coef3_r/r*(Et(i,j,0,2*m) + m*Er(i,j,0,2*m-1));
                     }
                 }
+
             }
         );
     }
@@ -116,11 +148,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Real const coef2_x = 2._rt*cdt_over_dx/(1._rt + cdt_over_dx) / PhysConst::c;
 #ifdef WARPX_DIM_3D
     amrex::Real const cdt_over_dy = PhysConst::c*dt*m_stencil_coefs_y[0];
-    amrex::Real const coef1_y = (1._rt - cdt_over_dy)/(1._rt + cdt_over_dx);
+    amrex::Real const coef1_y = (1._rt - cdt_over_dy)/(1._rt + cdt_over_dy);
     amrex::Real const coef2_y = 2._rt*cdt_over_dy/(1._rt + cdt_over_dy) / PhysConst::c;
 #endif
     amrex::Real const cdt_over_dz = PhysConst::c*dt*m_stencil_coefs_z[0];
-    amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dx);
+    amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
     amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid

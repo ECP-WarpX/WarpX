@@ -24,9 +24,10 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
        kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, false)),
 #endif
        m_v_comoving(v_comoving),
-       m_dt(dt),
-       m_update_with_rho(update_with_rho)
+       m_dt(dt)
 {
+    amrex::ignore_unused(update_with_rho);
+
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Allocate arrays of real spectral coefficients

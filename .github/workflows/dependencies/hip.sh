@@ -31,6 +31,7 @@ sudo apt-get install -y --no-install-recommends \
     openmpi-bin     \
     rocm-dev        \
     rocfft          \
+    rocprim         \
     rocrand
 
 # activate
