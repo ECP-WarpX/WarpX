@@ -177,7 +177,7 @@ WarpX::ScaleAreas() {
 
 void
 WarpX::MarkCells(){
-
+#ifdef AMREX_USE_EB
     ComputeAreaStab();
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -206,10 +206,12 @@ WarpX::MarkCells(){
             });
         }
     }
+#endif
 }
 
 void
 WarpX::ComputeAreaStab() {
+#ifdef AMREX_USE_EB
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &cell_size = CellSize(maxLevel());
@@ -242,4 +244,5 @@ WarpX::ComputeAreaStab() {
                                                      lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
         });
     }
+#endif
 }

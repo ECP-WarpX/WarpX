@@ -6,6 +6,7 @@
 int
 WarpX::CountExtFaces() {
     int sum = 0;
+#ifdef AMREX_USE_EB
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &area_frac = eb_fact.getAreaFrac();
@@ -22,6 +23,7 @@ WarpX::CountExtFaces() {
             });
         }
     }
+#endif
     return sum;
 }
 
@@ -32,6 +34,7 @@ WarpX::CountExtFaces() {
 */
 void
 WarpX::ComputeFaceExtensions(){
+#ifdef AMREX_USE_EB
     unsigned int N_ext_faces = CountExtFaces();
     std::cout<< "Cells to be extended before:\t" << N_ext_faces <<std::endl;
     amrex::Array1D<int, 0, 5> temp_inds = ComputeOneWayExtensions();
@@ -45,6 +48,7 @@ WarpX::ComputeFaceExtensions(){
     if (N_ext_faces_after_eight_ways > 0) {
         amrex::Abort("Some faces could not be extended");
     }
+#endif
 }
 
 /**
@@ -52,6 +56,7 @@ WarpX::ComputeFaceExtensions(){
 */
 amrex::Array1D<int, 0, 5>
 WarpX::ComputeOneWayExtensions() {
+#ifdef AMREX_USE_EB
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     int temp_ind_borrowing_x = 0;
@@ -241,6 +246,9 @@ WarpX::ComputeOneWayExtensions() {
     return {temp_ind_borrowing_x, temp_ind_lending_x,
             temp_ind_borrowing_y, temp_ind_lending_y,
             temp_ind_borrowing_z, temp_ind_lending_z};
+#else
+    return {0, 0, 0, 0, 0, 0};
+#endif
 }
 
 /**
@@ -248,6 +256,7 @@ WarpX::ComputeOneWayExtensions() {
 */
 void
 WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 5> temp_inds) {
+#ifdef AMREX_USE_EB
     int temp_ind_borrowing_x = temp_inds(0);
     int temp_ind_lending_x = temp_inds(1);
     int temp_ind_borrowing_y = temp_inds(2);
@@ -544,4 +553,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 5> temp_inds) {
                            }
                          });
     }
+#else
+    amrex::ignore_unused(temp_inds);
+#endif
 }
