@@ -88,11 +88,13 @@ WarpX::InitData ()
 
 #ifdef AMREX_USE_EB
     for(int lev = 0; lev <= maxLevel(); lev++) {
+        // Do the EB initialization on the fine patches
         ComputeEdgeLengths(m_edge_lengths_fp[lev], lev, false);
         ComputeFaceAreas(m_face_areas_fp[lev], lev, false);
         ScaleEdges(m_edge_lengths_fp[lev], lev, false);
         ScaleAreas(m_face_areas_fp[lev], lev, false);
         if (lev > 0) {
+            // Do the EB initialization on the coarse patches
             ComputeEdgeLengths(m_edge_lengths_cp[lev], lev, true);
             ComputeFaceAreas(m_face_areas_cp[lev], lev, true);
             ScaleEdges(m_edge_lengths_cp[lev], lev, true);

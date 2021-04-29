@@ -33,7 +33,8 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
 
-    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
     int lev_loc = lev;
     if(flag_cp and lev > 0){
         lev_loc = lev -1;
@@ -85,7 +86,8 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeFaceAreas");
 
-    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
     int lev_loc = lev;
     if(flag_cp and lev > 0){
         lev_loc = lev -1;
@@ -130,7 +132,8 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleEdges");
 
-    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
     int lev_loc = lev;
     if(flag_cp and lev > 0){
         lev_loc = lev -1;
@@ -160,7 +163,8 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleAreas");
 
-    //This variable is equal to lev if it's a fine patch or equal to lev -1 if it's a coars patch
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
     int lev_loc = lev;
     if(flag_cp and lev > 0){
         lev_loc = lev -1;
