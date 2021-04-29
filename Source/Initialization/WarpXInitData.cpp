@@ -86,6 +86,13 @@ WarpX::InitData ()
         PostRestart();
     }
 
+#ifdef AMREX_USE_EB
+    ComputeEdgeLengths();
+    ComputeFaceAreas();
+    ScaleEdges();
+    ScaleAreas();
+#endif
+
     ComputePMLFactors();
 
     if (WarpX::use_fdtd_nci_corr) {
@@ -174,6 +181,34 @@ WarpX::InitFromScratch ()
 void
 WarpX::InitPML ()
 {
+
+    // if periodicity defined in input, use existing pml interface
+    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
+    ParmParse pp_geometry("geometry");
+    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (geom_periodicity[idim] == 1) {
+                do_pml_Lo[idim] = 0;
+                do_pml_Hi[idim] = 0;
+            }
+        }
+    } else {
+        // setting do_pml = 0 as default and turning it on only when user-input is set to PML.
+        do_pml = 0;
+        do_pml_Lo = amrex::IntVect::TheZeroVector();
+        do_pml_Hi = amrex::IntVect::TheZeroVector();
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
+                do_pml = 1;
+                do_pml_Lo[idim] = 1;
+            }
+            if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
+                do_pml = 1;
+                do_pml_Hi[idim] = 1;
+            }
+        }
+    }
+    if (finest_level > 0) do_pml = 1;
     if (do_pml)
     {
         amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
@@ -184,12 +219,24 @@ WarpX::InitPML ()
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
-                             do_dive_cleaning, do_moving_window,
-                             pml_has_particles, do_pml_in_domain,
+                             do_moving_window, pml_has_particles, do_pml_in_domain,
+                             do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
+            amrex::IntVect do_pml_Hi_MR = amrex::IntVect::TheUnitVector();
+            // check if fine patch edges co-incide with domain boundary
+            amrex::Box levelBox = boxArray(lev).minimalBox();
+            // Domain box at level, lev
+            amrex::Box DomainBox = Geom(lev).Domain();
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
+                    do_pml_Lo_MR[idim] = do_pml_Lo[idim];
+                if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
+                    do_pml_Hi_MR[idim] = do_pml_Hi[idim];
+            }
+
 #ifdef WARPX_DIM_RZ
             //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
             if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
@@ -200,9 +247,9 @@ WarpX::InitPML ()
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
-                                   do_dive_cleaning, do_moving_window,
-                                   pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
+                                   do_moving_window, pml_has_particles, do_pml_in_domain,
+                                   do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
 }

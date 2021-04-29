@@ -51,6 +51,7 @@ jobs:
       if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 \
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
+        python -m pip install --upgrade openpmd-api
       fi
       cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
         -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON

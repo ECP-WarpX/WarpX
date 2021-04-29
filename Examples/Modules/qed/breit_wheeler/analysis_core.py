@@ -1,21 +1,14 @@
-#! /usr/bin/env python
-
 # Copyright 2019 Luca Fedeli, Maxence Thevenet
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-
 # -*- coding: utf-8 -*-
 
-import yt
 import numpy as np
-import sys
 import scipy.special as spe
 import scipy.integrate as integ
 import scipy.stats as st
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-import checksumAPI
 
 import matplotlib.pyplot as plt
 
@@ -80,6 +73,12 @@ B_f = np.array([2857142.85714286, 4285714.28571428, 8571428.57142857])
 NNS = [128,128,128,128] #bins for energy distribution comparison.
 #______________
 
+#Returns all the species names and if they are photon species or not
+def get_all_species_names_and_types():
+    names = spec_names_phot + spec_names_ele + spec_names_pos
+    types = [True]*len(spec_names_phot) + [False]*(len(spec_names_ele)+len(spec_names_pos))
+    return names, types
+
 def calc_chi_gamma(p, E, B):
     pnorm = np.linalg.norm(p)
     v = c*(p/pnorm)
@@ -128,30 +127,15 @@ def BW_d2N_dt_dchi(chi_phot, gamma_phot, chi_ele):
     return coeff_BW*BW_F(chi_phot, chi_ele)*(gamma_phot/gamma_phot)
 #__________________
 
-# Get data for a species
-def get_spec(ytdata, specname, is_photon):
-    px = ytdata[specname,"particle_momentum_x"].v
-    pz = ytdata[specname,"particle_momentum_z"].v
-    py = ytdata[specname,"particle_momentum_y"].v
-
-    w = ytdata[specname,"particle_weighting"].v
-
-    if (is_photon):
-        opt = ytdata[specname,"particle_optical_depth_BW"].v
-    else:
-        opt = ytdata[specname,"particle_optical_depth_QSR"].v
-
-    return {"px" : px, "py" : py, "pz" : pz, "w" : w, "opt" : opt}
-
 # Individual tests
 
-def check_number_of_pairs(ytdataset, phot_name, ele_name, pos_name, chi_phot, gamma_phot, dt, particle_number):
+def check_number_of_pairs(particle_data, phot_name, ele_name, pos_name, chi_phot, gamma_phot, dt, particle_number):
     dNBW_dt_theo = BW_dN_dt(chi_phot, gamma_phot)
     expected_pairs = (1.-np.exp(-dNBW_dt_theo*dt))*particle_number
     expected_pairs_tolerance = 5.0*np.sqrt(expected_pairs)
-    n_ele = ytdataset.particle_type_counts[ele_name]
-    n_pos = ytdataset.particle_type_counts[pos_name]
-    n_phot = ytdataset.particle_type_counts[phot_name]
+    n_ele = len(particle_data[ele_name]["w"])
+    n_pos = len(particle_data[pos_name]["w"])
+    n_phot = len(particle_data[phot_name]["w"])
     n_lost = initial_particle_number-n_phot
     assert((n_ele == n_pos) and (n_ele == n_lost))
     assert( np.abs(n_ele-expected_pairs) < expected_pairs_tolerance)
@@ -235,12 +219,7 @@ def check_energy_distrib(energy_ele, energy_pos, gamma_phot,
 
 #__________________
 
-def check():
-    filename_end = sys.argv[1]
-    data_set_end = yt.load(filename_end)
-
-    sim_time = data_set_end.current_time.to_value()
-    all_data_end = data_set_end.all_data()
+def check(sim_time, particle_data):
 
     for idx in range(4):
         phot_name = spec_names_phot[idx]
@@ -260,9 +239,9 @@ def check():
         print("  normalized photon energy: {:f}".format(gamma_phot))
         print("  timestep: {:f} fs".format(sim_time*1e15))
 
-        phot_data = get_spec(all_data_end, phot_name, is_photon=True)
-        ele_data = get_spec(all_data_end, ele_name, is_photon=False)
-        pos_data = get_spec(all_data_end, pos_name, is_photon=False)
+        phot_data = particle_data[phot_name]
+        ele_data = particle_data[ele_name]
+        pos_data = particle_data[pos_name]
 
         p2_ele = ele_data["px"]**2 + ele_data["py"]**2 + ele_data["pz"]**2
         p_ele = np.sqrt(p2_ele)
@@ -271,7 +250,7 @@ def check():
         p_pos = np.sqrt(p2_pos)
         energy_pos = np.sqrt(1.0 + p2_pos/mec**2 )*mec2
 
-        n_lost = check_number_of_pairs(data_set_end,
+        n_lost = check_number_of_pairs(particle_data,
                               phot_name, ele_name, pos_name,
                               chi_phot, gamma_phot, sim_time,
                               initial_particle_number)
@@ -288,11 +267,3 @@ def check():
 
         print("*************\n")
 
-    test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, filename_end)
-
-def main():
-    check()
-
-if __name__ == "__main__":
-    main()

@@ -227,18 +227,32 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
                         const amrex::IntVect& Bx_stag,
+                        const Real* const sigma_fac_x,
                         const Real* const sigma_fac_y,
                         const Real* const sigma_fac_z,
+                        const Real* const sigma_star_fac_x,
                         const Real* const sigma_star_fac_y,
                         const Real* const sigma_star_fac_z,
-                        int ylo, int zlo)
+                        int xlo, int ylo, int zlo,
+                        const bool divb_cleaning)
 {
 #if (AMREX_SPACEDIM == 2)
 
    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
-    // sz = 0 means that Bx is staggered in z, while sz = 1 means that Bx is nodal in z
+    // sx = 0 means that Bx is staggered in x, while sx = 1 means that Bx is nodal in x (same for z)
+    const int sx = Bx_stag[0];
     const int sz = Bx_stag[1];
+
+    if (divb_cleaning)
+    {
+        // Bxx
+        if (sx == 0) {
+            Bx(i,j,k,PMLComp::xx) *= sigma_star_fac_x[i-xlo];
+        } else {
+            Bx(i,j,k,PMLComp::xx) *= sigma_fac_x[i-xlo];
+        }
+    }
 
    // Bxz
    if (sz == 0) {
@@ -249,9 +263,20 @@ void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
 
 #elif (AMREX_SPACEDIM == 3)
 
-    // sy = 0 means that Bx is staggered in y, while sy = 1 means that Bx is nodal in y (same for z)
+    // sx = 0 means that Bx is staggered in x, while sx = 1 means that Bx is nodal in x (same for y, z)
+    const int sx = Bx_stag[0];
     const int sy = Bx_stag[1];
     const int sz = Bx_stag[2];
+
+    if (divb_cleaning)
+    {
+        // Bxx
+        if (sx == 0) {
+            Bx(i,j,k,PMLComp::xx) *= sigma_star_fac_x[i-xlo];
+        } else {
+            Bx(i,j,k,PMLComp::xx) *= sigma_fac_x[i-xlo];
+        }
+    }
 
    // Bxy
    if (sy == 0) {
@@ -274,12 +299,17 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
                         const amrex::IntVect& By_stag,
                         const Real* const sigma_fac_x,
+                        const Real* const sigma_fac_y,
                         const Real* const sigma_fac_z,
                         const Real* const sigma_star_fac_x,
+                        const Real* const sigma_star_fac_y,
                         const Real* const sigma_star_fac_z,
-                        int xlo, int zlo)
+                        int xlo, int ylo, int zlo,
+                        const bool divb_cleaning)
 {
 #if (AMREX_SPACEDIM == 2)
+
+    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo, divb_cleaning);
 
     // sx = 0 means that By is staggered in x, while sx = 1 means that By is nodal in x (same for z)
     const int sx = By_stag[0];
@@ -301,8 +331,9 @@ void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
 
 #elif (AMREX_SPACEDIM == 3)
 
-    // sx = 0 means that By is staggered in x, while sx = 1 means that By is nodal in x (same for z)
+    // sx = 0 means that By is staggered in x, while sx = 1 means that By is nodal in x (same for y, z)
     const int sx = By_stag[0];
+    const int sy = By_stag[1];
     const int sz = By_stag[2];
 
    // Byx
@@ -311,6 +342,16 @@ void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
    } else {
        By(i,j,k,PMLComp::yx) *= sigma_fac_x[i-xlo];
    }
+
+    if (divb_cleaning)
+    {
+        // Byy
+        if (sy == 0) {
+            By(i,j,k,PMLComp::yy) *= sigma_star_fac_y[j-ylo];
+        } else {
+            By(i,j,k,PMLComp::yy) *= sigma_fac_y[j-ylo];
+        }
+    }
 
    // Byz
    if (sz == 0) {
@@ -327,16 +368,20 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
                         const amrex::IntVect& Bz_stag,
                         const Real* const sigma_fac_x,
                         const Real* const sigma_fac_y,
+                        const Real* const sigma_fac_z,
                         const Real* const sigma_star_fac_x,
                         const Real* const sigma_star_fac_y,
-                        int xlo, int ylo)
+                        const Real* const sigma_star_fac_z,
+                        int xlo, int ylo, int zlo,
+                        const bool divb_cleaning)
 {
 #if (AMREX_SPACEDIM == 2)
 
    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
-    // sx = 0 means that Bz is staggered in x, while sx = 1 means that Bz is nodal in x
+    // sx = 0 means that Bz is staggered in x, while sx = 1 means that Bz is nodal in x (same for z)
     const int sx = Bz_stag[0];
+    const int sz = Bz_stag[1];
 
    // Bzx
    if (sx == 0) {
@@ -345,11 +390,22 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
        Bz(i,j,k,PMLComp::zx) *= sigma_fac_x[i-xlo];
    }
 
+    if (divb_cleaning)
+    {
+        // Bzz
+        if (sz == 0) {
+            Bz(i,j,k,PMLComp::zz) *= sigma_star_fac_z[j-zlo];
+        } else {
+            Bz(i,j,k,PMLComp::zz) *= sigma_fac_z[j-zlo];
+        }
+    }
+
 #elif (AMREX_SPACEDIM == 3)
 
-    // sx = 0 means that Bz is staggered in x, while sx = 1 means that Bz is nodal in x (same for y)
+    // sx = 0 means that Bz is staggered in x, while sx = 1 means that Bz is nodal in x (same for y, z)
     const int sx = Bz_stag[0];
     const int sy = Bz_stag[1];
+    const int sz = Bz_stag[2];
 
    // Bzx
    if (sx == 0) {
@@ -365,68 +421,78 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
        Bz(i,j,k,PMLComp::zy) *= sigma_fac_y[j-ylo];
    }
 
+    if (divb_cleaning)
+    {
+        // Bzz
+        if (sz == 0) {
+            Bz(i,j,k,PMLComp::zz) *= sigma_star_fac_z[k-zlo];
+        } else {
+            Bz(i,j,k,PMLComp::zz) *= sigma_fac_z[k-zlo];
+        }
+    }
+
 #endif
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_F (int i, int j, int k, Array4<Real> const& F_fab,
-                       const amrex::IntVect& F_stag,
-                       const Real* const sigma_fac_x,
-                       const Real* const sigma_fac_y,
-                       const Real* const sigma_fac_z,
-                       const Real* const sigma_star_fac_x,
-                       const Real* const sigma_star_fac_y,
-                       const Real* const sigma_star_fac_z,
-                       int xlo, int ylo, int zlo)
+void warpx_damp_pml_scalar (int i, int j, int k, Array4<Real> const& arr,
+                            const amrex::IntVect& arr_stag,
+                            const Real* const sigma_fac_x,
+                            const Real* const sigma_fac_y,
+                            const Real* const sigma_fac_z,
+                            const Real* const sigma_star_fac_x,
+                            const Real* const sigma_star_fac_y,
+                            const Real* const sigma_star_fac_z,
+                            int xlo, int ylo, int zlo)
 {
 #if (AMREX_SPACEDIM == 2)
 
    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
-    // sx = 0 means that F is staggered in x, while sx = 1 means that F is nodal in x (same for z)
-    const int sx = F_stag[0];
-    const int sz = F_stag[1];
+    // sx = 0 means that arr is staggered in x, while sx = 1 means that arr is nodal in x (same for z)
+    const int sx = arr_stag[0];
+    const int sz = arr_stag[1];
 
-   // Fx
+   // Component along x
    if (sx == 0) {
-       F_fab(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
+       arr(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
    } else {
-       F_fab(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
+       arr(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
    }
 
-   // Fz
+   // Component along z
    if (sz == 0) {
-       F_fab(i,j,k,PMLComp::z) *= sigma_star_fac_z[j-zlo];
+       arr(i,j,k,PMLComp::z) *= sigma_star_fac_z[j-zlo];
    } else {
-       F_fab(i,j,k,PMLComp::z) *= sigma_fac_z[j-zlo];
+       arr(i,j,k,PMLComp::z) *= sigma_fac_z[j-zlo];
    }
 
 #elif (AMREX_SPACEDIM == 3)
 
-    // sx = 0 means that F is staggered in x, while sx = 1 means that F is nodal in x (same for y, z)
-    const int sx = F_stag[0];
-    const int sy = F_stag[1];
-    const int sz = F_stag[2];
+    // sx = 0 means that arr is staggered in x, while sx = 1 means that arr is nodal in x (same for y, z)
+    const int sx = arr_stag[0];
+    const int sy = arr_stag[1];
+    const int sz = arr_stag[2];
 
-   // Fx
+   // Component along x
    if (sx == 0) {
-       F_fab(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
+       arr(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
    } else {
-       F_fab(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
+       arr(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
    }
 
-   // Fy
+   // Component along y
    if (sy == 0) {
-       F_fab(i,j,k,PMLComp::y) *= sigma_star_fac_y[j-ylo];
+       arr(i,j,k,PMLComp::y) *= sigma_star_fac_y[j-ylo];
    } else {
-       F_fab(i,j,k,PMLComp::y) *= sigma_fac_y[j-ylo];
+       arr(i,j,k,PMLComp::y) *= sigma_fac_y[j-ylo];
    }
 
-   // Fz
+   // Component along z
    if (sz == 0) {
-       F_fab(i,j,k,PMLComp::z) *= sigma_star_fac_z[k-zlo];
+       arr(i,j,k,PMLComp::z) *= sigma_star_fac_z[k-zlo];
    } else {
-       F_fab(i,j,k,PMLComp::z) *= sigma_fac_z[k-zlo];
+       arr(i,j,k,PMLComp::z) *= sigma_fac_z[k-zlo];
    }
 
 #endif
