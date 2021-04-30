@@ -21,7 +21,7 @@
  * \param[in] tb_bigEnd bigEnd of the tilebox
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void set_tilebox(
+void constrain_tilebox_to_guards(
     amrex::Box& tb,
     const int dir,
     const int n_domain,
@@ -58,7 +58,7 @@ void set_tilebox(
  * \param[in] tb_bigEnd bigEnd of the current tilebox
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void damp_field(
+void damp_field_in_guards(
     amrex::Array4<amrex::Real> const& mf_arr,
     const int i,
     const int j,

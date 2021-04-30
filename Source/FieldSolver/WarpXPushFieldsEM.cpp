@@ -465,40 +465,40 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
         int const nz_domain = domain.bigEnd(zdir);
 
         // Set the tileboxes so that they only cover the lower/upper half of the guard cells
-        set_tilebox(tex, zdir, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
-        set_tilebox(tey, zdir, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
-        set_tilebox(tez, zdir, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
-        set_tilebox(tbx, zdir, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
-        set_tilebox(tby, zdir, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
-        set_tilebox(tbz, zdir, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
+        constrain_tilebox_to_guards(tex, zdir, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
+        constrain_tilebox_to_guards(tey, zdir, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
+        constrain_tilebox_to_guards(tez, zdir, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
+        constrain_tilebox_to_guards(tbx, zdir, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
+        constrain_tilebox_to_guards(tby, zdir, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
+        constrain_tilebox_to_guards(tbz, zdir, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
 
         amrex::ParallelFor(
             tex, Efield[0]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Ex_arr, i, j, k, icomp, zdir, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
+                damp_field_in_guards(Ex_arr, i, j, k, icomp, zdir, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
             },
             tey, Efield[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Ey_arr, i, j, k, icomp, zdir, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
+                damp_field_in_guards(Ey_arr, i, j, k, icomp, zdir, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
             },
             tez, Efield[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Ez_arr, i, j, k, icomp, zdir, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
+                damp_field_in_guards(Ez_arr, i, j, k, icomp, zdir, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
             }
         );
 
         amrex::ParallelFor(
             tbx, Bfield[0]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Bx_arr, i, j, k, icomp, zdir, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
+                damp_field_in_guards(Bx_arr, i, j, k, icomp, zdir, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
             },
             tby, Bfield[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(By_arr, i, j, k, icomp, zdir, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
+                damp_field_in_guards(By_arr, i, j, k, icomp, zdir, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
             },
             tbz, Bfield[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-                damp_field(Bz_arr, i, j, k, icomp, zdir, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
+                damp_field_in_guards(Bz_arr, i, j, k, icomp, zdir, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
             }
         );
     }
