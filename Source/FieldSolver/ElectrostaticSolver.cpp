@@ -419,40 +419,61 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
             // Extract the potential
-            auto phi_arr   = phi[lev]->array(mfi);
-            // Extract tileboxes for which to loop
-            const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
+            auto phi_arr = phi[lev]->array(mfi);
 
-            amrex::ParallelFor( tb,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    int idx, idx_lo, idx_hi;
+            // loop over dimensions
+            for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+                    // check if the boundary in this dimension should be set
+                    if (!dirichlet_flag[idim]) continue;
 
-                    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
-                        // check if the boundary in this dimension should be set
-                        if (!dirichlet_flag[idim]) continue;
-
-                        if (idim == 0){
-                            idx = i;
-                            idx_lo = lo.x;
-                            idx_hi = hi.x;
-                        }
-                        if (idim == 1){
-                            idx = j;
-                            idx_lo = lo.y;
-                            idx_hi = hi.y;
-                        }
-                        if (idim == 2){
-                            idx = k;
-                            idx_lo = lo.z;
-                            idx_hi = hi.z;
+                    // check if the boundary values are already correct
+                    // otherwise store the domain boundary indices
+                    int idx_lo, idx_hi;
+                    if (idim == 0){
+                        if ((phi_arr(lo.x, 0, 0) == phi_bc_values_lo[idim]) &&
+                            (phi_arr(hi.x, 0, 0) == phi_bc_values_hi[idim])){
+                            continue;
                         }
 
-                        if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
-                        if (idx == idx_hi) phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                        idx_lo = lo.x;
+                        idx_hi = hi.x;
+                    }
+                    if (idim == 1){
+                        if ((phi_arr(0, lo.y, 0) == phi_bc_values_lo[idim]) &&
+                            (phi_arr(0, hi.y, 0) == phi_bc_values_hi[idim])){
+                            continue;
+                        }
+
+                        idx_lo = lo.y;
+                        idx_hi = hi.y;
+                    }
+                    if (idim == 2){
+                        if ((phi_arr(0, 0, lo.z) == phi_bc_values_lo[idim]) &&
+                            (phi_arr(0, 0, hi.z) == phi_bc_values_hi[idim])){
+                            continue;
+                        }
+
+                        idx_lo = lo.z;
+                        idx_hi = hi.z;
                     }
 
-                } // loop ijk
-            );
+                // Extract tileboxes for which to loop
+                const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
+
+                amrex::ParallelFor( tb,
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+
+                            int idx;
+                            if (idim == 0) idx = i;
+                            else if (idim == 1) idx = j;
+                            else if (idim == 2) idx = k;
+
+                            if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                            if (idx == idx_hi) phi_arr(i,j,k) = phi_bc_values_hi[idim];
+
+                    } // loop ijk
+                );
+            } // idim
     }} // lev & MFIter
 }
 
@@ -482,8 +503,8 @@ WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) cons
     // Get the boundary potentials specified in the simulation input file
     // first as strings and then parse those for possible math expressions
     ParmParse pp_geom("boundary");
-    pp_geom.queryarr("potential_lo",potential_lo_str,0,AMREX_SPACEDIM);
-    pp_geom.queryarr("potential_hi",potential_hi_str,0,AMREX_SPACEDIM);
+    pp_geom.queryarr("field_lo",potential_lo_str,0,AMREX_SPACEDIM);
+    pp_geom.queryarr("field_hi",potential_hi_str,0,AMREX_SPACEDIM);
 
     auto parser_lo = makeParser(potential_lo_str[idim], {"t"});
     pot_lo = parser_lo.eval(gett_new(0));

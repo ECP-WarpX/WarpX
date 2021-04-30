@@ -357,8 +357,8 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
         self.potential_xmin = 0
         self.potential_xmax = 0
-        self.potential_ymin = kw.pop('warpx_potential_zmin', 0)
-        self.potential_ymax = kw.pop('warpx_potential_zmax', 0)
+        self.potential_ymin = kw.pop('warpx_bc_zmin_field', 0)
+        self.potential_ymax = kw.pop('warpx_bc_zmax_field', 0)
         self.potential_zmin = 0
         self.potential_zmax = 0
 
@@ -405,10 +405,10 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
-        self.potential_xmin = kw.pop('warpx_potential_xmin', 0)
-        self.potential_xmax = kw.pop('warpx_potential_xmax', 0)
-        self.potential_ymin = kw.pop('warpx_potential_ymin', 0)
-        self.potential_ymax = kw.pop('warpx_potential_ymax', 0)
+        self.potential_xmin = kw.pop('warpx_bc_xmin_field', 0)
+        self.potential_xmax = kw.pop('warpx_bc_xmax_field', 0)
+        self.potential_ymin = kw.pop('warpx_bc_ymin_field', 0)
+        self.potential_ymax = kw.pop('warpx_bc_ymax_field', 0)
         self.potential_zmin = 0
         self.potential_zmax = 0
 
@@ -451,12 +451,12 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
-        self.potential_xmin = kw.pop('warpx_potential_xmin', 0)
-        self.potential_xmax = kw.pop('warpx_potential_xmax', 0)
-        self.potential_ymin = kw.pop('warpx_potential_ymin', 0)
-        self.potential_ymax = kw.pop('warpx_potential_ymax', 0)
-        self.potential_zmin = kw.pop('warpx_potential_zmin', 0)
-        self.potential_zmax = kw.pop('warpx_potential_zmax', 0)
+        self.potential_xmin = kw.pop('warpx_bc_xmin_field', 0)
+        self.potential_xmax = kw.pop('warpx_bc_xmax_field', 0)
+        self.potential_ymin = kw.pop('warpx_bc_ymin_field', 0)
+        self.potential_ymax = kw.pop('warpx_bc_ymax_field', 0)
+        self.potential_zmin = kw.pop('warpx_bc_zmin_field', 0)
+        self.potential_zmax = kw.pop('warpx_bc_zmax_field', 0)
 
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
@@ -566,11 +566,11 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
-            pywarpx.boundary.potential_lo = [
+            pywarpx.boundary.field_lo = [
                 self.grid.potential_xmin, self.grid.potential_ymin,
                 self.grid.potential_zmin
             ]
-            pywarpx.boundary.potential_hi = [
+            pywarpx.boundary.field_hi = [
                 self.grid.potential_xmax, self.grid.potential_ymax,
                 self.grid.potential_zmax
             ]
