@@ -437,53 +437,39 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
 
             // loop over dimensions
             for (int idim=0; idim<AMREX_SPACEDIM; idim++){
-                    // check if the boundary in this dimension should be set
-                    if (!dirichlet_flag[idim]) continue;
+                // check if the boundary in this dimension should be set
+                if (!dirichlet_flag[idim]) continue;
 
-                    // check if the boundary values are already correct
-                    // otherwise store the domain boundary indices
-                    int idx_lo, idx_hi;
-                    if (idim == 0){
-                        if ((phi_arr(lo.x, 0, 0) == phi_bc_values_lo[idim]) &&
-                            (phi_arr(hi.x, 0, 0) == phi_bc_values_hi[idim])){
-                            continue;
-                        }
-
-                        idx_lo = lo.x;
-                        idx_hi = hi.x;
-                    }
-                    if (idim == 1){
-                        if ((phi_arr(0, lo.y, 0) == phi_bc_values_lo[idim]) &&
-                            (phi_arr(0, hi.y, 0) == phi_bc_values_hi[idim])){
-                            continue;
-                        }
-
-                        idx_lo = lo.y;
-                        idx_hi = hi.y;
-                    }
-                    if (idim == 2){
-                        if ((phi_arr(0, 0, lo.z) == phi_bc_values_lo[idim]) &&
-                            (phi_arr(0, 0, hi.z) == phi_bc_values_hi[idim])){
-                            continue;
-                        }
-
-                        idx_lo = lo.z;
-                        idx_hi = hi.z;
-                    }
+                // a check can be added to test if the boundary values are
+                // already correct, in which case the loop over cells below
+                // can be skipped
+                int idx_lo, idx_hi;
+                if (idim == 0){
+                    idx_lo = lo.x;
+                    idx_hi = hi.x;
+                }
+                if (idim == 1){
+                    idx_lo = lo.y;
+                    idx_hi = hi.y;
+                }
+                if (idim == 2){
+                    idx_lo = lo.z;
+                    idx_hi = hi.z;
+                }
 
                 // Extract tileboxes for which to loop
                 const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
 
                 amrex::ParallelFor( tb,
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        int idx;
 
-                            int idx;
-                            if (idim == 0) idx = i;
-                            else if (idim == 1) idx = j;
-                            else if (idim == 2) idx = k;
+                        if (idim == 0) idx = i;
+                        else if (idim == 1) idx = j;
+                        else if (idim == 2) idx = k;
 
-                            if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
-                            if (idx == idx_hi) phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                        if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                        if (idx == idx_hi) phi_arr(i,j,k) = phi_bc_values_hi[idim];
 
                     } // loop ijk
                 );

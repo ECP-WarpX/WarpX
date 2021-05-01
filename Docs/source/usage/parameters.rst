@@ -125,10 +125,7 @@ Setting up the field mesh
 * ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
     Whether the boundary conditions are periodic, in each direction.
 
-    For each direction, use 1 for periodic conditions, 0 otherwise. If
-    warpx.do_electrostatic = labframe and non-periodic conditions are specified
-    the boundary potentials can also be specified through ``boundary.field_lo``
-    and ``boundary.field_hi`` (default `0`).
+    For each direction, use 1 for periodic conditions, 0 otherwise.
 
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
@@ -196,6 +193,7 @@ Domain Boundary Conditions
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+    * ``pec``: This option can be used to add a Perfect Electric Conductor at the simulation boundary. If ``warpx.do_electrostatic = labframe`` is also specified the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
