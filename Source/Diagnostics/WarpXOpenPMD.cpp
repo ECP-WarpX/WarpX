@@ -699,7 +699,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
   // here we the save the SoA properties (real)
   {
-    for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
+    auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
+    for (auto idx=0; idx<real_counter; idx++) {
       auto ii = m_NumAoSRealAttributes + idx;
       if (write_real_comp[ii]) {
         getComponentRecord(real_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),

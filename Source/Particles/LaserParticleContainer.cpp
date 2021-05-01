@@ -418,7 +418,7 @@ LaserParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
-                                Real t, Real dt, DtType /*a_dt_type*/)
+                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition)
 {
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
@@ -475,7 +475,7 @@ LaserParticleContainer::Evolve (int lev,
             plane_Yp.resize(np);
             amplitude_E.resize(np);
 
-            if (rho) {
+            if (rho && ! skip_deposition) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
@@ -510,7 +510,7 @@ LaserParticleContainer::Evolve (int lev,
             // Current Deposition
             //
             // Deposit inside domains
-            {
+            if (! skip_deposition ) {
                 int* ion_lev = nullptr;
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
@@ -525,7 +525,7 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
-            if (rho) {
+            if (rho && ! skip_deposition) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                               np_current, thread_num, lev, lev);

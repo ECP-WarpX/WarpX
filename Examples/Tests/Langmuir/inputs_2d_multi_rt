@@ -36,8 +36,10 @@ warpx.cfl = 1.0
 
 # Parameters for the plasma wave
 my_constants.epsilon = 0.01
-my_constants.kp = 376357.71524190728
-my_constants.k = 314159.2653589793
+my_constants.n0 = 2.e24  # electron and positron densities, #/m^3
+my_constants.wp = sqrt(2.*n0*q_e**2/(epsilon0*m_e))  # plasma frequency
+my_constants.kp = wp/clight  # plasma wavenumber
+my_constants.k = 2.*pi/20.e-6  # perturbation wavenumber
 # Note: kp is calculated in SI for a density of 4e24 (i.e. 2e24 electrons + 2e24 positrons)
 # k is calculated so as to have 2 periods within the 40e-6 wide box.
 
@@ -56,7 +58,7 @@ electrons.zmin = -20.e-6
 electrons.zmax = 20.e-6
 
 electrons.profile = constant
-electrons.density = 2.e24   # number of electrons per m^3
+electrons.density = n0   # number of electrons per m^3
 electrons.momentum_distribution_type = parse_momentum_function
 electrons.momentum_function_ux(x,y,z) = "epsilon * k/kp * sin(k*x) * cos(k*y) * cos(k*z)"
 electrons.momentum_function_uy(x,y,z) = "epsilon * k/kp * cos(k*x) * sin(k*y) * cos(k*z)"
@@ -74,7 +76,7 @@ positrons.zmin = -20.e-6
 positrons.zmax = 20.e-6
 
 positrons.profile = constant
-positrons.density = 2.e24   # number of positrons per m^3
+positrons.density = n0   # number of positrons per m^3
 positrons.momentum_distribution_type = parse_momentum_function
 positrons.momentum_function_ux(x,y,z) = "-epsilon * k/kp * sin(k*x) * cos(k*y) * cos(k*z)"
 positrons.momentum_function_uy(x,y,z) = "-epsilon * k/kp * cos(k*x) * sin(k*y) * cos(k*z)"

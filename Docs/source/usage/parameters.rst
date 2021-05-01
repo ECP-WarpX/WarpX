@@ -76,14 +76,14 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
-* ``self_fields_required_precision`` (`float`, default: 1.e-11)
+* ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
     This solver can fail to reach the default precision within a reasonable
     This only applies when warpx.do_electrostatic = labframe.
 
-* ``self_fields_max_iters`` (`integer`, default: 200)
+* ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
     fields calculation. In case if MLMG converges but fails to reach the desired
     ``self_fields_required_precision``, this parameter may be increased.
@@ -141,6 +141,12 @@ Setting up the field mesh
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
 
+* ``warpx.refine_plasma`` (`integer`) optional (default `0`)
+
+    Increase the number of macro-particles that are injected "ahead" of a mesh refinement patch in a moving window simulation.
+
+    Note: in development; only works with static mesh-refinement, specific to moving window plasma injection, and requires a single refined level.
+
 * ``warpx.n_current_deposition_buffer`` (`integer`)
     When using mesh refinement: the particles that are located inside
     a refinement patch, but within ``n_current_deposition_buffer`` cells of
@@ -183,9 +189,12 @@ Domain Boundary Conditions
 --------------------------
 
 * ``boundary.field_lo`` and ``boundary_field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
-    Boundary conditions applied to field at the lower and upper domain boundaries.
+    Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
+
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
+    Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
@@ -277,8 +286,9 @@ Distribution across MPI ranks and parallelization
 
     If this is `timers`: costs are updated according to in-code timers.
 
-    If this is `gpuclock`: costs are measured as (max-over-threads) time spent in
-    current deposition routine (only applies when running on GPUs).
+    If this is `gpuclock`: [**requires to compile with option** ``-DWarpX_GPUCLOCK=ON``]
+    costs are measured as (max-over-threads) time spent in current deposition
+    routine (only applies when running on GPUs).
 
 * ``algo.costs_heuristic_particles_wt`` (`float`) optional
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
@@ -327,13 +337,16 @@ User-defined constants
 
 Users can define their own constants in the input file.
 These constants can be used for any parameter that consists in one real number.
-User-defined constants can contain only letters, numbers and the character ``_``.
+User-defined constant names can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
-For example, parameters ``a0`` and ``z_plateau`` can be specified with:
+The values of the constants can include the predefined WarpX constants listed above as well as other user-defined constants.
+For example:
 
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
+* ``my_constants.n0 = 1.e22``
+* ``my_constants.wp = sqrt(n0*q_e**2/(epsilon0*m_e))``
 
 Coordinates
 ^^^^^^^^^^^
@@ -399,7 +412,9 @@ Particle initialization
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
 * ``<species_name>.injection_style`` (`string`)
-    Determines how the particles will be injected in the simulation.
+    Determines how the (macro-)particles will be injected in the simulation.
+    The number of particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are immediately assigned to a refined patch.
+
     The options are:
 
     * ``NUniformPerCell``: injection with a fixed number of evenly-spaced particles per cell.
@@ -452,6 +467,12 @@ Particle initialization
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
     number of particles per theta is at least two times the number of azimuthal modes requested.
     (It is recommended to do a convergence scan of the number of particles per theta)
+
+* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
+    Split particles of the species when crossing the boundary from a lower
+    resolution domain to a higher resolution domain.
+
+    Currently implemented on CPU only.
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
@@ -606,10 +627,6 @@ Particle initialization
 * ``<species_name>.do_backward_propagation`` (`bool`)
     Inject a backward-propagating beam to reduce the effect of charge-separation
     fields when running in the boosted frame. See examples.
-
-* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
-    Split particles of the species when crossing the boundary from a lower
-    resolution domain to a higher resolution domain.
 
 * ``<species_name>.split_type`` (`int`) optional (default `0`)
     Splitting technique. When `0`, particles are split along the simulation
@@ -814,11 +831,13 @@ Laser initialization
       function, they still have to be specified as they are used for numerical purposes.
     - ``"from_txye_file"``: the electric field of the laser is read from an external binary file
       whose format is explained below. It requires to provide the name of the binary file
-      setting the additional parameter ``<laser_name>.txye_file_name`` (string). It accepts an
-      optional parameter ``<laser_name>.time_chunk_size`` (int). This allows to read only
+      setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
+      optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
       time_chunk_size timesteps from the binary file. New timesteps are read as soon as they are needed.
       The default value is automatically set to the number of timesteps contained in the binary file
       (i.e. only one read is performed at the beginning of the simulation).
+      It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
+      delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
       The external binary file should provide E(x,y,t) on a rectangular (but non necessarily uniform)
       grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
       values. x,y,t are meant to be in S.I. units, while the field value is meant to be multiplied by
@@ -1401,10 +1420,12 @@ Numerics and algorithms
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
-    synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
-    Since the grid nodes at the interface between two neighbor boxes are duplicated in both
-    boxes, an instability can occur if they have too different values.
+    synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
+    boundaries is performed. Since the grid nodes at the interface between two neighbor boxes are
+    duplicated in both boxes, an instability can occur if they have too different values.
     This option makes sure that they are synchronized periodically.
+    Note that if Perfectly Matched Layers (PML) are used, synchronization of the `E` and `B` fields
+    is performed at every timestep regardless of this parameter.
 
 * ``warpx.use_hybrid_QED`` (`bool`; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
@@ -1460,6 +1481,18 @@ Boundary conditions
 * ``warpx.do_pml_j_damping`` (`int`; default: 0)
     Whether to damp current in PML. Can only be used if particles are propagated in PML,
     i.e. if `warpx.pml_has_particles = 1`.
+
+* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for E in the PML region.
+    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the PSATD solver.
+
+* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for B in the PML region.
+    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the PSATD solver.
 
 * ``warpx.do_pml_Lo`` (`2 ints in 2D`, `3 ints in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for lower boundaries on mother grid.
@@ -1566,25 +1599,15 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
-    When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
+    When ``<diag_name>.plot_raw_fields = 1``, then the raw (i.e. non-averaged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
     See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
     in the yt documentation for more details on how to view raw fields.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
-    Only used when ``warpx.plot_raw_fields`` is ``1``.
+    Only used when ``<diag_name>.plot_raw_fields = 1``.
     Whether to include the guard cells in the output of the raw fields.
-    Only works with ``<diag_name>.format = plotfile``.
-
-* ``<diag_name>.plot_finepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the fine patch, in the plot files.
-    Only works with ``<diag_name>.format = plotfile``.
-
-* ``<diag_name>.plot_crsepatch`` (`0` or `1`) optional (default `0`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the coarse patch, in the plot files.
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
@@ -1689,6 +1712,19 @@ Back-Transformed Diagnostics
     'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
     ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
     are dumped.
+
+* ``warpx.buffer_size`` (`integer`)
+    The default size of the back transformed diagnostic buffers used to generate lab-frame
+    data is 256. That is, when the multifab with lab-frame data has 256 z-slices,
+    the data will be flushed out. However, if many lab-frame snapshots are required for
+    diagnostics and visualization, the GPU may run out of memory with many large boxes with
+    a size of 256 in the z-direction. This input parameter can then be used to set a
+    smaller buffer-size, preferably multiples of 8, such that, a large number of
+    lab-frame snapshot data can be generated without running out of gpu memory.
+    The downside to using a small buffer size, is that the I/O time may increase due
+    to frequent flushes of the lab-frame data. The other option is to keep the default
+    value for buffer size and use slices to reduce the memory footprint and maintain
+    optimum I/O performance.
 
 * ``slice.num_slice_snapshots_lab`` (`integer`)
     Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
