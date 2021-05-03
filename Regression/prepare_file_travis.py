@@ -123,7 +123,7 @@ if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)    
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
