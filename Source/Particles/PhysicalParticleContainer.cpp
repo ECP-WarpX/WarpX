@@ -208,7 +208,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    Real& x, Real& y, Real& z, std::array<Real, 3>& u)
+    Real& x, Real& y, Real& z, Real& ux, Real& uy, Real& uz)
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -217,7 +217,7 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 
     // For now, start with the assumption that this will only happen
     // at the start of the simulation.
-    const Real t_lab = 0.;
+    const Real t_lab = 0._rt;
 
     const Real uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
 
@@ -230,18 +230,18 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
     Real zpr = WarpX::gamma_boost*z - uz_boost*t_lab;
 
     // transform u and gamma to the boosted frame
-    Real gamma_lab = std::sqrt(1._rt + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/(PhysConst::c*PhysConst::c));
-    // u[0] = u[0];
-    // u[1] = u[1];
-    u[2] = WarpX::gamma_boost*u[2] - uz_boost*gamma_lab;
-    Real gammapr = std::sqrt(1._rt + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/(PhysConst::c*PhysConst::c));
+    Real gamma_lab = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
+    // ux = ux;
+    // uy = uy;
+    uz = WarpX::gamma_boost*uz - uz_boost*gamma_lab;
+    Real gammapr = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
 
-    Real vxpr = u[0]/gammapr;
-    Real vypr = u[1]/gammapr;
-    Real vzpr = u[2]/gammapr;
+    Real vxpr = ux/gammapr;
+    Real vypr = uy/gammapr;
+    Real vzpr = uz/gammapr;
 
     if (do_backward_propagation){
-        u[2] = -u[2];
+        uz = -uz;
     }
 
     // Move the particles to where they will be at t = 0 in the boosted frame
@@ -305,24 +305,24 @@ PhysicalParticleContainer::AddGaussianBeam (
                 u.z *= PhysConst::c;
                 if (do_symmetrize){
                     // Add four particles to the beam:
-                    CheckAndAddParticle(x, y, z, { u.x, u.y, u.z}, weight/4._rt,
+                    CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
-                    CheckAndAddParticle(x, -y, z, { u.x, -u.y, u.z}, weight/4._rt,
+                    CheckAndAddParticle(x, -y, z, u.x, -u.y, u.z, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
-                    CheckAndAddParticle(-x, y, z, { -u.x, u.y, u.z}, weight/4._rt,
+                    CheckAndAddParticle(-x, y, z, -u.x, u.y, u.z, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
-                    CheckAndAddParticle(-x, -y, z, { -u.x, -u.y, u.z}, weight/4._rt,
+                    CheckAndAddParticle(-x, -y, z, -u.x, -u.y, u.z, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
                 } else {
-                    CheckAndAddParticle(x, y, z, { u.x, u.y, u.z}, weight,
+                    CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
@@ -418,7 +418,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 if (ps["momentum"].contains("y")) {
                     uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
                 }
-                CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                CheckAndAddParticle(x, y, z, ux, uy, uz, weight,
                                     particle_x,  particle_y,  particle_z,
                                     particle_ux, particle_uy, particle_uz,
                                     particle_w);
@@ -444,7 +444,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 void
 PhysicalParticleContainer::CheckAndAddParticle (
     Real x, Real y, Real z,
-    std::array<Real, 3> u,
+    Real ux, Real uy, Real uz,
     Real weight,
     Gpu::HostVector<ParticleReal>& particle_x,
     Gpu::HostVector<ParticleReal>& particle_y,
@@ -455,14 +455,14 @@ PhysicalParticleContainer::CheckAndAddParticle (
     Gpu::HostVector<ParticleReal>& particle_w)
 {
     if (WarpX::gamma_boost > 1.) {
-        MapParticletoBoostedFrame(x, y, z, u);
+        MapParticletoBoostedFrame(x, y, z, ux, uy, uz);
     }
     particle_x.push_back(x);
     particle_y.push_back(y);
     particle_z.push_back(z);
-    particle_ux.push_back(u[0]);
-    particle_uy.push_back(u[1]);
-    particle_uz.push_back(u[2]);
+    particle_ux.push_back(ux);
+    particle_uy.push_back(uy);
+    particle_uz.push_back(uz);
     particle_w.push_back(weight);
 }
 
@@ -472,6 +472,14 @@ PhysicalParticleContainer::AddParticles (int lev)
     WARPX_PROFILE("PhysicalParticleContainer::AddParticles()");
 
     if (plasma_injector->add_single_particle) {
+        if (WarpX::gamma_boost > 1.) {
+            MapParticletoBoostedFrame(plasma_injector->single_particle_pos[0],
+                                      plasma_injector->single_particle_pos[1],
+                                      plasma_injector->single_particle_pos[2],
+                                      plasma_injector->single_particle_vel[0],
+                                      plasma_injector->single_particle_vel[1],
+                                      plasma_injector->single_particle_vel[2]);
+        }
         AddNParticles(lev, 1,
                       &(plasma_injector->single_particle_pos[0]),
                       &(plasma_injector->single_particle_pos[1]),
@@ -484,6 +492,16 @@ PhysicalParticleContainer::AddParticles (int lev)
     }
 
     if (plasma_injector->add_multiple_particles) {
+        if (WarpX::gamma_boost > 1.) {
+            for (int i=0 ; i < plasma_injector->multiple_particles_pos_x.size() ; i++) {
+                MapParticletoBoostedFrame(plasma_injector->multiple_particles_pos_x[i],
+                                          plasma_injector->multiple_particles_pos_y[i],
+                                          plasma_injector->multiple_particles_pos_z[i],
+                                          plasma_injector->multiple_particles_vel_x[i],
+                                          plasma_injector->multiple_particles_vel_y[i],
+                                          plasma_injector->multiple_particles_vel_z[i]);
+            }
+        }
         AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
                       plasma_injector->multiple_particles_pos_x.dataPtr(),
                       plasma_injector->multiple_particles_pos_y.dataPtr(),
@@ -930,8 +948,6 @@ void
 PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                    const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                   const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
-                                   const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                    MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                    MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                    MultiFab* rho, MultiFab* crho,
@@ -998,12 +1014,12 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            FArrayBox const* exfab = WarpX::fft_do_time_averaging ? &(Ex_avg[pti]) : &(Ex[pti]);
-            FArrayBox const* eyfab = WarpX::fft_do_time_averaging ? &(Ey_avg[pti]) : &(Ey[pti]);
-            FArrayBox const* ezfab = WarpX::fft_do_time_averaging ? &(Ez_avg[pti]) : &(Ez[pti]);
-            FArrayBox const* bxfab = WarpX::fft_do_time_averaging ? &(Bx_avg[pti]) : &(Bx[pti]);
-            FArrayBox const* byfab = WarpX::fft_do_time_averaging ? &(By_avg[pti]) : &(By[pti]);
-            FArrayBox const* bzfab = WarpX::fft_do_time_averaging ? &(Bz_avg[pti]) : &(Bz[pti]);
+            FArrayBox const* exfab = &Ex[pti];
+            FArrayBox const* eyfab = &Ey[pti];
+            FArrayBox const* ezfab = &Ez[pti];
+            FArrayBox const* bxfab = &Bx[pti];
+            FArrayBox const* byfab = &By[pti];
+            FArrayBox const* bzfab = &Bz[pti];
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
@@ -1889,11 +1905,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        dt);
 
 #ifdef WARPX_QED
-    if (local_has_quantum_sync) {
-        evolve_opt(ux[ip], uy[ip], uz[ip],
-                   Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                   dt, p_optical_depth_QSR[ip]);
-    }
+        if (local_has_quantum_sync) {
+            evolve_opt(ux[ip], uy[ip], uz[ip],
+                       Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                       dt, p_optical_depth_QSR[ip]);
+        }
 #endif
 
     });

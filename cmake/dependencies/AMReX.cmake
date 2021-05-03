@@ -76,6 +76,11 @@ macro(find_amrex)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
+        # IPO/LTO
+        if(WarpX_IPO)
+            set(AMReX_IPO ON CACHE INTERNAL "")
+        endif()
+
         if(WarpX_DIMS STREQUAL RZ)
             set(AMReX_SPACEDIM 2 CACHE INTERNAL "")
         else()
@@ -173,7 +178,7 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
 
-        find_package(AMReX 21.03 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
+        find_package(AMReX 21.04 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -187,7 +192,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "e5b06d59e3a6cf55c40c6498e42eafe940203cb9"
+set(WarpX_amrex_branch "1796dd911bae1ae0b58ae92e4e023bdb00a0f44a"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

@@ -21,7 +21,6 @@
 #include <cmath>
 #include <limits>
 
-
 using namespace amrex;
 
 void
@@ -45,6 +44,7 @@ WarpX::Evolve (int numsteps)
     bool early_params_checked = false; // check typos in inputs after step 1
 
     Real walltime, walltime_start = amrex::second();
+
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         Real walltime_beg_step = amrex::second();
@@ -58,8 +58,6 @@ WarpX::Evolve (int numsteps)
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
         if (cost) {
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-                amrex::Abort("LoadBalance for PSATD: TODO");
             if (step > 0 && load_balance_intervals.contains(step+1))
             {
                 LoadBalance();
@@ -172,8 +170,6 @@ WarpX::Evolve (int numsteps)
             // B : guard cells are NOT up-to-date
         }
 
-        if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
-
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
             UpdateAuxilaryData();
@@ -187,8 +183,6 @@ WarpX::Evolve (int numsteps)
             }
             is_synchronized = true;
         }
-
-        if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 
         for (int lev = 0; lev <= max_level; ++lev) {
             ++istep[lev];
@@ -315,6 +309,7 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
+
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 
     // Synchronize J and rho
@@ -329,7 +324,6 @@ WarpX::OneStep_nosub (Real cur_time)
             VayDeposition();
     }
 
-
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
     // solve.
@@ -337,6 +331,8 @@ WarpX::OneStep_nosub (Real cur_time)
     // For extended PML: copy J from regular grid to PML, and damp J in PML
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
+
+    if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
 
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
@@ -350,18 +346,24 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
 
-        if (use_hybrid_QED)
-        {
+        if (use_hybrid_QED) {
             WarpX::Hybrid_QED_Push(dt);
             FillBoundaryE(guard_cells.ng_alloc_EB);
         }
+
+        // Synchronize E and B fields on nodal points
+        NodalSyncE();
+        NodalSyncB();
+
         if (do_pml) {
             DampPML();
             NodalSyncPML();
         }
     } else {
         EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
+        EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
+        FillBoundaryG(guard_cells.ng_FieldSolverG);
         EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
 
         if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
@@ -379,7 +381,13 @@ WarpX::OneStep_nosub (Real cur_time)
 
         FillBoundaryE(guard_cells.ng_FieldSolver);
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
+
+        // Synchronize E and B fields on nodal points
+        NodalSyncE();
+        NodalSyncB();
+
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
             DampPML();
@@ -393,6 +401,8 @@ WarpX::OneStep_nosub (Real cur_time)
         if (safe_guard_cells)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
+
+    if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 }
 
 /* /brief Perform one PIC iteration, with the multiple J deposition per
@@ -684,12 +694,19 @@ WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
 void
 WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
 {
+    // If warpx.do_current_centering = 1, the current is deposited on the nodal MultiFab current_fp_nodal
+    // and then centered onto the staggered MultiFab current_fp
+    amrex::MultiFab* current_x = (WarpX::do_current_centering) ? current_fp_nodal[lev][0].get()
+                                                               : current_fp[lev][0].get();
+    amrex::MultiFab* current_y = (WarpX::do_current_centering) ? current_fp_nodal[lev][1].get()
+                                                               : current_fp[lev][1].get();
+    amrex::MultiFab* current_z = (WarpX::do_current_centering) ? current_fp_nodal[lev][2].get()
+                                                               : current_fp[lev][2].get();
+
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
-                 *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],
-                 *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2],
-                 *current_fp[lev][0],*current_fp[lev][1],*current_fp[lev][2],
+                 *current_x, *current_y, *current_z,
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),

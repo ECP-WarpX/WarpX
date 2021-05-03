@@ -114,7 +114,7 @@ struct CylindricalYeeAlgorithm {
 
         Real const inv_dr = coefs_r[0];
         return inv_dr*( F(i+1,j,k,comp) - F(i,j,k,comp) );
-    };
+    }
 
     /**
      * Perform derivative along r on a nodal grid, from a cell-centered field `F` */

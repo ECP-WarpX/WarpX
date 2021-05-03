@@ -1,44 +1,44 @@
 {
   "beam": {
     "particle_cpu": 0.0,
-    "particle_id": 445160.0,
-    "particle_momentum_x": 5.430855258630549e-19,
-    "particle_momentum_y": 3.984206980723684e-19,
-    "particle_momentum_z": 8.084044038911465e-18,
-    "particle_position_x": 0.0013737429012070034,
-    "particle_position_y": 0.14010476401881042,
-    "particle_weight": 2761867765448.888
+    "particle_id": 447573.0,
+    "particle_momentum_x": 5.389906975731078e-19,
+    "particle_momentum_y": 4.0113509524430207e-19,
+    "particle_momentum_z": 8.088485048828958e-18,
+    "particle_position_x": 0.0014081774396371826,
+    "particle_position_y": 0.14121931180937125,
+    "particle_weight": 2780592292672.2705
   },
   "electrons": {
     "particle_cpu": 155383.0,
     "particle_id": 26721507984.0,
-    "particle_momentum_x": 7.384569499870267e-19,
-    "particle_momentum_y": 5.668587261205458e-19,
-    "particle_momentum_z": 5.697497123966546e-16,
-    "particle_position_x": 6.639900924688325,
-    "particle_position_y": 58.21047886468016,
-    "particle_weight": 3.215903744897337e+18
+    "particle_momentum_x": 7.338476660439086e-19,
+    "particle_momentum_y": 5.65821279562348e-19,
+    "particle_momentum_z": 5.696860669282423e-16,
+    "particle_position_x": 6.639871516463294,
+    "particle_position_y": 58.21048773913985,
+    "particle_weight": 3.2159037448973373e+18
   },
   "ions": {
     "particle_cpu": 155428.0,
     "particle_id": 26814790002.0,
-    "particle_momentum_x": 1.6753926430545967e-18,
-    "particle_momentum_y": 5.735995901770564e-19,
-    "particle_momentum_z": 1.0101677792943862e-12,
-    "particle_position_x": 6.6300500323791915,
-    "particle_position_y": 58.249147627010196,
+    "particle_momentum_x": 1.6705682162320084e-18,
+    "particle_momentum_y": 5.723976856025395e-19,
+    "particle_momentum_z": 1.0101678467302113e-12,
+    "particle_position_x": 6.630049969920412,
+    "particle_position_y": 58.2491476342914,
     "particle_weight": 3.21662600232034e+18
   },
   "lev=0": {
-    "Bx": 1222314.326298828,
-    "By": 3469458.700059423,
-    "Bz": 194604.08108686682,
-    "Ex": 1041743595886049.6,
-    "Ey": 383518705133115.0,
-    "Ez": 200674815779204.9,
-    "jx": 3.1058053345516452e+16,
-    "jy": 2.2205197753586972e+16,
-    "jz": 2.9099707530640435e+17,
-    "rho": 990359715.0656134
+    "Bx": 1220834.3602474995,
+    "By": 3462824.6001510955,
+    "Bz": 194280.5148985213,
+    "Ex": 1039574206585584.9,
+    "Ey": 383018547917553.56,
+    "Ez": 200106779561626.4,
+    "jx": 3.097332988821253e+16,
+    "jy": 2.215463603536144e+16,
+    "jz": 2.921753560471727e+17,
+    "rho": 994167865.3632829
   }
 }

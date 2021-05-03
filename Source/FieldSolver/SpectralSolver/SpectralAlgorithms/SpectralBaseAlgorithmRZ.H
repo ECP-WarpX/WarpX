@@ -26,7 +26,7 @@ class SpectralBaseAlgorithmRZ
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
-        virtual ~SpectralBaseAlgorithmRZ() {};
+        virtual ~SpectralBaseAlgorithmRZ() {}
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -74,7 +74,7 @@ class SpectralBaseAlgorithmRZ
                                 int const norder_z, bool const nodal)
           // Compute and assign the modified k vectors
           : modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, nodal))
-          {};
+          {}
 
         // Modified finite-order vectors
         KVectorComponent modified_kz_vec;

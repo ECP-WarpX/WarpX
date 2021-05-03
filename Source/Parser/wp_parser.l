@@ -6,6 +6,7 @@
 %}
 
 %option nounput
+%option noinput
 %option prefix="wxparser"
 
  /* Tokens NUMBER, SYMBOL, F1, POW, F2, etc. are defined in wp_parser.y. */
@@ -56,6 +57,7 @@ EXP	([Ee][-+]?[0-9]+)
 "or"          { wxparserlval.f2 = WP_OR;        return OR;}
 "pow"         { wxparserlval.f2 = WP_POW;       return F2; }
 "heaviside"   { wxparserlval.f2 = WP_HEAVISIDE; return F2; }
+"jn"          { wxparserlval.f2 = WP_JN;        return F2; }
 "min"         { wxparserlval.f2 = WP_MIN;       return F2; }
 "max"         { wxparserlval.f2 = WP_MAX;       return F2; }
 

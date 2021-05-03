@@ -106,7 +106,7 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep (int ts, const std::string& filePrefix,
+  void SetStep (int ts, const std::string& dirPrefix,
                 bool isBTD=false);
 
   /** Close the step
@@ -127,7 +127,7 @@ public:
 
 
 private:
-  void Init (openPMD::Access access, const std::string& filePrefix, bool isBTD);
+  void Init (openPMD::Access access, bool isBTD);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
@@ -209,6 +209,14 @@ private:
   std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
+
+  /** This is the output directory
+   *
+   * This usually does not yet end in a `/`.
+   * It does not yet include the file prefix of the openPMD series, which will
+   * be appended by the GetFileName function.
+   */
+  std::string m_dirPrefix;
 
   int m_MPIRank = 0;
   int m_MPISize = 1;
