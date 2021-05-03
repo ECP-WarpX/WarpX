@@ -22,6 +22,7 @@ ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
 ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
 ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
 ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
+ci_eb = os.environ.get('WARPX_CI_EB') == 'TRUE'
 ci_openpmd = os.environ.get('WARPX_CI_OPENPMD') == 'TRUE'
 ci_ccache = os.environ.get('WARPX_CI_CCACHE') == 'TRUE'
 
@@ -113,6 +114,7 @@ if ci_regular_cartesian_2d:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['dim = 2'], False)
@@ -121,6 +123,7 @@ if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
@@ -136,6 +139,9 @@ if ci_rz_or_nompi:
 
 if ci_qed:
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], True)
+
+if ci_eb:
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], True)
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)
