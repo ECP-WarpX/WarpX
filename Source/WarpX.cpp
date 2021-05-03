@@ -76,6 +76,7 @@ long WarpX::particle_pusher_algo;
 int WarpX::maxwell_solver_id;
 long WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = 0;
+bool WarpX::do_divb_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
@@ -221,6 +222,7 @@ WarpX::WarpX ()
     Bfield_aux.resize(nlevs_max);
 
     F_fp.resize(nlevs_max);
+    G_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
     phi_fp.resize(nlevs_max);
     current_fp.resize(nlevs_max);
@@ -240,6 +242,7 @@ WarpX::WarpX ()
     }
 
     F_cp.resize(nlevs_max);
+    G_cp.resize(nlevs_max);
     rho_cp.resize(nlevs_max);
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
@@ -543,6 +546,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("serialize_ics", serialize_ics);
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
+        pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
         pp_warpx.query("n_field_gather_buffer", n_field_gather_buffer);
         pp_warpx.query("n_current_deposition_buffer", n_current_deposition_buffer);
 #ifdef AMREX_USE_GPU
@@ -1135,9 +1139,11 @@ WarpX::ClearLevel (int lev)
     gather_buffer_masks[lev].reset();
 
     F_fp  [lev].reset();
+    G_fp  [lev].reset();
     rho_fp[lev].reset();
     phi_fp[lev].reset();
     F_cp  [lev].reset();
+    G_cp  [lev].reset();
     rho_cp[lev].reset();
 
 #ifdef WARPX_USE_PSATD
@@ -1205,13 +1211,13 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     }
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
-                  guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, aux_is_nodal);
+                  guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
 }
 
 void
 WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
                       const IntVect& ngE, const IntVect& ngJ, const IntVect& ngRho,
-                      const IntVect& ngF, const bool aux_is_nodal)
+                      const IntVect& ngF, const IntVect& ngG, const bool aux_is_nodal)
 {
     // Declare nodal flags
     IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
@@ -1362,6 +1368,20 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_fp"));
     }
 
+    if (do_divb_cleaning)
+    {
+        if (do_nodal)
+        {
+            G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheUnitVector()),
+                                                   dm, ncomps, ngG.max(), tag("G_fp"));
+        }
+        else // do_nodal = 0
+        {
+            G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()),
+                                                   dm, ncomps, ngG.max(), tag("G_fp"));
+        }
+    }
+
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
@@ -1500,6 +1520,20 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (do_dive_cleaning)
         {
             F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_cp"));
+        }
+
+        if (do_divb_cleaning)
+        {
+            if (do_nodal)
+            {
+                G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheUnitVector()),
+                                                       dm, ncomps, ngG.max(), tag("G_cp"));
+            }
+            else // do_nodal = 0
+            {
+                G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()),
+                                                       dm, ncomps, ngG.max(), tag("G_cp"));
+            }
         }
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
