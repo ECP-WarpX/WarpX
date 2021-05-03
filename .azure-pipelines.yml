@@ -28,6 +28,8 @@ jobs:
         WARPX_CI_RZ_OR_NOMPI: 'TRUE'
       qed:
         WARPX_CI_QED: 'TRUE'
+      embedded_boundary:
+        WARPX_CI_EB: 'TRUE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 90
