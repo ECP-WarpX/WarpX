@@ -54,7 +54,7 @@ git clone https://github.com/AMReX-Codes/amrex.git
 cd amrex && git checkout cff96a9f23638819cff688071ff2588d8cfadd63 && cd -
 # Use QED brach for QED tests
 git clone https://github.com/ECP-WarpX/picsar.git
-cd picsar && git checkout 3a948c4eb74b5355727b27eb0a7b2a215be69610 && cd -
+cd picsar && git checkout c16b642e3dcf860480dd1dd21cefa3874f395773 && cd -
 
 # Clone the AMReX regression test utility
 git clone https://github.com/ECP-WarpX/regression_testing.git
