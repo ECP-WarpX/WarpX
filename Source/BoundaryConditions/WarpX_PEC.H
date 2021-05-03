@@ -29,10 +29,12 @@ using namespace amrex;
      *        particles in each dimension.
      *
      * \param[in] icomp        component of the Efield being updated
-                               (0=x, 1=y, 2=z in 3D) and (0=x, 1=z in 2D)
+     *                         (0=x, 1=y, 2=z in Cartesian)
+     *                         (0=r, 1=theta, 2=z in RZ)
      * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
      * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
      * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of Efield Array4
+     * \param[in] n            index of the MultiFab component being updated
      * \param[in] Efield       field data to be updated if (ijk) is at the boundary or a guard cell
      * \param[in] stag         staggering of the field data being updated.
      * \param[in] fbndry_lo    Field boundary type at the lower boundaries
@@ -41,7 +43,7 @@ using namespace amrex;
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetTangentialEfield (const int icomp, const amrex::IntVect & dom_lo,
                                 const amrex::IntVect &dom_hi,
-                                const amrex::IntVect &ijk_vec,
+                                const amrex::IntVect &ijk_vec, const int n,
                                 amrex::Array4<amrex::Real> const& Efield,
                                 const amrex::IntVect& stag,
                                 amrex::GpuArray<int, 3> const& fbndry_lo,
@@ -49,9 +51,18 @@ using namespace amrex;
     {
         // Fields in guard cells set equal and opposite to valid cells
         amrex::IntVect ijk_valid = ijk_vec;
-        for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
-            // index of dimension
-            const int dir = ( ( (icomp+idim)<AMREX_SPACEDIM)? (icomp+idim) : ( (icomp+idim) - AMREX_SPACEDIM));
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+        const int sdim = ( (icomp == 1) ? 0 : 1 );
+#else
+        const int sdim = 1;               
+#endif
+//        int BoundaryCell = 0;
+//        int GuardCell = 0;
+//        amrex::Real sign = 1._rt; 
+        for (int idim = sdim; idim < AMREX_SPACEDIM; ++idim) {
+            // index of dimension that is tangential to the component, icomp
+            const int dir = ( ( (icomp+idim)<AMREX_SPACEDIM)
+                          ? (icomp+idim) : ( (icomp+idim) - AMREX_SPACEDIM));
             // loop over sides , iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 const int is_tangent_to_PEC = ( ( iside == 0 )
@@ -63,19 +74,22 @@ using namespace amrex;
                                  ? (dom_lo[dir] - ijk_vec[dir])
                                  : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
-                    if ( ig == 0) Efield(ijk_vec) = 0.;
+                    if ( ig == 0) Efield(ijk_vec,n) = 0._rt;
 
                     if ( ig > 0 ) {
                         // valid cell inside the domain by "ig" number of cells
+                        // in direction, dir, and side, iside
                         ijk_valid[dir] = ( ( iside == 0)
                                        ? (dom_lo[dir] + ig)
                                        : (dom_hi[dir] + stag[dir] - ig));
-                        // setting the guard cell Efield tangential to PEC boundary
-                        Efield(ijk_vec) = - Efield(ijk_valid);
+                        Efield(ijk_vec, n) = -Efield(ijk_valid, n);
+//                        sign *= -1._rt;
                     }
                 }
             }
         }
+//        if (GuardCell == 1) Efield(ijk_vec) = sign * Efield(ijk_valid);
+//        if (BoundaryCell == 1) Efield(ijk_vec) = 0._rt;
     }
 
     /**
@@ -85,11 +99,12 @@ using namespace amrex;
      *        The number or depth of guard cells updated is equal to the shape factor of
      *        particles in each dimension.
      *
-     * \param[in] icomp        component of the Efield being updated
-                               (0=x, 1=y, 2=z in 3D) and (0=x, 1=z in 2D)
+     * \param[in] icomp        component of the Bfield being updated
+     *                         (0=x, 1=y, 2=z)
      * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
      * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
      * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of Efield Array4
+     * \param[in] n            index of the MultiFab component being updated
      * \param[in] Bfield       field data to be updated if (ijk) is at the boundary
                                or a guard cell
      * \param[in] stag         staggering of the field data being updated.
@@ -99,14 +114,20 @@ using namespace amrex;
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void SetNormalBfield (const int icomp, const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
-                           const amrex::IntVect & ijk_vec,
+                           const amrex::IntVect & ijk_vec, const int n,
                            amrex::Array4<amrex::Real> const& Bfield,
                            const amrex::IntVect & stag,
                            amrex::GpuArray<int, 3> const& fbndry_lo,
                            amrex::GpuArray<int, 3> const& fbndry_hi )
     {
         amrex::IntVect ijk_valid = ijk_vec;
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+        if (icomp == 1)
+            amrex::Abort("This component of the Bfield is not normal to any boundary !!! \n");
+        const int dir = ( (icomp==2) ? (AMREX_SPACEDIM-1) : icomp );
+#else
         const int dir = icomp;
+#endif
         for (int iside = 0; iside < 2; ++iside) {
             const int is_normal_to_PEC = ( ( iside == 0 )
                                        ? is_boundary_PEC(fbndry_lo, dir)
@@ -117,7 +138,7 @@ using namespace amrex;
                                ? (dom_lo[dir] - ijk_vec[dir])
                                : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
-                if ( ig == 0 ) Bfield(ijk_vec) = 0.;
+                if ( ig == 0 ) Bfield(ijk_vec,n) = 0.;
 
                 if ( ig > 0 ) {
                     // valid cell inside the domain by "ig" number of cells
@@ -126,7 +147,7 @@ using namespace amrex;
                                    : (dom_hi[dir] + stag[dir] - ig));
 
                     // setting the guard cell Efield tangential to PEC boundary
-                    Bfield(ijk_vec) = - Bfield(ijk_valid);
+                    Bfield(ijk_vec,n) = - Bfield(ijk_valid,n);
                 }
             }
         }

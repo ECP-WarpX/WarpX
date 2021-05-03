@@ -41,6 +41,9 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
     amrex::IntVect Ex_stag = Efield[0]->ixType().toIntVect();
     amrex::IntVect Ey_stag = Efield[1]->ixType().toIntVect();
     amrex::IntVect Ez_stag = Efield[2]->ixType().toIntVect();
+    int nComp_x = Efield[0]->nComp();
+    int nComp_y = Efield[1]->nComp();
+    int nComp_z = Efield[2]->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -56,32 +59,26 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
         amrex::Box const& tez = mfi.tilebox(Efield[2]->ixType().toIntVect(), shape_factor);
 
         // loop over cells and update fields
-        amrex::ParallelFor(tex, tey, tez,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if (defined WARPX_DIM_RZ)
-                k = 0;
-#endif
+        amrex::ParallelFor(
+            tex, nComp_x,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, n,
                                            Ex, Ex_stag, fbndry_lo, fbndry_hi);
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if (defined WARPX_DIM_RZ)
-                k = 0;
-#endif
+            tey, nComp_y,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, n,
                                            Ey, Ey_stag, fbndry_lo, fbndry_hi);
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if (defined WARPX_DIM_RZ)
-                k = 0;
-#endif
+            tez, nComp_z,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv,
+                PEC::SetTangentialEfield(icomp, domain_lo, domain_hi, iv, n,
                                            Ez, Ez_stag, fbndry_lo, fbndry_hi);
             }
         );
@@ -116,6 +113,9 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
     amrex::IntVect Bx_stag = Bfield[0]->ixType().toIntVect();
     amrex::IntVect By_stag = Bfield[1]->ixType().toIntVect();
     amrex::IntVect Bz_stag = Bfield[2]->ixType().toIntVect();
+    const int nComp_x = Bfield[0]->nComp();
+    const int nComp_y = Bfield[1]->nComp();
+    const int nComp_z = Bfield[2]->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -132,32 +132,28 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
         amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), shape_factor);
 
         // loop over cells and update fields
-        amrex::ParallelFor(tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if (defined WARPX_DIM_RZ)
-                k = 0;
-#endif
+        amrex::ParallelFor(
+            tbx, nComp_x,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
-                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, n,
                                      Bx, Bx_stag, fbndry_lo, fbndry_hi);
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if (defined WARPX_DIM_RZ)
-                k = 0;
-#endif
+#if (AMREX_SPACEDIM == 3)
+            tby, nComp_y,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
-                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, n,
                                      By, By_stag, fbndry_lo, fbndry_hi);
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#if (defined WARPX_DIM_RZ)
-                k = 0;
 #endif
+            tbz, nComp_z,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
-                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv,
+                PEC::SetNormalBfield(icomp, domain_lo, domain_hi, iv, n,
                                      Bz, Bz_stag, fbndry_lo, fbndry_hi);
             }
         );
