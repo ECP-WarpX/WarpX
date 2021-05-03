@@ -27,6 +27,9 @@ using namespace amrex;
      *        and opposite to the field in the valid cells at their mirrored locations.
      *        The number or depth of guard cells updated is equal to the shape factor of
      *        particles in each dimension.
+     *        For corner cells with mixed boundaries, the mirror location could be outside
+     *        valid region, while still ensuring PEC condition is maintained across the
+     *        PEC boundary.
      *
      * \param[in] icomp        component of the Efield being updated
      *                         (0=x, 1=y, 2=z in Cartesian)
@@ -50,15 +53,15 @@ using namespace amrex;
                                 amrex::GpuArray<int, 3> const& fbndry_hi )
     {
         // Fields in guard cells set equal and opposite to valid cells
-        amrex::IntVect ijk_valid = ijk_vec;
+        amrex::IntVect ijk_mirror = ijk_vec;
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
         const int sdim = ( (icomp == 1) ? 0 : 1 );
 #else
         const int sdim = 1;               
 #endif
-//        int BoundaryCell = 0;
-//        int GuardCell = 0;
-//        amrex::Real sign = 1._rt; 
+        int BoundaryCell = 0;
+        int GuardCell = 0;
+        amrex::Real sign = 1._rt; 
         for (int idim = sdim; idim < AMREX_SPACEDIM; ++idim) {
             // index of dimension that is tangential to the component, icomp
             const int dir = ( ( (icomp+idim)<AMREX_SPACEDIM)
@@ -74,22 +77,25 @@ using namespace amrex;
                                  ? (dom_lo[dir] - ijk_vec[dir])
                                  : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
-                    if ( ig == 0) Efield(ijk_vec,n) = 0._rt;
-
+                    if ( ig == 0) BoundaryCell = 1;
                     if ( ig > 0 ) {
-                        // valid cell inside the domain by "ig" number of cells
+                        // Mirror location inside the domain by "ig" number of cells
                         // in direction, dir, and side, iside
-                        ijk_valid[dir] = ( ( iside == 0)
-                                       ? (dom_lo[dir] + ig)
-                                       : (dom_hi[dir] + stag[dir] - ig));
-                        Efield(ijk_vec, n) = -Efield(ijk_valid, n);
-//                        sign *= -1._rt;
+                        ijk_mirror[dir] = ( ( iside == 0)
+                                        ? (dom_lo[dir] + ig)
+                                        : (dom_hi[dir] + stag[dir] - ig));
+                        // The tangential Efield in guard cells is equal and opposite to the
+                        // value in the respective mirror location across the PEC boundary.
+                        // For corner cases, this sign change will occur for each valid
+                        // PEC boundary, and is stored in the variable "sign".
+                        sign *= -1._rt;
                     }
                 }
             }
         }
-//        if (GuardCell == 1) Efield(ijk_vec) = sign * Efield(ijk_valid);
-//        if (BoundaryCell == 1) Efield(ijk_vec) = 0._rt;
+        if (GuardCell == 1) Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
+        // if ijk_vec is on a PEC boundary in any direction, set Etangential to 0.
+        if (BoundaryCell == 1) Efield(ijk_vec,n) = 0._rt;
     }
 
     /**
@@ -120,7 +126,7 @@ using namespace amrex;
                            amrex::GpuArray<int, 3> const& fbndry_lo,
                            amrex::GpuArray<int, 3> const& fbndry_hi )
     {
-        amrex::IntVect ijk_valid = ijk_vec;
+        amrex::IntVect ijk_mirror = ijk_vec;
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
         if (icomp == 1)
             amrex::Abort("This component of the Bfield is not normal to any boundary !!! \n");
@@ -128,6 +134,9 @@ using namespace amrex;
 #else
         const int dir = icomp;
 #endif
+        int BoundaryCell = 0;
+        int GuardCell = 0;
+        amrex::Real sign = 1._rt;
         for (int iside = 0; iside < 2; ++iside) {
             const int is_normal_to_PEC = ( ( iside == 0 )
                                        ? is_boundary_PEC(fbndry_lo, dir)
@@ -138,19 +147,20 @@ using namespace amrex;
                                ? (dom_lo[dir] - ijk_vec[dir])
                                : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
-                if ( ig == 0 ) Bfield(ijk_vec,n) = 0.;
+                if ( ig == 0 ) BoundaryCell = 1;
 
                 if ( ig > 0 ) {
                     // valid cell inside the domain by "ig" number of cells
-                    ijk_valid[dir] = ( (iside == 0)
+                    ijk_mirror[dir] = ( (iside == 0)
                                    ? (dom_lo[dir] + ig)
                                    : (dom_hi[dir] + stag[dir] - ig));
-
-                    // setting the guard cell Efield tangential to PEC boundary
-                    Bfield(ijk_vec,n) = - Bfield(ijk_valid,n);
+                    sign *= -1._rt;
                 }
             }
         }
+        if (GuardCell == 1) Bfield(ijk_vec,n) = sign * Bfield(ijk_mirror,n);
+        // if ijk_vec is on a PEC boundary in any direction, set Bnormal to 0.
+        if (BoundaryCell == 1) Bfield(ijk_vec,n) = 0._rt;
     }
 
     /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
