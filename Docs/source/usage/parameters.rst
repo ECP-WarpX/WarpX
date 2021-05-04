@@ -1229,17 +1229,19 @@ Numerics and algorithms
     computational medium, respectively. The default values are the corresponding values
     in vacuum.
 
-* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
-    The order of the shape factors for the macroparticles, for the 3 dimensions of space.
-    Lower-order shape factors result in faster simulations, but more noisy results,
+* ``interpolation.shape_factors_order`` (`1`, `2`, or `3`)
+    The order of the shape factors for the macro-particles along all spatial directions.
+    Low-order shape factors result in faster simulations, but may lead to more noisy results.
+    High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is probably safer to use high-order shape factors, such as cubic order (that is, cubic splines).
 
-    Note that in the current implementation in WarpX these 3 numbers must be equal.
+    Note that this input parameter is not optional and must always be set in all input files.
+    No default value is provided automatically.
 
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
     When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
-    For example, `E_z` is gathered using ``interpolation.nox``, ``interpolation.noy``, and ``interpolation.noz - 1``.
-    See equations 21-23 of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
+    For example, :math:`E_z` is gathered using ``interpolation.shape_factors_order`` along :math:`(x,y)` and ``interpolation.shape_factors_order - 1`` along :math:`z`.
+    See equations (21)-(23) of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
     Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
 
     .. warning::
