@@ -83,7 +83,7 @@ using namespace amrex;
                                  ? (dom_lo[dir] - ijk_vec[dir])
                                  : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
-                    if ( ig == 0) BoundaryCell = 1;
+                    if ( ig == 0) OnPECBoundary = 1;
                     if ( ig > 0 ) {
                         GuardCell = 1;
                         // Mirror location inside the domain by "ig" number of cells
