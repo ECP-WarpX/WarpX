@@ -2,7 +2,7 @@
 # A proton and negatively charged particle with equal mass as a proton are initialized
 # near the boundary. The proton is given a finite bulk velocity in y and the negatively
 # charged particle is stationary, initially. Due to the PEC boundary setting zero Ey
-# tangential to the PEC surface at x_min and x_max, the Ey field gathered to the particles
+# tangential to the PEC surface at x_min and x_max, the Ey field gathered by the particles
 # is two orders of magnitude smaller than the periodic boundary.
 
 max_step = 20
