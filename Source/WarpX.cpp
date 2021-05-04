@@ -792,9 +792,35 @@ WarpX::ReadParameters ()
     }
     {
         ParmParse pp_interpolation("interpolation");
-        pp_interpolation.query("nox", nox);
-        pp_interpolation.query("noy", noy);
-        pp_interpolation.query("noz", noz);
+
+        int shape_factors_order;
+        if (pp_interpolation.query("shape_factors_order", shape_factors_order) == false)
+        {
+            amrex::Abort("\ninterpolation.shape_factors_order must be set in the input file:"
+                         "\nplease set interpolation.shape_factors_order to 1, 2, or 3");
+        }
+        else
+        {
+            if (shape_factors_order < 1 || shape_factors_order > 3)
+            {
+                amrex::Abort("\ninterpolation.shape_factors_order can be only 1, 2, or 3");
+            }
+            else
+            {
+                nox = shape_factors_order;
+                noy = shape_factors_order;
+                noz = shape_factors_order;
+            }
+        }
+
+        if ((maxLevel() > 0) && (shape_factors_order > 1) && (do_pml_j_damping == 1))
+        {
+            amrex::Warning("\nWARNING: When interpolation.shape_factors_order > 1,"
+                           " some numerical artifact will be present at the interface between coarse and fine patch."
+                           "\nWe recommend setting interpolation.shape_factors_order = 1 in order to avoid this issue");
+        }
+
+        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
 #ifdef WARPX_USE_PSATD
 
@@ -843,17 +869,6 @@ WarpX::ReadParameters ()
             }
         }
 #endif
-
-        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
-
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
-            "warpx.nox, noy and noz must be equal");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
-
-        if (maxLevel() > 0 and nox>1 and do_pml_j_damping==1) {
-            amrex::Warning("WARNING: for nox>1, some numerical artifact will be present"
-                           " at coarse-fine interface. nox=1 recommended to avoid this issue");
-        }
     }
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -1071,6 +1086,15 @@ WarpX::BackwardCompatibility ()
     if (pp_warpx.query("use_kspace_filter", backward_int)){
         amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
                      "Please use the flag use_filter, see documentation.");
+    }
+
+    ParmParse pp_interpolation("interpolation");
+    if (pp_interpolation.query("nox", backward_int) ||
+        pp_interpolation.query("noy", backward_int) ||
+        pp_interpolation.query("noz", backward_int))
+    {
+        amrex::Abort("\ninterpolation.nox (as well as .noy, .noz) are not supported anymore:"
+                     "\nplease use the new syntax interpolation.shape_factors_order instead");
     }
 
     ParmParse pp_algo("algo");
