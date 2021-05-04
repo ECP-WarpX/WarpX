@@ -536,7 +536,7 @@ void ReadBCParams ()
         }
     }
 #ifdef WARPX_DIM_RZ
-    // Ensure code aborts if PEC is specified for r=0 for RZ
+    // Ensure code aborts if PEC is specified at r=0 for RZ
     if ( WarpX::field_boundary_lo[0] == FieldBoundaryType::PEC) {
         amrex::Abort(" PEC boundary at r=0 cannot be PEC. Please set to ``none``. \n");
     }
