@@ -25,19 +25,21 @@ WarpX::LoadBalance ()
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
 #ifdef AMREX_USE_MPI
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+    if (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
         // compute the costs on a per-rank basis
-        WarpX::ComputeCostsHeuristic(costs);
+        ComputeCostsHeuristic(costs);
     }
 
     // By default, do not do a redistribute; this toggles to true if RemakeLevel
     // is called for any level
-    int doLoadBalance = 0;
+    int loadBalancedAnyLevel = false;
 
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
+        int doLoadBalance = false;
+
         // Compute the new distribution mapping
         DistributionMapping newdm;
         const amrex::Real nboxes = costs[lev]->size();
@@ -90,10 +92,12 @@ WarpX::LoadBalance ()
             RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
 
             // Record the load balance efficiency
-            WarpX::setLoadBalanceEfficiency(lev, proposedEfficiency);
+            setLoadBalanceEfficiency(lev, proposedEfficiency);
         }
+
+        loadBalancedAnyLevel = loadBalancedAnyLevel || doLoadBalance;
     }
-    if (doLoadBalance)
+    if (loadBalancedAnyLevel)
     {
         mypc->Redistribute();
         mypc->defineAllParticleTiles();
@@ -130,21 +134,21 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             {
                 const IntVect& ng = Efield_fp[lev][idim]->nGrowVect();
                 auto pmf = std::make_unique<MultiFab>(Efield_fp[lev][idim]->boxArray(),
-                                                                  dm, Efield_fp[lev][idim]->nComp(), ng);
+                                                      dm, Efield_fp[lev][idim]->nComp(), ng);
                 pmf->Redistribute(*Efield_fp[lev][idim], 0, 0, Efield_fp[lev][idim]->nComp(), ng);
                 Efield_fp[lev][idim] = std::move(pmf);
             }
             {
                 const IntVect& ng = current_fp[lev][idim]->nGrowVect();
                 auto pmf = std::make_unique<MultiFab>(current_fp[lev][idim]->boxArray(),
-                                                                  dm, current_fp[lev][idim]->nComp(), ng);
+                                                      dm, current_fp[lev][idim]->nComp(), ng);
                 current_fp[lev][idim] = std::move(pmf);
             }
             if (current_store[lev][idim])
             {
                 const IntVect& ng = current_store[lev][idim]->nGrowVect();
                 auto pmf = std::make_unique<MultiFab>(current_store[lev][idim]->boxArray(),
-                                                                  dm, current_store[lev][idim]->nComp(), ng);
+                                                      dm, current_store[lev][idim]->nComp(), ng);
                 // no need to redistribute
                 current_store[lev][idim] = std::move(pmf);
             }
@@ -165,6 +169,40 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                               dm, nc, ng);
             rho_fp[lev] = std::move(pmf);
         }
+
+#ifdef WARPX_USE_PSATD
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            if (spectral_solver_fp[lev] != nullptr) {
+                // Get the cell-centered box
+                BoxArray realspace_ba = ba;   // Copy box
+                realspace_ba.enclosedCells(); // Make it cell-centered
+                auto ngE = getngE();
+                auto dx = CellSize(lev);
+
+#   ifdef WARPX_DIM_RZ
+                if ( fft_periodic_single_box == false ) {
+                    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                }
+                AllocLevelSpectralSolverRZ(spectral_solver_fp,
+                                           lev,
+                                           realspace_ba,
+                                           dm,
+                                           dx);
+#   else
+                if ( fft_periodic_single_box == false ) {
+                    realspace_ba.grow(ngE);   // add guard cells
+                }
+                bool const pml_flag_false = false;
+                AllocLevelSpectralSolver(spectral_solver_fp,
+                                         lev,
+                                         realspace_ba,
+                                         dm,
+                                         dx,
+                                         pml_flag_false);
+#   endif
+            }
+        }
+#endif
 
         // Aux patch
         if (lev == 0 && Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType())
@@ -234,6 +272,40 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                                                   dm, nc, ng);
                 rho_cp[lev] = std::move(pmf);
             }
+
+#ifdef WARPX_USE_PSATD
+            if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+                if (spectral_solver_cp[lev] != nullptr) {
+                    BoxArray cba = ba;
+                    cba.coarsen(refRatio(lev-1));
+                    std::array<Real,3> cdx = CellSize(lev-1);
+
+                    // Get the cell-centered box
+                    BoxArray c_realspace_ba = cba;  // Copy box
+                    c_realspace_ba.enclosedCells(); // Make it cell-centered
+
+                    auto ngE = getngE();
+
+#   ifdef WARPX_DIM_RZ
+                    c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                    AllocLevelSpectralSolverRZ(spectral_solver_cp,
+                                               lev,
+                                               c_realspace_ba,
+                                               dm,
+                                               cdx);
+#   else
+                    c_realspace_ba.grow(ngE);
+                    bool const pml_flag_false = false;
+                    AllocLevelSpectralSolver(spectral_solver_cp,
+                                             lev,
+                                             c_realspace_ba,
+                                             dm,
+                                             cdx,
+                                             pml_flag_false);
+#   endif
+                }
+            }
+#endif
         }
 
         if (lev > 0 && (n_field_gather_buffer > 0 || n_current_deposition_buffer > 0)) {
@@ -277,7 +349,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 const IntVect& ng = current_buffer_masks[lev]->nGrowVect();
                 auto pmf = std::make_unique<iMultiFab>(current_buffer_masks[lev]->boxArray(),
                                                                     dm, current_buffer_masks[lev]->nComp(), ng);
-                // pmf->ParallelCopy(*current_buffer_masks[lev], 0, 0, current_buffer_masks[lev]->nComp(), ng, ng);
+                // we can avoid this since we immediately re-build the values via BuildBufferMasks()
+                // pmf->Redistribute(*current_buffer_masks[lev], 0, 0, current_buffer_masks[lev]->nComp(), ng);
                 current_buffer_masks[lev] = std::move(pmf);
             }
             if (gather_buffer_masks[lev])
@@ -285,9 +358,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 const IntVect& ng = gather_buffer_masks[lev]->nGrowVect();
                 auto pmf = std::make_unique<iMultiFab>(gather_buffer_masks[lev]->boxArray(),
                                                                     dm, gather_buffer_masks[lev]->nComp(), ng);
-                // pmf->ParallelCopy(*gather_buffer_masks[lev], 0, 0, gather_buffer_masks[lev]->nComp(), ng, ng);
+                // we can avoid this since we immediately re-build the values via BuildBufferMasks()
+                // pmf->Redistribute(*gather_buffer_masks[lev], 0, 0, gather_buffer_masks[lev]->nComp(), ng);
                 gather_buffer_masks[lev] = std::move(pmf);
             }
+            if (current_buffer_masks[lev] || gather_buffer_masks[lev])
+                BuildBufferMasks();
         }
 
         if (costs[lev] != nullptr)
@@ -296,7 +372,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             for (int i : costs[lev]->IndexArray())
             {
                 (*costs[lev])[i] = 0.0;
-                WarpX::setLoadBalanceEfficiency(lev, -1);
+                setLoadBalanceEfficiency(lev, -1);
             }
         }
 
@@ -315,7 +391,7 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        const auto & mypc_ref = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc_ref = GetInstance().GetPartContainer();
         const auto nSpecies = mypc_ref.nSpecies();
 
         // Species loop

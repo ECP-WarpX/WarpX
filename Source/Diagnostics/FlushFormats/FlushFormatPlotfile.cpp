@@ -514,6 +514,28 @@ FlushFormatPlotfile::WriteAllRawFields(
             WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
+        // Averaged fields on fine patch
+        if (warpx.fft_do_time_averaging)
+        {
+            WriteRawMF(warpx.getEfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
+                       "Ex_avg_fp", lev, plot_raw_fields_guards);
+
+            WriteRawMF(warpx.getEfield_avg_fp(lev, 1) , dm, raw_pltname, default_level_prefix,
+                       "Ey_avg_fp", lev, plot_raw_fields_guards);
+
+            WriteRawMF(warpx.getEfield_avg_fp(lev, 2) , dm, raw_pltname, default_level_prefix,
+                       "Ez_avg_fp", lev, plot_raw_fields_guards);
+
+            WriteRawMF(warpx.getBfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
+                       "Bx_avg_fp", lev, plot_raw_fields_guards);
+
+            WriteRawMF(warpx.getBfield_avg_fp(lev, 1) , dm, raw_pltname, default_level_prefix,
+                       "By_avg_fp", lev, plot_raw_fields_guards);
+
+            WriteRawMF(warpx.getBfield_avg_fp(lev, 2) , dm, raw_pltname, default_level_prefix,
+                       "Bz_avg_fp", lev, plot_raw_fields_guards);
+        }
+
         // Coarse path
         if (lev > 0) {
             WriteCoarseVector( "E",

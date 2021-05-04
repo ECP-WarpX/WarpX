@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2020 The WarpX Community
+# Copyright 2020-2021 The WarpX Community
 #
 # License: BSD-3-Clause-LBNL
 # Authors: Axel Huebl
@@ -25,7 +25,9 @@ sudo apt-get install -y --no-install-recommends \
     intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel \
     g++ gfortran    \
     libopenmpi-dev  \
-    openmpi-bin     && \
+    openmpi-bin  && \
+sudo apt-get clean
+
 du -sh /opt/intel/oneapi/
 du -sh /opt/intel/oneapi/*/*
 echo "+++ REDUCING oneAPI install size +++"

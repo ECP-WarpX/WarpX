@@ -122,7 +122,8 @@ class LabFrameSnapShot : public LabFrameDiag {
                      amrex::IntVect prob_ncells_lab, int ncomp_to_dump,
                      std::vector<std::string> mesh_field_names,
                      amrex::RealBox diag_domain_lab,
-                     amrex::Box diag_box, int file_num_in);
+                     amrex::Box diag_box, int file_num_in, const int max_box_size,
+                     const int buffer_size);
     void AddDataToBuffer( amrex::MultiFab& tmp_slice, int k_lab,
          amrex::Vector<int> const& map_actual_fields_to_dump) override;
     void AddPartDataToParticleBuffer(
@@ -149,7 +150,9 @@ class LabFrameSlice : public LabFrameDiag {
                      std::vector<std::string> mesh_field_names,
                      amrex::RealBox diag_domain_lab,
                      amrex::Box diag_box, int file_num_in,
-                     amrex::Real particle_slice_dx_lab);
+                     amrex::Real particle_slice_dx_lab,
+                     const int max_box_size,
+                     const int buffer_size);
     void AddDataToBuffer( amrex::MultiFab& tmp_slice_ptr, int i_lab,
          amrex::Vector<int> const& map_actual_fields_to_dump) override;
     void AddPartDataToParticleBuffer(

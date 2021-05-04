@@ -108,12 +108,11 @@
         "name": "Rowan, Michael E.",
         "orcid": "0000-0003-2406-1273"
       },
-      ,
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Weber, Gunther H.",
         "orcid": "0000-0002-1794-1398"
-      }
+      },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Yang, Eloise",
@@ -142,13 +141,13 @@
     ],
     "contributors": [
       {
-        "affiliation": "Intel",
         "type": "Other",
+        "affiliation": "Intel",
         "name": "Cohn, Robert"
       },
       {
-        "affiliation": "Bloomberg LP",
         "type": "Other",
+        "affiliation": "Bloomberg LP",
         "name": "Levine, Michael"
       },
       {
@@ -164,8 +163,8 @@
         "orcid": "0000-0002-1903-904X"
       },
       {
-        "affiliation": "Lawrence Berkeley National Laboratory",
         "type": "Other",
+        "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Park, Jaehong"
       }
     ],

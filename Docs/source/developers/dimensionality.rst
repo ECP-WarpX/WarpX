@@ -9,16 +9,14 @@ Build Options
 -------------
 
 ==========  ===================
-Dimensions  Makefile Option
+Dimensions  CMake Option
 ==========  ===================
-**3D3V**    ``DIM=3``
-**2D3V**    ``DIM=2``
-**RZ**      ``USE_RZ=TRUE``
+**3D3V**    ``WarpX_DIMS=3``
+**2D3V**    ``WarpX_DIMS=2``
+**RZ**      ``WarpX_DIMS=RZ``
 ==========  ===================
 
-Note that ``DIM`` is ignored (force-set to ``2``) as soon as ``USE_RZ`` is set to ``TRUE``.
-
-See :ref:`building from source <building-source>` for further details.
+See :ref:`building from source <install-developers>` for further details.
 
 Defines
 -------

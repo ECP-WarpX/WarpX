@@ -85,8 +85,6 @@ BTDiagnostics::ReadParameters ()
     BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ( warpx.do_back_transformed_diagnostics==true),
-        "the do_back_transformed_diagnostics flag must be set to true for BTDiagnostics");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.gamma_boost > 1.0_rt,
         "gamma_boost must be > 1 to use the back-transformed diagnostics");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.boost_direction[2] == 1,
@@ -126,6 +124,11 @@ BTDiagnostics::ReadParameters ()
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
     // For BTD, we always need rho to perform Lorentz Transform of current-density
     if (WarpXUtilStr::is_in(m_cellcenter_varnames, "rho")) warpx.setplot_rho(true);
+
+    if (pp_diag_name.query("buffer_size", m_buffer_size)) {
+        if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
+    }
+
 }
 
 bool
@@ -413,7 +416,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev) );
+                                             k_index_zlab(i_buffer, lev), m_max_box_size );
 
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
             }
@@ -464,6 +467,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         int ngrow = 0;
         m_mf_output[i_buffer][lev] = amrex::MultiFab ( buffer_ba, buffer_dmap,
                                                   m_varnames.size(), ngrow ) ;
+        m_mf_output[i_buffer][lev].setVal(0.);
 
         amrex::IntVect ref_ratio = amrex::IntVect(1);
         if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
@@ -743,4 +747,3 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
     snapshot_FabHeader.WriteMultiFabHeader();
 
 }
-
