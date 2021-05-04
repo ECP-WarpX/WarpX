@@ -3,7 +3,7 @@
 # max step
 max_step = 125
 
-# numver of grid points
+# number of grid points
 amr.n_cell = 16 16 128
 
 # Maximum allowable size of each subdomain

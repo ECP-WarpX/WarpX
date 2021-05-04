@@ -21,9 +21,8 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (patch_type == PatchType::coarse) {
-        if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
@@ -102,9 +101,8 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (patch_type == PatchType::coarse) {
-        if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
