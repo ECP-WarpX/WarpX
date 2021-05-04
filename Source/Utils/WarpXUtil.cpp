@@ -534,14 +534,13 @@ void ReadBCParams ()
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
             }
         }
-        // Ensure code aborts if PEC is specified for RZ
-        if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ||
-             WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC) {
-#ifdef WARPX_DIM_RZ
-            amrex::Abort(" PEC boundary is not yet supported in RZ. TO DO!\n");
-#endif
-        }
     }
+#ifdef WARPX_DIM_RZ
+    // Ensure code aborts if PEC is specified for r=0 for RZ
+    if ( WarpX::field_boundary_lo[0] == FieldBoundaryType::PEC) {
+        amrex::Abort(" PEC boundary at r=0 cannot be PEC. Please set to ``none``. \n");
+    }
+#endif
 
     pp_geometry.addarr("is_periodic", geom_periodicity);
 }
