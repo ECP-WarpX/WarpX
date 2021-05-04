@@ -537,9 +537,8 @@ void ReadBCParams ()
     }
 #ifdef WARPX_DIM_RZ
     // Ensure code aborts if PEC is specified at r=0 for RZ
-    if ( WarpX::field_boundary_lo[0] == FieldBoundaryType::PEC) {
-        amrex::Abort(" PEC boundary at r=0 cannot be PEC. Please set to ``none``. \n");
-    }
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
+        "Error : Field boundary at r=0 must be ``none``. \n");
 #endif
 
     pp_geometry.addarr("is_periodic", geom_periodicity);

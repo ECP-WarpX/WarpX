@@ -83,8 +83,9 @@ using namespace amrex;
                                  ? (dom_lo[dir] - ijk_vec[dir])
                                  : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
-                    if ( ig == 0) OnPECBoundary = 1;
-                    if ( ig > 0 ) {
+                    if ( ig == 0) {
+                        OnPECBoundary = 1;
+                    } else if ( ig > 0 ) {
                         GuardCell = 1;
                         // Mirror location inside the domain by "ig" number of cells
                         // across PEC boundary in direction, dir, and side, iside.
@@ -100,9 +101,12 @@ using namespace amrex;
                 }
             }
         }
-        if (GuardCell == 1) Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
         // if ijk_vec is on a PEC boundary in any direction, set Etangential to 0.
-        if (OnPECBoundary == 1) Efield(ijk_vec,n) = 0._rt;
+        if (OnPECBoundary == 1) {
+            Efield(ijk_vec,n) = 0._rt;
+        } else if (GuardCell == 1) {
+            Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
+        }
     }
 
     /**
@@ -156,9 +160,9 @@ using namespace amrex;
                                ? (dom_lo[dir] - ijk_vec[dir])
                                : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
 
-                if ( ig == 0 ) OnPECBoundary = 1;
-
-                if ( ig > 0 ) {
+                if ( ig == 0 ) {
+                    OnPECBoundary = 1;
+                } else if ( ig > 0 ) {
                     GuardCell = 1;
                     // Mirror location inside the domain by "ig" number of cells
                     // across PEC boundary in direction, dir, and side, iside
@@ -171,9 +175,12 @@ using namespace amrex;
                 }
             }
         }
-        if (GuardCell == 1) Bfield(ijk_vec,n) = sign * Bfield(ijk_mirror,n);
         // if ijk_vec is on a PEC boundary in any direction, set Bnormal to 0.
-        if (OnPECBoundary == 1) Bfield(ijk_vec,n) = 0._rt;
+        if (OnPECBoundary == 1) {
+            Bfield(ijk_vec,n) = 0._rt;
+        } else if (GuardCell == 1) {
+            Bfield(ijk_vec,n) = sign * Bfield(ijk_mirror,n);
+        }
     }
 
     /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
