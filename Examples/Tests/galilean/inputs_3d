@@ -24,9 +24,7 @@ algo.maxwell_solver = psatd
 algo.particle_pusher = vay
 
 warpx.cfl = 1.
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+interpolation.shape_factors_order = 3
 
 
 #################################
