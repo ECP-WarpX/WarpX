@@ -57,11 +57,11 @@ using namespace amrex;
         amrex::IntVect ijk_mirror = ijk_vec;
         int OnPECBoundary = 0;
         int GuardCell = 0;
-        amrex::Real sign = 1._rt; 
+        amrex::Real sign = 1._rt;
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
         const int sdim = ( (icomp == 1) ? 0 : 1 );
 #else
-        const int sdim = 1;               
+        const int sdim = 1;
 #endif
         // Loop over dimensions that are tangential to the Efield component, icomp.
         // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ), both X-Z and R-Z dimensions
@@ -155,7 +155,7 @@ using namespace amrex;
                 const int ig = ( (iside == 0)
                                ? (dom_lo[dir] - ijk_vec[dir])
                                : (ijk_vec[dir] - (dom_hi[dir] + stag[dir]) ) );
-                
+
                 if ( ig == 0 ) OnPECBoundary = 1;
 
                 if ( ig > 0 ) {
