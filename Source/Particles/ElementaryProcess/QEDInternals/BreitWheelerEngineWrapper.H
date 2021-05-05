@@ -15,6 +15,7 @@
 #include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
 
+#include <picsar_qed/physics/gamma_functions.hpp>
 #include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
 #include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_core.hpp>
 
@@ -145,13 +146,19 @@ public:
         const auto u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
         const auto energy = u_norm*m_e*PhysConst::c;
 
+        const auto px = m_e*ux;
+        const auto py = m_e*uy;
+        const auto pz = m_e*uz;
+
         const auto chi_phot = QedUtils::chi_photon(
-            m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
+            px, py, pz, ex, ey, ez, bx, by, bz);
 
         //Optical depth is not evolved for photons having less energy than what is
         //required to generate a pair or a quantum parameter smaller than
         //m_bw_minimum_chi_phot
-        const auto gamma_photon = u_norm/PhysConst::c;
+        const auto gamma_photon = pxr_p::compute_gamma_photon<
+                amrex::ParticleReal, pxr_p::unit_system::SI>(
+                    px, py, pz);
         if (gamma_photon < pxr_m::two<amrex::Real> ||
             chi_phot < m_bw_minimum_chi_phot)
             return 0;
