@@ -545,12 +545,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                 }
             }
             int ic = icomp + i_comp;
-            if (icomp == 0) {
-                // mode zero
-                field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp);
-            } else {
-                field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp+1);
-            }
+            field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp);
         });
 
     }
