@@ -110,8 +110,8 @@ bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
 bool WarpX::use_damp_fields_in_z_guard = false;
-bool WarpX::damp_fields_nz = 32;
-bool WarpX::zero_fields_nz = 32;
+int WarpX::damp_fields_nz = 32;
+int WarpX::zero_fields_nz = 32;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;

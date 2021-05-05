@@ -183,8 +183,8 @@ public:
     static bool use_kspace_filter;
     static bool use_filter_compensation;
     static bool use_damp_fields_in_z_guard;
-    static bool damp_fields_nz;
-    static bool zero_fields_nz;
+    static int damp_fields_nz;
+    static int zero_fields_nz;
     static bool serialize_ics;
 
     // Back transformation diagnostic

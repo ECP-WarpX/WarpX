@@ -441,9 +441,10 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
             int const nz_guard = zero_fields_nz + damp_fields_nz; // -tilebox.smallEnd(zdir);
 
             // Set so the box only covers the lower half of the guard cells
-            tilebox.setBig(zdir, nz_guard-1);
+            amrex::Box tilebox_guard = tilebox;
+            tilebox_guard.setBig(zdir, nz_guard-1);
 
-            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
+            amrex::ParallelFor(tilebox_guard, Efield[0]->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
 #if (AMREX_SPACEDIM == 3)
@@ -466,15 +467,16 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
             });
 
         }
-        else if (nz_tile > nz_domain) {
+        if (nz_tile > nz_domain) {
 
             // Apply damping factor in guards cells above the upper end of the domain
             int nz_guard = damp_fields_nz + zero_fields_nz; //nz_tile - nz_domain;
 
             // Set so the box only covers the upper half of the guard cells
-            tilebox.setSmall(zdir, nz_domain - nz_guard + 1);
+            amrex::Box tilebox_guard = tilebox;
+            tilebox_guard.setSmall(zdir, nz_domain - nz_guard + 1);
 
-            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
+            amrex::ParallelFor(tilebox_guard, Efield[0]->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
 #if (AMREX_SPACEDIM == 3)
