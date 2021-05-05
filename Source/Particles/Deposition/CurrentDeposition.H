@@ -170,8 +170,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // There are only two possible centerings, node or cell centered, so at most only two shape factor
             // arrays will be needed.
             // Keep these double to avoid bug in single precision
-            double sx_node[depos_order + 1];
-            double sx_cell[depos_order + 1];
+            double sx_node[depos_order + 1] = {0.};
+            double sx_cell[depos_order + 1] = {0.};
             int j_node = 0;
             int j_cell = 0;
             Compute_shape_factor< depos_order > const compute_shape_factor;
@@ -200,8 +200,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // y direction
             // Keep these double to avoid bug in single precision
             const double ymid = ( (yp - ymin) + relative_t*vy )*dyi;
-            double sy_node[depos_order + 1];
-            double sy_cell[depos_order + 1];
+            double sy_node[depos_order + 1] = {0.};
+            double sy_cell[depos_order + 1] = {0.};
             int k_node = 0;
             int k_cell = 0;
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
@@ -227,8 +227,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // z direction
             // Keep these double to avoid bug in single precision
             const double zmid = ((zp - zmin) + relative_t*vz)*dzi;
-            double sz_node[depos_order + 1];
-            double sz_cell[depos_order + 1];
+            double sz_node[depos_order + 1] = {0.};
+            double sz_cell[depos_order + 1] = {0.};
             int l_node = 0;
             int l_cell = 0;
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
