@@ -34,6 +34,8 @@ int main(int argc, char* argv[])
     rocfft_setup();
 #endif
 
+    ParseGeometryInput();
+
     ConvertLabParamsToBoost();
     ReadBCParams();
 

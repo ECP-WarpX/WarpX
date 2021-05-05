@@ -536,9 +536,9 @@ WarpX::ReadParameters ()
         pp_warpx.query("num_mirrors", num_mirrors);
         if (num_mirrors>0){
             mirror_z.resize(num_mirrors);
-            pp_warpx.getarr("mirror_z", mirror_z, 0, num_mirrors);
+            getArrWithParser(pp_warpx, "mirror_z", mirror_z, 0, num_mirrors);
             mirror_z_width.resize(num_mirrors);
-            pp_warpx.getarr("mirror_z_width", mirror_z_width, 0, num_mirrors);
+            getArrWithParser(pp_warpx, "mirror_z_width", mirror_z_width, 0, num_mirrors);
             mirror_z_npoints.resize(num_mirrors);
             pp_warpx.getarr("mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
         }
@@ -703,8 +703,8 @@ WarpX::ReadParameters ()
 
         if (maxLevel() > 0) {
             Vector<Real> lo, hi;
-            pp_warpx.getarr("fine_tag_lo", lo);
-            pp_warpx.getarr("fine_tag_hi", hi);
+            getArrWithParser(pp_warpx, "fine_tag_lo", lo);
+            getArrWithParser(pp_warpx, "fine_tag_hi", hi);
             fine_tag_lo = RealVect{lo};
             fine_tag_hi = RealVect{hi};
         }
@@ -979,8 +979,8 @@ WarpX::ReadParameters ()
        {
           slice_crse_ratio[idim] = 1;
        }
-       pp_slice.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
-       pp_slice.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
+       queryArrWithParser(pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
+       queryArrWithParser(pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
        pp_slice.queryarr("coarsening_ratio",slice_crse_ratio,0,AMREX_SPACEDIM);
        pp_slice.query("plot_int",slice_plot_int);
        slice_realbox.setLo(slice_lo);
