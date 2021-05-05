@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist in a single real number, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
 
 .. _running-cpp-parameters-overall:
 
@@ -130,13 +130,13 @@ Setting up the field mesh
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
 
-* ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters)
+* ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its
     extent is given here by the coordinates of the lower corner (``geometry.prob_lo``) and
     upper corner (``geometry.prob_hi``). The first axis of the coordinates is x (or r with cylindrical)
     and the last is z.
 
-* ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters) optional
+* ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
@@ -314,12 +314,13 @@ Math parser and user-defined constants
 --------------------------------------
 
 WarpX provides a math parser that reads expressions in the input file.
-It can be used in all input parameters that consist in one real number.
+It can be used in all input parameters that consist of one or more floats.
+Note that when multiple floats are expected, the expressions are space delimited.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
 
-WarpX provides a few pre-defined constants, that can be used for any parameter that consists in one real number.
+WarpX provides a few pre-defined constants, that can be used for any parameter that consists of one or more floats.
 
 ======== ===================
 q_e      elementary charge
@@ -336,7 +337,7 @@ User-defined constants
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Users can define their own constants in the input file.
-These constants can be used for any parameter that consists in one real number.
+These constants can be used for any parameter that consists of one or more floats.
 User-defined constant names can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
