@@ -1230,9 +1230,9 @@ Numerics and algorithms
     in vacuum.
 
 * ``interpolation.shape_factors_order`` (`1`, `2`, or `3`)
-    The order of the shape factors for the macro-particles along all spatial directions.
+    The order of the shape factors (splines) for the macro-particles along all spatial directions: `1` for linear, `2` for quadratic, `3` for cubic.
     Low-order shape factors result in faster simulations, but may lead to more noisy results.
-    High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is probably safer to use high-order shape factors, such as cubic order (that is, cubic splines).
+    High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is generally safer to use high-order shape factors, such as cubic order.
 
     Note that this input parameter is not optional and must always be set in all input files.
     No default value is provided automatically.

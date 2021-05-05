@@ -158,9 +158,9 @@ public:
     static bool do_divb_cleaning;
 
     // Interpolation order
-    static long nox;
-    static long noy;
-    static long noz;
+    static int nox;
+    static int noy;
+    static int noz;
 
     // Order of finite-order centering of fields (staggered to nodal)
     static int field_centering_nox;
