@@ -39,6 +39,8 @@ private:
     // Type of reduction (e.g. Maximum, Minimum or Sum)
     int m_reduction_type;
 
+public:
+
     /** This function does the actual reduction computation. The fields are first interpolated on
      *  the cell centers and the reduction operation is then performed using amrex::ReduceOps.
      *
