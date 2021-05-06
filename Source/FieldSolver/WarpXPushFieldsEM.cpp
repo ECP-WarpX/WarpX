@@ -435,6 +435,9 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
         amrex::Box const& domain = Geom(0).Domain();
         int const nz_domain = domain.bigEnd(zdir);
 
+        int const zero_fields_nz_temp = zero_fields_nz;
+        int const damp_fields_nz_temp = damp_fields_nz;
+
         if (tilebox.smallEnd(zdir) < 0) {
 
             // Apply damping factor in guards cells below the lower end of the domain
@@ -448,12 +451,12 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
 #if (AMREX_SPACEDIM == 3)
-                amrex::Real zcell = static_cast<amrex::Real>(k - zero_fields_nz);
+                amrex::Real zcell = static_cast<amrex::Real>(k - zero_fields_nz_temp);
 #else
-                amrex::Real zcell = static_cast<amrex::Real>(j - zero_fields_nz);
+                amrex::Real zcell = static_cast<amrex::Real>(j - zero_fields_nz_temp);
 #endif
                 if (zcell < 0._rt) zcell = 0._rt;
-                const amrex::Real phase = 0.5_rt*MathConst::pi*zcell/damp_fields_nz;
+                const amrex::Real phase = 0.5_rt*MathConst::pi*zcell/damp_fields_nz_temp;
                 const amrex::Real sin_phase = std::sin(phase);
                 const amrex::Real damp_factor = sin_phase*sin_phase;
 
@@ -480,12 +483,12 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
 #if (AMREX_SPACEDIM == 3)
-                amrex::Real zcell = static_cast<amrex::Real>(nz_domain - k - zero_fields_nz);
+                amrex::Real zcell = static_cast<amrex::Real>(nz_domain - k - zero_fields_nz_temp);
 #else
-                amrex::Real zcell = static_cast<amrex::Real>(nz_domain - j - zero_fields_nz);
+                amrex::Real zcell = static_cast<amrex::Real>(nz_domain - j - zero_fields_nz_temp);
 #endif
                 if (zcell < 0._rt) zcell = 0._rt;
-                const amrex::Real phase = 0.5_rt*MathConst::pi*zcell/damp_fields_nz;
+                const amrex::Real phase = 0.5_rt*MathConst::pi*zcell/damp_fields_nz_temp;
                 const amrex::Real sin_phase = std::sin(phase);
                 const amrex::Real damp_factor = sin_phase*sin_phase;
 
