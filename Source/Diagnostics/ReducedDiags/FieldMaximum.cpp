@@ -28,9 +28,9 @@ FieldMaximum::FieldMaximum (std::string rd_name)
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
-    constexpr int noutputs = 8; // total energy, E-field energy and B-field energy
+    constexpr int noutputs = 8;  // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
     // resize data array
-    m_data.resize(noutputs*nLevel, 0.0_rt); // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
+    m_data.resize(noutputs*nLevel, 0.0_rt);
 
     if (ParallelDescriptor::IOProcessor())
     {
