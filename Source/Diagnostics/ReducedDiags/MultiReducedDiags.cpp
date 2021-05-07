@@ -51,7 +51,7 @@ MultiReducedDiags::MultiReducedDiags ()
         };
     // loop over all reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
-        [](auto& rd_name){
+        [&](auto& rd_name){
             ParmParse pp_rd_name(rd_name);
 
             // read reduced diags type
