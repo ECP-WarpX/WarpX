@@ -144,7 +144,7 @@ Setting up the field mesh
 
 * ``warpx.moving_window_v`` (`float`)
     The speed of moving window, in units of the speed of light
-    (i.e. use ``1.0`` for a moving window to moves exactly at the speed of light)
+    (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
 
 * ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
