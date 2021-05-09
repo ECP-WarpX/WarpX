@@ -6,7 +6,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "FieldIO.H"
-#include "WarpX.H"
 #include "Utils/CoarsenIO.H"
 #include "Utils/WarpXUtil.H"
 

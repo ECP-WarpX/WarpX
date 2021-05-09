@@ -1,5 +1,15 @@
 #include "CoarsenMR.H"
 
+#include <AMReX_BLProfiler.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+
 using namespace amrex;
 
 void

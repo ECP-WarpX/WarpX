@@ -9,8 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 
 #include "ReducedDiags.H"
-#include "WarpX.H"
-#include <fstream>
+#include "Parser/WarpXParserWrapper.H"
 
 /**
  * Reduced diagnostics that computes a histogram over particles

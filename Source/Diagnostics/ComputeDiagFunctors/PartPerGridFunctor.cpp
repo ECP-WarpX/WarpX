@@ -1,3 +1,4 @@
+#include "WarpX.H"
 #include "PartPerGridFunctor.H"
 #include "Utils/CoarsenIO.H"
 

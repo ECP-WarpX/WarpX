@@ -44,22 +44,27 @@
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_BLProfiler.H>
-#include <AMReX_Print.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_VisMF.H>
 #include <AMReX_LayoutData.H>
-#include <AMReX_Interpolater.H>
 #include <AMReX_FillPatchUtil.H>
-
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
 
 #include <iostream>
 #include <memory>
 #include <array>
+#include <limits>
+#include <string>
+#include <vector>
 
 enum struct PatchType : int
 {

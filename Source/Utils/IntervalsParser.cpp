@@ -1,6 +1,11 @@
 #include "WarpXUtil.H"
 #include "IntervalsParser.H"
 
+#include <AMReX_Utility.H>
+
+#include <algorithm>
+#include <memory>
+
 SliceParser::SliceParser (const std::string& instr)
 {
     const std::string assert_msg = "ERROR: '" + instr + "' is not a valid syntax for a slice.";

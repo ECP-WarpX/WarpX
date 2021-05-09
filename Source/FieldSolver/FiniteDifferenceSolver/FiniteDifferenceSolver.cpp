@@ -14,7 +14,12 @@
 #    include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
 #include "FiniteDifferenceSolver.H"
-#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_Vector.H>
+#include <vector>
 
 /* This function initializes the stencil coefficients for the chosen finite-difference algorithm */
 FiniteDifferenceSolver::FiniteDifferenceSolver (

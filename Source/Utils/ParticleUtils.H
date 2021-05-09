@@ -8,7 +8,9 @@
 #define WARPX_PARTICLE_UTILS_H_
 
 #include "Particles/WarpXParticleContainer.H"
+
 #include <AMReX_DenseBins.H>
+#include <AMReX_Particles.H>
 
 namespace ParticleUtils {
 

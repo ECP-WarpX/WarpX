@@ -7,8 +7,6 @@
 #ifndef WARPX_RELATIVE_CELL_POSITION_H_
 #define WARPX_RELATIVE_CELL_POSITION_H_
 
-#include "WarpX.H"
-
 #include <AMReX_MultiFab.H>
 
 #include <vector>

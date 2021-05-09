@@ -9,10 +9,13 @@
 #include "WarpX.H"
 #include "WarpXAlgorithmSelection.H"
 
+#include <AMReX.H>
+
 #include <algorithm>
 #include <cstring>
 #include <map>
-
+#include <ctype.h>
+#include <utility>
 
 // Define dictionary with correspondance between user-input strings,
 // and corresponding integer for use inside the code

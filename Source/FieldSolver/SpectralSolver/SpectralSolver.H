@@ -10,6 +10,12 @@
 #include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "SpectralFieldData.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealVect.H>
+
+#include <array>
+#include <memory>
 
 #ifdef WARPX_USE_PSATD
 /**

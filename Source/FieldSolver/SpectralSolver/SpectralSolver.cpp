@@ -9,9 +9,9 @@
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
 #include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
 #include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
-#include "WarpX.H"
+#include "FieldSolver/SpectralSolver/SpectralAlgorithms/SpectralBaseAlgorithm.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 
 #include <memory>
 

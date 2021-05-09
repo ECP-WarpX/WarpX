@@ -15,10 +15,13 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Utility.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_Extension.H>
 
 #include <cstdint>
 #include <string>
-
+#include <cstddef>
+#include <vector>
 
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);

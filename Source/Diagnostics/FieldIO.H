@@ -8,7 +8,11 @@
 #ifndef WARPX_FielIO_H_
 #define WARPX_FielIO_H_
 
-#include <WarpX.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_IntVect.H>
+
 
 void
 AverageAndPackVectorField( amrex::MultiFab& mf_avg,

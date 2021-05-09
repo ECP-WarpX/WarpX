@@ -8,9 +8,7 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_LOADBALANCEEFFICIENCY_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_LOADBALANCEEFFICIENCY_H_
 
-#include "WarpX.H"
 #include "ReducedDiags.H"
-
 
 /**
  *  This class mainly contains a function that gets the

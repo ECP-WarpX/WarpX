@@ -1,3 +1,4 @@
+#include "WarpX.H"
 #include "DivBFunctor.H"
 #include "Utils/CoarsenIO.H"
 

@@ -6,11 +6,41 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "Parallelization/GuardCellManager.H"
 #include "WarpX.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXConst.H"
+#include "BoundaryConditions/PML.H"            // for PML
+#include "Parser/WarpXParserWrapper.H"         // for getParser, HostDeviceP...
+#include "Particles/MultiParticleContainer.H"  // for MultiParticleContainer
+#include "Utils/WarpXProfilerWrapper.H"        // for WARPX_PROFILE
 
+#include <AMReX_Array.H>                       // for Array, GpuArray
+#include <AMReX_Array4.H>                      // for Array4
+#include <AMReX_BLassert.H>                    // for AMREX_ALWAYS_ASSERT
+#include <AMReX_Box.H>                         // for Box, adjCellHi, adjCellLo
+#include <AMReX_BoxArray.H>                    // for BoxArray
+#include <AMReX_Config.H>                      // for AMREX_SPACEDIM, AMREX_...
+#include <AMReX_Dim3.H>                        // for Dim3
+#include <AMReX_FArrayBox.H>                   // for FArrayBox
+#include <AMReX_FabArray.H>                    // for FabArray
+#include <AMReX_Geometry.H>                    // for Geometry
+#include <AMReX_GpuControl.H>                  // for notInLaunchRegion
+#include <AMReX_GpuLaunch.H>                   // for AMREX_PARALLEL_FOR_4D
+#include <AMReX_GpuLaunchFunctsC.H>            // for ParallelFor
+#include <AMReX_GpuQualifiers.H>               // for AMREX_GPU_DEVICE
+#include <AMReX_INT.H>                         // for amrex
+#include <AMReX_IndexType.H>                   // for IndexType
+#include <AMReX_IntVect.H>                     // for IntVect
+#include <AMReX_MFIter.H>                      // for MFIter
+#include <AMReX_MultiFab.H>                    // for MultiFab
+#include <AMReX_REAL.H>                        // for Real
+#include <AMReX_RealBox.H>                     // for RealBox
+#include <AMReX_SPACE.H>                       // for AMREX_D_DECL
+#include <AMReX_Vector.H>                      // for Vector
+
+#include <cmath>
+#include <array>                               // for array
+#include <memory>                              // for allocator, unique_ptr
+#include <string>                              // for operator==, basic_string
 
 using namespace amrex;
 
