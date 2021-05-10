@@ -21,6 +21,10 @@
 #include <AMReX_ParallelDescriptor.H>
 
 #include <fstream>
+#include <map>
+#include <algorithm>
+#include <functional>
+#include <iterator>
 
 using namespace amrex;
 
