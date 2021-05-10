@@ -62,6 +62,13 @@ Diagnostics::BaseReadParameters ()
             "plot F only works if warpx.do_dive_cleaning = 1");
     }
 
+    // G can be written to file only if WarpX::do_divb_cleaning = 1
+    if (WarpXUtilStr::is_in(m_varnames, "G"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
+    }
+
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
     if (amrex::ParallelDescriptor::NProcs() == 1){

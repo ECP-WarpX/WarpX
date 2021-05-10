@@ -153,8 +153,9 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
-    // div(E) cleaning
+    // div(E) and div(B) cleaning
     static bool do_dive_cleaning;
+    static bool do_divb_cleaning;
 
     // Interpolation order
     static long nox;
@@ -242,6 +243,7 @@ public:
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
+    amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
@@ -249,6 +251,7 @@ public:
     amrex::MultiFab * get_pointer_current_cp  (int lev, int direction) const { return current_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
     amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
+    amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
 
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
@@ -265,6 +268,7 @@ public:
     const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
     const amrex::MultiFab& getphi_fp (int lev) {return *phi_fp[lev];}
     const amrex::MultiFab& getF_fp (int lev) {return *F_fp[lev];}
+    const amrex::MultiFab& getG_fp (int lev) {return *G_fp[lev];}
 
     const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
     const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
@@ -340,9 +344,12 @@ public:
     void EvolveB (int lev, amrex::Real dt);
     void EvolveF (         amrex::Real dt, DtType dt_type);
     void EvolveF (int lev, amrex::Real dt, DtType dt_type);
+    void EvolveG (         amrex::Real dt, DtType dt_type);
+    void EvolveG (int lev, amrex::Real dt, DtType dt_type);
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void ApplySilverMuellerBoundary (amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
@@ -469,6 +476,7 @@ public:
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
     void FillBoundaryF   (amrex::IntVect ng);
+    void FillBoundaryG   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
     void FillBoundaryE   (int lev, amrex::IntVect ng);
     void FillBoundaryB   (int lev, amrex::IntVect ng);
@@ -476,6 +484,7 @@ public:
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
     void FillBoundaryF   (int lev, amrex::IntVect ng);
+    void FillBoundaryG   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     void SyncCurrent ();
@@ -715,6 +724,7 @@ private:
     void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
@@ -867,7 +877,7 @@ private:
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
-                        const bool aux_is_nodal);
+                        const amrex::IntVect& ngG, const bool aux_is_nodal);
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
     void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
@@ -909,6 +919,7 @@ private:
 
     // Fine patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
@@ -929,6 +940,7 @@ private:
 
     // Coarse patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_cp;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_cp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
@@ -1051,6 +1063,7 @@ private:
     amrex::RealBox slice_realbox;
     amrex::IntVect slice_cr_ratio;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_slice;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_slice;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;

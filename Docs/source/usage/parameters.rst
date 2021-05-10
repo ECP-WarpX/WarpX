@@ -133,8 +133,18 @@ Setting up the field mesh
 * ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its
     extent is given here by the coordinates of the lower corner (``geometry.prob_lo``) and
-    upper corner (``geometry.prob_hi``). The first axis of the coordinates is x (or r with cylindrical)
-    and the last is z.
+    upper corner (``geometry.prob_hi``). The first axis of the coordinates is x
+    (or r with cylindrical) and the last is z.
+
+* ``warpx.do_moving_window`` (`integer`; 0 by default)
+    Whether to use a moving window for the simulation
+
+* ``warpx.moving_window_dir`` (either ``x``, ``y`` or ``z``)
+    The direction of the moving window.
+
+* ``warpx.moving_window_v`` (`float`)
+    The speed of moving window, in units of the speed of light
+    (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
 
 * ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
@@ -142,10 +152,11 @@ Setting up the field mesh
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
 
 * ``warpx.refine_plasma`` (`integer`) optional (default `0`)
+    Increase the number of macro-particles that are injected "ahead" of a mesh
+    refinement patch in a moving window simulation.
 
-    Increase the number of macro-particles that are injected "ahead" of a mesh refinement patch in a moving window simulation.
-
-    Note: in development; only works with static mesh-refinement, specific to moving window plasma injection, and requires a single refined level.
+    Note: in development; only works with static mesh-refinement, specific
+    to moving window plasma injection, and requires a single refined level.
 
 * ``warpx.n_current_deposition_buffer`` (`integer`)
     When using mesh refinement: the particles that are located inside
