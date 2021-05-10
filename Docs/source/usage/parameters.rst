@@ -343,6 +343,7 @@ q_e      elementary charge
 m_e      electron mass
 m_p      proton mass
 epsilon0 vacuum permittivity
+mu0      vacuum permeability
 clight   speed of light
 pi       math constant pi
 ======== ===================
@@ -1856,10 +1857,10 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.reduction_type`` (`string`)
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
-            ``Sum``.
-            Note that if ``Sum`` is used, the quantity to be reduced is multiplied by the volume of
-            a cell, so that the result is an integration over the simulation domain rather than
-            simply a sum of the values on the grid points.
+            ``Integral``.
+            ``Integral`` computes the spatial integral of the function defined in the parser by
+            summing its value on all grid points and multiplying the result by the volume of a
+            cell.
             Please be also aware that measuring maximum quantities might be very noisy in PIC
             simulations.
 

@@ -13,23 +13,23 @@
 #include "Utils/CoarsenIO.H"
 
 /**
- *  This class contains a function that computes an arbitrary reduction of the fields. The function
- *  used in the reduction is defined by an input file parser expression and the reduction operation
- *  can be either Maximum, Minimum, or Sum.
+ * This class contains a function that computes an arbitrary reduction of the fields. The function
+ * used in the reduction is defined by an input file parser expression and the reduction operation
+ * can be either Maximum, Minimum, or Integral (Sum multiplied by cell volume).
  */
 class FieldReduction : public ReducedDiags
 {
 public:
 
     /**
-     *  constructor
-     *  @param[in] rd_name reduced diags names 
+     * constructor
+     * @param[in] rd_name reduced diags names
      */
     FieldReduction(std::string rd_name);
 
     /**
      * This function is called at everytime step, and if necessary calls the templated function
-     *  ComputeFieldReduction(), which does the actual reduction computation.
+     * ComputeFieldReduction(), which does the actual reduction computation.
      *
      * @param[in] step the timestep
      */
@@ -46,14 +46,14 @@ private:
 
 public:
 
-    /** 
+    /**
      * This function does the actual reduction computation. The fields are first interpolated on
-     *  the cell centers and the reduction operation is then performed using amrex::ReduceOps.
+     * the cell centers and the reduction operation is then performed using amrex::ReduceOps.
      *
-     * \tparam T the type of reduction that is performed. This is typically amrex::ReduceOpMax,
-     *         amrex::ReduceOpMin or amrex::ReduceOpSum.
+     * \tparam ReduceOp the type of reduction that is performed. This is typically
+     *         amrex::ReduceOpMax, amrex::ReduceOpMin or amrex::ReduceOpSum.
      */
-    template<typename T>
+    template<typename ReduceOp>
     void ComputeFieldReduction()
     {
         using namespace amrex::literals;
@@ -80,17 +80,19 @@ public:
         const amrex::GpuArray<int,3> reduction_coarsening_ratio{1,1,1};
         constexpr int reduction_comp = 0;
 
-        amrex::ReduceOps<T> reduce_op;
+        amrex::ReduceOps<ReduceOp> reduce_op;
         amrex::ReduceData<amrex::Real> reduce_data(reduce_op);
         using ReduceTuple = typename decltype(reduce_data)::Type;
 
         // Prepare interpolation of field components to cell center
-        amrex::GpuArray<int,3> Extype;
-        amrex::GpuArray<int,3> Eytype;
-        amrex::GpuArray<int,3> Eztype;
-        amrex::GpuArray<int,3> Bxtype;
-        amrex::GpuArray<int,3> Bytype;
-        amrex::GpuArray<int,3> Bztype;
+        // The arrays below store the index type (staggering) of each MultiFab, with the third
+        // component set to zero in the two-dimensional case.
+        auto Extype = amrex::GpuArray<int,3>{0,0,0};
+        auto Eytype = amrex::GpuArray<int,3>{0,0,0};
+        auto Eztype = amrex::GpuArray<int,3>{0,0,0};
+        auto Bxtype = amrex::GpuArray<int,3>{0,0,0};
+        auto Bytype = amrex::GpuArray<int,3>{0,0,0};
+        auto Bztype = amrex::GpuArray<int,3>{0,0,0};
         for (int i = 0; i < AMREX_SPACEDIM; ++i){
             Extype[i] = Ex.ixType()[i];
             Eytype[i] = Ey.ixType()[i];
@@ -99,14 +101,6 @@ public:
             Bytype[i] = By.ixType()[i];
             Bztype[i] = Bz.ixType()[i];
         }
-#if   (AMREX_SPACEDIM == 2)
-        Extype[2] = 0;
-        Eytype[2] = 0;
-        Eztype[2] = 0;
-        Bxtype[2] = 0;
-        Bytype[2] = 0;
-        Bztype[2] = 0;
-#endif
 
         // get parser
         HostDeviceParser<m_nvars> reduction_function_parser = getParser(m_parser);
@@ -117,7 +111,8 @@ public:
 #endif
         for ( amrex::MFIter mfi(Ex, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            // Make the box cell centered to avoid including ghost cells in the calculation
+            // Make the box cell centered in preparation for the interpolation (and to avoid
+            // including ghost cells in the calculation)
             const amrex::Box& box = enclosedCells(mfi.nodaltilebox());
             const auto& arrEx = Ex[mfi].array();
             const auto& arrEy = Ey[mfi].array();
@@ -158,20 +153,19 @@ public:
         amrex::Real reduce_value = amrex::get<0>(reduce_data.value());
 
         // MPI reduce
-        if (std::is_same<T, amrex::ReduceOpMax>::value)
+        if (std::is_same<ReduceOp, amrex::ReduceOpMax>::value)
         {
             amrex::ParallelDescriptor::ReduceRealMax(reduce_value);
         }
-        if (std::is_same<T, amrex::ReduceOpMin>::value)
+        if (std::is_same<ReduceOp, amrex::ReduceOpMin>::value)
         {
             amrex::ParallelDescriptor::ReduceRealMin(reduce_value);
         }
-        if (std::is_same<T, amrex::ReduceOpSum>::value)
+        if (std::is_same<ReduceOp, amrex::ReduceOpSum>::value)
         {
             amrex::ParallelDescriptor::ReduceRealSum(reduce_value);
         // If reduction operation is a sum, multiply the value by the cell volume so that the
-        // result is an integration over the simulation domain rather than simply a sum of the
-        // values on the grid points.
+        // result is the integral of the function over the simulation domain.
 #if (AMREX_SPACEDIM==2)
             reduce_value *= dx[0]*dx[1];
 #else

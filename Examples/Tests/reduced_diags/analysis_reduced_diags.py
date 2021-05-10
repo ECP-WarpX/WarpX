@@ -138,11 +138,11 @@ MRdata = np.genfromtxt('./diags/reducedfiles/MR.txt')  # Rho maximum
 NPdata = np.genfromtxt('./diags/reducedfiles/NP.txt')  # Particle number
 FR_Maxdata = np.genfromtxt('./diags/reducedfiles/FR_Max.txt')  # Field Reduction using maximum
 FR_Mindata = np.genfromtxt('./diags/reducedfiles/FR_Min.txt')  # Field Reduction using minimum
-FR_Sumdata = np.genfromtxt('./diags/reducedfiles/FR_Sum.txt')  # Field Reduction using sum
+FR_Integraldata = np.genfromtxt('./diags/reducedfiles/FR_Integral.txt')  # Field Reduction using integral
 
 # First index "1" points to the values written at the last time step
 values_rd['field energy'] = EFdata[1][2]
-values_rd['field energy in quarter of simulation domain'] = FR_Sumdata[1][2]
+values_rd['field energy in quarter of simulation domain'] = FR_Integraldata[1][2]
 values_rd['particle energy'] = EPdata[1][2]
 values_rd['maximum of |Ex|'] = MFdata[1][2]
 values_rd['maximum of |Ey|'] = MFdata[1][3]

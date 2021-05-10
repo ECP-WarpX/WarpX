@@ -93,9 +93,9 @@ const std::map<std::string, int> ParticleBCType_algo_to_int = {
 };
 
 const std::map<std::string, int> ReductionType_algo_to_int = {
-    {"maximum", ReductionType::Maximum},
-    {"minimum", ReductionType::Minimum},
-    {"sum",     ReductionType::Sum}
+    {"maximum",  ReductionType::Maximum},
+    {"minimum",  ReductionType::Minimum},
+    {"integral", ReductionType::Sum}
 };
 
 int
