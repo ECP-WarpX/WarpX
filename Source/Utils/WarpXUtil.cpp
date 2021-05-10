@@ -287,6 +287,13 @@ void CheckGriddingForRZSpectral ()
     amrex::Abort("CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
 #else
 
+    // Ensure that geometry.coord_sys is set properly.
+    ParmParse pp_geometry("geometry");
+    int coord_sys = 1;
+    pp_geometry.query("coord_sys", coord_sys);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coord_sys == 1, "geometry.coord_sys needs to be 1 when using cylindrical geometry");
+    pp_geometry.add("coord_sys", coord_sys);
+
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 

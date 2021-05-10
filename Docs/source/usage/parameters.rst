@@ -133,13 +133,30 @@ Setting up the field mesh
 * ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its
     extent is given here by the coordinates of the lower corner (``geometry.prob_lo``) and
-    upper corner (``geometry.prob_hi``). The first axis of the coordinates is x (or r with cylindrical)
-    and the last is z.
+    upper corner (``geometry.prob_hi``). The first axis of the coordinates is x
+    (or r with cylindrical) and the last is z.
+
+* ``warpx.do_moving_window`` (`integer`; 0 by default)
+    Whether to use a moving window for the simulation
+
+* ``warpx.moving_window_dir`` (either ``x``, ``y`` or ``z``)
+    The direction of the moving window.
+
+* ``warpx.moving_window_v`` (`float`)
+    The speed of moving window, in units of the speed of light
+    (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
 
 * ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
+
+* ``warpx.refine_plasma`` (`integer`) optional (default `0`)
+    Increase the number of macro-particles that are injected "ahead" of a mesh
+    refinement patch in a moving window simulation.
+
+    Note: in development; only works with static mesh-refinement, specific
+    to moving window plasma injection, and requires a single refined level.
 
 * ``warpx.n_current_deposition_buffer`` (`integer`)
     When using mesh refinement: the particles that are located inside
@@ -419,7 +436,9 @@ Particle initialization
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
 * ``<species_name>.injection_style`` (`string`)
-    Determines how the particles will be injected in the simulation.
+    Determines how the (macro-)particles will be injected in the simulation.
+    The number of particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are immediately assigned to a refined patch.
+
     The options are:
 
     * ``NUniformPerCell``: injection with a fixed number of evenly-spaced particles per cell.
@@ -472,6 +491,12 @@ Particle initialization
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
     number of particles per theta is at least two times the number of azimuthal modes requested.
     (It is recommended to do a convergence scan of the number of particles per theta)
+
+* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
+    Split particles of the species when crossing the boundary from a lower
+    resolution domain to a higher resolution domain.
+
+    Currently implemented on CPU only.
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
@@ -626,10 +651,6 @@ Particle initialization
 * ``<species_name>.do_backward_propagation`` (`bool`)
     Inject a backward-propagating beam to reduce the effect of charge-separation
     fields when running in the boosted frame. See examples.
-
-* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
-    Split particles of the species when crossing the boundary from a lower
-    resolution domain to a higher resolution domain.
 
 * ``<species_name>.split_type`` (`int`) optional (default `0`)
     Splitting technique. When `0`, particles are split along the simulation

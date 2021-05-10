@@ -142,7 +142,8 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
                 Complex const divE = kr*(Ep_old - Em_old) + I*kz*Ez_old;
                 Complex const divJ = kr*(Jp - Jm) + I*kz*Jz;
 
-                rho_diff = T2*(X2 - X3)*PhysConst::ep0*divE + T_rho*X2*divJ;
+                auto const myeps0 = PhysConst::ep0;  // temporary for NVCC
+                rho_diff = T2*(X2 - X3)*myeps0*divE + T_rho*X2*divJ;
             }
 
             // Update E (see WarpX online documentation: theory section)

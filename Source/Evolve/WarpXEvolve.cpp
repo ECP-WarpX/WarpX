@@ -44,6 +44,7 @@ WarpX::Evolve (int numsteps)
     bool early_params_checked = false; // check typos in inputs after step 1
 
     Real walltime, walltime_start = amrex::second();
+
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         Real walltime_beg_step = amrex::second();
@@ -358,7 +359,9 @@ WarpX::OneStep_nosub (Real cur_time)
         }
     } else {
         EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
+        EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
+        FillBoundaryG(guard_cells.ng_FieldSolverG);
         EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
 
         if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
@@ -376,6 +379,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
         FillBoundaryE(guard_cells.ng_FieldSolver);
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
 
         // Synchronize E and B fields on nodal points

@@ -86,6 +86,13 @@ WarpX::InitData ()
         PostRestart();
     }
 
+#ifdef AMREX_USE_EB
+    ComputeEdgeLengths();
+    ComputeFaceAreas();
+    ScaleEdges();
+    ScaleAreas();
+#endif
+
     ComputePMLFactors();
 
     if (WarpX::use_fdtd_nci_corr) {
@@ -492,12 +499,20 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         F_fp[lev]->setVal(0.0);
     }
 
+    if (G_fp[lev]) {
+        G_fp[lev]->setVal(0.0);
+    }
+
     if (rho_fp[lev]) {
         rho_fp[lev]->setVal(0.0);
     }
 
     if (F_cp[lev]) {
         F_cp[lev]->setVal(0.0);
+    }
+
+    if (G_cp[lev]) {
+        G_cp[lev]->setVal(0.0);
     }
 
     if (rho_cp[lev]) {

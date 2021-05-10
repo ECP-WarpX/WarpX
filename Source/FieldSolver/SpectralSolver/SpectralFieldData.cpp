@@ -219,6 +219,15 @@ SpectralFieldData::BackwardTransform( const int lev,
     const bool is_nodal_z = mf.is_nodal(1);
 #endif
 
+    const int si = (is_nodal_x) ? 1 : 0;
+#if   (AMREX_SPACEDIM == 2)
+    const int sj = (is_nodal_z) ? 1 : 0;
+    const int sk = 0;
+#elif (AMREX_SPACEDIM == 3)
+    const int sj = (is_nodal_y) ? 1 : 0;
+    const int sk = (is_nodal_z) ? 1 : 0;
+#endif
+
     // Loop over boxes
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
@@ -256,51 +265,49 @@ SpectralFieldData::BackwardTransform( const int lev,
                 // Copy field into temporary array
                 tmp_arr(i,j,k) = spectral_field_value;
             });
-
         }
 
         // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
         AnyFFT::Execute(backward_plan[mfi]);
 
-        // Copy the temporary field `tmpRealField` to the real-space field `mf`
-        // (only in the valid cells ; not in the guard cells)
-        // Normalize (divide by 1/N) since the FFT+IFFT results in a factor N
+        // Copy the temporary field tmpRealField to the real-space field mf and
+        // normalize, dividing by N, since (FFT + inverse FFT) results in a factor N
         {
-            Array4<Real> mf_arr = mf[mfi].array();
-            Array4<const Real> tmp_arr = tmpRealField[mfi].array();
-            // Normalization: divide by the number of points in realspace
-            // (includes the guard cells)
-            const Box realspace_bx = tmpRealField[mfi].box();
-            const Real inv_N = 1./realspace_bx.numPts();
+            amrex::Box const& mf_box = (m_periodic_single_box) ? mfi.validbox() : mfi.fabbox();
+            amrex::Array4<amrex::Real> mf_arr = mf[mfi].array();
+            amrex::Array4<const amrex::Real> tmp_arr = tmpRealField[mfi].array();
 
-            if (m_periodic_single_box) {
-                // Enforce periodicity on the nodes, by using modulo in indices
-                // This is because `tmp_arr` is cell-centered while `mf_arr` can be nodal
-                int const nx = realspace_bx.length(0);
-                int const ny = realspace_bx.length(1);
-#if (AMREX_SPACEDIM == 3)
-                int const nz = realspace_bx.length(2);
-#else
-                int constexpr nz = 1;
+            const amrex::Real inv_N = 1._rt / tmpRealField[mfi].box().numPts();
+
+            // Total number of cells, including ghost cells (nj represents ny in 3D and nz in 2D)
+            const int ni = mf_box.length(0);
+            const int nj = mf_box.length(1);
+#if   (AMREX_SPACEDIM == 2)
+            constexpr int nk = 1;
+#elif (AMREX_SPACEDIM == 3)
+            const int nk = mf_box.length(2);
 #endif
-                ParallelFor(
-                    mfi.validbox(),
-                    /* GCC 8.1-8.2 work-around (ICE):
-                     *   named capture in nonexcept lambda needed for modulo operands
-                     *   https://godbolt.org/z/ppbAzd
-                     */
-                    [mf_arr, i_comp, inv_N, tmp_arr, nx, ny, nz]
-                    AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-                        mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx, j%ny, k%nz);
-                    });
-            } else {
-                ParallelFor( mfi.validbox(),
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-                    // Copy and normalize field
-                    mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i,j,k);
-                });
-            }
-
+            // Lower bound of the box (lo_j represents lo_y in 3D and lo_z in 2D)
+            const int lo_i = amrex::lbound(mf_box).x;
+            const int lo_j = amrex::lbound(mf_box).y;
+#if   (AMREX_SPACEDIM == 2)
+            constexpr int lo_k = 0;
+#elif (AMREX_SPACEDIM == 3)
+            const int lo_k = amrex::lbound(mf_box).z;
+#endif
+            // Loop over cells within full box, including ghost cells
+            ParallelFor(mf_box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+                // Assume periodicity and set the last outer guard cell equal to the first one:
+                // this is necessary in order to get the correct value along a nodal direction,
+                // because the last point along a nodal direction is always discarded when FFTs
+                // are computed, as the real-space box is always cell-centered.
+                const int ii = (i == lo_i + ni - si) ? lo_i : i;
+                const int jj = (j == lo_j + nj - sj) ? lo_j : j;
+                const int kk = (k == lo_k + nk - sk) ? lo_k : k;
+                // Copy and normalize field
+                mf_arr(i,j,k,i_comp) = inv_N * tmp_arr(ii,jj,kk);
+            });
         }
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
