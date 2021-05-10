@@ -152,7 +152,7 @@ using namespace amrex;
                     //          The logic below ensures that the flags are set right for 2D
                     const int is_normal_to_PEC = ( (icomp == AMREX_SPACEDIM*idim) ? 1 : 0 );
 #else
-                    const int is_normal_to_PEC = ( ( icomp == idim) ? 0 : 1 );
+                    const int is_normal_to_PEC = ( ( icomp == idim) ? 1 : 0 );
 #endif
                     // guard cell outside the domain by "ig" number cells, in direction, idim
                     const int ig = ( (iside == 0)
