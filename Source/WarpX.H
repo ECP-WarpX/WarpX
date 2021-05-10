@@ -12,9 +12,9 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
+#include "BoundaryConditions/PML.H"
 #include "Evolve/WarpXDtType.H"
 #include "Particles/MultiParticleContainer.H"
-#include "BoundaryConditions/PML.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Filter/BilinearFilter.H"

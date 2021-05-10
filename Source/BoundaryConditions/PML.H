@@ -9,6 +9,9 @@
 #ifndef WARPX_PML_H_
 #define WARPX_PML_H_
 
+class MultiSigmaBox; /*Forward declaration*/
+class PML;           /*Forward declaration*/
+
 #include "Utils/WarpXProfilerWrapper.H"
 
 #ifdef WARPX_USE_PSATD
@@ -19,7 +22,6 @@
 #include <AMReX_Geometry.H>
 
 #include <array>
-
 
 struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 {
