@@ -21,12 +21,17 @@ class FieldReduction : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     *  constructor
+     *  @param[in] rd_name reduced diags names 
+     */
     FieldReduction(std::string rd_name);
 
-    /** This function is called at everytime step, and if necessary calls the templated function
+    /**
+     * This function is called at everytime step, and if necessary calls the templated function
      *  ComputeFieldReduction(), which does the actual reduction computation.
+     *
+     * @param[in] step the timestep
      */
     virtual void ComputeDiags(int step) override final;
 
@@ -41,7 +46,8 @@ private:
 
 public:
 
-    /** This function does the actual reduction computation. The fields are first interpolated on
+    /** 
+     * This function does the actual reduction computation. The fields are first interpolated on
      *  the cell centers and the reduction operation is then performed using amrex::ReduceOps.
      *
      * \tparam T the type of reduction that is performed. This is typically amrex::ReduceOpMax,
@@ -176,7 +182,7 @@ public:
         // Fill output array
         m_data[0] = reduce_value;
 
-        // m_data now contains an up to date value of the reduced field quantity
+        // m_data now contains an up-to-date value of the reduced field quantity
     }
 
 };
