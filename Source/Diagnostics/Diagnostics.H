@@ -4,10 +4,15 @@
 #include "FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
-#include "Utils/IntervalsParser.H"
+
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Geometry.H>
 
+#include <string>
+#include <vector>
 #include <memory>
 
 /**

@@ -13,6 +13,10 @@
 #include <AMReX_REAL.H>
 #include <AMReX_IntVect.H>
 
+#include <cstdint>
+#include <array>
+#include <memory>
+#include <vector>
 
 void
 AverageAndPackVectorField( amrex::MultiFab& mf_avg,

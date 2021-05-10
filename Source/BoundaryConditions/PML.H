@@ -12,16 +12,27 @@
 class MultiSigmaBox; /*Forward declaration*/
 class PML;           /*Forward declaration*/
 
-#include "Utils/WarpXProfilerWrapper.H"
-
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
+#include <Utils/WarpXProfilerWrapper.H>
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <array>
+#include <memory>
+#include <string>
+#include <vector>
 
 struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 {

@@ -1,5 +1,13 @@
 #include "MultiDiagnostics.H"
+
+#include "Diagnostics/BTDiagnostics.H"
+#include "Diagnostics/FullDiagnostics.H"
+
 #include <AMReX_ParmParse.H>
+#include <AMReX.H>
+#include <AMReX_REAL.H>
+
+#include <algorithm>
 
 using namespace amrex;
 

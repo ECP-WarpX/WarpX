@@ -1,9 +1,12 @@
 #ifndef WARPX_MULTIDIAGNOSTICS_H_
 #define WARPX_MULTIDIAGNOSTICS_H_
 
-#include "FullDiagnostics.H"
-#include "BTDiagnostics.H"
+#include "Diagnostics/Diagnostics.H"
 
+#include <AMReX_Vector.H>
+
+#include <string>
+#include <vector>
 #include <memory>
 
 /** All types of diagnostics. */

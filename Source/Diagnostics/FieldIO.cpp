@@ -7,7 +7,6 @@
  */
 #include "FieldIO.H"
 #include "Utils/CoarsenIO.H"
-#include "Utils/WarpXUtil.H"
 
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
@@ -18,8 +17,15 @@
 #endif
 
 #include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_ccse-mpi.H>
+#include <AMReX_DistributionMapping.H>
 
 #include <memory>
+#include <algorithm>
+#include <cstdint>
 
 using namespace amrex;
 
