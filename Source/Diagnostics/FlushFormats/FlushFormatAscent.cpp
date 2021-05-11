@@ -1,7 +1,7 @@
 #include "FlushFormatAscent.H"
 
 #include <AMReX.H>
-#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
 
 using namespace amrex;
 

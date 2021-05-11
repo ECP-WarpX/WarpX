@@ -3,10 +3,46 @@
 #include "WarpX.H"
 #include "Utils/Interpolate.H"
 #include "Particles/Filter/FilterFunctors.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_buildInfo.H>
 #include <AMReX_PlotFileUtil.H>
+#include <AMReX.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParticleIO.H>
+#include <AMReX_Particles.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_VisMF.H>
+
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
+
+#include <cstring>
+#include <algorithm>
+#include <array>
+#include <fstream>
+#include <map>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace amrex;
 

@@ -4,10 +4,14 @@
 #include "FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
 #ifdef AMREX_USE_ASCENT
 #   include <ascent.hpp>
 #   include <AMReX_Conduit_Blueprint.H>
 #endif
+
+#include <string>
 
 /**
  * \brief This class aims at dumping performing in-situ diagnostics with ASCENT.

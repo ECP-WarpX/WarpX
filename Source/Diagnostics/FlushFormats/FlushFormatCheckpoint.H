@@ -3,6 +3,11 @@
 
 #include "FlushFormatPlotfile.H"
 
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <string>
+
 class FlushFormatCheckpoint final : public FlushFormatPlotfile
 {
     /** Flush fields and particles to plotfile */

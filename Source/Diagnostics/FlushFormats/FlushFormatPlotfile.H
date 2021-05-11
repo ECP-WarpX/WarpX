@@ -4,6 +4,12 @@
 #include "FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <iosfwd>
+#include <string>
+
 /**
  * \brief This class aims at dumping diags data to disk using the AMReX Plotfile format.
  * In particular, function WriteToFile takes fields and particles as input arguments,
