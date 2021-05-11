@@ -126,27 +126,6 @@ WarpX::Evolve (int numsteps)
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
             is_synchronized = false;
-        } else {
-            if (do_electrostatic == ElectrostaticSolverAlgo::None) {
-                // Beyond one step, we have E^{n} and B^{n}.
-                // Particles have p^{n-1/2} and x^{n}.
-
-                // E and B are up-to-date inside the domain only
-                FillBoundaryE(guard_cells.ng_FieldGather);
-                FillBoundaryB(guard_cells.ng_FieldGather);
-                // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
-                // Need to update Aux on lower levels, to interpolate to higher levels.
-                if (fft_do_time_averaging)
-                {
-                    FillBoundaryE_avg(guard_cells.ng_FieldGather);
-                    FillBoundaryB_avg(guard_cells.ng_FieldGather);
-                }
-                // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
-                if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD)
-                    FillBoundaryAux(guard_cells.ng_UpdateAux);
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
-            }
         }
 
         // Run multi-physics modules:
@@ -315,6 +294,30 @@ WarpX::Evolve (int numsteps)
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
+        }
+
+        // Calling these functions now should ensure we use up-to-date fields in the diagnostics
+        if(!is_synchronized) {
+            if (do_electrostatic == ElectrostaticSolverAlgo::None) {
+                // Beyond one step, we have E^{n} and B^{n}.
+                // Particles have p^{n-1/2} and x^{n}.
+
+                // E and B are up-to-date inside the domain only
+                FillBoundaryE(guard_cells.ng_FieldGather);
+                FillBoundaryB(guard_cells.ng_FieldGather);
+                // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
+                // Need to update Aux on lower levels, to interpolate to higher levels.
+                if (fft_do_time_averaging)
+                {
+                    FillBoundaryE_avg(guard_cells.ng_FieldGather);
+                    FillBoundaryB_avg(guard_cells.ng_FieldGather);
+                }
+                // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
+                if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+                    FillBoundaryAux(guard_cells.ng_UpdateAux);
+                UpdateAuxilaryData();
+                FillBoundaryAux(guard_cells.ng_UpdateAux);
+            }
         }
 
         /// reduced diags
