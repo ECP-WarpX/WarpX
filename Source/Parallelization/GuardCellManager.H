@@ -61,6 +61,8 @@ public:
     amrex::IntVect ng_alloc_Rho = amrex::IntVect::TheZeroVector();
     // Guard cells allocated for MultiFab F
     amrex::IntVect ng_alloc_F = amrex::IntVect::TheZeroVector();
+    // Guard cells allocated for MultiFab G
+    amrex::IntVect ng_alloc_G = amrex::IntVect::TheZeroVector();
 
     // Guard cells exchanged for specific parts of the PIC loop
 
@@ -68,6 +70,8 @@ public:
     amrex::IntVect ng_FieldSolver = amrex::IntVect::TheZeroVector();
     // Number of guard cells of F that must exchanged before Field Solver
     amrex::IntVect ng_FieldSolverF = amrex::IntVect::TheZeroVector();
+    // Number of guard cells of G that must be exchanged before Field Solver
+    amrex::IntVect ng_FieldSolverG = amrex::IntVect::TheZeroVector();
     // Number of guard cells of E and B that must exchanged before Field Gather
     amrex::IntVect ng_FieldGather = amrex::IntVect::TheZeroVector();
     // Number of guard cells of E and B that must exchanged before updating the Aux grid
