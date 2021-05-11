@@ -987,6 +987,7 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
         }
 
+#ifdef WARPX_DIM_RZ
         constexpr int zdir = AMREX_SPACEDIM - 1;
         if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
             WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
@@ -1005,6 +1006,7 @@ WarpX::ReadParameters ()
             }
         }
     }
+#endif
 
     // for slice generation //
     {
