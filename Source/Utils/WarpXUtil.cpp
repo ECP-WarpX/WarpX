@@ -241,7 +241,7 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
         } else if (std::strcmp(it->c_str(), "epsilon0") == 0) {
             parser.setConstant(*it, PhysConst::ep0);
             it = symbols.erase(it);
-          else if (std::strcmp(it->c_str(), "mu0") == 0) {
+        }  else if (std::strcmp(it->c_str(), "mu0") == 0) {
             parser.setConstant(*it, PhysConst::mu0);
             it = symbols.erase(it);
         } else if (std::strcmp(it->c_str(), "clight") == 0) {

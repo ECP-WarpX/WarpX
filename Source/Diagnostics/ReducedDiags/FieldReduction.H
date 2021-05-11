@@ -28,7 +28,7 @@ public:
     FieldReduction(std::string rd_name);
 
     /**
-     * This function is called at everytime step, and if necessary calls the templated function
+     * This function is called at every time step, and if necessary calls the templated function
      * ComputeFieldReduction(), which does the actual reduction computation.
      *
      * @param[in] step the timestep
