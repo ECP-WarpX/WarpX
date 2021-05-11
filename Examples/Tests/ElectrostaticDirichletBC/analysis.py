@@ -8,7 +8,7 @@
 # conditions in the x directions and Dirichlet boundary
 # conditions in the y direction with specified potentials
 # of sine waves with different periods on the lo and hi side.
-# One period of the hi side sine wave is simulated and the 
+# One period of the hi side sine wave is simulated and the
 # potentials at the boundaries compared to expectation.
 
 # Possible running time: ~ 19 s

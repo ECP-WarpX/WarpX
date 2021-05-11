@@ -420,13 +420,13 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
     }
     if (!has_Dirichlet) return;
 
-    amrex::Box domain = Geom(0).Domain();
-    domain.surroundingNodes();
-    const auto lo = lbound(domain);
-    const auto hi = ubound(domain);
-
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
+
+        amrex::Box domain = Geom(lev).Domain();
+        domain.surroundingNodes();
+        const auto lo = lbound(domain);
+        const auto hi = ubound(domain);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
