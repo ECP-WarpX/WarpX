@@ -432,6 +432,8 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
             // Extract the potential
             auto phi_arr = phi[lev]->array(mfi);
+            // Extract tileboxes for which to loop
+            const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
 
             // loop over dimensions
             for (int idim=0; idim<AMREX_SPACEDIM; idim++){
@@ -442,23 +444,22 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                 // are already correct, in which case the ParallelFor over the
                 // cells can be skipped
 
-                // Extract tileboxes for which to loop
-                const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
+                if (!domain.strictly_contains(tb)) {
+                    amrex::ParallelFor( tb,
+                        [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 
-                amrex::ParallelFor( tb,
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                            IntVect iv(AMREX_D_DECL(i,j,k));
 
-                        IntVect iv(AMREX_D_DECL(i,j,k));
+                            if (iv[idim] == domain.smallEnd(idim)){
+                                phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                            }
+                            if (iv[idim] == domain.bigEnd(idim)) {
+                                phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                            }
 
-                        if (iv[idim] == domain.smallEnd(idim)){
-                            phi_arr(i,j,k) = phi_bc_values_lo[idim];
-                        }
-                        if (iv[idim] == domain.bigEnd(idim)) {
-                            phi_arr(i,j,k) = phi_bc_values_hi[idim];
-                        }
-
-                    } // loop ijk
-                );
+                        } // loop ijk
+                    );
+                }
             } // idim
     }} // lev & MFIter
 }
