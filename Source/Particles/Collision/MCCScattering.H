@@ -259,7 +259,7 @@ public:
         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
-    using std::sqrt;
+        using std::sqrt;
 
         // get references to the original particle's velocity
         auto& ux = src.m_rdata[PIdx::ux][i_src];

@@ -68,6 +68,16 @@ MCCProcess::init()
 
     // sanity check cross-section energy grid
     sanityCheckEnergyGrid(m_energies, m_dE);
+
+    // check that the cross-section is 0 at the energy cost if the energy
+    // cost is > 0 - this is to prevent the possibility of negative left
+    // over energy after a collision event
+    if (m_energy_penalty > 0) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (getCrossSection(m_energy_penalty) == 0),
+            "Cross-section > 0 at energy cost for collision."
+        );
+    }
 }
 
 MCCProcessType
