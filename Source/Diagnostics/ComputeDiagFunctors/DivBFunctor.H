@@ -3,6 +3,8 @@
 
 #include "ComputeDiagFunctor.H"
 
+#include <array>
+
 /**
  * \brief Functor to compute divB into mf_out.
  */

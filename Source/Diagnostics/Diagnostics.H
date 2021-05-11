@@ -1,9 +1,9 @@
 #ifndef WARPX_DIAGNOSTICS_H_
 #define WARPX_DIAGNOSTICS_H_
 
+#include "ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "ParticleDiag/ParticleDiag.H"
 
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>

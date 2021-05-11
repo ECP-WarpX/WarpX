@@ -1,7 +1,10 @@
 #include "CellCenterFunctor.H"
+
 #include "Utils/CoarsenIO.H"
 
 #include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 
 CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
                                      amrex::IntVect crse_ratio,

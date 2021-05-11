@@ -9,15 +9,17 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/MultiParticleContainer.H" // PIdx
-#include "Particles/PhysicalParticleContainer.H"
-
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_Print.H>
+#include <AMReX_Vector.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
@@ -26,7 +28,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 
 //
 // helper class

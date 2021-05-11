@@ -1,5 +1,6 @@
-#include "WarpX.H"
 #include "DivBFunctor.H"
+
+#include "WarpX.H"
 #include "Utils/CoarsenIO.H"
 
 DivBFunctor::DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect crse_ratio, const int ncomp)
