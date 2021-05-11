@@ -4,6 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "MultiReducedDiags.H"
 
 #include "LoadBalanceCosts.H"
 #include "LoadBalanceEfficiency.H"
@@ -15,12 +16,14 @@
 #include "FieldMaximum.H"
 #include "RhoMaximum.H"
 #include "ParticleNumber.H"
-#include "MultiReducedDiags.H"
+#include "Utils/IntervalsParser.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX.H>
+#include <AMReX_REAL.H>
 
-#include <fstream>
+#include <algorithm>
 
 using namespace amrex;
 

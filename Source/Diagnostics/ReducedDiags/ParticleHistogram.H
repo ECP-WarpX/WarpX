@@ -11,6 +11,11 @@
 #include "ReducedDiags.H"
 #include "Parser/WarpXParserWrapper.H"
 
+#include <AMReX_REAL.H>
+
+#include <memory>
+#include <string>
+
 /**
  * Reduced diagnostics that computes a histogram over particles
  * for a quantity specified by the user in the input file using the parser.

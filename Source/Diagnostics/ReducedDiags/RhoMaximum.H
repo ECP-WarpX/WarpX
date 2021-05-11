@@ -11,6 +11,11 @@
 #include "ReducedDiags.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 
+#include <AMReX_Vector.H>
+
+#include <memory>
+#include <string>
+
 /**
  *  This class mainly contains a function that computes the extrema of the total charge density
  *  and of the charge density of each charged species.

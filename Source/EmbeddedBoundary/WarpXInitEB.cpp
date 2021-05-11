@@ -1,10 +1,26 @@
 #include "WarpX.H"
 
 #include <AMReX_Config.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLProfiler.H>
+#include <AMReX_Box.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_Loop.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiCutFab.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 #ifdef AMREX_USE_EB
 #   include <AMReX_EB2.H>
 #   include <AMReX_ParmParse.H>
 #endif
+
+#include <array>
+#include <memory>
+#include <string>
+#include <cstdlib>
 
 
 void

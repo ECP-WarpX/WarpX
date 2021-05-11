@@ -10,6 +10,8 @@
 
 #include "ReducedDiags.H"
 
+#include <string>
+
 /**
  *  This class mainly contains a function that computes the maximum value of each component
  * of the EM field and of the vector norm of the E and B fields.

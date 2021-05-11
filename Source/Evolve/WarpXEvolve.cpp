@@ -9,17 +9,42 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "FieldSolver/WarpX_QED_K.H"
+
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Python/WarpX_py.H"
+#include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "Evolve/WarpXDtType.H"
+#include "Parallelization/GuardCellManager.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
-#include <cmath>
-#include <limits>
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <array>
+#include <memory>
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 

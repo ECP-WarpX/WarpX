@@ -5,7 +5,9 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
 #ifdef WARPX_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
@@ -13,6 +15,16 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
+
+#include <AMReX.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <memory>
 
 /**
  * Determine the timestep of the simulation. */

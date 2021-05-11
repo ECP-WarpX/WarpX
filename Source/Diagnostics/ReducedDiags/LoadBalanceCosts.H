@@ -12,6 +12,9 @@
 
 #include <AMReX_Vector.H>
 
+#include <string>
+#include <vector>
+
 /**
  *  This class mainly contains a function that update the
  *  costs (used in load balance) for writing to output.

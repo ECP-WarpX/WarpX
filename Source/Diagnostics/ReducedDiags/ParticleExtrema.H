@@ -9,7 +9,8 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEEXTREMA_H_
 
 #include "ReducedDiags.H"
-#include <fstream>
+
+#include <string>
 
 /**
  *  This class mainly contains a function that

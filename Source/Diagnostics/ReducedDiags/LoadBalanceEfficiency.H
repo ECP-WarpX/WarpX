@@ -10,6 +10,8 @@
 
 #include "ReducedDiags.H"
 
+#include <string>
+
 /**
  *  This class mainly contains a function that gets the
  *  current load balance efficiency for writing to output.
