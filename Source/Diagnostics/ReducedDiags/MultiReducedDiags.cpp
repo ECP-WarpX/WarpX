@@ -53,7 +53,7 @@ MultiReducedDiags::MultiReducedDiags ()
             {"ParticleNumber",        [](CS s){return std::make_unique<ParticleNumber>(s);}},
             {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}}
         };
-    // loop over all reduced diags
+    // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
         [&](const auto& rd_name){
             ParmParse pp_rd_name(rd_name);
