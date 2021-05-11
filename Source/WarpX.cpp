@@ -30,7 +30,6 @@
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Dim3.H>
-#include <AMReX_EBSupport.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_FabFactory.H>
 #include <AMReX_Geometry.H>
