@@ -30,7 +30,7 @@ warpx.do_silver_mueller = 1
 warpx.do_moving_window = 0
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 # Laser
 lasers.names        = laser1

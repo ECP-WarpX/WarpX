@@ -37,7 +37,7 @@ particles.species_names = driver beam plasma_e plasma_p
 particles.deposit_on_main_grid = plasma_e plasma_p
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 3
+algo.particle_shape = 3
 
 driver.charge = -q_e
 driver.mass = m_e

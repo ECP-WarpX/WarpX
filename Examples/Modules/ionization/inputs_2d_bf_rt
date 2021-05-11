@@ -18,7 +18,7 @@ warpx.gamma_boost = 2.
 warpx.boost_direction = z
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 particles.species_names = electrons ions
 

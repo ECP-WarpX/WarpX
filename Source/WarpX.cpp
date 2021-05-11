@@ -89,7 +89,7 @@ bool WarpX::do_current_centering = false;
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
 
-// This will be overwritten by setting nox = noy = noz = interpolation.shape_factors_order
+// This will be overwritten by setting nox = noy = noz = algo.particle_shape
 int WarpX::nox = 0;
 int WarpX::noy = 0;
 int WarpX::noz = 0;
@@ -790,36 +790,37 @@ WarpX::ReadParameters ()
         load_balance_costs_update_algo = GetAlgorithmInteger(pp_algo, "load_balance_costs_update");
         queryWithParser(pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         queryWithParser(pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
-    }
-    {
-        ParmParse pp_interpolation("interpolation");
 
-        int shape_factors_order;
-        if (pp_interpolation.query("shape_factors_order", shape_factors_order) == false)
+        int particle_shape;
+        if (pp_algo.query("particle_shape", particle_shape) == false)
         {
-            amrex::Abort("\ninterpolation.shape_factors_order must be set in the input file:"
-                         "\nplease set interpolation.shape_factors_order to 1, 2, or 3");
+            amrex::Abort("\nalgo.particle_shape must be set in the input file:"
+                         "\nplease set algo.particle_shape to 1, 2, or 3");
         }
         else
         {
-            if (shape_factors_order < 1 || shape_factors_order > 3)
+            if (particle_shape < 1 || particle_shape > 3)
             {
-                amrex::Abort("\ninterpolation.shape_factors_order can be only 1, 2, or 3");
+                amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
             }
             else
             {
-                nox = shape_factors_order;
-                noy = shape_factors_order;
-                noz = shape_factors_order;
+                nox = particle_shape;
+                noy = particle_shape;
+                noz = particle_shape;
             }
         }
 
-        if ((maxLevel() > 0) && (shape_factors_order > 1) && (do_pml_j_damping == 1))
+        if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
         {
-            amrex::Warning("\nWARNING: When interpolation.shape_factors_order > 1,"
+            amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
                            " some numerical artifact will be present at the interface between coarse and fine patch."
-                           "\nWe recommend setting interpolation.shape_factors_order = 1 in order to avoid this issue");
+                           "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
         }
+    }
+
+    {
+        ParmParse pp_interpolation("interpolation");
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
@@ -1095,7 +1096,7 @@ WarpX::BackwardCompatibility ()
         pp_interpolation.query("noz", backward_int))
     {
         amrex::Abort("\ninterpolation.nox (as well as .noy, .noz) are not supported anymore:"
-                     "\nplease use the new syntax interpolation.shape_factors_order instead");
+                     "\nplease use the new syntax algo.particle_shape instead");
     }
 
     ParmParse pp_algo("algo");

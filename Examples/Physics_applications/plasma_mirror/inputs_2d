@@ -27,7 +27,7 @@ warpx.use_filter = 1
 algo.load_balance_intervals = 66
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 3
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

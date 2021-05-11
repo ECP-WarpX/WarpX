@@ -12,7 +12,7 @@ warpx.do_dive_cleaning = 1
 warpx.do_pml = 1
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 particles.species_names = beam
 beam.charge = -q_e

@@ -1181,7 +1181,6 @@ Numerics and algorithms
      If ``warpx.do_nodal`` is ``true``, then ``energy-conserving`` and ``momentum-conserving``
      are equivalent.
 
-
 * ``algo.particle_pusher`` (`string`, optional)
     The algorithm for the particle pusher. Available options are:
 
@@ -1190,6 +1189,14 @@ Numerics and algorithms
      - ``higuera``: Higuera-Cary pusher (see `Higuera and Cary, Phys. Plasmas (2017) <https://aip.scitation.org/doi/10.1063/1.4979989>`__)
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
+
+* ``algo.particle_shape`` (`integer`; `1`, `2`, or `3`)
+    The order of the shape factors (splines) for the macro-particles along all spatial directions: `1` for linear, `2` for quadratic, `3` for cubic.
+    Low-order shape factors result in faster simulations, but may lead to more noisy results.
+    High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is generally safer to use high-order shape factors, such as cubic order.
+
+    Note that this input parameter is not optional and must always be set in all input files.
+    No default value is provided automatically.
 
 * ``algo.maxwell_solver`` (`string`, optional)
     The algorithm for the Maxwell field solver.
@@ -1229,18 +1236,10 @@ Numerics and algorithms
     computational medium, respectively. The default values are the corresponding values
     in vacuum.
 
-* ``interpolation.shape_factors_order`` (`1`, `2`, or `3`)
-    The order of the shape factors (splines) for the macro-particles along all spatial directions: `1` for linear, `2` for quadratic, `3` for cubic.
-    Low-order shape factors result in faster simulations, but may lead to more noisy results.
-    High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is generally safer to use high-order shape factors, such as cubic order.
-
-    Note that this input parameter is not optional and must always be set in all input files.
-    No default value is provided automatically.
-
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
     When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
-    For example, :math:`E_z` is gathered using ``interpolation.shape_factors_order`` along :math:`(x,y)` and ``interpolation.shape_factors_order - 1`` along :math:`z`.
+    For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
     See equations (21)-(23) of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
     Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
 

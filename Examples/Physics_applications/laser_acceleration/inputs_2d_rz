@@ -26,7 +26,7 @@ warpx.moving_window_dir = z # Only z is supported for the moment
 warpx.moving_window_v = 1.0 # units of speed of light
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 3
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

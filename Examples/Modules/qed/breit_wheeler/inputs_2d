@@ -26,7 +26,7 @@ warpx.do_pml = 1 # use Perfectly Matched Layer as boundary condition
 warpx.serialize_ics = 1
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 3
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

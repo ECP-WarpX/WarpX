@@ -29,7 +29,7 @@ algo.current_deposition = esirkepov
 warpx.cfl = 1.0
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 # Laser
 lasers.names        = laser1

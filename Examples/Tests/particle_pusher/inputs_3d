@@ -25,7 +25,7 @@ algo.particle_pusher = "higuera"
 warpx.cfl = 1.0
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 # particles
 particles.species_names = positron

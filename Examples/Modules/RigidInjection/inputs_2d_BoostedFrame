@@ -23,7 +23,7 @@ warpx.moving_window_v = 1.0 # in units of the speed of light
 warpx.serialize_ics = 1
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 particles.species_names = beam
 particles.rigid_injected_species = beam

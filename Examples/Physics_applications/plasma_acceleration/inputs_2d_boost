@@ -28,7 +28,7 @@ my_constants.pi    = 3.141592653589793
 my_constants.dens  = 1e+23
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 3
+algo.particle_shape = 3
 
 #################################
 ######### BOOSTED FRAME #########

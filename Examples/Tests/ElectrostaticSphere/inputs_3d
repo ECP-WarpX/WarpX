@@ -16,7 +16,7 @@ particles.species_names = electron
 algo.field_gathering = momentum-conserving
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 my_constants.n0 = 1.49e6
 my_constants.R0 = 0.1

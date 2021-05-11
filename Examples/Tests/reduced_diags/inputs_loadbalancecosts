@@ -28,7 +28,7 @@ algo.load_balance_intervals = 2
 #algo.load_balance_costs_update = Timers
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 0.99999

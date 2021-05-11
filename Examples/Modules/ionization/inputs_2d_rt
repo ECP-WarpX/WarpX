@@ -13,7 +13,7 @@ warpx.do_pml = 1
 warpx.cfl = .999
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 particles.species_names = electrons ions
 

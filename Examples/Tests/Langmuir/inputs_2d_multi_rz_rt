@@ -28,7 +28,7 @@ algo.field_gathering = energy-conserving
 algo.current_deposition = esirkepov
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 1.0

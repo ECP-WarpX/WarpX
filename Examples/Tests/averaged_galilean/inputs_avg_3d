@@ -27,8 +27,7 @@ algo.particle_pusher = vay
 warpx.cfl = 2.
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 3
-
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

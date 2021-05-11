@@ -26,7 +26,7 @@ warpx.do_pml = 0
 algo.current_deposition = esirkepov
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 3
+algo.particle_shape = 3
 
 warpx.serialize_ics = 1
 warpx.cfl = 1.0

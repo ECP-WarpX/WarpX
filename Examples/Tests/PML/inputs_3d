@@ -21,7 +21,7 @@ warpx.use_filter = 1
 warpx.verbose = 1
 
 # Order of particle shape factors
-interpolation.shape_factors_order = 1
+algo.particle_shape = 1
 
 # PSATD algorithm
 algo.maxwell_solver = psatd
