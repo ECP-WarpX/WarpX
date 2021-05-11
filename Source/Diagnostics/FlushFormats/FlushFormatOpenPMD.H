@@ -4,8 +4,11 @@
 #include "FlushFormat.H"
 #include "Diagnostics/WarpXOpenPMD.H"
 
-#include <memory>
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
 
+#include <memory>
+#include <string>
 
 /**
  * \brief This class aims at dumping diags data to disk using the openPMD standard.

@@ -1,5 +1,12 @@
 #include "FlushFormatOpenPMD.H"
+
 #include "WarpX.H"
+#include "Utils/WarpXProfilerWrapper.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
 
 #include <memory>
 

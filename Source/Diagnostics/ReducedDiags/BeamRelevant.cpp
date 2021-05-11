@@ -5,16 +5,28 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BeamRelevant.H"
+
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particles.H>
 
-#include <iostream>
 #include <cmath>
 #include <limits>
-
+#include <algorithm>
+#include <fstream>
+#include <map>
+#include <vector>
 
 using namespace amrex;
 
