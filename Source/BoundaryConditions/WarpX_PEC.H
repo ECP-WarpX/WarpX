@@ -82,13 +82,13 @@ using namespace amrex;
                     const int ig = ( (iside == 0)
                                  ? (dom_lo[idim] - ijk_vec[idim])
                                  : (ijk_vec[idim] - (dom_hi[idim] + stag[idim]) ) );
-                    // Find mirror location across PEC boundary
-                    ijk_mirror[idim] = ( ( iside == 0)
-                                    ? (dom_lo[idim] + ig)
-                                    : (dom_hi[idim] + stag[idim] - ig));
                     if (ig == 0) {
                         if (is_tangent_to_PEC == 1) OnPECBoundary = 1;
                     } else if (ig > 0) {
+                        // Find mirror location across PEC boundary
+                        ijk_mirror[idim] = ( ( iside == 0)
+                                        ? (dom_lo[idim] + ig)
+                                        : (dom_hi[idim] + stag[idim] - ig));
                         GuardCell = 1;
                         // tangential components are inverted across PEC boundary
                         if (is_tangent_to_PEC == 1) sign *= -1._rt;
@@ -158,15 +158,15 @@ using namespace amrex;
                     const int ig = ( (iside == 0)
                                    ? (dom_lo[idim] - ijk_vec[idim])
                                    : (ijk_vec[idim] - (dom_hi[idim] + stag[idim]) ) );
-                    // Mirror location inside the domain by "ig" number of cells
-                    // across PEC boundary in direction, idim, and side, iside
-                    ijk_mirror[idim] = ( (iside == 0)
-                                   ? (dom_lo[idim] + ig)
-                                   : (dom_hi[idim] + stag[idim] - ig));
                     if (ig == 0) {
                         // Only normal component is set to 0
                         if (is_normal_to_PEC == 1) OnPECBoundary = 1;
                     } else if ( ig > 0) {
+                        // Mirror location inside the domain by "ig" number of cells
+                        // across PEC boundary in direction, idim, and side, iside
+                        ijk_mirror[idim] = ( (iside == 0)
+                                       ? (dom_lo[idim] + ig)
+                                       : (dom_hi[idim] + stag[idim] - ig));
                         GuardCell = 1;
                         // Sign of the normal component in guard cell is inverted
                         if (is_normal_to_PEC == 1) sign *= -1._rt;
