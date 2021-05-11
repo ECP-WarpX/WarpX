@@ -162,8 +162,16 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
         PushPSATDSinglePatch( lev, *spectral_solver_cp[lev],
              Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
     }
-    if (use_damp_fields_in_z_guard) {
-        DampFieldsInGuards( Efield_fp[lev], Bfield_fp[lev] );
+
+    // Damp the fields in the guard cells along z
+    if (use_damp_fields_in_z_guard)
+    {
+        DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
+
+        if (WarpX::fft_do_time_averaging)
+        {
+            DampFieldsInGuards(Efield_avg_fp[lev], Bfield_avg_fp[lev]);
+        }
     }
 #endif
 }
@@ -321,7 +329,50 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
                 pml[lev]->GetF_cp(), pml[lev]->GetE_cp(), a_dt );
         }
     }
+}
 
+void
+WarpX::EvolveG (amrex::Real a_dt, DtType a_dt_type)
+{
+    if (!do_divb_cleaning) return;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        EvolveG(lev, a_dt, a_dt_type);
+    }
+}
+
+void
+WarpX::EvolveG (int lev, amrex::Real a_dt, DtType a_dt_type)
+{
+    if (!do_divb_cleaning) return;
+
+    EvolveG(lev, PatchType::fine, a_dt, a_dt_type);
+
+    if (lev > 0)
+    {
+        EvolveG(lev, PatchType::coarse, a_dt, a_dt_type);
+    }
+}
+
+void
+WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_type*/)
+{
+    if (!do_divb_cleaning) return;
+
+    WARPX_PROFILE("WarpX::EvolveG()");
+
+    // Evolve G field in regular cells
+    if (patch_type == PatchType::fine)
+    {
+        m_fdtd_solver_fp[lev]->EvolveG(G_fp[lev], Bfield_fp[lev], a_dt);
+    }
+    else // coarse patch
+    {
+        m_fdtd_solver_cp[lev]->EvolveG(G_cp[lev], Bfield_cp[lev], a_dt);
+    }
+
+    // TODO Evolution in PML cells will go here
 }
 
 void
@@ -377,7 +428,6 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 
     for ( amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
-
         amrex::Array4<amrex::Real> const& Ex_arr = Efield[0]->array(mfi);
         amrex::Array4<amrex::Real> const& Ey_arr = Efield[1]->array(mfi);
         amrex::Array4<amrex::Real> const& Ez_arr = Efield[2]->array(mfi);
