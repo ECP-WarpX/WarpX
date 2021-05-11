@@ -425,8 +425,6 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
 
         amrex::Box domain = Geom(lev).Domain();
         domain.surroundingNodes();
-        const auto lo = lbound(domain);
-        const auto hi = ubound(domain);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -440,36 +438,24 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                 // check if the boundary in this dimension should be set
                 if (!dirichlet_flag[idim]) continue;
 
-                // a check can be added to test if the boundary values are
-                // already correct, in which case the loop over cells below
-                // can be skipped
-                int idx_lo, idx_hi;
-                if (idim == 0){
-                    idx_lo = lo.x;
-                    idx_hi = hi.x;
-                }
-                if (idim == 1){
-                    idx_lo = lo.y;
-                    idx_hi = hi.y;
-                }
-                if (idim == 2){
-                    idx_lo = lo.z;
-                    idx_hi = hi.z;
-                }
+                // a check can be added below to test if the boundary values
+                // are already correct, in which case the ParallelFor over the
+                // cells can be skipped
 
                 // Extract tileboxes for which to loop
                 const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
 
                 amrex::ParallelFor( tb,
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        int idx;
 
-                        if (idim == 0) idx = i;
-                        else if (idim == 1) idx = j;
-                        else if (idim == 2) idx = k;
+                        IntVect iv(AMREX_D_DECL(i,j,k));
 
-                        if (idx == idx_lo) phi_arr(i,j,k) = phi_bc_values_lo[idim];
-                        if (idx == idx_hi) phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                        if (iv[idim] == domain.smallEnd(idim)){
+                            phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                        }
+                        if (iv[idim] == domain.bigEnd(idim)) {
+                            phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                        }
 
                     } // loop ijk
                 );
