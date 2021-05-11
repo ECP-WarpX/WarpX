@@ -1,8 +1,10 @@
 #include "FlushFormatCheckpoint.H"
+
 #include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_buildInfo.H>
+#include <AMReX_PlotFileUtil.H>
 
 using namespace amrex;
 

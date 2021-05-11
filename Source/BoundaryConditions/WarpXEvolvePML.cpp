@@ -21,13 +21,13 @@
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuLaunchFunctsC.H>
 #include <AMReX_GpuQualifiers.H>
-#include <AMReX_INT.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_ccse-mpi.H>
 
 #include <array>
 #include <memory>

@@ -1,10 +1,12 @@
 #include "FlushFormatPlotfile.H"
+
 #include "WarpX.H"
 #include "Utils/Interpolate.H"
 #include "Particles/Filter/FilterFunctors.H"
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_buildInfo.H>
+#include <AMReX_PlotFileUtil.H>
 
 using namespace amrex;
 
