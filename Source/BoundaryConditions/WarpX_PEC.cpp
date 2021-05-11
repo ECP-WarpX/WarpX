@@ -153,6 +153,9 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
             },
             tby, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
