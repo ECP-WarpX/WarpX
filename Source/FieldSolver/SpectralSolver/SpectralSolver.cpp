@@ -43,7 +43,9 @@ SpectralSolver::SpectralSolver(
                 const amrex::RealVect dx, const amrex::Real dt,
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
-                const bool fft_do_time_averaging) {
+                const bool fft_do_time_averaging,
+                const bool dive_cleaning,
+                const bool divb_cleaning) {
 
     // Initialize all structures using the same distribution mapping dm
 
@@ -57,7 +59,7 @@ SpectralSolver::SpectralSolver(
 
     if (pml) {
         algorithm = std::make_unique<PMLPsatdAlgorithm>(
-            k_space, dm, norder_x, norder_y, norder_z, nodal, dt);
+            k_space, dm, norder_x, norder_y, norder_z, nodal, dt, dive_cleaning, divb_cleaning);
     }
     else {
         // Comoving PSATD algorithm

@@ -7,9 +7,9 @@
 # domain of 64 x 8 cells is simulated with periodic boundary
 # conditions in the x directions and Dirichlet boundary
 # conditions in the y direction with specified potentials
-# of 0 V on the lo side and a sine wave on the hi side.
-# One period of the sine wave is simulated and the potentials
-# at the boundaries compared to expectation.
+# of sine waves with different periods on the lo and hi side.
+# One period of the hi side sine wave is simulated and the
+# potentials at the boundaries compared to expectation.
 
 # Possible running time: ~ 19 s
 

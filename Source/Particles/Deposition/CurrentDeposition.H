@@ -111,8 +111,10 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
+#if (defined WARPX_USE_GPUCLOCK)
             KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+#endif
 
             // --- Get particle quantities
             const amrex::Real gaminv = 1.0/std::sqrt(1.0 + uxp[ip]*uxp[ip]*clightsq
@@ -168,8 +170,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // There are only two possible centerings, node or cell centered, so at most only two shape factor
             // arrays will be needed.
             // Keep these double to avoid bug in single precision
-            double sx_node[depos_order + 1];
-            double sx_cell[depos_order + 1];
+            double sx_node[depos_order + 1] = {0.};
+            double sx_cell[depos_order + 1] = {0.};
             int j_node = 0;
             int j_cell = 0;
             Compute_shape_factor< depos_order > const compute_shape_factor;
@@ -198,8 +200,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // y direction
             // Keep these double to avoid bug in single precision
             const double ymid = ( (yp - ymin) + relative_t*vy )*dyi;
-            double sy_node[depos_order + 1];
-            double sy_cell[depos_order + 1];
+            double sy_node[depos_order + 1] = {0.};
+            double sy_cell[depos_order + 1] = {0.};
             int k_node = 0;
             int k_cell = 0;
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
@@ -225,8 +227,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // z direction
             // Keep these double to avoid bug in single precision
             const double zmid = ((zp - zmin) + relative_t*vz)*dzi;
-            double sz_node[depos_order + 1];
-            double sz_cell[depos_order + 1];
+            double sz_node[depos_order + 1] = {0.};
+            double sz_cell[depos_order + 1] = {0.};
             int l_node = 0;
             int l_cell = 0;
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
@@ -389,8 +391,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
+#if (defined WARPX_USE_GPUCLOCK)
             KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+#endif
 
             // --- Get particle quantities
             Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
@@ -724,8 +728,10 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     *cost_real = 0.;
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
+#if (defined WARPX_USE_GPUCLOCK)
         KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                              == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+#endif
 
         // Inverse of Lorentz factor gamma
         const amrex::Real invgam = 1._rt / std::sqrt(1._rt + uxp[ip] * uxp[ip] * invcsq
