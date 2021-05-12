@@ -983,6 +983,13 @@ WarpX::ReadParameters ()
                 "field boundary in both lo and high must be set to Damped for PSATD"
             );
         }
+    } else {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Damped ) {
+                    amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
+            }
+        }
     }
 
     // for slice generation //
