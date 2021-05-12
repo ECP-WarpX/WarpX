@@ -447,13 +447,6 @@ void ReadBCParams ()
             }
 
         }
-        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
-            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Damped ) {
-            int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
-            if (maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
-                amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
-            }
-        }
     }
 
     pp_geometry.addarr("is_periodic", geom_periodicity);
