@@ -379,7 +379,6 @@ void ReadBCParams ()
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
     ParmParse pp_geometry("geometry");
     ParmParse pp_warpx("warpx");
-    ParmParse pp_algo("algo");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
         // set default field and particle boundary appropriately
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
