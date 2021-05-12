@@ -25,7 +25,7 @@ data = ds.covering_grid(
 elec_data = data['rho_electrons'].to_ndarray()
 ion_data = data['rho_he_ions'].to_ndarray()
 
-# this sections saves the data to be compared to
+# this section saves the data for comparison
 # should be commented out unless the reference data
 # needs to be regenerated for some reason
 # ref_data = np.zeros((np.shape(elec_data)[0], np.shape(elec_data)[1], 2))
