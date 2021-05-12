@@ -210,7 +210,7 @@ Domain Boundary Conditions
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
-    * ``damped``: This option can be set when using the spectral solver with moving window. This boundary condition applies a damping factor to the electric and magnetic fields in the guard cells along z that extend beyond the edge of the domain. The damping profile is a sine squared and is applied to the fields on the outer half of the guard cell region. This damping is useful for damping high frequency numerical artifacts that occur at the boundary when using moving window condition for the spectral solver. Note that this boundary is only valid for the spectral solve. Since no such high frequency numerical artifacts are present for FDTD solver with moving window, this boundary condition is not valid for FDTD and can be used only for PSATD and only in the direction of the moving window.
+    * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
@@ -1141,18 +1141,6 @@ Numerics and algorithms
 * ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
     Whether to add compensation when applying filtering.
     This is only supported with the RZ spectral solver.
-
-* ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
-    When using the RZ spectrol solver, specifies whether to apply a
-    damping factor to the E and B fields in the guard cells
-    along z that extend beyond the edge of the domain.
-    When the boundary conditions along z are not periodic, this defaults to
-    true, otherwise false. The damping profile is
-    a sine squared and is applied to the fields on the outer half of the guards.
-    This damping is useful for damping high frequency numerical artifacts that
-    occur when there is parallel decomposition along z with non-periodic boundary
-    conditions. Note that this input parameter will be deprecated soon and the capability
-    will be supported using ``boundary.field_lo=damped`` and ``boundary.field_hi=damped``.
 
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.

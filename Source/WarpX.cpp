@@ -975,6 +975,14 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
         }
 
+        constexpr int zdir = AMREX_SPACEDIM - 1;
+        if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
+            WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
+                "field boundary in both lo and high must be set to Damped for PSATD"
+            );
+        }
     }
 
     // for slice generation //
