@@ -16,6 +16,7 @@
 #if defined(WARPX_DIM_RZ) || defined(WARPX_USE_PSATD)
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#endif
 #include "BoundaryConditions/WarpX_PML_kernels.H"
 #include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
