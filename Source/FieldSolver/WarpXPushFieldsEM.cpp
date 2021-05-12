@@ -8,18 +8,38 @@
  */
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
-#include "BoundaryConditions/WarpX_PML_kernels.H"
-#include "BoundaryConditions/PML_current.H"
-#include "WarpX_FDTD.H"
-
-#ifdef BL_USE_SENSEI_INSITU
-#   include <AMReX_AmrMeshInSituBridge.H>
+#include "BoundaryConditions/PML.H"
+#include "Evolve/WarpXDtType.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#if defined(WARPX_DIM_RZ) || defined(WARPX_USE_PSATD)
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
 #include <AMReX.H>
 #include <AMReX_Math.H>
-#include <limits>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+#ifdef BL_USE_SENSEI_INSITU
+#   include <AMReX_AmrMeshInSituBridge.H>
+#endif
 
+#include <cmath>
+#include <array>
+#include <memory>
 
 using namespace amrex;
 

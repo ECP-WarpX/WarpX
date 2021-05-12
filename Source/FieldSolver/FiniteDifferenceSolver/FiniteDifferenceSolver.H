@@ -14,6 +14,11 @@ class FiniteDifferenceSolver; /*Forward declaration*/
 #include "MacroscopicProperties/MacroscopicProperties.H"
 
 #include <AMReX_MultiFab.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_REAL.H>
+
+#include <array>
+#include <memory>
 
 /**
  * \brief Top-level class for the electromagnetic finite-difference solver

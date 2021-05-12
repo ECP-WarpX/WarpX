@@ -4,6 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "FiniteDifferenceSolver.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_DIM_RZ
@@ -13,12 +14,12 @@
 #    include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #    include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
-#include "FiniteDifferenceSolver.H"
 
 #include <AMReX.H>
 #include <AMReX_GpuDevice.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_Vector.H>
+
 #include <vector>
 
 /* This function initializes the stencil coefficients for the chosen finite-difference algorithm */

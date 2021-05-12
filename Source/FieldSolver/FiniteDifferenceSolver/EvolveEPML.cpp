@@ -4,9 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
@@ -18,8 +18,21 @@
 #include "BoundaryConditions/PML_current.H"
 #include "BoundaryConditions/PMLComponent.H"
 #include "Utils/WarpXConst.H"
-#include <AMReX_Gpu.H>
+
 #include <AMReX.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+
+#include <array>
 
 using namespace amrex;
 

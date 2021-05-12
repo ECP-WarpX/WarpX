@@ -4,9 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "FiniteDifferenceSolver.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "FiniteDifferenceSolver.H"
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
@@ -16,7 +16,6 @@
 #endif
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_Gpu.H>
 #include <AMReX.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Config.H>

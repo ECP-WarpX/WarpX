@@ -1,8 +1,20 @@
 #include "MacroscopicProperties.H"
+
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
 
 #include <AMReX_ParmParse.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_Print.H>
+#include <AMReX_RealBox.H>
 
 #include <memory>
 

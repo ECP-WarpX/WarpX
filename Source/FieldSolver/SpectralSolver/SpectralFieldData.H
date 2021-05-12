@@ -13,8 +13,16 @@
 #include "AnyFFT.H"
 
 #include <AMReX_MultiFab.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_IntVect.H>
 
-#include <string>
+#include <vector>
 
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
