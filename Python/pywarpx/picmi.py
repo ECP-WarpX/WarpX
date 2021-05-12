@@ -757,9 +757,7 @@ class Simulation(picmistandard.PICMI_Simulation):
                 interpolation_order = {'NGP':0, 'linear':1, 'quadratic':2, 'cubic':3}[particle_shape]
             else:
                 interpolation_order = particle_shape
-            pywarpx.interpolation.nox = interpolation_order
-            pywarpx.interpolation.noy = interpolation_order
-            pywarpx.interpolation.noz = interpolation_order
+            pywarpx.algo.particle_shape = interpolation_order
 
         self.solver.initialize_inputs()
 

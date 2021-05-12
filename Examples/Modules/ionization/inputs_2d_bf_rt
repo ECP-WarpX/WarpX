@@ -17,6 +17,9 @@ warpx.moving_window_v = 1.0
 warpx.gamma_boost = 2.
 warpx.boost_direction = z
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 particles.species_names = electrons ions
 
 ions.mass = 2.3428415e-26
