@@ -11,6 +11,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <AMReX_BLProfiler.H>
 

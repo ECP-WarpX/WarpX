@@ -12,6 +12,8 @@
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX_py.H"
+#include "Particles/MultiParticleContainer.H"
+#include "BoundaryConditions/PML.H"
 
 #include <AMReX.H>
 #include <AMReX_BLProfiler.H>

@@ -14,6 +14,7 @@
 #include "RigidInjectedParticleContainer.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Pusher/UpdateMomentumBoris.H"
 #include "Pusher/UpdateMomentumVay.H"

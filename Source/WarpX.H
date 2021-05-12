@@ -17,7 +17,6 @@
 #include "Utils/IntervalsParser.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Parser/WarpXParserWrapper.H"
-#include "Diagnostics/MultiDiagnostics.H"
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_RealVect.H>
