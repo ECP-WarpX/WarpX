@@ -125,10 +125,7 @@ Setting up the field mesh
 * ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
     Whether the boundary conditions are periodic, in each direction.
 
-    For each direction, use 1 for periodic conditions, 0 otherwise. If
-    warpx.do_electrostatic = labframe and non-periodic conditions are specified
-    the boundary potentials can also be specified through ``boundary.potential_lo``
-    and ``boundary.potential_hi`` (default `0`).
+    For each direction, use 1 for periodic conditions, 0 otherwise.
 
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.

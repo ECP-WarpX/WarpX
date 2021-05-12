@@ -277,7 +277,6 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         dirichlet_flag[1] = false;
     } else if ( WarpX::field_boundary_lo[1] == FieldBoundaryType::PEC
          && WarpX::field_boundary_hi[1] == FieldBoundaryType::PEC ) {
-
         // Use Dirichlet boundary condition by default.
         // Ideally, we would often want open boundary conditions here.
         lobc[1] = LinOpBCType::Dirichlet;
@@ -294,9 +293,6 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
             "when using the electrostatic solver"
         );
     }
-
-    // set the boundary potential values if needed
-    setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // set the boundary potential values if needed
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
@@ -353,10 +349,8 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
             lobc[idim] = LinOpBCType::Periodic;
             hibc[idim] = LinOpBCType::Periodic;
             dirichlet_flag[idim] = false;
-
         } else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
              && WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
-
             // Ideally, we would often want open boundary conditions here.
             lobc[idim] = LinOpBCType::Dirichlet;
             hibc[idim] = LinOpBCType::Dirichlet;
