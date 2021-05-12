@@ -12,6 +12,9 @@ algo.maxwell_solver = ckc
 warpx.do_pml = 1
 warpx.cfl = .999
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 particles.species_names = electrons ions
 
 ions.mass = 2.3428415e-26

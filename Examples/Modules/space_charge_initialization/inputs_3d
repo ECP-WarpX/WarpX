@@ -4,11 +4,16 @@ amr.max_grid_size = 32
 amr.max_level = 0
 
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0     0     0       # Is periodic?
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
 geometry.prob_lo     = -50.e-6   -50.e-6    -50.e-6
 geometry.prob_hi     =  50.e-6    50.e-6     50.e-6
 
 warpx.cfl = 1.e-3
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
 particles.species_names = beam
 beam.charge = -q_e
 beam.mass = m_e

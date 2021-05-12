@@ -23,11 +23,8 @@ algo.field_gathering = energy-conserving # or momentum-conserving
 warpx.use_filter = 1
 algo.maxwell_solver = yee # or ckc
 
-# Interpolation
-# 1: Linear; 2: Quadratic; 3: Cubic.
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 0.99999
