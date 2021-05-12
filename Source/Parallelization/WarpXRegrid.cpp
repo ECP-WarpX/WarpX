@@ -7,7 +7,10 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Particles/MultiParticleContainer.H"
 
 #include <AMReX_BLProfiler.H>
 

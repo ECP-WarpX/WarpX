@@ -12,44 +12,17 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
-#include "BoundaryConditions/PML.H"
 #include "Evolve/WarpXDtType.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Diagnostics/BackTransformedDiagnostic.H"
-#include "Diagnostics/MultiDiagnostics.H"
 #include "Filter/BilinearFilter.H"
-#include "Filter/NCIGodfreyFilter.H"
-#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/IntervalsParser.H"
-#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
-
-#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#ifdef WARPX_USE_PSATD
-#   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-#   else
-#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
-#   endif
-#endif
-
 #include "Parallelization/GuardCellManager.H"
-
-#ifdef WARPX_USE_OPENPMD
-#   include "Diagnostics/WarpXOpenPMD.H"
-#endif
-
 #include "Parser/WarpXParserWrapper.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <AMReX_AmrCore.H>
-#include <AMReX_BLProfiler.H>
-#include <AMReX_Geometry.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_VisMF.H>
-#include <AMReX_LayoutData.H>
-#include <AMReX_FillPatchUtil.H>
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
@@ -58,6 +31,60 @@
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_Vector.H>
+#ifdef AMREX_USE_EB
+#   include "AMReX_EBFabFactory.H"
+#endif
+
+// _______________________________________________WarpX Forward declarations
+class BackTransformedDiagnostic;
+class FiniteDifferenceSolver;
+class MacroscopicProperties;
+class MultiDiagnostics;
+class MultiParticleContainer;
+class MultiReducedDiags;
+class NCIGodfreyFilter;
+class PML;
+class WarpXParticleContainer;
+class SpectralSolverRZ;
+class SpectralSolver;
+// _______________________________________________Headers
+//#include "Diagnostics/BackTransformedDiagnostic.H"
+//#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+//#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+//#include "Diagnostics/MultiDiagnostics.H"
+//#include "Particles/MultiParticleContainer.H"
+//#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+//#include "Filter/NCIGodfreyFilter.H"
+//#include "BoundaryConditions/PML.H"
+//#include "FieldSolver/SpectralSolver/SpectralSolver.H"
+//#ifdef WARPX_USE_PSATD
+//#   ifdef WARPX_DIM_RZ
+//#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+//#   else
+//#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+//#   endif
+//#endif
+// ________________________________________________________________________
+
+// _______________________________________________AMReX Forward declarations
+namespace amrex { class Box; }
+namespace amrex { class BoxArray; }
+namespace amrex { class DistributionMapping; }
+namespace amrex { class FArrayBox; }
+namespace amrex { class Geometry; }
+namespace amrex { class IArrayBox; }
+namespace amrex { class MultiFab; }
+namespace amrex { class TagBoxArray; }
+namespace amrex { class iMultiFab; }
+namespace amrex { template <typename FAB> class FabFactory; }
+namespace amrex { template <typename T> class LayoutData; }
+// _______________________________________________Headers
+//#include <AMReX_Geometry.H>
+//#include <AMReX_LayoutData.H>
+//#include <AMReX_iMultiFab.H>
+// #include <AMReX_LayoutData.H>
+// ________________________________________________________________________
+
 
 #include <iostream>
 #include <memory>

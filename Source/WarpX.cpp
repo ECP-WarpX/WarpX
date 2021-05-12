@@ -13,12 +13,22 @@
 
 #include "FieldSolver/WarpX_FDTD.H"
 #ifdef WARPX_USE_PSATD
-#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#endif
+#ifdef WARPX_DIM_RZ
+#   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
 #include "Python/WarpXWrappers.h"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "Diagnostics/BackTransformedDiagnostic.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFabUtil.H>

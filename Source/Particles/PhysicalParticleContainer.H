@@ -15,6 +15,8 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #include "Particles/Gather/ScaleFields.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #ifdef WARPX_QED
 #    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"

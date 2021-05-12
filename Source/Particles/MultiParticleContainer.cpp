@@ -12,6 +12,7 @@
 #include "MultiParticleContainer.H"
 #include "SpeciesPhysicalProperties.H"
 #include "WarpX.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_QED
     #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
     #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"

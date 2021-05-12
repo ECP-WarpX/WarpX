@@ -9,9 +9,6 @@
 #ifndef WARPX_PML_H_
 #define WARPX_PML_H_
 
-class MultiSigmaBox; /*Forward declaration*/
-class PML;           /*Forward declaration*/
-
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif

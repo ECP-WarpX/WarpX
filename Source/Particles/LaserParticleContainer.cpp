@@ -11,6 +11,8 @@
 #include "Utils/WarpX_Complex.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
 
