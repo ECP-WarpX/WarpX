@@ -379,6 +379,7 @@ void ReadBCParams ()
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
     ParmParse pp_geometry("geometry");
     ParmParse pp_warpx("warpx");
+    ParmParse pp_algo("algo");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
         // set default field and particle boundary appropriately
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -398,6 +399,28 @@ void ReadBCParams ()
                 }
             }
         }
+#ifdef WARPX_USE_PSATD
+        int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            ParmParse pp_psatd("psatd");
+            int do_moving_window_input = 0;
+            pp_warpx.query("do_moving_window", do_moving_window_input);
+            if (do_moving_window_input == 1) {
+                std::string s;
+                pp_warpx.get("moving_window_dir", s);
+                int zdir;
+                if (s == "z" || s == "Z") zdir = AMREX_SPACEDIM-1;
+                bool damp_fields_in_z_guard = true;
+                if (pp_psatd.query("use_damp_fields_in_z_guard", damp_fields_in_z_guard) ) {
+                    amrex::Warning("WARNING : the input parameter ``use_damp_fields_in_z_guard`` will be deprecated soon. Please use boundary.field_lo=Damped and boundary.field_hi=Damped instead.");
+                }
+                if (damp_fields_in_z_guard == true) {
+                    WarpX::field_boundary_lo[zdir] = FieldBoundaryType::Damped;
+                    WarpX::field_boundary_hi[zdir] = FieldBoundaryType::Damped;
+                }
+            }
+        }
+#endif
         return;
         // When all boundary conditions are supported, the abort statement below will be introduced
         //amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
@@ -445,6 +468,21 @@ void ReadBCParams ()
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
             }
 
+        }
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
+            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Damped ) {
+#ifdef WARPX_USE_PSATD
+            int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+            if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::field_boundary_lo[idim] == WarpX::field_boundary_hi[idim],
+                    "field boundary in both lo and high must be set to Damped for PSATD");}
+            else {
+                amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
+            }
+#else
+            amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
+#endif
         }
     }
 

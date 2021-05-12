@@ -110,7 +110,6 @@ bool WarpX::galerkin_interpolation = true;
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
-bool WarpX::use_damp_fields_in_z_guard = false;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -976,12 +975,6 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
         }
 
-        constexpr int zdir = AMREX_SPACEDIM - 1;
-        if (!Geom(0).isPeriodic(zdir))
-        {
-            use_damp_fields_in_z_guard = true;
-        }
-        pp_psatd.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
     }
 
     // for slice generation //

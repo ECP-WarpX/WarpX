@@ -164,7 +164,9 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
     }
 
     // Damp the fields in the guard cells along z
-    if (use_damp_fields_in_z_guard)
+    constexpr int zdir = AMREX_SPACEDIM - 1;
+    if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped &&
+        WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped)
     {
         DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
 
