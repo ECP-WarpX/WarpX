@@ -8,10 +8,9 @@
 #ifndef WARPX_BILIN_FILTER_H_
 #define WARPX_BILIN_FILTER_H_
 
-#include <AMReX_Array.H>
-
 #include "Filter.H"
 
+#include <AMReX_Array.H>
 
 class BilinearFilter : public Filter
 {

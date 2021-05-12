@@ -9,6 +9,7 @@
 
 #include "Filter.H"
 
+#include <AMReX_REAL.H>
 
 enum class godfrey_coeff_set { Ex_Ey_Bz=0, Bx_By_Ez=1 };
 

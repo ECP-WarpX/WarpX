@@ -11,10 +11,15 @@
 #include "CustomMomentumProb.H"
 #include "Parser/GpuParser.H"
 #include "Utils/WarpXConst.H"
+#include "Parser/WarpXParser.H"
 
-#include <AMReX_Gpu.H>
+#include <AMReX.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
 #include <AMReX_Dim3.H>
 
+#include <string>
 #include <cmath>
 
 

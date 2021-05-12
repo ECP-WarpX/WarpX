@@ -24,6 +24,7 @@
 #include <AMReX_PODVector.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
+#include <AMReX_BoxArray.H>
 
 #if WARPX_USE_PSATD
 

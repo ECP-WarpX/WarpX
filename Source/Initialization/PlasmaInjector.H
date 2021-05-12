@@ -14,19 +14,18 @@
 #include "InjectorDensity.H"
 #include "InjectorMomentum.H"
 
-#include "Utils/WarpXConst.H"
-#include "Parser/WarpXParser.H"
-
 #include <AMReX_Vector.H>
 #include <AMReX_ParmParse.H>
-#include <AMReX_Utility.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_REAL.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
-#include <array>
 #include <memory>
+#include <limits>
+#include <string>
 
 ///
 /// The PlasmaInjector class parses and stores information about the plasma

@@ -5,9 +5,23 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "Utils/WarpXConst.H"
 #include "SpectralKSpace.H"
 
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+
+#include <array>
+#include <vector>
 #include <cmath>
 
 using namespace amrex;

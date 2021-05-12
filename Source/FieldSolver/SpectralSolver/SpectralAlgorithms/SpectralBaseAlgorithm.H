@@ -10,8 +10,6 @@
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 
-#include <AMReX.H>
-
 #if WARPX_USE_PSATD
 
 /* \brief Class that updates the field in spectral space

@@ -8,6 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PlasmaInjector.H"
+
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -16,11 +17,19 @@
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_RandomEngine.H>
 
-#include <functional>
+#include <algorithm>
+#include <map>
+#include <utility>
+#include <vector>
 #include <sstream>
-#include <string>
 #include <memory>
+#include <ctype.h>
 
 using namespace amrex;
 

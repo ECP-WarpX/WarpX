@@ -8,7 +8,6 @@
 #include <AMReX_FabFactory.H>
 #include <AMReX_Loop.H>
 #include <AMReX_MFIter.H>
-#include <AMReX_MultiCutFab.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>

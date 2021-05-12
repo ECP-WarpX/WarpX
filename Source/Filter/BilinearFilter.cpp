@@ -14,6 +14,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_Vector.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Config.H>
 
 #include <array>
 #include <vector>

@@ -6,8 +6,15 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "InjectorDensity.H"
-#include "PlasmaInjector.H"
 
+#include "Initialization/CustomDensityProb.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_ParmParse.H>
+
+#include <algorithm>
+#include <vector>
+#include <ctype.h>
 
 using namespace amrex;
 

@@ -8,6 +8,12 @@
 #define WARPX_PML_PSATD_ALGORITHM_H_
 
 #include "SpectralBaseAlgorithm.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+
+#include <AMReX_REAL.H>
+
+#include <array>
+#include <memory>
 
 #if WARPX_USE_PSATD
 

@@ -10,11 +10,17 @@
 #define INJECTOR_DENSITY_H_
 
 #include "Parser/GpuParser.H"
+#include "Parser/WarpXParser.H"
 #include "CustomDensityProb.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_Gpu.H>
-#include <AMReX_Dim3.H>
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
+
+#include <string>
+#include <cmath>
 
 // struct whose getDensity returns constant density.
 struct InjectorDensityConstant

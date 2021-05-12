@@ -5,10 +5,23 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PMLPsatdAlgorithm.H"
+
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXConst.H"
 
-#include <cmath>
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
 
+#include <cmath>
 
 #if WARPX_USE_PSATD
 
