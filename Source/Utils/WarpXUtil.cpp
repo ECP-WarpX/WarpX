@@ -403,9 +403,9 @@ void ReadBCParams ()
         int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             ParmParse pp_psatd("psatd");
-            int do_moving_window_input = 0;
-            pp_warpx.query("do_moving_window", do_moving_window_input);
-            if (do_moving_window_input == 1) {
+            int do_moving_window = 0;
+            pp_warpx.query("do_moving_window", do_moving_window);
+            if (do_moving_window == 1) {
                 std::string s;
                 pp_warpx.get("moving_window_dir", s);
                 int zdir;
