@@ -80,7 +80,7 @@ Overall simulation parameters
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
-    This solver can fail to reach the default precision within a reasonable
+    This solver can fail to reach the default precision within a reasonable time.
     This only applies when warpx.do_electrostatic = labframe.
 
 * ``warpx.self_fields_max_iters`` (`integer`, default: 200)
@@ -204,6 +204,7 @@ Domain Boundary Conditions
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+    * ``pec``: This option can be used to add a Perfect Electric Conductor at the simulation boundary. If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
@@ -1106,7 +1107,6 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     :math:`R\approx1.4A^{1/3}` is the effective Coulombic radius of the nucleus,
     :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
-    a Coulomb logarithm will be computed automatically according to the algorithm.
     a Coulomb logarithm will be computed automatically according to the algorithm in
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
