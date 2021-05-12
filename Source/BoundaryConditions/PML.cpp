@@ -13,8 +13,10 @@
 #include "BoundaryConditions/PMLComponent.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#endif
 
 #include <AMReX.H>
 #include <AMReX_VisMF.H>
