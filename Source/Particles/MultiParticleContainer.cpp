@@ -117,13 +117,13 @@ MultiParticleContainer::ReadParameters ()
         // then the values for the external B on particles must
         // be provided in the input file.
         if (m_B_ext_particle_s == "constant")
-            pp_particles.getarr("B_external_particle", m_B_external_particle);
+            getArrWithParser(pp_particles, "B_external_particle", m_B_external_particle);
 
         // if the input string for E_external on particles is "constant"
         // then the values for the external E on particles must
         // be provided in the input file.
         if (m_E_ext_particle_s == "constant")
-            pp_particles.getarr("E_external_particle", m_E_external_particle);
+            getArrWithParser(pp_particles, "E_external_particle", m_E_external_particle);
 
         // if the input string for B_ext_particle_s is
         // "parse_b_ext_particle_function" then the mathematical expression

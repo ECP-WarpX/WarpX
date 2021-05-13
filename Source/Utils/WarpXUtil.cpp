@@ -20,6 +20,22 @@
 
 using namespace amrex;
 
+void ParseGeometryInput()
+{
+    ParmParse pp_geometry("geometry");
+
+    Vector<Real> prob_lo(AMREX_SPACEDIM);
+    Vector<Real> prob_hi(AMREX_SPACEDIM);
+
+    getArrWithParser(pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
+    getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+
+    pp_geometry.addarr("prob_lo", prob_lo);
+    pp_geometry.addarr("prob_hi", prob_hi);
+}
+
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
@@ -72,21 +88,19 @@ void ConvertLabParamsToBoost()
     ParmParse pp_amr("amr");
     ParmParse pp_slice("slice");
 
-    pp_geometry.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
-    pp_geometry.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+    getArrWithParser(pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
+    getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
 
-    pp_slice.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
+    queryArrWithParser(pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
-    pp_slice.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
+    queryArrWithParser(pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
 
 
     pp_amr.query("max_level", max_level);
     if (max_level > 0){
-      pp_warpx.getarr("fine_tag_lo", fine_tag_lo);
-      pp_warpx.getarr("fine_tag_hi", fine_tag_hi);
+      getArrWithParser(pp_warpx, "fine_tag_lo", fine_tag_lo);
+      getArrWithParser(pp_warpx, "fine_tag_hi", fine_tag_hi);
     }
 
 
@@ -271,6 +285,58 @@ getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real
 
     auto parser = makeParser(str_val, {});
     val = parser.eval();
+}
+
+int
+queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                    const int start_ix, const int num_val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::vector<std::string> tmp_str_arr;
+    int is_specified = a_pp.queryarr(str, tmp_str_arr, start_ix, num_val);
+    if (is_specified)
+    {
+        // If so, create parser objects and apply them to the values provided by the user.
+        int const n = static_cast<int>(tmp_str_arr.size());
+        val.resize(n);
+        for (int i=0 ; i < n ; i++) {
+            auto parser = makeParser(tmp_str_arr[i], {});
+            val[i] = parser.eval();
+        }
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+void
+getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val)
+{
+    // Create parser objects and apply them to the values provided by the user.
+    std::vector<std::string> tmp_str_arr;
+    a_pp.getarr(str, tmp_str_arr);
+
+    int const n = static_cast<int>(tmp_str_arr.size());
+    val.resize(n);
+    for (int i=0 ; i < n ; i++) {
+        auto parser = makeParser(tmp_str_arr[i], {});
+        val[i] = parser.eval();
+    }
+}
+
+void
+getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                    const int start_ix, const int num_val)
+{
+    // Create parser objects and apply them to the values provided by the user.
+    std::vector<std::string> tmp_str_arr;
+    a_pp.getarr(str, tmp_str_arr, start_ix, num_val);
+
+    int const n = static_cast<int>(tmp_str_arr.size());
+    val.resize(n);
+    for (int i=0 ; i < n ; i++) {
+        auto parser = makeParser(tmp_str_arr[i], {});
+        val[i] = parser.eval();
+    }
 }
 
 /**

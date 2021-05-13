@@ -12,6 +12,8 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_Dim3.H>
 
+#include "Utils/WarpXUtil.H"
+
 // An example of Custom Density Profile
 
 // struct whose getDensity returns density at a given position computed from
@@ -25,7 +27,7 @@ struct InjectorDensityCustom
         std::vector<amrex::Real> v;
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                          "Too many parameters for InjectorDensityCustom");
-        pp_species_name.getarr("custom_profile_params", v);
+        getArrWithParser(pp_species_name, "custom_profile_params", v);
         for (int i = 0; i < static_cast<int>(v.size()); ++i) {
             p[i] = v[i];
         }
