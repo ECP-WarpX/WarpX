@@ -208,7 +208,8 @@ jobs:
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_PRECISION=SINGLE
+          -DWarpX_PRECISION=SINGLE     \
+          -DWarpX_openpmd_branch=dev
         cmake --build build_sp -j 2
 
      # Skip this as it will copy the binary artifacts and we are tight on disk space
