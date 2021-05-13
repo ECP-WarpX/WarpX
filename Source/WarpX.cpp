@@ -110,7 +110,6 @@ bool WarpX::galerkin_interpolation = true;
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
-bool WarpX::use_damp_fields_in_z_guard = false;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -977,11 +976,22 @@ WarpX::ReadParameters ()
         }
 
         constexpr int zdir = AMREX_SPACEDIM - 1;
-        if (!Geom(0).isPeriodic(zdir))
-        {
-            use_damp_fields_in_z_guard = true;
+        if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
+            WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
+                "field boundary in both lo and high must be set to Damped for PSATD"
+            );
         }
-        pp_psatd.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
+    }
+
+    if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Damped ) {
+                    amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
+            }
+        }
     }
 
     // for slice generation //

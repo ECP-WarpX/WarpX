@@ -199,14 +199,18 @@ Setting up the field mesh
 Domain Boundary Conditions
 --------------------------
 
-* ``boundary.field_lo`` and ``boundary_field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+
     * ``pec``: This option can be used to add a Perfect Electric Conductor at the simulation boundary. If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
+
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
+
+    * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
@@ -1137,17 +1141,6 @@ Numerics and algorithms
 * ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
     Whether to add compensation when applying filtering.
     This is only supported with the RZ spectral solver.
-
-* ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
-    When using the RZ spectrol solver, specifies whether to apply a
-    damping factor to the E and B fields in the guard cells
-    along z that extend beyond the edge of the domain.
-    When the boundary conditions along z are not periodic, this defaults to
-    true, otherwise false. The damping profile is
-    a sine squared and is applied to the fields on the outer half of the guards.
-    This damping is useful for damping high frequency numerical artifacts that
-    occur when there is parallel decomposition along z with non-periodic boundary
-    conditions.
 
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.

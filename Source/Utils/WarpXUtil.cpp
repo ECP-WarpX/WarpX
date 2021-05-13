@@ -379,6 +379,7 @@ void ReadBCParams ()
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
     ParmParse pp_geometry("geometry");
     ParmParse pp_warpx("warpx");
+    ParmParse pp_algo("algo");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
         // set default field and particle boundary appropriately
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -395,6 +396,23 @@ void ReadBCParams ()
                 if (pml_input == 0) {
                     WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
                     WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
+                }
+            }
+        }
+        // Temporarily setting default boundary to Damped until PEC Boundary Type is enabled
+        int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            ParmParse pp_psatd("psatd");
+            int do_moving_window = 0;
+            pp_warpx.query("do_moving_window", do_moving_window);
+            if (do_moving_window == 1) {
+                std::string s;
+                pp_warpx.get("moving_window_dir", s);
+                int zdir;
+                if (s == "z" || s == "Z") {
+                    zdir = AMREX_SPACEDIM-1;
+                    WarpX::field_boundary_lo[zdir] = FieldBoundaryType::Damped;
+                    WarpX::field_boundary_hi[zdir] = FieldBoundaryType::Damped;
                 }
             }
         }
