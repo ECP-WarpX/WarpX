@@ -17,8 +17,8 @@ using namespace amrex;
      * \param[out] 1 if the boundary type is PEC else 0
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    int is_boundary_PEC (amrex::GpuArray<int, 3> const& fboundary, int dir) {
-        return int( fboundary[dir] == FieldBoundaryType::PEC);
+    bool is_boundary_PEC (amrex::GpuArray<int, 3> const& fboundary, int dir) {
+        return ( fboundary[dir] == FieldBoundaryType::PEC);
     }
 
     /**
@@ -60,46 +60,49 @@ using namespace amrex;
         // components are set equal to values in the mirror locations across the PEC
         // boundary. Here we just initialize it.
         amrex::IntVect ijk_mirror = ijk_vec;
-        int OnPECBoundary = 0;
-        int GuardCell = 0;
+        bool OnPECBoundary = false;
+        bool GuardCell = false;
         amrex::Real sign = 1._rt;
         // Loop over all the dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             for (int iside = 0; iside < 2; ++iside) {
-                const int isPECBoundary = ( (iside == 0)
+                const bool isPECBoundary = ( (iside == 0)
                                         ? is_boundary_PEC(fbndry_lo, idim)
                                         : is_boundary_PEC(fbndry_hi, idim) );
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
                 //          both X-Z and R-Z dimensions are tangential.
                 //          The logic below ensures that the flags are set right for 2D
-                const int is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim) ? 0 : 1 );
+                const bool is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
+                                             ? false : true );
 #else
-                const int is_tangent_to_PEC = ( ( icomp == idim) ? 0 : 1 );
+                const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
 #endif
-                if (isPECBoundary == 1) {
+                if (isPECBoundary == true) {
                     // guard cell outside the domain by "ig" number cells, in direction, idim
                     const int ig = ( (iside == 0)
                                  ? (dom_lo[idim] - ijk_vec[idim])
                                  : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
                     if (ig == 0) {
-                        if (is_tangent_to_PEC == 1 and is_nodal[idim]==1) OnPECBoundary = 1;
+                        if (is_tangent_to_PEC == true and is_nodal[idim] == 1) {
+                            OnPECBoundary = true;
+                        }
                     } else if (ig > 0) {
                         // Find mirror location across PEC boundary
                         ijk_mirror[idim] = ( ( iside == 0)
                                         ? (dom_lo[idim] + ig)
                                         : (dom_hi[idim] + is_nodal[idim] - ig));
-                        GuardCell = 1;
+                        GuardCell = true;
                         // tangential components are inverted across PEC boundary
-                        if (is_tangent_to_PEC == 1) sign *= -1._rt;
+                        if (is_tangent_to_PEC == true) sign *= -1._rt;
                     }
                 } // is PEC boundary
             } // loop over iside
         } // loop over dimensions
-        if (OnPECBoundary == 1) {
+        if (OnPECBoundary == true) {
             // if ijk_vec is on a PEC boundary in any direction, set Etangential to 0.
             Efield(ijk_vec,n) = 0._rt;
-        } else if (GuardCell == 1) {
+        } else if (GuardCell == true) {
             Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
         }
     }
@@ -135,8 +138,8 @@ using namespace amrex;
                            amrex::GpuArray<int, 3> const& fbndry_hi )
     {
         amrex::IntVect ijk_mirror = ijk_vec;
-        int OnPECBoundary = 0;
-        int GuardCell = 0;
+        bool OnPECBoundary = false;
+        bool GuardCell = false;
         amrex::Real sign = 1._rt;
         // Loop over all dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -145,14 +148,15 @@ using namespace amrex;
                 const int isPECBoundary = ( (iside == 0 )
                                         ? is_boundary_PEC(fbndry_lo, idim)
                                         : is_boundary_PEC(fbndry_hi, idim) );
-                if (isPECBoundary == 1) {
+                if (isPECBoundary == true) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                     // For 2D : for icomp==1, (By in XZ, Btheta in RZ),
                     //          both X-Z and R-Z dimensions are not normal, only tangential.
                     //          The logic below ensures that the flags are set right for 2D
-                    const int is_normal_to_PEC = ( (icomp == AMREX_SPACEDIM*idim) ? 1 : 0 );
+                    const bool is_normal_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
+                                                ? true : false );
 #else
-                    const int is_normal_to_PEC = ( ( icomp == idim) ? 1 : 0 );
+                    const bool is_normal_to_PEC = ( ( icomp == idim) ? true : false );
 #endif
                     // guard cell outside the domain by "ig" number cells, in direction, idim
                     const int ig = ( (iside == 0)
@@ -160,25 +164,27 @@ using namespace amrex;
                                    : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
                     if (ig == 0) {
                         // Only normal component is set to 0
-                        if (is_normal_to_PEC == 1 and is_nodal[idim]==1) OnPECBoundary = 1;
+                        if (is_normal_to_PEC == true and is_nodal[idim]==1) {
+                            OnPECBoundary = true;
+                        }
                     } else if ( ig > 0) {
                         // Mirror location inside the domain by "ig" number of cells
                         // across PEC boundary in direction, idim, and side, iside
                         ijk_mirror[idim] = ( (iside == 0)
                                        ? (dom_lo[idim] + ig)
                                        : (dom_hi[idim] + is_nodal[idim] - ig));
-                        GuardCell = 1;
+                        GuardCell = true;
                         // Sign of the normal component in guard cell is inverted
-                        if (is_normal_to_PEC == 1) sign *= -1._rt;
+                        if (is_normal_to_PEC == true) sign *= -1._rt;
                     }
                 } // if PEC Boundary
             } // loop over sides
         } // loop of dimensions
 
-        if (OnPECBoundary == 1) {
+        if (OnPECBoundary == true) {
             // if ijk_vec is on a PEC boundary in any direction, set Bnormal to 0.
             Bfield(ijk_vec,n) = 0._rt;
-        } else if (GuardCell == 1) {
+        } else if (GuardCell == true) {
             // Bnormal and Btangential is set opposite and equal to the value
             // in the mirror location, respectively.
             Bfield(ijk_vec,n) = sign * Bfield(ijk_mirror,n);
