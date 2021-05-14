@@ -74,6 +74,14 @@ Brew (macOS/Linux)
    brew install pkg-config  # for fftw
    brew install open-mpi
 
+.. note::
+
+   On macOS, it is sometimes required to also set the following environment variable to hint the MPI installation location inside ``brew``'s prefix:
+
+   .. code-block:: bash
+
+      export MPI_HOME=/usr/local
+
 
 Conda (Linux/macOS/Windows)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
