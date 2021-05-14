@@ -814,13 +814,13 @@ WarpX::ReadParameters ()
                     noz = particle_shape;
                 }
             }
-        }
 
-        if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
-        {
-            amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
-                           " some numerical artifact will be present at the interface between coarse and fine patch."
-                           "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+            if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
+            {
+                amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
+                               " some numerical artifact will be present at the interface between coarse and fine patch."
+                               "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+            }
         }
     }
 
