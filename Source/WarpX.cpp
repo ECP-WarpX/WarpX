@@ -790,23 +790,29 @@ WarpX::ReadParameters ()
         queryWithParser(pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         queryWithParser(pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
 
-        int particle_shape;
-        if (pp_algo.query("particle_shape", particle_shape) == false)
-        {
-            amrex::Abort("\nalgo.particle_shape must be set in the input file:"
-                         "\nplease set algo.particle_shape to 1, 2, or 3");
-        }
-        else
-        {
-            if (particle_shape < 1 || particle_shape > 3)
+        // check if any nspecies > 0 before testing entry for algo.particle_shape
+        ParmParse pp_particles("particles");
+        std::vector<std::string> species_names;
+        pp_particles.queryarr("species_names", species_names);
+        if (species_names.size() > 0) {
+            int particle_shape;
+            if (pp_algo.query("particle_shape", particle_shape) == false)
             {
-                amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
+                amrex::Abort("\nalgo.particle_shape must be set in the input file:"
+                             "\nplease set algo.particle_shape to 1, 2, or 3");
             }
             else
             {
-                nox = particle_shape;
-                noy = particle_shape;
-                noz = particle_shape;
+                if (particle_shape < 1 || particle_shape > 3)
+                {
+                    amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
+                }
+                else
+                {
+                    nox = particle_shape;
+                    noy = particle_shape;
+                    noz = particle_shape;
+                }
             }
         }
 
