@@ -37,9 +37,9 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
         fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
         fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
     }
-    amrex::IntVect Ex_stag = Efield[0]->ixType().toIntVect();
-    amrex::IntVect Ey_stag = Efield[1]->ixType().toIntVect();
-    amrex::IntVect Ez_stag = Efield[2]->ixType().toIntVect();
+    amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
+    amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
+    amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
     int nComp_x = Efield[0]->nComp();
     int nComp_y = Efield[1]->nComp();
     int nComp_z = Efield[2]->nComp();
@@ -67,7 +67,7 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
-                                           Ex, Ex_stag, fbndry_lo, fbndry_hi);
+                                           Ex, Ex_nodal, fbndry_lo, fbndry_hi);
             },
             tey, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
@@ -77,7 +77,7 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
-                                           Ey, Ey_stag, fbndry_lo, fbndry_hi);
+                                           Ey, Ey_nodal, fbndry_lo, fbndry_hi);
             },
             tez, nComp_z,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
@@ -87,7 +87,7 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
-                                           Ez, Ez_stag, fbndry_lo, fbndry_hi);
+                                           Ez, Ez_nodal, fbndry_lo, fbndry_hi);
             }
         );
 
@@ -117,9 +117,9 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
         fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
         fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
     }
-    amrex::IntVect Bx_stag = Bfield[0]->ixType().toIntVect();
-    amrex::IntVect By_stag = Bfield[1]->ixType().toIntVect();
-    amrex::IntVect Bz_stag = Bfield[2]->ixType().toIntVect();
+    amrex::IntVect Bx_nodal = Bfield[0]->ixType().toIntVect();
+    amrex::IntVect By_nodal = Bfield[1]->ixType().toIntVect();
+    amrex::IntVect Bz_nodal = Bfield[2]->ixType().toIntVect();
     const int nComp_x = Bfield[0]->nComp();
     const int nComp_y = Bfield[1]->nComp();
     const int nComp_z = Bfield[2]->nComp();
@@ -149,7 +149,7 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
-                                     Bx, Bx_stag, fbndry_lo, fbndry_hi);
+                                     Bx, Bx_nodal, fbndry_lo, fbndry_hi);
             },
             tby, nComp_y,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
@@ -159,7 +159,7 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
-                                     By, By_stag, fbndry_lo, fbndry_hi);
+                                     By, By_nodal, fbndry_lo, fbndry_hi);
             },
             tbz, nComp_z,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
@@ -169,7 +169,7 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
-                                     Bz, Bz_stag, fbndry_lo, fbndry_hi);
+                                     Bz, Bz_nodal, fbndry_lo, fbndry_hi);
             }
         );
 

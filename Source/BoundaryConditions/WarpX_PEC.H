@@ -42,7 +42,7 @@ using namespace amrex;
      * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of Efield Array4
      * \param[in] n            index of the MultiFab component being updated
      * \param[in] Efield       field data to be updated if (ijk) is at the boundary or a guard cell
-     * \param[in] stag         staggering of the field data being updated.
+     * \param[in] is_nodal     staggering of the field data being updated.
      * \param[in] fbndry_lo    Field boundary type at the lower boundaries
      * \param[in] fbndry_hi    Field boundary type at the upper boundaries
      */
@@ -51,7 +51,7 @@ using namespace amrex;
                                 const amrex::IntVect &dom_hi,
                                 const amrex::IntVect &ijk_vec, const int n,
                                 amrex::Array4<amrex::Real> const& Efield,
-                                const amrex::IntVect& stag,
+                                const amrex::IntVect& is_nodal,
                                 amrex::GpuArray<int, 3> const& fbndry_lo,
                                 amrex::GpuArray<int, 3> const& fbndry_hi )
     {
@@ -81,14 +81,14 @@ using namespace amrex;
                     // guard cell outside the domain by "ig" number cells, in direction, idim
                     const int ig = ( (iside == 0)
                                  ? (dom_lo[idim] - ijk_vec[idim])
-                                 : (ijk_vec[idim] - (dom_hi[idim] + stag[idim]) ) );
+                                 : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
                     if (ig == 0) {
-                        if (is_tangent_to_PEC == 1) OnPECBoundary = 1;
+                        if (is_tangent_to_PEC == 1 and is_nodal[idim]==1) OnPECBoundary = 1;
                     } else if (ig > 0) {
                         // Find mirror location across PEC boundary
                         ijk_mirror[idim] = ( ( iside == 0)
                                         ? (dom_lo[idim] + ig)
-                                        : (dom_hi[idim] + stag[idim] - ig));
+                                        : (dom_hi[idim] + is_nodal[idim] - ig));
                         GuardCell = 1;
                         // tangential components are inverted across PEC boundary
                         if (is_tangent_to_PEC == 1) sign *= -1._rt;
@@ -121,7 +121,7 @@ using namespace amrex;
      * \param[in] n            index of the MultiFab component being updated
      * \param[in] Bfield       field data to be updated if (ijk) is at the boundary
                                or a guard cell
-     * \param[in] stag         staggering of the field data being updated.
+     * \param[in] is_nodal     staggering of the field data being updated.
      * \param[in] fbndry_lo    Field boundary type at the lower boundaries
      * \param[in] fbndry_hi    Field boundary type at the upper boundaries
      */
@@ -130,7 +130,7 @@ using namespace amrex;
                            const amrex::IntVect & dom_hi,
                            const amrex::IntVect & ijk_vec, const int n,
                            amrex::Array4<amrex::Real> const& Bfield,
-                           const amrex::IntVect & stag,
+                           const amrex::IntVect & is_nodal,
                            amrex::GpuArray<int, 3> const& fbndry_lo,
                            amrex::GpuArray<int, 3> const& fbndry_hi )
     {
@@ -157,16 +157,16 @@ using namespace amrex;
                     // guard cell outside the domain by "ig" number cells, in direction, idim
                     const int ig = ( (iside == 0)
                                    ? (dom_lo[idim] - ijk_vec[idim])
-                                   : (ijk_vec[idim] - (dom_hi[idim] + stag[idim]) ) );
+                                   : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
                     if (ig == 0) {
                         // Only normal component is set to 0
-                        if (is_normal_to_PEC == 1) OnPECBoundary = 1;
+                        if (is_normal_to_PEC == 1 and is_nodal[idim]==1) OnPECBoundary = 1;
                     } else if ( ig > 0) {
                         // Mirror location inside the domain by "ig" number of cells
                         // across PEC boundary in direction, idim, and side, iside
                         ijk_mirror[idim] = ( (iside == 0)
                                        ? (dom_lo[idim] + ig)
-                                       : (dom_hi[idim] + stag[idim] - ig));
+                                       : (dom_hi[idim] + is_nodal[idim] - ig));
                         GuardCell = 1;
                         // Sign of the normal component in guard cell is inverted
                         if (is_normal_to_PEC == 1) sign *= -1._rt;
