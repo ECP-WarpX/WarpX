@@ -992,7 +992,7 @@ WarpX::ReadParameters ()
             WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
-                "field boundary in both lo and high must be set to Damped for PSATD"
+                "field boundary in both lo and hi must be set to Damped for PSATD"
             );
         }
     }
