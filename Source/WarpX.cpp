@@ -790,7 +790,8 @@ WarpX::ReadParameters ()
         queryWithParser(pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         queryWithParser(pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
 
-        // check if any nspecies > 0 before testing entry for algo.particle_shape
+        // Parse algo.particle_shape and check that input is acceptable
+        // (do this only if there is at least one particle species)
         ParmParse pp_particles("particles");
         std::vector<std::string> species_names;
         pp_particles.queryarr("species_names", species_names);
