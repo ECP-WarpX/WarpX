@@ -29,6 +29,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
+#include "BoundaryConditions/PML.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFabUtil.H>

@@ -9,6 +9,9 @@
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
 #include "MacroscopicProperties/MacroscopicProperties.H"
+// _______________________________________________WarpX Forward declarations
+#include "BoundaryConditions/PML.def"
+//________________________________________________
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_GpuContainers.H>

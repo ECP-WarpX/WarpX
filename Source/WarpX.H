@@ -27,7 +27,6 @@
 #include "Filter/NCIGodfreyFilter.def"
 #include "BoundaryConditions/PML.def"
 #include "Particles/WarpXParticleContainer.def"
-#include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.def"
