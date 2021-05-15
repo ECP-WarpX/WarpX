@@ -795,7 +795,12 @@ WarpX::ReadParameters ()
         ParmParse pp_particles("particles");
         std::vector<std::string> species_names;
         pp_particles.queryarr("species_names", species_names);
-        if (species_names.size() > 0) {
+
+        ParmParse pp_lasers("lasers");
+        std::vector<std::string> lasers_names;
+        pp_lasers.queryarr("names", lasers_names);
+
+        if (species_names.size() > 0 || lasers_names.size() > 0) {
             int particle_shape;
             if (pp_algo.query("particle_shape", particle_shape) == false)
             {

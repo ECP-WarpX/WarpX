@@ -1200,7 +1200,7 @@ Numerics and algorithms
     Low-order shape factors result in faster simulations, but may lead to more noisy results.
     High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is generally safer to use high-order shape factors, such as cubic order.
 
-    Note that this input parameter is not optional and must always be set in all input files (provided that there is at least one particle species in the simulation). No default value is provided automatically.
+    Note that this input parameter is not optional and must always be set in all input files provided that there is at least one particle species (set in input as ``particles.species_names``) or one laser species (set in input as ``lasers.names``) in the simulation. No default value is provided automatically.
 
 * ``algo.maxwell_solver`` (`string`, optional)
     The algorithm for the Maxwell field solver.
