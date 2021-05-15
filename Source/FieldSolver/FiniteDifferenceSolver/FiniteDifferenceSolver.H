@@ -8,9 +8,6 @@
 #ifndef WARPX_FINITE_DIFFERENCE_SOLVER_H_
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
-class FiniteDifferenceSolver; /*Forward declaration*/
-
-#include "BoundaryConditions/PML.H"
 #include "MacroscopicProperties/MacroscopicProperties.H"
 
 #include <AMReX_MultiFab.H>
