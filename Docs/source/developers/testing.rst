@@ -47,9 +47,10 @@ For easier debugging, it can be convenient to run the tests on your local machin
 Note that the script `./run_test.sh <https://github.com/ECP-WarpX/WarpX/blob/development/run_test.sh>`__ runs the tests with the exact same compile-time options and runtime options used to run the tests remotely.
 
 Moreover, the script `./run_test.sh <https://github.com/ECP-WarpX/WarpX/blob/development/run_test.sh>`__ compiles all the executables that are necessary in order to run the chosen tests.
-The default number of threads allotted for compiling, initially set as ``numMakeJobs = 8`` in `./Regression/WarpX-tests.ini <https://github.com/ECP-WarpX/WarpX/blob/ad74bcbdd131a8797339ba38370b1195d0aecffb/Regression/WarpX-tests.ini#L20>`__, is overwritten as ``numMakeJobs = 2`` in `./Regression/prepare_file_travis.py <https://github.com/ECP-WarpX/WarpX/blob/ad74bcbdd131a8797339ba38370b1195d0aecffb/Regression/prepare_file_travis.py#L74>`__, in order to avoid overloading the remote host.
+The default number of threads allotted for compiling is set with ``numMakeJobs = 8`` in `./Regression/WarpX-tests.ini <https://github.com/ECP-WarpX/WarpX/blob/ad74bcbdd131a8797339ba38370b1195d0aecffb/Regression/WarpX-tests.ini#L20>`__.
 However, when running the tests on a local machine, it is usually possible and convenient to allot more threads for compiling, in order to speed up the builds.
-This can be accomplished by modifying locally the assignment ``numMakeJobs = 2`` in `./Regression/prepare_file_travis.py <https://github.com/ECP-WarpX/WarpX/blob/ad74bcbdd131a8797339ba38370b1195d0aecffb/Regression/prepare_file_travis.py#L74>`__, with the preferred number of threads that fits your local machine.
+This can be accomplished by setting the environment variable ``WARPX_CI_NUM_MAKE_JOBS``, with the preferred number of threads that fits your local machine, e.g. ``export WARPX_CI_NUM_MAKE_JOBS=16`` (or less if your machine is smaller).
+On public CI, we overwrite the value to ``WARPX_CI_NUM_MAKE_JOBS=2``, in order to avoid overloading the available remote resources.
 Note that this will not change the number of threads used to run each test, but only the number of threads used to compile each executable necessary to run the tests.
 
 Once the execution of `./run_test.sh <https://github.com/ECP-WarpX/WarpX/blob/development/run_test.sh>`__ is completed, you can find all the relevant files associated with each test in one single directory.
