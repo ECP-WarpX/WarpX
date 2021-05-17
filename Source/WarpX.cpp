@@ -790,31 +790,43 @@ WarpX::ReadParameters ()
         queryWithParser(pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         queryWithParser(pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
 
-        int particle_shape;
-        if (pp_algo.query("particle_shape", particle_shape) == false)
-        {
-            amrex::Abort("\nalgo.particle_shape must be set in the input file:"
-                         "\nplease set algo.particle_shape to 1, 2, or 3");
-        }
-        else
-        {
-            if (particle_shape < 1 || particle_shape > 3)
+        // Parse algo.particle_shape and check that input is acceptable
+        // (do this only if there is at least one particle or laser species)
+        ParmParse pp_particles("particles");
+        std::vector<std::string> species_names;
+        pp_particles.queryarr("species_names", species_names);
+
+        ParmParse pp_lasers("lasers");
+        std::vector<std::string> lasers_names;
+        pp_lasers.queryarr("names", lasers_names);
+
+        if (species_names.size() > 0 || lasers_names.size() > 0) {
+            int particle_shape;
+            if (pp_algo.query("particle_shape", particle_shape) == false)
             {
-                amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
+                amrex::Abort("\nalgo.particle_shape must be set in the input file:"
+                             "\nplease set algo.particle_shape to 1, 2, or 3");
             }
             else
             {
-                nox = particle_shape;
-                noy = particle_shape;
-                noz = particle_shape;
+                if (particle_shape < 1 || particle_shape > 3)
+                {
+                    amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
+                }
+                else
+                {
+                    nox = particle_shape;
+                    noy = particle_shape;
+                    noz = particle_shape;
+                }
             }
-        }
 
-        if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
-        {
-            amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
-                           " some numerical artifact will be present at the interface between coarse and fine patch."
-                           "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+            if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
+            {
+                amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
+                               " some numerical artifact will be present at the interface between coarse and fine patch."
+                               "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+            }
         }
     }
 
