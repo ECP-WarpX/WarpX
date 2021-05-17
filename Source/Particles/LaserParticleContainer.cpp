@@ -6,6 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "LaserParticleContainer.H"
+
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
@@ -13,6 +15,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Laser/LaserProfiles.H"
 
 #include <AMReX.H>
 

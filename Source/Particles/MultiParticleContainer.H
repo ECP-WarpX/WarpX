@@ -14,28 +14,40 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 #include "PhysicalParticleContainer.H"
-#include "PhotonParticleContainer.H"
-#include "LaserParticleContainer.H"
 #include "Parser/WarpXParserWrapper.H"
 #include "Particles/Collision/CollisionHandler.H"
-#include "Particles/ParticleCreation/SmartUtils.H"
-#include "Particles/ParticleCreation/SmartCopy.H"
-#include "Particles/ParticleCreation/SmartCreate.H"
-#include "Particles/ParticleCreation/FilterCopyTransform.H"
-#include "Particles/RigidInjectedParticleContainer.H"
+#include "Evolve/WarpXDtType.H"
+#include "Utils/WarpXConst.H"
 
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
-#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.def"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.def"
 #endif
 
-#include <AMReX_Particles.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_INT.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+#include <AMReX_AmrCore.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_RealBox.H>
 
 #include <memory>
-#include <map>
 #include <string>
 #include <algorithm>
+#include <array>
+#include <iosfwd>
+#include <iterator>
+#include <limits>
+#include <vector>
 
 /**
  * The class MultiParticleContainer holds multiple instances of the polymorphic

@@ -13,18 +13,57 @@
 #include "SpeciesPhysicalProperties.H"
 #include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Particles/ElementaryProcess/Ionization.H"
+#include "Particles/LaserParticleContainer.H"
+#include "Particles/ParticleCreation/FilterCopyTransform.H"
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/ParticleCreation/SmartCreate.H"
+#include "Particles/ParticleCreation/SmartUtils.H"
+#include "Particles/PhotonParticleContainer.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/RigidInjectedParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_QED
-    #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
-    #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
-    #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
+#   include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
+#   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
 
 #include <AMReX_Vector.H>
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particles.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_Print.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Utility.H>
 
 #include <limits>
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <cmath>
+#include <map>
+#include <utility>
 
 using namespace amrex;
 

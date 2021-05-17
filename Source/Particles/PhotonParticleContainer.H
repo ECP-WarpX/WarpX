@@ -9,7 +9,20 @@
 #define WARPX_PhotonParticleContainer_H_
 
 #include "PhysicalParticleContainer.H"
-#include <AMReX_Vector.H>
+#include "Evolve/WarpXDtType.H"
+#include "Particles/Gather/ScaleFields.H"
+// _______________________________________________WarpX Forward declarations
+#include "Particles/WarpXParticleContainer.def"
+// ________________________________________________________________________
+
+#include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
+#include <AMReX_AmrCore.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+
+#include <string>
 
 /**
  * Photon particles have no mass, they deposit no charge, and see specific QED
