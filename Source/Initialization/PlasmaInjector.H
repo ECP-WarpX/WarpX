@@ -10,9 +10,11 @@
 #define PLASMA_INJECTOR_H_
 
 #include "Particles/SpeciesPhysicalProperties.H"
-#include "InjectorPosition.H"
-#include "InjectorDensity.H"
 #include "InjectorMomentum.H"
+#include "InjectorDensity.H"
+// _______________________________________________WarpX Forward declarations
+#include "InjectorPosition.def"
+// ________________________________________________________________________
 
 #include <AMReX_Vector.H>
 #include <AMReX_ParmParse.H>

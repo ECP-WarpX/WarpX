@@ -2,7 +2,9 @@
 #define WARPX_FLUSHFORMATPLOTFILE_H_
 
 #include "FlushFormat.H"
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+// _______________________________________________WarpX Forward declarations
+#include "Diagnostics/ParticleDiag/ParticleDiag.def"
+//________________________________________________________________________
 
 #include <AMReX_Geometry.H>
 #include <AMReX_Vector.H>

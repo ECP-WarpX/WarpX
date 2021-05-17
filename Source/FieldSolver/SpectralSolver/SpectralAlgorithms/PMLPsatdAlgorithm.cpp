@@ -6,6 +6,7 @@
  */
 #include "PMLPsatdAlgorithm.H"
 
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXConst.H"
@@ -412,6 +413,10 @@ PMLPsatdAlgorithm::VayDeposition (const int /*lev*/,
                                   std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for PML PSATD");
+}
+
+int PMLPsatdAlgorithm::getRequiredNumberOfFields() const {
+    return SpectralPMLIndex::n_fields;
 }
 
 #endif // WARPX_USE_PSATD

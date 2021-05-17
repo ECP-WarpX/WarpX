@@ -22,6 +22,7 @@
 #include "Particles/Pusher/PushSelector.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Initialization/InjectorPosition.H"
 
 #include <AMReX_Geometry.H>
 #include <AMReX_Print.H>

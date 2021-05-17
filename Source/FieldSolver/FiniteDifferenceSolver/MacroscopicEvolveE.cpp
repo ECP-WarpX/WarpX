@@ -13,7 +13,6 @@
 #include "MacroscopicProperties/MacroscopicProperties.H"
 
 #include <AMReX.H>
-#include <AMReX_Gpu.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Config.H>
 #include <AMReX_Extension.H>

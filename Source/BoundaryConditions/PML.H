@@ -12,7 +12,6 @@
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
-#include <Utils/WarpXProfilerWrapper.H>
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_Geometry.H>

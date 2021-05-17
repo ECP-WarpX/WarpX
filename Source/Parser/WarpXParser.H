@@ -7,21 +7,21 @@
 #ifndef WARPX_PARSER_H_
 #define WARPX_PARSER_H_
 
+#include "wp_parser_c.h"
+#include "wp_parser_y.h"
+
+#include <AMReX_REAL.H>
+#include <AMReX_Config.H>
+
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
+
 #include <array>
 #include <vector>
 #include <string>
 #include <set>
-
-#include <AMReX_REAL.H>
-
-#include "wp_parser_c.h"
-#include "wp_parser_y.h"
-
-#ifdef AMREX_USE_OMP
-#include <omp.h>
-#endif
-
-template <int N> class GpuParser;
+#include <memory>
 
 class WarpXParser
 {

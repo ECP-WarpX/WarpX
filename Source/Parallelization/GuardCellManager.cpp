@@ -10,7 +10,12 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_ParmParse.H>
-#include <AMReX.H>
+#include <AMReX_Config.H>
+#include <AMReX_INT.H>
+#include <AMReX_SPACE.H>
+
+#include <math.h>
+#include <algorithm>
 
 using namespace amrex;
 

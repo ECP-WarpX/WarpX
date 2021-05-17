@@ -8,9 +8,9 @@
 #ifndef WARPX_FINITE_DIFFERENCE_SOLVER_H_
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
-#include "MacroscopicProperties/MacroscopicProperties.H"
 // _______________________________________________WarpX Forward declarations
 #include "BoundaryConditions/PML.def"
+#include "MacroscopicProperties/MacroscopicProperties.def"
 //________________________________________________
 
 #include <AMReX_MultiFab.H>

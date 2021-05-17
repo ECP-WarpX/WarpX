@@ -24,15 +24,16 @@
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "BoundaryConditions/PML.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "Filter/NCIGodfreyFilter.H"
+#include "Parser/WarpXParserWrapper.H"
 
 #include <AMReX_ParmParse.H>
-#include <AMReX_MultiFabUtil.H>
 #include <AMReX_Array4.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -59,6 +60,10 @@
 #include <AMReX_SPACE.H>
 #include <AMReX_ccse-mpi.H>
 #include <AMReX_iMultiFab.H>
+#ifdef AMREX_USE_EB
+#   include <AMReX_EBFabFactory.H>
+#   include <AMReX_EBSupport.H>
+#endif
 
 #include <algorithm>
 #include <cmath>

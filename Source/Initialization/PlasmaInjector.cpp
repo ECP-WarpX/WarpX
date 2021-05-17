@@ -10,6 +10,9 @@
 #include "PlasmaInjector.H"
 
 #include "Particles/SpeciesPhysicalProperties.H"
+#include "Initialization/InjectorDensity.H"
+#include "Initialization/InjectorMomentum.H"
+#include "Initialization/InjectorPosition.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"

@@ -2,8 +2,10 @@
 #define WARPX_DIAGNOSTICS_H_
 
 #include "ParticleDiag/ParticleDiag.H"
-#include "FlushFormats/FlushFormat.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
+// _______________________________________________WarpX Forward declarations
+#include "FlushFormats/FlushFormat.def"
+#include "ComputeDiagFunctors/ComputeDiagFunctor.def"
+//________________________________________________________________________
 
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>

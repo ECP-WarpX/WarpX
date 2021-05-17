@@ -3,6 +3,10 @@
 
 #include "FlushFormat.H"
 #include "Diagnostics/WarpXOpenPMD.H"
+// _______________________________________________WarpX Forward declarations
+#include "Diagnostics/ParticleDiag/ParticleDiag.def"
+//________________________________________________________________________
+
 
 #include <AMReX_Geometry.H>
 #include <AMReX_Vector.H>

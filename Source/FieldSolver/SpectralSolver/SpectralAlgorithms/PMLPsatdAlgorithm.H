@@ -8,7 +8,10 @@
 #define WARPX_PML_PSATD_ALGORITHM_H_
 
 #include "SpectralBaseAlgorithm.H"
-#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+// _______________________________________________WarpX Forward declarations
+#include "FieldSolver/SpectralSolver/SpectralFieldData.def"
+#include "FieldSolver/SpectralSolver/SpectralKSpace.def"
+//________________________________________________________________________
 
 #include <AMReX_REAL.H>
 
@@ -38,9 +41,7 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
 
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields() const override final {
-            return SpectralPMLIndex::n_fields;
-        }
+        virtual int getRequiredNumberOfFields() const override final;
 
         /**
          * \brief Virtual function for current correction in Fourier space

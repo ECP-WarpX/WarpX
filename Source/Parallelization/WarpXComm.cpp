@@ -6,20 +6,15 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXComm_K.H"
-
 #include "WarpX.H"
+
+#include "WarpXComm_K.H"
 #include "WarpXSumGuardCells.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "BoundaryConditions/PML.H"
 
-#ifdef WARPX_USE_PSATD
-#   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#endif
-
 #include <algorithm>
-#include <cstdlib>
 #include <memory>
 
 using namespace amrex;
