@@ -23,9 +23,6 @@ warpx.cfl = 1.
 warpx.do_pml = 0
 warpx.use_hybrid_QED = 1
 
-# Order of particle shape factors
-algo.particle_shape = 1
-
 #################################
 ############ FIELDS #############
 #################################
