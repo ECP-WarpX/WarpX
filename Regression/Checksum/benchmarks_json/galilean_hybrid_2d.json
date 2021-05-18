@@ -1,44 +1,44 @@
 {
   "beam": {
     "particle_cpu": 0.0,
-    "particle_id": 469783.0,
-    "particle_momentum_x": 8.430115204061214e-19,
-    "particle_momentum_y": 4.174317442912255e-19,
-    "particle_momentum_z": 8.252825654229242e-18,
-    "particle_position_x": 0.003300507555221829,
-    "particle_position_y": 0.15433326243964302,
-    "particle_weight": 2921026246847.6377
+    "particle_id": 475633.0,
+    "particle_momentum_x": 8.977128505251121e-19,
+    "particle_momentum_y": 4.2594832606345773e-19,
+    "particle_momentum_z": 8.163886912007971e-18,
+    "particle_position_x": 0.003448652102974574,
+    "particle_position_y": 0.15864821154046593,
+    "particle_weight": 2949113037682.7114
   },
   "electrons": {
-    "particle_cpu": 152698.0,
-    "particle_id": 26335172971.0,
-    "particle_momentum_x": 2.757442399943138e-17,
-    "particle_momentum_y": 5.754532917591758e-19,
-    "particle_momentum_z": 5.853505891088483e-16,
-    "particle_position_x": 6.484524723414986,
-    "particle_position_y": 56.91487423680809,
-    "particle_weight": 3.138254004514874e+18
+    "particle_cpu": 152722.0,
+    "particle_id": 26339030788.0,
+    "particle_momentum_x": 2.7437756993656543e-17,
+    "particle_momentum_y": 5.765981101849211e-19,
+    "particle_momentum_z": 5.859470265830017e-16,
+    "particle_position_x": 6.483959681234519,
+    "particle_position_y": 56.92826868484145,
+    "particle_weight": 3.138852336747638e+18
   },
   "ions": {
     "particle_cpu": 155428.0,
     "particle_id": 26814790002.0,
-    "particle_momentum_x": 5.308858706539578e-17,
-    "particle_momentum_y": 5.825074326514948e-19,
-    "particle_momentum_z": 1.010133271863926e-12,
-    "particle_position_x": 6.629830858708762,
-    "particle_position_y": 58.24915385911236,
+    "particle_momentum_x": 5.29909898680688e-17,
+    "particle_momentum_y": 5.830379723587888e-19,
+    "particle_momentum_z": 1.0101325178495399e-12,
+    "particle_position_x": 6.629858086956483,
+    "particle_position_y": 58.24915360742482,
     "particle_weight": 3.21662600232034e+18
   },
   "lev=0": {
-    "Bx": 1227822.5558519152,
-    "By": 36541951.2872289,
-    "Bz": 195059.04422597602,
-    "Ex": 1.0342152241409732e+16,
-    "Ey": 386149353183636.56,
-    "Ez": 3398065718052690.0,
-    "jx": 5.331240909681178e+17,
-    "jy": 2.329601829474791e+16,
-    "jz": 4.2815654939964713e+18,
-    "rho": 13845754157.456049
+    "Bx": 1227876.9003523819,
+    "By": 36168333.843256354,
+    "Bz": 195425.49352945696,
+    "Ex": 1.029161390289296e+16,
+    "Ey": 386163681952065.3,
+    "Ez": 3380885839370191.0,
+    "jx": 5.444336689883573e+17,
+    "jy": 2.3304259207837416e+16,
+    "jz": 4.280570212876446e+18,
+    "rho": 13877805401.55049
   }
 }
