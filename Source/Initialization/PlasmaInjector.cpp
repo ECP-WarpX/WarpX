@@ -209,7 +209,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     } else if (part_pos_s == "nfluxpercell") {
         surface_flux = true;
         pp_species_name.query("num_particles_per_cell", num_particles_per_cell_real);
-#if WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical gemoetry the number "
@@ -220,7 +220,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         std::string flux_normal_axis_string;
         pp_species_name.get("flux_normal_axis", flux_normal_axis_string);
         flux_normal_axis = -1;
-#if WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
         if      (flux_normal_axis_string == "r" || flux_normal_axis_string == "R") {
             flux_normal_axis = 0;
         }
@@ -242,7 +242,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #ifdef WARPX_DIM_3D
             "'x', 'y', or 'z'.");
 #else
-#    if WARPX_DIM_RZ
+#    ifdef WARPX_DIM_RZ
             "'r' or 'z'.");
 #    else
             "'x' or 'z'.");
