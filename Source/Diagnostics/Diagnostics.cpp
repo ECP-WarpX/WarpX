@@ -81,14 +81,14 @@ Diagnostics::BaseReadParameters ()
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
 
-    bool lo_specified = pp_diag_name.queryarr("diag_lo", m_lo);
+    bool lo_specified = queryArrWithParser(pp_diag_name, "diag_lo", m_lo, 0, AMREX_SPACEDIM);
 
     if (!lo_specified) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    bool hi_specified = pp_diag_name.queryarr("diag_hi", m_hi);
+    bool hi_specified = queryArrWithParser(pp_diag_name, "diag_hi", m_hi, 0, AMREX_SPACEDIM);
     if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
@@ -193,7 +193,8 @@ Diagnostics::InitData ()
 
     amrex::ParmParse pp_diag_name(m_diag_name);
     amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
-    if ( pp_diag_name.queryarr("diag_lo", dummy_val) || pp_diag_name.queryarr("diag_hi", dummy_val) ) {
+    if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
+         queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
         // set geometry filter for particle-diags to true when the diagnostic domain-extent
         // is specified by the user
         for (int i = 0; i < m_output_species.size(); ++i) {

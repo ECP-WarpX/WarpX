@@ -269,7 +269,6 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
     dirichlet_flag[0] = false;
     Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
-
     if ( WarpX::field_boundary_lo[1] == FieldBoundaryType::Periodic
          && WarpX::field_boundary_hi[1] == FieldBoundaryType::Periodic ) {
         lobc[1] = LinOpBCType::Periodic;
