@@ -53,6 +53,20 @@ struct ParticleBoundaries
              && zmin_bc == bc && zmax_bc == bc);
     }
 
+    /* \brief Applies absorbing or reflecting boundary condition to the input particles, along all axis.
+     *        For reflecting boundaries, the position of the particle is changed appropriately and
+     *        the sign of the velocity is changed (depending on the reflect_all_velocities flag).
+     *        For absorbing, a flag is set whether the particle has been lost (it is up to the calling
+     *        code to take appropriate action to remove any lost particles).
+     *        Note that periodic boundaries are handled in AMReX code.
+     *
+     * \param x, xmin, xmax: particle x position, location of x boundary
+     * \param y, ymin, ymax: particle y position, location of y boundary (3D only)
+     * \param z, zmin, zmax: particle z position, location of z boundary
+     * \param ux, uy, uz: particle momenta
+     * \param particle_lost: output, flags whether the particle was lost
+     * \param boundaries: object with boundary condition settings
+    */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static void
     apply_boundaries (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,

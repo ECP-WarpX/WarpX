@@ -397,19 +397,6 @@ Particle initialization
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
     Not currently available in the RZ configuration.
 
-* ``particles.boundary_conditions`` (`string`) optional (default `none`)
-    Boundary conditions to apply to particles on all boundaries. Options are:
-    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
-    * ``absorbing``: particles exiting the simulation domain are discarded.
-    * ``reflecting``: particles are reflected from the boundaries
-
-* ``particles.boundary_conditions_x/y/z`` (`strings`, separated by spaces) optional (default `none`)
-    Boundary conditions to apply to particles on the x, y, or z boundaries.
-    The same values as with ``particles.boundary_conditions`` are used. If one
-    value is specified, it will apply to both boundaries, the min and max.
-    Two values can be specified for the min and max if the conditions are different.
-    Note that this option will take precedence over ``particles.boundary_conditions``.
-
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
     method is useful when injecting a relativistic particle beam, in boosted-frame

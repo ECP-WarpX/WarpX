@@ -8,7 +8,10 @@
 
 
 """
-This script tests the particle boundary conditions
+This script tests the particle boundary conditions.
+The input file sets up absorbing, periodic, and reflecting boundary conditions
+along each of the three axis. It launches particles heading toward each of the boundaries
+and checks that they end up in the correct place (or are deleted).
 """
 
 import sys
@@ -19,6 +22,7 @@ yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
+# The min and max size of the box along the three axis.
 dmin = -1.
 dmax = +1.
 
@@ -92,8 +96,8 @@ zza[0] = do_periodic(zza[0])
 zza[1] = do_periodic(zza[1])
 
 assert (len(a_id) == 1), 'Absorbing particles not absorbed'
-assert (np.all(vx == -vx0)), 'Reflecting particle velocity not reflect'
-assert (np.all(vz == +vz0)), 'Periodic particle velocity not reflect'
+assert (np.all(vx == -vx0)), 'Reflecting particle velocity not correct'
+assert (np.all(vz == +vz0)), 'Periodic particle velocity not correct'
 assert (np.all(np.abs((xx - xxa)/xx) < 1.e-15)), 'Reflecting particle position not correct'
 assert (np.all(np.abs((zz - zza)/zz) < 1.e-15)), 'Periodic particle position not correct'
 
