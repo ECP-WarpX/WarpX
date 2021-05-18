@@ -28,7 +28,7 @@ Try the following steps to debug a simulation:
    Try compiling with ``-DAMReX_BOUND_CHECK=ON`` (this will make the simulation very slow), and rerun.
 #. If the problem looks like a random memory might be used, try initializing memory with signaling Not-a-Number (NaN) values through the runtime option ``fab.init_snan = 1``.
 Further useful runtime options are ``amrex.fpe_trap_invalid``, ``amrex.fpe_trap_zero`` and ``amrex.fpe_trap_overflow`` (see details in the AMReX link below).
-#. On Nvidia GPUs, if you suspect the problem might be a race condition, set the environment variable ``export CUDA_LAUNCH_BLOCKING=1`` and rerun.
+#. On Nvidia GPUs, if you suspect the problem might be a race condition due to a missing host / device synchronization, set the environment variable ``export CUDA_LAUNCH_BLOCKING=1`` and rerun.
 #. Consider simplifying your input options and re-adding more options after having found a working baseline.
 
 Fore more information, see also the `AMReX Debugging Manual <https://amrex-codes.github.io/amrex/docs_html/Basics.html#debugging>`__.
