@@ -237,17 +237,17 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         else if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
             flux_normal_axis = AMREX_SPACEDIM-1;
         }
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
-            "Error: Invalid value for flux_normal_axis. It must be "
 #ifdef WARPX_DIM_3D
-            "'x', 'y', or 'z'.");
+        std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
 #else
 #    ifdef WARPX_DIM_RZ
-            "'r' or 'z'.");
+        std::string flux_normal_axis_help = "'r' or 'z'.";
 #    else
-            "'x' or 'z'.");
+        std::string flux_normal_axis_help = "'x' or 'z'.";
 #    endif
 #endif
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
+            "Error: Invalid value for flux_normal_axis. It must be " + flux_normal_axis_help);
         pp_species_name.get("flux_direction", flux_direction);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
             "Error: flux_direction must be -1 or +1.");
