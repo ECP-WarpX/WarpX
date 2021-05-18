@@ -158,9 +158,9 @@ public:
     static bool do_divb_cleaning;
 
     // Interpolation order
-    static long nox;
-    static long noy;
-    static long noz;
+    static int nox;
+    static int noy;
+    static int noz;
 
     // Order of finite-order centering of fields (staggered to nodal)
     static int field_centering_nox;
@@ -182,7 +182,6 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool use_damp_fields_in_z_guard;
     static bool serialize_ics;
 
     // Back transformation diagnostic
@@ -392,7 +391,7 @@ public:
      * Applies a damping factor in the guards cells that extend
      * beyond the extent of the domain, reducing fluctuations that
      * can appear in parallel simulations. This will be called
-     * when use_damp_fields_in_z_guard is true.
+     * when FieldBoundaryType is set to damped.
      */
     void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
@@ -595,6 +594,14 @@ public:
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
                        int const max_iters) const;
+
+    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi
+                   ) const;
+    void getPhiBC (const int idim, amrex::Real &pot_lo,
+                   amrex::Real &pot_hi) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,

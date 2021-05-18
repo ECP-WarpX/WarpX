@@ -27,10 +27,8 @@ warpx.do_pml = 0
 algo.field_gathering = energy-conserving
 algo.current_deposition = esirkepov
 
-# Interpolation
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 1.0

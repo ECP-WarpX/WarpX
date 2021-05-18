@@ -91,8 +91,8 @@ struct CartesianYeeAlgorithm {
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
         amrex::ignore_unused(n_coefs_y);
+        return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -115,8 +115,8 @@ struct CartesianYeeAlgorithm {
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
         amrex::ignore_unused(n_coefs_y);
+        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);

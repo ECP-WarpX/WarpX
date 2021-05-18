@@ -16,13 +16,13 @@ warpx.serialize_ics = 1
 #################################
 ############ NUMERICS ###########
 #################################
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.cfl = 0.98
 warpx.use_filter = 0
 algo.maxwell_solver = ckc
 algo.load_balance_intervals = -1
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############# LASER #############

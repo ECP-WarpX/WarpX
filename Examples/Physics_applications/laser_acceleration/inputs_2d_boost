@@ -23,9 +23,6 @@ algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 algo.particle_pusher = vay
 algo.maxwell_solver = ckc
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.use_filter = 1
 warpx.cfl = 1.
 warpx.do_pml = 0
@@ -34,6 +31,9 @@ warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # in units of the speed of light
 warpx.serialize_ics = 1
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ####### BOOST PARAMETERS ########

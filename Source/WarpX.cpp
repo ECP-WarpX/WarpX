@@ -89,9 +89,10 @@ bool WarpX::do_current_centering = false;
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
 
-long WarpX::nox = 1;
-long WarpX::noy = 1;
-long WarpX::noz = 1;
+// This will be overwritten by setting nox = noy = noz = algo.particle_shape
+int WarpX::nox = 0;
+int WarpX::noy = 0;
+int WarpX::noz = 0;
 
 // Order of finite-order centering of fields (staggered to nodal)
 int WarpX::field_centering_nox = 2;
@@ -109,7 +110,6 @@ bool WarpX::galerkin_interpolation = true;
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
-bool WarpX::use_damp_fields_in_z_guard = false;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -536,9 +536,9 @@ WarpX::ReadParameters ()
         pp_warpx.query("num_mirrors", num_mirrors);
         if (num_mirrors>0){
             mirror_z.resize(num_mirrors);
-            pp_warpx.getarr("mirror_z", mirror_z, 0, num_mirrors);
+            getArrWithParser(pp_warpx, "mirror_z", mirror_z, 0, num_mirrors);
             mirror_z_width.resize(num_mirrors);
-            pp_warpx.getarr("mirror_z_width", mirror_z_width, 0, num_mirrors);
+            getArrWithParser(pp_warpx, "mirror_z_width", mirror_z_width, 0, num_mirrors);
             mirror_z_npoints.resize(num_mirrors);
             pp_warpx.getarr("mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
         }
@@ -703,8 +703,8 @@ WarpX::ReadParameters ()
 
         if (maxLevel() > 0) {
             Vector<Real> lo, hi;
-            pp_warpx.getarr("fine_tag_lo", lo);
-            pp_warpx.getarr("fine_tag_hi", hi);
+            getArrWithParser(pp_warpx, "fine_tag_lo", lo);
+            getArrWithParser(pp_warpx, "fine_tag_hi", hi);
             fine_tag_lo = RealVect{lo};
             fine_tag_hi = RealVect{hi};
         }
@@ -789,12 +789,51 @@ WarpX::ReadParameters ()
         load_balance_costs_update_algo = GetAlgorithmInteger(pp_algo, "load_balance_costs_update");
         queryWithParser(pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         queryWithParser(pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+
+        // Parse algo.particle_shape and check that input is acceptable
+        // (do this only if there is at least one particle or laser species)
+        ParmParse pp_particles("particles");
+        std::vector<std::string> species_names;
+        pp_particles.queryarr("species_names", species_names);
+
+        ParmParse pp_lasers("lasers");
+        std::vector<std::string> lasers_names;
+        pp_lasers.queryarr("names", lasers_names);
+
+        if (species_names.size() > 0 || lasers_names.size() > 0) {
+            int particle_shape;
+            if (pp_algo.query("particle_shape", particle_shape) == false)
+            {
+                amrex::Abort("\nalgo.particle_shape must be set in the input file:"
+                             "\nplease set algo.particle_shape to 1, 2, or 3");
+            }
+            else
+            {
+                if (particle_shape < 1 || particle_shape > 3)
+                {
+                    amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
+                }
+                else
+                {
+                    nox = particle_shape;
+                    noy = particle_shape;
+                    noz = particle_shape;
+                }
+            }
+
+            if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
+            {
+                amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
+                               " some numerical artifact will be present at the interface between coarse and fine patch."
+                               "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+            }
+        }
     }
+
     {
         ParmParse pp_interpolation("interpolation");
-        pp_interpolation.query("nox", nox);
-        pp_interpolation.query("noy", noy);
-        pp_interpolation.query("noz", noz);
+
+        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
 #ifdef WARPX_USE_PSATD
 
@@ -843,17 +882,6 @@ WarpX::ReadParameters ()
             }
         }
 #endif
-
-        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
-
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
-            "warpx.nox, noy and noz must be equal");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
-
-        if (maxLevel() > 0 and nox>1 and do_pml_j_damping==1) {
-            amrex::Warning("WARNING: for nox>1, some numerical artifact will be present"
-                           " at coarse-fine interface. nox=1 recommended to avoid this issue");
-        }
     }
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -960,11 +988,22 @@ WarpX::ReadParameters ()
         }
 
         constexpr int zdir = AMREX_SPACEDIM - 1;
-        if (!Geom(0).isPeriodic(zdir))
-        {
-            use_damp_fields_in_z_guard = true;
+        if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
+            WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
+                "field boundary in both lo and high must be set to Damped for PSATD"
+            );
         }
-        pp_psatd.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
+    }
+
+    if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Damped ) {
+                    amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
+            }
+        }
     }
 
     // for slice generation //
@@ -978,8 +1017,8 @@ WarpX::ReadParameters ()
        {
           slice_crse_ratio[idim] = 1;
        }
-       pp_slice.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
-       pp_slice.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
+       queryArrWithParser(pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
+       queryArrWithParser(pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
        pp_slice.queryarr("coarsening_ratio",slice_crse_ratio,0,AMREX_SPACEDIM);
        pp_slice.query("plot_int",slice_plot_int);
        slice_realbox.setLo(slice_lo);
@@ -1070,6 +1109,15 @@ WarpX::BackwardCompatibility ()
     if (pp_warpx.query("use_kspace_filter", backward_int)){
         amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
                      "Please use the flag use_filter, see documentation.");
+    }
+
+    ParmParse pp_interpolation("interpolation");
+    if (pp_interpolation.query("nox", backward_int) ||
+        pp_interpolation.query("noy", backward_int) ||
+        pp_interpolation.query("noz", backward_int))
+    {
+        amrex::Abort("\ninterpolation.nox (as well as .noy, .noz) are not supported anymore:"
+                     "\nplease use the new syntax algo.particle_shape instead");
     }
 
     ParmParse pp_algo("algo");

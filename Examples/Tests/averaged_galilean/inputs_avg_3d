@@ -25,10 +25,9 @@ algo.current_deposition = direct
 algo.particle_pusher = vay
 
 warpx.cfl = 2.
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############
