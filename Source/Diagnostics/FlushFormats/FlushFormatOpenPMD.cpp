@@ -24,18 +24,18 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
       encoding = openPMD::IterationEncoding::groupBased;
 #endif
     else if ( 0 == openpmd_encoding.compare("f") )
-      encoding = openPMD::IterationEncoding::fileBased;      
+      encoding = openPMD::IterationEncoding::fileBased;
 
     //
     // if no encoding is defined, then check to see if tspf is defined.
-    // (backward compatibility) 
+    // (backward compatibility)
     //
     if ( !encodingDefined )
     {
       bool openpmd_tspf = false;
-      bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);      
-      if ( tspfDefined && openpmd_tspf ) 
-           encoding = openPMD::IterationEncoding::fileBased;      
+      bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
+      if ( tspfDefined && openpmd_tspf )
+           encoding = openPMD::IterationEncoding::fileBased;
     }
     auto & warpx = WarpX::GetInstance();
     m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
