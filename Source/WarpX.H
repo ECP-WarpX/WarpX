@@ -327,8 +327,8 @@ public:
 
     /**
      * \brief
-     * Compute the last timestep of the simulation. Calls computeMaxStepBoostAccelerator() if
-     * required.
+     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Calls computeMaxStepBoostAccelerator() if required.
      */
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
