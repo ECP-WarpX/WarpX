@@ -1,20 +1,20 @@
-max_step = 49152000
+max_step = 4096000
 warpx.verbose = 0
-warpx.const_dt = 2.3045722713864306e-11
+warpx.const_dt = 9.218289085545723e-11
 warpx.do_electrostatic = labframe
 warpx.self_fields_required_precision = 1e-06
 
-amr.n_cell = 512 8
-amr.max_grid_size = 512
+amr.n_cell = 256 8
+amr.max_grid_size = 256
 amr.max_level = 0
 
 geometry.coord_sys = 0
 geometry.prob_lo = 0.0 0.0
-geometry.prob_hi = 0.067 0.001046875
+geometry.prob_hi = 0.067 0.00209375
 
 boundary.field_lo = pec periodic
 boundary.field_hi = pec periodic
-boundary.potential_hi_x = 120.0*sin(2*pi*13.56e6*t)
+boundary.potential_hi_x = 200.0*sin(2*pi*13.56e+6*t)
 
 # Order of particle shape factors
 algo.particle_shape = 1
@@ -24,9 +24,9 @@ electrons.mass = m_e
 electrons.charge = -q_e
 electrons.injection_style = nuniformpercell
 electrons.initialize_self_fields = 0
-electrons.num_particles_per_cell_each_dim = 8 8
+electrons.num_particles_per_cell_each_dim = 16 16
 electrons.profile = constant
-electrons.density = 3.84e14
+electrons.density = 5.12e14
 electrons.momentum_distribution_type = gaussian
 electrons.ux_m = 0.0
 electrons.uy_m = 0.0
@@ -39,9 +39,9 @@ he_ions.mass = 6.67e-27
 he_ions.charge = q_e
 he_ions.injection_style = nuniformpercell
 he_ions.initialize_self_fields = 0
-he_ions.num_particles_per_cell_each_dim = 8 8
+he_ions.num_particles_per_cell_each_dim = 16 16
 he_ions.profile = constant
-he_ions.density = 3.84e14
+he_ions.density = 5.12e14
 he_ions.momentum_distribution_type = gaussian
 he_ions.ux_m = 0.0
 he_ions.uy_m = 0.0
@@ -53,7 +53,7 @@ he_ions.uz_th = 2.6332116917541573e-06
 collisions.collision_names = coll_elec coll_ion
 coll_ion.type = background_mcc
 coll_ion.species = he_ions
-coll_ion.background_density = 321e20
+coll_ion.background_density = 32.1e20
 coll_ion.background_temperature = 300
 coll_ion.scattering_processes = elastic back # charge_exchange
 coll_ion.elastic_cross_section = ../../../Source/Particles/Collision/MCC_cross_sections/He/ion_scattering.dat
@@ -61,7 +61,7 @@ coll_ion.back_cross_section = ../../../Source/Particles/Collision/MCC_cross_sect
 
 coll_elec.type = background_mcc
 coll_elec.species = electrons
-coll_elec.background_density = 321e20
+coll_elec.background_density = 32.1e20
 coll_elec.background_temperature = 300
 coll_elec.background_mass = 6.67e-27
 coll_elec.scattering_processes = elastic excitation1 excitation2 ionization
@@ -78,6 +78,6 @@ diagnostics.diags_names = diags
 diags.diag_type = Full
 diags.format = openpmd
 diags.openpmd_backend = h5
-diags.intervals = 102400
+diags.intervals = 4070401:
 diags.fields_to_plot = phi rho_electrons rho_he_ions
-diags.file_prefix = ./diags_case4
+diags.file_prefix = ./diags_case2

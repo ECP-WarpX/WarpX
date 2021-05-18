@@ -1137,8 +1137,8 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     Set to ``background_mcc`` for collisions between particles and a neutral
     background.
 
-* ``<collision_name>.species`` (`string`, species names)
-    The names of the species for which collision will be considered. Only one
+* ``<collision_name>.species`` (`string`, species name)
+    The name of the species for which collisions will be included. Only one
     species name should be given.
 
 * ``<collision_name>.background_density`` (`float`)
