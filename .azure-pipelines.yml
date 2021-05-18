@@ -6,6 +6,7 @@ pool:
 jobs:
 - job:
   variables:
+    WARPX_CI_NUM_MAKE_JOBS: 2
     WARPX_CI_CCACHE: 'TRUE'
     WARPX_CI_OPENPMD: 'TRUE'
     WARPX_CI_PSATD: 'TRUE'
@@ -28,6 +29,8 @@ jobs:
         WARPX_CI_RZ_OR_NOMPI: 'TRUE'
       qed:
         WARPX_CI_QED: 'TRUE'
+      embedded_boundary:
+        WARPX_CI_EB: 'TRUE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 90

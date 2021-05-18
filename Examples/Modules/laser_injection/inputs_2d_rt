@@ -28,6 +28,9 @@ algo.current_deposition = esirkepov
 # CFL
 warpx.cfl = 1.0
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 # Laser
 lasers.names        = laser1
 laser1.profile      = Gaussian

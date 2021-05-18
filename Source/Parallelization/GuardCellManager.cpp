@@ -122,6 +122,11 @@ guardCellManager::Init (
     if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
+    // Used if warpx.do_divb_cleaning = 1
+    int ng_alloc_G_int = (do_moving_window) ? 2 : 1;
+    // TODO Does the CKC solver require one additional guard cell (as for F)?
+    ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
+
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         // The number of guard cells should be enough to contain the stencil of the FFT solver.
@@ -178,9 +183,11 @@ guardCellManager::Init (
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         ng_FieldSolver = ng_alloc_EB;
         ng_FieldSolverF = ng_alloc_EB;
+        ng_FieldSolverG = ng_alloc_EB;
     } else {
         ng_FieldSolver = IntVect(AMREX_D_DECL(1, 1, 1));
         ng_FieldSolverF = IntVect(AMREX_D_DECL(1, 1, 1));
+        ng_FieldSolverG = IntVect(AMREX_D_DECL(1, 1, 1));
     }
 
     if (safe_guard_cells){
@@ -188,6 +195,7 @@ guardCellManager::Init (
         // call of FillBoundary
         ng_FieldSolver = ng_alloc_EB;
         ng_FieldSolverF = ng_alloc_F;
+        ng_FieldSolverG = ng_alloc_G;
         ng_FieldGather = ng_alloc_EB;
         ng_UpdateAux = ng_alloc_EB;
         if (do_moving_window){
@@ -217,6 +225,7 @@ guardCellManager::Init (
         ng_FieldGather = ng_FieldGather.min(ng_alloc_EB);
         ng_UpdateAux = ng_UpdateAux.min(ng_alloc_EB);
         ng_FieldSolverF = ng_FieldSolverF.min(ng_alloc_F);
+        ng_FieldSolverG = ng_FieldSolverG.min(ng_alloc_G);
         // Only FillBoundary(ng_FieldGather) is called between consecutive
         // field solves. So ng_FieldGather must have enough cells
         // for the field solve too.

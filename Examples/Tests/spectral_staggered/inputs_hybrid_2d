@@ -15,9 +15,8 @@ algo.charge_deposition = standard
 algo.field_gathering = momentum-conserving
 algo.particle_pusher = vay
 
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+# Order of particle shape factors
+algo.particle_shape = 3
 
 warpx.cfl = 1.
 

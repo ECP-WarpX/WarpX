@@ -38,10 +38,8 @@ algo.field_gathering = energy-conserving
 # CFL
 warpx.cfl = 1.0
 
-# interpolation
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # Moving window
 warpx.do_moving_window = 0

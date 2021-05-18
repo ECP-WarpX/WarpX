@@ -20,10 +20,8 @@ warpx.do_pml_divb_cleaning = 1
 warpx.use_filter = 1
 warpx.verbose = 1
 
-# Particle shape factors
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # PSATD algorithm
 algo.maxwell_solver = psatd

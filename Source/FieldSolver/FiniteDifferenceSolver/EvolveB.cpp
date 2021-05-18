@@ -25,6 +25,8 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::unique_ptr<amrex::MultiFab> const& Gfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     int lev, amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -37,21 +39,20 @@ void FiniteDifferenceSolver::EvolveB (
 #else
     if (m_do_nodal) {
 
-        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, lev, dt );
+        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, lev, dt );
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, lev, dt );
+        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
 
 #endif
     } else {
         amrex::Abort("EvolveB: Unknown algorithm");
     }
-
 }
 
 
@@ -61,9 +62,17 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::unique_ptr<amrex::MultiFab> const& Gfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     int lev, amrex::Real const dt ) {
 
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(face_areas);
+#endif
+
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+    Real constexpr c2 = PhysConst::c * PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -84,6 +93,12 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
 
+#ifdef AMREX_USE_EB
+        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+#endif
+
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
         int const n_coefs_x = m_stencil_coefs_x.size();
@@ -101,21 +116,56 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (Sx(i, j, k) <= 0) return;
+#endif
                 Bx(i, j, k) += dt * T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                              - dt * T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (Sy(i, j, k) <= 0) return;
+#endif
                 By(i, j, k) += dt * T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                              - dt * T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (Sz(i, j, k) <= 0) return;
+#endif
                 Bz(i, j, k) += dt * T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                              - dt * T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k);
             }
-
         );
+
+        // div(B) cleaning correction for errors in magnetic Gauss law (div(B) = 0)
+        if (Gfield)
+        {
+            // Extract field data for this grid/tile
+            Array4<Real> G = Gfield->array(mfi);
+
+            // Loop over cells and update G
+            amrex::ParallelFor(tbx, tby, tbz,
+
+                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                {
+                    Bx(i,j,k) += c2 * dt * T_Algo::DownwardDx(G, coefs_x, n_coefs_x, i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                {
+                    By(i,j,k) += c2 * dt * T_Algo::DownwardDy(G, coefs_y, n_coefs_y, i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                {
+                    Bz(i,j,k) += c2 * dt * T_Algo::DownwardDz(G, coefs_z, n_coefs_z, i, j, k);
+                }
+            );
+        }
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
