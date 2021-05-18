@@ -195,10 +195,10 @@ namespace detail
 }
 
 #ifdef WARPX_USE_OPENPMD
-WarpXOpenPMDPlot::WarpXOpenPMDPlot(bool oneFilePerTS,
+WarpXOpenPMDPlot::WarpXOpenPMDPlot(openPMD::IterationEncoding ie,
     std::string openPMDFileType, std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
-   m_OneFilePerTS(oneFilePerTS),
+   m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
@@ -232,7 +232,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   //
   // OpenPMD supports timestepped names
   //
-  if (m_OneFilePerTS)
+  if (m_Encoding == openPMD::IterationEncoding::fileBased)
       filename = filename.append("_%06T");
   filename.append(".").append(m_OpenPMDFileType);
   filepath.append(filename);
@@ -298,7 +298,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
-    if (m_OneFilePerTS)
+    //if (m_OneFilePerTS)
+    if (m_Encoding == openPMD::IterationEncoding::fileBased)
         m_Series = nullptr;
     else if (m_Series != nullptr)
         return;
@@ -320,12 +321,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         m_MPIRank = 1;
     }
 
-    if ( m_OpenPMDFileType.compare("bp") == 0 )
-#if OPENPMDAPI_VERSION_GE(0, 14, 0)
-        m_Series->setIterationEncoding( openPMD::IterationEncoding::variableBased );
-#else
-        m_Series->setIterationEncoding( openPMD::IterationEncoding::groupBased );
-#endif
+    m_Series->setIterationEncoding( m_Encoding );
 
     // input file / simulation setup author
     if( WarpX::authors.size() > 0u )
