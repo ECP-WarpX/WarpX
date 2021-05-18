@@ -10,21 +10,35 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
-#include "Parser/WarpXParserWrapper.H"
-#include "Utils/WarpXConst.H"
 #include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
-#include "Particles/Resampling/Resampling.H"
-
+// _______________________________________________WarpX Forward declarations
+#include "MultiParticleContainer.def"
 #ifdef WARPX_QED
-#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.def"
+#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.def"
 #endif
+// ________________________________________________________________________
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
+#include <AMReX_Array.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_INT.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_REAL.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Vector.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_RealBox.H>
 
 #include <memory>
+#include <array>
+#include <iosfwd>
+#include <map>
+#include <string>
+#include <utility>
 
 enum struct ParticleBC { none=0, absorbing };
 
@@ -103,9 +117,6 @@ public:
         return GetStructOfArrays().GetIntData(comp);
     }
 };
-
-// Forward-declaration needed by WarpXParticleContainer below
-class MultiParticleContainer;
 
 /**
  * WarpXParticleContainer is the base polymorphic class from which all concrete

@@ -14,6 +14,17 @@
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
+
+#include <cmath>
+
 struct IonizationFilterFunc
 {
     const amrex::Real* AMREX_RESTRICT m_ionization_energies;

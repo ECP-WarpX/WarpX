@@ -10,13 +10,19 @@
 #define WARPX_LaserParticleContainer_H_
 
 #include "Laser/LaserProfiles.H"
-
+#include "Evolve/WarpXDtType.H"
 #include "WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
-#include "Parser/WarpXParser.H"
+
+#include <AMReX_Extension.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+#include <AMReX_AmrCore.H>
+#include <AMReX_MultiFab.H>
 
 #include <memory>
 #include <limits>
+#include <string>
 
 /**
  * The main method to inject a laser pulse in WarpX is to use an artificial

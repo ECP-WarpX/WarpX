@@ -9,7 +9,21 @@
 #define WARPX_RigidInjectedParticleContainer_H_
 
 #include "PhysicalParticleContainer.H"
+#include "Evolve/WarpXDtType.H"
+#include "Particles/Gather/ScaleFields.H"
+// _______________________________________________WarpX Forward declarations
+#include "WarpXParticleContainer.def"
+// ________________________________________________________________________
+
 #include <AMReX_Vector.H>
+#include <AMReX_REAL.H>
+#include <AMReX_AmrCore.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+
+#include <iosfwd>
+#include <string>
 
 /**
  * When injecting a particle beam (typically for a plasma wakefield

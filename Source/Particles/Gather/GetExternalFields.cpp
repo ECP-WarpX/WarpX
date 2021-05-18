@@ -1,7 +1,13 @@
 #include "Particles/Gather/GetExternalFields.H"
 
 #include "WarpX.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "Particles/MultiParticleContainer.H"
+
+#include <AMReX_Vector.H>
+
+#include <string>
+
 
 GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) noexcept
 {

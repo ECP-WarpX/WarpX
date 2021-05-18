@@ -7,9 +7,15 @@
 #ifndef WARPX_PARTICLES_COLLISION_PAIRWISECOULOMBCOLLISION_H_
 #define WARPX_PARTICLES_COLLISION_PAIRWISECOULOMBCOLLISION_H_
 
-#include "Particles/MultiParticleContainer.H"
 #include "CollisionBase.H"
-#include <AMReX_ParmParse.H>
+// _______________________________________________WarpX Forward declarations
+#include "Particles/MultiParticleContainer.def"
+#include "Particles/WarpXParticleContainer.def"
+// ______________________________________________
+
+#include <AMReX_REAL.H>
+
+#include <string>
 
 class PairWiseCoulombCollision
     : public CollisionBase

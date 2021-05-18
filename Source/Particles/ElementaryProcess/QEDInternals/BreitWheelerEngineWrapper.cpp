@@ -6,18 +6,23 @@
  */
 #include "BreitWheelerEngineWrapper.H"
 
-#include <picsar_qed/utils/serialization.hpp>
-
 //Functions needed to generate a new table
 #ifdef WARPX_QED_TABLE_GEN
 #   include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables_generator.hpp>
 #endif
 
-#include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_GpuDevice.H>
 
-#include <utility>
+#include <picsar_qed/utils/serialization.hpp>
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+
 #include <vector>
 #include <cstdint>
+#include <algorithm>
+#include <cmath>
+#include <initializer_list>
+#include <iosfwd>
 
 using namespace std;
 using namespace amrex;

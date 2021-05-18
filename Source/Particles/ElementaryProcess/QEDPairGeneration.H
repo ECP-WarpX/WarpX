@@ -8,12 +8,20 @@
 #ifndef QED_PAIR_GENERATION_H_
 #define QED_PAIR_GENERATION_H_
 
-#include "Utils/WarpXConst.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "QEDInternals/BreitWheelerEngineWrapper.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_REAL.H>
+
 
 /** @file
  *

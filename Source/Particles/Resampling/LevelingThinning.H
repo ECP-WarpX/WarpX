@@ -8,6 +8,12 @@
 #define WARPX_LEVELING_THINNING_H_
 
 #include "Resampling.H"
+// _______________________________________________WarpX Forward declarations
+#include "Particles/WarpXParticleContainer.def"
+// ________________________________________________________________________
+
+#include <AMReX_REAL.H>
+#include <string>
 
 /**
  * \brief This class implements the leveling thinning algorithm as defined in Muraviev, A., et al.

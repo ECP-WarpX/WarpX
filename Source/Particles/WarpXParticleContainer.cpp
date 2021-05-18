@@ -7,7 +7,6 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "MultiParticleContainer.H"
 #include "WarpXParticleContainer.H"
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -17,12 +16,48 @@
 #include "Pusher/UpdatePosition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Deposition/ChargeDeposition.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_AmrParGDB.H>
 #include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParGDB.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParallelReduce.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particle.H>
+#include <AMReX_ParticleContainerBase.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_ParticleTransformation.H>
+#include <AMReX_ParticleUtil.H>
+#include <AMReX_TinyProfiler.H>
+#include <AMReX_Utility.H>
 
-#include <limits>
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
 
+#include <cmath>
+#include <algorithm>
 
 using namespace amrex;
 

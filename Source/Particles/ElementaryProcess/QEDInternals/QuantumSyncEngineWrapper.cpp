@@ -6,16 +6,22 @@
  */
 #include "QuantumSyncEngineWrapper.H"
 
+#include <AMReX_BLassert.H>
+#include <AMReX_GpuDevice.H>
+
 //Functions needed to generate a new table
 #ifdef WARPX_QED_TABLE_GEN
 #   include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables_generator.hpp>
 #endif
+#include "picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp"
+#include "picsar_qed/utils/serialization.hpp"
 
-#include <AMReX.H>
-
-#include <utility>
 #include <vector>
 #include <cstdint>
+#include <algorithm>
+#include <cmath>
+#include <initializer_list>
+#include <iosfwd>
 
 using namespace std;
 using namespace amrex;

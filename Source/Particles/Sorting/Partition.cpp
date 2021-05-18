@@ -7,9 +7,18 @@
 #include "SortingUtils.H"
 #include "Particles/PhysicalParticleContainer.H"
 #include "WarpX.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_Particles.H>
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_REAL.H>
+#include <AMReX_StructOfArrays.H>
 
+#include <utility>
 
 using namespace amrex;
 

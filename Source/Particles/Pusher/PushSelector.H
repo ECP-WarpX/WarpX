@@ -7,6 +7,7 @@
 #ifndef WARPX_PARTICLES_PUSHER_PUSHSELECTOR_H_
 #define WARPX_PARTICLES_PUSHER_PUSHSELECTOR_H_
 
+#include "Utils/WarpXAlgorithmSelection.H"
 // Import low-level single-particle kernels
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/Pusher/UpdateMomentumBoris.H"

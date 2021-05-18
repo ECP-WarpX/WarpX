@@ -16,8 +16,23 @@
 #include "BoundaryConditions/PML.H"
 
 #include <AMReX.H>
-#include <AMReX_BLProfiler.H>
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_Particles.H>
+#include <AMReX_StructOfArrays.H>
 
+#include <cstdlib>
+#include <array>
 
 namespace
 {
