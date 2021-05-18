@@ -975,7 +975,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
     static int rrfac = 1;
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
-    if (WarpX::refine_plasma and nlevs == 2)
+    if (WarpX::refine_plasma && nlevs == 2)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
@@ -1145,9 +1145,9 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
 
-        int* pi = nullptr;
+        int* p_ion_level = nullptr;
         if (do_field_ionization) {
-            pi = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
+            p_ion_level = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
         }
 
 #ifdef WARPX_QED
@@ -1269,7 +1269,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
                 dens = amrex::min(dens, density_max);
 
                 if (loc_do_field_ionization) {
-                    pi[ip] = loc_ionization_initial_level;
+                    p_ion_level[ip] = loc_ionization_initial_level;
                 }
 
 #ifdef WARPX_QED
