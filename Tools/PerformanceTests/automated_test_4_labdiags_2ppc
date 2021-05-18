@@ -16,9 +16,7 @@ geometry.prob_hi     =  150.e-6    150.e-6    0.
 warpx.verbose = 1
 
 # Numerics
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+algo.particle_shape = 3
 warpx.use_filter = 1
 warpx.cfl = 1.0
 warpx.do_pml = 0

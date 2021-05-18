@@ -24,9 +24,9 @@ warpx.cfl = .99
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1. # in units of the speed of light
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

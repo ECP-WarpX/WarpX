@@ -143,8 +143,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     if (part_pos_s == "python") {
         return;
     } else if (part_pos_s == "singleparticle") {
-        pp_species_name.getarr("single_particle_pos", single_particle_pos, 0, 3);
-        pp_species_name.getarr("single_particle_vel", single_particle_vel, 0, 3);
+        getArrWithParser(pp_species_name, "single_particle_pos", single_particle_pos, 0, 3);
+        getArrWithParser(pp_species_name, "single_particle_vel", single_particle_vel, 0, 3);
         for (auto& x : single_particle_vel) {
             x *= PhysConst::c;
         }
@@ -152,13 +152,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         add_single_particle = true;
         return;
     } else if (part_pos_s == "multipleparticles") {
-        pp_species_name.getarr("multiple_particles_pos_x", multiple_particles_pos_x);
-        pp_species_name.getarr("multiple_particles_pos_y", multiple_particles_pos_y);
-        pp_species_name.getarr("multiple_particles_pos_z", multiple_particles_pos_z);
-        pp_species_name.getarr("multiple_particles_vel_x", multiple_particles_vel_x);
-        pp_species_name.getarr("multiple_particles_vel_y", multiple_particles_vel_y);
-        pp_species_name.getarr("multiple_particles_vel_z", multiple_particles_vel_z);
-        pp_species_name.getarr("multiple_particles_weight", multiple_particles_weight);
+        getArrWithParser(pp_species_name, "multiple_particles_pos_x", multiple_particles_pos_x);
+        getArrWithParser(pp_species_name, "multiple_particles_pos_y", multiple_particles_pos_y);
+        getArrWithParser(pp_species_name, "multiple_particles_pos_z", multiple_particles_pos_z);
+        getArrWithParser(pp_species_name, "multiple_particles_vel_x", multiple_particles_vel_x);
+        getArrWithParser(pp_species_name, "multiple_particles_vel_y", multiple_particles_vel_y);
+        getArrWithParser(pp_species_name, "multiple_particles_vel_z", multiple_particles_vel_z);
+        getArrWithParser(pp_species_name, "multiple_particles_weight", multiple_particles_weight);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&

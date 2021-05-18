@@ -340,12 +340,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
-        pp_warpx.getarr("B_external_grid", B_external_grid);
+        getArrWithParser(pp_warpx, "B_external_grid", B_external_grid);
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (E_ext_grid_s == "constant")
-        pp_warpx.getarr("E_external_grid", E_external_grid);
+        getArrWithParser(pp_warpx, "E_external_grid", E_external_grid);
 
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
@@ -499,12 +499,20 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         F_fp[lev]->setVal(0.0);
     }
 
+    if (G_fp[lev]) {
+        G_fp[lev]->setVal(0.0);
+    }
+
     if (rho_fp[lev]) {
         rho_fp[lev]->setVal(0.0);
     }
 
     if (F_cp[lev]) {
         F_cp[lev]->setVal(0.0);
+    }
+
+    if (G_cp[lev]) {
+        G_cp[lev]->setVal(0.0);
     }
 
     if (rho_cp[lev]) {

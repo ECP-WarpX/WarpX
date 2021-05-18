@@ -11,6 +11,7 @@
 #include "BoundaryConditions/WarpX_PML_kernels.H"
 #include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
+#include "WarpXPushFieldsEM_K.H"
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -161,8 +162,18 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
         PushPSATDSinglePatch( lev, *spectral_solver_cp[lev],
              Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
     }
-    if (use_damp_fields_in_z_guard) {
-        DampFieldsInGuards( Efield_fp[lev], Bfield_fp[lev] );
+
+    // Damp the fields in the guard cells along z
+    constexpr int zdir = AMREX_SPACEDIM - 1;
+    if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped &&
+        WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped)
+    {
+        DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
+
+        if (WarpX::fft_do_time_averaging)
+        {
+            DampFieldsInGuards(Efield_avg_fp[lev], Bfield_avg_fp[lev]);
+        }
     }
 #endif
 }
@@ -192,9 +203,11 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], m_face_areas[lev], lev, a_dt );
+        m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], G_fp[lev],
+                                        m_face_areas[lev], lev, a_dt);
     } else {
-        m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], m_face_areas[lev], lev, a_dt );
+        m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], G_cp[lev],
+                                        m_face_areas[lev], lev, a_dt);
     }
 
     // Evolve B field in PML cells
@@ -318,7 +331,50 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
                 pml[lev]->GetF_cp(), pml[lev]->GetE_cp(), a_dt );
         }
     }
+}
 
+void
+WarpX::EvolveG (amrex::Real a_dt, DtType a_dt_type)
+{
+    if (!do_divb_cleaning) return;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        EvolveG(lev, a_dt, a_dt_type);
+    }
+}
+
+void
+WarpX::EvolveG (int lev, amrex::Real a_dt, DtType a_dt_type)
+{
+    if (!do_divb_cleaning) return;
+
+    EvolveG(lev, PatchType::fine, a_dt, a_dt_type);
+
+    if (lev > 0)
+    {
+        EvolveG(lev, PatchType::coarse, a_dt, a_dt_type);
+    }
+}
+
+void
+WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt, DtType /*a_dt_type*/)
+{
+    if (!do_divb_cleaning) return;
+
+    WARPX_PROFILE("WarpX::EvolveG()");
+
+    // Evolve G field in regular cells
+    if (patch_type == PatchType::fine)
+    {
+        m_fdtd_solver_fp[lev]->EvolveG(G_fp[lev], Bfield_fp[lev], a_dt);
+    }
+    else // coarse patch
+    {
+        m_fdtd_solver_cp[lev]->EvolveG(G_cp[lev], Bfield_cp[lev], a_dt);
+    }
+
+    // TODO Evolution in PML cells will go here
 }
 
 void
@@ -374,7 +430,6 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 
     for ( amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
-
         amrex::Array4<amrex::Real> const& Ex_arr = Efield[0]->array(mfi);
         amrex::Array4<amrex::Real> const& Ey_arr = Efield[1]->array(mfi);
         amrex::Array4<amrex::Real> const& Ez_arr = Efield[2]->array(mfi);
@@ -382,74 +437,72 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
         amrex::Array4<amrex::Real> const& By_arr = Bfield[1]->array(mfi);
         amrex::Array4<amrex::Real> const& Bz_arr = Bfield[2]->array(mfi);
 
-        // Get the tilebox from Efield so that it includes the guard cells.
-        amrex::Box tilebox = (*Efield[0])[mfi].box();
-        int const nz_tile = tilebox.bigEnd(zdir);
+        // Get the tileboxes from Efield and Bfield so that they include the guard cells
+        // and take the staggering of each MultiFab into account
+        amrex::Box tex = amrex::convert((*Efield[0])[mfi].box(), Efield[0]->ixType().toIntVect());
+        amrex::Box tey = amrex::convert((*Efield[1])[mfi].box(), Efield[1]->ixType().toIntVect());
+        amrex::Box tez = amrex::convert((*Efield[2])[mfi].box(), Efield[2]->ixType().toIntVect());
+        amrex::Box tbx = amrex::convert((*Bfield[0])[mfi].box(), Bfield[0]->ixType().toIntVect());
+        amrex::Box tby = amrex::convert((*Bfield[1])[mfi].box(), Bfield[1]->ixType().toIntVect());
+        amrex::Box tbz = amrex::convert((*Bfield[2])[mfi].box(), Bfield[2]->ixType().toIntVect());
+
+        // Get smallEnd of tileboxes
+        const int tex_smallEnd_z = tex.smallEnd(zdir);
+        const int tey_smallEnd_z = tey.smallEnd(zdir);
+        const int tez_smallEnd_z = tez.smallEnd(zdir);
+        const int tbx_smallEnd_z = tbx.smallEnd(zdir);
+        const int tby_smallEnd_z = tby.smallEnd(zdir);
+        const int tbz_smallEnd_z = tbz.smallEnd(zdir);
+
+        // Get bigEnd of tileboxes
+        const int tex_bigEnd_z = tex.bigEnd(zdir);
+        const int tey_bigEnd_z = tey.bigEnd(zdir);
+        const int tez_bigEnd_z = tez.bigEnd(zdir);
+        const int tbx_bigEnd_z = tbx.bigEnd(zdir);
+        const int tby_bigEnd_z = tby.bigEnd(zdir);
+        const int tbz_bigEnd_z = tbz.bigEnd(zdir);
 
         // Box for the whole simulation domain
         amrex::Box const& domain = Geom(0).Domain();
         int const nz_domain = domain.bigEnd(zdir);
 
-        if (tilebox.smallEnd(zdir) < 0) {
+        // Set the tileboxes so that they only cover the lower/upper half of the guard cells
+        constrain_tilebox_to_guards(tex, zdir, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
+        constrain_tilebox_to_guards(tey, zdir, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
+        constrain_tilebox_to_guards(tez, zdir, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
+        constrain_tilebox_to_guards(tbx, zdir, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
+        constrain_tilebox_to_guards(tby, zdir, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
+        constrain_tilebox_to_guards(tbz, zdir, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
 
-            // Apply damping factor in guards cells below the lower end of the domain
-            int const nz_guard = -tilebox.smallEnd(zdir);
-
-            // Set so the box only covers the lower half of the guard cells
-            tilebox.setBig(zdir, -nz_guard/2-1);
-
-            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
-            [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+        amrex::ParallelFor(
+            tex, Efield[0]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-#if (AMREX_SPACEDIM == 3)
-                amrex::Real zcell = static_cast<amrex::Real>(k + nz_guard);
-#else
-                amrex::Real zcell = static_cast<amrex::Real>(j + nz_guard);
-#endif
-                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
-                const amrex::Real sin_phase = std::sin(phase);
-                const amrex::Real damp_factor = sin_phase*sin_phase;
-
-                Ex_arr(i,j,k,icomp) *= damp_factor;
-                Ey_arr(i,j,k,icomp) *= damp_factor;
-                Ez_arr(i,j,k,icomp) *= damp_factor;
-                Bx_arr(i,j,k,icomp) *= damp_factor;
-                By_arr(i,j,k,icomp) *= damp_factor;
-                Bz_arr(i,j,k,icomp) *= damp_factor;
-
-            });
-
-        }
-        else if (nz_tile > nz_domain) {
-
-            // Apply damping factor in guards cells above the upper end of the domain
-            int nz_guard = nz_tile - nz_domain;
-
-            // Set so the box only covers the upper half of the guard cells
-            tilebox.setSmall(zdir, nz_domain + nz_guard/2 + 1);
-
-            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
-            [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+                damp_field_in_guards(Ex_arr, i, j, k, icomp, zdir, nz_domain, tex_smallEnd_z, tex_bigEnd_z);
+            },
+            tey, Efield[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
-#if (AMREX_SPACEDIM == 3)
-                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - k);
-#else
-                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - j);
-#endif
-                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
-                const amrex::Real sin_phase = std::sin(phase);
-                const amrex::Real damp_factor = sin_phase*sin_phase;
+                damp_field_in_guards(Ey_arr, i, j, k, icomp, zdir, nz_domain, tey_smallEnd_z, tey_bigEnd_z);
+            },
+            tez, Efield[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+                damp_field_in_guards(Ez_arr, i, j, k, icomp, zdir, nz_domain, tez_smallEnd_z, tez_bigEnd_z);
+            }
+        );
 
-                Ex_arr(i,j,k,icomp) *= damp_factor;
-                Ey_arr(i,j,k,icomp) *= damp_factor;
-                Ez_arr(i,j,k,icomp) *= damp_factor;
-                Bx_arr(i,j,k,icomp) *= damp_factor;
-                By_arr(i,j,k,icomp) *= damp_factor;
-                Bz_arr(i,j,k,icomp) *= damp_factor;
-
-            });
-
-        }
+        amrex::ParallelFor(
+            tbx, Bfield[0]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+                damp_field_in_guards(Bx_arr, i, j, k, icomp, zdir, nz_domain, tbx_smallEnd_z, tbx_bigEnd_z);
+            },
+            tby, Bfield[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+                damp_field_in_guards(By_arr, i, j, k, icomp, zdir, nz_domain, tby_smallEnd_z, tby_bigEnd_z);
+            },
+            tbz, Bfield[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+                damp_field_in_guards(Bz_arr, i, j, k, icomp, zdir, nz_domain, tbz_smallEnd_z, tbz_bigEnd_z);
+            }
+        );
     }
 }
 

@@ -2298,11 +2298,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        dt);
 
 #ifdef WARPX_QED
-    if (local_has_quantum_sync) {
-        evolve_opt(ux[ip], uy[ip], uz[ip],
-                   Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                   dt, p_optical_depth_QSR[ip]);
-    }
+        if (local_has_quantum_sync) {
+            evolve_opt(ux[ip], uy[ip], uz[ip],
+                       Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                       dt, p_optical_depth_QSR[ip]);
+        }
 #endif
 
     });

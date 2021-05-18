@@ -457,6 +457,15 @@ WarpX::FillBoundaryF (IntVect ng)
 }
 
 void
+WarpX::FillBoundaryG (IntVect ng)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        FillBoundaryG(lev, ng);
+    }
+}
+
+void
 WarpX::FillBoundaryB_avg (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
@@ -702,7 +711,6 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
     }
 }
 
-
 void
 WarpX::FillBoundaryF (int lev, IntVect ng)
 {
@@ -749,6 +757,56 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
                 ng <= F_cp[lev]->nGrowVect(),
                 "Error: in FillBoundaryF, requested more guard cells than allocated");
             F_cp[lev]->FillBoundary(ng, cperiod);
+        }
+    }
+}
+
+void WarpX::FillBoundaryG (int lev, IntVect ng)
+{
+    FillBoundaryG(lev, PatchType::fine, ng);
+
+    if (lev > 0)
+    {
+        FillBoundaryG(lev, PatchType::coarse, ng);
+    }
+}
+
+void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
+{
+    if (patch_type == PatchType::fine && G_fp[lev])
+    {
+        // TODO Exchange in PML cells will go here
+
+        const auto& period = Geom(lev).periodicity();
+
+        if (safe_guard_cells)
+        {
+            G_fp[lev]->FillBoundary(period);
+        }
+        else
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ng <= G_fp[lev]->nGrowVect(),
+                "Error: in FillBoundaryG, requested more guard cells than allocated");
+
+            G_fp[lev]->FillBoundary(ng, period);
+        }
+    }
+    else if (patch_type == PatchType::coarse && G_cp[lev])
+    {
+        // TODO Exchange in PML cells will go here
+
+        const auto& cperiod = Geom(lev-1).periodicity();
+
+        if (safe_guard_cells)
+        {
+            G_cp[lev]->FillBoundary(cperiod);
+        }
+        else
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ng <= G_cp[lev]->nGrowVect(),
+                "Error: in FillBoundaryG, requested more guard cells than allocated");
+
+            G_cp[lev]->FillBoundary(ng, cperiod);
         }
     }
 }

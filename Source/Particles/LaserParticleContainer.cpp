@@ -46,9 +46,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     std::transform(laser_type_s.begin(), laser_type_s.end(), laser_type_s.begin(), ::tolower);
 
     // Parse the properties of the antenna
-    pp_laser_name.getarr("position", m_position);
-    pp_laser_name.getarr("direction", m_nvec);
-    pp_laser_name.getarr("polarization", m_p_X);
+    getArrWithParser(pp_laser_name, "position", m_position);
+    getArrWithParser(pp_laser_name, "direction", m_nvec);
+    getArrWithParser(pp_laser_name, "polarization", m_p_X);
 
     pp_laser_name.query("pusher_algo", m_pusher_algo);
     getWithParser(pp_laser_name, "wavelength", m_wavelength);
@@ -127,10 +127,10 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     m_laser_injection_box= Geom(0).ProbDomain();
     {
         Vector<Real> lo, hi;
-        if (pp_laser_name.queryarr("prob_lo", lo)) {
+        if (queryArrWithParser(pp_laser_name, "prob_lo", lo, 0, AMREX_SPACEDIM)) {
             m_laser_injection_box.setLo(lo);
         }
-        if (pp_laser_name.queryarr("prob_hi", hi)) {
+        if (queryArrWithParser(pp_laser_name, "prob_hi", hi, 0, AMREX_SPACEDIM)) {
             m_laser_injection_box.setHi(hi);
         }
     }
