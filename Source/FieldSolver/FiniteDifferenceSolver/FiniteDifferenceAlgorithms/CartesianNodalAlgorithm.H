@@ -56,7 +56,7 @@ struct CartesianNodalAlgorithm {
     }
 
     /**
-     * Returns maximum number of guard cells required by the field-solve
+     * \brief Returns maximum number of guard cells required by the field-solve
      */
     static amrex::IntVect GetMaxGuardCell () {
         // The nodal solver requires one guard cell in each dimension
