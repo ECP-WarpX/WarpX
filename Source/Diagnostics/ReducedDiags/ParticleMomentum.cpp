@@ -12,9 +12,11 @@
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
 
-#include <iostream>
 #include <cmath>
 #include <limits>
+#include <vector>
+#include <ostream>
+#include <string>
 
 using namespace amrex;
 
