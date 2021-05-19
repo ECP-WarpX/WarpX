@@ -68,7 +68,7 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP NP EF MF MR FR_Max FR_Min FR_Integral
+warpx.reduced_diags_names = EP NP EF PP PF MF MR FR_Max FR_Min FR_Integral
 EP.type = ParticleEnergy
 EP.intervals = 200
 EF.type = FieldEnergy
