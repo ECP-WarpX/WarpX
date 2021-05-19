@@ -27,10 +27,9 @@ algo.current_deposition = direct
 algo.particle_pusher = vay
 
 warpx.cfl = 4.
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############
@@ -78,5 +77,5 @@ ions.uz_th = 1e-4
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 100
+diag1.intervals = 400
 diag1.diag_type = Full

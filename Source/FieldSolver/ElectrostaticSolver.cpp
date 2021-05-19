@@ -7,7 +7,11 @@
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_MLMG.H>
+#ifdef WARPX_DIM_RZ
+#include <AMReX_MLNodeLaplacian.H>
+#else
 #include <AMReX_MLNodeTensorLaplacian.H>
+#endif
 #include <AMReX_REAL.H>
 
 #include <WarpX.H>
@@ -54,7 +58,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
 
 #ifdef WARPX_DIM_RZ
-    amrex::Abort("The initialization of space-charge field has not yet been implemented in RZ geometry.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                     "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
     // Allocate fields for charge and potential
@@ -96,7 +101,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 {
 
 #ifdef WARPX_DIM_RZ
-    amrex::Abort("The calculation of space-charge field has not yet been implemented in RZ geometry.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                     "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
     // Allocate fields for charge
@@ -124,6 +130,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyFilterandSumBoundaryRho (lev, lev, *rho[lev], 0, 1);
     }
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+    }
+#endif
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
@@ -142,11 +153,6 @@ WarpX::AddSpaceChargeFieldLabFrame ()
    a source, assuming that the source moves at a constant speed \f$\vec{\beta}\f$.
    This uses the amrex solver.
 
-   More specifically, this solves the equation
-   \f[
-       \vec{\nabla}^2\phi - (\vec{\beta}\cdot\vec{\nabla})^2\phi = -\frac{\rho}{\epsilon_0}
-   \f]
-
    \param[in] rho The charge density a given species
    \param[out] phi The potential to be computed by this function
    \param[in] beta Represents the velocity of the source of `phi`
@@ -158,23 +164,215 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    Real const required_precision,
                    int const max_iters) const
 {
-    // Define the boundary conditions
-    Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
-    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
-        if ( Geom(0).isPeriodic(idim) ) {
-            lobc[idim] = LinOpBCType::Periodic;
-            hibc[idim] = LinOpBCType::Periodic;
-        } else {
-            // Use Dirichlet boundary condition by default.
-            // Ideally, we would often want open boundary conditions here.
-            lobc[idim] = LinOpBCType::Dirichlet;
-            hibc[idim] = LinOpBCType::Dirichlet;
+#ifdef WARPX_DIM_RZ
+    computePhiRZ( rho, phi, beta, required_precision, max_iters );
+#else
+    computePhiCartesian( rho, phi, beta, required_precision, max_iters );
+#endif
+
+}
+
+#ifdef WARPX_DIM_RZ
+/* Compute the potential `phi` in cylindrical geometry by solving the Poisson equation
+   with `rho` as a source, assuming that the source moves at a constant
+   speed \f$\vec{\beta}\f$.
+   This uses the amrex solver.
+
+   More specifically, this solves the equation
+   \f[
+       \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
+   \f]
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+   \param[in] beta Represents the velocity of the source of `phi`
+*/
+void
+WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                   amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<Real, 3> const beta,
+                   Real const required_precision,
+                   int const max_iters) const
+{
+    // Create a new geometry with the z coordinate scaled by gamma
+    amrex::Real const gamma = std::sqrt(1._rt/(1. - beta[2]*beta[2]));
+
+    amrex::Vector<amrex::Geometry> geom_scaled(max_level + 1);
+    for (int lev = 0; lev <= max_level; ++lev) {
+        const amrex::Geometry & geom_lev = Geom(lev);
+        const amrex::Real* current_lo = geom_lev.ProbLo();
+        const amrex::Real* current_hi = geom_lev.ProbHi();
+        amrex::Real scaled_lo[AMREX_SPACEDIM];
+        amrex::Real scaled_hi[AMREX_SPACEDIM];
+        scaled_lo[0] = current_lo[0];
+        scaled_hi[0] = current_hi[0];
+        scaled_lo[1] = current_lo[1]*gamma;
+        scaled_hi[1] = current_hi[1]*gamma;
+        amrex::RealBox rb = RealBox(scaled_lo, scaled_hi);
+        geom_scaled[lev].define(geom_lev.Domain(), &rb);
+    }
+
+    // Setup the sigma = radius
+    // sigma must be cell centered
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > sigma(max_level+1);
+    for (int lev = 0; lev <= max_level; ++lev) {
+        const amrex::Real * problo = geom_scaled[lev].ProbLo();
+        const amrex::Real * dx = geom_scaled[lev].CellSize();
+        const amrex::Real rmin = problo[0];
+        const amrex::Real dr = dx[0];
+
+        amrex::BoxArray nba = boxArray(lev);
+        nba.enclosedCells(); // Get cell centered array (correct?)
+        sigma[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 0);
+        for ( MFIter mfi(*sigma[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            const amrex::Box& tbx = mfi.tilebox();
+            const amrex::Dim3 lo = amrex::lbound(tbx);
+            const int irmin = lo.x;
+            Array4<amrex::Real> const& sigma_arr = sigma[lev]->array(mfi);
+            amrex::ParallelFor( tbx,
+                [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/) {
+                    sigma_arr(i,j,0) = rmin + (i - irmin + 0.5_rt)*dr;
+                }
+            );
+        }
+
+        // Also, multiply rho by radius (rho is node centered)
+        // Note that this multiplication is not undone since rho is
+        // a temporary array.
+        for ( MFIter mfi(*rho[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            const amrex::Box& tbx = mfi.tilebox();
+            const amrex::Dim3 lo = amrex::lbound(tbx);
+            const int irmin = lo.x;
+            int const ncomp = rho[lev]->nComp(); // This should be 1!
+            Array4<Real> const& rho_arr = rho[lev]->array(mfi);
+            amrex::ParallelFor(tbx, ncomp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
+            {
+                amrex::Real r = rmin + (i - irmin)*dr;
+                if (r == 0.) {
+                    // dr/3 is used to be consistent with the finite volume formulism
+                    // that is used to solve Poisson's equation
+                    rho_arr(i,j,0,icomp) *= dr/3._rt;
+                } else {
+                    rho_arr(i,j,0,icomp) *= r;
+                }
+            });
         }
     }
 
+    // Define the boundary conditions
+    Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
+    lobc[0] = LinOpBCType::Neumann;
+    hibc[0] = LinOpBCType::Dirichlet;
+    std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
+    dirichlet_flag[0] = false;
+    Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
+    if ( WarpX::field_boundary_lo[1] == FieldBoundaryType::Periodic
+         && WarpX::field_boundary_hi[1] == FieldBoundaryType::Periodic ) {
+        lobc[1] = LinOpBCType::Periodic;
+        hibc[1] = LinOpBCType::Periodic;
+        dirichlet_flag[1] = false;
+    } else if ( WarpX::field_boundary_lo[1] == FieldBoundaryType::PEC
+         && WarpX::field_boundary_hi[1] == FieldBoundaryType::PEC ) {
+        // Use Dirichlet boundary condition by default.
+        // Ideally, we would often want open boundary conditions here.
+        lobc[1] = LinOpBCType::Dirichlet;
+        hibc[1] = LinOpBCType::Dirichlet;
+
+        // set flag so we know which dimensions to fix the potential for
+        dirichlet_flag[1] = true;
+        // parse the input file for the potential at the current time
+        getPhiBC(1, phi_bc_values_lo[1], phi_bc_values_hi[1]);
+    }
+    else {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            "Field boundary conditions have to be either periodic or PEC "
+            "when using the electrostatic solver"
+        );
+    }
+
+    // set the boundary potential values if needed
+    setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
+
+    // Define the linear operator (Poisson operator)
+    MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
+    for (int lev = 0; lev <= max_level; ++lev) {
+        linop.setSigma( lev, *sigma[lev] );
+    }
+
+    for (int lev=0; lev < rho.size(); lev++){
+        rho[lev]->mult(-1._rt/PhysConst::ep0);
+    }
+
+    // Solve the Poisson equation
+    linop.setDomainBC( lobc, hibc );
+    MLMG mlmg(linop);
+    mlmg.setVerbose(2);
+    mlmg.setMaxIter(max_iters);
+    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+}
+
+#else
+
+/* Compute the potential `phi` in Cartesian geometry by solving the Poisson equation
+   with `rho` as a source, assuming that the source moves at a constant
+   speed \f$\vec{\beta}\f$.
+   This uses the amrex solver.
+
+   More specifically, this solves the equation
+   \f[
+       \vec{\nabla}^2\phi - (\vec{\beta}\cdot\vec{\nabla})^2\phi = -\frac{\rho}{\epsilon_0}
+   \f]
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+   \param[in] beta Represents the velocity of the source of `phi`
+*/
+void
+WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                            amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                            std::array<Real, 3> const beta,
+                            Real const required_precision,
+                            int const max_iters) const
+{
+
+    // Define the boundary conditions
+    Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
+    std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
+    Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
+    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
+             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
+            lobc[idim] = LinOpBCType::Periodic;
+            hibc[idim] = LinOpBCType::Periodic;
+            dirichlet_flag[idim] = false;
+        } else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
+             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
+            // Ideally, we would often want open boundary conditions here.
+            lobc[idim] = LinOpBCType::Dirichlet;
+            hibc[idim] = LinOpBCType::Dirichlet;
+
+            // set flag so we know which dimensions to fix the potential for
+            dirichlet_flag[idim] = true;
+            // parse the input file for the potential at the current time
+            getPhiBC(idim, phi_bc_values_lo[idim], phi_bc_values_hi[idim]);
+        }
+        else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "Field boundary conditions have to be either periodic or PEC "
+                "when using the electrostatic solver"
+            );
+        }
+    }
+
+    // set the boundary potential values if needed
+    setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
+
     // Define the linear operator (Poisson operator)
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
-    linop.setDomainBC( lobc, hibc );
+
     // Set the value of beta
     amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if (AMREX_SPACEDIM==2)
@@ -185,15 +383,144 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     linop.setBeta( beta_solver );
 
     // Solve the Poisson equation
+    linop.setDomainBC( lobc, hibc );
+
+    for (int lev=0; lev < rho.size(); lev++){
+        rho[lev]->mult(-1._rt/PhysConst::ep0);
+    }
+
     MLMG mlmg(linop);
     mlmg.setVerbose(2);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+}
+#endif
 
-    // Normalize by the correct physical constant
-    for (int lev=0; lev < rho.size(); lev++){
-        phi[lev]->mult(-1._rt/PhysConst::ep0);
+/* \bried Set Dirichlet boundary conditions for the electrostatic solver.
+
+    The given potential's values are fixed on the boundaries of the given
+    dimension according to the desired values from the simulation input file,
+    boundary.potential_lo and boundary.potential_hi.
+
+   \param[inout] phi The electrostatic potential
+   \param[in] idim The dimension for which the Dirichlet boundary condition is set
+*/
+void
+WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                 std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
+                 Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
+                 Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi ) const
+{
+    // check if any dimension has Dirichlet boundary conditions
+    bool has_Dirichlet = false;
+    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+        if (dirichlet_flag[idim]) {
+            has_Dirichlet = true;
+        }
     }
+    if (!has_Dirichlet) return;
+
+    // loop over all mesh refinement levels and set the boundary values
+    for (int lev=0; lev <= max_level; lev++) {
+
+        amrex::Box domain = Geom(lev).Domain();
+        domain.surroundingNodes();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            // Extract the potential
+            auto phi_arr = phi[lev]->array(mfi);
+            // Extract tileboxes for which to loop
+            const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
+
+            // loop over dimensions
+            for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+                // check if the boundary in this dimension should be set
+                if (!dirichlet_flag[idim]) continue;
+
+                // a check can be added below to test if the boundary values
+                // are already correct, in which case the ParallelFor over the
+                // cells can be skipped
+
+                if (!domain.strictly_contains(tb)) {
+                    amrex::ParallelFor( tb,
+                        [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+
+                            IntVect iv(AMREX_D_DECL(i,j,k));
+
+                            if (iv[idim] == domain.smallEnd(idim)){
+                                phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                            }
+                            if (iv[idim] == domain.bigEnd(idim)) {
+                                phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                            }
+
+                        } // loop ijk
+                    );
+                }
+            } // idim
+    }} // lev & MFIter
+}
+
+/* \bried Utility function to parse input file for boundary potentials.
+
+    The input values are parsed to allow math expressions for the potentials
+    that specify time dependence.
+
+   \param[in] idim The dimension for which the potential is queried
+   \param[inout] pot_lo The specified value of `phi` on the lower boundary.
+   \param[inout] pot_hi The specified value of `phi` on the upper boundary.
+*/
+void
+WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) const
+{
+    // set default potentials to zero in order for current tests to pass
+    // but forcing the user to specify a potential might be better
+    std::string potential_lo_str = "0";
+    std::string potential_hi_str = "0";
+
+    // Get the boundary potentials specified in the simulation input file
+    // first as strings and then parse those for possible math expressions
+    ParmParse pp_boundary("boundary");
+
+#ifdef WARPX_DIM_RZ
+    if (idim == 1) {
+        pp_boundary.query("potential_lo_z", potential_lo_str);
+        pp_boundary.query("potential_hi_z", potential_hi_str);
+    }
+    else {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            "Field boundary condition values can currently only be specified "
+            "for z when using RZ geometry."
+        );
+    }
+#else
+    if (idim == 0) {
+        pp_boundary.query("potential_lo_x", potential_lo_str);
+        pp_boundary.query("potential_hi_x", potential_hi_str);
+    }
+    else if (idim == 1){
+        if (AMREX_SPACEDIM == 2){
+            pp_boundary.query("potential_lo_z", potential_lo_str);
+            pp_boundary.query("potential_hi_z", potential_hi_str);
+        }
+        else {
+            pp_boundary.query("potential_lo_y", potential_lo_str);
+            pp_boundary.query("potential_hi_y", potential_hi_str);
+        }
+    }
+    else {
+        pp_boundary.query("potential_lo_z", potential_lo_str);
+        pp_boundary.query("potential_hi_z", potential_hi_str);
+    }
+#endif
+
+    auto parser_lo = makeParser(potential_lo_str, {"t"});
+    pot_lo = parser_lo.eval(gett_new(0));
+    auto parser_hi = makeParser(potential_hi_str, {"t"});
+    pot_hi = parser_hi.eval(gett_new(0));
 }
 
 /* \bried Compute the electric field that corresponds to `phi`, and

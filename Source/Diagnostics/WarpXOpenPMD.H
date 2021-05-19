@@ -106,13 +106,14 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep (int ts, const std::string& filePrefix);
+  void SetStep (int ts, const std::string& dirPrefix,
+                bool isBTD=false);
 
   /** Close the step
    *
    * Signal that no further updates will be written for the step.
    */
-  void CloseStep ();
+  void CloseStep (bool isBTD = false, bool isLastBTDFlush = false);
 
   void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
 
@@ -120,11 +121,13 @@ public:
               const std::vector<std::string>& varnames,
               const amrex::MultiFab& mf,
               const amrex::Geometry& geom,
-              const int iteration, const double time ) const;
+              const int iteration, const double time,
+              bool isBTD = false,
+              const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
 
 private:
-  void Init (openPMD::Access access, const std::string& filePrefix);
+  void Init (openPMD::Access access, bool isBTD);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
@@ -195,10 +198,25 @@ private:
             amrex::ParticleReal const charge,
             amrex::ParticleReal const mass) const;
 
-  // no need for ts in the name, openPMD  handles it
-  void GetFileName (std::string& filename);
+  /** Get the openPMD-api filename for openPMD::Series
+   *
+   * No need for ts in the file name, openPMD handles steps (iterations).
+   *
+   * @param[inout] filepath the path and filename for openPMD::Series
+   *               passes a prefix path in and appends the filename
+   * @return pure filename w/o path
+   */
+  std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
+
+  /** This is the output directory
+   *
+   * This usually does not yet end in a `/`.
+   * It does not yet include the file prefix of the openPMD series, which will
+   * be appended by the GetFileName function.
+   */
+  std::string m_dirPrefix;
 
   int m_MPIRank = 0;
   int m_MPISize = 1;

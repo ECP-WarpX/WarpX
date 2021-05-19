@@ -34,7 +34,10 @@ int main(int argc, char* argv[])
     rocfft_setup();
 #endif
 
+    ParseGeometryInput();
+
     ConvertLabParamsToBoost();
+    ReadBCParams();
 
 #ifdef WARPX_DIM_RZ
     CheckGriddingForRZSpectral();
@@ -51,13 +54,10 @@ int main(int argc, char* argv[])
 
         warpx.Evolve();
 
-        auto end_total = static_cast<Real>(amrex::second()) - strt_total;
-
-        ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
         if (warpx.Verbose()) {
+            auto end_total = static_cast<Real>(amrex::second()) - strt_total;
+            ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
             Print() << "Total Time                     : " << end_total << '\n';
-            Print() << "WarpX Version: " << WarpX::Version() << '\n';
-            Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
         }
     }
 

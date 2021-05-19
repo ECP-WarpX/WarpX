@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 0.20.5)
+project(WarpX VERSION 21.05)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -45,6 +45,7 @@ set_default_install_dirs()
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
+option(WarpX_GPUCLOCK      "Add GPU kernel timers (cost function)"      ON)
 option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
@@ -86,6 +87,10 @@ option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 # change the default build type to RelWithDebInfo (or Release) instead of Debug
 set_default_build_type("RelWithDebInfo")
 
+# Option to enable interprocedural optimization
+# (also know as "link-time optimization" or "whole program optimization")
+option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
+
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
@@ -108,21 +113,12 @@ include(${WarpX_SOURCE_DIR}/cmake/dependencies/PICSAR.cmake)
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
 # PSATD
+include(${WarpX_SOURCE_DIR}/cmake/dependencies/FFT.cmake)
 if(WarpX_PSATD)
-    # FFTW (non-GPU) and cuFFT (GPU)
-    if(NOT WarpX_COMPUTE STREQUAL CUDA)
-        find_package(PkgConfig REQUIRED QUIET)
-        if(WarpX_PRECISION STREQUAL "DOUBLE")
-            pkg_check_modules(fftw3 REQUIRED IMPORTED_TARGET fftw3)
-        else()
-            pkg_check_modules(fftw3f REQUIRED IMPORTED_TARGET fftw3f)
-        endif()
-    endif()
     # BLASPP and LAPACKPP
     if(WarpX_DIMS STREQUAL RZ)
-        # FIXME send a couple of upstream PRs to those repos...
-        find_package(blaspp REQUIRED)
-        find_package(lapackpp REQUIRED)
+        find_package(blaspp CONFIG REQUIRED)
+        find_package(lapackpp CONFIG REQUIRED)
         find_package(OpenMP REQUIRED)  # pulled by the two above
     endif()
 endif()
@@ -204,22 +200,17 @@ set_target_properties(${_ALL_TARGETS} PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+# Interprocedural optimization
+if(WarpX_IPO)
+    enable_IPO("${_ALL_TARGETS}")
+endif()
+
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
 
 if(WarpX_PSATD)
-    if(WarpX_COMPUTE STREQUAL CUDA)
-        # CUDA_ADD_CUFFT_TO_TARGET(WarpX)
-        target_link_libraries(WarpX PUBLIC cufft)
-    else()
-        if(WarpX_PRECISION STREQUAL "DOUBLE")
-            target_link_libraries(WarpX PUBLIC PkgConfig::fftw3)
-        else()
-            target_link_libraries(WarpX PUBLIC PkgConfig::fftw3f)
-        endif()
-    endif()
+    target_link_libraries(WarpX PUBLIC WarpX::thirdparty::FFT)
     if(WarpX_DIMS STREQUAL RZ)
-        # FIXME send a couple of upstream PRs to those repos...
         target_link_libraries(WarpX PUBLIC blaspp)
         target_link_libraries(WarpX PUBLIC lapackpp)
     endif()
@@ -261,12 +252,22 @@ set_warpx_binary_name()
 
 # Defines #####################################################################
 #
+get_source_version(WarpX ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(WarpX PUBLIC WARPX_GIT_VERSION="${WarpX_GIT_VERSION}")
+if(WarpX_QED)
+    target_compile_definitions(WarpX PUBLIC PICSAR_GIT_VERSION="${PXRMP_QED_GIT_VERSION}")
+endif()
+
 if(WarpX_DIMS STREQUAL 3)
     target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D)
 elseif(WarpX_DIMS STREQUAL 2)
     target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ)
 elseif(WarpX_DIMS STREQUAL RZ)
     target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ)
+endif()
+
+if(WarpX_GPUCLOCK)
+    target_compile_definitions(WarpX PUBLIC WARPX_USE_GPUCLOCK)
 endif()
 
 if(WarpX_OPENPMD)
@@ -330,6 +331,27 @@ install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+# simplified library alias
+# this is currently expected by Python bindings
+if(WarpX_LIB)
+    if(WarpX_DIMS STREQUAL 3)
+        set(lib_suffix "3d")
+    elseif(WarpX_DIMS STREQUAL 2)
+        set(lib_suffix "2d")
+    elseif(WarpX_DIMS STREQUAL RZ)
+        set(lib_suffix "rz")
+    endif()
+    if(WIN32)
+        set(mod_ext "dll")
+    else()
+        set(mod_ext "so")
+    endif()
+    install(CODE "file(CREATE_LINK
+        $<TARGET_FILE_NAME:shared>
+        ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
+        COPY_ON_ERROR SYMBOLIC)")
+endif()
 
 # CMake package file for find_package(WarpX::WarpX) in depending projects
 #install(EXPORT WarpXTargets

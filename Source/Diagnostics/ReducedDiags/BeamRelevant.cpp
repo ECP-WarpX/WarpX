@@ -24,8 +24,8 @@ BeamRelevant::BeamRelevant (std::string rd_name)
 {
 
     // read beam name
-    ParmParse pp(rd_name);
-    pp.get("species",m_beam_name);
+    ParmParse pp_rd_name(rd_name);
+    pp_rd_name.get("species",m_beam_name);
 
     // resize data array
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)

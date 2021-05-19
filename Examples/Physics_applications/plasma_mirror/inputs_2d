@@ -7,7 +7,7 @@ amr.max_grid_size = 128
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0 0 0     # Is periodic?
+geometry.is_periodic = 0 0     # Is periodic?
 geometry.prob_lo     = -100.e-6   0.     # physical domain
 geometry.prob_hi     =  100.e-6   100.e-6
 warpx.verbose = 1
@@ -16,9 +16,6 @@ warpx.serialize_ics = 1
 #################################
 ############ NUMERICS ###########
 #################################
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 my_constants.zc    = 20.e-6
 my_constants.zp    = 20.05545177444479562e-6
 my_constants.lgrad = .08e-6
@@ -26,9 +23,11 @@ my_constants.nc    = 1.74e27
 my_constants.zp2   = 24.e-6
 my_constants.zc2   = 24.05545177444479562e-6
 warpx.cfl = 1.0
-warpx.do_dynamic_scheduling = 0
 warpx.use_filter = 1
 algo.load_balance_intervals = 66
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

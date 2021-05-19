@@ -123,9 +123,15 @@ class Species(picmistandard.PICMI_Species):
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
-    def initialize_inputs(self, layout, initialize_self_fields=False):
+    def initialize_inputs(self, layout,
+                          initialize_self_fields = False,
+                          injection_plane_position = None,
+                          injection_plane_normal_vector = None):
         for species in self.species_instances_list:
-            species.initialize_inputs(layout, initialize_self_fields)
+            species.initialize_inputs(layout,
+                                      initialize_self_fields,
+                                      injection_plane_position,
+                                      injection_plane_normal_vector)
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
@@ -295,18 +301,20 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
-
-        if len(self.x) > 1:
-            raise Exception('Only a single particle can be loaded')
+        pass
 
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
-        species.injection_style = "singleparticle"
-        species.single_particle_pos = [self.x[0], self.y[0], self.z[0]]
-        species.single_particle_vel = [self.ux[0]/constants.c, self.uy[0]/constants.c, self.uz[0]/constants.c]
-        species.single_particle_weight = self.weight
+        species.injection_style = "multipleparticles"
+        species.multiple_particles_pos_x = self.x
+        species.multiple_particles_pos_y = self.y
+        species.multiple_particles_pos_z = self.z
+        species.multiple_particles_vel_x = self.ux/constants.c
+        species.multiple_particles_vel_y = self.uy/constants.c
+        species.multiple_particles_vel_z = self.uz/constants.c
+        species.multiple_particles_weight = self.weight
         if density_scale is not None:
-            species.single_particle_weight *= density_scale
+            species.multiple_particles_weight = self.weight*density_scale
 
 
 class ParticleDistributionPlanarInjector(picmistandard.PICMI_ParticleDistributionPlanarInjector):
@@ -346,6 +354,13 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+
+        self.potential_xmin = None
+        self.potential_xmax = None
+        self.potential_ymin = None
+        self.potential_ymax = None
+        self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
+        self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
@@ -390,6 +405,13 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
+        self.potential_xmin = kw.pop('warpx_potential_lo_x', None)
+        self.potential_xmax = kw.pop('warpx_potential_hi_x', None)
+        self.potential_ymin = None
+        self.potential_ymax = None
+        self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
+        self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -428,6 +450,13 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+
+        self.potential_xmin = kw.pop('warpx_potential_lo_x', None)
+        self.potential_xmax = kw.pop('warpx_potential_hi_x', None)
+        self.potential_ymin = kw.pop('warpx_potential_lo_y', None)
+        self.potential_ymax = kw.pop('warpx_potential_hi_y', None)
+        self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
+        self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
@@ -537,6 +566,12 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
+            pywarpx.boundary.potential_lo_x = self.grid.potential_xmin
+            pywarpx.boundary.potential_lo_y = self.grid.potential_ymin
+            pywarpx.boundary.potential_lo_z = self.grid.potential_zmin
+            pywarpx.boundary.potential_hi_x = self.grid.potential_xmax
+            pywarpx.boundary.potential_hi_y = self.grid.potential_ymax
+            pywarpx.boundary.potential_hi_z = self.grid.potential_zmax
 
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
@@ -722,9 +757,7 @@ class Simulation(picmistandard.PICMI_Simulation):
                 interpolation_order = {'NGP':0, 'linear':1, 'quadratic':2, 'cubic':3}[particle_shape]
             else:
                 interpolation_order = particle_shape
-            pywarpx.interpolation.nox = interpolation_order
-            pywarpx.interpolation.noy = interpolation_order
-            pywarpx.interpolation.noz = interpolation_order
+            pywarpx.algo.particle_shape = interpolation_order
 
         self.solver.initialize_inputs()
 

@@ -42,7 +42,6 @@ public:
         const bool do_fdtd_nci_corr,
         const bool do_nodal,
         const bool do_moving_window,
-        const bool aux_is_nodal,
         const int moving_window_dir,
         const int nox,
         const int nox_fft, const int noy_fft, const int noz_fft,
@@ -62,6 +61,8 @@ public:
     amrex::IntVect ng_alloc_Rho = amrex::IntVect::TheZeroVector();
     // Guard cells allocated for MultiFab F
     amrex::IntVect ng_alloc_F = amrex::IntVect::TheZeroVector();
+    // Guard cells allocated for MultiFab G
+    amrex::IntVect ng_alloc_G = amrex::IntVect::TheZeroVector();
 
     // Guard cells exchanged for specific parts of the PIC loop
 
@@ -69,18 +70,14 @@ public:
     amrex::IntVect ng_FieldSolver = amrex::IntVect::TheZeroVector();
     // Number of guard cells of F that must exchanged before Field Solver
     amrex::IntVect ng_FieldSolverF = amrex::IntVect::TheZeroVector();
+    // Number of guard cells of G that must be exchanged before Field Solver
+    amrex::IntVect ng_FieldSolverG = amrex::IntVect::TheZeroVector();
     // Number of guard cells of E and B that must exchanged before Field Gather
     amrex::IntVect ng_FieldGather = amrex::IntVect::TheZeroVector();
     // Number of guard cells of E and B that must exchanged before updating the Aux grid
     amrex::IntVect ng_UpdateAux = amrex::IntVect::TheZeroVector();
     // Number of guard cells of all MultiFabs that must exchanged before moving window
     amrex::IntVect ng_MovingWindow = amrex::IntVect::TheZeroVector();
-
-    // When the auxiliary grid is nodal but the field solver is staggered
-    // (typically with momentum-conserving gather with FDTD Yee solver),
-    // An extra guard cell is needed on the fine grid to do the interpolation
-    // for E and B.
-    amrex::IntVect ng_Extra = amrex::IntVect::TheZeroVector();
 
     // Number of guard cells for local deposition of J and rho
     amrex::IntVect ng_depos_J   = amrex::IntVect::TheZeroVector();

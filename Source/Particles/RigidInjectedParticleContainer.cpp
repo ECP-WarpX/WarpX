@@ -37,12 +37,12 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
-    getWithParser(pp, "zinject_plane", zinject_plane);
-    pp.query("projected", projected);
-    pp.query("focused", focused);
-    pp.query("rigid_advance", rigid_advance);
+    getWithParser(pp_species_name, "zinject_plane", zinject_plane);
+    pp_species_name.query("projected", projected);
+    pp_species_name.query("focused", focused);
+    pp_species_name.query("rigid_advance", rigid_advance);
 
 }
 
@@ -235,7 +235,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         amrex::FArrayBox const * bxfab,
                                         amrex::FArrayBox const * byfab,
                                         amrex::FArrayBox const * bzfab,
-                                        const int ngE, const int e_is_nodal,
+                                        const amrex::IntVect ngE, const int e_is_nodal,
                                         const long offset,
                                         const long np_to_push,
                                         int lev, int gather_lev,
@@ -342,14 +342,12 @@ void
 RigidInjectedParticleContainer::Evolve (int lev,
                                         const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                         const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                        const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
-                                        const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                         MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                         MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                         MultiFab* rho, MultiFab* crho,
                                         const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                         const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                        Real t, Real dt, DtType a_dt_type)
+                                        Real t, Real dt, DtType a_dt_type, bool skip_deposition)
 {
 
     // Update location of injection plane in the boosted frame
@@ -371,14 +369,12 @@ RigidInjectedParticleContainer::Evolve (int lev,
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
-                                       Ex_avg, Ey_avg, Ez_avg,
-                                       Bx_avg, By_avg, Bz_avg,
                                        jx, jy, jz,
                                        cjx, cjy, cjz,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, a_dt_type);
+                                       t, dt, a_dt_type, skip_deposition);
 }
 
 void
@@ -399,7 +395,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             amrex::Box box = pti.tilebox();
-            box.grow(Ex.nGrow());
+            box.grow(Ex.nGrowVect());
 
             const long np = pti.numParticles();
 
@@ -487,27 +483,22 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 getExternalE(ip, Exp, Eyp, Ezp);
                 getExternalB(ip, Bxp, Byp, Bzp);
 
+                amrex::Real qp = q;
+                if (ion_lev) { qp *= ion_lev[ip]; }
+
                 if (do_crr) {
-                    amrex::Real qp = q;
-                    if (ion_lev) { qp *= ion_lev[ip]; }
                     UpdateMomentumBorisWithRadiationReaction(uxpp[ip], uypp[ip], uzpp[ip],
                                                              Exp, Eyp, Ezp, Bxp,
                                                              Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::Boris) {
-                    amrex::Real qp = q;
-                    if (ion_lev) { qp *= ion_lev[ip]; }
                     UpdateMomentumBoris( uxpp[ip], uypp[ip], uzpp[ip],
                                          Exp, Eyp, Ezp, Bxp,
                                          Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::Vay) {
-                    amrex::Real qp = q;
-                    if (ion_lev){ qp *= ion_lev[ip]; }
                     UpdateMomentumVay( uxpp[ip], uypp[ip], uzpp[ip],
                                        Exp, Eyp, Ezp, Bxp,
                                        Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::HigueraCary) {
-                    amrex::Real qp = q;
-                    if (ion_lev){ qp *= ion_lev[ip]; }
                     UpdateMomentumHigueraCary( uxpp[ip], uypp[ip], uzpp[ip],
                                                Exp, Eyp, Ezp, Bxp,
                                                Byp, Bzp, qp, m, dt);

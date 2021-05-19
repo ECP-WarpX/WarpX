@@ -19,11 +19,17 @@
 #include <cstdint>
 #include <string>
 
+void ParseGeometryInput();
 
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);
 
 void ConvertLabParamsToBoost();
+
+/**
+ * Reads the user-defined field and particle boundary condition parameters
+ */
+void ReadBCParams ();
 
 /**
  * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
@@ -174,6 +180,8 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
  * \param[out] val where the value queried and parsed is stored
  */
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                        const int start_ix, const int num_val);
 
 /**
  * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
@@ -188,6 +196,9 @@ int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex
  * \param[out] val where the value queried and parsed is stored
  */
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                       const int start_ix, const int num_val);
 
 namespace WarpXUtilMsg{
 

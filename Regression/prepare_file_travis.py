@@ -15,14 +15,17 @@ import os
 # Get relevant environment variables
 arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
 
-ci_regular_cartesian = os.environ.get('WARPX_CI_REGULAR_CARTESIAN') == 'TRUE'
+ci_regular_cartesian_2d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_2D') == 'TRUE'
+ci_regular_cartesian_3d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_3D') == 'TRUE'
 ci_psatd = os.environ.get('WARPX_CI_PSATD') == 'TRUE'
 ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
 ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
 ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
 ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
+ci_eb = os.environ.get('WARPX_CI_EB') == 'TRUE'
 ci_openpmd = os.environ.get('WARPX_CI_OPENPMD') == 'TRUE'
 ci_ccache = os.environ.get('WARPX_CI_CCACHE') == 'TRUE'
+ci_num_make_jobs = os.environ.get('WARPX_CI_NUM_MAKE_JOBS', None)
 
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
@@ -52,6 +55,13 @@ if ci_openpmd:
     text = re.sub('addToCompileString =',
                   'addToCompileString = USE_OPENPMD=TRUE ', text)
 
+# always build with PSATD support (runtime controlled if used)
+if ci_psatd:
+    text = re.sub('addToCompileString =',
+                  'addToCompileString = USE_PSATD=TRUE ', text)
+    text = re.sub('USE_PSATD=FALSE',
+                  '', text)
+
 # Ccache
 if ci_ccache:
     text = re.sub('addToCompileString =',
@@ -62,8 +72,9 @@ text = re.sub('runtime_params =',
               'runtime_params = amrex.abort_on_unused_inputs=1 ',
               text)
 
-# Use only 2 cores for compiling
-text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = 2', text )
+# Use less/more cores for compiling, e.g. public CI only provides 2 cores
+if ci_num_make_jobs is not None:
+    text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = {}'.format(ci_num_make_jobs), text )
 # Use only 1 OMP thread for running
 text = re.sub( 'numthreads = \d+', 'numthreads = 1', text)
 # Prevent emails from being sent
@@ -98,20 +109,23 @@ def select_tests(blocks, match_string_list, do_test):
             blocks = [ block for block in blocks if match_string in block ]
     return blocks
 
-if ci_regular_cartesian:
+if ci_regular_cartesian_2d:
+    test_blocks = select_tests(test_blocks, ['dim = 2'], True)
     test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
-if ci_psatd:
-    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
-    # Remove PSATD single-precision, which is done in ci_single_precision
-    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
-    # Remove PSATD RZ, which is done in ci_rz_or_nompi
+if ci_regular_cartesian_3d:
+    test_blocks = select_tests(test_blocks, ['dim = 2'], False)
     test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
+    test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
@@ -127,6 +141,9 @@ if ci_rz_or_nompi:
 
 if ci_qed:
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], True)
+
+if ci_eb:
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], True)
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)

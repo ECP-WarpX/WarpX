@@ -73,14 +73,14 @@ WarpXParticleContainer::ReadParameters ()
     static bool initialized = false;
     if (!initialized)
     {
-        ParmParse pp("particles");
+        ParmParse pp_particles("particles");
 
 #ifdef AMREX_USE_GPU
         do_tiling = false; // By default, tiling is off on GPU
 #else
         do_tiling = true;
 #endif
-        pp.query("do_tiling",  do_tiling);
+        pp_particles.query("do_tiling", do_tiling);
 
         initialized = true;
     }
@@ -226,6 +226,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
  * \param lev         : Level of box that contains particles
  * \param depos_lev   : Level on which particles deposit (if buffers are used)
  * \param dt          : Time step for particle level
+ * \param relative_time: Time at which to deposit J, relative to the time of
+ *                       the current positions of the particles (expressed as
+ *                       a fraction of dt). When different than 0, the particle
+ *                       position will be temporarily modified to match the
+ *                       time of the deposition.
  */
 void
 WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
@@ -235,7 +240,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                                        MultiFab* jx, MultiFab* jy, MultiFab* jz,
                                        const long offset, const long np_to_depose,
                                        int thread_num, int lev, int depos_lev,
-                                       Real dt)
+                                       Real dt, Real relative_time)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -360,28 +365,42 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         if ( (m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)){
             amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
         }
+        if ( relative_time != -0.5_rt ) {
+            amrex::Abort("The Esirkepov deposition cannot be performed at another time then -0.5 dt.");
+        }
+    }
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        if ( relative_time != -0.5_rt ) {
+          amrex::Abort("The Esirkepov deposition cannot be performed at another time then -0.5 dt.");
+        }
     }
 
     WARPX_PROFILE_VAR_START(blp_deposit);
+    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
+    amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
             doEsirkepovDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 2){
             doEsirkepovDepositionShapeN<2>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 3){
             doEsirkepovDepositionShapeN<3>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         }
     } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
         if        (WarpX::nox == 1){
@@ -389,39 +408,45 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes );
+                WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 2){
             doVayDepositionShapeN<2>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes );
+                WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 3){
             doVayDepositionShapeN<3>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes );
+                WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         }
     } else {
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
-                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt*relative_time, dx,
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 2){
             doDepositionShapeN<2>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
-                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt*relative_time, dx,
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 3){
             doDepositionShapeN<3>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
-                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt*relative_time, dx,
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                WarpX::load_balance_costs_update_algo);
         }
     }
     WARPX_PROFILE_VAR_STOP(blp_deposit);
@@ -572,18 +597,24 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const Dim3 lo = lbound(tilebox);
 
     WARPX_PROFILE_VAR_START(blp_ppc_chd);
+    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
+    amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+
     if        (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes);
+                                    WarpX::n_rz_azimuthal_modes, cost,
+                                    WarpX::load_balance_costs_update_algo);
     } else if (WarpX::nox == 2){
         doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes);
+                                    WarpX::n_rz_azimuthal_modes, cost,
+                                    WarpX::load_balance_costs_update_algo);
     } else if (WarpX::nox == 3){
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes);
+                                    WarpX::n_rz_azimuthal_modes, cost,
+                                    WarpX::load_balance_costs_update_algo);
     }
     WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
 
@@ -608,7 +639,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
     for (int lev = 0; lev <= finest_level; ++lev) {
 
         // Reset the `rho` array if `reset` is True
-        if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrow());
+        if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrowVect());
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP
@@ -880,7 +911,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) return;
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -889,7 +920,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -918,11 +949,11 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
                 }
             );
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+                amrex::HostDevice::Atomic::Add( &(*costs)[pti.index()], wt);
             }
         }
     }

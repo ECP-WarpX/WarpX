@@ -52,6 +52,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
         Abort("Error! time_chunk_size must be >= 2!");
     }
 
+    //Reads the (optional) delay
+    ppl.query("delay", m_params.t_delay);
+
     //Allocate memory for E_data Vector
     const int data_size = m_params.time_chunk_size*
             m_params.nx*m_params.ny;
@@ -67,6 +70,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
 {
+    t -= m_params.t_delay;
+
     if(t >= m_params.t_coords.back())
         return;
 
@@ -86,6 +91,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
+    t -= m_params.t_delay;
+
     //Amplitude is 0 if time is out of range
     if(t < m_params.t_coords.front() ||  t > m_params.t_coords.back()){
         amrex::ParallelFor(np,

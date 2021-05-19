@@ -50,12 +50,6 @@ public:
                          const amrex::MultiFab& Bx,
                          const amrex::MultiFab& By,
                          const amrex::MultiFab& Bz,
-                         const amrex::MultiFab& Ex_avg,
-                         const amrex::MultiFab& Ey_avg,
-                         const amrex::MultiFab& Ez_avg,
-                         const amrex::MultiFab& Bx_avg,
-                         const amrex::MultiFab& By_avg,
-                         const amrex::MultiFab& Bz_avg,
                          amrex::MultiFab& jx,
                          amrex::MultiFab& jy,
                          amrex::MultiFab& jz,
@@ -72,7 +66,8 @@ public:
                          const amrex::MultiFab* cBz,
                          amrex::Real t,
                          amrex::Real dt,
-                         DtType a_dt_type=DtType::Full) override;
+                         DtType a_dt_type=DtType::Full,
+                         bool skip_deposition=false ) override;
 
     virtual void PushPX (WarpXParIter& pti,
                          amrex::FArrayBox const * exfab,
@@ -81,7 +76,7 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const int ngE, const int /*e_is_nodal*/,
+                         const amrex::IntVect ngE, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,
