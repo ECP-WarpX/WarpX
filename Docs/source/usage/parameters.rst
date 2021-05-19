@@ -1588,7 +1588,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (default, variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
-    Whether to write one file per timestep.
+    openPMD file output encoding (file based will write one file per timestep).
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
