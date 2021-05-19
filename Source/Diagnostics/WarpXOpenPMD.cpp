@@ -297,19 +297,12 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     std::string filepath = m_dirPrefix;
     GetFileName(filepath);
 
-    std::string useSteps = R"(
-    {
-        "adios2": {
-            "engine": {
-                "type": "bp4",
-                "usesteps": true
-             }
-        }
-    }
-    )";
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
-    if (m_OneFilePerTS)
+    bool is_ADIOS1 = false;
+    if (m_Series != nullptr)
+        is_ADIOS1 = (m_Series->backend() == "ADIOS1" || m_Series->backend() == "MPI_ADIOS1");
+    if (m_OneFilePerTS && is_ADIOS1)
         m_Series = nullptr;
     else if (m_Series != nullptr)
         return;
@@ -318,8 +311,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
                 filepath, access,
-                amrex::ParallelDescriptor::Communicator(),
-                useSteps
+                amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -327,7 +319,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
     } else {
-        m_Series = std::make_unique<openPMD::Series>(filepath, access, useSteps);
+        m_Series = std::make_unique<openPMD::Series>(filepath, access);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
@@ -886,7 +878,6 @@ WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
        mesh.setGridSpacing(grid_spacing);
        mesh.setGridGlobalOffset(global_offset);
        mesh.setAttribute("fieldSmoothing", "none");
-       //detail::setOpenPMDUnit(mesh, field_name);
        mesh_comp.resetDataset(dataset);
 
 }
@@ -928,7 +919,7 @@ WarpXOpenPMDPlot::GetMeshCompNames( int meshLevel,
     if ( 0 == meshLevel )
       return;
 
-    field_name += "_lvl"+std::to_string(meshLevel);
+    field_name += std::string("_lvl").append(std::to_string(meshLevel));
 }
 /*
  * Write Field with all mesh levels
@@ -1015,7 +1006,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     } // icomp loop
     // Flush data to disk after looping over all components
     m_Series->flush();
-  } // levels lopp (i)
+  } // levels loop (i)
 }
 #endif // WARPX_USE_OPENPMD
 
