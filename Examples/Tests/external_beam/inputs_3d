@@ -1,0 +1,59 @@
+#################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 2
+amr.n_cell = 32 32 32
+amr.max_grid_size = 64
+amr.blocking_factor = 16
+amr.max_level = 0
+geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.is_periodic = 1 1 0     # Is periodic?
+geometry.prob_lo     = -0.00015 -0.00015 -0.00012
+geometry.prob_hi     = 0.00015 0.00015 1.e-06
+
+#################################
+############ NUMERICS ###########
+#################################
+algo.maxwell_solver = ckc
+warpx.verbose = 1
+warpx.do_dive_cleaning = 0
+warpx.use_filter = 1
+warpx.do_pml = 1
+warpx.cfl = .99
+warpx.do_moving_window = 1
+warpx.moving_window_dir = z
+warpx.moving_window_v = 1. # in units of the speed of light
+
+#################################
+############# PLASMA ############
+#################################
+particles.species_names = driver
+
+driver.charge = -q_e
+driver.mass = 1.e100
+driver.injection_style = "gaussian_beam"
+driver.x_rms = 2.e-6
+driver.y_rms = 2.e-6
+driver.z_rms = 4.e-6
+driver.x_m = 0.
+driver.y_m = 0.
+driver.z_m = -20.e-6
+driver.npart = 1000
+driver.q_tot = -1.e-9
+driver.momentum_distribution_type = "gaussian"
+driver.ux_m = 0.0
+driver.uy_m = 0.0
+driver.uz_m = 200000.
+driver.ux_th = 2.
+driver.uy_th = 2.
+driver.uz_th = 20000.
+driver.zinject_plane = 0.
+driver.rigid_advance = true
+driver.projected = true
+driver.focused = false
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 10000
+diag1.diag_type = Full
+diag1.format = openpmd
