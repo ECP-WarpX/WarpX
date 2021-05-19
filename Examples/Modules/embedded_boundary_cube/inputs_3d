@@ -11,9 +11,6 @@ warpx.do_pml = 0
 warpx.const_dt = 1e-6
 warpx.cfl = 1
 
-# Order of particle shape factors
-algo.particle_shape = 1
-
 eb2.geom_type = box
 eb2.box_lo = -0.5 -0.5 -0.5
 eb2.box_hi = 0.5 0.5 0.5
