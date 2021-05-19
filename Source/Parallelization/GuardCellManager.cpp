@@ -220,7 +220,6 @@ guardCellManager::Init (
     ng_alloc_EB.max( ng_FieldSolver );
     ng_alloc_F.max( ng_FieldSolverF );
     ng_alloc_G.max( ng_FieldSolverG );
-    ng_alloc_J.max( ng_FieldSolver  );
 
     if (safe_guard_cells){
         // Run in safe mode: exchange all allocated guard cells at each
