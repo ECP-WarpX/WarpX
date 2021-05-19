@@ -15,6 +15,7 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Reduce.H>
 #include <AMReX_REAL.H>
 
 #include <cmath>
@@ -31,7 +32,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
         amrex::Abort("FieldMomentum reduced diagnostics not implemented in RZ geometry");
 #endif
 
-    // read number of levels
+    // Read number of levels
     int nLevel = 0;
     amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
@@ -100,32 +101,104 @@ void FieldMomentum::ComputeDiags (int step)
         const amrex::MultiFab & By = warpx.getBfield(lev, 1);
         const amrex::MultiFab & Bz = warpx.getBfield(lev, 2);
 
-        // Allocate cell-centered MultiFabs
-        amrex::MultiFab Ex_cc(amrex::convert(Ex.boxArray(), amrex::IntVect::TheZeroVector()),
-                              warpx.DistributionMap(lev), 1, 0);
+        // Cell-centered index type
+        const amrex::GpuArray<int,3> cc{0,0,0};
+        // Coarsening ratio (no coarsening)
+        const amrex::GpuArray<int,3> cr{1,1,1};
+        // Reduction component (fourth component in Array4)
+        constexpr int comp = 0;
 
-        amrex::MultiFab Ey_cc(amrex::convert(Ey.boxArray(), amrex::IntVect::TheZeroVector()),
-                              warpx.DistributionMap(lev), 1, 0);
+        // Index type (staggering) of each MultiFab
+        // (with third component set to zero in 2D)
+        amrex::GpuArray<int,3> Ex_stag{0,0,0};
+        amrex::GpuArray<int,3> Ey_stag{0,0,0};
+        amrex::GpuArray<int,3> Ez_stag{0,0,0};
+        amrex::GpuArray<int,3> Bx_stag{0,0,0};
+        amrex::GpuArray<int,3> By_stag{0,0,0};
+        amrex::GpuArray<int,3> Bz_stag{0,0,0};
+        for (int i = 0; i < AMREX_SPACEDIM; ++i)
+        {
+            Ex_stag[i] = Ex.ixType()[i];
+            Ey_stag[i] = Ey.ixType()[i];
+            Ez_stag[i] = Ez.ixType()[i];
+            Bx_stag[i] = Bx.ixType()[i];
+            By_stag[i] = By.ixType()[i];
+            Bz_stag[i] = Bz.ixType()[i];
+        }
 
-        amrex::MultiFab Ez_cc(amrex::convert(Ez.boxArray(), amrex::IntVect::TheZeroVector()),
-                              warpx.DistributionMap(lev), 1, 0);
+        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op_ExB_x;
+        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op_ExB_y;
+        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op_ExB_z;
 
-        amrex::MultiFab Bx_cc(amrex::convert(Bx.boxArray(), amrex::IntVect::TheZeroVector()),
-                              warpx.DistributionMap(lev), 1, 0);
+        amrex::ReduceData<amrex::Real> reduce_data_ExB_x(reduce_op_ExB_x);
+        amrex::ReduceData<amrex::Real> reduce_data_ExB_y(reduce_op_ExB_y);
+        amrex::ReduceData<amrex::Real> reduce_data_ExB_z(reduce_op_ExB_z);
 
-        amrex::MultiFab By_cc(amrex::convert(By.boxArray(), amrex::IntVect::TheZeroVector()),
-                              warpx.DistributionMap(lev), 1, 0);
+        // Reduce operation type is the same (amrex::ReduceOpSum) for all components of (E x B)
+        using ReduceTuple = typename decltype(reduce_data_ExB_x)::Type;
 
-        amrex::MultiFab Bz_cc(amrex::convert(Bz.boxArray(), amrex::IntVect::TheZeroVector()),
-                              warpx.DistributionMap(lev), 1, 0);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        // Loop over boxes, interpolate E,B data to cell centers
+        // and compute sum over cells of (E x B) components
+        for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box & box = enclosedCells(mfi.nodaltilebox());
+            const amrex::Array4<const amrex::Real> & Ex_arr = Ex[mfi].array();
+            const amrex::Array4<const amrex::Real> & Ey_arr = Ey[mfi].array();
+            const amrex::Array4<const amrex::Real> & Ez_arr = Ez[mfi].array();
+            const amrex::Array4<const amrex::Real> & Bx_arr = Bx[mfi].array();
+            const amrex::Array4<const amrex::Real> & By_arr = By[mfi].array();
+            const amrex::Array4<const amrex::Real> & Bz_arr = Bz[mfi].array();
 
-        // Interpolate to cell-centered MultiFabs
-        CoarsenIO::Coarsen(Ex_cc, Ex, 0, 0, 1, 0);
-        CoarsenIO::Coarsen(Ey_cc, Ey, 0, 0, 1, 0);
-        CoarsenIO::Coarsen(Ez_cc, Ez, 0, 0, 1, 0);
-        CoarsenIO::Coarsen(Bx_cc, Bx, 0, 0, 1, 0);
-        CoarsenIO::Coarsen(By_cc, By, 0, 0, 1, 0);
-        CoarsenIO::Coarsen(Bz_cc, Bz, 0, 0, 1, 0);
+            // (E x B) along x
+            reduce_op_ExB_x.eval(box, reduce_data_ExB_x,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+            {
+                const amrex::Real Ey_cc = CoarsenIO::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
+                const amrex::Real Ez_cc = CoarsenIO::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
+
+                const amrex::Real By_cc = CoarsenIO::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
+                const amrex::Real Bz_cc = CoarsenIO::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
+
+                return (Ey_cc * Bz_cc - Ez_cc * By_cc);
+            });
+
+            // (E x B) along y
+            reduce_op_ExB_y.eval(box, reduce_data_ExB_y,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+            {
+                const amrex::Real Ex_cc = CoarsenIO::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
+                const amrex::Real Ez_cc = CoarsenIO::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
+
+                const amrex::Real Bx_cc = CoarsenIO::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
+                const amrex::Real Bz_cc = CoarsenIO::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
+
+                return (Ez_cc * Bx_cc - Ex_cc * Bz_cc);
+            });
+
+            // (E x B) along z
+            reduce_op_ExB_z.eval(box, reduce_data_ExB_z,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+            {
+                const amrex::Real Ex_cc = CoarsenIO::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
+                const amrex::Real Ey_cc = CoarsenIO::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
+
+                const amrex::Real Bx_cc = CoarsenIO::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
+                const amrex::Real By_cc = CoarsenIO::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
+
+                return (Ex_cc * By_cc - Ey_cc * Bx_cc);
+            });
+        }
+
+        // MPI reduce
+        amrex::Real ExB_x = amrex::get<0>(reduce_data_ExB_x.value());
+        amrex::Real ExB_y = amrex::get<0>(reduce_data_ExB_y.value());
+        amrex::Real ExB_z = amrex::get<0>(reduce_data_ExB_z.value());
+        amrex::ParallelDescriptor::ReduceRealSum(ExB_x);
+        amrex::ParallelDescriptor::ReduceRealSum(ExB_y);
+        amrex::ParallelDescriptor::ReduceRealSum(ExB_z);
 
         // Get cell size
         amrex::Geometry const & geom = warpx.Geom(lev);
@@ -134,15 +207,6 @@ void FieldMomentum::ComputeDiags (int step)
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
-
-        // Compute E x B (including sum over cells)
-        const bool local = false;
-        const amrex::Real ExB_x = amrex::MultiFab::Dot(Ey_cc, 0, Bz_cc, 0, 1, 0, local)
-                                - amrex::MultiFab::Dot(Ez_cc, 0, By_cc, 0, 1, 0, local);
-        const amrex::Real ExB_y = amrex::MultiFab::Dot(Ez_cc, 0, Bx_cc, 0, 1, 0, local)
-                                - amrex::MultiFab::Dot(Ex_cc, 0, Bz_cc, 0, 1, 0, local);
-        const amrex::Real ExB_z = amrex::MultiFab::Dot(Ex_cc, 0, By_cc, 0, 1, 0, local)
-                                - amrex::MultiFab::Dot(Ey_cc, 0, Bx_cc, 0, 1, 0, local);
 
         // Save data (offset: 3 values for each refinement level)
         const int offset = lev*3;
