@@ -267,10 +267,8 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     // close BTD file only when isLastBTDFlush is true
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
-        if (!m_Series)
-            return;
-        auto iterations = m_Series->writeIterations();
-        iterations[m_CurrentStep].close();
+        if (m_Series)
+            m_Series->iterations[m_CurrentStep].close();
 
         // create a little helper file for ParaView 5.9+
         if (amrex::ParallelDescriptor::IOProcessor())
@@ -299,13 +297,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
-    bool is_ADIOS1 = false;
-    if (m_Series != nullptr)
-        is_ADIOS1 = (m_Series->backend() == "ADIOS1" || m_Series->backend() == "MPI_ADIOS1");
-    if (m_OneFilePerTS && is_ADIOS1)
-        m_Series = nullptr;
-    else if (m_Series != nullptr)
-        return;
+    m_Series = nullptr;
 
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
@@ -438,8 +430,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
   WarpXParticleCounter counter(pc);
 
-  openPMD::WriteIterations iterations = m_Series->writeIterations();
-  auto currIteration = iterations[iteration];
+  openPMD::Iteration currIteration = m_Series->iterations[iteration];
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -944,8 +935,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::WriteIterations iterations = m_Series->writeIterations();
-  auto series_iteration = iterations[iteration];
+  openPMD::Iteration series_iteration = m_Series->iterations[iteration];
 
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {
