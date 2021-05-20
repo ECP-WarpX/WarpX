@@ -90,9 +90,9 @@ int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
 
 // This will be overwritten by setting nox = noy = noz = algo.particle_shape
-int WarpX::nox = 1;
-int WarpX::noy = 1;
-int WarpX::noz = 1;
+int WarpX::nox = 0;
+int WarpX::noy = 0;
+int WarpX::noz = 0;
 
 // Order of finite-order centering of fields (staggered to nodal)
 int WarpX::field_centering_nox = 2;
