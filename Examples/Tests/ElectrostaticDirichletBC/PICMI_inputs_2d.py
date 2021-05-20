@@ -23,11 +23,12 @@ solver = picmi.ElectrostaticSolver(
 )
 
 field_diag = picmi.FieldDiagnostic(
-    name='dirichletbc_plt',
+    name='diag1',
     grid=grid,
     period=4,
     data_list=['phi'],
     write_dir='.',
+    warpx_file_prefix='dirichletbc_plt'
 )
 
 ##########################
