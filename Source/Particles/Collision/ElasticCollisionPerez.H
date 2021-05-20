@@ -47,7 +47,9 @@ void ElasticCollisionPerez (
     T_R const  m1, T_R const  m2,
     T_R const  T1, T_R const  T2,
     T_R const  dt, T_R const   L, T_R const dV,
-    amrex::RandomEngine const& engine)
+    amrex::RandomEngine const& engine,
+    bool const doHigginson,
+    bool const isSameSpecies)
 {
 
     int NI1 = I1e - I1s;
@@ -96,7 +98,12 @@ void ElasticCollisionPerez (
     {
       int i1 = I1s; int i2 = I2s;
       int d1 = 1;   int d2 = 1;
-      int np = amrex::max(NI1,NI2);
+      int np;
+      if ( isSameSpecies ) {
+          np = (NI1+NI2) - 1 + (NI1+NI2)%2;
+      } else {
+          np = amrex::max(NI1,NI2);
+      }
       for (int k = 0; k < amrex::max(NI1,NI2); ++k)
       {
           UpdateMomentumPerezElastic(
@@ -106,7 +113,7 @@ void ElasticCollisionPerez (
               q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
               dt, L, lmdD,
               engine,
-              amrex::max(d1,d2), np, dV, true);
+              amrex::max(d1,d2), np, dV, doHigginson, isSameSpecies);
           ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; ++d1; }
           ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; ++d2; }
       }

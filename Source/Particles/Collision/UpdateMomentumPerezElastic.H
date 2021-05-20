@@ -24,7 +24,7 @@
  *        For Higginson's modification method,
  *        nd is the max number of duplications among group 1 and 2,
  *        np is the number of partners, dV is the cell volume,
- *        do_Higginson = true will do the modified version.
+ *        doHigginson = true will do the modified version.
  *        To see if there are nan or inf updated velocities,
  *        compile with USE_ASSERTION=TRUE.
 */
@@ -39,7 +39,8 @@ void UpdateMomentumPerezElastic (
     T_R const dt, T_R const L,  T_R const lmdD,
     amrex::RandomEngine const& engine,
     int const nd, int const np, T_R const dV,
-    bool const do_Higginson=true)
+    bool const doHigginson=true,
+    bool const isSameSpecies=true)
 {
 
     // If g = u1 - u2 = 0, do not collide.
@@ -120,10 +121,11 @@ void UpdateMomentumPerezElastic (
     const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_R(1.0);
     const auto tts2 = tts*tts;
     T_R s;
-    if ( do_Higginson ) {
+    if ( doHigginson ) {
         s = np/dV*amrex::max(w1,w2)/nd * dt*lnLmd*q1*q1*q2*q2 /
               ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
                 m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
+        if ( isSameSpecies ) { s = s*T_R(2.0); }
     } else {
         s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
               ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
@@ -136,11 +138,12 @@ void UpdateMomentumPerezElastic (
     const auto coeff = static_cast<T_R>(
         std::pow(4.0*MathConst::pi/3.0,1.0/3.0));
     T_R const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
-    T_R sp = T_R(0.0);
-    if ( do_Higginson ) {
+    T_R sp;
+    if ( doHigginson ) {
         sp = coeff * np/dV*amrex::max(w1,w2)/nd * dt * vrel * (m1+m2) /
               amrex::max( m1*cbrt_n1*cbrt_n1,
                           m2*cbrt_n2*cbrt_n2);
+        if ( isSameSpecies ) { sp = sp*T_R(2.0); }
     } else {
         sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
               amrex::max( m1*cbrt_n1*cbrt_n1,

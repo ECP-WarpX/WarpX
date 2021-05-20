@@ -26,6 +26,14 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
     m_CoulombLog = -1.0_rt;
     queryWithParser(pp_collision_name, "CoulombLog", m_CoulombLog);
 
+    amrex::Real real_doHigginson = 1.0_rt;
+    queryWithParser(pp_collision_name, "doHigginson", real_doHigginson);
+    if ( real_doHigginson > 0.5_rt ) {
+        m_doHigginson=true;
+    } else {
+        m_doHigginson=false;
+    }
+
     if (m_species_names[0] == m_species_names[1])
         m_isSameSpecies = true;
     else
@@ -170,7 +178,7 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                     indices_1, indices_1,
                     ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
                     q1, q1, m1, m1, amrex::Real(-1.0), amrex::Real(-1.0),
-                    dt*ndt, CoulombLog, dV, engine );
+                    dt*ndt, CoulombLog, dV, engine, m_doHigginson, m_isSameSpecies);
             }
         );
     }
@@ -261,7 +269,7 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                     indices_1, indices_2,
                     ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
                     q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
-                    dt*ndt, CoulombLog, dV, engine );
+                    dt*ndt, CoulombLog, dV, engine, m_doHigginson, m_isSameSpecies);
             }
         );
     } // end if ( m_isSameSpecies)
