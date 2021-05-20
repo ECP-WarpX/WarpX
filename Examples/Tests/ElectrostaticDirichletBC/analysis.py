@@ -19,6 +19,7 @@ import yt
 import glob
 
 files = sorted(glob.glob('dirichletbc_plt*'))[1:]
+assert len(files) > 0
 
 times = np.ones(len(files))
 potentials_lo = np.zeros(len(files))

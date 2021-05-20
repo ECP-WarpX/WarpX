@@ -375,10 +375,13 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
         # Geometry
         pywarpx.geometry.coord_sys = 1  # RZ
-        pywarpx.geometry.is_periodic = '0 %d'%(self.bc_zmin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = '%s %s' % (self.bc_rmin, self.bc_zmin)
+        pywarpx.boundary.field_hi = '%s %s' % (self.bc_rmax, self.bc_zmax)
 
         if self.moving_window_zvelocity is not None:
             if np.isscalar(self.moving_window_zvelocity):
@@ -422,9 +425,12 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
-        pywarpx.geometry.is_periodic = '%d %d'%(self.bc_xmin=='periodic', self.bc_ymin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = '%s %s' % (self.bc_xmin, self.bc_ymin)
+        pywarpx.boundary.field_hi = '%s %s' % (self.bc_xmax, self.bc_ymax)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -468,9 +474,12 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
-        pywarpx.geometry.is_periodic = '%d %d %d'%(self.bc_xmin=='periodic', self.bc_ymin=='periodic', self.bc_zmin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = '%s %s %s' % (self.bc_xmin, self.bc_ymin, self.bc_zmin)
+        pywarpx.boundary.field_hi = '%s %s %s' % (self.bc_xmax, self.bc_ymax, self.bc_zmax)
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
