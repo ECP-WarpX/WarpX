@@ -31,6 +31,7 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
     shape_factor[1] = WarpX::noz;
 #endif
+    shape_factor.max( amrex::IntVect::TheUnitVector() );
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
