@@ -14,12 +14,6 @@ WarpX-tests.ini files
 .. note::
    section empty!
 
-TravisCI tests
-^^^^^^^^^^^^^^
-
-.. note::
-   section empty!
-
 Local tests every night
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -29,24 +23,53 @@ Local tests every night
 Run the test suite locally
 --------------------------
 
-Once your new feature is ready, you can check that you did not break anything. WarpX has automated tests running for each Pull Request. For easier debugging, it can be convenient to run the tests on your local machine with
+Once your new feature is ready, there are ways to check that you did not break anything.
+WarpX has automated tests running every time a commit is added to an open pull request.
+The list of automated tests is defined in `./Regression/WarpX-tests.ini <https://github.com/ECP-WarpX/WarpX/blob/development/Regression/WarpX-tests.ini>`__.
+
+For easier debugging, it can be convenient to run the tests on your local machine by executing the script
+`./run_test.sh <https://github.com/ECP-WarpX/WarpX/blob/development/run_test.sh>`__ from WarpX's root folder, as illustrated in the examples below:
 
 .. code-block:: sh
 
+    # Example:
+    # run all tests defined in ./Regression/WarpX-tests.ini
     ./run_test.sh
 
-from WarpX root folder. It will compile all necessary executables and run all tests. The tests can be influenced by environment variables:
+    # Example:
+    # run only the test named 'pml_x_yee'
+    ./run_test.sh pml_x_yee
 
-* ``export WARPX_TEST_DIM=3``, ``export WARPX_TEST_DIM=2`` or ``export WARPX_TEST_DIM=RZ`` in order to select only the tests that correspond to this dimensionality
-* ``export WARPX_TEST_ARCH=CPU`` or ``export WARPX_TEST_ARCH=GPU`` in order to run the tests on CPU or GPU respectively.
+    # Example:
+    # run only the tests named 'pml_x_yee', 'pml_x_ckc' and 'pml_x_psatd'
+    ./run_test.sh pml_x_yee pml_x_ckc pml_x_psatd
 
-The command above (without command line arguments) runs all the tests defined in [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini). In order to run single tests, pass the test names as command line arguments:
+Note that the script `./run_test.sh <https://github.com/ECP-WarpX/WarpX/blob/development/run_test.sh>`__ runs the tests with the exact same compile-time options and runtime options used to run the tests remotely.
+
+Moreover, the script `./run_test.sh <https://github.com/ECP-WarpX/WarpX/blob/development/run_test.sh>`__ compiles all the executables that are necessary in order to run the chosen tests.
+The default number of threads allotted for compiling is set with ``numMakeJobs = 8`` in `./Regression/WarpX-tests.ini <https://github.com/ECP-WarpX/WarpX/blob/ad74bcbdd131a8797339ba38370b1195d0aecffb/Regression/WarpX-tests.ini#L20>`__.
+However, when running the tests on a local machine, it is usually possible and convenient to allot more threads for compiling, in order to speed up the builds.
+This can be accomplished by setting the environment variable ``WARPX_CI_NUM_MAKE_JOBS``, with the preferred number of threads that fits your local machine, e.g. ``export WARPX_CI_NUM_MAKE_JOBS=16`` (or less if your machine is smaller).
+On public CI, we overwrite the value to ``WARPX_CI_NUM_MAKE_JOBS=2``, in order to avoid overloading the available remote resources.
+Note that this will not change the number of threads used to run each test, but only the number of threads used to compile each executable necessary to run the tests.
+
+Once the execution of `./run_test.sh <https://github.com/ECP-WarpX/WarpX/blob/development/run_test.sh>`__ is completed, you can find all the relevant files associated with each test in one single directory.
+For example, if you run the single test ``pml_x_yee``, as shown above, on 04/30/2021,  you can find all relevant files in the directory ``./test_dir/rt-WarpX/WarpX-tests/2021-04-30/pml_x_yee/``.
+The content of this directory will look like the following (possibly including backtraces if the test crashed at runtime):
 
 .. code-block:: sh
 
-    ./run_test.sh test1 test2
-    # For instance
-    ./run_test.sh PlasmaAccelerationBoost3d Larmor
+    $ ls ./test_dir/rt-WarpX/WarpX-tests/2021-04-30/pml_x_yee/
+    analysis_pml_yee.py     # Python analysis script
+    inputs_2d               # input file
+    main2d.gnu.TEST.TPROF.MTMPI.OMP.QED.GPUCLOCK.ex  # executable
+    pml_x_yee.analysis.out  # Python analysis output
+    pml_x_yee.err.out       # error output
+    pml_x_yee.make.out      # build output
+    pml_x_yee_plt00000/     # data output (initialization)
+    pml_x_yee_plt00300/     # data output (last time step)
+    pml_x_yee.run.out       # test output
+
 
 Add a test to the suite
 -----------------------

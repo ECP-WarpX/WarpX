@@ -65,6 +65,14 @@ struct CylindricalYeeAlgorithm {
         return delta_t;
     }
 
+    /**
+     * \brief Returns maximum number of guard cells required by the field-solve
+     */
+    static amrex::IntVect GetMaxGuardCell () {
+        // The cylindrical solver requires one guard cell in each dimension
+        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
+    }
+
     /** Applies the differential operator `1/r * d(rF)/dr`,
      * where `F` is on a *nodal* grid in `r`
      * and the differential operator is evaluated on a *cell-centered* grid.

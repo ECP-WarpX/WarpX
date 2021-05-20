@@ -113,7 +113,7 @@ Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic en
    source $HOME/sw/venvs/warpx-libE/bin/activate
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade cython
-   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade numpy==1.19.5
    python3 -m pip install --upgrade scipy
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
