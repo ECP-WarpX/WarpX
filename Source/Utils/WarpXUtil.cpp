@@ -446,6 +446,7 @@ void ReadBCParams ()
     ParmParse pp_geometry("geometry");
     ParmParse pp_warpx("warpx");
     ParmParse pp_algo("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
         // set default field and particle boundary appropriately
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -462,16 +463,20 @@ void ReadBCParams ()
                 pp_warpx.query("do_pml", pml_input);
                 pp_warpx.query("do_silver_mueller", silverMueller_input);
                 if (pml_input == 0 and silverMueller_input == 0) {
-                    WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
-                    WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
+                    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+                        WarpX::field_boundary_lo[idim] = FieldBoundaryType::None;
+                        WarpX::field_boundary_hi[idim] = FieldBoundaryType::None;
+                    } else {
+                        WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
+                        WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
+                    }
 #ifdef WARPX_DIM_RZ
                     if (idim == 0) WarpX::field_boundary_lo[idim] = FieldBoundaryType::None;
 #endif
                 }
             }
         }
-        // Temporarily setting default boundary to Damped until PEC Boundary Type is enabled
-        int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+        // Temporarily setting default boundary to Damped until new boundary interface is introduced
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             ParmParse pp_psatd("psatd");
             int do_moving_window = 0;
@@ -532,6 +537,12 @@ void ReadBCParams ()
                 // set particle boundary to periodic
                 WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
+            }
+        }
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ||
+                WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
+                amrex::Abort(" PEC boundary not implemented for PSATD, yet!")
             }
         }
     }
