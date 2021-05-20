@@ -26,8 +26,6 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
-#include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-#include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
 #include "Particles/Pusher/UpdateMomentumBoris.H"
 #include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
@@ -35,6 +33,10 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#ifdef WARPX_QED
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#endif
 
 #include <AMReX_Geometry.H>
 #include <AMReX_Print.H>
