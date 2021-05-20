@@ -22,7 +22,7 @@
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_GpuControl.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>

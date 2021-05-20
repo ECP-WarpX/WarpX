@@ -21,7 +21,7 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_GpuControl.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 

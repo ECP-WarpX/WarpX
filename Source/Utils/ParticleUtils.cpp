@@ -12,7 +12,7 @@
 #include <AMReX_Box.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_Geometry.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>

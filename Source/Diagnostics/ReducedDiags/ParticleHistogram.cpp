@@ -24,7 +24,7 @@
 #include <AMReX_Extension.H>
 #include <AMReX_GpuAtomic.H>
 #include <AMReX_GpuControl.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParIter.H>

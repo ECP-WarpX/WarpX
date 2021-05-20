@@ -19,7 +19,7 @@
 #include <AMReX_Array4.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_Extension.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_REAL.H>

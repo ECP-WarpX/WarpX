@@ -14,7 +14,7 @@
 #include <AMReX_BoxList.H>
 #include <AMReX_GpuComplex.H>
 #include <AMReX_GpuDevice.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_IntVect.H>

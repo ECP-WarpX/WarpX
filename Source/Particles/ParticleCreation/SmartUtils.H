@@ -13,7 +13,7 @@
 
 #include <AMReX_Config.H>
 #include <AMReX_GpuContainers.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_INT.H>
 #include <AMReX_ParallelDescriptor.H>

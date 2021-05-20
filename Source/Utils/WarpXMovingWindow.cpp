@@ -25,7 +25,6 @@
 #include <AMReX_Geometry.H>                    // for Geometry
 #include <AMReX_GpuControl.H>                  // for notInLaunchRegion
 #include <AMReX_GpuLaunch.H>                   // for AMREX_PARALLEL_FOR_4D
-#include <AMReX_GpuLaunchFunctsC.H>            // for ParallelFor
 #include <AMReX_GpuQualifiers.H>               // for AMREX_GPU_DEVICE
 #include <AMReX_INT.H>                         // for amrex
 #include <AMReX_IndexType.H>                   // for IndexType

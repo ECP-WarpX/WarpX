@@ -17,7 +17,7 @@
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
 #include <AMReX_GpuComplex.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>

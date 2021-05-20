@@ -9,7 +9,7 @@
 #include <AMReX_Config.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_Geometry.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>

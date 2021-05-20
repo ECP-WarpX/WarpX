@@ -15,7 +15,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_GpuComplex.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>

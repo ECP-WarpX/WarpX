@@ -37,7 +37,7 @@
 #include <AMReX_BoxList.H>
 #include <AMReX_Config.H>
 #include <AMReX_Geometry.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_INT.H>
 #include <AMReX_IndexType.H>

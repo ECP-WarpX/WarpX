@@ -11,7 +11,7 @@
 
 #include <AMReX.H>
 #include <AMReX_Extension.H>
-#include <AMReX_GpuLaunchFunctsC.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
