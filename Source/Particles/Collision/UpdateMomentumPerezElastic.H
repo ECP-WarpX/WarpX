@@ -21,6 +21,10 @@
  *        @param[in] LmdD is max(Debye length, minimal interparticle distance).
  *        @param[in] L is the Coulomb log. A fixed L will be used if L > 0,
  *        otherwise L will be calculated based on the algorithm.
+ *        For Higginson's modification method,
+ *        nd is the max number of duplications among group 1 and 2,
+ *        np is the number of partners, dV is the cell volume,
+ *        do_Higginson = true will do the modified version.
  *        To see if there are nan or inf updated velocities,
  *        compile with USE_ASSERTION=TRUE.
 */
@@ -33,7 +37,9 @@ void UpdateMomentumPerezElastic (
     T_R const q1, T_R const m1, T_R const w1,
     T_R const q2, T_R const m2, T_R const w2,
     T_R const dt, T_R const L,  T_R const lmdD,
-    amrex::RandomEngine const& engine)
+    amrex::RandomEngine const& engine,
+    int const nd, int const np, T_R const dV,
+    bool const do_Higginson=true)
 {
 
     // If g = u1 - u2 = 0, do not collide.
@@ -113,9 +119,16 @@ void UpdateMomentumPerezElastic (
     // Compute s
     const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_R(1.0);
     const auto tts2 = tts*tts;
-    T_R s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
-          ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
-            m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
+    T_R s;
+    if ( do_Higginson ) {
+        s = np/dV*amrex::max(w1,w2)/nd * dt*lnLmd*q1*q1*q2*q2 /
+              ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
+                m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
+    } else {
+        s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
+              ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
+                m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
+    }
 
     // Compute s'
     const auto cbrt_n1 = std::cbrt(n1);
@@ -123,9 +136,16 @@ void UpdateMomentumPerezElastic (
     const auto coeff = static_cast<T_R>(
         std::pow(4.0*MathConst::pi/3.0,1.0/3.0));
     T_R const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
-    T_R const sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
-          amrex::max( m1*cbrt_n1*cbrt_n1,
-                      m2*cbrt_n2*cbrt_n2);
+    T_R sp = T_R(0.0);
+    if ( do_Higginson ) {
+        sp = coeff * np/dV*amrex::max(w1,w2)/nd * dt * vrel * (m1+m2) /
+              amrex::max( m1*cbrt_n1*cbrt_n1,
+                          m2*cbrt_n2*cbrt_n2);
+    } else {
+        sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
+              amrex::max( m1*cbrt_n1*cbrt_n1,
+                          m2*cbrt_n2*cbrt_n2);
+    }
 
     // Determine s
     s = amrex::min(s,sp);

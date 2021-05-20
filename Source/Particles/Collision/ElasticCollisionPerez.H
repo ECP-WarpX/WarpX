@@ -95,6 +95,8 @@ void ElasticCollisionPerez (
     // call UpdateMomentumPerezElastic()
     {
       int i1 = I1s; int i2 = I2s;
+      int d1 = 1;   int d2 = 1;
+      int np = amrex::max(NI1,NI2);
       for (int k = 0; k < amrex::max(NI1,NI2); ++k)
       {
           UpdateMomentumPerezElastic(
@@ -103,9 +105,10 @@ void ElasticCollisionPerez (
               n1, n2, n12,
               q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
               dt, L, lmdD,
-              engine);
-          ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-          ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+              engine,
+              amrex::max(d1,d2), np, dV, true);
+          ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; ++d1; }
+          ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; ++d2; }
       }
     }
 
