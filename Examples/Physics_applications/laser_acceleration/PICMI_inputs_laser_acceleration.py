@@ -90,8 +90,10 @@ electrons = picmi.Species(particle_type = 'electron',
 grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
                              lower_bound = [xmin, ymin, zmin],
                              upper_bound = [xmax, ymax, zmax],
-                             lower_boundary_conditions = ['periodic', 'periodic', 'open'],
-                             upper_boundary_conditions = ['periodic', 'periodic', 'open'],
+                             lower_boundary_conditions = ['periodic', 'periodic', 'pml'],
+                             upper_boundary_conditions = ['periodic', 'periodic', 'pml'],
+                             lower_boundary_conditions_particles = ['periodic', 'periodic', 'open'],
+                             upper_boundary_conditions_particles = ['periodic', 'periodic', 'open'],
                              moving_window_velocity = moving_window_velocity,
                              warpx_max_grid_size=32)
 

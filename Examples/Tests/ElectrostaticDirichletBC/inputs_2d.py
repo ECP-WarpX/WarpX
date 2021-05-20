@@ -1,5 +1,4 @@
 from pywarpx import picmi
-import pywarpx
 
 grid = picmi.Cartesian2DGrid(
     number_of_cells = [64, 8],
