@@ -217,7 +217,7 @@ using namespace amrex;
                 if (isPECBoundary == true) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                     // For 2D : for icomp==1, (By in XZ, Btheta in RZ),
-                    //          icomp=1 is not normal to x or z boundaries
+                    //          icomp=1 is not normal to x or z boundary
                     //          The logic below ensures that the flags are set right for 2D
                     const bool is_normal_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
                                                 ? true : false );
