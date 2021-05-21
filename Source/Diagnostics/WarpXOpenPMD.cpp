@@ -614,11 +614,14 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             std::tie(std::ignore, newRecord) = addedRecords.insert(record_name);
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
-                currRecord.setAttribute( "macroWeighted", 0u );
-                if( record_name == "momentum" )
-                currRecord.setAttribute( "weightingPower", 1.0 );
+                if( record_name == "weighting" )
+                    currRecord.setAttribute( "macroWeighted", 1u );
                 else
-                currRecord.setAttribute( "weightingPower", 0.0 );
+                    currRecord.setAttribute( "macroWeighted", 0u );
+                if( record_name == "momentum" || record_name == "weighting" )
+                    currRecord.setAttribute( "weightingPower", 1.0 );
+                else
+                    currRecord.setAttribute( "weightingPower", 0.0 );
             }
         }
     }
@@ -636,7 +639,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 currRecord.setAttribute( "macroWeighted", 0u );
-                if( record_name == "momentum" )
+                if( record_name == "momentum" || record_name == "weighting" )
                     currRecord.setAttribute( "weightingPower", 1.0 );
                 else
                     currRecord.setAttribute( "weightingPower", 0.0 );
