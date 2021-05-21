@@ -542,7 +542,7 @@ void ReadBCParams ()
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ||
                 WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
-                amrex::Abort(" PEC boundary not implemented for PSATD, yet!")
+                amrex::Abort(" PEC boundary not implemented for PSATD, yet!");
             }
         }
     }
