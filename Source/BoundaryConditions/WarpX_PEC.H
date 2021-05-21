@@ -34,6 +34,38 @@ using namespace amrex;
      *        PEC boundary, and the necessary sign change is accounted for depending on
      *        if the component, icomp, is tangential or normal to the PEC boundary.
      *
+     *        For 3D : 
+     *            x component is tangential to the y-boundary and z-boundary
+     *            y component is tangential to the x-boundary and z-boundary
+     *            z component is tangential to the x-boundary and y-boundary
+     *            x component is normal to the x-boundary
+     *            y component is normal to the y-boundary
+     *            z component is normal to the z-boundary
+     *            where, x-boundary is the yz-plane at x=xmin and x=xmax
+     *                   y-boundary is the xz-plane at y=ymin and y=ymax
+     *                   z-boundary is the xy-plane at z=zmin and z=zmax
+     *
+     *        For 2D : WarpX uses X-Z as the two dimensions
+     *            x component is tangential to the z-boundary
+     *            y component is tangential to the x-boundary and z-boundary
+     *            z component is tangential to the x-boundary
+     *            x component is normal to the x-boundary
+     *            y component is not normal to any boundary (Only xz dimensions in 2D)
+     *            z component is normal to the z-boundary
+     *            where, x-boundary is along the line z at x=xmin and x=xmax
+     *                   z-boundary is along the line x at z=zmin and z=zmax
+     *        
+     *        For RZ : WarpX uses R-Z as the two dimensions
+     *            r component is tangential to the z-boundary
+     *            theta_component is tangential to the r-boundary and z-boundary
+     *            z component is tangential to the r-boundary
+     *            r component is normal to the r-boundary
+     *            theta_component is not normal to any boundary (on RZ dimensions are modeled)
+     *            z component is normal to the z-boundary
+     *            where, r-boundary is along the line z at r=rmin and r=rmax
+     *                   z-boundary is along the line r at z=zmin and z=zmax
+     *        
+     *
      * \param[in] icomp        component of the Efield being updated
      *                         (0=x, 1=y, 2=z in Cartesian)
      *                         (0=r, 1=theta, 2=z in RZ)
@@ -73,7 +105,7 @@ using namespace amrex;
                                         : is_boundary_PEC(fbndry_hi, idim) );
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
-                //          both X-Z and R-Z dimensions are tangential.
+                //          icomp=1 is tangential to both x and z boundaries
                 //          The logic below ensures that the flags are set right for 2D
                 const bool is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
                                              ? false : true );
@@ -117,6 +149,38 @@ using namespace amrex;
      *        The number or depth of guard cells updated is equal to the shape factor of
      *        particles in each dimension.
      *
+     *        For 3D : 
+     *            x component is tangential to the y-boundary and z-boundary
+     *            y component is tangential to the x-boundary and z-boundary
+     *            z component is tangential to the x-boundary and y-boundary
+     *            x component is normal to the x-boundary
+     *            y component is normal to the y-boundary
+     *            z component is normal to the z-boundary
+     *            where, x-boundary is the yz-plane at x=xmin and x=xmax
+     *                   y-boundary is the xz-plane at y=ymin and y=ymax
+     *                   z-boundary is the xy-plane at z=zmin and z=zmax
+     *
+     *        For 2D : WarpX uses X-Z as the two dimensions
+     *            x component is tangential to the z-boundary
+     *            y component is tangential to the x-boundary and z-boundary
+     *            z component is tangential to the x-boundary
+     *            x component is normal to the x-boundary
+     *            y component is not normal to any boundary (Only xz dimensions in 2D)
+     *            z component is normal to the z-boundary
+     *            where, x-boundary is along the line z at x=xmin and x=xmax
+     *                   z-boundary is along the line x at z=zmin and z=zmax
+     *        
+     *        For RZ : WarpX uses R-Z as the two dimensions
+     *            r component is tangential to the z-boundary
+     *            theta_component is tangential to the r-boundary and z-boundary
+     *            z component is tangential to the r-boundary
+     *            r component is normal to the r-boundary
+     *            theta_component is not normal to any boundary (on RZ dimensions are modeled)
+     *            z component is normal to the z-boundary
+     *            where, r-boundary is along the line z at r=rmin and r=rmax
+     *                   z-boundary is along the line r at z=zmin and z=zmax
+     *        
+     *
      * \param[in] icomp        component of the Bfield being updated
      *                         (0=x, 1=y, 2=z in Cartesian)
      *                         (0=r, 1=theta, 2=z in RZ)
@@ -153,7 +217,7 @@ using namespace amrex;
                 if (isPECBoundary == true) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                     // For 2D : for icomp==1, (By in XZ, Btheta in RZ),
-                    //          both X-Z and R-Z dimensions are not normal, only tangential.
+                    //          icomp=1 is not normal to x or z boundaries
                     //          The logic below ensures that the flags are set right for 2D
                     const bool is_normal_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
                                                 ? true : false );
