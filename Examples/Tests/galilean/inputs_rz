@@ -13,7 +13,7 @@ geometry.coord_sys   = 1
 geometry.prob_lo     =  0.  -38.68
 geometry.prob_hi     = 38.68 38.68
 boundary.field_lo = none periodic
-boundary.field_lo = none periodic
+boundary.field_hi = none periodic
 
 #################################
 ############ NUMERICS ###########
