@@ -34,7 +34,7 @@ using namespace amrex;
      *        PEC boundary, and the necessary sign change is accounted for depending on
      *        if the component, icomp, is tangential or normal to the PEC boundary.
      *
-     *        For 3D : 
+     *        For 3D :
      *            x component is tangential to the y-boundary and z-boundary
      *            y component is tangential to the x-boundary and z-boundary
      *            z component is tangential to the x-boundary and y-boundary
@@ -54,7 +54,7 @@ using namespace amrex;
      *            z component is normal to the z-boundary
      *            where, x-boundary is along the line z at x=xmin and x=xmax
      *                   z-boundary is along the line x at z=zmin and z=zmax
-     *        
+     *
      *        For RZ : WarpX uses R-Z as the two dimensions
      *            r component is tangential to the z-boundary
      *            theta_component is tangential to the r-boundary and z-boundary
@@ -64,7 +64,7 @@ using namespace amrex;
      *            z component is normal to the z-boundary
      *            where, r-boundary is along the line z at r=rmin and r=rmax
      *                   z-boundary is along the line r at z=zmin and z=zmax
-     *        
+     *
      *
      * \param[in] icomp        component of the Efield being updated
      *                         (0=x, 1=y, 2=z in Cartesian)
@@ -149,7 +149,7 @@ using namespace amrex;
      *        The number or depth of guard cells updated is equal to the shape factor of
      *        particles in each dimension.
      *
-     *        For 3D : 
+     *        For 3D :
      *            x component is tangential to the y-boundary and z-boundary
      *            y component is tangential to the x-boundary and z-boundary
      *            z component is tangential to the x-boundary and y-boundary
@@ -169,7 +169,7 @@ using namespace amrex;
      *            z component is normal to the z-boundary
      *            where, x-boundary is along the line z at x=xmin and x=xmax
      *                   z-boundary is along the line x at z=zmin and z=zmax
-     *        
+     *
      *        For RZ : WarpX uses R-Z as the two dimensions
      *            r component is tangential to the z-boundary
      *            theta_component is tangential to the r-boundary and z-boundary
@@ -179,7 +179,7 @@ using namespace amrex;
      *            z component is normal to the z-boundary
      *            where, r-boundary is along the line z at r=rmin and r=rmax
      *                   z-boundary is along the line r at z=zmin and z=zmax
-     *        
+     *
      *
      * \param[in] icomp        component of the Bfield being updated
      *                         (0=x, 1=y, 2=z in Cartesian)
