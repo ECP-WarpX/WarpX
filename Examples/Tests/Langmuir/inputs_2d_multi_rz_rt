@@ -13,9 +13,10 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 1                  # 0: Cartesian
-geometry.is_periodic = 0     1            # Is periodic?
 geometry.prob_lo     =   0.e-6   -20.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6
+boundary.field_lo = none periodic
+boundary.field_hi = none periodic
 
 warpx.serialize_ics = 1
 
