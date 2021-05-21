@@ -21,10 +21,10 @@ number_per_cell_each_dim = [4, 4, 4]
 grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
                              lower_bound = [xmin, ymin, zmin],
                              upper_bound = [xmax, ymax, zmax],
-                             lower_boundary_conditions = ['periodic', 'periodic', 'pml'],
-                             upper_boundary_conditions = ['periodic', 'periodic', 'pml'],
-                             lower_boundary_conditions_particles = ['periodic', 'periodic', 'open'],
-                             upper_boundary_conditions_particles = ['periodic', 'periodic', 'open'],
+                             lower_boundary_conditions = ['periodic', 'periodic', 'open'],
+                             upper_boundary_conditions = ['periodic', 'periodic', 'open'],
+                             lower_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
+                             upper_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
                              moving_window_velocity = moving_window_velocity,
                              #refined_regions = [[1, [-25e-6, -25e-6, -200.e-6], [25e-6, 25e-6, 200.e-6]]],  # as argument
                              warpx_max_grid_size=128, warpx_blocking_factor=16)
