@@ -184,8 +184,6 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
     }
     case WP_F3:
     {
-        // Currently there is only WP_IF
-        // If we change this to wp_call_f3, we need to update wp_ast_depth.
         if (wp_ast_eval<Depth+1>(((struct wp_f3*)node)->n1,x) != amrex::Real(0.)) {
             result = wp_ast_eval<Depth+1>(((struct wp_f3*)node)->n2,x);
         } else {

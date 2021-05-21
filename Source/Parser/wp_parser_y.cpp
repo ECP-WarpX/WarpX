@@ -955,11 +955,9 @@ wp_ast_depth (struct wp_node* node, int* n)
         wp_ast_depth(node->l, &nl);
         break;
     case WP_F1:
-        (*n)++;
         wp_ast_depth(((struct wp_f1*)node)->l, &nl);
         break;
     case WP_F2:
-        (*n)++;
         wp_ast_depth(((struct wp_f2*)node)->l, &nl);
         wp_ast_depth(((struct wp_f2*)node)->r, &nr);
         break;
