@@ -1,6 +1,9 @@
 #include "CellCenterFunctor.H"
 
 #include "Utils/CoarsenIO.H"
+#ifdef WARPX_DIM_RZ
+#   include "WarpX.H"
+#endif
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
