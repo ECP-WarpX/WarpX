@@ -375,6 +375,7 @@ The parser reads python-style expressions between double quotes, for instance
 user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
+Alternatively the expression above can be written as ``if(x>0, a0*x**2 * (1-y*1.e2), 0)``.
 The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
 A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group explicitly, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
