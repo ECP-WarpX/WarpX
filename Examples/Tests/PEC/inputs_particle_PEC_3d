@@ -1,0 +1,57 @@
+# Set-up to test PEC boundary condition with particles.
+# A proton and negatively charged particle with equal mass as a proton are initialized
+# near the boundary. The proton is given a finite bulk velocity in y and the negatively
+# charged particle is stationary, initially. Due to the PEC boundary setting zero Ey
+# tangential to the PEC surface at x_min and x_max, the Ey field gathered by the particles
+# is two orders of magnitude smaller than the periodic boundary.
+
+max_step = 20
+amr.n_cell = 128 64 64
+
+amr.blocking_factor = 16
+amr.max_grid_size = 1024
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.prob_lo     = -32.e-6  -32.e-6  -32.e-6      # physical domain
+geometry.prob_hi     =  32.e-6   32.e-6   32.e-6
+
+# boundary condition
+boundary.field_lo = pec periodic periodic
+boundary.field_hi = pec periodic periodic
+
+
+# Algorithms
+algo.current_deposition = esirkepov
+algo.charge_deposition = standard
+algo.particle_pusher = vay
+algo.maxwell_solver = yee
+warpx.cfl = 0.9
+warpx.use_filter = 1
+
+# Particle species
+particles.species_names = electron proton
+
+electron.charge = -q_e
+electron.mass = m_p
+electron.injection_style = "singleparticle"
+electron.single_particle_pos = 31.998e-6 0. 0.
+electron.single_particle_vel = 0. 0. 0.
+electron.single_particle_weight = 1.0
+
+proton.charge = q_e
+proton.mass = m_p    # Very heavy ; should not move
+proton.injection_style = "singleparticle"
+proton.single_particle_pos = 31.998e-6 0.e-6 0.
+proton.single_particle_vel = 0. -2. 0.
+proton.single_particle_weight = 1.0
+
+# Particle shape factor in each direction
+algo.particle_shape = 3
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 20
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz

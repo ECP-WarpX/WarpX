@@ -423,6 +423,9 @@ public:
                                                   int lev);
 #endif
 
+    void ApplyEfieldBoundary (const int lev, PatchType patch_type);
+    void ApplyBfieldBoundary (const int lev, PatchType patch_type);
+
     void DampPML ();
     void DampPML (int lev);
     void DampPML (int lev, PatchType patch_type);

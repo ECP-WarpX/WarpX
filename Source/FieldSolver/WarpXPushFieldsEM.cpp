@@ -163,6 +163,10 @@ WarpX::PushPSATD (amrex::Real a_dt)
         if (do_pml && pml[lev]->ok()) {
             pml[lev]->PushPSATD(lev);
         }
+        ApplyEfieldBoundary(lev,PatchType::fine);
+        if (lev > 0) ApplyEfieldBoundary(lev,PatchType::coarse);
+        ApplyBfieldBoundary(lev,PatchType::fine);
+        if (lev > 0) ApplyBfieldBoundary(lev,PatchType::coarse);
     }
 #endif
 }
@@ -244,6 +248,7 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
         }
     }
 
+    ApplyBfieldBoundary(lev, patch_type);
 }
 
 void
@@ -303,6 +308,9 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                 a_dt, pml_has_particles );
         }
     }
+
+    ApplyEfieldBoundary(lev, patch_type);
+
 }
 
 
@@ -443,6 +451,8 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 a_dt, pml_has_particles );
         }
     }
+
+    ApplyEfieldBoundary(lev, patch_type);
 }
 
 void
