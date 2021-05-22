@@ -3,7 +3,7 @@
 #include "WarpX.H"
 #include "Utils/CoarsenIO.H"
 #ifdef WARPX_DIM_RZ
-#   include "WarpXAlgorithmSelection.H"
+#   include "Utilis/WarpXAlgorithmSelection.H"
 #endif
 
 #include <AMReX.H>
