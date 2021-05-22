@@ -2,6 +2,9 @@
 
 #include "WarpX.H"
 #include "Utils/CoarsenIO.H"
+#ifdef WARPX_DIM_RZ
+#   include "WarpXAlgorithmSelection.H"
+#endif
 
 #include <AMReX.H>
 #include <AMReX_BoxArray.H>

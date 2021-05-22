@@ -7,6 +7,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+    #include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
 
 #include <AMReX.H>
