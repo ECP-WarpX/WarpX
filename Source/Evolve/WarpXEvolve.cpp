@@ -25,6 +25,9 @@
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
+#ifdef WARPX_DIM_RZ
+#   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#endif
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
