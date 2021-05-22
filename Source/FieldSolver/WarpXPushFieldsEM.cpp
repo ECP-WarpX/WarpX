@@ -13,14 +13,18 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#if defined(WARPX_DIM_RZ) || defined(WARPX_USE_PSATD)
-#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
-#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
-#endif
 #include "BoundaryConditions/WarpX_PML_kernels.H"
 #include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
 #include "WarpXPushFieldsEM_K.H"
+#if defined(WARPX_DIM_RZ) || defined(WARPX_USE_PSATD)
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#   ifdef WARPX_DIM_RZ
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   elif defined(WARPX_USE_PSATD)
+#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#   endif
+#endif
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
