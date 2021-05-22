@@ -8,6 +8,7 @@
 
 #include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_DIM_RZ
+#   include "WarpX.H"
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
