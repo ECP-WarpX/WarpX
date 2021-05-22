@@ -7,6 +7,7 @@
 #include "FiniteDifferenceSolver.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
 #ifdef WARPX_DIM_RZ
 #    include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
