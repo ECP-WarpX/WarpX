@@ -342,6 +342,12 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
+    /**
+     * \brief
+     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Calls computeMaxStepBoostAccelerator() if required.
+     */
+    void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
@@ -1110,6 +1116,9 @@ private:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
+
+    // EB implicit funciton
+    std::unique_ptr<ParserWrapper<3> > m_eb_if_parser;
 #endif
 
     void InitEB ();
