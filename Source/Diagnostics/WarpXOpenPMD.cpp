@@ -465,7 +465,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
           (openPMD::IterationEncoding::groupBased == m_Encoding )  )
     {
-        openPMD::Iteration& it = m_Series->iterations[iteration]; 
+        openPMD::Iteration& it = m_Series->iterations[iteration];
         return it;
     } else {
         auto iterations = m_Series->writeIterations();
@@ -985,7 +985,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     {
         openPMD::Iteration& it = m_Series->iterations[m_CurrentStep];
         return it;
-    } else { 
+    } else {
         auto iterations = m_Series->writeIterations();
         openPMD::Iteration& it = iterations[m_CurrentStep];
         return it;

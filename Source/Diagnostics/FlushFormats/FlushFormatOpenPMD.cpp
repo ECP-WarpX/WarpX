@@ -25,7 +25,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 #endif
     else if ( 0 == openpmd_encoding.compare("f") )
       encoding = openPMD::IterationEncoding::fileBased;
-      
+
   //
   // if no encoding is defined, then check to see if tspf is defined.
   // (backward compatibility)
