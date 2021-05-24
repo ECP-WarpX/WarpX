@@ -35,12 +35,12 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
       bool openpmd_tspf = false;
       bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
       if ( tspfDefined && openpmd_tspf )
-	encoding = openPMD::IterationEncoding::fileBased;
+    encoding = openPMD::IterationEncoding::fileBased;
     }
   auto & warpx = WarpX::GetInstance();
   m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
-							   encoding, openpmd_backend, warpx.getPMLdirections()
-							   );
+                               encoding, openpmd_backend, warpx.getPMLdirections()
+                               );
 }
 
 void

@@ -263,7 +263,7 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
       {
         std::string warnMsg = "Unable to support BTD with streaming. Using GroupBased ";
         amrex::Warning(warnMsg);
-	m_Encoding = openPMD::IterationEncoding::groupBased;
+    m_Encoding = openPMD::IterationEncoding::groupBased;
       }
     }
     m_CurrentStep = ts;
@@ -290,7 +290,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
         if (m_Series) {
-	  lf_iterationClose();	
+      lf_iterationClose();    
         }
 
         // create a little helper file for ParaView 5.9+
