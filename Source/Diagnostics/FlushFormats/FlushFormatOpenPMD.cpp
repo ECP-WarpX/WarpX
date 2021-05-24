@@ -21,10 +21,23 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 #if OPENPMDAPI_VERSION_GE(0, 14, 0)
       encoding = openPMD::IterationEncoding::variableBased;
 #else
-    encoding = openPMD::IterationEncoding::groupBased;
+      encoding = openPMD::IterationEncoding::groupBased;
 #endif
     else if ( 0 == openpmd_encoding.compare("f") )
       encoding = openPMD::IterationEncoding::fileBased;
+
+    std::string diag_type_str;
+    pp_diag_name.get("diag_type", diag_type_str);
+    if (diag_type_str == "BackTransformed")
+    {
+      if ( ( openPMD::IterationEncoding::fileBased != encoding ) &&
+           ( openPMD::IterationEncoding::groupBased != encoding ) )
+      {
+        std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
+        amrex::Warning(warnMsg);
+        encoding = openPMD::IterationEncoding::groupBased;
+      }
+    }
 
   //
   // if no encoding is defined, then check to see if tspf is defined.
@@ -35,8 +48,9 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
       bool openpmd_tspf = false;
       bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
       if ( tspfDefined && openpmd_tspf )
-    encoding = openPMD::IterationEncoding::fileBased;
+          encoding = openPMD::IterationEncoding::fileBased;
     }
+
   auto & warpx = WarpX::GetInstance();
   m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
                                encoding, openpmd_backend, warpx.getPMLdirections()

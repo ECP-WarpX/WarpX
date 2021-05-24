@@ -129,6 +129,23 @@ public:
 private:
   void Init (openPMD::Access access, bool isBTD);
 
+
+  inline openPMD::Iteration& GetIteration(int iteration) const
+  {
+    // so BTD will be able to revisit previous steps, so we do not use steps with these two encodings,
+    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
+          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
+    {
+        openPMD::Iteration& it = m_Series->iterations[iteration];
+        return it;
+    } else {
+        auto iterations = m_Series->writeIterations();
+        openPMD::Iteration& it = iterations[iteration];
+        return it;
+    }
+  };
+
+
   /** This function does initial setup for the fields when interation is newly created
    *  @param[in] meshes   The meshes in a series
    *  @param[in] full_geom The geometry

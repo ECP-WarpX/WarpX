@@ -257,41 +257,19 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
         }
     }
 
-    if ( isBTD )
-    {
-      if ( ( openPMD::IterationEncoding::fileBased != m_Encoding ) &&
-           ( openPMD::IterationEncoding::groupBased != m_Encoding ) )
-      {
-        std::string warnMsg = "Unable to support BTD with streaming. Using GroupBased ";
-        amrex::Warning(warnMsg);
-        m_Encoding = openPMD::IterationEncoding::groupBased;
-      }
-    }
     m_CurrentStep = ts;
     Init(openPMD::Access::CREATE, isBTD);
 }
 
 void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
 {
-  auto lf_iterationClose = [&] ()
-    {
-      if ( isBTD ) {
-        auto it = m_Series->iterations[m_CurrentStep];
-        it.close();
-      } else {
-        auto iterations = m_Series->writeIterations();
-        auto it = iterations[m_CurrentStep];
-        it.close();
-      }
-    };
-
     // default close is true
     bool callClose = true;
     // close BTD file only when isLastBTDFlush is true
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
         if (m_Series) {
-      lf_iterationClose();
+            GetIteration(m_CurrentStep).close();
         }
 
         // create a little helper file for ParaView 5.9+
@@ -458,23 +436,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-
-  auto  lfs_test =[&] () -> openPMD::Iteration&
-  {
-    // do not use steps with these two encodings, so BTD will be able to revisit previous steps
-    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
-          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
-    {
-        openPMD::Iteration& it = m_Series->iterations[iteration];
-        return it;
-    } else {
-        auto iterations = m_Series->writeIterations();
-        openPMD::Iteration& it = iterations[iteration];
-        return it;
-    }
-  };
-
-  openPMD::Iteration& currIteration = lfs_test();
+  openPMD::Iteration& currIteration = GetIteration(iteration);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -977,27 +939,12 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
-  auto  lfs_test =[&] () -> openPMD::Iteration&
-  {
-    // do not use steps with these two encodings, so BTD will be able to revisit previous steps
-    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
-          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
-    {
-        openPMD::Iteration& it = m_Series->iterations[m_CurrentStep];
-        return it;
-    } else {
-        auto iterations = m_Series->writeIterations();
-        openPMD::Iteration& it = iterations[m_CurrentStep];
-        return it;
-    }
-  };
-
   // is this either a regular write (true) or the first write in a
   // backtransformed diagnostic (BTD):
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration& series_iteration = lfs_test();
+  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep);
 
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {
