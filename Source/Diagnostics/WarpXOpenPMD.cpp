@@ -290,7 +290,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
         if (m_Series) {
-      lf_iterationClose();    
+      lf_iterationClose();
         }
 
         // create a little helper file for ParaView 5.9+
@@ -341,7 +341,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         m_MPISize = 1;
         m_MPIRank = 1;
     }
-   
+
     m_Series->setIterationEncoding( m_Encoding );
 
     // input file / simulation setup author
@@ -457,7 +457,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-  
+
   auto  lfs_test =[&] () -> openPMD::Iteration&
   {
     if ( m_Encoding != openPMD::IterationEncoding::variableBased ) {
@@ -469,9 +469,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         return it;
     }
   };
- 
+
   openPMD::Iteration& currIteration = lfs_test();
-  
+
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
   currSpecies.setAttribute( "particleShape", double( WarpX::noz ) );
