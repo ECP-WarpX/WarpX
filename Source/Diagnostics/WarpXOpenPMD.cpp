@@ -259,11 +259,12 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
 
     if ( isBTD )
     {
-      if ( m_Encoding == openPMD::IterationEncoding::variableBased )xs
+      if ( ( openPMD::IterationEncoding::fileBased != m_Encoding ) &&
+           ( openPMD::IterationEncoding::groupBased != m_Encoding ) )
       {
         std::string warnMsg = "Unable to support BTD with streaming. Using GroupBased ";
         amrex::Warning(warnMsg);
-    m_Encoding = openPMD::IterationEncoding::groupBased;
+        m_Encoding = openPMD::IterationEncoding::groupBased;
       }
     }
     m_CurrentStep = ts;
@@ -460,8 +461,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
   auto  lfs_test =[&] () -> openPMD::Iteration&
   {
-    if ( m_Encoding != openPMD::IterationEncoding::variableBased ) {
-        openPMD::Iteration& it = m_Series->iterations[iteration];
+    // do not use steps with these two encodings, so BTD will be able to revisit previous steps
+    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
+          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
+    {
+        openPMD::Iteration& it = m_Series->iterations[iteration]; 
         return it;
     } else {
         auto iterations = m_Series->writeIterations();
@@ -975,10 +979,13 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
   auto  lfs_test =[&] () -> openPMD::Iteration&
   {
-    if ( m_Encoding != openPMD::IterationEncoding::variableBased ) {
+    // do not use steps with these two encodings, so BTD will be able to revisit previous steps
+    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
+          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
+    {
         openPMD::Iteration& it = m_Series->iterations[m_CurrentStep];
         return it;
-    } else {
+    } else { 
         auto iterations = m_Series->writeIterations();
         openPMD::Iteration& it = iterations[m_CurrentStep];
         return it;
