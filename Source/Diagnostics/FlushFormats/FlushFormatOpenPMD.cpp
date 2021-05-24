@@ -12,13 +12,35 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
     // one file per timestep (or one file for all steps)
-    bool openpmd_tspf = true;
+    std::string  openpmd_encoding {"v"};
     pp_diag_name.query("openpmd_backend", openpmd_backend);
-    pp_diag_name.query("openpmd_tspf", openpmd_tspf);
-    auto & warpx = WarpX::GetInstance();
-    m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
-        openpmd_tspf, openpmd_backend, warpx.getPMLdirections()
-    );
+    bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
+
+    openPMD::IterationEncoding encoding = openPMD::IterationEncoding::groupBased;
+    if ( 0 == openpmd_encoding.compare("v") )
+#if OPENPMDAPI_VERSION_GE(0, 14, 0)
+      encoding = openPMD::IterationEncoding::variableBased;
+#else
+    encoding = openPMD::IterationEncoding::groupBased;
+#endif
+    else if ( 0 == openpmd_encoding.compare("f") )
+      encoding = openPMD::IterationEncoding::fileBased;
+
+  //
+  // if no encoding is defined, then check to see if tspf is defined.
+  // (backward compatibility)
+  //
+  if ( !encodingDefined )
+    {
+      bool openpmd_tspf = false;
+      bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
+      if ( tspfDefined && openpmd_tspf )
+	encoding = openPMD::IterationEncoding::fileBased;
+    }
+  auto & warpx = WarpX::GetInstance();
+  m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
+							   encoding, openpmd_backend, warpx.getPMLdirections()
+							   );
 }
 
 void

@@ -93,11 +93,11 @@ public:
 
   /** Initialize openPMD I/O routines
    *
-   * @param oneFilePerTS write one file per timestep
+   * @param ie  iteration encoding from openPMD: "group, file, variable"
    * @param filetype file backend, e.g. "bp" or "h5"
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
-  WarpXOpenPMDPlot (bool oneFilePerTS, std::string filetype, std::vector<bool> fieldPMLdirections);
+  WarpXOpenPMDPlot (openPMD::IterationEncoding ie, std::string filetype, std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
 
@@ -243,7 +243,7 @@ private:
   //int m_NumSoAIntAttributes = PIdx::nattribs; //! WarpX' additional int particle attributes in SoA
   int m_NumAoSIntAttributes = 0; //! WarpX definition: no additional int attributes in particle AoS
 
-  bool m_OneFilePerTS = true;  //! write in openPMD fileBased manner for individual time steps
+  openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::groupBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
   int m_CurrentStep  = -1;
 

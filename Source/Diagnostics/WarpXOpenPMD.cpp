@@ -195,10 +195,10 @@ namespace detail
 }
 
 #ifdef WARPX_USE_OPENPMD
-WarpXOpenPMDPlot::WarpXOpenPMDPlot(bool oneFilePerTS,
+WarpXOpenPMDPlot::WarpXOpenPMDPlot(openPMD::IterationEncoding ie,
     std::string openPMDFileType, std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
-   m_OneFilePerTS(oneFilePerTS),
+   m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
@@ -232,7 +232,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   //
   // OpenPMD supports timestepped names
   //
-  if (m_OneFilePerTS)
+  if (m_Encoding == openPMD::IterationEncoding::fileBased)
       filename = filename.append("_%06T");
   filename.append(".").append(m_OpenPMDFileType);
   filepath.append(filename);
@@ -256,19 +256,42 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
             amrex::Warning(warnMsg);
         }
     }
+
+    if ( isBTD )
+    {
+      if ( m_Encoding == openPMD::IterationEncoding::variableBased )xs
+      {
+        std::string warnMsg = "Unable to support BTD with streaming. Using GroupBased ";
+        amrex::Warning(warnMsg);
+	m_Encoding = openPMD::IterationEncoding::groupBased;
+      }
+    }
     m_CurrentStep = ts;
     Init(openPMD::Access::CREATE, isBTD);
 }
 
 void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
 {
+  auto lf_iterationClose = [&] ()
+    {
+      if ( isBTD ) {
+        auto it = m_Series->iterations[m_CurrentStep];
+        it.close();
+      } else {
+        auto iterations = m_Series->writeIterations();
+        auto it = iterations[m_CurrentStep];
+        it.close();
+      }
+    };
+
     // default close is true
     bool callClose = true;
     // close BTD file only when isLastBTDFlush is true
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
-        if (m_Series)
-            m_Series->iterations[m_CurrentStep].close();
+        if (m_Series) {
+	  lf_iterationClose();	
+        }
 
         // create a little helper file for ParaView 5.9+
         if (amrex::ParallelDescriptor::IOProcessor())
@@ -297,7 +320,10 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
-    m_Series = nullptr;
+    if ( m_Encoding == openPMD::IterationEncoding::fileBased )
+        m_Series = nullptr;
+    else if ( m_Series != nullptr )
+        return;
 
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
@@ -315,6 +341,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         m_MPISize = 1;
         m_MPIRank = 1;
     }
+   
+    m_Series->setIterationEncoding( m_Encoding );
 
     // input file / simulation setup author
     if( WarpX::authors.size() > 0u )
@@ -429,9 +457,21 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-
-  openPMD::Iteration currIteration = m_Series->iterations[iteration];
-
+  
+  auto  lfs_test =[&] () -> openPMD::Iteration&
+  {
+    if ( m_Encoding != openPMD::IterationEncoding::variableBased ) {
+        openPMD::Iteration& it = m_Series->iterations[iteration];
+        return it;
+    } else {
+        auto iterations = m_Series->writeIterations();
+        openPMD::Iteration& it = iterations[iteration];
+        return it;
+    }
+  };
+ 
+  openPMD::Iteration& currIteration = lfs_test();
+  
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
   currSpecies.setAttribute( "particleShape", double( WarpX::noz ) );
@@ -933,12 +973,24 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
+  auto  lfs_test =[&] () -> openPMD::Iteration&
+  {
+    if ( m_Encoding != openPMD::IterationEncoding::variableBased ) {
+        openPMD::Iteration& it = m_Series->iterations[m_CurrentStep];
+        return it;
+    } else {
+        auto iterations = m_Series->writeIterations();
+        openPMD::Iteration& it = iterations[m_CurrentStep];
+        return it;
+    }
+  };
+
   // is this either a regular write (true) or the first write in a
   // backtransformed diagnostic (BTD):
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration series_iteration = m_Series->iterations[iteration];
+  openPMD::Iteration& series_iteration = lfs_test();
 
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {
