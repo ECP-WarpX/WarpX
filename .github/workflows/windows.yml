@@ -2,10 +2,6 @@ name: windows
 
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.head_ref }}
-  cancel-in-progress: true
-
 jobs:
   build_win_msvc:
     name: MSVC C++17 w/o MPI

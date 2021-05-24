@@ -2,10 +2,6 @@ name: Ubuntu build
 
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.head_ref }}
-  cancel-in-progress: true
-
 jobs:
   build_cxxminimal:
     name: GCC Minimal w/o MPI [Linux]
