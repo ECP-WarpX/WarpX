@@ -19,8 +19,8 @@
 #include <AMReX_Config.H>
 #include <AMReX_INT.H>
 #include <AMReX_SPACE.H>
+#include <AMReX_Math.H>
 
-#include <math.h>
 #include <algorithm>
 
 using namespace amrex;
