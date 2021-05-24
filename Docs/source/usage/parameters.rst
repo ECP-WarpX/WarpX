@@ -1593,6 +1593,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (default, variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
      openPMD file output encoding (file based will write one file per timestep).
+     `variable based` is not supported for back-transformed diagnostics.
+     Default: ``v`` (full diagnostics) or ``g`` (back-transformed diagnostics).
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
