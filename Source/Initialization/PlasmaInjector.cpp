@@ -212,7 +212,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
-            "Error: For accurate use of WarpX cylindrical gemoetry the number "
+            "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
 #endif
