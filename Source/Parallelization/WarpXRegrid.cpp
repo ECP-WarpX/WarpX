@@ -33,11 +33,13 @@ WarpX::LoadBalance ()
 
     // By default, do not do a redistribute; this toggles to true if RemakeLevel
     // is called for any level
-    int doLoadBalance = 0;
+    int loadBalancedAnyLevel = false;
 
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
+        int doLoadBalance = false;
+
         // Compute the new distribution mapping
         DistributionMapping newdm;
         const amrex::Real nboxes = costs[lev]->size();
@@ -92,8 +94,10 @@ WarpX::LoadBalance ()
             // Record the load balance efficiency
             setLoadBalanceEfficiency(lev, proposedEfficiency);
         }
+
+        loadBalancedAnyLevel = loadBalancedAnyLevel || doLoadBalance;
     }
-    if (doLoadBalance)
+    if (loadBalancedAnyLevel)
     {
         mypc->Redistribute();
         mypc->defineAllParticleTiles();
@@ -345,7 +349,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 const IntVect& ng = current_buffer_masks[lev]->nGrowVect();
                 auto pmf = std::make_unique<iMultiFab>(current_buffer_masks[lev]->boxArray(),
                                                                     dm, current_buffer_masks[lev]->nComp(), ng);
-                // pmf->ParallelCopy(*current_buffer_masks[lev], 0, 0, current_buffer_masks[lev]->nComp(), ng, ng);
+                // we can avoid this since we immediately re-build the values via BuildBufferMasks()
+                // pmf->Redistribute(*current_buffer_masks[lev], 0, 0, current_buffer_masks[lev]->nComp(), ng);
                 current_buffer_masks[lev] = std::move(pmf);
             }
             if (gather_buffer_masks[lev])
@@ -353,9 +358,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 const IntVect& ng = gather_buffer_masks[lev]->nGrowVect();
                 auto pmf = std::make_unique<iMultiFab>(gather_buffer_masks[lev]->boxArray(),
                                                                     dm, gather_buffer_masks[lev]->nComp(), ng);
-                // pmf->ParallelCopy(*gather_buffer_masks[lev], 0, 0, gather_buffer_masks[lev]->nComp(), ng, ng);
+                // we can avoid this since we immediately re-build the values via BuildBufferMasks()
+                // pmf->Redistribute(*gather_buffer_masks[lev], 0, 0, gather_buffer_masks[lev]->nComp(), ng);
                 gather_buffer_masks[lev] = std::move(pmf);
             }
+            if (current_buffer_masks[lev] || gather_buffer_masks[lev])
+                BuildBufferMasks();
         }
 
         if (costs[lev] != nullptr)

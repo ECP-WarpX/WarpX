@@ -96,10 +96,14 @@ struct LoadBalanceCostsUpdateAlgo {
  */
 struct FieldBoundaryType {
     enum {
-        PEC = 0,     //!< perfect electric conductor (PEC) with E_tangential=0
+        PML = 0,
         Periodic = 1,
-        PML = 2,
-        PMC = 3      //!< perfect magnetic conductor (PMC) with B_tangential=0
+        PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
+        PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
+        Damped = 4,   // Fields in the guard cells are damped for PSATD
+                     //in the moving window direction
+        None = 5     // The fields values at the boundary are not updated. This is
+                     // useful for RZ simulations, at r=0.
     };
 };
 

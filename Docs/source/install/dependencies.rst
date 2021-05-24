@@ -8,6 +8,7 @@ Please see installation instructions below.
 
 - a mature `C++14 <https://en.wikipedia.org/wiki/C%2B%2B14>`__ compiler: e.g. GCC 5, Clang 3.6 or newer
 - `CMake 3.15.0+ <https://cmake.org>`__
+- `Git 2.18+ <https://git-scm.com>`__
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
 - `PICSAR <https://github.com/ECP-WarpX/picsar>`__: we automatically download and compile a copy of PICSAR
 
@@ -52,11 +53,11 @@ Spack (macOS/Linux)
 
 (in new terminals, re-activate the environment with ``spack env activate warpx-dev`` again)
 
-If you also want to run runtime tests and added Python above, install also these additional Python packages in the active Spack environment:
+If you also want to run runtime tests and added Python (``spack add python``) above, install also these additional Python packages in the active Spack environment:
 
 .. code-block:: bash
 
-   python -m pip install matplotlib==3.2.2 yt scipy numpy
+   python -m pip install matplotlib==3.2.2 yt scipy numpy openpmd-api
 
 
 Brew (macOS/Linux)
@@ -69,6 +70,7 @@ Brew (macOS/Linux)
    brew install ccache
    brew install cmake
    brew install fftw
+   brew install git
    brew install hdf5-mpi
    brew install libomp
    brew install pkg-config  # for fftw
@@ -101,5 +103,5 @@ Apt (Debian/Ubuntu)
 .. code-block:: bash
 
    sudo apt update
-   sudo apt install build-essential ccache cmake g++ libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-scipy
+   sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-scipy
 

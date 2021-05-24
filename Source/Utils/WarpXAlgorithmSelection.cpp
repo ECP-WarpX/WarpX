@@ -76,11 +76,13 @@ const std::map<std::string, int> MacroscopicSolver_algo_to_int = {
 };
 
 const std::map<std::string, int> FieldBCType_algo_to_int = {
-    {"pec",      FieldBoundaryType::PEC},
-    {"periodic", FieldBoundaryType::Periodic},
     {"pml",      FieldBoundaryType::PML},
+    {"periodic", FieldBoundaryType::Periodic},
+    {"pec",      FieldBoundaryType::PEC},
     {"pmc",      FieldBoundaryType::PMC},
-    {"default",  FieldBoundaryType::PEC}
+    {"damped",   FieldBoundaryType::Damped},
+    {"none",     FieldBoundaryType::None},
+    {"default",  FieldBoundaryType::PML}
 };
 
 const std::map<std::string, int> ParticleBCType_algo_to_int = {

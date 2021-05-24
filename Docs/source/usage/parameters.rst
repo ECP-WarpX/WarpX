@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist in a single real number, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
 
 .. _running-cpp-parameters-overall:
 
@@ -76,14 +76,14 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
-* ``self_fields_required_precision`` (`float`, default: 1.e-11)
+* ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
-    This solver can fail to reach the default precision within a reasonable
+    This solver can fail to reach the default precision within a reasonable time.
     This only applies when warpx.do_electrostatic = labframe.
 
-* ``self_fields_max_iters`` (`integer`, default: 200)
+* ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
     fields calculation. In case if MLMG converges but fails to reach the desired
     ``self_fields_required_precision``, this parameter may be increased.
@@ -130,16 +130,33 @@ Setting up the field mesh
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
 
-* ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters)
+* ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its
     extent is given here by the coordinates of the lower corner (``geometry.prob_lo``) and
-    upper corner (``geometry.prob_hi``). The first axis of the coordinates is x (or r with cylindrical)
-    and the last is z.
+    upper corner (``geometry.prob_hi``). The first axis of the coordinates is x
+    (or r with cylindrical) and the last is z.
 
-* ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 integers in 3D`; in meters) optional
+* ``warpx.do_moving_window`` (`integer`; 0 by default)
+    Whether to use a moving window for the simulation
+
+* ``warpx.moving_window_dir`` (either ``x``, ``y`` or ``z``)
+    The direction of the moving window.
+
+* ``warpx.moving_window_v`` (`float`)
+    The speed of moving window, in units of the speed of light
+    (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
+
+* ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
+
+* ``warpx.refine_plasma`` (`integer`) optional (default `0`)
+    Increase the number of macro-particles that are injected "ahead" of a mesh
+    refinement patch in a moving window simulation.
+
+    Note: in development; only works with static mesh-refinement, specific
+    to moving window plasma injection, and requires a single refined level.
 
 * ``warpx.n_current_deposition_buffer`` (`integer`)
     When using mesh refinement: the particles that are located inside
@@ -182,10 +199,21 @@ Setting up the field mesh
 Domain Boundary Conditions
 --------------------------
 
-* ``boundary.field_lo`` and ``boundary_field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
-    Boundary conditions applied to field at the lower and upper domain boundaries.
+* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+    Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
+
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
+
+    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
+    Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
+
+    * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
+
+    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
+If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
+
+    * ``none``: No boundary condition is applied to the fields. This option must be used for the RZ-solver at `r=0`.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
@@ -305,12 +333,13 @@ Math parser and user-defined constants
 --------------------------------------
 
 WarpX provides a math parser that reads expressions in the input file.
-It can be used in all input parameters that consist in one real number.
+It can be used in all input parameters that consist of one or more floats.
+Note that when multiple floats are expected, the expressions are space delimited.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
 
-WarpX provides a few pre-defined constants, that can be used for any parameter that consists in one real number.
+WarpX provides a few pre-defined constants, that can be used for any parameter that consists of one or more floats.
 
 ======== ===================
 q_e      elementary charge
@@ -327,7 +356,7 @@ User-defined constants
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Users can define their own constants in the input file.
-These constants can be used for any parameter that consists in one real number.
+These constants can be used for any parameter that consists of one or more floats.
 User-defined constant names can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
@@ -349,6 +378,7 @@ The parser reads python-style expressions between double quotes, for instance
 user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
+Alternatively the expression above can be written as ``if(x>0, a0*x**2 * (1-y*1.e2), 0)``.
 The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
 A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group explicitly, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
@@ -403,7 +433,9 @@ Particle initialization
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
 * ``<species_name>.injection_style`` (`string`)
-    Determines how the particles will be injected in the simulation.
+    Determines how the (macro-)particles will be injected in the simulation.
+    The number of particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are immediately assigned to a refined patch.
+
     The options are:
 
     * ``NUniformPerCell``: injection with a fixed number of evenly-spaced particles per cell.
@@ -456,6 +488,12 @@ Particle initialization
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
     number of particles per theta is at least two times the number of azimuthal modes requested.
     (It is recommended to do a convergence scan of the number of particles per theta)
+
+* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
+    Split particles of the species when crossing the boundary from a lower
+    resolution domain to a higher resolution domain.
+
+    Currently implemented on CPU only.
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
@@ -610,10 +648,6 @@ Particle initialization
 * ``<species_name>.do_backward_propagation`` (`bool`)
     Inject a backward-propagating beam to reduce the effect of charge-separation
     fields when running in the boosted frame. See examples.
-
-* ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
-    Split particles of the species when crossing the boundary from a lower
-    resolution domain to a higher resolution domain.
 
 * ``<species_name>.split_type`` (`int`) optional (default `0`)
     Splitting technique. When `0`, particles are split along the simulation
@@ -818,11 +852,13 @@ Laser initialization
       function, they still have to be specified as they are used for numerical purposes.
     - ``"from_txye_file"``: the electric field of the laser is read from an external binary file
       whose format is explained below. It requires to provide the name of the binary file
-      setting the additional parameter ``<laser_name>.txye_file_name`` (string). It accepts an
-      optional parameter ``<laser_name>.time_chunk_size`` (int). This allows to read only
+      setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
+      optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
       time_chunk_size timesteps from the binary file. New timesteps are read as soon as they are needed.
       The default value is automatically set to the number of timesteps contained in the binary file
       (i.e. only one read is performed at the beginning of the simulation).
+      It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
+      delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
       The external binary file should provide E(x,y,t) on a rectangular (but non necessarily uniform)
       grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
       values. x,y,t are meant to be in S.I. units, while the field value is meant to be multiplied by
@@ -1080,7 +1116,6 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     :math:`R\approx1.4A^{1/3}` is the effective Coulombic radius of the nucleus,
     :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
-    a Coulomb logarithm will be computed automatically according to the algorithm.
     a Coulomb logarithm will be computed automatically according to the algorithm in
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
@@ -1111,17 +1146,6 @@ Numerics and algorithms
 * ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
     Whether to add compensation when applying filtering.
     This is only supported with the RZ spectral solver.
-
-* ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
-    When using the RZ spectrol solver, specifies whether to apply a
-    damping factor to the E and B fields in the guard cells
-    along z that extend beyond the edge of the domain.
-    When the boundary conditions along z are not periodic, this defaults to
-    true, otherwise false. The damping profile is
-    a sine squared and is applied to the fields on the outer half of the guards.
-    This damping is useful for damping high frequency numerical artifacts that
-    occur when there is parallel decomposition along z with non-periodic boundary
-    conditions.
 
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
@@ -1166,7 +1190,6 @@ Numerics and algorithms
      If ``warpx.do_nodal`` is ``true``, then ``energy-conserving`` and ``momentum-conserving``
      are equivalent.
 
-
 * ``algo.particle_pusher`` (`string`, optional)
     The algorithm for the particle pusher. Available options are:
 
@@ -1175,6 +1198,13 @@ Numerics and algorithms
      - ``higuera``: Higuera-Cary pusher (see `Higuera and Cary, Phys. Plasmas (2017) <https://aip.scitation.org/doi/10.1063/1.4979989>`__)
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
+
+* ``algo.particle_shape`` (`integer`; `1`, `2`, or `3`)
+    The order of the shape factors (splines) for the macro-particles along all spatial directions: `1` for linear, `2` for quadratic, `3` for cubic.
+    Low-order shape factors result in faster simulations, but may lead to more noisy results.
+    High-order shape factors are computationally more expensive, but may increase the overall accuracy of the results. For production runs it is generally safer to use high-order shape factors, such as cubic order.
+
+    Note that this input parameter is not optional and must always be set in all input files provided that there is at least one particle species (set in input as ``particles.species_names``) or one laser species (set in input as ``lasers.names``) in the simulation. No default value is provided automatically.
 
 * ``algo.maxwell_solver`` (`string`, optional)
     The algorithm for the Maxwell field solver.
@@ -1214,17 +1244,11 @@ Numerics and algorithms
     computational medium, respectively. The default values are the corresponding values
     in vacuum.
 
-* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
-    The order of the shape factors for the macroparticles, for the 3 dimensions of space.
-    Lower-order shape factors result in faster simulations, but more noisy results,
-
-    Note that in the current implementation in WarpX these 3 numbers must be equal.
-
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
     When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
-    For example, `E_z` is gathered using ``interpolation.nox``, ``interpolation.noy``, and ``interpolation.noz - 1``.
-    See equations 21-23 of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
+    For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
+    See equations (21)-(23) of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
     Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
 
     .. warning::
@@ -1405,10 +1429,12 @@ Numerics and algorithms
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
-    synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
-    Since the grid nodes at the interface between two neighbor boxes are duplicated in both
-    boxes, an instability can occur if they have too different values.
+    synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
+    boundaries is performed. Since the grid nodes at the interface between two neighbor boxes are
+    duplicated in both boxes, an instability can occur if they have too different values.
     This option makes sure that they are synchronized periodically.
+    Note that if Perfectly Matched Layers (PML) are used, synchronization of the `E` and `B` fields
+    is performed at every timestep regardless of this parameter.
 
 * ``warpx.use_hybrid_QED`` (`bool`; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
@@ -1464,6 +1490,18 @@ Boundary conditions
 * ``warpx.do_pml_j_damping`` (`int`; default: 0)
     Whether to damp current in PML. Can only be used if particles are propagated in PML,
     i.e. if `warpx.pml_has_particles = 1`.
+
+* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for E in the PML region.
+    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the PSATD solver.
+
+* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for B in the PML region.
+    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the PSATD solver.
 
 * ``warpx.do_pml_Lo`` (`2 ints in 2D`, `3 ints in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for lower boundaries on mother grid.

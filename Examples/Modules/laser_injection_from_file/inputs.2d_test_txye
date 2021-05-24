@@ -16,13 +16,13 @@ warpx.serialize_ics = 1
 #################################
 ############ NUMERICS ###########
 #################################
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.cfl = 0.98
 warpx.use_filter = 0
 algo.maxwell_solver = ckc
 algo.load_balance_intervals = -1
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############# LASER #############
@@ -36,6 +36,7 @@ txye_laser.wavelength = 1.0e-6         # The wavelength of the laser (in meters)
 txye_laser.profile      = from_txye_file
 txye_laser.txye_file_name = "gauss_2d_unf.txye"
 txye_laser.time_chunk_size = 50
+txye_laser.delay = 0.0
 
 # Diagnostics
 diagnostics.diags_names = diag1

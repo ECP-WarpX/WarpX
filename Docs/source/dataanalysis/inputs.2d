@@ -26,6 +26,7 @@ algo.current_deposition = 0
 algo.charge_deposition = 0
 algo.field_gathering = 0
 algo.particle_pusher = 0
+algo.particle_shape = 3
 algo.maxwell_solver = ckc
 warpx.use_filter = 1
 warpx.do_pml = 1
@@ -34,9 +35,6 @@ warpx.cfl = .99
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1. # in units of the speed of light
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 
 #################################
 ############ PLASMA #############
