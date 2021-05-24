@@ -325,6 +325,12 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
+    /**
+     * \brief
+     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Calls computeMaxStepBoostAccelerator() if required.
+     */
+    void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
