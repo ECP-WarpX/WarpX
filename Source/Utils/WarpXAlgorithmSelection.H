@@ -118,6 +118,16 @@ struct ParticleBoundaryType {
     };
 };
 
+/** MPI reductions
+ */
+struct ReductionType {
+    enum {
+        Maximum = 0,
+        Minimum = 1,
+        Sum = 2
+    };
+};
+
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
 

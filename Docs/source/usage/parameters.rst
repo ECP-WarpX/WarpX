@@ -351,6 +351,7 @@ q_e      elementary charge
 m_e      electron mass
 m_p      proton mass
 epsilon0 vacuum permittivity
+mu0      vacuum permeability
 clight   speed of light
 pi       math constant pi
 ======== ===================
@@ -1821,6 +1822,9 @@ Reduced Diagnostics
         :math:`E` field energy,
         :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
+        Note that the fields are *not* averaged on the cell centers before their energy is
+        computed.
+
     * ``FieldMaximum``
         This type computes the maximum value of each component of the electric and magnetic fields
         and of the norm of the electric and magnetic field vectors.
@@ -1853,6 +1857,25 @@ Reduced Diagnostics
 
         Note that the charge densities are averaged on the cell centers before their maximum values
         are computed.
+
+    * ``FieldReduction``
+        This type computes an arbitrary reduction of the positions and the electromagnetic fields.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)`` (`string`)
+            An analytic function to be reduced must be provided, using the math parser.
+
+        * ``<reduced_diags_name>.reduction_type`` (`string`)
+            The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
+            ``Integral``.
+            ``Integral`` computes the spatial integral of the function defined in the parser by
+            summing its value on all grid points and multiplying the result by the volume of a
+            cell.
+            Please be also aware that measuring maximum quantities might be very noisy in PIC
+            simulations.
+
+        The only output column is the reduced value.
+
+        Note that the fields are averaged on the cell centers before the reduction is performed.
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the

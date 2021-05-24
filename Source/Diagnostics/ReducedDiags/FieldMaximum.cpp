@@ -28,9 +28,9 @@ FieldMaximum::FieldMaximum (std::string rd_name)
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
-    constexpr int noutputs = 8; // total energy, E-field energy and B-field energy
+    constexpr int noutputs = 8;  // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
     // resize data array
-    m_data.resize(noutputs*nLevel, 0.0_rt); // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
+    m_data.resize(noutputs*nLevel, 0.0_rt);
 
     if (ParallelDescriptor::IOProcessor())
     {
@@ -147,12 +147,14 @@ void FieldMaximum::ComputeDiags (int step)
         using ReduceTuple = typename decltype(reduceEx_data)::Type;
 
         // Prepare interpolation of field components to cell center
-        GpuArray<int,3> Extype;
-        GpuArray<int,3> Eytype;
-        GpuArray<int,3> Eztype;
-        GpuArray<int,3> Bxtype;
-        GpuArray<int,3> Bytype;
-        GpuArray<int,3> Bztype;
+        // The arrays below store the index type (staggering) of each MultiFab, with the third
+        // component set to zero in the two-dimensional case.
+        auto Extype = amrex::GpuArray<int,3>{0,0,0};
+        auto Eytype = amrex::GpuArray<int,3>{0,0,0};
+        auto Eztype = amrex::GpuArray<int,3>{0,0,0};
+        auto Bxtype = amrex::GpuArray<int,3>{0,0,0};
+        auto Bytype = amrex::GpuArray<int,3>{0,0,0};
+        auto Bztype = amrex::GpuArray<int,3>{0,0,0};
         for (int i = 0; i < AMREX_SPACEDIM; ++i){
             Extype[i] = Ex.ixType()[i];
             Eytype[i] = Ey.ixType()[i];
@@ -161,14 +163,6 @@ void FieldMaximum::ComputeDiags (int step)
             Bytype[i] = By.ixType()[i];
             Bztype[i] = Bz.ixType()[i];
         }
-#if   (AMREX_SPACEDIM == 2)
-        Extype[2] = 0;
-        Eytype[2] = 0;
-        Eztype[2] = 0;
-        Bxtype[2] = 0;
-        Bytype[2] = 0;
-        Bztype[2] = 0;
-#endif
 
         // MFIter loop to interpolate fields to cell center and get maximum values
 #ifdef AMREX_USE_OMP
@@ -176,7 +170,8 @@ void FieldMaximum::ComputeDiags (int step)
 #endif
         for ( MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            // Make the box cell centered to avoid including ghost cells in the calculation
+            // Make the box cell centered in preparation for the interpolation (and to avoid
+            // including ghost cells in the calculation)
             const Box& box = enclosedCells(mfi.nodaltilebox());
             const auto& arrEx = Ex[mfi].array();
             const auto& arrEy = Ey[mfi].array();

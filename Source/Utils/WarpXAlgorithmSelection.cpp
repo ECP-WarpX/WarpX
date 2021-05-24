@@ -93,6 +93,12 @@ const std::map<std::string, int> ParticleBCType_algo_to_int = {
     {"default",    ParticleBoundaryType::Absorbing}
 };
 
+const std::map<std::string, int> ReductionType_algo_to_int = {
+    {"maximum",  ReductionType::Maximum},
+    {"minimum",  ReductionType::Minimum},
+    {"integral", ReductionType::Sum}
+};
+
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 
@@ -124,6 +130,8 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = MaxwellSolver_medium_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "macroscopic_sigma_method")) {
         algo_to_int = MacroscopicSolver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "reduction_type")) {
+        algo_to_int = ReductionType_algo_to_int;
     } else {
         std::string pp_search_string = pp_search_key;
         amrex::Abort("Unknown algorithm type: " + pp_search_string);
