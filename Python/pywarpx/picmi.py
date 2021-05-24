@@ -685,6 +685,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_particles_wt = kw.pop('warpx_costs_heuristic_particles_wt', None)
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
+        self.amr_check_input = kw.pop('warpx_amr_check_input', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -721,6 +722,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
+
+        pywarpx.amr.check_input = self.amr_check_input
 
         particle_shape = self.particle_shape
         for s in self.species:
