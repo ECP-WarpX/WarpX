@@ -109,6 +109,14 @@ struct CartesianCKCAlgorithm {
     }
 
     /**
+     * \brief Returns maximum number of guard cells required by the field-solve
+     */
+    static amrex::IntVect GetMaxGuardCell () {
+        // The ckc solver requires one guard cell in each dimension
+        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
+    }
+
+    /**
      * Perform derivative along x on a cell-centered grid, from a nodal field `F` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (

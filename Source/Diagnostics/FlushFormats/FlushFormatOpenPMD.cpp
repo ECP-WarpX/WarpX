@@ -50,8 +50,8 @@ FlushFormatOpenPMD::WriteToFile (
     m_OpenPMDPlotWriter->SetStep(output_iteration, prefix, isBTD);
 
     // fields: only dumped for coarse level
-    m_OpenPMDPlotWriter->WriteOpenPMDFields(
-        varnames, mf[0], geom[0], output_iteration, time, isBTD, full_BTD_snapshot);
+    m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
+        varnames, mf, geom, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags);

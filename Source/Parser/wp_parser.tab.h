@@ -67,16 +67,17 @@ extern int wxparserdebug;
     SYMBOL = 260,                  /* SYMBOL  */
     F1 = 261,                      /* F1  */
     F2 = 262,                      /* F2  */
-    EOL = 263,                     /* EOL  */
-    POW = 264,                     /* "**"  */
-    GEQ = 265,                     /* ">="  */
-    LEQ = 266,                     /* "<="  */
-    EQ = 267,                      /* "=="  */
-    NEQ = 268,                     /* "!="  */
-    AND = 269,                     /* "and"  */
-    OR = 270,                      /* "or"  */
-    NEG = 271,                     /* NEG  */
-    UPLUS = 272                    /* UPLUS  */
+    F3 = 263,                      /* F3  */
+    EOL = 264,                     /* EOL  */
+    POW = 265,                     /* "**"  */
+    GEQ = 266,                     /* ">="  */
+    LEQ = 267,                     /* "<="  */
+    EQ = 268,                      /* "=="  */
+    NEQ = 269,                     /* "!="  */
+    AND = 270,                     /* "and"  */
+    OR = 271,                      /* "or"  */
+    NEG = 272,                     /* NEG  */
+    UPLUS = 273                    /* UPLUS  */
   };
   typedef enum wxparsertokentype wxparsertoken_kind_t;
 #endif
@@ -91,6 +92,7 @@ union WXPARSERSTYPE
     struct wp_symbol* s;
     enum wp_f1_t f1;
     enum wp_f2_t f2;
+    enum wp_f3_t f3;
 
 
 };
