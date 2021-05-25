@@ -70,6 +70,19 @@ wp_newf2 (enum wp_f2_t ftype, struct wp_node* l, struct wp_node* r)
     return (struct wp_node*) tmp;
 }
 
+struct wp_node*
+wp_newf3 (enum wp_f3_t ftype, struct wp_node* n1, struct wp_node* n2,
+          struct wp_node* n3)
+{
+    struct wp_f3* tmp = (struct wp_f3*) std::malloc(sizeof(struct wp_f3));
+    tmp->type = WP_F3;
+    tmp->n1 = n1;
+    tmp->n2 = n2;
+    tmp->n3 = n3;
+    tmp->ftype = ftype;
+    return (struct wp_node*) tmp;
+}
+
 void
 wxparsererror (char const *s, ...)
 {
@@ -177,6 +190,12 @@ wp_ast_size (struct wp_node* node)
         result = wp_aligned_size(sizeof(struct wp_f2))
             + wp_ast_size(node->l) + wp_ast_size(node->r);
         break;
+    case WP_F3:
+        result = wp_aligned_size(sizeof(struct wp_f3))
+            + wp_ast_size(((struct wp_f3*)node)->n1)
+            + wp_ast_size(((struct wp_f3*)node)->n2)
+            + wp_ast_size(((struct wp_f3*)node)->n3);
+        break;
     case WP_ADD_VP:
     case WP_SUB_VP:
     case WP_MUL_VP:
@@ -244,6 +263,13 @@ wp_parser_ast_dup (struct wp_parser* my_parser, struct wp_node* node, int move)
         memcpy(result, node                  , sizeof(struct wp_f2));
         ((struct wp_f2*)result)->l = wp_parser_ast_dup(my_parser, ((struct wp_f2*)node)->l, move);
         ((struct wp_f2*)result)->r = wp_parser_ast_dup(my_parser, ((struct wp_f2*)node)->r, move);
+        break;
+    case WP_F3:
+        result = wp_parser_allocate(my_parser, sizeof(struct wp_f3));
+        memcpy(result, node                  , sizeof(struct wp_f3));
+        ((struct wp_f3*)result)->n1 = wp_parser_ast_dup(my_parser, ((struct wp_f3*)node)->n1, move);
+        ((struct wp_f3*)result)->n2 = wp_parser_ast_dup(my_parser, ((struct wp_f3*)node)->n2, move);
+        ((struct wp_f3*)result)->n3 = wp_parser_ast_dup(my_parser, ((struct wp_f3*)node)->n3, move);
         break;
     case WP_ADD_VP:
     case WP_SUB_VP:
@@ -650,6 +676,23 @@ wp_ast_optimize (struct wp_node* node)
             }
         }
         break;
+    case WP_F3:
+        wp_ast_optimize(((struct wp_f3*)node)->n1);
+        wp_ast_optimize(((struct wp_f3*)node)->n2);
+        wp_ast_optimize(((struct wp_f3*)node)->n3);
+        if (((struct wp_f3*)node)->n1->type == WP_NUMBER &&
+            ((struct wp_f3*)node)->n2->type == WP_NUMBER &&
+            ((struct wp_f3*)node)->n3->type == WP_NUMBER)
+        {
+            amrex_real v = wp_call_f3
+                (((struct wp_f3*)node)->ftype,
+                 ((struct wp_number*)(((struct wp_f3*)node)->n1))->value,
+                 ((struct wp_number*)(((struct wp_f3*)node)->n2))->value,
+                 ((struct wp_number*)(((struct wp_f3*)node)->n3))->value);
+            ((struct wp_number*)node)->type = WP_NUMBER;
+            ((struct wp_number*)node)->value = v;
+        }
+        break;
     case WP_ADD_VP:
         wp_ast_optimize(node->r);
         if (node->r->type == WP_NUMBER)
@@ -783,6 +826,22 @@ wp_ast_print_f2 (struct wp_f2* f2)
     }
 }
 
+static
+void
+wp_ast_print_f3 (struct wp_f3* f3)
+{
+    wp_ast_print(f3->n1);
+    wp_ast_print(f3->n2);
+    wp_ast_print(f3->n3);
+    switch (f3->ftype) {
+    case WP_IF:
+        std::printf("IF\n");
+        break;
+    default:
+        amrex::AllPrint() << "wp_ast_print_f3: Unknow funciton " << f3->ftype << "\n";
+    }
+}
+
 void
 wp_ast_print (struct wp_node* node)
 {
@@ -823,6 +882,9 @@ wp_ast_print (struct wp_node* node)
         break;
     case WP_F2:
         wp_ast_print_f2((struct wp_f2*)node);
+        break;
+    case WP_F3:
+        wp_ast_print_f3((struct wp_f3*)node);
         break;
     case WP_ADD_VP:
         std::printf("ADD:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
@@ -866,6 +928,7 @@ wp_ast_depth (struct wp_node* node, int* n)
 {
     int nl = 0;
     int nr = 0;
+    int n3 = 0;
     switch (node->type)
     {
     case WP_NUMBER:
@@ -892,13 +955,16 @@ wp_ast_depth (struct wp_node* node, int* n)
         wp_ast_depth(node->l, &nl);
         break;
     case WP_F1:
-        (*n)++;
         wp_ast_depth(((struct wp_f1*)node)->l, &nl);
         break;
     case WP_F2:
-        (*n)++;
         wp_ast_depth(((struct wp_f2*)node)->l, &nl);
         wp_ast_depth(((struct wp_f2*)node)->r, &nr);
+        break;
+    case WP_F3:
+        wp_ast_depth(((struct wp_f3*)node)->n1, &nl);
+        wp_ast_depth(((struct wp_f3*)node)->n2, &nr);
+        wp_ast_depth(((struct wp_f3*)node)->n3, &n3);
         break;
     case WP_ADD_VP:
         break;
@@ -922,7 +988,7 @@ wp_ast_depth (struct wp_node* node, int* n)
         wxparsererror("wp_ast_depth: unknown node type %d\n", node->type);
         exit(1);
     }
-    *n += std::max(nl,nr) + 1;
+    *n += std::max({nl,nr,n3}) + 1;
 }
 
 void
@@ -953,6 +1019,11 @@ wp_ast_regvar (struct wp_node* node, char const* name, amrex_real* p)
     case WP_F2:
         wp_ast_regvar(node->l, name, p);
         wp_ast_regvar(node->r, name, p);
+        break;
+    case WP_F3:
+        wp_ast_regvar(((struct wp_f3*)node)->n1, name, p);
+        wp_ast_regvar(((struct wp_f3*)node)->n2, name, p);
+        wp_ast_regvar(((struct wp_f3*)node)->n3, name, p);
         break;
     case WP_ADD_VP:
     case WP_SUB_VP:
@@ -1009,6 +1080,11 @@ wp_ast_regvar_gpu (struct wp_node* node, char const* name, int i)
         wp_ast_regvar_gpu(node->l, name, i);
         wp_ast_regvar_gpu(node->r, name, i);
         break;
+    case WP_F3:
+        wp_ast_regvar_gpu(((struct wp_f3*)node)->n1, name, i);
+        wp_ast_regvar_gpu(((struct wp_f3*)node)->n2, name, i);
+        wp_ast_regvar_gpu(((struct wp_f3*)node)->n3, name, i);
+        break;
     case WP_ADD_VP:
     case WP_SUB_VP:
     case WP_MUL_VP:
@@ -1063,6 +1139,11 @@ void wp_ast_setconst (struct wp_node* node, char const* name, amrex_real c)
     case WP_F2:
         wp_ast_setconst(node->l, name, c);
         wp_ast_setconst(node->r, name, c);
+        break;
+    case WP_F3:
+        wp_ast_setconst(((struct wp_f3*)node)->n1, name, c);
+        wp_ast_setconst(((struct wp_f3*)node)->n2, name, c);
+        wp_ast_setconst(((struct wp_f3*)node)->n3, name, c);
         break;
     case WP_ADD_VP:
     case WP_SUB_VP:

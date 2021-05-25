@@ -9,6 +9,9 @@ amr.max_level = 0
 
 warpx.do_pml = 0
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 particles.species_names = resampled_part1 resampled_part2
 
 my_constants.pi = 3.141592653589793

@@ -25,6 +25,7 @@ ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
 ci_eb = os.environ.get('WARPX_CI_EB') == 'TRUE'
 ci_openpmd = os.environ.get('WARPX_CI_OPENPMD') == 'TRUE'
 ci_ccache = os.environ.get('WARPX_CI_CCACHE') == 'TRUE'
+ci_num_make_jobs = os.environ.get('WARPX_CI_NUM_MAKE_JOBS', None)
 
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
@@ -71,8 +72,9 @@ text = re.sub('runtime_params =',
               'runtime_params = amrex.abort_on_unused_inputs=1 ',
               text)
 
-# Use only 2 cores for compiling
-text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = 2', text )
+# Use less/more cores for compiling, e.g. public CI only provides 2 cores
+if ci_num_make_jobs is not None:
+    text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = {}'.format(ci_num_make_jobs), text )
 # Use only 1 OMP thread for running
 text = re.sub( 'numthreads = \d+', 'numthreads = 1', text)
 # Prevent emails from being sent

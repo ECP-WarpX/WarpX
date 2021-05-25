@@ -431,6 +431,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   WarpXParticleCounter counter(pc);
 
   openPMD::Iteration currIteration = m_Series->iterations[iteration];
+
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
   currSpecies.setAttribute( "particleShape", double( WarpX::noz ) );
@@ -613,11 +614,14 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             std::tie(std::ignore, newRecord) = addedRecords.insert(record_name);
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
-                currRecord.setAttribute( "macroWeighted", 0u );
-                if( record_name == "momentum" )
-                currRecord.setAttribute( "weightingPower", 1.0 );
+                if( record_name == "weighting" )
+                    currRecord.setAttribute( "macroWeighted", 1u );
                 else
-                currRecord.setAttribute( "weightingPower", 0.0 );
+                    currRecord.setAttribute( "macroWeighted", 0u );
+                if( record_name == "momentum" || record_name == "weighting" )
+                    currRecord.setAttribute( "weightingPower", 1.0 );
+                else
+                    currRecord.setAttribute( "weightingPower", 0.0 );
             }
         }
     }
@@ -635,7 +639,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 currRecord.setAttribute( "macroWeighted", 0u );
-                if( record_name == "momentum" )
+                if( record_name == "momentum" || record_name == "weighting" )
                     currRecord.setAttribute( "weightingPower", 1.0 );
                 else
                     currRecord.setAttribute( "weightingPower", 0.0 );
@@ -766,56 +770,17 @@ WarpXOpenPMDPlot::SetupPos(
 }
 
 
-//
-// this is originally copied from FieldIO.cpp
-//
+/*
+ * Set up paramter for mesh container using the geometry (from level 0)
+ *
+ * @param [IN] meshes: openPMD-api mesh container
+ * @param [IN] full_geom: field geometry
+ *
+ */
 void
-WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
-                      const std::vector<std::string>& varnames,
-                      const amrex::MultiFab& mf,
-                      const amrex::Geometry& geom, // geometry of the mf/Fab
-                      const int iteration,
-                      const double time, bool isBTD,
-                      const amrex::Geometry& full_BTD_snapshot ) const
+WarpXOpenPMDPlot::SetupFields(  openPMD::Container< openPMD::Mesh >& meshes,
+                                amrex::Geometry& full_geom  ) const
 {
-  //This is AMReX's tiny profiler. Possibly will apply it later
-  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
-
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
-
-  amrex::Geometry full_geom = geom;
-  if( isBTD )
-      full_geom = full_BTD_snapshot;
-
-  // is this either a regular write (true) or the first write in a
-  // backtransformed diagnostic (BTD):
-  bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
-
-  int const ncomp = mf.nComp();
-
-  // Create a few vectors that store info on the global domain
-  // Swap the indices for each of them, since AMReX data is Fortran order
-  // and since the openPMD API assumes contiguous C order
-  // - Size of the box, in integer number of cells
-  amrex::Box const & global_box = full_geom.Domain();
-  auto const global_size = getReversedVec(global_box.size());
-  // - Grid spacing
-  std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
-  // - Global offset
-  std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
-  // - AxisLabels
-  std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
-
-  // Prepare the type of dataset that will be written
-  openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
-  auto const dataset = openPMD::Dataset(datatype, global_size);
-
-  // meta data
-  auto series_iteration = m_Series->iterations[iteration];
-  auto meshes = series_iteration.meshes;
-  if( first_write_to_iteration ) {
-      series_iteration.setTime( time );
-
       // meta data for ED-PIC extension
       auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
       std::vector<std::string> fieldBoundary(6, "reflecting");
@@ -875,16 +840,57 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
       }());
       if (WarpX::do_dive_cleaning)
           meshes.setAttribute("chargeCorrectionParameters", "period=1");
-  }
+}
 
-  // Loop through the different components, i.e. different fields stored in mf
-  for (int icomp=0; icomp<ncomp; icomp++){
-    std::string const & varname = varnames[icomp];
 
-    // assume fields are scalar unless they match the following match of known vector fields
-    std::string field_name = varname;
-    std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
+/*
+ * Setup component properties  for a field mesh
+ * @param [IN]: mesh          a mesh field
+ * @param [IN]: full_geom     geometry for the mesh
+ * @param [IN]: mesh_comp     a component for the mesh
+ */
+void
+WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
+                                 amrex::Geometry& full_geom,
+                                 openPMD::MeshRecordComponent& mesh_comp ) const
+{
+       amrex::Box const & global_box = full_geom.Domain();
+       auto const global_size = getReversedVec(global_box.size());
+       // - Grid spacing
+       std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
+       // - Global offset
+       std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
+       // - AxisLabels
+       std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
 
+       // Prepare the type of dataset that will be written
+       openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
+       auto const dataset = openPMD::Dataset(datatype, global_size);
+
+       mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
+       mesh.setAxisLabels(axis_labels);
+       mesh.setGridSpacing(grid_spacing);
+       mesh.setGridGlobalOffset(global_offset);
+       mesh.setAttribute("fieldSmoothing", "none");
+       mesh_comp.resetDataset(dataset);
+
+}
+
+/*
+ * Get component names of a field for openPMD-api book-keeping
+ * Level is reflected as _lvl<meshLevel>
+ *
+ * @param meshLevel [IN]:    level of mesh
+ * @param varname [IN]:      name from WarpX
+ * @param field_name [OUT]:  field name for openPMD-api output
+ * @param comp_name [OUT]:   comp name for openPMD-api output
+ */
+void
+WarpXOpenPMDPlot::GetMeshCompNames( int meshLevel,
+                                    const std::string& varname,
+                                    std::string& field_name,
+                                    std::string& comp_name ) const
+{
     if (varname.size() >= 2u ) {
         std::string const varname_1st = varname.substr(0u, 1u); // 1st character
         std::string const varname_2nd = varname.substr(1u, 1u); // 2nd character
@@ -904,51 +910,96 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
         }
     }
 
-    // Setup the mesh record accordingly
-    auto mesh = meshes[field_name];
-    //   MultiFab: Fortran order of indices and axes;
-    //   we invert (only) meta-data arrays to assign labels and offsets in the
-    //   order: slowest to fastest varying index when accessing the mesh
-    //   contiguously (as 1D flattened logical memory)
-    if( first_write_to_iteration ) {
-        mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
-        mesh.setAxisLabels(axis_labels);
-        mesh.setGridSpacing(grid_spacing);
-        mesh.setGridGlobalOffset(global_offset);
-        mesh.setAttribute("fieldSmoothing", "none");
-        detail::setOpenPMDUnit(mesh, field_name);
-    }
+    if ( 0 == meshLevel )
+      return;
 
-    // Create a new mesh record component, and store the associated metadata
-    auto mesh_comp = mesh[comp_name];
-    if( first_write_to_iteration ) {
-        mesh_comp.resetDataset(dataset);
+    field_name += std::string("_lvl").append(std::to_string(meshLevel));
+}
+/*
+ * Write Field with all mesh levels
+ *
+ */
+void
+WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
+                      const std::vector<std::string>& varnames,
+                      const amrex::Vector<amrex::MultiFab>& mf,
+                      amrex::Vector<amrex::Geometry>& geom,
+                      const int iteration,
+                      const double time, bool isBTD,
+                      const amrex::Geometry& full_BTD_snapshot ) const
+{
+  //This is AMReX's tiny profiler. Possibly will apply it later
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
-        auto relative_cell_pos = utils::getRelativeCellPosition(mf);       // AMReX Fortran index order
-        std::reverse(relative_cell_pos.begin(), relative_cell_pos.end());  // now in C order
-        mesh_comp.setPosition(relative_cell_pos);
-    }
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
-    // Loop through the multifab, and store each box as a chunk,
-    // in the openPMD file.
-    for( amrex::MFIter mfi(mf); mfi.isValid(); ++mfi ) {
+  // is this either a regular write (true) or the first write in a
+  // backtransformed diagnostic (BTD):
+  bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
-      amrex::FArrayBox const& fab = mf[mfi];
-      amrex::Box const& local_box = fab.box();
+  // meta data
+  openPMD::Iteration series_iteration = m_Series->iterations[iteration];
 
-      // Determine the offset and size of this chunk
-      amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
-      auto const chunk_offset = getReversedVec( box_offset );
-      auto const chunk_size = getReversedVec( local_box.size() );
-
-      // Write local data
-      amrex::Real const * local_data = fab.dataPtr( icomp );
-      mesh_comp.storeChunk( openPMD::shareRaw(local_data),
-                            chunk_offset, chunk_size );
-    }
+  auto meshes = series_iteration.meshes;
+  if (first_write_to_iteration) {
+    // lets see whether full_geom varies from geom[0]   xgeom[1]
+    series_iteration.setTime( time );
   }
-  // Flush data to disk after looping over all components
-  m_Series->flush();
+
+  for (int i=0; i<geom.size(); i++) {
+    amrex::Geometry full_geom = geom[i];
+    if( isBTD )
+      full_geom = full_BTD_snapshot;
+
+    // setup is called once. So it uses property "period" from first
+    // geometry for <all> field levels.
+    if ( (0 == i) && first_write_to_iteration )
+      SetupFields(meshes, full_geom);
+
+    amrex::Box const & global_box = full_geom.Domain();
+    auto const global_size = getReversedVec(global_box.size());
+
+    int const ncomp = mf[i].nComp();
+    for ( int icomp=0; icomp<ncomp; icomp++ ) {
+          std::string const & varname = varnames[icomp];
+
+          // assume fields are scalar unless they match the following match of known vector fields
+          std::string field_name = varname;
+          std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
+          GetMeshCompNames( i, varname, field_name, comp_name );
+
+          auto mesh = meshes[field_name];
+          auto mesh_comp = mesh[comp_name];
+          if ( first_write_to_iteration )
+          {
+             SetupMeshComp( mesh, full_geom, mesh_comp );
+             detail::setOpenPMDUnit( mesh, field_name );
+
+             auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+             std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+             mesh_comp.setPosition( relative_cell_pos );
+           }
+
+           // Loop through the multifab, and store each box as a chunk,
+           // in the openPMD file.
+           for( amrex::MFIter mfi(mf[i]); mfi.isValid(); ++mfi )
+           {
+                amrex::FArrayBox const& fab = mf[i][mfi];
+                amrex::Box const& local_box = fab.box();
+
+                // Determine the offset and size of this chunk
+                amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
+                auto const chunk_offset = getReversedVec( box_offset );
+                auto const chunk_size = getReversedVec( local_box.size() );
+
+                amrex::Real const * local_data = fab.dataPtr( icomp );
+                mesh_comp.storeChunk( openPMD::shareRaw(local_data),
+                                      chunk_offset, chunk_size );
+            }
+    } // icomp loop
+    // Flush data to disk after looping over all components
+    m_Series->flush();
+  } // levels loop (i)
 }
 #endif // WARPX_USE_OPENPMD
 

@@ -158,9 +158,9 @@ public:
     static bool do_divb_cleaning;
 
     // Interpolation order
-    static long nox;
-    static long noy;
-    static long noz;
+    static int nox;
+    static int noy;
+    static int noz;
 
     // Order of finite-order centering of fields (staggered to nodal)
     static int field_centering_nox;
@@ -182,7 +182,6 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool use_damp_fields_in_z_guard;
     static bool serialize_ics;
 
     // Back transformation diagnostic
@@ -326,6 +325,12 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
+    /**
+     * \brief
+     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Calls computeMaxStepBoostAccelerator() if required.
+     */
+    void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
@@ -392,7 +397,7 @@ public:
      * Applies a damping factor in the guards cells that extend
      * beyond the extent of the domain, reducing fluctuations that
      * can appear in parallel simulations. This will be called
-     * when use_damp_fields_in_z_guard is true.
+     * when FieldBoundaryType is set to damped.
      */
     void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
@@ -406,6 +411,9 @@ public:
     void ApplyInverseVolumeScalingToChargeDensity(amrex::MultiFab* Rho,
                                                   int lev);
 #endif
+
+    void ApplyEfieldBoundary (const int lev, PatchType patch_type);
+    void ApplyBfieldBoundary (const int lev, PatchType patch_type);
 
     void DampPML ();
     void DampPML (int lev);
@@ -595,6 +603,14 @@ public:
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
                        int const max_iters) const;
+
+    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi
+                   ) const;
+    void getPhiBC (const int idim, amrex::Real &pot_lo,
+                   amrex::Real &pot_hi) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
@@ -1084,6 +1100,9 @@ private:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
+
+    // EB implicit funciton
+    std::unique_ptr<ParserWrapper<3> > m_eb_if_parser;
 #endif
 
     void InitEB (int lev);

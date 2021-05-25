@@ -18,6 +18,9 @@ warpx.serialize_ics = 1
 warpx.verbose = 1
 warpx.cfl = 1.0
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 #################################
 ############ PLASMA #############
 #################################

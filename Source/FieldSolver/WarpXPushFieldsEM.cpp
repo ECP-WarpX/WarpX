@@ -140,6 +140,10 @@ WarpX::PushPSATD (amrex::Real a_dt)
         if (do_pml && pml[lev]->ok()) {
             pml[lev]->PushPSATD(lev);
         }
+        ApplyEfieldBoundary(lev,PatchType::fine);
+        if (lev > 0) ApplyEfieldBoundary(lev,PatchType::coarse);
+        ApplyBfieldBoundary(lev,PatchType::fine);
+        if (lev > 0) ApplyBfieldBoundary(lev,PatchType::coarse);
     }
 #endif
 }
@@ -164,7 +168,9 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
     }
 
     // Damp the fields in the guard cells along z
-    if (use_damp_fields_in_z_guard)
+    constexpr int zdir = AMREX_SPACEDIM - 1;
+    if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped &&
+        WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped)
     {
         DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
 
@@ -219,6 +225,7 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
         }
     }
 
+    ApplyBfieldBoundary(lev, patch_type);
 }
 
 void
@@ -278,6 +285,9 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                 a_dt, pml_has_particles );
         }
     }
+
+    ApplyEfieldBoundary(lev, patch_type);
+
 }
 
 
@@ -418,6 +428,8 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 a_dt, pml_has_particles );
         }
     }
+
+    ApplyEfieldBoundary(lev, patch_type);
 }
 
 void

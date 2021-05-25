@@ -23,6 +23,7 @@
     struct wp_symbol* s;
     enum wp_f1_t f1;
     enum wp_f2_t f2;
+    enum wp_f3_t f3;
 }
 
 /* Define tokens.  They are used by flex too. */
@@ -31,6 +32,7 @@
 %token <s>  SYMBOL
 %token <f1> F1
 %token <f2> F2
+%token <f3> F3
 %token EOL
 %token POW "**" '^'
 %token GEQ ">="
@@ -40,7 +42,7 @@
 %token AND "and"
 %token OR "or"
 
-%nonassoc F1 F2
+%nonassoc F1 F2 F3
 %right '='
 %left OR
 %left AND
@@ -95,6 +97,7 @@ exp:
 | exp POW exp                { $$ = wp_newf2(WP_POW, $1, $3); }
 | F1 '(' exp ')'             { $$ = wp_newf1($1, $3); }
 | F2 '(' exp ',' exp ')'     { $$ = wp_newf2($1, $3, $5); }
+| F3 '(' exp ',' exp ',' exp ')' { $$ = wp_newf3($1, $3, $5, $7); }
 ;
 
 %%
