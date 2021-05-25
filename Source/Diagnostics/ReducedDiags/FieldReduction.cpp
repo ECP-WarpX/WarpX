@@ -8,6 +8,7 @@
 #include "FieldReduction.H"
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
 
 // constructor
 FieldReduction::FieldReduction (std::string rd_name)
