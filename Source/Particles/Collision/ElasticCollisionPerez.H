@@ -96,27 +96,60 @@ void ElasticCollisionPerez (
 
     // call UpdateMomentumPerezElastic()
     {
-      int i1 = I1s; int i2 = I2s;
-      int d1 = 1;   int d2 = 1;
-      int np;
-      if ( isSameSpecies ) {
-          np = (NI1+NI2) - 1 + (NI1+NI2)%2;
-      } else {
-          np = amrex::max(NI1,NI2);
-      }
-      for (int k = 0; k < amrex::max(NI1,NI2); ++k)
-      {
-          UpdateMomentumPerezElastic(
-              u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
-              u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
-              n1, n2, n12,
-              q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
-              dt, L, lmdD,
-              engine,
-              amrex::max(d1,d2), np, dV, doHigginson, isSameSpecies);
-          ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; ++d1; }
-          ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; ++d2; }
-      }
+
+        int i1 = I1s; int i2 = I2s;
+        int d1; int d2;
+        int np;
+
+        if ( isSameSpecies ) {
+            np = (NI1+NI2) - 1 + (NI1+NI2)%2;
+        } else {
+            np = amrex::max(NI1,NI2);
+        }
+
+        for (int k = 0; k < amrex::max(NI1,NI2); ++k)
+        {
+
+            if ( isSameSpecies ) {
+
+                d1 = 1; d2 = 1;
+                if ( (NI1+NI2)%2>0 && k==0 ) { d1=2; }
+
+            } else {
+
+                if ( NI1/NI2>=1 ) { d1 = 1; }
+                else {
+                    if ( k<=NI2%NI1-1 ) {
+                        d1 = std::floor(NI2/NI1) + 1;
+                    } else {
+                        d1 = std::floor(NI2/NI1);
+                    }
+                }
+
+                if ( NI2/NI1>=1 ) { d2 = 1; }
+                else {
+                    if ( k<=NI1%NI2-1 ) {
+                        d2 = std::floor(NI1/NI2) + 1;
+                    } else {
+                        d2 = std::floor(NI1/NI2);
+                    }
+                }
+
+            }
+
+            UpdateMomentumPerezElastic(
+                u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
+                u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
+                n1, n2, n12,
+                q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
+                dt, L, lmdD,
+                engine,
+                amrex::max(d1,d2), np, dV, doHigginson, isSameSpecies);
+            ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
+            ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+
+        }
+
     }
 
 }
