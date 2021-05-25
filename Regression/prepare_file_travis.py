@@ -62,6 +62,13 @@ if ci_psatd:
     text = re.sub('USE_PSATD=FALSE',
                   '', text)
 
+# always build with EB support (runtime controlled if used)
+if ci_eb:
+    text = re.sub('addToCompileString =',
+                  'addToCompileString = USE_EB=TRUE ', text)
+    text = re.sub('USE_EB=FALSE',
+                  '', text)
+
 # Ccache
 if ci_ccache:
     text = re.sub('addToCompileString =',
@@ -116,7 +123,6 @@ if ci_regular_cartesian_2d:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['dim = 2'], False)
@@ -125,7 +131,6 @@ if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
@@ -141,9 +146,6 @@ if ci_rz_or_nompi:
 
 if ci_qed:
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], True)
-
-if ci_eb:
-    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], True)
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)

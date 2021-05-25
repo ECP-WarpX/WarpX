@@ -68,6 +68,7 @@ jobs:
           -DWarpX_COMPUTE=CUDA         \
           -DWarpX_LIB=ON               \
           -DAMReX_CUDA_ARCH=6.0        \
+          -DWarpX_EB=ON                \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE     \
@@ -158,6 +159,7 @@ jobs:
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="14"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_EB=ON                \
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
@@ -205,6 +207,7 @@ jobs:
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
+          -DWarpX_EB=ON                \
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
@@ -240,6 +243,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON \
           -DAMReX_AMD_ARCH=gfx900     \
           -DWarpX_COMPUTE=HIP         \
+          -DWarpX_EB=ON               \
           -DWarpX_LIB=ON              \
           -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \
