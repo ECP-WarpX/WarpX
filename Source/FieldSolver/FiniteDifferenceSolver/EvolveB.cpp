@@ -306,9 +306,9 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             Box const &tb = mfi.tilebox(Bfield[idim]->ixType().toIntVect());
 
             //Take care of the unstable cells
-            amrex::LoopOnCpu(tb,
+            amrex::ParallelFor(tb,
 
-            [=, &borrowing_dim, &lending_dim] (int i, int j, int k) {
+            [=, &borrowing_dim, &lending_dim] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
