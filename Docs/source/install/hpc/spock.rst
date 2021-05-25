@@ -58,7 +58,7 @@ We use the following modules and environments on the system (``$HOME/warpx_spock
    # compiler environment hints
    export CC=$(which clang)
    export CXX=$(which hipcc)
-   export LDFLAGS="-L/opt/cray/pe/cce/11.0.4/cce/x86_64/lib/ $(CC --cray-print-opts=libs) -lmpi"
+   export LDFLAGS="-L${CRAYLIBS_X86_64} $(CC --cray-print-opts=libs) -lmpi"
    # GPU aware MPI: ${PE_MPICH_GTL_DIR_gfx908} -lmpi_gtl_hsa
 
 
