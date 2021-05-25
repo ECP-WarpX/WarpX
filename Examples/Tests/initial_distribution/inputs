@@ -18,6 +18,9 @@ warpx.do_pml         = 0
 warpx.verbose = 1
 warpx.cfl     = 1.e-8
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 #################################
 ############ PLASMA #############
 #################################
