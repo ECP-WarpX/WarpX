@@ -1,4 +1,5 @@
 #include "WarpX.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Config.H>
 #include <AMReX_Array4.H>
