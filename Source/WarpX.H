@@ -941,7 +941,6 @@ private:
     //EB grid info
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_int_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_unst_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_avail_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
@@ -952,7 +951,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
     //This is just needed for the ECT solver
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Vfield;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Rhofield;
 
     // store fine patch

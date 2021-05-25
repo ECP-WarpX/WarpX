@@ -25,13 +25,11 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::unique_ptr<amrex::MultiFab> const& Gfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Vfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
@@ -61,8 +59,8 @@ void FiniteDifferenceSolver::EvolveB (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveRhoCartesianECT( Efield, edge_lengths, face_areas, Rhofield, lev );
-        EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, area_stab, Rhofield,
-                             flag_unst_cell, borrowing, lending, lev, dt);
+        EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, Rhofield, flag_unst_cell,
+                             borrowing, lending, lev, dt);
 #endif
     } else {
         amrex::Abort("EvolveB: Unknown algorithm");
@@ -270,7 +268,6 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
@@ -298,7 +295,6 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             amrex::Array4<Real> const &S = face_areas[idim]->array(mfi);
             amrex::Array4<Real> const &S_enl = area_enl[idim]->array(mfi);
             amrex::Array4<Real> const &S_red = area_red[idim]->array(mfi);
-            amrex::Array4<Real> const &S_stab = area_stab[idim]->array(mfi);
 
             auto &lending_dim = (*lending[idim])[mfi];
             auto &borrowing_dim = (*borrowing[idim])[mfi];

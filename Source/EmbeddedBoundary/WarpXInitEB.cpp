@@ -231,14 +231,12 @@ WarpX::MarkCells(){
             amrex::Box const &box = mfi.validbox();
 
             auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
-            auto const &flag_int_face = m_flag_int_face[maxLevel()][idim]->array(mfi);
             auto const &flag_unst_face = m_flag_unst_face[maxLevel()][idim]->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
             auto const &flag_avail_face = m_flag_avail_face[maxLevel()][idim]->array(mfi);
             auto const &area_stab = m_area_stab[maxLevel()][idim]->array(mfi);
             amrex::LoopOnCpu(box,
                              [=](int i, int j, int k) {
-                flag_int_face(i, j, k) = int(S(i, j, k) > 0);
                 // This face is unstable if it has less area than area_stab
                 flag_unst_face(i, j, k) = int((S(i, j, k) < area_stab(i, j, k))
                                             and !amrex::isnan(S(i, j, k)) and S(i, j, k) > 0);
@@ -247,8 +245,7 @@ WarpX::MarkCells(){
                 flag_ext_face(i, j, k) = flag_unst_face(i, j, k);
                 // Is this face available to lend area to other faces?
                 // The criterion is that the face has to be interior and not already unstable itself
-                flag_avail_face(i, j, k) = int(flag_int_face(i, j, k) and
-                                               !flag_unst_face(i, j, k));
+                flag_avail_face(i, j, k) = int(S(i, j, k) > 0 and !flag_unst_face(i, j, k));
             });
         }
     }
