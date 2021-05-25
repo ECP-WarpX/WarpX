@@ -12,7 +12,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
     // one file per timestep (or one file for all steps)
-    std::string  openpmd_encoding {"v"};
+    std::string  openpmd_encoding {"f"};
     pp_diag_name.query("openpmd_backend", openpmd_backend);
     bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
 
