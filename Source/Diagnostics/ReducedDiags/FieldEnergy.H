@@ -20,16 +20,22 @@ class FieldEnergy : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     FieldEnergy(std::string rd_name);
 
-    /** This function computes the field energy (EF).
-     *  EF = E eps / 2 + B / mu / 2,
-     *  where E is the electric field,
-     *  B is the magnetic field,
-     *  eps is the vacuum permittivity,
-     *  mu is the vacuum permeability. */
+    /**
+     * This function computes the field energy (EF).
+     * EF = E eps / 2 + B / mu / 2,
+     * where E is the electric field,
+     * B is the magnetic field,
+     * eps is the vacuum permittivity,
+     * mu is the vacuum permeability.
+     *
+     * @param[in] step current time step
+     */
     virtual void ComputeDiags(int step) override final;
 
 };

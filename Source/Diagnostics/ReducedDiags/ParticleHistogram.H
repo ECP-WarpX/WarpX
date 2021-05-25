@@ -24,8 +24,10 @@ class ParticleHistogram : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     ParticleHistogram(std::string rd_name);
 
     /// normalization type
@@ -55,8 +57,10 @@ public:
     /// Whether the filter is activated
     bool m_do_parser_filter = false;
 
-    /** This function computes a histogram of user defined quantity.
-     *  \param [in] step current time step.
+    /**
+     * This function computes a histogram of user defined quantity.
+     *
+     * @param[in] step current time step
      */
     virtual void ComputeDiags(int step) override final;
 
