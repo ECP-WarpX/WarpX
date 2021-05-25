@@ -110,7 +110,8 @@ WarpX::ComputeEdgeLengths () {
                         edge_lengths_dim(i, j, k) = 1.;
                     } else {
                         // This edge is cut.
-                        edge_lengths_dim(i, j, k) = 1 - abs(amrex::Real(2.0)*edge_cent(i, j, k));
+                        edge_lengths_dim(i, j, k) = 1 - amrex::Math::abs(amrex::Real(2.0)
+                                                                        * edge_cent(i, j, k));
                     }
                 });
             }
