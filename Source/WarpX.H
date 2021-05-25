@@ -944,7 +944,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_unst_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_avail_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_stab;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_red;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_enl;
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_lending;
@@ -1123,7 +1122,6 @@ private:
     void ScaleEdges ();
     void ScaleAreas ();
     void MarkCells();
-    void ComputeAreaStab();
     int CountExtFaces();
     void ComputeFaceExtensions();
     amrex::Array1D<int, 0, 5> ComputeOneWayExtensions();

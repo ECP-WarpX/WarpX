@@ -224,7 +224,7 @@ WarpX::ScaleAreas() {
 void
 WarpX::MarkCells(){
 #ifdef AMREX_USE_EB
-    ComputeAreaStab();
+    auto const &cell_size = CellSize(maxLevel());
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
@@ -234,12 +234,31 @@ WarpX::MarkCells(){
             auto const &flag_unst_face = m_flag_unst_face[maxLevel()][idim]->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
             auto const &flag_avail_face = m_flag_avail_face[maxLevel()][idim]->array(mfi);
-            auto const &area_stab = m_area_stab[maxLevel()][idim]->array(mfi);
+            const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
+            const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
+            const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+            amrex::Real dx = cell_size[0];
+            amrex::Real dy = cell_size[1];
+            amrex::Real dz = cell_size[2];
+
             amrex::LoopOnCpu(box,
                              [=](int i, int j, int k) {
+                // Minimal area for this cell to be stable
+                double S_stab;
+                if(idim == 0){
+                    S_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
+                                                    lz(i, j, k) * dy, lz(i, j, k + 1) * dy});
+                }else if(idim == 1){
+                    S_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
+                                             lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+                }else {
+                    S_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
+                                             ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
+                }
+
                 // This face is unstable if it has less area than area_stab
-                flag_unst_face(i, j, k) = int((S(i, j, k) < area_stab(i, j, k))
-                                            and !amrex::isnan(S(i, j, k)) and S(i, j, k) > 0);
+                flag_unst_face(i, j, k) = int(S(i, j, k) < S_stab and !amrex::isnan(S(i, j, k))
+                                              and S(i, j, k) > 0);
                 // Does this face need to be extended? This is the same as flag_unst_face here,
                 // but it is modified later to keep track o which faces still need to be extended
                 flag_ext_face(i, j, k) = flag_unst_face(i, j, k);
@@ -248,44 +267,6 @@ WarpX::MarkCells(){
                 flag_avail_face(i, j, k) = int(S(i, j, k) > 0 and !flag_unst_face(i, j, k));
             });
         }
-    }
-#endif
-}
-
-void
-WarpX::ComputeAreaStab() {
-#ifdef AMREX_USE_EB
-    auto const eb_fact = fieldEBFactory(maxLevel());
-    auto const &flags = eb_fact.getMultiEBCellFlagFab();
-    auto const &cell_size = CellSize(maxLevel());
-    auto const &area_frac = eb_fact.getAreaFrac();
-    amrex::Real dx = cell_size[0];
-    amrex::Real dy = cell_size[1];
-    amrex::Real dz = cell_size[2];
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
-        auto const &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
-        auto const &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-        auto const &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
-        auto const &area_stab_x = m_area_stab[maxLevel()][0]->array(mfi);
-        auto const &area_stab_y = m_area_stab[maxLevel()][1]->array(mfi);
-        auto const &area_stab_z = m_area_stab[maxLevel()][2]->array(mfi);
-        auto const &face = area_frac[0]->const_array(mfi);
-        amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
-                         [=](int i, int j, int k) {
-            area_stab_z(i, j, k) = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
-                                                     ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
-        });
-        amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
-                         [=](int i, int j, int k) {
-            area_stab_y(i, j, k) = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
-                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
-        });
-        amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
-                         [=](int i, int j, int k) {
-            area_stab_x(i, j, k) = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
-                                                     lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
-        });
     }
 #endif
 }

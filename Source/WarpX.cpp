@@ -237,7 +237,6 @@ WarpX::WarpX ()
     m_flag_unst_face.resize(nlevs_max);
     m_flag_avail_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
-    m_area_stab.resize(nlevs_max);
     m_lending.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
     m_area_red.resize(nlevs_max);
@@ -1396,9 +1395,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
         m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
         m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
-        m_area_stab[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_area_stab[x]"));
-        m_area_stab[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_area_stab[y]"));
-        m_area_stab[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_area_stab[z]"));
         m_flag_avail_face[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_avail_face[x]"));
         m_flag_avail_face[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_avail_face[y]"));
         m_flag_avail_face[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_avail_face[z]"));
