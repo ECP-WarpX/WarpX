@@ -317,7 +317,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
                 amrex::Real V_enl = Rho(i, j, k) * S(i, j, k);
                 amrex::Real rho_enl;
-                if (borrowing_inds(i, j, k).size() == 0) {
+                if (borrowing_inds(i, j, k).empty()) {
                     amrex::Abort("EvolveBCartesianECT: face ("
                                 + std::to_string(i) + ", "
                                 + std::to_string(j) + ", "
@@ -334,8 +334,8 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
                 rho_enl = V_enl / S_enl(i, j, k);
 
-                //Now we have to insert the computed rho_enl in the lending FaceInfoBox in the correct
-                // position
+                //Now we have to insert the computed rho_enl in the lending FaceInfoBox in the
+                // correct position
                 for (int ind : borrowing_inds(i, j, k)) {
                     int ip = borrowing_dim.i_face[ind];
                     int jp = borrowing_dim.j_face[ind];
@@ -363,7 +363,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                 if (flag_unst_cell_dim(i, j, k))
                     return;
 
-                if (lending_inds(i, j, k).size()  == 0) {
+                if (lending_inds(i, j, k).empty()) {
                     //Stable cell which hasn't been intruded
                     B(i, j, k) = B(i, j, k) - dt * Rho(i, j, k);
                 } else {
