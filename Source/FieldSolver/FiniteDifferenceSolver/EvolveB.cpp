@@ -298,7 +298,16 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
             auto &lending_dim = (*lending[idim])[mfi];
             auto &borrowing_dim = (*borrowing[idim])[mfi];
+            auto borrowing_dim_i_face = borrowing_dim.i_face;
+            auto borrowing_dim_j_face = borrowing_dim.j_face;
+            auto borrowing_dim_k_face = borrowing_dim.k_face;
+            auto borrowing_dim_area = borrowing_dim.area;
+            auto lending_dim_i_face = lending_dim.i_face;
+            auto lending_dim_j_face = lending_dim.j_face;
+            auto lending_dim_k_face = lending_dim.k_face;
+            auto lending_dim_area = lending_dim.area;
 
+            auto lending_dim_rho_face = lending_dim.rho_face.dataPtr();
             auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.array();
             auto const &lending_inds = (*lending[idim])[mfi].inds.array();
 
@@ -308,7 +317,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             //Take care of the unstable cells
             amrex::ParallelFor(tb,
 
-            [=, &borrowing_dim, &lending_dim] AMREX_GPU_DEVICE(int i, int j, int k) {
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
@@ -326,10 +335,10 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                 }
                 // First we compute the rho of the enlarged face
                 for (int ind : borrowing_inds(i, j, k)) {
-                    int ip = borrowing_dim.i_face[ind];
-                    int jp = borrowing_dim.j_face[ind];
-                    int kp = borrowing_dim.k_face[ind];
-                    V_enl += Rho(ip, jp, kp) * borrowing_dim.area[ind];
+                    int ip = borrowing_dim_i_face[ind];
+                    int jp = borrowing_dim_j_face[ind];
+                    int kp = borrowing_dim_k_face[ind];
+                    V_enl += Rho(ip, jp, kp) * borrowing_dim_area[ind];
                 }
 
                 rho_enl = V_enl / S_enl(i, j, k);
@@ -337,15 +346,15 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                 //Now we have to insert the computed rho_enl in the lending FaceInfoBox in the
                 // correct position
                 for (int ind : borrowing_inds(i, j, k)) {
-                    int ip = borrowing_dim.i_face[ind];
-                    int jp = borrowing_dim.j_face[ind];
-                    int kp = borrowing_dim.k_face[ind];
+                    int ip = borrowing_dim_i_face[ind];
+                    int jp = borrowing_dim_j_face[ind];
+                    int kp = borrowing_dim_k_face[ind];
                     for (int ind2 : lending_inds(ip, jp, kp)) {
-                        int ip2 = lending_dim.i_face[ind2];
-                        int jp2 = lending_dim.j_face[ind2];
-                        int kp2 = lending_dim.k_face[ind2];
+                        int ip2 = lending_dim_i_face[ind2];
+                        int jp2 = lending_dim_j_face[ind2];
+                        int kp2 = lending_dim_k_face[ind2];
                         if (ip2 == i and jp2 == j and kp2 == k) {
-                            lending_dim.rho_face[ind2] = rho_enl;
+                            lending_dim_rho_face[ind2] = rho_enl;
                         }
                     }
                 }
@@ -357,7 +366,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             //Take care of the stable cells
             amrex::ParallelFor(tb,
 
-            [=, &lending_dim] AMREX_GPU_DEVICE(int i, int j, int k) {
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
                 if (flag_unst_cell_dim(i, j, k))
@@ -372,7 +381,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                     amrex::Real Venl = Rho(i, j, k) * S_red(i, j, k);
 
                     for (int ind : lending_inds(i, j, k)) {
-                        Venl += lending_dim.rho_face[ind] * lending_dim.area[ind];
+                        Venl += lending_dim_rho_face[ind] * lending_dim_area[ind];
                     }
 
                     B(i, j, k) = B(i, j, k) - dt * Venl / S(i, j, k);

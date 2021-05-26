@@ -85,9 +85,9 @@ WarpX::ComputeOneWayExtensions() {
         amrex::Real dy = cell_size[1];
         amrex::Real dz = cell_size[2];
 
-        amrex::LoopOnCpu(box,
+        amrex::ParallelFor(box,
                          [=, &borrowing_x, &lending_x,
-                             &temp_ind_borrowing_x, &temp_ind_lending_x](int i, int j, int k) {
+                             &temp_ind_borrowing_x, &temp_ind_lending_x] AMREX_GPU_HOST(int i, int j, int k) {
 
             // If the face doesn't need to be extended break the loop
             if( !flag_ext_face_x(i, j, k) ) return;
