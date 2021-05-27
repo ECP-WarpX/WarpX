@@ -62,7 +62,7 @@ MultiReducedDiags::MultiReducedDiags ()
 
             // read reduced diags type
             std::string rd_type;
-            pp_rd_name.query("type", rd_type);
+            pp_rd_name.get("type", rd_type);
 
             if(reduced_diags_dictionary.count(rd_type) == 0)
                 Abort("No matching reduced diagnostics type found.");
