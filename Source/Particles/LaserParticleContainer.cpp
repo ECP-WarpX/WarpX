@@ -162,6 +162,12 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         }
     }
 
+#ifndef WARPX_DIM_RZ
+    if(!do_continuous_injection && !antenna_intersects_sim_box()){
+        amrex::Print() << "WARNING: laser antenna is completely out of the simulation box !!!\n";
+    }
+#endif
+
     //Init laser profile
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_e_max > 0.,
@@ -735,4 +741,68 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             SetPosition(i, x, y, z);
         }
         );
+}
+
+bool LaserParticleContainer::antenna_intersects_sim_box()
+{
+    const auto& warpx = WarpX::GetInstance();
+
+    const auto& geom = warpx.Geom(0);
+    const auto& sim_box = geom.ProbDomain();
+
+    std::vector<Real> t_corners;
+
+    const auto& x_l = sim_box.lo(0);
+    const auto& x_h = sim_box.hi(0);
+
+    const auto& x_p = m_position[0];
+    const auto& z_p = m_position[2];
+
+    const auto& x_n = m_nvec[0];
+    const auto& z_n = m_nvec[2];
+
+#if (defined WARPX_DIM_3D)
+    const auto& y_l = sim_box.lo(1);
+    const auto& y_h = sim_box.hi(1);
+    const auto& z_l = sim_box.lo(2);
+    const auto& z_h = sim_box.hi(2);
+
+    const auto& y_p = m_position[1];
+    const auto& y_n = m_nvec[0];
+
+    const auto ff = [&](auto x, auto y, auto z){
+        return (x-x_p)*x_n + (y-y_p)*y_n + (z-z_p)*z_n;
+    };
+
+    t_corners.push_back(ff(x_l,y_l,z_l));
+    t_corners.push_back(ff(x_l,y_l,z_h));
+    t_corners.push_back(ff(x_l,y_h,z_l));
+    t_corners.push_back(ff(x_l,y_h,z_h));
+    t_corners.push_back(ff(x_h,y_l,z_l));
+    t_corners.push_back(ff(x_h,y_l,z_h));
+    t_corners.push_back(ff(x_h,y_h,z_l));
+    t_corners.push_back(ff(x_h,y_h,z_h));
+
+#else
+    const auto& z_l = sim_box.lo(1);
+    const auto& z_h = sim_box.hi(1);
+
+    const auto ff = [&](auto x, auto z){
+        return (x-x_p)*x_n + (z-z_p)*z_n;
+    };
+
+    t_corners.push_back(ff(x_l, z_l));
+    t_corners.push_back(ff(x_l, z_h));
+    t_corners.push_back(ff(x_h, z_l));
+    t_corners.push_back(ff(x_h, z_h));
+#endif
+
+    std::sort(t_corners.begin(), t_corners.end());
+
+    //If t_corner has at least two elements of opposite sign, than
+    //the plane of the antenna intersects the simulation box.
+    //The equal sign takes into account the cases in which a face
+    //of the simulation box lies in the plane of the antenna.
+    return ( t_corners.front()*t_corners.back() <= 0.0_rt );
+
 }
