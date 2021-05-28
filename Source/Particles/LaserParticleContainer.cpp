@@ -18,6 +18,7 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
+#include <vector>
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
@@ -162,11 +163,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         }
     }
 
-#ifndef WARPX_DIM_RZ
     if(!do_continuous_injection && !antenna_intersects_sim_box()){
         amrex::Print() << "WARNING: laser antenna is completely out of the simulation box !!!\n";
     }
-#endif
 
     //Init laser profile
 
@@ -761,7 +760,12 @@ bool LaserParticleContainer::antenna_intersects_sim_box()
     const auto& x_n = m_nvec[0];
     const auto& z_n = m_nvec[2];
 
-#if (defined WARPX_DIM_3D)
+#ifdef WARPX_DIM_RZ
+    // In RZ we only check that the antenna position is within [z_left, z_right]
+    amrex::ignore_unused(x_l, x_h, x_p, x_n, z_n, t_corners);
+    return (z_p >= z_l) && (z_p <= z_r);
+
+#elif (defined WARPX_DIM_3D)
     const auto& y_l = sim_box.lo(1);
     const auto& y_h = sim_box.hi(1);
     const auto& z_l = sim_box.lo(2);
@@ -770,10 +774,18 @@ bool LaserParticleContainer::antenna_intersects_sim_box()
     const auto& y_p = m_position[1];
     const auto& y_n = m_nvec[0];
 
+    // A plane in 3D can be defined using a point (x_p, y_p, z_p) and
+    // a normal (x_n, y_n, z_n). For all the points of the plane
+    // ff(x, y, z) = 0, where
+    // ff(x, y, z) = [(x, y, z) - (x_p, y_p, z_p)] dot (x_n, y_n, z_n)
+    // The plane bisects the 3D space in 2 regions, depending on the sign
+    // of ff applied to the points of those regions.
     const auto ff = [&](auto x, auto y, auto z){
         return (x-x_p)*x_n + (y-y_p)*y_n + (z-z_p)*z_n;
     };
 
+    // For each corner of the simulation box we calculate the value of ff,
+    // in order to figure out which side of the antenna that point is on.
     t_corners.push_back(ff(x_l,y_l,z_l));
     t_corners.push_back(ff(x_l,y_l,z_h));
     t_corners.push_back(ff(x_l,y_h,z_l));
@@ -787,6 +799,7 @@ bool LaserParticleContainer::antenna_intersects_sim_box()
     const auto& z_l = sim_box.lo(1);
     const auto& z_h = sim_box.hi(1);
 
+    // See comments above for the 3D case
     const auto ff = [&](auto x, auto z){
         return (x-x_p)*x_n + (z-z_p)*z_n;
     };
@@ -797,12 +810,14 @@ bool LaserParticleContainer::antenna_intersects_sim_box()
     t_corners.push_back(ff(x_h, z_h));
 #endif
 
+    // If t_corner has at least two elements of opposite sign, than
+    // those corners are on opposite sides of the antenna and thus
+    // the plane of the antenna intersects the simulation box.
+    // In order to figure that out, we sort t_corners and check if
+    // the first and the last element have opposite signs
+    // (i.e., if their product is < 0). We also accept the case in
+    // which the product is zero, to take into account the cases
+    // in which a face of the simulation box lies in the plane of the antenna.
     std::sort(t_corners.begin(), t_corners.end());
-
-    //If t_corner has at least two elements of opposite sign, than
-    //the plane of the antenna intersects the simulation box.
-    //The equal sign takes into account the cases in which a face
-    //of the simulation box lies in the plane of the antenna.
     return ( t_corners.front()*t_corners.back() <= 0.0_rt );
-
 }
