@@ -72,6 +72,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     if (m_e_max == amrex::Real(0.)){
         amrex::Print() << m_laser_name << " with zero amplitude disabled.\n";
+        m_enabled = false;
         return; // Disable laser if amplitude is 0
     }
 
@@ -165,15 +166,19 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     if(!do_continuous_injection && !antenna_intersects_sim_box()){
         amrex::Print() << "WARNING: laser antenna is completely out of the simulation box !!!\n";
+        m_enabled = false;
+        return; // Disable laser if antenna is completely out of the simulation bo
     }
 
     //Init laser profile
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_e_max > 0.,
-        "Laser amplitude (e_max) must be positive.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_e_max >= 0.,
+        "Laser amplitude (e_max) must be >= 0.");
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_wavelength > 0.,
         "Laser wavelength must be positive.");
+
+    m_enabled = true;
 
     CommonLaserParameters common_params;
     common_params.wavelength = m_wavelength;
@@ -194,7 +199,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
     // So far, LaserParticleContainer::laser_injection_box contains the
     // outdated full problem domain at t=0.
 
-    if (m_e_max == amrex::Real(0.)) return; // Disable laser if amplitude is 0
+    if (!m_enabled) return;
 
     // Convert updated_position to Real* to use RealBox::contains().
 #if (AMREX_SPACEDIM == 3)
@@ -219,7 +224,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 {
-    if (m_e_max == amrex::Real(0.)) return; // Disable laser if amplitude is 0
+    if (!m_enabled) return;
 
     int dir = WarpX::moving_window_dir;
     if (do_continuous_injection and (WarpX::gamma_boost > 1)){
@@ -249,7 +254,7 @@ LaserParticleContainer::InitData ()
 void
 LaserParticleContainer::InitData (int lev)
 {
-    if (m_e_max == amrex::Real(0.)) return; // Disable laser if amplitude is 0
+    if (!m_enabled) return;
 
     // spacing of laser particles in the laser plane.
     // has to be done after geometry is set up.
@@ -428,7 +433,7 @@ LaserParticleContainer::Evolve (int lev,
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
 
-    if (m_e_max == amrex::Real(0.)) return; // Disable laser if amplitude is 0
+    if (!m_enabled) return;
 
     Real t_lab = t;
     if (WarpX::gamma_boost > 1) {
@@ -555,7 +560,8 @@ LaserParticleContainer::Evolve (int lev,
 void
 LaserParticleContainer::PostRestart ()
 {
-    if (m_e_max == amrex::Real(0.)) return; // Disable laser if amplitude is 0
+    if (m_enabled) return;
+
     Real Sx, Sy;
     const int lev = finestLevel();
     ComputeSpacing(lev, Sx, Sy);
