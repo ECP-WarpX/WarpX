@@ -45,24 +45,19 @@ FieldEnergy::FieldEnergy (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[0]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[1]time(s)";
-            constexpr int shift_total = 2;
-            constexpr int shift_E = 3;
-            constexpr int shift_B = 4;
+            ofs << "[" << c++ << "]time(s)";
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_total+noutputs*lev) + "]";
-                ofs << "total_lev"+std::to_string(lev)+"(J)";
+                ofs << "[" << c++ << "]total_lev" + std::to_string(lev) + "(J)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_E+noutputs*lev) + "]";
-                ofs << "E_lev"+std::to_string(lev)+"(J)";
+                ofs << "[" << c++ << "]E_lev" + std::to_string(lev) + "(J)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_B+noutputs*lev) + "]";
-                ofs << "B_lev"+std::to_string(lev)+"(J)";
+                ofs << "[" << c++ << "]B_lev" + std::to_string(lev) + "(J)";
             }
             ofs << std::endl;
             // close file

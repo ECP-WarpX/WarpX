@@ -45,26 +45,24 @@ ParticleEnergy::ParticleEnergy (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[0]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[1]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             ofs << m_sep;
-            ofs << "[2]total(J)";
+            ofs << "[" << c++ << "]total(J)";
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(3+i) + "]";
-                ofs << species_names[i]+"(J)";
+                ofs << "[" << c++ << "]" << species_names[i] + "(J)";
             }
             ofs << m_sep;
-            ofs << "[" + std::to_string(3+nSpecies) + "]";
-            ofs << "total_mean(J)";
+            ofs << "[" << c++ << "]total_mean(J)";
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(4+nSpecies+i) + "]";
-                ofs << species_names[i]+"_mean(J)";
+                ofs << "[" << c++ << "]" << species_names[i] + "_mean(J)";
             }
             ofs << std::endl;
             // close file

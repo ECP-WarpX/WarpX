@@ -78,27 +78,22 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[0]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[1]time(s)";
-            constexpr int shift_max_rho = 2;
-            constexpr int shift_min_rho = 3;
-            constexpr int shift_first_species = 4;
+            ofs << "[" << c++ << "]time(s)";
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_max_rho+noutputs_per_level*lev) + "]";
-                ofs << "max_rho_lev"+std::to_string(lev)+" (C/m^3)";
+                ofs << "[" << c++ << "]max_rho_lev" + std::to_string(lev) + " (C/m^3)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_min_rho+noutputs_per_level*lev) + "]";
-                ofs << "min_rho_lev"+std::to_string(lev)+" (C/m^3)";
+                ofs << "[" << c++ << "]min_rho_lev" + std::to_string(lev) + " (C/m^3)";
                 for (int i = 0; i < n_charged_species; ++i)
                 {
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(shift_first_species+i+noutputs_per_level*lev) + "]";
-                    ofs << "max_" + species_names[indices_charged_species[i]]
-                                  + "_|rho|_lev"+std::to_string(lev)+" (C/m^3)";
+                    ofs << "[" << c++ << "]max_" + species_names[indices_charged_species[i]]
+                                         + "_|rho|_lev" + std::to_string(lev) + " (C/m^3)";
                 }
             }
             ofs << std::endl;

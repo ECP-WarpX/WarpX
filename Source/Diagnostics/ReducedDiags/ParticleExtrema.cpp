@@ -72,54 +72,55 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 ofs.open(m_path + m_rd_name + "." + m_extension,
                     std::ofstream::out | std::ofstream::app);
                 // write header row
+                int c = 0;
                 ofs << "#";
-                ofs << "[0]step()";
+                ofs << "[" << c++ << "]step()";
                 ofs << m_sep;
-                ofs << "[1]time(s)";
+                ofs << "[" << c++ << "]time(s)";
                 ofs << m_sep;
-                ofs << "[2]xmin(m)";
+                ofs << "[" << c++ << "]xmin(m)";
                 ofs << m_sep;
-                ofs << "[3]xmax(m)";
+                ofs << "[" << c++ << "]xmax(m)";
                 ofs << m_sep;
-                ofs << "[4]ymin(m)";
+                ofs << "[" << c++ << "]ymin(m)";
                 ofs << m_sep;
-                ofs << "[5]ymax(m)";
+                ofs << "[" << c++ << "]ymax(m)";
                 ofs << m_sep;
-                ofs << "[6]zmin(m)";
+                ofs << "[" << c++ << "]zmin(m)";
                 ofs << m_sep;
-                ofs << "[7]zmax(m)";
+                ofs << "[" << c++ << "]zmax(m)";
                 ofs << m_sep;
-                ofs << "[8]pxmin(kg*m/s)";
+                ofs << "[" << c++ << "]pxmin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[9]pxmax(kg*m/s)";
+                ofs << "[" << c++ << "]pxmax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[10]pymin(kg*m/s)";
+                ofs << "[" << c++ << "]pymin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[11]pymax(kg*m/s)";
+                ofs << "[" << c++ << "]pymax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[12]pzmin(kg*m/s)";
+                ofs << "[" << c++ << "]pzmin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[13]pzmax(kg*m/s)";
+                ofs << "[" << c++ << "]pzmax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[14]gmin()";
+                ofs << "[" << c++ << "]gmin()";
                 ofs << m_sep;
-                ofs << "[15]gmax()";
+                ofs << "[" << c++ << "]gmax()";
                 ofs << m_sep;
 #if (defined WARPX_DIM_3D)
-                ofs << "[16]wmin()";
+                ofs << "[" << c++ << "]wmin()";
                 ofs << m_sep;
-                ofs << "[17]wmax()";
+                ofs << "[" << c++ << "]wmax()";
 #else
-                ofs << "[16]wmin(1/m)";
+                ofs << "[" << c++ << "]wmin(1/m)";
                 ofs << m_sep;
-                ofs << "[17]wmax(1/m)";
+                ofs << "[" << c++ << "]wmax(1/m)";
 #endif
                 if (myspc.DoQED())
                 {
                     ofs << m_sep;
-                    ofs << "[18]chimin()";
+                    ofs << "[" << c++ << "]chimin()";
                     ofs << m_sep;
-                    ofs << "[19]chimax()";
+                    ofs << "[" << c++ << "]chimax()";
                 }
                 ofs << std::endl;
                 // close file

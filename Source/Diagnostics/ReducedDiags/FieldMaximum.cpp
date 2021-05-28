@@ -38,44 +38,29 @@ FieldMaximum::FieldMaximum (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[0]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[1]time(s)";
-            constexpr int shift_Ex = 2;
-            constexpr int shift_Ey = 3;
-            constexpr int shift_Ez = 4;
-            constexpr int shift_absE = 5;
-            constexpr int shift_Bx = 6;
-            constexpr int shift_By = 7;
-            constexpr int shift_Bz = 8;
-            constexpr int shift_absB = 9;
+            ofs << "[" << c++ << "]time(s)";
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Ex+noutputs*lev) + "]";
-                ofs << "max_Ex_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_Ex_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Ey+noutputs*lev) + "]";
-                ofs << "max_Ey_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_Ey_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Ez+noutputs*lev) + "]";
-                ofs << "max_Ez_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_Ez_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_absE+noutputs*lev) + "]";
-                ofs << "max_|E|_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_|E|_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Bx+noutputs*lev) + "]";
-                ofs << "max_Bx_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_Bx_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_By+noutputs*lev) + "]";
-                ofs << "max_By_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_By_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Bz+noutputs*lev) + "]";
-                ofs << "max_Bz_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_Bz_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_absB+noutputs*lev) + "]";
-                ofs << "max_|B|_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_|B|_lev" + std::to_string(lev) + " (T)";
             }
             ofs << std::endl;
             // close file
