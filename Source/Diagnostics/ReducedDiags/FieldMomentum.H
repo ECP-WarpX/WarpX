@@ -9,7 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDMOMENTUM_H_
 
 #include "ReducedDiags.H"
-#include <fstream>
+#include <string>
 
 /**
  * \brief This class mainly contains a function that computes the field momentum.

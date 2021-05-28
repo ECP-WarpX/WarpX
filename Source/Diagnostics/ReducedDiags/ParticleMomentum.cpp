@@ -115,9 +115,6 @@ void ParticleMomentum::ComputeDiags (int step)
     // Get number of species
     const int nSpecies = mypc.nSpecies();
 
-    // Get species names
-    const std::vector<std::string> species_names = mypc.GetSpeciesNames();
-
     // Some useful offsets to fill m_data below
     int offset_total_species, offset_mean_species, offset_mean_all;
 
