@@ -260,7 +260,7 @@ private:
   //int m_NumSoAIntAttributes = PIdx::nattribs; //! WarpX' additional int particle attributes in SoA
   int m_NumAoSIntAttributes = 0; //! WarpX definition: no additional int attributes in particle AoS
 
-  openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::groupBased;
+  openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::fileBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
   int m_CurrentStep  = -1;
 
