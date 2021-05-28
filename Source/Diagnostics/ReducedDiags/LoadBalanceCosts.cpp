@@ -17,7 +17,6 @@ using namespace amrex;
 LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
     : ReducedDiags{rd_name}
 {
-
 }
 
 // function that gathers costs
@@ -225,7 +224,6 @@ void LoadBalanceCosts::WriteToFile (int step) const
     // close file
     ofs.close();
 
-
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
@@ -244,40 +242,40 @@ void LoadBalanceCosts::WriteToFile (int step) const
         int nDataFieldsToWrite = m_nDataFields + 1;
 
         ofstmp << "#";
-        ofstmp << "[1]step()";
+        ofstmp << "[0]step()";
         ofstmp << m_sep;
-        ofstmp << "[2]time(s)";
+        ofstmp << "[1]time(s)";
 
         for (int boxNumber=0; boxNumber<m_nBoxesMax; ++boxNumber)
         {
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(3 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(2 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "cost_box_"+std::to_string(boxNumber)+"()";
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(4 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(3 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "proc_box_"+std::to_string(boxNumber)+"()";
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(5 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(4 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "lev_box_"+std::to_string(boxNumber)+"()";
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(6 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(5 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "i_low_box_"+std::to_string(boxNumber)+"()";
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(7 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(6 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "j_low_box_"+std::to_string(boxNumber)+"()";
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(8 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(7 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "k_low_box_"+std::to_string(boxNumber)+"()";
 #ifdef AMREX_USE_GPU
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(9 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(8 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "gpu_ID_box_"+std::to_string(boxNumber)+"()";
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(10 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(9 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "hostname_box_"+std::to_string(boxNumber)+"()";
 #else
             ofstmp << m_sep;
-            ofstmp << "[" + std::to_string(9 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "[" + std::to_string(8 + nDataFieldsToWrite*boxNumber) + "]";
             ofstmp << "hostname_box_"+std::to_string(boxNumber)+"()";
 #endif
         }

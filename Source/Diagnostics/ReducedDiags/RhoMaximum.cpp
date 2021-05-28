@@ -15,7 +15,6 @@ using namespace amrex::literals;
 RhoMaximum::RhoMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
@@ -80,12 +79,12 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[0]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
-            constexpr int shift_max_rho = 3;
-            constexpr int shift_min_rho = 4;
-            constexpr int shift_first_species = 5;
+            ofs << "[1]time(s)";
+            constexpr int shift_max_rho = 2;
+            constexpr int shift_min_rho = 3;
+            constexpr int shift_first_species = 4;
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
@@ -107,7 +106,6 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
@@ -165,6 +163,5 @@ void RhoMaximum::ComputeDiags (int step)
 
     /* m_data now contains up-to-date values for:
      *  [max(rho), min(rho), max(|rho_charged_species1|), max(|rho_charged_species2|), ...] */
-
 }
 // end void RhoMaximum::ComputeDiags

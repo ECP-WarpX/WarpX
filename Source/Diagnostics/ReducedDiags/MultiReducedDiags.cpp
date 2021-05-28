@@ -32,7 +32,6 @@ using namespace amrex;
 // constructor
 MultiReducedDiags::MultiReducedDiags ()
 {
-
     // read reduced diags names
     ParmParse pp_warpx("warpx");
     m_plot_rd = pp_warpx.queryarr("reduced_diags_names", m_rd_names);
@@ -70,7 +69,6 @@ MultiReducedDiags::MultiReducedDiags ()
             return reduced_diags_dictionary.at(rd_type)(rd_name);
         });
     // end loop over all reduced diags
-
 }
 // end constructor
 
@@ -89,7 +87,6 @@ void MultiReducedDiags::ComputeDiags (int step)
 // function to write data
 void MultiReducedDiags::WriteToFile (int step)
 {
-
     // Only the I/O rank does
     if ( !ParallelDescriptor::IOProcessor() ) { return; }
 
@@ -101,7 +98,6 @@ void MultiReducedDiags::WriteToFile (int step)
 
         // call the write to file function
         m_multi_rd[i_rd]->WriteToFile(step);
-
     }
     // end loop over all reduced diags
 }

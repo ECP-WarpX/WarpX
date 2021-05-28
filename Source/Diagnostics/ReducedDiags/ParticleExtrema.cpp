@@ -73,53 +73,53 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                     std::ofstream::out | std::ofstream::app);
                 // write header row
                 ofs << "#";
-                ofs << "[1]step()";
+                ofs << "[0]step()";
                 ofs << m_sep;
-                ofs << "[2]time(s)";
+                ofs << "[1]time(s)";
                 ofs << m_sep;
-                ofs << "[3]xmin(m)";
+                ofs << "[2]xmin(m)";
                 ofs << m_sep;
-                ofs << "[4]xmax(m)";
+                ofs << "[3]xmax(m)";
                 ofs << m_sep;
-                ofs << "[5]ymin(m)";
+                ofs << "[4]ymin(m)";
                 ofs << m_sep;
-                ofs << "[6]ymax(m)";
+                ofs << "[5]ymax(m)";
                 ofs << m_sep;
-                ofs << "[7]zmin(m)";
+                ofs << "[6]zmin(m)";
                 ofs << m_sep;
-                ofs << "[8]zmax(m)";
+                ofs << "[7]zmax(m)";
                 ofs << m_sep;
-                ofs << "[9]pxmin(kg*m/s)";
+                ofs << "[8]pxmin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[10]pxmax(kg*m/s)";
+                ofs << "[9]pxmax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[11]pymin(kg*m/s)";
+                ofs << "[10]pymin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[12]pymax(kg*m/s)";
+                ofs << "[11]pymax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[13]pzmin(kg*m/s)";
+                ofs << "[12]pzmin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[14]pzmax(kg*m/s)";
+                ofs << "[13]pzmax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[15]gmin()";
+                ofs << "[14]gmin()";
                 ofs << m_sep;
-                ofs << "[16]gmax()";
+                ofs << "[15]gmax()";
                 ofs << m_sep;
 #if (defined WARPX_DIM_3D)
-                ofs << "[17]wmin()";
+                ofs << "[16]wmin()";
                 ofs << m_sep;
-                ofs << "[18]wmax()";
+                ofs << "[17]wmax()";
 #else
-                ofs << "[17]wmin(1/m)";
+                ofs << "[16]wmin(1/m)";
                 ofs << m_sep;
-                ofs << "[18]wmax(1/m)";
+                ofs << "[17]wmax(1/m)";
 #endif
                 if (myspc.DoQED())
                 {
                     ofs << m_sep;
-                    ofs << "[19]chimin()";
+                    ofs << "[18]chimin()";
                     ofs << m_sep;
-                    ofs << "[20]chimax()";
+                    ofs << "[19]chimax()";
                 }
                 ofs << std::endl;
                 // close file
@@ -133,7 +133,6 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
 // function that computes extrema
 void ParticleExtrema::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -159,7 +158,6 @@ void ParticleExtrema::ComputeDiags (int step)
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
-
         // only chosen species does
         if (species_names[i_s] != m_species_name) { continue; }
 
@@ -353,7 +351,6 @@ void ParticleExtrema::ComputeDiags (int step)
 
         if (myspc.DoQED())
         {
-
             // declare chi arrays
             std::vector<Real> chimin, chimax;
             chimin.resize(level_number+1,0.0_rt);
@@ -460,7 +457,6 @@ void ParticleExtrema::ComputeDiags (int step)
             ParallelDescriptor::ReduceRealMax(chimax_f);
         }
 #endif
-
         m_data[0]  = xmin;
         m_data[1]  = xmax;
         m_data[2]  = ymin;
@@ -484,9 +480,7 @@ void ParticleExtrema::ComputeDiags (int step)
             m_data[17] = chimax_f;
         }
 #endif
-
     }
     // end loop over species
-
 }
 // end void ParticleEnergy::ComputeDiags

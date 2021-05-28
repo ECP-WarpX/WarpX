@@ -15,7 +15,6 @@ using namespace amrex;
 FieldMaximum::FieldMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
@@ -40,17 +39,17 @@ FieldMaximum::FieldMaximum (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[0]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
-            constexpr int shift_Ex = 3;
-            constexpr int shift_Ey = 4;
-            constexpr int shift_Ez = 5;
-            constexpr int shift_absE = 6;
-            constexpr int shift_Bx = 7;
-            constexpr int shift_By = 8;
-            constexpr int shift_Bz = 9;
-            constexpr int shift_absB = 10;
+            ofs << "[1]time(s)";
+            constexpr int shift_Ex = 2;
+            constexpr int shift_Ey = 3;
+            constexpr int shift_Ez = 4;
+            constexpr int shift_absE = 5;
+            constexpr int shift_Bx = 6;
+            constexpr int shift_By = 7;
+            constexpr int shift_Bz = 8;
+            constexpr int shift_absB = 9;
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
@@ -83,7 +82,6 @@ FieldMaximum::FieldMaximum (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
@@ -102,7 +100,6 @@ void FieldMaximum::ComputeDiags (int step)
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
-
         // get MultiFab data at lev
         const MultiFab & Ex = warpx.getEfield(lev,0);
         const MultiFab & Ey = warpx.getEfield(lev,1);
@@ -280,6 +277,5 @@ void FieldMaximum::ComputeDiags (int step)
     /* m_data now contains up-to-date values for:
      *  [max(Ex),max(Ey),max(Ez),max(|E|),
      *   max(Bx),max(By),max(Bz),max(|B|)] */
-
 }
 // end void FieldMaximum::ComputeDiags

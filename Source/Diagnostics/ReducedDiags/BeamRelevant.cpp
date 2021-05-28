@@ -22,7 +22,6 @@ using namespace amrex;
 BeamRelevant::BeamRelevant (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // read beam name
     ParmParse pp_rd_name(rd_name);
     pp_rd_name.get("species",m_beam_name);
@@ -59,58 +58,56 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             // write header row
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
             ofs << "#";
-            ofs << "[1]step()";           ofs << m_sep;
-            ofs << "[2]time(s)";          ofs << m_sep;
-            ofs << "[3]x_mean(m)";        ofs << m_sep;
-            ofs << "[4]y_mean(m)";        ofs << m_sep;
-            ofs << "[5]z_mean(m)";        ofs << m_sep;
-            ofs << "[6]px_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[7]py_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[8]pz_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[9]gamma_mean()";     ofs << m_sep;
-            ofs << "[10]x_rms(m)";        ofs << m_sep;
-            ofs << "[11]y_rms(m)";        ofs << m_sep;
-            ofs << "[12]z_rms(m)";        ofs << m_sep;
-            ofs << "[13]px_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[14]py_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[15]pz_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[16]gamma_rms()";     ofs << m_sep;
-            ofs << "[17]emittance_x(m)";  ofs << m_sep;
-            ofs << "[18]emittance_y(m)";  ofs << m_sep;
-            ofs << "[19]emittance_z(m)";  ofs << m_sep;
-            ofs << "[20]charge(C)";       ofs << std::endl;
-#elif (defined WARPX_DIM_XZ)
-            ofs << "#";
-            ofs << "[1]step()";           ofs << m_sep;
-            ofs << "[2]time(s)";          ofs << m_sep;
-            ofs << "[3]x_mean(m)";        ofs << m_sep;
+            ofs << "[0]step()";           ofs << m_sep;
+            ofs << "[1]time(s)";          ofs << m_sep;
+            ofs << "[2]x_mean(m)";        ofs << m_sep;
+            ofs << "[3]y_mean(m)";        ofs << m_sep;
             ofs << "[4]z_mean(m)";        ofs << m_sep;
             ofs << "[5]px_mean(kg*m/s)";  ofs << m_sep;
             ofs << "[6]py_mean(kg*m/s)";  ofs << m_sep;
             ofs << "[7]pz_mean(kg*m/s)";  ofs << m_sep;
             ofs << "[8]gamma_mean()";     ofs << m_sep;
             ofs << "[9]x_rms(m)";         ofs << m_sep;
-            ofs << "[10]z_rms(m)";        ofs << m_sep;
-            ofs << "[11]px_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[12]py_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[13]pz_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[14]gamma_rms()";     ofs << m_sep;
-            ofs << "[15]emittance_x(m)";  ofs << m_sep;
-            ofs << "[16]emittance_z(m)";  ofs << m_sep;
-            ofs << "[17]charge(C)";       ofs << std::endl;
+            ofs << "[10]y_rms(m)";        ofs << m_sep;
+            ofs << "[11]z_rms(m)";        ofs << m_sep;
+            ofs << "[12]px_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[13]py_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[14]pz_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[15]gamma_rms()";     ofs << m_sep;
+            ofs << "[16]emittance_x(m)";  ofs << m_sep;
+            ofs << "[17]emittance_y(m)";  ofs << m_sep;
+            ofs << "[18]emittance_z(m)";  ofs << m_sep;
+            ofs << "[19]charge(C)";       ofs << std::endl;
+#elif (defined WARPX_DIM_XZ)
+            ofs << "#";
+            ofs << "[0]step()";           ofs << m_sep;
+            ofs << "[1]time(s)";          ofs << m_sep;
+            ofs << "[2]x_mean(m)";        ofs << m_sep;
+            ofs << "[3]z_mean(m)";        ofs << m_sep;
+            ofs << "[4]px_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[5]py_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[6]pz_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[7]gamma_mean()";     ofs << m_sep;
+            ofs << "[8]x_rms(m)";         ofs << m_sep;
+            ofs << "[9]z_rms(m)";         ofs << m_sep;
+            ofs << "[10]px_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[11]py_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[12]pz_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[13]gamma_rms()";     ofs << m_sep;
+            ofs << "[14]emittance_x(m)";  ofs << m_sep;
+            ofs << "[15]emittance_z(m)";  ofs << m_sep;
+            ofs << "[16]charge(C)";       ofs << std::endl;
 #endif
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that compute beam relevant quantities
 void BeamRelevant::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -449,6 +446,5 @@ void BeamRelevant::ComputeDiags (int step)
 
     }
     // end loop over species
-
 }
 // end void BeamRelevant::ComputeDiags

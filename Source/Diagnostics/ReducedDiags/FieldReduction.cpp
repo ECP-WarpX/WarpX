@@ -54,18 +54,17 @@ FieldReduction::FieldReduction (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[0]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[1]time(s)";
             ofs << m_sep;
-            ofs << "[3]" + reduction_type_string + " of " + parser_string + " (SI units)";
+            ofs << "[2]" + reduction_type_string + " of " + parser_string + " (SI units)";
 
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 

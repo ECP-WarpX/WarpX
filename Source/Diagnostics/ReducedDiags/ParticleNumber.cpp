@@ -38,13 +38,13 @@ ParticleNumber::ParticleNumber (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[0]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[1]time(s)";
             ofs << m_sep;
-            ofs << "[3]total macroparticles()";
+            ofs << "[2]total macroparticles()";
             // Column number of first species macroparticle number
-            constexpr int shift_first_species_macroparticles = 4;
+            constexpr int shift_first_species_macroparticles = 3;
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
@@ -69,14 +69,12 @@ ParticleNumber::ParticleNumber (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes total number of macroparticles and physical particles
 void ParticleNumber::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -140,6 +138,5 @@ void ParticleNumber::ComputeDiags (int step)
      *   sum of particles weight (species 1),
      *   ...,
      *   sum of particles weight (species n)] */
-
 }
 // end void ParticleNumber::ComputeDiags

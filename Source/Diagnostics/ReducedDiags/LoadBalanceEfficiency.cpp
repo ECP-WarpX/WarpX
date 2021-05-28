@@ -32,10 +32,10 @@ LoadBalanceEfficiency::LoadBalanceEfficiency (std::string rd_name)
 
             // write header row
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[0]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
-            constexpr int shift = 3;
+            ofs << "[1]time(s)";
+            constexpr int shift = 2;
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
