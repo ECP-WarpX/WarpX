@@ -769,7 +769,9 @@ bool LaserParticleContainer::antenna_intersects_sim_box()
 #ifdef WARPX_DIM_RZ
     // In RZ we only check that the antenna position is within [z_left, z_right]
     amrex::ignore_unused(x_l, x_h, x_p, x_n, z_n, t_corners);
-    return (z_p >= z_l) && (z_p <= z_r);
+    const auto& z_l = sim_box.lo(1);
+    const auto& z_h = sim_box.hi(1);
+    return (z_p >= z_l) && (z_p <= z_h);
 
 #elif (defined WARPX_DIM_3D)
     const auto& y_l = sim_box.lo(1);
