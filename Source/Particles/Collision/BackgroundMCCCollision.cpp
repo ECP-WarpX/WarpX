@@ -325,6 +325,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               }
                           }
                           );
+    amrex::Gpu::synchronize();
 }
 
 
@@ -377,5 +378,6 @@ void BackgroundMCCCollision::doBackgroundIonization
 
         setNewParticleIDs(elec_tile, np_elec, num_added);
         setNewParticleIDs(ion_tile, np_ion, num_added);
+        amrex::Gpu::synchronize();
     }
 }
