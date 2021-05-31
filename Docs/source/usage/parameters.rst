@@ -2162,8 +2162,10 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
-    **Note: implementation of this feature is in progress.**
-    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement, cylindrical coordinates or single precision.
+    Schwinger process requires either ``warpx.do_nodal=1`` or
+    ``algo.field_gathering=momentum-conserving`` (so that different field components are computed
+    at the same location in the grid) and does not currently support mesh refinement, cylindrical
+    coordinates or single precision.
 
 * ``qed_schwinger.ele_product_species`` (`string`)
     If Schwinger process is activated, an electron product species must be specified
