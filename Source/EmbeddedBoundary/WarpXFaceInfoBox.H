@@ -8,7 +8,7 @@
 struct FaceInfoBox {
   amrex::Gpu::DeviceVector<int> i_face, j_face, k_face;
   amrex::Gpu::DeviceVector<amrex::Real> area, rho_face;
-  amrex::BaseFab<std::vector<int>> inds;
+  amrex::BaseFab<amrex::Gpu::DeviceVector<int>> inds;
 };
 
 #endif //WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_H
