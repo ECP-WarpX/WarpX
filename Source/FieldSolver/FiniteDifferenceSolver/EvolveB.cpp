@@ -298,14 +298,14 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
             auto &lending_dim = (*lending[idim])[mfi];
             auto &borrowing_dim = (*borrowing[idim])[mfi];
-            auto borrowing_dim_i_face = borrowing_dim.i_face;
-            auto borrowing_dim_j_face = borrowing_dim.j_face;
-            auto borrowing_dim_k_face = borrowing_dim.k_face;
-            auto borrowing_dim_area = borrowing_dim.area;
-            auto lending_dim_i_face = lending_dim.i_face;
-            auto lending_dim_j_face = lending_dim.j_face;
-            auto lending_dim_k_face = lending_dim.k_face;
-            auto lending_dim_area = lending_dim.area;
+            auto borrowing_dim_i_face = borrowing_dim.i_face.dataPtr();
+            auto borrowing_dim_j_face = borrowing_dim.j_face.dataPtr();
+            auto borrowing_dim_k_face = borrowing_dim.k_face.dataPtr();
+            auto borrowing_dim_area = borrowing_dim.area.dataPtr();
+            auto lending_dim_i_face = lending_dim.i_face.dataPtr();
+            auto lending_dim_j_face = lending_dim.j_face.dataPtr();
+            auto lending_dim_k_face = lending_dim.k_face.dataPtr();
+            auto lending_dim_area = lending_dim.area.dataPtr();
 
             auto lending_dim_rho_face = lending_dim.rho_face.dataPtr();
             auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.array();
