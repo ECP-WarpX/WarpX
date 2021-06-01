@@ -118,6 +118,8 @@ void ParticleMomentum::ComputeDiags (int step)
     // Some useful offsets to fill m_data below
     int offset_total_species, offset_mean_species, offset_mean_all;
 
+    amrex::Real Wtot = 0.0_rt;
+
     // Loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
@@ -158,16 +160,19 @@ void ParticleMomentum::ComputeDiags (int step)
 
         // Use amrex::ReduceSum to compute the sum of the weights of all particles held by
         // the current MPI rank for this species (loop over all boxes held by this MPI rank)
-        amrex::Real Wtot = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        amrex::Real Ws = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
             return p.rdata(PIdx::w);
         });
 
         // Reduced sum over MPI ranks
-        ParallelDescriptor::ReduceRealSum(Px  , ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealSum(Py  , ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealSum(Pz  , ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealSum(Wtot, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum(Px, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum(Py, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum(Pz, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum(Ws, ParallelDescriptor::IOProcessorNumber());
+
+        // Accumulate sum of weights over all species (must come after MPI reduction of Ws)
+        Wtot += Ws;
 
         // Save results for this species i_s into m_data
 
@@ -185,11 +190,11 @@ void ParticleMomentum::ComputeDiags (int step)
         // 3 values of mean  momentum for all  species +
         // 3 values of mean  momentum for each species
         offset_mean_species = 3 + nSpecies*3 + 3 + i_s*3;
-        if (Wtot > std::numeric_limits<Real>::min())
+        if (Ws > std::numeric_limits<Real>::min())
         {
-            m_data[offset_mean_species+0] = Px / Wtot;
-            m_data[offset_mean_species+1] = Py / Wtot;
-            m_data[offset_mean_species+2] = Pz / Wtot;
+            m_data[offset_mean_species+0] = Px / Ws;
+            m_data[offset_mean_species+1] = Py / Ws;
+            m_data[offset_mean_species+2] = Pz / Ws;
         }
         else
         {
@@ -199,19 +204,10 @@ void ParticleMomentum::ComputeDiags (int step)
         }
     }
 
-    // Save total momentum and total mean momentum
-
+    // Total momentum
     m_data[0] = 0.0;
     m_data[1] = 0.0;
     m_data[2] = 0.0;
-
-    // Offset:
-    // 3 values of total momentum for all  species +
-    // 3 values of total momentum for each species
-    offset_mean_all = 3 + nSpecies*3;
-    m_data[offset_mean_all+0] = 0.0;
-    m_data[offset_mean_all+1] = 0.0;
-    m_data[offset_mean_all+2] = 0.0;
 
     // Loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
@@ -223,17 +219,15 @@ void ParticleMomentum::ComputeDiags (int step)
         m_data[0] += m_data[offset_total_species+0];
         m_data[1] += m_data[offset_total_species+1];
         m_data[2] += m_data[offset_total_species+2];
-
-        // Offset:
-        // 3 values of total momentum for all  species +
-        // 3 values of total momentum for each species +
-        // 3 values of mean  momentum for all  species +
-        // 3 values of mean  momentum for each species
-        offset_mean_species = 3 + nSpecies*3 + 3 + i_s*3;
-        m_data[offset_mean_all+0] += m_data[offset_mean_species+0];
-        m_data[offset_mean_all+1] += m_data[offset_mean_species+1];
-        m_data[offset_mean_all+2] += m_data[offset_mean_species+2];
     }
+
+    // Total mean momentum. Offset:
+    // 3 values of total momentum for all  species +
+    // 3 values of total momentum for each species
+    offset_mean_all = 3 + nSpecies*3;
+    m_data[offset_mean_all+0] = m_data[0] / Wtot;
+    m_data[offset_mean_all+1] = m_data[1] / Wtot;
+    m_data[offset_mean_all+2] = m_data[2] / Wtot;
 
     // m_data contains up-to-date values for:
     // [total momentum along x (all species)

@@ -101,6 +101,31 @@ values_yt['sum of weights'] = values_yt['electrons: sum of weights'] \
                               + values_yt['protons: sum of weights'] \
                               + values_yt['photons: sum of weights']
 
+values_yt['mean particle momentum in x'] = values_yt['particle momentum in x'] / values_yt['sum of weights']
+values_yt['mean particle momentum in y'] = values_yt['particle momentum in y'] / values_yt['sum of weights']
+values_yt['mean particle momentum in z'] = values_yt['particle momentum in z'] / values_yt['sum of weights']
+
+values_yt['electrons: mean particle momentum in x'] = values_yt['electrons: particle momentum in x'] \
+                                                    / values_yt['electrons: sum of weights']
+values_yt['electrons: mean particle momentum in y'] = values_yt['electrons: particle momentum in y'] \
+                                                    / values_yt['electrons: sum of weights']
+values_yt['electrons: mean particle momentum in z'] = values_yt['electrons: particle momentum in z'] \
+                                                    / values_yt['electrons: sum of weights']
+
+values_yt['protons: mean particle momentum in x'] = values_yt['protons: particle momentum in x'] \
+                                                  / values_yt['protons: sum of weights']
+values_yt['protons: mean particle momentum in y'] = values_yt['protons: particle momentum in y'] \
+                                                  / values_yt['protons: sum of weights']
+values_yt['protons: mean particle momentum in z'] = values_yt['protons: particle momentum in z'] \
+                                                  / values_yt['protons: sum of weights']
+
+values_yt['photons: mean particle momentum in x'] = values_yt['photons: particle momentum in x'] \
+                                                  / values_yt['photons: sum of weights']
+values_yt['photons: mean particle momentum in y'] = values_yt['photons: particle momentum in y'] \
+                                                  / values_yt['photons: sum of weights']
+values_yt['photons: mean particle momentum in z'] = values_yt['photons: particle momentum in z'] \
+                                                  / values_yt['photons: sum of weights']
+
 # Load 3D data from plotfiles
 ad = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Ex = ad['Ex'].to_ndarray()
@@ -185,6 +210,18 @@ values_rd['protons: particle momentum in z'] = PPdata[1][10]
 values_rd['photons: particle momentum in x'] = PPdata[1][11]
 values_rd['photons: particle momentum in y'] = PPdata[1][12]
 values_rd['photons: particle momentum in z'] = PPdata[1][13]
+values_rd['mean particle momentum in x'] = PPdata[1][14]
+values_rd['mean particle momentum in y'] = PPdata[1][15]
+values_rd['mean particle momentum in z'] = PPdata[1][16]
+values_rd['electrons: mean particle momentum in x'] = PPdata[1][17]
+values_rd['electrons: mean particle momentum in y'] = PPdata[1][18]
+values_rd['electrons: mean particle momentum in z'] = PPdata[1][19]
+values_rd['protons: mean particle momentum in x'] = PPdata[1][20]
+values_rd['protons: mean particle momentum in y'] = PPdata[1][21]
+values_rd['protons: mean particle momentum in z'] = PPdata[1][22]
+values_rd['photons: mean particle momentum in x'] = PPdata[1][23]
+values_rd['photons: mean particle momentum in y'] = PPdata[1][24]
+values_rd['photons: mean particle momentum in z'] = PPdata[1][25]
 values_rd['maximum of |Ex|'] = MFdata[1][2]
 values_rd['maximum of |Ey|'] = MFdata[1][3]
 values_rd['maximum of |Ez|'] = MFdata[1][4]
