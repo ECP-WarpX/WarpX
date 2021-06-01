@@ -992,7 +992,7 @@ WarpX::ReadParameters ()
             WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
-                "field boundary in both lo and high must be set to Damped for PSATD"
+                "field boundary in both lo and hi must be set to Damped for PSATD"
             );
         }
     }
@@ -1401,6 +1401,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,phi_nodal_flag),dm,ncomps,ngPhi,tag("phi_fp"));
+        phi_fp[lev]->setVal(0.);
     }
 
     if (do_subcycling == 1 && lev == 0)

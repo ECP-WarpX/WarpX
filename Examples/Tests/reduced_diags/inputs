@@ -68,7 +68,7 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP NP EF MF MR
+warpx.reduced_diags_names = EP NP EF MF MR FR_Max FR_Min FR_Integral
 EP.type = ParticleEnergy
 EP.intervals = 200
 EF.type = FieldEnergy
@@ -79,6 +79,19 @@ MR.type = RhoMaximum
 MR.intervals = 200
 NP.type = ParticleNumber
 NP.intervals = 200
+FR_Max.type = FieldReduction
+FR_Max.intervals = 200
+FR_Max.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = sqrt(Bx**2 + By**2 + Bz**2)
+FR_Max.reduction_type = Maximum
+FR_Min.type = FieldReduction
+FR_Min.intervals = 200
+FR_Min.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = x*Ey*Bz
+FR_Min.reduction_type = Minimum
+FR_Integral.type = FieldReduction
+FR_Integral.intervals = 200
+FR_Integral.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) =
+    "if(y > 0 and z < 0, 0.5*((Ex**2 + Ey**2 + Ez**2)*epsilon0+(Bx**2 + By**2 + Bz**2)/mu0), 0)"
+FR_Integral.reduction_type = Integral
 
 # Diagnostics
 diagnostics.diags_names = diag1

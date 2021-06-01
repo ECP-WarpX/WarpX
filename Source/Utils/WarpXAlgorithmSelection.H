@@ -100,8 +100,10 @@ struct FieldBoundaryType {
         Periodic = 1,
         PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
         PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
-        Damped = 4   // Fields in the guard cells are damped for PSATD
+        Damped = 4,   // Fields in the guard cells are damped for PSATD
                      //in the moving window direction
+        None = 5     // The fields values at the boundary are not updated. This is
+                     // useful for RZ simulations, at r=0.
     };
 };
 
@@ -113,6 +115,16 @@ struct ParticleBoundaryType {
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
         Periodic = 3
+    };
+};
+
+/** MPI reductions
+ */
+struct ReductionType {
+    enum {
+        Maximum = 0,
+        Minimum = 1,
+        Sum = 2
     };
 };
 
