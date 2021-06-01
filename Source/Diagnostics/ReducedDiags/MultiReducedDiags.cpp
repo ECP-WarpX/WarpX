@@ -64,7 +64,7 @@ MultiReducedDiags::MultiReducedDiags ()
             pp_rd_name.get("type", rd_type);
 
             if(reduced_diags_dictionary.count(rd_type) == 0)
-                Abort("No matching reduced diagnostics type found.");
+                Abort(rd_type + " is not a valid type for reduced diagnostic " + rd_name);
 
             return reduced_diags_dictionary.at(rd_type)(rd_name);
         });
