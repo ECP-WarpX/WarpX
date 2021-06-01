@@ -96,6 +96,9 @@ For running on 48 cores of a single node:
 
    srun -p short -N 1 -n 48 --pty bash
    OMP_NUM_THREADS=1 mpiexec -n 48 --map-by ppr:12:numa:pe=1 --report-bindings ./warpx inputs
+   
+   # alternatively, using 4 MPI ranks with each 12 threads on a single node:
+   OMP_NUM_THREADS=12 mpiexec -n 4 --map-by ppr:4:numa:pe=12 --report-bindings ./warpx inputs
 
 The Ookami HPE Apollo 80 system has 174 A64FX compute nodes each with 32GB of high-bandwidth memory.
 
