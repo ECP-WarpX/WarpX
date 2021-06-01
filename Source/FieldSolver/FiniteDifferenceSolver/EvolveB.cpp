@@ -338,7 +338,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                     int ip = borrowing_dim_i_face[ind];
                     int jp = borrowing_dim_j_face[ind];
                     int kp = borrowing_dim_k_face[ind];
-                    V_enl += Rho(ip, jp, kp) * borrowing_dim_area[ind];
+                    V_enl = V_enl + Rho(ip, jp, kp) * borrowing_dim_area[ind];
                 }
 
                 rho_enl = V_enl / S_enl(i, j, k);
@@ -381,7 +381,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                     amrex::Real Venl = Rho(i, j, k) * S_red(i, j, k);
 
                     for (int ind : lending_inds(i, j, k)) {
-                        Venl += lending_dim_rho_face[ind] * lending_dim_area[ind];
+                        Venl = Venl + lending_dim_rho_face[ind] * lending_dim_area[ind];
                     }
 
                     B(i, j, k) = B(i, j, k) - dt * Venl / S(i, j, k);
