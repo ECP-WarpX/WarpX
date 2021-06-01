@@ -39,13 +39,6 @@ FieldReduction::FieldReduction (std::string rd_name)
     std::string parser_string = "";
     Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)",
                        parser_string);
-    // Remove newlines and spaces in the parser string. This is because this string is written in
-    // the header of the reduced diag output file so this should prevent weird formatting from
-    // occuring.
-    parser_string.erase(std::remove(parser_string.begin(), parser_string.end(), '\n'),
-                        parser_string.end());
-    parser_string.erase(std::remove(parser_string.begin(), parser_string.end(), ' '),
-                        parser_string.end());
     m_parser = std::make_unique<ParserWrapper<m_nvars>>(
         makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz"}));
 
