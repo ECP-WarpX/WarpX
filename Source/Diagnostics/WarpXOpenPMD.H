@@ -93,11 +93,11 @@ public:
 
   /** Initialize openPMD I/O routines
    *
-   * @param oneFilePerTS write one file per timestep
+   * @param ie  iteration encoding from openPMD: "group, file, variable"
    * @param filetype file backend, e.g. "bp" or "h5"
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
-  WarpXOpenPMDPlot (bool oneFilePerTS, std::string filetype, std::vector<bool> fieldPMLdirections);
+  WarpXOpenPMDPlot (openPMD::IterationEncoding ie, std::string filetype, std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
 
@@ -128,6 +128,23 @@ public:
 
 private:
   void Init (openPMD::Access access, bool isBTD);
+
+
+  inline openPMD::Iteration& GetIteration(int iteration) const
+  {
+    // so BTD will be able to revisit previous steps, so we do not use steps with these two encodings,
+    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
+          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
+    {
+        openPMD::Iteration& it = m_Series->iterations[iteration];
+        return it;
+    } else {
+        auto iterations = m_Series->writeIterations();
+        openPMD::Iteration& it = iterations[iteration];
+        return it;
+    }
+  };
+
 
   /** This function does initial setup for the fields when interation is newly created
    *  @param[in] meshes   The meshes in a series
@@ -243,7 +260,7 @@ private:
   //int m_NumSoAIntAttributes = PIdx::nattribs; //! WarpX' additional int particle attributes in SoA
   int m_NumAoSIntAttributes = 0; //! WarpX definition: no additional int attributes in particle AoS
 
-  bool m_OneFilePerTS = true;  //! write in openPMD fileBased manner for individual time steps
+  openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::fileBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
   int m_CurrentStep  = -1;
 
