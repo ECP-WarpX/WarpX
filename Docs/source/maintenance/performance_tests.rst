@@ -68,6 +68,7 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    python3 -m pip install --upgrade pandas
    python3 -m pip install --upgrade bokeh
    python3 -m pip install --upgrade gitpython
+   python3 -m pip install --upgrade tables
 
    # Run the performance test suite
    cd $AUTOMATED_PERF_TESTS/warpx/Tools/PerformanceTests/
