@@ -75,11 +75,11 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DAMReX_MPI_THREAD_MULTIPLE=FALSE
+   cmake -S . -B build -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON
    cmake --build build -j 10
 
    # or (currently better performance)
-   cmake -S . -B build -DWarpX_COMPUTE=NOACC -DWarpX_OPENPMD=ON -DAMReX_MPI_THREAD_MULTIPLE=FALSE
+   cmake -S . -B build -DWarpX_COMPUTE=NOACC -DWarpX_OPENPMD=ON
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -124,3 +124,21 @@ We compiled with the Fujitsu Compiler (Clang) with the following build string:
    cmake --build build -j 10
 
 An internal compiler error requires us to modify a range-based for loop to a conventional for loop for ``WarpX::setLoadBalanceEfficiency``.
+We need to rewrite (at the moment three) loops that look roughly like this:
+
+.. code-block:: cpp
+
+   for (int i : costs[lev]->IndexArray()) {
+       (*costs[lev])[i] = 0.0;
+       WarpX::setLoadBalanceEfficiency(lev, -1);
+   }
+
+into
+
+.. code-block:: cpp
+
+   const auto idx_arr = costs[lev]->IndexArray();
+   for (auto it = idx_arr.begin(); it < idx_arr.end(); ++it ) {
+       (*costs[lev])[*it] = 0.0;
+       WarpX::setLoadBalanceEfficiency(lev, -1);
+   }
