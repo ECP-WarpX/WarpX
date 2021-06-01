@@ -8,11 +8,12 @@ The `Ookami cluster <https://www.stonybrook.edu/ookami/>`__ is located at Stony 
 If you are new to this system, please see the following resources:
 
 * `Ookami documentation <https://www.stonybrook.edu/commcms/ookami/support/index_links_and_docs.php>`__
-* Batch system: *TODO*
-* Production directories *TODO*:
+* Batch system: `Slurm <https://www.stonybrook.edu/commcms/ookami/support/faq/example-slurm-script>`__ (see `available queues <https://www.stonybrook.edu/commcms/ookami/support/faq/queues_on_ookami>`__)
+* `Filesystem locations <https://www.stonybrook.edu/commcms/ookami/support/faq/ookami_storage_options.php>`__:
 
-  * A high-performance Lustre filesystem provides about 0.8 PByte storage.
-  * ...
+  * ``/lustre/home/<netid>`` (30GByte, backuped)
+  * ``/lustre/scratch/<netid>`` (14 day purge)
+  * ``/lustre/projects/<your_group>*`` (1TByte default, up to 8TB possible, shared within our group/project, backuped, prefer this location)
 
 We use Ookami as a development cluster for `A64FX <https://www.arm.com/blogs/blueprint/fujitsu-a64fx-arm>`__,
 The cluster also provides a few extra nodes, e.g. two ``Thunder X2`` (ARM) nodes.
@@ -96,7 +97,7 @@ For running on 48 cores of a single node:
 
    srun -p short -N 1 -n 48 --pty bash
    OMP_NUM_THREADS=1 mpiexec -n 48 --map-by ppr:12:numa:pe=1 --report-bindings ./warpx inputs
-   
+
    # alternatively, using 4 MPI ranks with each 12 threads on a single node:
    OMP_NUM_THREADS=12 mpiexec -n 4 --map-by ppr:4:numa:pe=12 --report-bindings ./warpx inputs
 
