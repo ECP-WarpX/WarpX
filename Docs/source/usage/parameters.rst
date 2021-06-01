@@ -1602,25 +1602,25 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
      `variable based` is not supported for back-transformed diagnostics.
      Default: ``f`` (full diagnostics)
 
-* ``<diag_name>.openpmd_operator.type`` (``zfp``, ``blosc``) optional,
+* ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
     `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
-* ``<diag_name>.openpmd_operator.parameters.*`` optional,
+* ``<diag_name>.adios2_operator.parameters.*`` optional,
     `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
     A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
     ```
-        <diag_name>.openpmd_operator.type = blosc
-        <diag_name>.openpmd_operator.parameters.compressor = zstd
-        <diag_name>.openpmd_operator.parameters.clevel = 1
-        <diag_name>.openpmd_operator.parameters.doshuffle = BLOSC_BITSHUFFLE
-        <diag_name>.openpmd_operator.parameters.threshold = 2048
-        <diag_name>.openpmd_operator.parameters.nthreads = 6  # per MPI rank (and thus per GPU)
+        <diag_name>.adios2_operator.type = blosc
+        <diag_name>.adios2_operator.parameters.compressor = zstd
+        <diag_name>.adios2_operator.parameters.clevel = 1
+        <diag_name>.adios2_operator.parameters.doshuffle = BLOSC_BITSHUFFLE
+        <diag_name>.adios2_operator.parameters.threshold = 2048
+        <diag_name>.adios2_operator.parameters.nthreads = 6  # per MPI rank (and thus per GPU)
     ```
     or for the lossy ZFP compressor using very strong compression per scalar:
     ```
-        <diag_name>.openpmd_operator.type = zfp
-        <diag_name>.openpmd_operator.parameters.precision = 3
+        <diag_name>.adios2_operator.type = zfp
+        <diag_name>.adios2_operator.parameters.precision = 3
     ```
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)

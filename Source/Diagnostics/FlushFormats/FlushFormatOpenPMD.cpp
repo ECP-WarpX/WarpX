@@ -58,8 +58,8 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 
   // ADIOS2 operator type & parameters
   std::string operator_type;
-  pp_diag_name.query("openpmd_operator.type", operator_type);
-  std::string const prefix = diag_name + ".openpmd_operator.parameters";
+  pp_diag_name.query("adios2_operator.type", operator_type);
+  std::string const prefix = diag_name + ".adios2_operator.parameters";
   ParmParse pp;
   auto entr = pp.getEntries(prefix);
 
