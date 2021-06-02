@@ -308,8 +308,8 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             auto lending_dim_area = lending_dim.area.dataPtr();
 
             auto lending_dim_rho_face = lending_dim.rho_face.dataPtr();
-            auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.array();
-            auto const &lending_inds = (*lending[idim])[mfi].inds.array();
+            auto borrowing_inds = (*borrowing[idim])[mfi].inds.dataPtr();
+            auto lending_inds = (*lending[idim])[mfi].inds.dataPtr();
 
             // Extract tileboxes for which to loop
             Box const &tb = mfi.tilebox(Bfield[idim]->ixType().toIntVect());
