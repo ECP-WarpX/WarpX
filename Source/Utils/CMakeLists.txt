@@ -5,6 +5,7 @@ target_sources(WarpX
     Interpolate.cpp
     IntervalsParser.cpp
     MPIInitHelpers.cpp
+    MsgLogger.cpp
     ParticleUtils.cpp
     RelativeCellPosition.cpp
     WarpXAlgorithmSelection.cpp
