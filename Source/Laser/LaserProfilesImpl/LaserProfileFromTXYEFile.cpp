@@ -8,6 +8,8 @@
 #include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/MsgLogger.H"
+#include "WarpX.H"
 
 #include <AMReX_Print.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -29,8 +31,14 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 {
     if (!std::numeric_limits< double >::is_iec559)
     {
-        Print() << R"(Warning: double does not comply with IEEE 754: bad
-            things will happen parsing the X, Y and T profiles for the laser!)";
+        auto& logger = WarpX::GetInstance().get_logger();
+
+        logger.record_entry(
+            MsgLogger::Type::warning, MsgLogger::Importance::high,
+            "Laser",
+            "double precision type does not comply with IEEE 754:\n" +
+            MsgLogger::new_line_skip + "bad things will happen parsing the X, Y and T profiles for the laser!"
+        );
     }
 
     // Parse the TXYE file

@@ -12,6 +12,8 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "WarpX.H"
+#include "Utils/MsgLogger.H"
+
 #include "Utils/WarpXUtil.H"
 #include <AMReX_Vector.H>
 #include <string>
@@ -205,8 +207,11 @@ Diagnostics::InitData ()
         // This is a temporary fix until particle_buffer is supported in diagnostics.
         m_output_species.clear();
 
-        auto& wpx = WarpX::GetInstance();
-        amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
+        auto& logger = WarpX::GetInstance().get_logger();
+        logger.record_entry(
+            MsgLogger::Type::warning, MsgLogger::Importance::medium, "Diagnostics",
+            "For full diagnostics on a reduced domain, particle io is not supported, yet! \n" +
+            MsgLogger::new_line_skip + "Therefore, particle-io is disabled for this diag " + m_diag_name);
     }
 
     // default for writing species output is 1

@@ -24,6 +24,8 @@ enum class Importance{
     high
 };
 
+const auto new_line_skip = std::string{"*      "};
+
 class Logger
 {
 

@@ -11,6 +11,7 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/MsgLogger.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -113,9 +114,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     bool mass_is_specified = queryWithParser(pp_species_name, "mass", mass);
 
     if ( charge_is_specified && species_is_specified ){
-        Print() << "WARNING: Both '" << species_name << ".charge' and "
-                << species_name << ".species_type' are specified\n'"
-                << species_name << ".charge' will take precedence.\n";
+        auto& logger = WarpX::GetInstance().get_logger();
+        logger.record_entry(
+            MsgLogger::Type::warning, MsgLogger::Importance::medium,
+            "Particles", "Both '" + species_name + ".charge' and '" + species_name + ".species_type' are specified.\n" +
+            MsgLogger::new_line_skip + "'" + species_name + ".charge' will take precedence.");
     }
     if (!charge_is_specified && !species_is_specified && s_inj_style != "external_file"){
         // external file will throw own assertions below if charge cannot be found
@@ -123,9 +126,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 
     if ( mass_is_specified && species_is_specified ){
-        Print() << "WARNING: Both '" << species_name << ".mass' and "
-                << species_name << ".species_type' are specified\n'"
-                << species_name << ".mass' will take precedence.\n";
+        auto& logger = WarpX::GetInstance().get_logger();
+        logger.record_entry(
+            MsgLogger::Type::warning, MsgLogger::Importance::medium,
+            "Particles", "Both '" + species_name + ".mass' and '" + species_name + ".species_type' are specified.\n" +
+            MsgLogger::new_line_skip + "'" + species_name + ".mass' will take precedence.");
     }
     if (!mass_is_specified && !species_is_specified && s_inj_style != "external_file"){
         // external file will throw own assertions below if mass cannot be found

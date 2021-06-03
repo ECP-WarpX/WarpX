@@ -271,6 +271,13 @@ WarpX::Evolve (int numsteps)
         }
         multi_diags->FilterComputePackFlush( step );
 
+        if(step < 1)
+        {
+            std::stringstream ss;
+            m_logger.print_warnings(ss);
+            amrex::Print() << ss.str();
+        }
+
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
             break;
         }

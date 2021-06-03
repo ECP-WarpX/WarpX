@@ -662,6 +662,8 @@ public:
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
 #endif
 
+    MsgLogger::Logger& get_logger(){return m_logger;}
+
 protected:
 
     /**
@@ -719,8 +721,6 @@ protected:
 
     //! Delete level data.  Called by AmrCore::regrid.
     virtual void ClearLevel (int lev) final;
-
-    MsgLogger::Logger& get_logger(){return m_logger;}
 
 private:
 
