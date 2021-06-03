@@ -19,6 +19,8 @@ import yt
 import glob
 
 files = sorted(glob.glob('dirichletbc_plt*'))[1:]
+if len(files) == 0:
+    files = sorted(glob.glob('Python_dirichletbc_plt*'))[1:]
 assert len(files) > 0
 
 times = np.ones(len(files))

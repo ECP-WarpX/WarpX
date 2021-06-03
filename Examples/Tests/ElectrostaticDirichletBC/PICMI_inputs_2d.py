@@ -62,7 +62,7 @@ field_diag = picmi.FieldDiagnostic(
     period = 4,
     data_list = ['phi'],
     write_dir = '.',
-    warpx_file_prefix = 'dirichletbc_plt'
+    warpx_file_prefix = 'Python_dirichletbc_plt'
 )
 
 ##########################
