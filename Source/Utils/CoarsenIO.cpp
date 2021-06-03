@@ -115,6 +115,6 @@ CoarsenIO::Coarsen ( MultiFab& mf_dst,
         // 2) interpolate from mf_src to mf_tmp (start writing into component 0)
         CoarsenIO::Loop( mf_tmp, mf_src, 0, scomp, ncomp, ngrowvect, crse_ratio );
         // 3) copy from mf_tmp to mf_dst (with different BoxArray or DistributionMapping)
-        mf_dst.copy( mf_tmp, 0, dcomp, ncomp );
+        mf_dst.ParallelCopy( mf_tmp, 0, dcomp, ncomp );
     }
 }

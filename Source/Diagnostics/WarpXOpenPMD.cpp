@@ -28,6 +28,51 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
+    /** Create the option string
+     *
+     * @return JSON option string for openPMD::Series
+     */
+    inline std::string
+    getSeriesOptions (std::string const & operator_type,
+                      std::map< std::string, std::string > const & operator_parameters)
+    {
+        std::string options;
+
+        std::string op_parameters;
+        for (const auto& kv : operator_parameters) {
+            if (op_parameters.size() > 0u) op_parameters.append(",\n");
+            op_parameters.append(std::string(12, ' '))         /* just pretty alignment */
+                    .append("\"").append(kv.first).append("\": ")    /* key */
+                    .append("\"").append(kv.second).append("\""); /* value (as string) */
+        }
+        if (operator_type.size() > 0u) {
+            options = R"END(
+{
+  "adios2": {
+    "dataset": {
+      "operators": [
+        {
+          "type": ")END";
+            options += operator_type + "\"";
+        }
+        if (operator_type.size() > 0u && op_parameters.size() > 0u) {
+            options += R"END(
+         ,"parameters": {
+)END";
+            options += op_parameters + "}";
+        }
+        if (operator_type.size() > 0u)
+            options += R"END(
+        }
+      ]
+    }
+  }
+}
+)END";
+        if (options.size() == 0u) options = "{}";
+        return options;
+    }
+
     /** Unclutter a real_names to openPMD record
      *
      * @param fullName name as in real_names variable
@@ -195,10 +240,14 @@ namespace detail
 }
 
 #ifdef WARPX_USE_OPENPMD
-WarpXOpenPMDPlot::WarpXOpenPMDPlot(bool oneFilePerTS,
-    std::string openPMDFileType, std::vector<bool> fieldPMLdirections)
+WarpXOpenPMDPlot::WarpXOpenPMDPlot (
+    openPMD::IterationEncoding ie,
+    std::string openPMDFileType,
+    std::string operator_type,
+    std::map< std::string, std::string > operator_parameters,
+    std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
-   m_OneFilePerTS(oneFilePerTS),
+   m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
@@ -213,6 +262,8 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot(bool oneFilePerTS,
 #else
     m_OpenPMDFileType = "json";
 #endif
+
+    m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters);
 }
 
 WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
@@ -232,7 +283,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   //
   // OpenPMD supports timestepped names
   //
-  if (m_OneFilePerTS)
+  if (m_Encoding == openPMD::IterationEncoding::fileBased)
       filename = filename.append("_%06T");
   filename.append(".").append(m_OpenPMDFileType);
   filepath.append(filename);
@@ -256,6 +307,7 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
             amrex::Warning(warnMsg);
         }
     }
+
     m_CurrentStep = ts;
     Init(openPMD::Access::CREATE, isBTD);
 }
@@ -267,8 +319,9 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     // close BTD file only when isLastBTDFlush is true
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
-        if (m_Series)
-            m_Series->iterations[m_CurrentStep].close();
+        if (m_Series) {
+            GetIteration(m_CurrentStep).close();
+        }
 
         // create a little helper file for ParaView 5.9+
         if (amrex::ParallelDescriptor::IOProcessor())
@@ -297,13 +350,17 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
     // close a previously open series before creating a new one
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
-    m_Series = nullptr;
+    if ( m_Encoding == openPMD::IterationEncoding::fileBased )
+        m_Series = nullptr;
+    else if ( m_Series != nullptr )
+        return;
 
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
                 filepath, access,
-                amrex::ParallelDescriptor::Communicator()
+                amrex::ParallelDescriptor::Communicator(),
+                m_OpenPMDoptions
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -311,10 +368,12 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
     } else {
-        m_Series = std::make_unique<openPMD::Series>(filepath, access);
+        m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
+
+    m_Series->setIterationEncoding( m_Encoding );
 
     // input file / simulation setup author
     if( WarpX::authors.size() > 0u )
@@ -429,8 +488,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-
-  openPMD::Iteration currIteration = m_Series->iterations[iteration];
+  openPMD::Iteration& currIteration = GetIteration(iteration);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -938,7 +996,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration series_iteration = m_Series->iterations[iteration];
+  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep);
 
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {

@@ -1597,8 +1597,31 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
-* ``<diag_name>.openpmd_tspf`` (`bool`, optional, default ``true``) only read if ``<diag_name>.format = openpmd``.
-    Whether to write one file per timestep.
+* ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
+     openPMD file output encoding (file based will write one file per timestep).
+     `variable based` is not supported for back-transformed diagnostics.
+     Default: ``f`` (full diagnostics)
+
+* ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
+    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+* ``<diag_name>.adios2_operator.parameters.*`` optional,
+    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
+    ```
+        <diag_name>.adios2_operator.type = blosc
+        <diag_name>.adios2_operator.parameters.compressor = zstd
+        <diag_name>.adios2_operator.parameters.clevel = 1
+        <diag_name>.adios2_operator.parameters.doshuffle = BLOSC_BITSHUFFLE
+        <diag_name>.adios2_operator.parameters.threshold = 2048
+        <diag_name>.adios2_operator.parameters.nthreads = 6  # per MPI rank (and thus per GPU)
+    ```
+    or for the lossy ZFP compressor using very strong compression per scalar:
+    ```
+        <diag_name>.adios2_operator.type = zfp
+        <diag_name>.adios2_operator.parameters.precision = 3
+    ```
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
@@ -2164,8 +2187,10 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
-    **Note: implementation of this feature is in progress.**
-    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement, cylindrical coordinates or single precision.
+    Schwinger process requires either ``warpx.do_nodal=1`` or
+    ``algo.field_gathering=momentum-conserving`` (so that different field components are computed
+    at the same location in the grid) and does not currently support mesh refinement, cylindrical
+    coordinates or single precision.
 
 * ``qed_schwinger.ele_product_species`` (`string`)
     If Schwinger process is activated, an electron product species must be specified

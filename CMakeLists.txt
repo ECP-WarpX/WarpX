@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 21.05)
+project(WarpX VERSION 21.06)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -16,10 +16,13 @@ endif()
 
 # CMake policies ##############################################################
 #
+# AMReX 21.06+ supports CUDA_ARCHITECTURES with CMake 3.20+
 # CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
-if(POLICY CMP0104)
-    cmake_policy(SET CMP0104 OLD)
+if(CMAKE_VERSION VERSION_LESS 3.20)
+    if(POLICY CMP0104)
+        cmake_policy(SET CMP0104 OLD)
+    endif()
 endif()
 
 

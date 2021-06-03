@@ -91,7 +91,10 @@ macro(find_amrex)
             list(APPEND CMAKE_MODULE_PATH "${WarpX_amrex_src}/Tools/CMake")
             if(WarpX_COMPUTE STREQUAL CUDA)
                 enable_language(CUDA)
-                include(AMReX_SetupCUDA)
+                # AMReX 21.06+ supports CUDA_ARCHITECTURES
+                if(CMAKE_VERSION VERSION_LESS 3.20)
+                    include(AMReX_SetupCUDA)
+                endif()
             endif()
             add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
         else()
@@ -107,7 +110,10 @@ macro(find_amrex)
                 list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
                 if(WarpX_COMPUTE STREQUAL CUDA)
                     enable_language(CUDA)
-                    include(AMReX_SetupCUDA)
+                    # AMReX 21.06+ supports CUDA_ARCHITECTURES
+                    if(CMAKE_VERSION VERSION_LESS 3.20)
+                        include(AMReX_SetupCUDA)
+                    endif()
                 endif()
                 add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
             endif()
@@ -178,7 +184,7 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
 
-        find_package(AMReX 21.05 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
+        find_package(AMReX 21.06 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -192,7 +198,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "646d5f63445ff46e4df23cbdb1fbe662ca1708fb"
+set(WarpX_amrex_branch "f7fd082bc8ab099d42784f69d6fe49dea3d388a7"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
