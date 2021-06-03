@@ -204,6 +204,8 @@ Diagnostics::InitData ()
         // the particle-diag vector to zero.
         // This is a temporary fix until particle_buffer is supported in diagnostics.
         m_output_species.clear();
+
+        auto& wpx = WarpX::GetInstance();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
     }
 

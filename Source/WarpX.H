@@ -24,6 +24,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/IntervalsParser.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "Utils/MsgLogger.H"
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
@@ -719,6 +720,8 @@ protected:
     //! Delete level data.  Called by AmrCore::regrid.
     virtual void ClearLevel (int lev) final;
 
+    MsgLogger::Logger& get_logger(){return m_logger;}
+
 private:
 
     // Singleton is used when the code is run from python
@@ -1112,6 +1115,9 @@ private:
     void ScaleAreas ();
 
 private:
+
+    MsgLogger::Logger m_logger;
+
     // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
     void PushPSATD (int lev, amrex::Real dt);
