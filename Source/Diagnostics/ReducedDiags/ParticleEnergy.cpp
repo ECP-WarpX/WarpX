@@ -92,7 +92,10 @@ void ParticleEnergy::ComputeDiags (int step)
     const auto species_names = mypc.GetSpeciesNames();
 
     // speed of light squared
-    auto c2 = PhysConst::c * PhysConst::c;
+    amrex::Real c2 = PhysConst::c * PhysConst::c;
+    amrex::Real c4 = c2 * c2;
+
+    amrex::Real Wtot = 0.0_rt;
 
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
@@ -100,8 +103,9 @@ void ParticleEnergy::ComputeDiags (int step)
         // get WarpXParticleContainer class object
         const auto & myspc = mypc.GetParticleContainer(i_s);
 
-        // get mass (Real)
-        auto m = myspc.getMass();
+        // get mass
+        amrex::Real m = myspc.getMass();
+        amrex::Real m2 = m * m;
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
@@ -133,43 +137,47 @@ void ParticleEnergy::ComputeDiags (int step)
                 const auto uy = p.rdata(PIdx::uy);
                 const auto uz = p.rdata(PIdx::uz);
                 const auto us = ux*ux + uy*uy + uz*uz;
-                return ( std::sqrt(us*c2 + c2*c2) - c2 ) * m * w;
+                return (std::sqrt(us * m2 * c2 + m2 * c4) - m * c2) * w;
             });
         }
 
         // Same thing for the particles weights.
-        auto Wtot = ReduceSum( myspc,
+        auto Ws = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
             return p.rdata(PIdx::w);
         });
 
         // reduced sum over mpi ranks
-        ParallelDescriptor::ReduceRealSum
-            (Etot, ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealSum
-            (Wtot, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum(Etot, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum(Ws  , ParallelDescriptor::IOProcessorNumber());
+
+        // Accumulate sum of weights over all species (must come after MPI reduction of Ws)
+        Wtot += Ws;
 
         // save results for this species i_s into m_data
         m_data[i_s+1] = Etot;
-        if ( Wtot > std::numeric_limits<Real>::min() )
-        { m_data[nSpecies+2+i_s] = Etot / Wtot; }
+        if ( Ws > std::numeric_limits<Real>::min() )
+        { m_data[nSpecies+2+i_s] = Etot / Ws; }
         else
         { m_data[nSpecies+2+i_s] = 0.0; }
 
     }
     // end loop over species
 
-    // save total energy
-    // loop over species
-    m_data[0] = 0.0;          // total energy
-    m_data[nSpecies+1] = 0.0; // total mean energy
+    // Total energy
+    m_data[0] = 0.0;
+
+    // Loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
         m_data[0] += m_data[i_s+1];
-        m_data[nSpecies+1] += m_data[nSpecies+2+i_s];
     }
-    // end loop over species
+
+    // Total mean energy. Offset:
+    // 1 value of total energy for all  species +
+    // 1 value of total energy for each species
+    m_data[1+nSpecies] = m_data[0] / Wtot;
 
     /* m_data now contains up-to-date values for:
      *  [total energy (all species),

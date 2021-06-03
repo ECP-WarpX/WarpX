@@ -32,8 +32,6 @@ ad = ds.all_data()
 # Quantities computed from plotfiles
 values_yt = dict()
 
-values_yt['particle energy'] = 0.0
-
 # Electrons
 px = ad['electrons', 'particle_momentum_x'].to_ndarray()
 py = ad['electrons', 'particle_momentum_y'].to_ndarray()
@@ -42,7 +40,7 @@ w  = ad['electrons', 'particle_weight'].to_ndarray()
 p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
-values_yt['particle energy'] += np.sum((np.sqrt(p2 * c**2 + m_e**2 * c**4) - m_e * c**2) * w)
+values_yt['electrons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_e**2 * c**4) - m_e * c**2) * w)
 values_yt['electrons: particle momentum in x'] = np.sum(px * w)
 values_yt['electrons: particle momentum in y'] = np.sum(py * w)
 values_yt['electrons: particle momentum in z'] = np.sum(pz * w)
@@ -57,7 +55,7 @@ w  = ad['protons', 'particle_weight'].to_ndarray()
 p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
-values_yt['particle energy'] += np.sum((np.sqrt(p2 * c**2 + m_p**2 * c**4) - m_p * c**2) * w)
+values_yt['protons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_p**2 * c**4) - m_p * c**2) * w)
 values_yt['protons: particle momentum in x'] = np.sum(px * w)
 values_yt['protons: particle momentum in y'] = np.sum(py * w)
 values_yt['protons: particle momentum in z'] = np.sum(pz * w)
@@ -72,7 +70,7 @@ w  = ad['photons', 'particle_weight'].to_ndarray()
 p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
-values_yt['particle energy'] += np.sum(np.sqrt(p2 * c**2) * w)
+values_yt['photons: particle energy'] = np.sum(np.sqrt(p2 * c**2) * w)
 values_yt['photons: particle momentum in x'] = np.sum(px * w)
 values_yt['photons: particle momentum in y'] = np.sum(py * w)
 values_yt['photons: particle momentum in z'] = np.sum(pz * w)
@@ -80,6 +78,10 @@ values_yt['photons: number of particles'] = w.shape[0]
 values_yt['photons: sum of weights'] = np.sum(w)
 
 # Accumulate total particle diagnostics
+
+values_yt['particle energy'] = values_yt['electrons: particle energy'] \
+                               + values_yt['protons: particle energy'] \
+                               + values_yt['photons: particle energy']
 
 values_yt['particle momentum in x'] = values_yt['electrons: particle momentum in x'] \
                                       + values_yt['protons: particle momentum in x'] \
@@ -101,9 +103,14 @@ values_yt['sum of weights'] = values_yt['electrons: sum of weights'] \
                               + values_yt['protons: sum of weights'] \
                               + values_yt['photons: sum of weights']
 
+values_yt['mean particle energy'] = values_yt['particle energy'] / values_yt['sum of weights']
+
 values_yt['mean particle momentum in x'] = values_yt['particle momentum in x'] / values_yt['sum of weights']
 values_yt['mean particle momentum in y'] = values_yt['particle momentum in y'] / values_yt['sum of weights']
 values_yt['mean particle momentum in z'] = values_yt['particle momentum in z'] / values_yt['sum of weights']
+
+values_yt['electrons: mean particle energy'] = values_yt['electrons: particle energy'] \
+                                             / values_yt['electrons: sum of weights']
 
 values_yt['electrons: mean particle momentum in x'] = values_yt['electrons: particle momentum in x'] \
                                                     / values_yt['electrons: sum of weights']
@@ -112,12 +119,18 @@ values_yt['electrons: mean particle momentum in y'] = values_yt['electrons: part
 values_yt['electrons: mean particle momentum in z'] = values_yt['electrons: particle momentum in z'] \
                                                     / values_yt['electrons: sum of weights']
 
+values_yt['protons: mean particle energy'] = values_yt['protons: particle energy'] \
+                                           / values_yt['protons: sum of weights']
+
 values_yt['protons: mean particle momentum in x'] = values_yt['protons: particle momentum in x'] \
                                                   / values_yt['protons: sum of weights']
 values_yt['protons: mean particle momentum in y'] = values_yt['protons: particle momentum in y'] \
                                                   / values_yt['protons: sum of weights']
 values_yt['protons: mean particle momentum in z'] = values_yt['protons: particle momentum in z'] \
                                                   / values_yt['protons: sum of weights']
+
+values_yt['photons: mean particle energy'] = values_yt['photons: particle energy'] \
+                                           / values_yt['photons: sum of weights']
 
 values_yt['photons: mean particle momentum in x'] = values_yt['photons: particle momentum in x'] \
                                                   / values_yt['photons: sum of weights']
@@ -195,6 +208,13 @@ FR_Integraldata = np.genfromtxt('./diags/reducedfiles/FR_Integral.txt')  # Field
 values_rd['field energy'] = EFdata[1][2]
 values_rd['field energy in quarter of simulation domain'] = FR_Integraldata[1][2]
 values_rd['particle energy'] = EPdata[1][2]
+values_rd['electrons: particle energy'] = EPdata[1][3]
+values_rd['protons: particle energy'] = EPdata[1][4]
+values_rd['photons: particle energy'] = EPdata[1][5]
+values_rd['mean particle energy'] = EPdata[1][6]
+values_rd['electrons: mean particle energy'] = EPdata[1][7]
+values_rd['protons: mean particle energy'] = EPdata[1][8]
+values_rd['photons: mean particle energy'] = EPdata[1][9]
 values_rd['field momentum in x'] = PFdata[1][2]
 values_rd['field momentum in y'] = PFdata[1][3]
 values_rd['field momentum in z'] = PFdata[1][4]
