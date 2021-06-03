@@ -133,37 +133,26 @@ void ParticleMomentum::ComputeDiags (int step)
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        // Use amrex::ReduceSum to compute the sum of the momentum of all particles held by
-        // the current MPI rank for this species (loop over all boxes held by this MPI rank)
-        amrex::Real Px = 0.0_rt;
-        amrex::Real Py = 0.0_rt;
-        amrex::Real Pz = 0.0_rt;
+        // Use amrex::ParticleReduce to compute the sum of the momenta and weights of all particles
+        // held by the current MPI rank for this species (loop over all boxes held by this MPI rank):
+        // the result r is the tuple (Px, Py, Pz, Ws)
+        amrex::ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops;
+        auto r = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real, Real, Real>
+            {
+                const amrex::Real w  = p.rdata(PIdx::w);
+                const amrex::Real ux = p.rdata(PIdx::ux);
+                const amrex::Real uy = p.rdata(PIdx::uy);
+                const amrex::Real uz = p.rdata(PIdx::uz);
+                return {w*m*ux, w*m*uy, w*m*uz, w};
+            },
+            reduce_ops);
 
-        Px = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real ux = p.rdata(PIdx::ux);
-            return ux * m * w;
-        });
-        Py = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real uy = p.rdata(PIdx::uy);
-            return uy * m * w;
-        });
-        Pz = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real uz = p.rdata(PIdx::uz);
-            return uz * m * w;
-        });
-
-        // Use amrex::ReduceSum to compute the sum of the weights of all particles held by
-        // the current MPI rank for this species (loop over all boxes held by this MPI rank)
-        amrex::Real Ws = ReduceSum(myspc, [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            return p.rdata(PIdx::w);
-        });
+        amrex::Real Px = amrex::get<0>(r);
+        amrex::Real Py = amrex::get<1>(r);
+        amrex::Real Pz = amrex::get<2>(r);
+        amrex::Real Ws = amrex::get<3>(r);
 
         // Reduced sum over MPI ranks
         ParallelDescriptor::ReduceRealSum(Px, ParallelDescriptor::IOProcessorNumber());
@@ -198,16 +187,16 @@ void ParticleMomentum::ComputeDiags (int step)
         }
         else
         {
-            m_data[offset_mean_species+0] = 0.0;
-            m_data[offset_mean_species+1] = 0.0;
-            m_data[offset_mean_species+2] = 0.0;
+            m_data[offset_mean_species+0] = 0.0_rt;
+            m_data[offset_mean_species+1] = 0.0_rt;
+            m_data[offset_mean_species+2] = 0.0_rt;
         }
     }
 
     // Total momentum
-    m_data[0] = 0.0;
-    m_data[1] = 0.0;
-    m_data[2] = 0.0;
+    m_data[0] = 0.0_rt;
+    m_data[1] = 0.0_rt;
+    m_data[2] = 0.0_rt;
 
     // Loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
@@ -233,9 +222,9 @@ void ParticleMomentum::ComputeDiags (int step)
     }
     else
     {
-        m_data[offset_mean_all+0] = 0.0;
-        m_data[offset_mean_all+1] = 0.0;
-        m_data[offset_mean_all+2] = 0.0;
+        m_data[offset_mean_all+0] = 0.0_rt;
+        m_data[offset_mean_all+1] = 0.0_rt;
+        m_data[offset_mean_all+2] = 0.0_rt;
     }
 
     // m_data contains up-to-date values for:
