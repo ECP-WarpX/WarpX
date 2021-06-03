@@ -177,7 +177,14 @@ void ParticleEnergy::ComputeDiags (int step)
     // Total mean energy. Offset:
     // 1 value of total energy for all  species +
     // 1 value of total energy for each species
-    m_data[1+nSpecies] = m_data[0] / Wtot;
+    if (Wtot > std::numeric_limits<Real>::min())
+    {
+        m_data[1+nSpecies] = m_data[0] / Wtot;
+    }
+    else
+    {
+        m_data[1+nSpecies] = 0.0;
+    }
 
     /* m_data now contains up-to-date values for:
      *  [total energy (all species),

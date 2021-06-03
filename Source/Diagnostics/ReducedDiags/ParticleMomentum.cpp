@@ -225,9 +225,18 @@ void ParticleMomentum::ComputeDiags (int step)
     // 3 values of total momentum for all  species +
     // 3 values of total momentum for each species
     offset_mean_all = 3 + nSpecies*3;
-    m_data[offset_mean_all+0] = m_data[0] / Wtot;
-    m_data[offset_mean_all+1] = m_data[1] / Wtot;
-    m_data[offset_mean_all+2] = m_data[2] / Wtot;
+    if (Wtot > std::numeric_limits<Real>::min())
+    {
+        m_data[offset_mean_all+0] = m_data[0] / Wtot;
+        m_data[offset_mean_all+1] = m_data[1] / Wtot;
+        m_data[offset_mean_all+2] = m_data[2] / Wtot;
+    }
+    else
+    {
+        m_data[offset_mean_all+0] = 0.0;
+        m_data[offset_mean_all+1] = 0.0;
+        m_data[offset_mean_all+2] = 0.0;
+    }
 
     // m_data contains up-to-date values for:
     // [total momentum along x (all species)
