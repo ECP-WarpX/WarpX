@@ -350,6 +350,7 @@ WarpX provides a few pre-defined constants, that can be used for any parameter t
 q_e      elementary charge
 m_e      electron mass
 m_p      proton mass
+m_u      unified atomic mass unit (Dalton)
 epsilon0 vacuum permittivity
 mu0      vacuum permeability
 clight   speed of light
