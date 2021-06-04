@@ -7,6 +7,7 @@
 from .WarpX import warpx
 from .Constants import my_constants
 from .Amr import amr
+from .Boundary import boundary
 from .Geometry import geometry
 from .Algo import algo
 from .Langmuirwave import langmuirwave

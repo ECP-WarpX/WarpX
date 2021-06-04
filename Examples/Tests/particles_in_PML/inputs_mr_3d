@@ -47,10 +47,8 @@ proton.single_particle_pos = 0. 0. 0.
 proton.single_particle_vel = -2. 0. 0.
 proton.single_particle_weight = 1.
 
-# Particle shape factor in each direction
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1

@@ -11,6 +11,9 @@ geometry.prob_hi     =  50.e-6    50.e-6   50.e-6
 warpx.do_dive_cleaning = 1
 warpx.do_pml = 1
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 particles.species_names = beam
 beam.charge = -q_e
 beam.mass = 1.e30

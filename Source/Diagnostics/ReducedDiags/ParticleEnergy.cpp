@@ -45,40 +45,36 @@ ParticleEnergy::ParticleEnergy (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             ofs << m_sep;
-            ofs << "[3]total(J)";
+            ofs << "[" << c++ << "]total(J)";
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(4+i) + "]";
-                ofs << species_names[i]+"(J)";
+                ofs << "[" << c++ << "]" << species_names[i] + "(J)";
             }
             ofs << m_sep;
-            ofs << "[" + std::to_string(4+nSpecies) + "]";
-            ofs << "total_mean(J)";
+            ofs << "[" << c++ << "]total_mean(J)";
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(5+nSpecies+i) + "]";
-                ofs << species_names[i]+"_mean(J)";
+                ofs << "[" << c++ << "]" << species_names[i] + "_mean(J)";
             }
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes kinetic energy
 void ParticleEnergy::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -156,7 +152,6 @@ void ParticleEnergy::ComputeDiags (int step)
         { m_data[nSpecies+2+i_s] = Etot / Wtot; }
         else
         { m_data[nSpecies+2+i_s] = 0.0; }
-
     }
     // end loop over species
 
@@ -180,6 +175,5 @@ void ParticleEnergy::ComputeDiags (int step)
      *   mean energy (species 1),
      *   ...,
      *   mean energy (species n)] */
-
 }
 // end void ParticleEnergy::ComputeDiags

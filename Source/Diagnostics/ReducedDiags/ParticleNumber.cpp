@@ -37,46 +37,39 @@ ParticleNumber::ParticleNumber (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             ofs << m_sep;
-            ofs << "[3]total macroparticles()";
+            ofs << "[" << c++ << "]total macroparticles()";
             // Column number of first species macroparticle number
-            constexpr int shift_first_species_macroparticles = 4;
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_first_species_macroparticles+i) + "]";
-                ofs << species_names[i]+" macroparticles()";
+                ofs << "[" << c++ << "]" << species_names[i] + " macroparticles()";
             }
             // Column number of total weight (summed over all species)
-            const int shift_total_sum_weight = shift_first_species_macroparticles + nSpecies;
             ofs << m_sep;
-            ofs << "[" + std::to_string(shift_total_sum_weight) + "]";
-            ofs << "total weight()";
+            ofs << "[" << c++ << "]total weight()";
             // Column number of first species weight
-            const int shift_first_species_sum_weight = shift_total_sum_weight + 1;
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_first_species_sum_weight+i) + "]";
-                ofs << species_names[i]+" weight()";
+                ofs << "[" << c++ << "]" << species_names[i] + " weight()";
             }
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes total number of macroparticles and physical particles
 void ParticleNumber::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -140,6 +133,5 @@ void ParticleNumber::ComputeDiags (int step)
      *   sum of particles weight (species 1),
      *   ...,
      *   sum of particles weight (species n)] */
-
 }
 // end void ParticleNumber::ComputeDiags

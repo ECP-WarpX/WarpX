@@ -137,8 +137,8 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   #                           append if you target GPUs:    -DWarpX_COMPUTE=CUDA
-   cmake -S build -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3
+   #                       append if you target GPUs:    -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3
    cmake --build build -j 16
 
 The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake>` apply as usual.
@@ -156,6 +156,8 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
 
 Running
 -------
+
+Navigate (i.e. ``cd``) into one of the production directories (e.g. ``$SCRATCH``) before executing the instructions below.
 
 KNL
 ^^^

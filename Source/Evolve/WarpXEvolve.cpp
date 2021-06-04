@@ -30,10 +30,6 @@ WarpX::Evolve (int numsteps)
 
     Real cur_time = t_new[0];
 
-    if (do_compute_max_step_from_zmax) {
-        computeMaxStepBoostAccelerator(geom[0]);
-    }
-
     int numsteps_max;
     if (numsteps < 0) {  // Note that the default argument is numsteps = -1
         numsteps_max = max_step;
@@ -172,6 +168,13 @@ WarpX::Evolve (int numsteps)
 
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
+            FillBoundaryE(guard_cells.ng_FieldGather);
+            FillBoundaryB(guard_cells.ng_FieldGather);
+            if (fft_do_time_averaging)
+            {
+                FillBoundaryE_avg(guard_cells.ng_FieldGather);
+                FillBoundaryB_avg(guard_cells.ng_FieldGather);
+            }
             UpdateAuxilaryData();
             FillBoundaryAux(guard_cells.ng_UpdateAux);
             for (int lev = 0; lev <= finest_level; ++lev) {
@@ -412,78 +415,89 @@ void
 WarpX::OneStep_multiJ (Real cur_time)
 {
 
-    // Warning: this does not work with galilean
-    // (the shifts are not properly taken into account when depositing)
-    // This does not work with PML
+#ifdef WARPX_USE_PSATD
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    {
+        // Warning: this does not work with galilean
+        // (the shifts are not properly taken into account when depositing)
+        // This does not work with PML
 
-    // Push particle from x^{n} to x^{n+1}
-    //               from p^{n-1/2} to p^{n+1/2}
-    bool const skip_deposition = true;
-    PushParticlesandDepose(cur_time, skip_deposition);
+        // Push particle from x^{n} to x^{n+1}
+        //               from p^{n-1/2} to p^{n+1/2}
+        bool const skip_deposition = true;
+        PushParticlesandDepose(cur_time, skip_deposition);
 
-    // Initialize multi-J loop:
-    // - Prepare E, B, F fields in spectral space
-    PSATDForwardTransformEB();
-    PSATDForwardTransformF();
-    // - Set the averaged fields to zero
-    if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
-    // - Deposit rho (in rho_new, since it will be moved during the loop)
-    if (WarpX::update_with_rho) {
-        mypc->DepositCharge( rho_fp, -dt[0], 1 );
-        SyncRho(); // Filter, exchange boundary, and interpolate across levels
-        PSATDForwardTransformRho(1); // rho new
-    }
-    // - Deposit J if needed
-    if (WarpX::psatd_linear_in_J) {
-        mypc->DepositCurrent( current_fp, dt[0],  -dt[0] );
-        SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
-        PSATDForwardTransformJ(); // Transform to k space
-    }
-
-    // Loop over mutiple j deposition
-    int const n_depose = WarpX::multij_n_depose;
-    Real const sub_dt = dt[0]/n_depose;
-    int const n_loop = (WarpX::fft_do_time_averaging)? 2*n_depose : n_depose;
-    for (int i_depose=0; i_depose<n_loop; i_depose++) {
-
-        // Move previously deposited rho and J
-        PSATDMoveRhoNewToRhoOld();
-        if (WarpX::psatd_linear_in_J) PSATDMoveJNewToJOld();
-
-        // Deposit the new J
-        Real const t_depose = (WarpX::psatd_linear_in_J)?
-            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5)*sub_dt;
-        mypc->DepositCurrent( current_fp, dt[0], t_depose );
-        SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
-        PSATDForwardTransformJ(); // Transform to k space
-
-        // Deposit the new rho
+        // Initialize multi-J loop:
+        // - Prepare E, B, F fields in spectral space
+        PSATDForwardTransformEB();
+        PSATDForwardTransformF();
+        // - Set the averaged fields to zero
+        if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
+        // - Deposit rho (in rho_new, since it will be moved during the loop)
         if (WarpX::update_with_rho) {
-            mypc->DepositCharge( rho_fp, (i_depose-n_depose+1)*sub_dt, 1 );
+            mypc->DepositCharge( rho_fp, -dt[0], 1 );
             SyncRho(); // Filter, exchange boundary, and interpolate across levels
             PSATDForwardTransformRho(1); // rho new
         }
-
-        // Advance E and B fields in time and update the average fields
-        PSATDPushSpectralFields( dt[0] ); // Push fields in k space
-
-        // Transform non-average fields after n_depose pushes
-        if (i_depose == n_depose-1) {
-            PSATDBackwardTransformEB();
-            PSATDBackwardTransformF();
+        // - Deposit J if needed
+        if (WarpX::psatd_linear_in_J) {
+            mypc->DepositCurrent( current_fp, dt[0],  -dt[0] );
+            SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
+            PSATDForwardTransformJ(); // Transform to k space
         }
 
-    }
+        // Loop over mutiple j deposition
+        int const n_depose = WarpX::multij_n_depose;
+        Real const sub_dt = dt[0]/n_depose;
+        int const n_loop = (WarpX::fft_do_time_averaging)? 2*n_depose : n_depose;
+        for (int i_depose=0; i_depose<n_loop; i_depose++) {
 
-    // Bring fields to real space and exchange guards
-    if (WarpX::fft_do_time_averaging) {
-        // We summed the integral of the field over 2*dt
-        PSATDScaleAverageFields( 1./(2*dt[0]) );
-        PSATDBackwardTransformEBavg();
+            // Move previously deposited rho and J
+            PSATDMoveRhoNewToRhoOld();
+            if (WarpX::psatd_linear_in_J) PSATDMoveJNewToJOld();
+
+            // Deposit the new J
+            Real const t_depose = (WarpX::psatd_linear_in_J)?
+                (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5)*sub_dt;
+            mypc->DepositCurrent( current_fp, dt[0], t_depose );
+            SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
+            PSATDForwardTransformJ(); // Transform to k space
+
+            // Deposit the new rho
+            if (WarpX::update_with_rho) {
+                mypc->DepositCharge( rho_fp, (i_depose-n_depose+1)*sub_dt, 1 );
+                SyncRho(); // Filter, exchange boundary, and interpolate across levels
+                PSATDForwardTransformRho(1); // rho new
+            }
+
+            // Advance E and B fields in time and update the average fields
+            PSATDPushSpectralFields( dt[0] ); // Push fields in k space
+
+            // Transform non-average fields after n_depose pushes
+            if (i_depose == n_depose-1) {
+                PSATDBackwardTransformEB();
+                PSATDBackwardTransformF();
+            }
+
+        }
+
+        // Bring fields to real space and exchange guards
+        if (WarpX::fft_do_time_averaging) {
+            // We summed the integral of the field over 2*dt
+            PSATDScaleAverageFields( 1./(2*dt[0]) );
+            PSATDBackwardTransformEBavg();
+        }
+        FillBoundaryE(guard_cells.ng_alloc_EB);
+        FillBoundaryB(guard_cells.ng_alloc_EB);
+        FillBoundaryF(guard_cells.ng_alloc_EB);
     }
-    FillBoundaryE(guard_cells.ng_alloc_EB);
-    FillBoundaryB(guard_cells.ng_alloc_EB);
-    FillBoundaryF(guard_cells.ng_alloc_EB);
+    else
+    {
+        amrex::Abort("multi-J algorithm not implemented for FDTD");
+    }
+#else
+    amrex::Abort("multi-J algorithm not implemented for FDTD");
+#endif
 }
 
 /* /brief Perform one PIC iteration, with subcycling
@@ -727,54 +741,6 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         }
     }
 #endif
-}
-
-/* \brief computes max_step for wakefield simulation in boosted frame.
- * \param geom: Geometry object that contains simulation domain.
- *
- * max_step is set so that the simulation stop when the lower corner of the
- * simulation box passes input parameter zmax_plasma_to_compute_max_step.
- */
-void
-WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
-    // Sanity checks: can use zmax_plasma_to_compute_max_step only if
-    // the moving window and the boost are all in z direction.
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
-        "Can use zmax_plasma_to_compute_max_step only if " +
-        "moving window along z. TODO: all directions.");
-    if (gamma_boost > 1){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
-            (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
-            (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
-            "Can use zmax_plasma_to_compute_max_step in boosted frame only if " +
-            "warpx.boost_direction = z. TODO: all directions.");
-    }
-
-    // Lower end of the simulation domain. All quantities are given in boosted
-    // frame except zmax_plasma_to_compute_max_step.
-    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
-    // End of the plasma: Transform input argument
-    // zmax_plasma_to_compute_max_step to boosted frame.
-    const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
-    // Plasma velocity
-    const Real v_plasma_boost = -beta_boost * PhysConst::c;
-    // Get time at which the lower end of the simulation domain passes the
-    // upper end of the plasma (in the z direction).
-    const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost)/
-        (moving_window_v-v_plasma_boost);
-    // Divide by dt, and update value of max_step.
-    int computed_max_step;
-    if (do_subcycling){
-        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
-    } else {
-        computed_max_step =
-            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
-    }
-    max_step = computed_max_step;
-    Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
-           <<computed_max_step<<std::endl;
 }
 
 /* \brief Apply perfect mirror condition inside the box (not at a boundary).

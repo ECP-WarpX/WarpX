@@ -15,6 +15,9 @@ eb2.geom_type = box
 eb2.box_lo = -0.5 -0.5 -0.5
 eb2.box_hi = 0.5 0.5 0.5
 eb2.box_has_fluid_inside = true
+# Alternatively one could use parser to build EB
+# Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.
+# warpx.eb_implicit_function = "max(max(max(x-0.5,-0.5-x), max(y-0.5,-0.5-y)), max(z-0.5,-0.5-z))"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 my_constants.m = 0
