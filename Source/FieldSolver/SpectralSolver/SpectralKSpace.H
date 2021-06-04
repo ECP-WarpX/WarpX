@@ -12,6 +12,8 @@
 
 #include <AMReX_BoxArray.H>
 #include <AMReX_LayoutData.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealVect.H>
 
 
 // `KVectorComponent` and `SpectralShiftFactor` hold one 1D array
