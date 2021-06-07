@@ -104,6 +104,7 @@ public:
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
+         const bool psatd_linear_in_J,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
