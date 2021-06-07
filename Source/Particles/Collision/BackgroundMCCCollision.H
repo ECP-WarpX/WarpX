@@ -67,7 +67,7 @@ private:
     amrex::Real m_background_density;
     amrex::Real m_background_mass;
     amrex::Real m_total_collision_prob;
-    amrex::Real m_total_collision_prob_ioniz;
+    amrex::Real m_total_collision_prob_ioniz = 0;
     amrex::Real m_nu_max;
     amrex::Real m_nu_max_ioniz;
 };

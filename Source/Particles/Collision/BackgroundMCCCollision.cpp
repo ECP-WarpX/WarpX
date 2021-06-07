@@ -151,16 +151,9 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
         // dt has to be small enough that a linear expansion of the collision
         // probability is sufficiently accurately, otherwise the MCC results
         // will be very heavily affected by small changes in the timestep
-        if (coll_n > 0.1) {
-            amrex::Print() <<
-                "dt is too large to ensure accurate MCC results for "
-                           << m_species_names[0] << " collisions since nu_max*dt = "
-                           << coll_n << " > 0.1\n";
-            amrex::Abort();
-        }
-        amrex::Print() <<
-            "Setting up collisions for " << m_species_names[0] << " with total "
-            "collision probability: " << m_total_collision_prob << "\n";
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1,
+            "dt is too large to ensure accurate MCC results"
+        );
 
         if (ionization_flag) {
             // calculate maximum collision frequency for ionization
@@ -169,6 +162,10 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             // calculate total ionization probability
             auto coll_n_ioniz = m_nu_max_ioniz * dt;
             m_total_collision_prob_ioniz = 1.0 - std::exp(-coll_n_ioniz);
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1,
+                "dt is too large to ensure accurate MCC results"
+            );
 
             // if an ionization process is included the secondary species mass
             // is taken as the background mass
@@ -180,6 +177,11 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
         else if (m_background_mass == -1) {
             m_background_mass = species1.getMass();
         }
+
+        amrex::Print() <<
+            "Setting up collisions for " << m_species_names[0] << " with total "
+            "collision probability: " <<
+            m_total_collision_prob + m_total_collision_prob_ioniz << "\n";
 
         init_flag = true;
     }

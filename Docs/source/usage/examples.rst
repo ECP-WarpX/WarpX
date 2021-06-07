@@ -64,10 +64,11 @@ Uniform plasma
 Capacitive discharge
 --------------
 
-The Monte-Carlo collision (MCC) model can be used to simulate capacitive discharges between parallel plates. The implementation has been tested against the benchmark results from Turner et. al. in `Phys. Plasmas 20, 013507, 2013 <https://aip.scitation.org/doi/abs/10.1063/1.4775084>`_. The figure below shows a comparison of the ion density as calculated in WarpX (in May 2021) compared to the literature results (which can be found `here <https://aip.scitation.org/doi/suppl/10.1063/1.4775084>`_). Input files for all four benchmark cases are provided below.
+The Monte-Carlo collision (MCC) model can be used to simulate capacitive discharges between parallel plates. The implementation has been tested against the benchmark results from Turner et. al. in `Phys. Plasmas 20, 013507, 2013 <https://aip.scitation.org/doi/abs/10.1063/1.4775084>`_. The figure below shows a comparison of the ion density as calculated in WarpX (in June 2021) compared to the literature results (which can be found `here <https://aip.scitation.org/doi/suppl/10.1063/1.4775084>`_). Input files for all four benchmark cases are provided below.
 
-.. figure:: MCC_benchmark_turner2013.png
-   :alt: picture
+.. figure:: MCC_benchmark_Turner2013.png
+   :alt: MCC benchmark against Turner et. al. (2013).
+   :width: 15cm
 
 * :download:`test case 1 <../../../Examples/Physics_applications/capacitive_discharge/inputs_Turner_case1>`
 * :download:`test case 2 <../../../Examples/Physics_applications/capacitive_discharge/inputs_Turner_case2>`

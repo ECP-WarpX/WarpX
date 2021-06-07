@@ -70,7 +70,7 @@ coll_elec.excitation1_energy = 19.82
 coll_elec.excitation1_cross_section = ../../../Source/Particles/Collision/MCC_cross_sections/He/excitation_1.dat
 coll_elec.excitation2_energy = 20.61
 coll_elec.excitation2_cross_section = ../../../Source/Particles/Collision/MCC_cross_sections/He/excitation_2.dat
-coll_elec.ionization_energy = 24.60
+coll_elec.ionization_energy = 24.55
 coll_elec.ionization_cross_section = ../../../Source/Particles/Collision/MCC_cross_sections/He/ionization.dat
 coll_elec.ionization_species = he_ions
 
