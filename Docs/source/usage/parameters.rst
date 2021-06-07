@@ -490,6 +490,14 @@ Particle initialization
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
+    * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
+      The density specified by the density profile is interpreted to have the units of #/m^2/s.
+      This requires the additional parameters:
+      ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
+      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
+      ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
+      ``<species_name>.num_particles_per_cell`` (`double`)
+
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
@@ -564,6 +572,14 @@ Particle initialization
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m`` as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
+
+    * ``gaussianflux``: Gaussian momentum flux distribution, which is Gaussian in the plane and v*Gaussian normal to the plane.
+      It can only be used when ``injection_style = NFluxPerCell``.
+      This requires additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
+      ``<species_name>.flux_direction``, for the average momenta along each direction
+      ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
+      well as standard deviations along each direction ``<species_name>.ux_th``,
+      ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
       temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
