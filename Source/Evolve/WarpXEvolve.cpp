@@ -444,6 +444,7 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
         // 1) Prepare E, B, F fields in spectral space
         PSATDForwardTransformEB();
         PSATDForwardTransformF();
+        PSATDForwardTransformG();
 
         // 2) Set the averaged fields to zero
         if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
@@ -505,6 +506,7 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
             {
                 PSATDBackwardTransformEB();
                 PSATDBackwardTransformF();
+                PSATDBackwardTransformG();
             }
         }
 
@@ -517,7 +519,8 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
         }
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
-        FillBoundaryF(guard_cells.ng_alloc_EB);
+        FillBoundaryF(guard_cells.ng_alloc_F);
+        FillBoundaryG(guard_cells.ng_alloc_G);
     }
     else
     {

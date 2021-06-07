@@ -1,4 +1,4 @@
- /* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
+/* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
  *                     Axel Huebl, Burlen Loring, David Grote
  *                     Glenn Richardson, Junmin Gu, Luca Fedeli
  *                     Mathieu Lobet, Maxence Thevenet, Michael Rowan
@@ -1132,6 +1132,8 @@ private:
     void PSATDMoveJNewToJOld ();
     void PSATDForwardTransformF ();
     void PSATDBackwardTransformF ();
+    void PSATDForwardTransformG ();
+    void PSATDBackwardTransformG ();
     void PSATDPushSpectralFields ();
     void PSATDScaleAverageFields (const amrex::Real scale_factor);
     void PSATDEraseAverageFields ();

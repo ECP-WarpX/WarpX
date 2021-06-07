@@ -263,13 +263,13 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 fields(i,j,k,Idx::Ez) += -X1 * (Jz_new - Jz) / dt + I * c2 * S_ck * F_old * kz;
 
                 fields(i,j,k,Idx::Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
-                //    + I * c2 * S_ck * G_old * kx;
+                    + I * c2 * S_ck * G_old * kx;
 
                 fields(i,j,k,Idx::By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
-                //    + I * c2 * S_ck * G_old * ky;
+                    + I * c2 * S_ck * G_old * ky;
 
                 fields(i,j,k,Idx::Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx));
-                //    + I * c2 * S_ck * G_old * kz;
+                    + I * c2 * S_ck * G_old * kz;
 
                 const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;
                 const Complex k_dot_dJ = kx * (Jx_new - Jx) + ky * (Jy_new - Jy) + kz * (Jz_new - Jz);
@@ -308,17 +308,17 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                     fields(i,j,k,IdxLin::Bx_avg) += S_ck * Bx_old
                         - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
                         - I * X5/c2 * (ky * Jz - kz * Jy) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
-                        //+ I * c2 * ep0 * X1 * G_old * kx;
+                        + I * c2 * ep0 * X1 * G_old * kx;
 
                     fields(i,j,k,IdxLin::By_avg) += S_ck * By_old
                         - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
                         - I * X5/c2 * (kz * Jx - kx * Jz) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
-                        //+ I * c2 * ep0 * X1 * G_old * ky;
+                        + I * c2 * ep0 * X1 * G_old * ky;
 
                     fields(i,j,k,IdxLin::Bz_avg) += S_ck * Bz_old
                         - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
                         - I * X5/c2 * (kx * Jy - ky * Jx) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
-                        //+ I * c2 * ep0 * X1 * G_old * kz;
+                        + I * c2 * ep0 * X1 * G_old * kz;
                 }
             }
 
@@ -794,7 +794,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAvgLin (
             constexpr Real c = PhysConst::c;
             constexpr Real c2 = c*c;
             constexpr Real ep0 = PhysConst::ep0;
-            constexpr Complex I = Complex{0._rt, 1._rt};
 
             // Auxiliary coefficients
             const Real dt3 = dt * dt * dt;

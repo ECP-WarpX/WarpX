@@ -1000,6 +1000,9 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be equal to 1 for linear-in-J PSATD");
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
                 "warpx.do_dive_cleaning must be equal to 1 for linear-in-J PSATD");
+            // TODO Do we want to mandate div(B) cleaning or leave it optional?
+            //AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_divb_cleaning,
+            //    "warpx.do_divb_cleaning must be equal to 1 for linear-in-J PSATD");
         }
 
         constexpr int zdir = AMREX_SPACEDIM - 1;
