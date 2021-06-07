@@ -1,4 +1,4 @@
-/* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
+ /* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
  *                     Axel Huebl, Burlen Loring, David Grote
  *                     Glenn Richardson, Junmin Gu, Luca Fedeli
  *                     Mathieu Lobet, Maxence Thevenet, Michael Rowan
@@ -771,8 +771,12 @@ private:
     void NodalSyncB (int lev, PatchType patch_type);
 
     void OneStep_nosub (amrex::Real t);
-    void OneStep_multiJ (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
+
+    /**
+     * \brief Perform one PIC iteration, with the multiple J deposition per time step
+     */
+    void OneStep_multiJ (amrex::Real t);
 
     void RestrictCurrentFromFineToCoarsePatch (int lev);
     void AddCurrentFromFineLevelandSumBoundary (int lev);
@@ -1117,7 +1121,7 @@ private:
 
 private:
 
-    void PushPSATD (amrex::Real dt);
+    void PushPSATD ();
 #ifdef WARPX_USE_PSATD
     void PSATDForwardTransformEB ();
     void PSATDBackwardTransformEB ();
@@ -1128,7 +1132,7 @@ private:
     void PSATDMoveJNewToJOld ();
     void PSATDForwardTransformF ();
     void PSATDBackwardTransformF ();
-    void PSATDPushSpectralFields (amrex::Real dt);
+    void PSATDPushSpectralFields ();
     void PSATDScaleAverageFields (amrex::Real const scale_factor);
     void PSATDEraseAverageFields ();
 #endif

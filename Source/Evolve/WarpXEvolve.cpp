@@ -130,22 +130,34 @@ WarpX::Evolve (int numsteps)
 
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
-        if ( do_electrostatic != ElectrostaticSolverAlgo::None ) {
-            // Special case: electrostatic solver.
-            // In this case, we only gather fields and push particles
-            // The deposition and calculation of fields is done further below
-            bool const skip_deposition=true;
+
+        // Electrostatic case: only gather fields and push particles,
+        // deposition and calculation of fields done further below
+        if (do_electrostatic != ElectrostaticSolverAlgo::None)
+        {
+            bool const skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
-        } else if (do_multij) {
+        }
+        // Electromagnetic case: multi-J algorithm
+        else if (do_multij)
+        {
             OneStep_multiJ(cur_time);
-        } else if (do_subcycling == 0 || finest_level == 0) {
+        }
+        // Electromagnetic case: no subcycling or no mesh refinement
+        else if (do_subcycling == 0 || finest_level == 0)
+        {
             OneStep_nosub(cur_time);
-            // E : guard cells are up-to-date
-            // B : guard cells are NOT up-to-date
-            // F : guard cells are NOT up-to-date
-        } else if (do_subcycling == 1 && finest_level == 1) {
+            // E: guard cells are up-to-date
+            // B: guard cells are NOT up-to-date
+            // F: guard cells are NOT up-to-date
+        }
+        // Electromagnetic case: subcycling with one level of mesh refinement
+        else if (do_subcycling == 1 && finest_level == 1)
+        {
             OneStep_sub1(cur_time);
-        } else {
+        }
+        else
+        {
             amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
             amrex::Abort("Unsupported do_subcycling type");
         }
@@ -345,7 +357,7 @@ WarpX::OneStep_nosub (Real cur_time)
             WarpX::Hybrid_QED_Push(dt);
             FillBoundaryE(guard_cells.ng_alloc_EB);
         }
-        PushPSATD(dt[0]);
+        PushPSATD();
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
 
@@ -408,11 +420,8 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 }
 
-/* /brief Perform one PIC iteration, with the multiple J deposition per
- * timestep
- */
 void
-WarpX::OneStep_multiJ (Real cur_time)
+WarpX::OneStep_multiJ (amrex::Real cur_time)
 {
 #ifdef WARPX_DIM_RZ
     amrex::Abort("multi-J algorithm not implemented for RZ geometry");
@@ -420,73 +429,90 @@ WarpX::OneStep_multiJ (Real cur_time)
 #ifdef WARPX_USE_PSATD
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
-        // Warning: this does not work with galilean
-        // (the shifts are not properly taken into account when depositing)
-        // This does not work with PML
+        // Warnings:
+        // - this does not work with Galilean PSATD
+        //   (the shifts are not properly taken into account when depositing)
+        // - this does not work with PML
 
         // Push particle from x^{n} to x^{n+1}
         //               from p^{n-1/2} to p^{n+1/2}
-        bool const skip_deposition = true;
+        const bool skip_deposition = true;
         PushParticlesandDepose(cur_time, skip_deposition);
 
         // Initialize multi-J loop:
-        // - Prepare E, B, F fields in spectral space
+
+        // 1) Prepare E, B, F fields in spectral space
         PSATDForwardTransformEB();
         PSATDForwardTransformF();
-        // - Set the averaged fields to zero
+
+        // 2) Set the averaged fields to zero
         if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
-        // - Deposit rho (in rho_new, since it will be moved during the loop)
-        if (WarpX::update_with_rho) {
-            mypc->DepositCharge( rho_fp, -dt[0], 1 );
-            SyncRho(); // Filter, exchange boundary, and interpolate across levels
-            PSATDForwardTransformRho(1); // rho new
-        }
-        // - Deposit J if needed
-        if (WarpX::psatd_linear_in_J) {
-            mypc->DepositCurrent( current_fp, dt[0],  -dt[0] );
-            SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
-            PSATDForwardTransformJ(); // Transform to k space
+
+        // 3) Deposit rho (in rho_new, since it will be moved during the loop)
+        if (WarpX::update_with_rho)
+        {
+            mypc->DepositCharge(rho_fp, -dt[0], 1);
+            // Filter, exchange boundary, and interpolate across levels
+            SyncRho();
+            // Forward FFT of rho_new
+            PSATDForwardTransformRho(1);
         }
 
-        // Loop over mutiple j deposition
-        int const n_depose = WarpX::multij_n_depose;
-        Real const sub_dt = dt[0]/n_depose;
-        int const n_loop = (WarpX::fft_do_time_averaging)? 2*n_depose : n_depose;
-        for (int i_depose=0; i_depose<n_loop; i_depose++) {
+        // 4) Deposit J if needed
+        if (WarpX::psatd_linear_in_J)
+        {
+            mypc->DepositCurrent(current_fp, dt[0], -dt[0]);
+            // Filter, exchange boundary, and interpolate across levels
+            SyncCurrent();
+            // Forward FFT of J
+            PSATDForwardTransformJ();
+        }
 
+        // Loop over multiple J deposition
+        const int n_depose = WarpX::multij_n_depose;
+        const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_depose);
+        const int n_loop = (WarpX::fft_do_time_averaging) ? 2*n_depose : n_depose;
+        for (int i_depose = 0; i_depose < n_loop; i_depose++)
+        {
             // Move previously deposited rho and J
             PSATDMoveRhoNewToRhoOld();
             if (WarpX::psatd_linear_in_J) PSATDMoveJNewToJOld();
 
             // Deposit the new J
-            Real const t_depose = (WarpX::psatd_linear_in_J)?
+            const amrex::Real t_depose = (WarpX::psatd_linear_in_J) ?
                 (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5)*sub_dt;
-            mypc->DepositCurrent( current_fp, dt[0], t_depose );
-            SyncCurrent(); // Filter, exchange boundary, and interpolate across levels
-            PSATDForwardTransformJ(); // Transform to k space
+            mypc->DepositCurrent(current_fp, dt[0], t_depose);
+            // Filter, exchange boundary, and interpolate across levels
+            SyncCurrent();
+            // Forward FFT of J
+            PSATDForwardTransformJ();
 
-            // Deposit the new rho
-            if (WarpX::update_with_rho) {
-                mypc->DepositCharge( rho_fp, (i_depose-n_depose+1)*sub_dt, 1 );
-                SyncRho(); // Filter, exchange boundary, and interpolate across levels
-                PSATDForwardTransformRho(1); // rho new
+            // Deposit the rho_new
+            if (WarpX::update_with_rho)
+            {
+                mypc->DepositCharge(rho_fp, (i_depose-n_depose+1)*sub_dt, 1);
+                // Filter, exchange boundary, and interpolate across levels
+                SyncRho();
+                // Forward FFT of rho_new
+                PSATDForwardTransformRho(1);
             }
 
             // Advance E and B fields in time and update the average fields
-            PSATDPushSpectralFields( dt[0] ); // Push fields in k space
+            PSATDPushSpectralFields();
 
             // Transform non-average fields after n_depose pushes
-            if (i_depose == n_depose-1) {
+            if (i_depose == n_depose-1)
+            {
                 PSATDBackwardTransformEB();
                 PSATDBackwardTransformF();
             }
-
         }
 
-        // Bring fields to real space and exchange guards
-        if (WarpX::fft_do_time_averaging) {
+        // Transform fields back to real space and exchange guard cells
+        if (WarpX::fft_do_time_averaging)
+        {
             // We summed the integral of the field over 2*dt
-            PSATDScaleAverageFields( 1./(2*dt[0]) );
+            PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
             PSATDBackwardTransformEBavg();
         }
         FillBoundaryE(guard_cells.ng_alloc_EB);

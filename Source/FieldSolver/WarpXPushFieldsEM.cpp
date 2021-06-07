@@ -195,10 +195,13 @@ WarpX::PSATDForwardTransformRho (int const icomp) {
 }
 
 void
-WarpX::PSATDPushSpectralFields (amrex::Real a_dt) {
-    for (int lev = 0; lev <= finest_level; ++lev) {
+WarpX::PSATDPushSpectralFields ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
         spectral_solver_fp[lev]->pushSpectralFields();
-        if (spectral_solver_cp[lev]) {
+        if (spectral_solver_cp[lev])
+        {
             spectral_solver_cp[lev]->pushSpectralFields();
         }
     }
@@ -272,19 +275,17 @@ WarpX::PSATDScaleAverageFields (amrex::Real const scale_factor) {
 #endif // WARPX_USE_PSATD
 
 void
-WarpX::PushPSATD (amrex::Real a_dt)
+WarpX::PushPSATD ()
 {
 #ifndef WARPX_USE_PSATD
-    amrex::ignore_unused(a_dt);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-    "PushFieldsEM: PSATD solver selected but not built.");
+    amrex::Abort("PushFieldsEM: PSATD solver selected but not built");
 #else
 
     PSATDForwardTransformEB();
     PSATDForwardTransformJ();
     PSATDForwardTransformRho(0); // rho old
     PSATDForwardTransformRho(1); // rho new
-    PSATDPushSpectralFields( a_dt );
+    PSATDPushSpectralFields();
     PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
 
