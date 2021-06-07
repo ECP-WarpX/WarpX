@@ -194,15 +194,15 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) = 0;
 
-    void DepositCurrent (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-        amrex::Real dt, amrex::Real relative_t );
+    void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+                         amrex::Real dt, amrex::Real relative_t);
 
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       bool local = false, bool reset = false,
-                       bool do_rz_volume_scaling = false,
-                       bool interpolate_across_levels = true,
-                       int const icomp = 0);
+                        bool local = false, bool reset = false,
+                        bool do_rz_volume_scaling = false,
+                        bool interpolate_across_levels = true,
+                        const int icomp = 0);
+
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,

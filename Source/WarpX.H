@@ -1127,13 +1127,13 @@ private:
     void PSATDBackwardTransformEB ();
     void PSATDBackwardTransformEBavg ();
     void PSATDForwardTransformJ ();
-    void PSATDForwardTransformRho (int const icomp);
+    void PSATDForwardTransformRho (const int icomp);
     void PSATDMoveRhoNewToRhoOld ();
     void PSATDMoveJNewToJOld ();
     void PSATDForwardTransformF ();
     void PSATDBackwardTransformF ();
     void PSATDPushSpectralFields ();
-    void PSATDScaleAverageFields (amrex::Real const scale_factor);
+    void PSATDScaleAverageFields (const amrex::Real scale_factor);
     void PSATDEraseAverageFields ();
 #endif
 
