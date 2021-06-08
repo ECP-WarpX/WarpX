@@ -305,6 +305,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #if defined(WARPX_USE_GPUCLOCK)
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::synchronize();
+        *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
     }
 #endif
@@ -635,6 +636,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #if defined(WARPX_USE_GPUCLOCK)
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::synchronize();
+        *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
     }
 #endif
@@ -992,6 +994,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #   if defined(WARPX_USE_GPUCLOCK)
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::synchronize();
+        *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
     }
 #   endif
