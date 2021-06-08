@@ -45,10 +45,13 @@ set_default_install_dirs()
 
 # Options and Variants ########################################################
 #
+include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
-option(WarpX_GPUCLOCK      "Add GPU kernel timers (cost function)"      ON)
+cmake_dependent_option(WarpX_GPUCLOCK
+                           "Add GPU kernel timers (cost function)"      ON
+                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
 option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
