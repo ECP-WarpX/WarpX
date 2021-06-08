@@ -126,16 +126,8 @@ void FieldMomentum::ComputeDiags (int step)
             Bz_stag[i] = Bz.ixType()[i];
         }
 
-        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op_ExB_x;
-        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op_ExB_y;
-        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op_ExB_z;
-
-        amrex::ReduceData<amrex::Real> reduce_data_ExB_x(reduce_op_ExB_x);
-        amrex::ReduceData<amrex::Real> reduce_data_ExB_y(reduce_op_ExB_y);
-        amrex::ReduceData<amrex::Real> reduce_data_ExB_z(reduce_op_ExB_z);
-
-        // Reduce operation type is the same (amrex::ReduceOpSum) for all components of (E x B)
-        using ReduceTuple = typename decltype(reduce_data_ExB_x)::Type;
+        amrex::ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops;
+        amrex::ReduceData<Real, Real, Real> reduce_data(reduce_ops);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -152,50 +144,29 @@ void FieldMomentum::ComputeDiags (int step)
             const amrex::Array4<const amrex::Real> & By_arr = By[mfi].array();
             const amrex::Array4<const amrex::Real> & Bz_arr = Bz[mfi].array();
 
-            // (E x B) along x
-            reduce_op_ExB_x.eval(box, reduce_data_ExB_x,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
-            {
-                const amrex::Real Ey_cc = CoarsenIO::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
-                const amrex::Real Ez_cc = CoarsenIO::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
+            // Compute E x B
+            reduce_ops.eval(box, reduce_data,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) -> amrex::GpuTuple<Real, Real, Real>
+                {
+                    const amrex::Real Ex_cc = CoarsenIO::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Ey_cc = CoarsenIO::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Ez_cc = CoarsenIO::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
 
-                const amrex::Real By_cc = CoarsenIO::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
-                const amrex::Real Bz_cc = CoarsenIO::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Bx_cc = CoarsenIO::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real By_cc = CoarsenIO::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Bz_cc = CoarsenIO::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
 
-                return (Ey_cc * Bz_cc - Ez_cc * By_cc);
-            });
-
-            // (E x B) along y
-            reduce_op_ExB_y.eval(box, reduce_data_ExB_y,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
-            {
-                const amrex::Real Ex_cc = CoarsenIO::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
-                const amrex::Real Ez_cc = CoarsenIO::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
-
-                const amrex::Real Bx_cc = CoarsenIO::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
-                const amrex::Real Bz_cc = CoarsenIO::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
-
-                return (Ez_cc * Bx_cc - Ex_cc * Bz_cc);
-            });
-
-            // (E x B) along z
-            reduce_op_ExB_z.eval(box, reduce_data_ExB_z,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
-            {
-                const amrex::Real Ex_cc = CoarsenIO::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
-                const amrex::Real Ey_cc = CoarsenIO::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
-
-                const amrex::Real Bx_cc = CoarsenIO::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
-                const amrex::Real By_cc = CoarsenIO::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
-
-                return (Ex_cc * By_cc - Ey_cc * Bx_cc);
-            });
+                    return {Ey_cc * Bz_cc - Ez_cc * By_cc,
+                            Ez_cc * Bx_cc - Ex_cc * Bz_cc,
+                            Ex_cc * By_cc - Ey_cc * Bx_cc};
+                });
         }
 
         // MPI reduce
-        amrex::Real ExB_x = amrex::get<0>(reduce_data_ExB_x.value());
-        amrex::Real ExB_y = amrex::get<0>(reduce_data_ExB_y.value());
-        amrex::Real ExB_z = amrex::get<0>(reduce_data_ExB_z.value());
+        auto r = reduce_data.value();
+        amrex::Real ExB_x = amrex::get<0>(r);
+        amrex::Real ExB_y = amrex::get<1>(r);
+        amrex::Real ExB_z = amrex::get<2>(r);
         amrex::ParallelDescriptor::ReduceRealSum(ExB_x);
         amrex::ParallelDescriptor::ReduceRealSum(ExB_y);
         amrex::ParallelDescriptor::ReduceRealSum(ExB_z);

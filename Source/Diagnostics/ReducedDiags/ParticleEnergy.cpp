@@ -16,7 +16,6 @@
 #include <cmath>
 #include <limits>
 
-
 using namespace amrex;
 
 // constructor
