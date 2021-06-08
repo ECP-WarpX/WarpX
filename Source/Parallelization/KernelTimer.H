@@ -34,9 +34,9 @@ public:
 #endif
     {
 #if (defined AMREX_USE_GPU)
-        m_cost = cost;
 #   if (defined WARPX_USE_GPUCLOCK)
         if (m_do_timing && cost) {
+            m_cost = cost;
 #       if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
             // Start the timer
             m_wt = clock64();
