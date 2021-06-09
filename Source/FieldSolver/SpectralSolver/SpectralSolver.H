@@ -22,10 +22,6 @@
 class SpectralSolver
 {
     public:
-        // Inline definition of the member functions of `SpectralSolver`,
-        // except the constructor (see `SpectralSolver.cpp`)
-        // The body of these functions is short, since the work is done in the
-        // underlying classes `SpectralFieldData` and `PsatdAlgorithm`
 
         /**
          * \brief Constructor of the class SpectralSolver
@@ -140,25 +136,46 @@ class SpectralSolver
             algorithm->VayDeposition(lev, field_data, current);
         }
 
-        // TODO: documentation
+        /**
+         * \brief Copy spectral data from component \c src_comp to component \c dest_comp
+         *        of \c field_data.fields.
+         *
+         * \param[in] src_comp  component of the source FabArray from which the data are copied
+         * \param[in] dest_comp component of the destination FabArray where the data are copied
+         */
         void CopySpectralDataComp (const int src_comp, const int dest_comp)
         {
+            // The last two arguments represent the number of components and
+            // the number of ghost cells to perform this operation
             Copy(field_data.fields, field_data.fields, src_comp, dest_comp, 1, 0);
         }
 
-        // TODO: documentation
+        /**
+         * \brief Set to zero the data on component \c icomp of \c field_data.fields
+         *
+         * \param[in] icomp component of the FabArray where the data are set to zero
+         */
         void ZeroOutDataComp (const int icomp)
         {
-            field_data.fields.setVal(0, icomp, 1);
+            // The last argument represents the number of components to perform this operation
+            field_data.fields.setVal(0., icomp, 1);
         }
 
-        // TODO: documentation
+        /**
+         * \brief Scale the data on component \c icomp of \c field_data.fields
+         *        by a given scale factor
+         *
+         * \param[in] icomp component of the FabArray where the data are scaled
+         * \param[in] scale_factor scale factor to use for scaling
+         */
         void ScaleDataComp (const int icomp, const amrex::Real scale_factor)
         {
+            // The last argument represents the number of components to perform this operation
             field_data.fields.mult(scale_factor, icomp, 1);
         }
 
     private:
+
         void ReadParameters ();
 
         // Store field in spectral space and perform the Fourier transforms
