@@ -1815,55 +1815,59 @@ Reduced Diagnostics
     If ``warpx.reduced_diags_names`` is not provided in the input file,
     no reduced diagnostics will be done.
     This is then used in the rest of the input deck;
-    in this documentation we use `<reduced_diags_name>` as a placeholder.
+    in this documentation we use ``<reduced_diags_name>`` as a placeholder.
 
 * ``<reduced_diags_name>.type`` (`string`)
-    The type of reduced diagnostics associated with this `<reduced_diags_name>`.
-    For example, ``ParticleEnergy`` and ``FieldEnergy``.
-    All available types will be described below in detail.
+    The type of reduced diagnostics associated with this ``<reduced_diags_name>``.
+    For example, ``ParticleEnergy``, ``FieldEnergy``, etc.
+    All available types are described below in detail.
     For all reduced diagnostics,
     the first and the second columns in the output file are
     the time step and the corresponding physical time in seconds, respectively.
 
     * ``ParticleEnergy``
-        This type computes both the total and the mean
-        relativistic particle kinetic energy among all species.
+        This type computes the total and mean relativistic particle kinetic energy among all species:
 
         .. math::
 
-            E_p = \sum_{i=1}^N ( \sqrt{ p_i^2 c^2 + m_0^2 c^4 } - m_0 c^2 ) w_i
+            E_p = \sum_{i=1}^N w_i \, \left( \sqrt{|\boldsymbol{p}_i|^2 c^2 + m_0^2 c^4} - m_0 c^2 \right)
 
-        where :math:`p` is the relativistic momentum,
-        :math:`c` is the speed of light,
-        :math:`m_0` is the rest mass,
-        :math:`N` is the number of particles,
-        :math:`w` is the individual particle weight.
+        where :math:`\boldsymbol{p}_i` is the relativistic momentum of the :math:`i`-th particle, :math:`c` is the speed of light, :math:`m_0` is the rest mass, :math:`N` is the number of particles, and :math:`w_i` is the weight of the :math:`i`-th particle.
 
-        The output columns are
-        total :math:`E_p` of all species,
-        :math:`E_p` of each species,
-        total mean energy :math:`E_p / \sum w_i`,
-        mean energy of each species.
+        The output columns are the total energy of all species, the total energy per species, the total mean energy :math:`E_p / \sum_i w_i` of all species, and the total mean energy per species.
+
+    * ``ParticleMomentum``
+        This type computes the total and mean relativistic particle momentum among all species:
+
+        .. math::
+
+            \boldsymbol{P}_p = \sum_{i=1}^N w_i \, \boldsymbol{p}_i
+
+        where :math:`\boldsymbol{p}_i` is the relativistic momentum of the :math:`i`-th particle, :math:`N` is the number of particles, and :math:`w_i` is the weight of the :math:`i`-th particle.
+
+        The output columns are the components of the total momentum of all species, the total momentum per species, the total mean momentum :math:`\boldsymbol{P}_p / \sum_i w_i` of all species, and the total mean momentum per species.
 
     * ``FieldEnergy``
-        This type computes the electric and magnetic field energy.
+        This type computes the electromagnetic field energy
 
         .. math::
 
-            E_f = \sum [ \varepsilon_0 E^2 / 2 + B^2 / ( 2 \mu_0 ) ] \Delta V
+            E_f = \frac{1}{2} \sum_{\text{cells}} \left( \varepsilon_0 |\boldsymbol{E}|^2 + \frac{|\boldsymbol{B}|^2}{\mu_0} \right) \Delta V
 
-        where
-        :math:`E` is the electric field,
-        :math:`B` is the magnetic field,
-        :math:`\varepsilon_0` is the vacuum permittivity,
-        :math:`\mu_0` is the vacuum permeability,
-        :math:`\Delta V` is the cell volume (or area for 2D),
-        the sum is over all cells.
+        where :math:`\boldsymbol{E}` is the electric field, :math:`\boldsymbol{B}` is the magnetic field, :math:`\varepsilon_0` is the vacuum permittivity, :math:`\mu_0` is the vacuum permeability, :math:`\Delta V` is the cell volume (or cell area in 2D), and the sum is over all cells.
 
-        The output columns are
-        total field energy :math:`E_f`,
-        :math:`E` field energy,
-        :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
+        The output columns are the total field energy :math:`E_f`, the :math:`\boldsymbol{E}` field energy, and the :math:`\boldsymbol{B}` field energy, at each mesh refinement level.
+
+    * ``FieldMomentum``
+        This type computes the electromagnetic field momentum
+
+        .. math::
+
+            \boldsymbol{P}_f = \varepsilon_0 \sum_{\text{cells}} \left( \boldsymbol{E} \times \boldsymbol{B} \right) \Delta V
+
+        where :math:`\boldsymbol{E}` is the electric field, :math:`\boldsymbol{B}` is the magnetic field, :math:`\varepsilon_0` is the vacuum permittivity, :math:`\Delta V` is the cell volume (or cell area in 2D), and the sum is over all cells.
+
+        The output columns are the components of the total field momentum :math:`\boldsymbol{P}_f` at each mesh refinement level.
 
         Note that the fields are *not* averaged on the cell centers before their energy is
         computed.
