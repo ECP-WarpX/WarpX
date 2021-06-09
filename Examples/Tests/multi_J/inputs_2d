@@ -12,14 +12,14 @@ geometry.is_periodic = 1 0
 geometry.prob_lo = -200e-6 -220e-6
 geometry.prob_hi =  200e-6   10e-6
 
-# Numerics
-
+# Algorithms
 algo.current_deposition = direct
 algo.field_gathering = energy-conserving
 algo.maxwell_solver = psatd
 algo.particle_pusher = vay
 algo.particle_shape = 3
 
+# Numerics
 warpx.cfl = 3.19
 warpx.do_nodal = 1
 warpx.do_pml = 0
@@ -46,8 +46,7 @@ warpx.multij_n_depose = 2
 warpx.do_dive_cleaning = 1
 warpx.do_divb_cleaning = 1
 
-# Plasma
-
+# Particles
 particles.species_names = driver driver_back plasma_e plasma_p
 particles.use_fdtd_nci_corr = 0
 particles.rigid_injected_species = driver driver_back

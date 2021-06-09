@@ -429,11 +429,6 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
 #ifdef WARPX_USE_PSATD
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
-        // Warnings:
-        // - this does not work with Galilean PSATD
-        //   (the shifts are not properly taken into account when depositing)
-        // - this does not work with PML
-
         // Push particle from x^{n} to x^{n+1}
         //               from p^{n-1/2} to p^{n+1/2}
         const bool skip_deposition = true;
@@ -441,7 +436,7 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
 
         // Initialize multi-J loop:
 
-        // 1) Prepare E, B, F fields in spectral space
+        // 1) Prepare E,B,F,G fields in spectral space
         PSATDForwardTransformEB();
         PSATDForwardTransformF();
         PSATDForwardTransformG();
@@ -452,6 +447,8 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
         // 3) Deposit rho (in rho_new, since it will be moved during the loop)
         if (WarpX::update_with_rho)
         {
+            // Deposit rho at relative time -dt in component 1 (rho_new)
+            // (dt[0] denotes the time step on mesh refinement level 0)
             mypc->DepositCharge(rho_fp, -dt[0], 1);
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
@@ -462,6 +459,8 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
         // 4) Deposit J if needed
         if (WarpX::psatd_linear_in_J)
         {
+            // Deposit J at relative time -dt with time step dt
+            // (dt[0] denotes the time step on mesh refinement level 0)
             mypc->DepositCurrent(current_fp, dt[0], -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
@@ -469,28 +468,39 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
             PSATDForwardTransformJ();
         }
 
-        // Loop over multiple J deposition
+        // Number of depositions for multi-J scheme
         const int n_depose = WarpX::multij_n_depose;
+        // Time sub-step for each multi-J deposition
         const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_depose);
+        // Whether to perform multi-J depositions on a time interval that spans
+        // one or two full time steps (from n*dt to (n+1)*dt, or from n*dt to (n+2)*dt)
         const int n_loop = (WarpX::fft_do_time_averaging) ? 2*n_depose : n_depose;
+
+        // Loop over multi-J depositions
         for (int i_depose = 0; i_depose < n_loop; i_depose++)
         {
-            // Move previously deposited rho and J
+            // Move rho deposited previously, from new to old
             PSATDMoveRhoNewToRhoOld();
+
+            // Move J deposited previously, from new to old
+            // (when using assumption of J linear in time)
             if (WarpX::psatd_linear_in_J) PSATDMoveJNewToJOld();
 
-            // Deposit the new J
             const amrex::Real t_depose = (WarpX::psatd_linear_in_J) ?
                 (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5)*sub_dt;
+
+            // Deposit new J at relative time t_depose with time step dt
+            // (dt[0] denotes the time step on mesh refinement level 0)
             mypc->DepositCurrent(current_fp, dt[0], t_depose);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
             PSATDForwardTransformJ();
 
-            // Deposit the rho_new
+            // Deposit new rho
             if (WarpX::update_with_rho)
             {
+                // Deposit rho at relative time (i_depose-n_depose+1)*sub_dt in component 1 (rho_new)
                 mypc->DepositCharge(rho_fp, (i_depose-n_depose+1)*sub_dt, 1);
                 // Filter, exchange boundary, and interpolate across levels
                 SyncRho();
@@ -498,10 +508,11 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
                 PSATDForwardTransformRho(1);
             }
 
-            // Advance E and B fields in time and update the average fields
+            // Advance E,B,F,G fields in time and update the average fields
             PSATDPushSpectralFields();
 
-            // Transform non-average fields after n_depose pushes
+            // Transform non-average fields E,B,F,G after n_depose pushes
+            // (the relative time reached here coincides with an integer full time step)
             if (i_depose == n_depose-1)
             {
                 PSATDBackwardTransformEB();
