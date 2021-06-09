@@ -2324,7 +2324,7 @@ PhysicalParticleContainer::InitIonizationModule ()
     // Add runtime integer component for ionization level
     AddIntComp("ionization_level");
     // Get atomic number and ionization energies from file
-    int ion_element_id = ion_map_ids[physical_element];
+    int const ion_element_id = ion_map_ids.at(physical_element);
     ion_atomic_number = ion_atomic_numbers[ion_element_id];
     Vector<Real> h_ionization_energies(ion_atomic_number);
     int offset = ion_energy_offsets[ion_element_id];
