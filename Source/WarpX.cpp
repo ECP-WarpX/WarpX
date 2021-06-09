@@ -587,6 +587,11 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
 
+        if (do_multij && do_pml)
+        {
+            amrex::Abort("Multi-J algorithm not implemented with PMLs");
+        }
+
         // div(E) cleaning not implemented for PSATD solver
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
@@ -992,6 +997,14 @@ WarpX::ReadParameters ()
         if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
+        }
+
+        if (do_multij)
+        {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
+            {
+                amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
+            }
         }
 
         if (psatd_linear_in_J)
