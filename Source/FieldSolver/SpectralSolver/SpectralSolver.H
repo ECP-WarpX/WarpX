@@ -27,7 +27,39 @@ class SpectralSolver
         // The body of these functions is short, since the work is done in the
         // underlying classes `SpectralFieldData` and `PsatdAlgorithm`
 
-        // Constructor
+        /**
+         * \brief Constructor of the class SpectralSolver
+         *
+         * Select the spectral algorithm to be used, allocate the corresponding coefficients
+         * for the discrete field update equations, and prepare the structures that store
+         * the fields in spectral space.
+         *
+         * \param[in] lev mesh refinement level
+         * \param[in] realspace_ba BoxArray in real space
+         * \param[in] dm DistributionMapping for the given BoxArray
+         * \param[in] norder_x spectral order along x
+         * \param[in] norder_y spectral order along y
+         * \param[in] norder_z spectral order along z
+         * \param[in] nodal whether the spectral solver is applied to a nodal or staggered grid
+         * \param[in] v_galilean three-dimensional vector containing the components of the Galilean
+         *                       velocity for the standard or averaged Galilean PSATD solvers
+         * \param[in] v_comoving three-dimensional vector containing the components of the comoving
+         *                       velocity for the comoving PSATD solver
+         * \param[in] dx AMREX_SPACEDIM-dimensional vector containing the cell sizes along each direction
+         * \param[in] dt time step for the analytical integration of Maxwell's equations
+         * \param[in] pml whether the boxes in the given BoxArray are PML boxes
+         * \param[in] periodic_single_box whether there is only one periodic single box
+         *                                (no domain decomposition)
+         * \param[in] update_with_rho whether rho is used in the field update equations
+         * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
+         * \param[in] psatd_linear_in_J whether to use two currents computed at the beginning and
+         *                              the end of the time interval (instead of using one current
+         *                              compute at half time)
+         * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in Gauss law
+         *                          (new field F in the field update equations)
+         * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in magnetic Gauss law
+         *                          (new field G in the field update equations)
+         */
         SpectralSolver (const int lev,
                         const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
@@ -37,10 +69,10 @@ class SpectralSolver
                         const amrex::Array<amrex::Real,3>& v_comoving,
                         const amrex::RealVect dx,
                         const amrex::Real dt,
-                        const bool pml=false,
-                        const bool periodic_single_box=false,
-                        const bool update_with_rho=false,
-                        const bool fft_do_time_averaging=false,
+                        const bool pml = false,
+                        const bool periodic_single_box = false,
+                        const bool update_with_rho = false,
+                        const bool fft_do_time_averaging = false,
                         const bool psatd_linear_in_J = false,
                         const bool dive_cleaning = false,
                         const bool divb_cleaning = false);
