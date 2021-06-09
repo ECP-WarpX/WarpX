@@ -30,6 +30,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
+         * \param[in] linear_in_J whether to use two currents computed at the beginning and the end
+         *            of the time interval (instead of using one current computed at half time)
          */
         PsatdAlgorithm (
             const SpectralKSpace& spectral_kspace,
@@ -82,7 +84,14 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
 
-        // TODO Add Doxygen docs
+        /**
+         * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
+         *        required only when using time averaging with the assumption that J is linear in time
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
+         * \param[in] dt time step of the simulation
+         */
         void InitializeSpectralCoefficientsAvgLin (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,

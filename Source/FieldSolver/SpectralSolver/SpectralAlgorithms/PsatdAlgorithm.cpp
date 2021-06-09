@@ -54,6 +54,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     X2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
+    // Allocate these coefficients only with Galilean PSATD
     if (m_is_galilean)
     {
         X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
@@ -62,7 +63,7 @@ PsatdAlgorithm::PsatdAlgorithm(
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
-    // Allocate these coefficients only with averaged Galilean PSATD
+    // Allocate these coefficients only with time averaging
     if (time_averaging && !linear_in_J)
     {
         Psi1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
@@ -73,6 +74,8 @@ PsatdAlgorithm::PsatdAlgorithm(
         Y4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
+    // Allocate these coefficients only with time averaging
+    // and with the assumption that J is linear in time
     else if (time_averaging && linear_in_J)
     {
         X5_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
