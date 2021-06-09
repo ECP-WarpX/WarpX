@@ -5,7 +5,7 @@ amr.n_cell = 96 704
 warpx.numprocs = 1 2
 
 geometry.coord_sys = 0
-geometry.is_periodic = 0 0
+geometry.is_periodic = 1 0
 geometry.prob_lo = -90.e-6 -70.e-6
 geometry.prob_hi =  90.e-6   0.e-6
 
@@ -17,6 +17,8 @@ algo.particle_pusher = vay
 
 # Order of particle shape factors
 algo.particle_shape = 3
+
+psatd.v_comoving = 0. 0. -0.9970370305242862
 
 warpx.cfl = 1.
 

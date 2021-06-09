@@ -728,7 +728,7 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
 
                 MultiFab tmp(buff_ba, buff_dm, ncomp, 0);
 
-                tmp.copy(*lf_diags->m_data_buffer_, 0, 0, ncomp);
+                tmp.ParallelCopy(*lf_diags->m_data_buffer_, 0, 0, ncomp);
 
 #ifdef WARPX_USE_HDF5
                 for (int comp = 0; comp < ncomp; ++comp) {
@@ -881,7 +881,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              // which has the dmap of the domain to
              // tmp_slice_ptr which has the dmap of the
              // data_buffer that stores the back-transformed data.
-             tmp_slice_ptr->copy(*slice, 0, 0, ncomp);
+             tmp_slice_ptr->ParallelCopy(*slice, 0, 0, ncomp);
              lf_diags->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                                map_actual_fields_to_dump);
              tmp_slice_ptr = nullptr;

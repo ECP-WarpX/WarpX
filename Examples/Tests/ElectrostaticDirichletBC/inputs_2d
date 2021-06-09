@@ -15,7 +15,6 @@ boundary.field_hi = pec periodic
 boundary.potential_lo_x = 150.0*sin(2*pi*6.78e+06*t)
 boundary.potential_hi_x = 450.0*sin(2*pi*13.56e+06*t)
 
-algo.particle_shape = 1
 diagnostics.diags_names = diag1
 diag1.diag_type = Full
 diag1.intervals = ::4

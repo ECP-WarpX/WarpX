@@ -34,29 +34,41 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
 
    #!/bin/bash -l
    #BSUB -P APH114
-   #BSUB -W 00:10
+   #BSUB -W 00:15
    #BSUB -nnodes 1
    #BSUB -J PERFTEST
    #BSUB -e err_automated_tests.txt
    #BSUB -o out_automated_tests.txt
 
-   source $HOME/my_bashrc.sh
+   #source $HOME/my_bashrc.sh
+   module load gcc/6.4.0
+   module load ccache
+   module load cmake
+   module load ninja
+   module load cuda
+   module load hdf5/1.10.4
+   module load fftw
+   module load boost/1.66.0
+   module load openblas/0.3.9-omp
+   module load netlib-lapack/3.8.0
 
    # Make sure all dependencies are installed and loaded
    cd $HOME
    module load python/3.7.0
+   export BLAS=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
+   export LAPACK=$OLCF_NETLIB_LAPACK_ROOT/lib64/liblapack.so
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
    python3 -m venv $HOME/sw/venvs/warpx-perftest
    source $HOME/sw/venvs/warpx-perftest/bin/activate
-   python3 -m pip install numpy==1.15.4
-   python3 -m pip install pandas
-   python3 -m pip install bokeh
-   python3 -m pip install gitpython
-
-   # Check where numpy is installed, and prepend its parent directory to PYTHONPATH
-   home_to_numpy=$(python3 -c "import numpy ; import os ; print(os.path.split(os.path.split(numpy.__file__)[0])[0])")
-   export PYTHONPATH=$home_to_numpy:$PYTHONPATH
+   python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy==1.19.5
+   python3 -m pip install --upgrade markupsafe
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade bokeh
+   python3 -m pip install --upgrade gitpython
+   python3 -m pip install --upgrade tables
 
    # Run the performance test suite
    cd $AUTOMATED_PERF_TESTS/warpx/Tools/PerformanceTests/
