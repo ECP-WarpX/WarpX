@@ -2,6 +2,7 @@
 
 #include <AMReX_BLProfiler.H>
 #include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
 #include <AMReX_DistributionMapping.H>

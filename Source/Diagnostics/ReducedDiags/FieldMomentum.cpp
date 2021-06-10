@@ -9,8 +9,8 @@
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/IntervalsParser.H"
 
-#include <AMReX.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -18,9 +18,22 @@
 #include <AMReX_Reduce.H>
 #include <AMReX_REAL.H>
 
-#include <cmath>
 #include <ostream>
-#include <string>
+#include <algorithm>
+#include <vector>
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_Tuple.H>
+#include <AMReX_Vector.H>
 
 using namespace amrex;
 

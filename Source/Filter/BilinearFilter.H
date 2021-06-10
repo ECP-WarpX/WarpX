@@ -11,6 +11,7 @@
 #include "Filter.H"
 
 #include <AMReX_Array.H>
+#include <AMReX_Config.H>
 
 class BilinearFilter : public Filter
 {

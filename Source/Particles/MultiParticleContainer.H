@@ -22,7 +22,6 @@
 #include "Utils/WarpXConst.H"
 
 #ifdef WARPX_QED
-#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif

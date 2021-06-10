@@ -13,6 +13,8 @@
 #include "FieldSolver/SpectralSolver/SpectralKSpace_fwd.H"
 
 #include <AMReX_REAL.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_MultiFab.H>
 
 #include <array>
 #include <memory>

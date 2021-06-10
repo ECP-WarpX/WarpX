@@ -9,7 +9,6 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParticleIO.H>
-#include <AMReX_PlotFileUtil.H>
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>

@@ -26,8 +26,9 @@
 #   include <openPMD/openPMD.hpp>
 #endif
 
+#include <cstdint>
+#include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 

@@ -3,6 +3,9 @@
 
 #include "ComputeDiagFunctor.H"
 
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+
 /**
  * \brief Functor to cell-center MF and store result in mf_out.
  */

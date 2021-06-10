@@ -8,6 +8,7 @@
 
 #include <AMReX_Geometry.H>
 #include <AMReX_Vector.H>
+#include <AMReX_MultiFab.H>
 
 #include <memory>
 #include <string>

@@ -11,6 +11,7 @@
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_Particles.H>
+#include <AMReX_MFIter.H>
 
 namespace ParticleUtils {
 

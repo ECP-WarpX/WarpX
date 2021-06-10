@@ -33,6 +33,7 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
+#include <AMReX_Box.H>
 
 #include <array>
 #include <memory>

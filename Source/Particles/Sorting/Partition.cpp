@@ -17,6 +17,7 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_REAL.H>
 #include <AMReX_StructOfArrays.H>
+#include <AMReX_iMultiFab.H>
 
 #include <utility>
 

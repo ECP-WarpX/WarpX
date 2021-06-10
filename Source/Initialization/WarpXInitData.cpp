@@ -27,7 +27,6 @@
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
-#include <ctype.h>
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
@@ -50,6 +49,7 @@
 #include <AMReX_RealBox.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
+#include <AMReX_BLassert.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif

@@ -25,6 +25,7 @@
 #include <AMReX_GpuDevice.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_RandomEngine.H>
+#include <AMReX_Config.H>
 
 #include <algorithm>
 #include <map>

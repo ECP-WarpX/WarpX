@@ -24,6 +24,7 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Box.H>
 
 #include <array>
 #include <memory>

@@ -1,25 +1,24 @@
 #include "BackTransformFunctor.H"
 
 #include "WarpX.H"
-#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"  // for Comp...
-#include "Utils/WarpXConst.H"                                    // for c
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_MultiFabUtil.H>
-#include <AMReX_Array4.H>                                        // for Array4
-#include <AMReX_BoxArray.H>                                      // for BoxA...
-#include <AMReX_Config.H>                                        // for AMRE...
-#include <AMReX_FArrayBox.H>                                     // for FArr...
-#include <AMReX_FabArray.H>                                      // for FabA...
-#include <AMReX_Geometry.H>                                      // for Geom...
-#include <AMReX_GpuControl.H>                                    // for notI...
-#include <AMReX_GpuLaunch.H>                              // for Para...
-#include <AMReX_GpuQualifiers.H>                                 // for AMRE...
-#include <AMReX_MFIter.H>                                        // for MFIter
-#include <AMReX_MultiFab.H>                                      // for Mult...
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
 
 #include <memory>
 #include <cmath>
-#include <map>                                                   // for map
+#include <map>
 
 using namespace amrex;
 

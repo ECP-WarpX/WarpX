@@ -37,6 +37,11 @@
 #include <AMReX_Particles.H>
 #include <AMReX_StructOfArrays.H>
 
+#include <algorithm>
+#include <array>
+#include <map>
+#include <memory>
+
 using namespace amrex;
 
 PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecies,

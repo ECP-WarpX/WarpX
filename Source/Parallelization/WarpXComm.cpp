@@ -13,9 +13,34 @@
 #include "Utils/CoarsenMR.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "BoundaryConditions/PML.H"
+#include "Filter/BilinearFilter.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_FabArrayBase.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <algorithm>
 #include <memory>
+#include <array>
+#include <vector>
 
 using namespace amrex;
 

@@ -13,8 +13,6 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "BoundaryConditions/WarpX_PML_kernels.H"
-#include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
 #include "WarpXPushFieldsEM_K.H"
 #if defined(WARPX_DIM_RZ) || defined(WARPX_USE_PSATD)
@@ -44,6 +42,7 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_IndexType.H>
 
 #include <cmath>
 #include <array>

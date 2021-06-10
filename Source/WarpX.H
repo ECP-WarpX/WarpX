@@ -51,23 +51,10 @@
 #   include "AMReX_EBFabFactory.H"
 #endif
 
-namespace amrex { class Box; }
-namespace amrex { class BoxArray; }
-namespace amrex { class DistributionMapping; }
-namespace amrex { class FArrayBox; }
-namespace amrex { class Geometry; }
-namespace amrex { class IArrayBox; }
-namespace amrex { class MultiFab; }
-namespace amrex { class TagBoxArray; }
-namespace amrex { class iMultiFab; }
-namespace amrex { template <typename FAB> class FabFactory; }
-namespace amrex { template <typename T> class LayoutData; }
-// _______________________________________________Headers
-//#include <AMReX_Geometry.H>
-//#include <AMReX_LayoutData.H>
-//#include <AMReX_iMultiFab.H>
-// #include <AMReX_LayoutData.H>
-// ________________________________________________________________________
+#include <AMReX_Geometry.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_iMultiFab.H>
+#include <AMReX_LayoutData.H>
 
 #include <iostream>
 #include <memory>

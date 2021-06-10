@@ -27,10 +27,10 @@
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#   include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
 #   include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
 #   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
-#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#   include "Particles/ElementaryProcess/QEDPairGeneration.H"
+#   include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #endif
 
 #include <AMReX_Vector.H>

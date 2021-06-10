@@ -4,15 +4,14 @@
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_BLassert.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
-
-#include <AMReX_ParmParse.H>
+#include <AMReX.H>
 
 #include <map>
 #include <memory>
 #include <string>
+#include <set>
 
 using namespace amrex;
 

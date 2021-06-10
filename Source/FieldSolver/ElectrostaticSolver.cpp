@@ -9,6 +9,8 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Parser/WarpXParser.H"
+#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_MLMG.H>
@@ -35,7 +37,12 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_Vector.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_SPACE.H>
 
+#include <string>
 #include <memory>
 #include <array>
 

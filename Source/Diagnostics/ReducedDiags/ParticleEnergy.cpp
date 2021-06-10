@@ -21,6 +21,9 @@
 #include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Particles.H>
+#include <AMReX_Reduce.H>
+#include <AMReX_Tuple.H>
+#include <AMReX_Vector.H>
 
 #include <cmath>
 #include <limits>

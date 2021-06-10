@@ -1,6 +1,12 @@
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+#include "Parser/WarpXParser.H"
+#include "Parser/WarpXParserWrapper.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
 #include <AMReX_Config.H>
 #include <AMReX_Array4.H>
 #include <AMReX_BLProfiler.H>
@@ -12,11 +18,17 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_SPACE.H>
 #ifdef AMREX_USE_EB
 #   include <AMReX_EB2.H>
 #   include <AMReX_ParmParse.H>
 #endif
 
+#include <vector>
 #include <array>
 #include <memory>
 #include <string>

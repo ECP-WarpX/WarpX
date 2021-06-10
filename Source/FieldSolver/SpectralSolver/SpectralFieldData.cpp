@@ -25,6 +25,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 #include <AMReX_BoxArray.H>
+#include <AMReX_Dim3.H>
 
 #if WARPX_USE_PSATD
 

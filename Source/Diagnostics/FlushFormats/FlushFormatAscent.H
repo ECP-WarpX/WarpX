@@ -11,6 +11,7 @@
 #   include <ascent.hpp>
 #   include <AMReX_Conduit_Blueprint.H>
 #endif
+#include <AMReX_MultiFab.H>
 
 #include <string>
 

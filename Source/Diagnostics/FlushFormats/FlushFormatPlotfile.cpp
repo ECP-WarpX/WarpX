@@ -19,13 +19,11 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MakeType.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParticleIO.H>
 #include <AMReX_Particles.H>
-#include <AMReX_PlotFileUtil.H>
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>

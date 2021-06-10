@@ -9,6 +9,9 @@
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_Array4.H>
 
 #ifndef WARPX_FILTER_H_
 #define WARPX_FILTER_H_

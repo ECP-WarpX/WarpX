@@ -18,6 +18,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Random.H>
 #include <AMReX_Dim3.H>
+#include <AMReX_Config.H>
 
 #include <string>
 #include <cmath>

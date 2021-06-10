@@ -8,6 +8,7 @@
 #include "InjectorDensity.H"
 
 #include "Initialization/CustomDensityProb.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>

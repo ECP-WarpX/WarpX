@@ -3,6 +3,9 @@
 
 #include "ComputeDiagFunctor.H"
 
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+
 #include <array>
 
 /**

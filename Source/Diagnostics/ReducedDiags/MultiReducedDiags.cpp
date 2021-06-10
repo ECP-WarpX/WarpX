@@ -27,6 +27,9 @@
 #include <AMReX_REAL.H>
 
 #include <algorithm>
+#include <functional>
+#include <iterator>
+#include <map>
 
 using namespace amrex;
 

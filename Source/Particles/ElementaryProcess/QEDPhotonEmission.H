@@ -23,6 +23,9 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_REAL.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_RandomEngine.H>
 
 #include <algorithm>
 #include <limits>
