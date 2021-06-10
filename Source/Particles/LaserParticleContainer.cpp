@@ -171,8 +171,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_wavelength > 0.,
         "Laser wavelength must be positive.");
 
-    m_enabled = true;
-
     CommonLaserParameters common_params;
     common_params.wavelength = m_wavelength;
     common_params.e_max = m_e_max;
