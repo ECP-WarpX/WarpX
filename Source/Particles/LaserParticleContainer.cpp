@@ -216,6 +216,8 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 {
+    if (!m_enabled) return; // Laser might be disabled due to e_max == 0.0
+
     int dir = WarpX::moving_window_dir;
     if (do_continuous_injection and (WarpX::gamma_boost > 1)){
         // In boosted-frame simulations, the antenna has moved since the last
