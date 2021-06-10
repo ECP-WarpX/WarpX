@@ -553,7 +553,7 @@ LaserParticleContainer::Evolve (int lev,
 void
 LaserParticleContainer::PostRestart ()
 {
-    if (m_enabled) return;
+    if (!m_enabled) return;
 
     Real Sx, Sy;
     const int lev = finestLevel();
