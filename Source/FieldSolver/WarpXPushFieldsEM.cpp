@@ -189,16 +189,12 @@ WarpX::PSATDBackwardTransformG ()
 void
 WarpX::PSATDForwardTransformJ ()
 {
-    int idx_jx = Idx::Jx;
-    int idx_jy = Idx::Jy;
-    int idx_jz = Idx::Jz;
-
-    if (WarpX::J_linear_in_time)
-    {
-        idx_jx = LinJIdx::Jx_new;
-        idx_jy = LinJIdx::Jy_new;
-        idx_jz = LinJIdx::Jz_new;
-    }
+    const int idx_jx = (WarpX::J_linear_in_time) ? static_cast<int>(LinJIdx::Jx_new)
+                                                 : static_cast<int>(Idx::Jx);
+    const int idx_jy = (WarpX::J_linear_in_time) ? static_cast<int>(LinJIdx::Jy_new)
+                                                 : static_cast<int>(Idx::Jy);
+    const int idx_jz = (WarpX::J_linear_in_time) ? static_cast<int>(LinJIdx::Jz_new)
+                                                 : static_cast<int>(Idx::Jz);
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -231,7 +227,7 @@ void
 WarpX::PSATDForwardTransformRho (const int icomp)
 {
     // Select index in k space
-    int const dst_comp = (icomp==0 ? Idx::rho_old : Idx::rho_new);
+    const int dst_comp = (icomp == 0) ? Idx::rho_old : Idx::rho_new;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {

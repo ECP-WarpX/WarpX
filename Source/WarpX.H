@@ -776,7 +776,7 @@ private:
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step
      */
-    void OneStep_multiJ (amrex::Real t);
+    void OneStep_multiJ (const amrex::Real t);
 
     void RestrictCurrentFromFineToCoarsePatch (int lev);
     void AddCurrentFromFineLevelandSumBoundary (int lev);

@@ -135,7 +135,7 @@ WarpX::Evolve (int numsteps)
         // deposition and calculation of fields done further below
         if (do_electrostatic != ElectrostaticSolverAlgo::None)
         {
-            bool const skip_deposition = true;
+            const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
         }
         // Electromagnetic case: multi-J algorithm
@@ -421,7 +421,7 @@ WarpX::OneStep_nosub (Real cur_time)
 }
 
 void
-WarpX::OneStep_multiJ (amrex::Real cur_time)
+WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
 #ifdef WARPX_DIM_RZ
     amrex::Abort("multi-J algorithm not implemented for RZ geometry");
