@@ -10,8 +10,6 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
-// using namespace amrex::literals;
-
 BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name)
     : CollisionBase(collision_name)
 {

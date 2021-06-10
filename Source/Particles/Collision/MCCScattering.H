@@ -21,9 +21,9 @@ AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
                        amrex::RandomEngine const& engine )
 {
-  using std::sqrt;
-  using std::cos;
-  using std::sin;
+    using std::sqrt;
+    using std::cos;
+    using std::sin;
 
     // generate random unit vector in 3 dimensions
     // https://math.stackexchange.com/questions/44689/how-to-find-a-random-axis-or-unit-vector-in-3d
@@ -74,7 +74,7 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
                          amrex::ParticleReal uCOM_y, amrex::ParticleReal uCOM_z,
                          amrex::RandomEngine const& engine )
 {
-  using std::sqrt;
+    using std::sqrt;
 
     // transform to center of momentum frame
     ux -= uCOM_x;
@@ -180,7 +180,7 @@ public:
     ) const noexcept
     {
         using namespace amrex;
-    using std::sqrt;
+        using std::sqrt;
 
         // determine if this particle should collide
         if (Random(engine) > m_total_collision_prob) return false;
