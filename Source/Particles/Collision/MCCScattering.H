@@ -1,4 +1,4 @@
-/* Copyright 2021 Roelof Groenewald
+/* Copyright 2021 Modern Electron
  *
  * This file is part of WarpX.
  *
