@@ -193,7 +193,7 @@ WarpX::PSATDForwardTransformJ ()
     int idx_jy = Idx::Jy;
     int idx_jz = Idx::Jz;
 
-    if (WarpX::psatd_linear_in_J)
+    if (WarpX::J_linear_in_time)
     {
         idx_jx = LinJIdx::Jx_new;
         idx_jy = LinJIdx::Jy_new;

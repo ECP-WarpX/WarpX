@@ -139,7 +139,7 @@ WarpX::Evolve (int numsteps)
             PushParticlesandDepose(cur_time, skip_deposition);
         }
         // Electromagnetic case: multi-J algorithm
-        else if (do_multij)
+        else if (do_multi_J)
         {
             OneStep_multiJ(cur_time);
         }
@@ -457,7 +457,7 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
         }
 
         // 4) Deposit J if needed
-        if (WarpX::psatd_linear_in_J)
+        if (WarpX::J_linear_in_time)
         {
             // Deposit J at relative time -dt with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
@@ -469,7 +469,7 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
         }
 
         // Number of depositions for multi-J scheme
-        const int n_depose = WarpX::multij_n_depose;
+        const int n_depose = WarpX::do_multi_J_n_depositions;
         // Time sub-step for each multi-J deposition
         const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_depose);
         // Whether to perform multi-J depositions on a time interval that spans
@@ -484,9 +484,9 @@ WarpX::OneStep_multiJ (amrex::Real cur_time)
 
             // Move J deposited previously, from new to old
             // (when using assumption of J linear in time)
-            if (WarpX::psatd_linear_in_J) PSATDMoveJNewToJOld();
+            if (WarpX::J_linear_in_time) PSATDMoveJNewToJOld();
 
-            const amrex::Real t_depose = (WarpX::psatd_linear_in_J) ?
+            const amrex::Real t_depose = (WarpX::J_linear_in_time) ?
                 (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5)*sub_dt;
 
             // Deposit new J at relative time t_depose with time step dt

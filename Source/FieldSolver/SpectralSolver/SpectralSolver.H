@@ -48,9 +48,9 @@ class SpectralSolver
          *                                (no domain decomposition)
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
-         * \param[in] psatd_linear_in_J whether to use two currents computed at the beginning and
-         *                              the end of the time interval (instead of using one current
-         *                              compute at half time)
+         * \param[in] J_linear_in_time whether to use two currents computed at the beginning and
+         *                             the end of the time interval (instead of using one current
+         *                             compute at half time)
          * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in Gauss law
          *                          (new field F in the field update equations)
          * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in magnetic Gauss law
@@ -69,7 +69,7 @@ class SpectralSolver
                         const bool periodic_single_box = false,
                         const bool update_with_rho = false,
                         const bool fft_do_time_averaging = false,
-                        const bool psatd_linear_in_J = false,
+                        const bool J_linear_in_time = false,
                         const bool dive_cleaning = false,
                         const bool divb_cleaning = false);
 

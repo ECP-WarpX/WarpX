@@ -206,9 +206,9 @@ public:
     static amrex::IntVect sort_bin_size;
 
     static int do_subcycling;
-    static int do_multij;
-    static int multij_n_depose;
-    static int psatd_linear_in_J;
+    static int do_multi_J;
+    static int do_multi_J_n_depositions;
+    static int J_linear_in_time;
 
     static bool do_device_synchronize_before_profile;
     static bool safe_guard_cells;

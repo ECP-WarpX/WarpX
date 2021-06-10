@@ -37,12 +37,12 @@ warpx.moving_window_v = 1.
 
 # Spectral solver
 psatd.do_time_averaging = 1
-psatd.linear_in_J = 1
+psatd.J_linear_in_time = 1
 psatd.update_with_rho = 1
 
 # Multi-J scheme
-warpx.do_multij = 1
-warpx.multij_n_depose = 2
+warpx.do_multi_J = 1
+warpx.do_multi_J_n_depositions = 2
 warpx.do_dive_cleaning = 1
 warpx.do_divb_cleaning = 1
 

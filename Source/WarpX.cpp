@@ -137,9 +137,9 @@ Real WarpX::self_fields_required_precision = 1.e-11_rt;
 int WarpX::self_fields_max_iters = 200;
 
 int WarpX::do_subcycling = 0;
-int WarpX::do_multij = 0;
-int WarpX::multij_n_depose = 1;
-int WarpX::psatd_linear_in_J = 0;
+int WarpX::do_multi_J = 0;
+int WarpX::do_multi_J_n_depositions = 1;
+int WarpX::J_linear_in_time = 0;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -416,8 +416,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("verbose", verbose);
         pp_warpx.query("regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
-        pp_warpx.query("do_multij", do_multij);
-        pp_warpx.query("multij_n_depose", multij_n_depose);
+        pp_warpx.query("do_multi_J", do_multi_J);
+        pp_warpx.query("do_multi_J_n_depositions", do_multi_J_n_depositions);
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};
@@ -587,7 +587,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
 
-        if (do_multij && do_pml)
+        if (do_multi_J && do_pml)
         {
             amrex::Abort("Multi-J algorithm not implemented with PMLs");
         }
@@ -595,7 +595,7 @@ WarpX::ReadParameters ()
         // div(E) cleaning not implemented for PSATD solver
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            if (do_multij == 0 && do_dive_cleaning == 1)
+            if (do_multi_J == 0 && do_dive_cleaning == 1)
             {
                 amrex::Abort("warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
             }
@@ -935,7 +935,7 @@ WarpX::ReadParameters ()
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("v_comoving", m_v_comoving);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
-        pp_psatd.query("linear_in_J", psatd_linear_in_J);
+        pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
         if (!fft_periodic_single_box && current_correction)
             amrex::Abort(
@@ -999,7 +999,7 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
         }
 
-        if (do_multij)
+        if (do_multi_J)
         {
             if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
             {
@@ -1007,7 +1007,7 @@ WarpX::ReadParameters ()
             }
         }
 
-        if (psatd_linear_in_J)
+        if (J_linear_in_time)
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be equal to 1 for linear-in-J PSATD");
@@ -1773,7 +1773,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 #endif
 
     Real solver_dt = dt[lev];
-    if (WarpX::do_multij) solver_dt /= static_cast<amrex::Real>(WarpX::multij_n_depose);
+    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
 
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
@@ -1790,7 +1790,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
-                                                psatd_linear_in_J);
+                                                J_linear_in_time);
     spectral_solver[lev] = std::move(pss);
 }
 #   endif

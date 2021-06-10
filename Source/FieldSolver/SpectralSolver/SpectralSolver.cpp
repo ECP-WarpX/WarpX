@@ -29,7 +29,7 @@ SpectralSolver::SpectralSolver(
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
                 const bool fft_do_time_averaging,
-                const bool psatd_linear_in_J,
+                const bool J_linear_in_time,
                 const bool dive_cleaning,
                 const bool divb_cleaning)
 {
@@ -56,7 +56,7 @@ SpectralSolver::SpectralSolver(
         // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging, psatd_linear_in_J);
+                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time);
         }
     }
 

@@ -30,7 +30,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
-         * \param[in] linear_in_J whether to use two currents computed at the beginning and the end
+         * \param[in] J_linear_in_time whether to use two currents computed at the beginning and the end
          *            of the time interval (instead of using one current computed at half time)
          */
         PsatdAlgorithm (
@@ -44,7 +44,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Real dt,
             const bool update_with_rho,
             const bool time_averaging,
-            const bool linear_in_J);
+            const bool J_linear_in_time);
 
         /**
          * \brief Updates the E and B fields in spectral space, according to the relevant PSATD equations
@@ -58,11 +58,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual int getRequiredNumberOfFields () const override final
         {
-            if (!m_linear_in_J && !m_time_averaging)
+            if (!m_J_linear_in_time && !m_time_averaging)
             {
                 return SpectralFieldIndex::n_fields;
             }
-            else if (!m_linear_in_J && m_time_averaging)
+            else if (!m_J_linear_in_time && m_time_averaging)
             {
                 return SpectralAvgFieldIndex::n_fields;
             }
@@ -167,7 +167,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
-        bool m_linear_in_J;
+        bool m_J_linear_in_time;
         bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD
