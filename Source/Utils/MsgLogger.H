@@ -24,8 +24,6 @@ enum class Importance{
     high
 };
 
-const auto new_line_skip = std::string{"*      "};
-
 class Logger
 {
 
@@ -47,7 +45,14 @@ private:
         const std::string& prefix,
         const std::string& topic,
         const std::vector<std::string>& entries,
-        std::stringstream& ss);
+        const int max_line_length,
+        std::stringstream& ss) const;
+
+    std::string
+    aux_msg_formatter(
+        std::string msg,
+        std::string& new_line_skip,
+        const int max_line_length) const;
 
     std::map<Type,
         std::map<Importance,

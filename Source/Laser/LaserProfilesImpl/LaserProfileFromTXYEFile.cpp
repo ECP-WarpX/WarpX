@@ -37,7 +37,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
             MsgLogger::Type::warning, MsgLogger::Importance::high,
             "Laser",
             "double precision type does not comply with IEEE 754:\n" +
-            MsgLogger::new_line_skip + "bad things will happen parsing the X, Y and T profiles for the laser!"
+            "bad things will happen parsing the X, Y and T profiles for the laser!"
         );
     }
 

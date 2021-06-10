@@ -211,7 +211,7 @@ Diagnostics::InitData ()
         logger.record_entry(
             MsgLogger::Type::warning, MsgLogger::Importance::medium, "Diagnostics",
             "For full diagnostics on a reduced domain, particle io is not supported, yet! \n" +
-            MsgLogger::new_line_skip + "Therefore, particle-io is disabled for this diag " + m_diag_name);
+            "Therefore, particle-io is disabled for this diag " + m_diag_name);
     }
 
     // default for writing species output is 1
