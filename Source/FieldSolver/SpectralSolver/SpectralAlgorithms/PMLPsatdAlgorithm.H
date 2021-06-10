@@ -8,10 +8,9 @@
 #define WARPX_PML_PSATD_ALGORITHM_H_
 
 #include "SpectralBaseAlgorithm.H"
-// _______________________________________________WarpX Forward declarations
-#include "FieldSolver/SpectralSolver/SpectralFieldData.def"
-#include "FieldSolver/SpectralSolver/SpectralKSpace.def"
-//________________________________________________________________________
+
+#include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpace_fwd.H"
 
 #include <AMReX_REAL.H>
 

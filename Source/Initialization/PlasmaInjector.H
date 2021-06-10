@@ -12,9 +12,8 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "InjectorMomentum.H"
 #include "InjectorDensity.H"
-// _______________________________________________WarpX Forward declarations
-#include "InjectorPosition.def"
-// ________________________________________________________________________
+
+#include "InjectorPosition_fwd.H"
 
 #include <AMReX_Vector.H>
 #include <AMReX_ParmParse.H>

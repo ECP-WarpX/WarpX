@@ -4,9 +4,8 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Parser/WarpXParserWrapper.H"
-// _______________________________________________WarpX Forward declarations
-#include "Particles/WarpXParticleContainer.def"
-// ________________________________________________________________________
+
+#include "Particles/WarpXParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX.H>

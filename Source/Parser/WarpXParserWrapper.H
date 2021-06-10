@@ -7,6 +7,8 @@
 #ifndef WARPX_PARSER_WRAPPER_H_
 #define WARPX_PARSER_WRAPPER_H_
 
+#include "WarpXParserWrapper_fwd.H"
+
 #include "Parser/WarpXParser.H"
 #include "Parser/GpuParser.H"
 

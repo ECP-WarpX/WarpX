@@ -8,9 +8,8 @@
 #define WARPX_LEVELING_THINNING_H_
 
 #include "Resampling.H"
-// _______________________________________________WarpX Forward declarations
-#include "Particles/WarpXParticleContainer.def"
-// ________________________________________________________________________
+
+#include "Particles/WarpXParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
 #include <string>

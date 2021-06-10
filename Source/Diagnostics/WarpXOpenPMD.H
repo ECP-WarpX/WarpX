@@ -9,9 +9,8 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
-// _______________________________________________WarpX Forward declarations
-#include "Diagnostics/ParticleDiag/ParticleDiag.def"
-//________________________________________________________________________
+
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_ParallelDescriptor.H>

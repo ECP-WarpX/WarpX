@@ -7,6 +7,8 @@
 #ifndef WARPX_SPECTRAL_SOLVER_H_
 #define WARPX_SPECTRAL_SOLVER_H_
 
+#include "SpectralSolver_fwd.H"
+
 #include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "SpectralFieldData.H"
 

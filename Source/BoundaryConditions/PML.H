@@ -9,6 +9,8 @@
 #ifndef WARPX_PML_H_
 #define WARPX_PML_H_
 
+#include "PML_fwd.H"
+
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif

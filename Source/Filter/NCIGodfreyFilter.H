@@ -7,6 +7,8 @@
 #ifndef WARPX_GODFREY_FILTER_H_
 #define WARPX_GODFREY_FILTER_H_
 
+#include "NCIGodfreyFilter_fwd.H"
+
 #include "Filter.H"
 
 #include <AMReX_REAL.H>

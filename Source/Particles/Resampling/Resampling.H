@@ -8,9 +8,7 @@
 #define WARPX_RESAMPLING_H_
 
 #include "ResamplingTrigger.H"
-// _______________________________________________WarpX Forward declarations
-#include "Particles/WarpXParticleContainer.def"
-// ________________________________________________________________________
+#include "Particles/WarpXParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
 

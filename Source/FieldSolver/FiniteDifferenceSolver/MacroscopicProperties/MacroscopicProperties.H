@@ -1,6 +1,8 @@
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
+#include "MacroscopicProperties_fwd.H"
+
 #include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXConst.H"
 

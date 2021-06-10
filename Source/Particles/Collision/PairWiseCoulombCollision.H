@@ -8,10 +8,9 @@
 #define WARPX_PARTICLES_COLLISION_PAIRWISECOULOMBCOLLISION_H_
 
 #include "CollisionBase.H"
-// _______________________________________________WarpX Forward declarations
-#include "Particles/MultiParticleContainer.def"
-#include "Particles/WarpXParticleContainer.def"
-// ______________________________________________
+
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
 

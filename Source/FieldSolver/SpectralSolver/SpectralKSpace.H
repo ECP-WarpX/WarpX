@@ -8,6 +8,8 @@
 #ifndef WARPX_SPECTRAL_K_SPACE_H_
 #define WARPX_SPECTRAL_K_SPACE_H_
 
+#include "SpectralKSpace_fwd.H"
+
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX_BoxArray.H>

@@ -10,15 +10,16 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
+#include "WarpXParticleContainer_fwd.H"
+
 #include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
-// _______________________________________________WarpX Forward declarations
-#include "MultiParticleContainer.def"
+
+#include "MultiParticleContainer_fwd.H"
 #ifdef WARPX_QED
-#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.def"
-#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.def"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
+#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
 #endif
-// ________________________________________________________________________
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>

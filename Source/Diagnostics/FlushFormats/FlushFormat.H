@@ -1,6 +1,8 @@
 #ifndef WARPX_FLUSHFORMAT_H_
 #define WARPX_FLUSHFORMAT_H_
 
+#include "FlushFormat_fwd.H"
+
 #include "Particles/MultiParticleContainer.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 

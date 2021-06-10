@@ -8,6 +8,8 @@
 #ifndef WARPX_BackTransformedDiagnostic_H_
 #define WARPX_BackTransformedDiagnostic_H_
 
+#include "BackTransformedDiagnostic_fwd.H"
+
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/MultiParticleContainer.H"
 

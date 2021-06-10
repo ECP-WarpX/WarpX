@@ -19,10 +19,8 @@
 #ifdef WARPX_QED
 #    include "Particles/ElementaryProcess/QEDPairGeneration.H"
 #    include "Particles/ElementaryProcess/QEDPhotonEmission.H"
-// _______________________________________________WarpX Forward declarations
-#    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.def"
-#    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.def"
-// ______________________________________________
+#    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
+#    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
 #endif
 
 #include <AMReX_GpuContainers.H>

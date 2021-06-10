@@ -1,10 +1,10 @@
 #ifndef WARPX_PARTICLEDIAG_H_
 #define WARPX_PARTICLEDIAG_H_
 
-// _______________________________________________WarpX Forward declarations
-#include "Particles/WarpXParticleContainer.def"
-#include "Parser/WarpXParserWrapper.def"
-//________________________________________________________________________
+#include "ParticleDiag_fwd.H"
+
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Parser/WarpXParserWrapper_fwd.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>

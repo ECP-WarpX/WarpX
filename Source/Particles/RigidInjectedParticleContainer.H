@@ -11,9 +11,8 @@
 #include "PhysicalParticleContainer.H"
 #include "Evolve/WarpXDtType.H"
 #include "Particles/Gather/ScaleFields.H"
-// _______________________________________________WarpX Forward declarations
-#include "WarpXParticleContainer.def"
-// ________________________________________________________________________
+
+#include "WarpXParticleContainer_fwd.H"
 
 #include <AMReX_Vector.H>
 #include <AMReX_REAL.H>

@@ -1,6 +1,8 @@
 #ifndef WARPX_MULTIDIAGNOSTICS_H_
 #define WARPX_MULTIDIAGNOSTICS_H_
 
+#include "MultiDiagnostics_fwd.H"
+
 #include "Diagnostics.H"
 
 #include <AMReX_Vector.H>

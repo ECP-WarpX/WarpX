@@ -17,24 +17,23 @@
 #include "Utils/IntervalsParser.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Parser/WarpXParserWrapper.H"
-// _______________________________________________WarpX Forward declarations
-#include "Diagnostics/BackTransformedDiagnostic.def"
-#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.def"
-#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.def"
-#include "Diagnostics/MultiDiagnostics.def"
-#include "Particles/MultiParticleContainer.def"
-#include "Diagnostics/ReducedDiags/MultiReducedDiags.def"
-#include "Filter/NCIGodfreyFilter.def"
-#include "BoundaryConditions/PML.def"
-#include "Particles/WarpXParticleContainer.def"
+
+#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Diagnostics/MultiDiagnostics_fwd.H"
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
+#include "Filter/NCIGodfreyFilter_fwd.H"
+#include "BoundaryConditions/PML_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.def"
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
 #   else
-#       include "FieldSolver/SpectralSolver/SpectralSolver.def"
+#       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
-// ________________________________________________________________________
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_RealVect.H>
@@ -52,7 +51,6 @@
 #   include "AMReX_EBFabFactory.H"
 #endif
 
-// _______________________________________________AMReX Forward declarations
 namespace amrex { class Box; }
 namespace amrex { class BoxArray; }
 namespace amrex { class DistributionMapping; }

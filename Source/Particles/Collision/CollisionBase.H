@@ -7,9 +7,7 @@
 #ifndef WARPX_PARTICLES_COLLISION_COLLISIONBASE_H_
 #define WARPX_PARTICLES_COLLISION_COLLISIONBASE_H_
 
-// _______________________________________________WarpX Forward declarations
-#include "Particles/MultiParticleContainer.def"
-// ______________________________________________
+#include "Particles/MultiParticleContainer_fwd.H"
 
 #include <AMReX_Vector.H>
 #include <AMReX_REAL.H>

@@ -7,6 +7,8 @@
 #ifndef WARPX_breit_wheeler_engine_wrapper_h_
 #define WARPX_breit_wheeler_engine_wrapper_h_
 
+#include "BreitWheelerEngineWrapper_fwd.H"
+
 #include "QedWrapperCommons.H"
 #include "QedChiFunctions.H"
 #include "Utils/WarpXConst.H"

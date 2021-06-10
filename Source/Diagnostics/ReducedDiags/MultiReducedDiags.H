@@ -8,6 +8,8 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
 
+#include "MultiReducedDiags_fwd.H"
+
 #include "ReducedDiags.H"
 
 #include <vector>

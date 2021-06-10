@@ -8,6 +8,8 @@
 #ifndef INJECTOR_POSITION_H_
 #define INJECTOR_POSITION_H_
 
+#include "InjectorPosition_fwd.H"
+
 #include <AMReX_Gpu.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_Utility.H>

@@ -9,9 +9,8 @@
 
 #include "Utils/WarpX_Complex.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-// _______________________________________________WarpX Forward declarations
-#include "FieldSolver/SpectralSolver/SpectralFieldData.def"
-//________________________________________________________________________
+
+#include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>

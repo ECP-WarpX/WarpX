@@ -11,6 +11,8 @@
 #ifndef WARPX_ParticleContainer_H_
 #define WARPX_ParticleContainer_H_
 
+#include "MultiParticleContainer_fwd.H"
+
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 #include "PhysicalParticleContainer.H"
@@ -21,8 +23,8 @@
 
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
-#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.def"
-#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.def"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 
 #include <AMReX_BLassert.H>
