@@ -127,12 +127,25 @@ public:
     */
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
 
-    // Deposit charge density
+    /**
+     * \brief Deposit charge density.
+     *
+     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in] relative_t relative time of deposition
+     * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
+     */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    amrex::Real relative_t, const int icomp = 0);
 
-    // Deposit current density
+    /**
+     * \brief Deposit current density.
+     *
+     * \param[in,out] J vector of current densities (one three-dimensional array of pointers
+     *                to MultiFabs per mesh refinement level)
+     * \param[in] dt time step
+     * \param[in] relative_t relative time of deposition
+     */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
                     amrex::Real dt, amrex::Real relative_t);

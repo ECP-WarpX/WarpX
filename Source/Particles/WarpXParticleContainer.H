@@ -194,9 +194,27 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) = 0;
 
+    /**
+     * \brief Deposit current density.
+     *
+     * \param[in,out] J vector of current densities (one three-dimensional array of pointers
+     *                to MultiFabs per mesh refinement level)
+     * \param[in] dt time step
+     * \param[in] relative_t relative time of deposition
+     */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
                          amrex::Real dt, amrex::Real relative_t);
 
+    /**
+     * \brief Deposit charge density.
+     *
+     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in] local if false, exchange the data in the guard cells after the deposition
+     * \param[in] reset if true, reset all values of rho to zero
+     * \param[in] do_rz_volume_scaling whether to scale the final density by some volume norm in RZ geometry
+     * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
+     * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
+     */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                         bool local = false, bool reset = false,
                         bool do_rz_volume_scaling = false,

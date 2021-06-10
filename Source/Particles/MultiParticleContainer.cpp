@@ -420,7 +420,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles in time, if needed
-    if (relative_t!=0) PushX(relative_t);
+    if (relative_t != 0.) PushX(relative_t);
 
     // Call the deposition kernel for each species
     for (int ispecies = 0; ispecies < nSpecies(); ispecies++)
@@ -435,7 +435,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles back in time
-    if (relative_t!=0) PushX(-relative_t);
+    if (relative_t != 0.) PushX(-relative_t);
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev)
