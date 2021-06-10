@@ -8,6 +8,7 @@
 #include "ParticleMomentum.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
+#include "Particles/MultiParticleContainer.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
