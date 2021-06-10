@@ -1122,20 +1122,80 @@ private:
 private:
 
     void PushPSATD ();
+
 #ifdef WARPX_USE_PSATD
+
+    /**
+     * \brief Forward FFT of E,B on all mesh refinement levels
+     */
     void PSATDForwardTransformEB ();
+
+    /**
+     * \brief Backward FFT of E,B on all mesh refinement levels,
+     *        with field damping in the guard cells (if needed)
+     */
     void PSATDBackwardTransformEB ();
+
+    /**
+     * \brief Backward FFT of averaged E,B on all mesh refinement levels
+     */
     void PSATDBackwardTransformEBavg ();
+
+    /**
+     * \brief Forward FFT of J on all mesh refinement levels,
+     *        with k-space filtering (if needed)
+     */
     void PSATDForwardTransformJ ();
+
+    /**
+     * \brief Forward FFT of rho on all mesh refinement levels,
+     *        with k-space filtering (if needed)
+     */
     void PSATDForwardTransformRho (const int icomp);
+
+    /**
+     * \brief Copy rho_new to rho_old in spectral space
+     */
     void PSATDMoveRhoNewToRhoOld ();
+
+    /**
+     * \brief Copy J_new to J_old in spectral space (when J is linear in time)
+     */
     void PSATDMoveJNewToJOld ();
+
+    /**
+     * \brief Forward FFT of F on all mesh refinement levels
+     */
     void PSATDForwardTransformF ();
+
+    /**
+     * \brief Backward FFT of F on all mesh refinement levels
+     */
     void PSATDBackwardTransformF ();
+
+    /**
+     * \brief Forward FFT of G on all mesh refinement levels
+     */
     void PSATDForwardTransformG ();
+
+    /**
+     * \brief Backward FFT of G on all mesh refinement levels
+     */
     void PSATDBackwardTransformG ();
+
+    /**
+     * \brief Update all necessary fields in spectral space
+     */
     void PSATDPushSpectralFields ();
+
+    /**
+     * \brief Scale averaged E,B fields to account for time integration
+     */
     void PSATDScaleAverageFields (const amrex::Real scale_factor);
+
+    /**
+     * \brief Set averaged E,B fields to zero before new iteration
+     */
     void PSATDEraseAverageFields ();
 #endif
 
