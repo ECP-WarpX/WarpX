@@ -21,8 +21,6 @@ public:
 
     BackgroundMCCCollision (std::string collision_name);
 
-    void addProcess(MCCProcess* process);
-
     amrex::Real get_nu_max ( VectorType<MCCProcess*> const& mcc_processes );
 
     /** Perform the collisions

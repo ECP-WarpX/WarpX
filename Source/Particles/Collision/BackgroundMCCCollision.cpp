@@ -51,6 +51,9 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
         auto process = new MCCProcess(scattering_process, cross_section_file, energy);
 
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(process->m_type != MCCProcessType::INVALID,
+                                         "Cannot add an unknown MCC process type");
+
         // if the scattering process is ionization get the secondary species
         // only one ionization process is supported, the vector
         // m_ionization_processes is only used to make it simple to calculate
@@ -66,28 +69,12 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             m_species_names.push_back(secondary_species);
 
             m_ionization_processes.push_back(process);
-            amrex::Gpu::synchronize();
         } else {
-            addProcess(process);
+            m_scattering_processes.push_back(process);
         }
+
+        amrex::Gpu::synchronize();
     }
-}
-
-void
-BackgroundMCCCollision::addProcess(MCCProcess* process)
-{
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(process != nullptr,
-                                     "Cannot add a NULL MCC process type");
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(process->m_type != MCCProcessType::INVALID,
-                                     "Cannot add an unknown MCC process type");
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(process->m_type != MCCProcessType::IONIZATION,
-                                     "Addition of ionization process requires special handling");
-
-    m_scattering_processes.push_back(process);
-
-    amrex::Gpu::synchronize();
 }
 
 /** Calculate the maximum collision frequency using a fixed energy grid that
