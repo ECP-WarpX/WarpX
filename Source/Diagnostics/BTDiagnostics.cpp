@@ -132,12 +132,12 @@ BTDiagnostics::ReadParameters ()
 }
 
 bool
-BTDiagnostics::DoDump (int step, int i_buffer, bool last_timestep)
+BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
-    // Return true if buffer is full or if last_timestep == true
+    // Return true if buffer is full or if force_flush == true
     // Return false if timestep < 0, i.e., at initialization when step == -1.
     if (step < 0 ) return false;
-    else if ( buffer_full(i_buffer) || last_timestep) {
+    else if ( buffer_full(i_buffer) || force_flush) {
         return true;
     }
     return false;
@@ -145,7 +145,7 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool last_timestep)
 
 
 bool
-BTDiagnostics::DoComputeAndPack (int step, bool /*last_timestep*/)
+BTDiagnostics::DoComputeAndPack (int step, bool /*force_flush*/)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
     // computed and packed every timstep, except at initialization when step == -1.

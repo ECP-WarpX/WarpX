@@ -35,6 +35,7 @@ Diagnostics::BaseReadParameters ()
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
     pp_diag_name.query("format", m_format);
+    pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
@@ -315,17 +316,17 @@ Diagnostics::ComputeAndPack ()
 
 
 void
-Diagnostics::FilterComputePackFlush (int step, bool last_timestep)
+Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
 
     MovingWindowAndGalileanDomainShift ();
 
-    if ( DoComputeAndPack (step, last_timestep) ) {
+    if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
 
         for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-            if ( !DoDump (step, i_buffer, last_timestep) ) continue;
+            if ( !DoDump (step, i_buffer, force_flush) ) continue;
             Flush(i_buffer);
         }
 

@@ -33,18 +33,18 @@ private:
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
      * \param[in] step current time step
-     * \param[in] last_timestep whether it is the last timestep in the simulation
+     * \param[in] force_flush if true, return true for any step
      *  The return bool is used to determine when to write buffer data out
      */
-    bool DoDump (int step, int i_buffer, bool last_timestep=false) override;
+    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
     /** whether to compute the back-transformed data and store buffer in this timestep
      *  The field-data is back-transformed from boosted-frame to lab-frame
      *  at every time step within the PIC loop. Back-transformation is not performed
      *  at initialization.
      * \param[in] step current time step, return true for any step >= 0
-     * \param[in] last_timestep whether it is the last timestep in the simulation
+     * \param[in] force_flush if true, return true for any step
      */
-    bool DoComputeAndPack (int step, bool last_timestep=false) override;
+    bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** Initialize Data required to compute back-transformed diagnostics */
     void DerivedInitData () override;
     /** Initialize functors that store pointers to the fields requested by the user.

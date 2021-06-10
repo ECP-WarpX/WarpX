@@ -14,8 +14,6 @@ private:
     void ReadParameters ();
     /** Determines timesteps at which full diagnostics are written to file */
     IntervalsParser m_intervals;
-    /** If true, a dump is performed at the last timestep regardless of m_intervals */
-    bool m_dump_last_timestep = true;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
@@ -30,16 +28,17 @@ private:
     void FlushRaw ();
     /** whether to compute and pack cell-centered data in m_mf_output
      * \param[in] step current time step
-     * \param[in] last_timestep whether it is the last timestep in the simulation
+     * \param[in] force_flush if true, return true for any step since output must be
+                  computed in this case
      * \return bool, whether to flush
      */
-    bool DoComputeAndPack (int step, bool last_timestep=false) override;
+    bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** whether to flush at this time step
      * \param[in] step current time step
-     * \param[in] last_timestep whether it is the last timestep in the simulation
+     * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    bool DoDump (int step, int i_buffer, bool last_timestep=false) override;
+    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
     /** Append varnames with names for all modes of a field
      * \param[in] field field name (includes component, e.g., Er)
      * \param[in] ncomp number of components (modes, real and imag)

@@ -53,25 +53,27 @@ public:
     virtual void InitializeFieldFunctors (int lev) = 0;
     /** whether to compute and pack data in output buffers at this time step
      * \param[in] step current time step
-     * \param[in] last_timestep whether it is the last timestep in the simulation
+     * \param[in] force_flush if true, return true for any step
      * \return bool, whether to compute and pack data
      */
-    virtual bool DoComputeAndPack(int step, bool last_timestep=false) = 0;
+    virtual bool DoComputeAndPack(int step, bool force_flush=false) = 0;
     /** whether to flush at this time step
      * \param[in] step current time step
-     * \param[in] last_timestep whether it is the last timestep in the simulation
+     * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    virtual bool DoDump (int step, int i_buffer, bool last_timestep=false) = 0;
+    virtual bool DoDump (int step, int i_buffer, bool force_flush=false) = 0;
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;}
     /** Perform necessary operations with user-defined diagnostic parameters
      *  to filter (coarsen, slice), compute (cell-center, back-transform),
      *  and flush the output data stored in buffers, m_mf_output.
      * \param[in] step current timestep
-     * \param[in] last_timestep used to force-fully write data stored in buffers.
+     * \param[in] force_flush used to force-fully write data stored in buffers.
      */
-    void FilterComputePackFlush (int step, bool last_timestep=false);
+    void FilterComputePackFlush (int step, bool force_flush=false);
+    /** Whether the last timestep is always dumped */
+    bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
 
 protected:
     /** Read Parameters of the base Diagnostics class */
@@ -105,6 +107,8 @@ protected:
      * in cylindrical geometry, this list is appended with
      * automatically-constructed names for all modes of all fields */
     amrex::Vector< std::string > m_varnames;
+    /** If true, a dump is performed at the last timestep regardless of the required dump timesteps */
+    bool m_dump_last_timestep = true;
     /** format for output files, "plotfile" or "openpmd" or "sensei" or "ascent"
      * The checkpoint format is applicable for FullDiagnostics only.
      */
