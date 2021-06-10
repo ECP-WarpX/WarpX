@@ -28,6 +28,7 @@
 #endif
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -98,9 +99,15 @@ public:
    *
    * @param ie  iteration encoding from openPMD: "group, file, variable"
    * @param filetype file backend, e.g. "bp" or "h5"
+   * @param operator_type openPMD-api backend operator (compressor) for ADIOS2
+   * @param operator_parameters openPMD-api backend operator parameters for ADIOS2
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
-  WarpXOpenPMDPlot (openPMD::IterationEncoding ie, std::string filetype, std::vector<bool> fieldPMLdirections);
+  WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
+                    std::string filetype,
+                    std::string operator_type,
+                    std::map< std::string, std::string > operator_parameters,
+                    std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
 
@@ -146,7 +153,7 @@ private:
         openPMD::Iteration& it = iterations[iteration];
         return it;
     }
-  };
+  }
 
 
   /** This function does initial setup for the fields when interation is newly created
@@ -265,6 +272,7 @@ private:
 
   openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::fileBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
+  std::string m_OpenPMDoptions = "{}"; //! JSON option string for openPMD::Series constructor
   int m_CurrentStep  = -1;
 
   // meta data

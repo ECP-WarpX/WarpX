@@ -8,7 +8,11 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
 
+#include <AMReX_ParmParse.H>
+
+#include <map>
 #include <memory>
+#include <string>
 
 using namespace amrex;
 
@@ -18,6 +22,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     ParmParse pp_diag_name(diag_name);
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
+
     // one file per timestep (or one file for all steps)
     std::string  openpmd_encoding {"f"};
     pp_diag_name.query("openpmd_backend", openpmd_backend);
@@ -58,10 +63,28 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
           encoding = openPMD::IterationEncoding::fileBased;
     }
 
+  // ADIOS2 operator type & parameters
+  std::string operator_type;
+  pp_diag_name.query("adios2_operator.type", operator_type);
+  std::string const prefix = diag_name + ".adios2_operator.parameters";
+  ParmParse pp;
+  auto entr = pp.getEntries(prefix);
+
+  std::map< std::string, std::string > operator_parameters;
+  auto const prefix_len = prefix.size() + 1;
+  for (std::string k : entr) {
+    std::string v;
+    pp.get(k.c_str(), v);
+    k.erase(0, prefix_len);
+    operator_parameters.insert({k, v});
+  }
+
   auto & warpx = WarpX::GetInstance();
   m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
-                               encoding, openpmd_backend, warpx.getPMLdirections()
-                               );
+    encoding, openpmd_backend,
+    operator_type, operator_parameters,
+    warpx.getPMLdirections()
+  );
 }
 
 void

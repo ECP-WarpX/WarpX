@@ -22,7 +22,6 @@ using namespace amrex;
 // constructor
 ReducedDiags::ReducedDiags (std::string rd_name)
 {
-
     m_rd_name = rd_name;
 
     BackwardCompatibility();
@@ -62,7 +61,6 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     // read separator
     pp_rd_name.query("separator", m_sep);
-
 }
 // end constructor
 
@@ -79,7 +77,6 @@ void ReducedDiags::BackwardCompatibility ()
 // write to file function
 void ReducedDiags::WriteToFile (int step) const
 {
-
     // open file
     std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
         std::ofstream::out | std::ofstream::app};
@@ -108,6 +105,5 @@ void ReducedDiags::WriteToFile (int step) const
 
     // close file
     ofs.close();
-
 }
 // end ReducedDiags::WriteToFile

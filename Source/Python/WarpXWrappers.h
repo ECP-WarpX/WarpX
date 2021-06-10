@@ -75,6 +75,8 @@ extern "C" {
 
     void warpx_ConvertLabParamsToBoost();
 
+    void warpx_ReadBCParams();
+
     void warpx_CheckGriddingForRZSpectral();
 
     amrex::Real warpx_getProbLo(int dir);

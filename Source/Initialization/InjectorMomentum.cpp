@@ -21,6 +21,7 @@ void InjectorMomentum::clear ()
         break;
     }
     case Type::gaussian:
+    case Type::gaussianflux:
     case Type::boltzmann:
     case Type::juttner:
     case Type::constant:

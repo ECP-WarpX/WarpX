@@ -350,6 +350,7 @@ WarpX provides a few pre-defined constants, that can be used for any parameter t
 q_e      elementary charge
 m_e      electron mass
 m_p      proton mass
+m_u      unified atomic mass unit (Dalton)
 epsilon0 vacuum permittivity
 mu0      vacuum permeability
 clight   speed of light
@@ -489,6 +490,14 @@ Particle initialization
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
+    * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
+      The density specified by the density profile is interpreted to have the units of #/m^2/s.
+      This requires the additional parameters:
+      ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
+      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
+      ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
+      ``<species_name>.num_particles_per_cell`` (`double`)
+
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
@@ -563,6 +572,14 @@ Particle initialization
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m`` as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
+
+    * ``gaussianflux``: Gaussian momentum flux distribution, which is Gaussian in the plane and v*Gaussian normal to the plane.
+      It can only be used when ``injection_style = NFluxPerCell``.
+      This requires additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
+      ``<species_name>.flux_direction``, for the average momenta along each direction
+      ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
+      well as standard deviations along each direction ``<species_name>.ux_th``,
+      ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
       temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
@@ -1602,6 +1619,30 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
      `variable based` is not supported for back-transformed diagnostics.
      Default: ``f`` (full diagnostics)
 
+* ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
+    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+* ``<diag_name>.adios2_operator.parameters.*`` optional,
+    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
+
+    .. code-block::
+
+        <diag_name>.adios2_operator.type = blosc
+        <diag_name>.adios2_operator.parameters.compressor = zstd
+        <diag_name>.adios2_operator.parameters.clevel = 1
+        <diag_name>.adios2_operator.parameters.doshuffle = BLOSC_BITSHUFFLE
+        <diag_name>.adios2_operator.parameters.threshold = 2048
+        <diag_name>.adios2_operator.parameters.nthreads = 6  # per MPI rank (and thus per GPU)
+
+    or for the lossy ZFP compressor using very strong compression per scalar:
+
+    .. code-block::
+
+        <diag_name>.adios2_operator.type = zfp
+        <diag_name>.adios2_operator.parameters.precision = 3
+
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
     Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
@@ -1774,55 +1815,59 @@ Reduced Diagnostics
     If ``warpx.reduced_diags_names`` is not provided in the input file,
     no reduced diagnostics will be done.
     This is then used in the rest of the input deck;
-    in this documentation we use `<reduced_diags_name>` as a placeholder.
+    in this documentation we use ``<reduced_diags_name>`` as a placeholder.
 
 * ``<reduced_diags_name>.type`` (`string`)
-    The type of reduced diagnostics associated with this `<reduced_diags_name>`.
-    For example, ``ParticleEnergy`` and ``FieldEnergy``.
-    All available types will be described below in detail.
+    The type of reduced diagnostics associated with this ``<reduced_diags_name>``.
+    For example, ``ParticleEnergy``, ``FieldEnergy``, etc.
+    All available types are described below in detail.
     For all reduced diagnostics,
     the first and the second columns in the output file are
     the time step and the corresponding physical time in seconds, respectively.
 
     * ``ParticleEnergy``
-        This type computes both the total and the mean
-        relativistic particle kinetic energy among all species.
+        This type computes the total and mean relativistic particle kinetic energy among all species:
 
         .. math::
 
-            E_p = \sum_{i=1}^N ( \sqrt{ p_i^2 c^2 + m_0^2 c^4 } - m_0 c^2 ) w_i
+            E_p = \sum_{i=1}^N w_i \, \left( \sqrt{|\boldsymbol{p}_i|^2 c^2 + m_0^2 c^4} - m_0 c^2 \right)
 
-        where :math:`p` is the relativistic momentum,
-        :math:`c` is the speed of light,
-        :math:`m_0` is the rest mass,
-        :math:`N` is the number of particles,
-        :math:`w` is the individual particle weight.
+        where :math:`\boldsymbol{p}_i` is the relativistic momentum of the :math:`i`-th particle, :math:`c` is the speed of light, :math:`m_0` is the rest mass, :math:`N` is the number of particles, and :math:`w_i` is the weight of the :math:`i`-th particle.
 
-        The output columns are
-        total :math:`E_p` of all species,
-        :math:`E_p` of each species,
-        total mean energy :math:`E_p / \sum w_i`,
-        mean energy of each species.
+        The output columns are the total energy of all species, the total energy per species, the total mean energy :math:`E_p / \sum_i w_i` of all species, and the total mean energy per species.
+
+    * ``ParticleMomentum``
+        This type computes the total and mean relativistic particle momentum among all species:
+
+        .. math::
+
+            \boldsymbol{P}_p = \sum_{i=1}^N w_i \, \boldsymbol{p}_i
+
+        where :math:`\boldsymbol{p}_i` is the relativistic momentum of the :math:`i`-th particle, :math:`N` is the number of particles, and :math:`w_i` is the weight of the :math:`i`-th particle.
+
+        The output columns are the components of the total momentum of all species, the total momentum per species, the total mean momentum :math:`\boldsymbol{P}_p / \sum_i w_i` of all species, and the total mean momentum per species.
 
     * ``FieldEnergy``
-        This type computes the electric and magnetic field energy.
+        This type computes the electromagnetic field energy
 
         .. math::
 
-            E_f = \sum [ \varepsilon_0 E^2 / 2 + B^2 / ( 2 \mu_0 ) ] \Delta V
+            E_f = \frac{1}{2} \sum_{\text{cells}} \left( \varepsilon_0 |\boldsymbol{E}|^2 + \frac{|\boldsymbol{B}|^2}{\mu_0} \right) \Delta V
 
-        where
-        :math:`E` is the electric field,
-        :math:`B` is the magnetic field,
-        :math:`\varepsilon_0` is the vacuum permittivity,
-        :math:`\mu_0` is the vacuum permeability,
-        :math:`\Delta V` is the cell volume (or area for 2D),
-        the sum is over all cells.
+        where :math:`\boldsymbol{E}` is the electric field, :math:`\boldsymbol{B}` is the magnetic field, :math:`\varepsilon_0` is the vacuum permittivity, :math:`\mu_0` is the vacuum permeability, :math:`\Delta V` is the cell volume (or cell area in 2D), and the sum is over all cells.
 
-        The output columns are
-        total field energy :math:`E_f`,
-        :math:`E` field energy,
-        :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
+        The output columns are the total field energy :math:`E_f`, the :math:`\boldsymbol{E}` field energy, and the :math:`\boldsymbol{B}` field energy, at each mesh refinement level.
+
+    * ``FieldMomentum``
+        This type computes the electromagnetic field momentum
+
+        .. math::
+
+            \boldsymbol{P}_f = \varepsilon_0 \sum_{\text{cells}} \left( \boldsymbol{E} \times \boldsymbol{B} \right) \Delta V
+
+        where :math:`\boldsymbol{E}` is the electric field, :math:`\boldsymbol{B}` is the magnetic field, :math:`\varepsilon_0` is the vacuum permittivity, :math:`\Delta V` is the cell volume (or cell area in 2D), and the sum is over all cells.
+
+        The output columns are the components of the total field momentum :math:`\boldsymbol{P}_f` at each mesh refinement level.
 
         Note that the fields are *not* averaged on the cell centers before their energy is
         computed.
