@@ -233,6 +233,9 @@ LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 void
 LaserParticleContainer::InitData ()
 {
+
+    if (!m_enabled) return; // Laser might be disabled due to e_max == 0.0
+
     // Call InitData on max level to inject one laser particle per
     // finest cell.
     InitData(maxLevel());
