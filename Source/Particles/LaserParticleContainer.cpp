@@ -185,8 +185,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 void
 LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 {
-
-    if (!m_enabled) return; // Laser might be disabled due to e_max == 0.0
+    if (!m_enabled) return;
 
     // Input parameter injection_box contains small box where injection
     // should occur.
@@ -216,7 +215,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 {
-    if (!m_enabled) return; // Laser might be disabled due to e_max == 0.0
+    if (!m_enabled) return;
 
     int dir = WarpX::moving_window_dir;
     if (do_continuous_injection and (WarpX::gamma_boost > 1)){
@@ -238,8 +237,7 @@ LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 void
 LaserParticleContainer::InitData ()
 {
-
-    if (!m_enabled) return; // Laser might be disabled due to e_max == 0.0
+    if (!m_enabled) return;
 
     // Call InitData on max level to inject one laser particle per
     // finest cell.
@@ -254,6 +252,8 @@ LaserParticleContainer::InitData ()
 void
 LaserParticleContainer::InitData (int lev)
 {
+    if (!m_enabled) return;
+
     // spacing of laser particles in the laser plane.
     // has to be done after geometry is set up.
     Real S_X, S_Y;
