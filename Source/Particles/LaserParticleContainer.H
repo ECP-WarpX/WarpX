@@ -111,13 +111,6 @@ private:
     // Update position of the antenna
     void UpdateContinuousInjectionPosition(amrex::Real dt) override;
 
-    /**
-    * Checks if the laser antenna intersects the simulation box
-    *
-    * @return true if laser antenna intersects the simulation box, false otherwise
-    */
-    bool antenna_intersects_sim_box();
-
     // Unique (smart) pointer to the laser profile
     std::unique_ptr<WarpXLaserProfiles::ILaserProfile> m_up_laser_profile;
 
