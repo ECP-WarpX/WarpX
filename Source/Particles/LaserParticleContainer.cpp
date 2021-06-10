@@ -18,7 +18,6 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
-#include <vector>
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
