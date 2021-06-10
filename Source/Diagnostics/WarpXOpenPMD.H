@@ -150,7 +150,7 @@ private:
         openPMD::Iteration& it = iterations[iteration];
         return it;
     }
-  };
+  }
 
 
   /** This function does initial setup for the fields when interation is newly created
