@@ -1773,7 +1773,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 #endif
 
     Real solver_dt = dt[lev];
-    if (WarpX::do_multij) solver_dt /= WarpX::multij_n_depose;
+    if (WarpX::do_multij) solver_dt /= static_cast<amrex::Real>(WarpX::multij_n_depose);
 
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
