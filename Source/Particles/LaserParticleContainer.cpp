@@ -185,6 +185,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 void
 LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 {
+
+    if (!m_enabled) return; // Laser might be disabled due to e_max == 0.0
+
     // Input parameter injection_box contains small box where injection
     // should occur.
     // So far, LaserParticleContainer::laser_injection_box contains the
