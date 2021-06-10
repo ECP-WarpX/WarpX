@@ -2,7 +2,7 @@
  *
  * This file is part of WarpX.
  *
- * License: ????
+ * License: BSD-3-Clause-LBNL
  */
 #ifndef WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
 #define WARPX_PARTICLES_COLLISION_MCCPROCESS_H_

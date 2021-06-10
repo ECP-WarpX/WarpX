@@ -2,13 +2,18 @@
  *
  * This file is part of WarpX.
  *
- * License: ????
+ * License: BSD-3-Clause-LBNL
  */
 #include "BackgroundMCCCollision.H"
 #include "MCCScattering.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+
+#include <AMReX_ParmParse.H>
+#include <AMReX_Vector.H>
+
+#include <string>
 
 BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name)
     : CollisionBase(collision_name)

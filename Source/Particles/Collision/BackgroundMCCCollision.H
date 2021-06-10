@@ -2,7 +2,7 @@
  *
  * This file is part of WarpX.
  *
- * License: ????
+ * License: BSD-3-Clause-LBNL
  */
 #ifndef WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
 #define WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
@@ -10,7 +10,11 @@
 #include "Particles/MultiParticleContainer.H"
 #include "CollisionBase.H"
 #include "MCCProcess.H"
-#include <AMReX_ParmParse.H>
+
+#include <AMReX_REAL.H>
+#include <AMReX_GpuContainers.H>
+
+#include <string>
 
 class BackgroundMCCCollision
     : public CollisionBase

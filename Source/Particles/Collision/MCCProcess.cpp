@@ -2,7 +2,7 @@
  *
  * This file is part of WarpX.
  *
- * License: ????
+ * License: BSD-3-Clause-LBNL
  */
 #include "MCCProcess.H"
 #include "WarpX.H"
