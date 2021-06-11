@@ -96,9 +96,9 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     auto& attribs = pti.GetAttribs();
 
     // Extract pointers to the different particle quantities
-    ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-    ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-    ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+    ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr() + offset;
+    ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
+    ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
 #ifdef WARPX_QED
     BreitWheelerEvolveOpticalDepth evolve_opt;
@@ -106,7 +106,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const bool local_has_breit_wheeler = has_breit_wheeler();
     if (local_has_breit_wheeler) {
         evolve_opt = m_shr_p_bw_engine->build_evolve_functor();
-        p_optical_depth_BW = pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr();
+        p_optical_depth_BW = pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr() + offset;
     }
 #endif
 
