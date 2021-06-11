@@ -7,6 +7,8 @@
 #ifndef WARPX_MSG_LOGGER_H_
 #define WARPX_MSG_LOGGER_H_
 
+#include <mpi.h> //for tests
+
 #include <vector>
 #include <map>
 #include <string>
@@ -24,11 +26,32 @@ enum class Importance{
     high
 };
 
+struct WarnStyle{
+    std::string header;
+    std::string low_prefix;
+    std::string medium_prefix;
+    std::string high_prefix;
+    std::string new_line_prefix;
+    std::string topic_left;
+    std::string topic_right;
+    std::string footer;
+    std::string no_warning_msg;
+};
+
+const auto default_warn_style =
+    WarnStyle{
+        "******************* WARNINGS! *********************",
+        "* [!  ]", "* [!! ]", "* [!!!]",
+        "*       ",
+        " [ ", " ] ",
+        "***************************************************",
+        "* No warnings have been raised!"};
+
 class Logger
 {
 
 public:
-    Logger(){}
+    Logger();
 
     void record_entry(
         Type type,
@@ -36,7 +59,17 @@ public:
         std::string topic,
         std::string text);
 
-    void print_warnings(std::stringstream& ss);
+    void record_collective_entry(
+        Type type,
+        Importance importance,
+        std::string topic,
+        std::string text,
+        bool affects_me,
+        MPI_Comm comm,
+        int ranks_per_line = 15);
+
+    void print_warnings(std::stringstream& ss,
+        const WarnStyle& ws = default_warn_style);
 
 private:
 
@@ -45,14 +78,14 @@ private:
         const std::string& prefix,
         const std::string& topic,
         const std::vector<std::string>& entries,
-        const int max_line_length,
+        const WarnStyle& ws,
         std::stringstream& ss) const;
 
     std::string
     aux_msg_formatter(
-        std::string msg,
-        std::string& new_line_skip,
-        const int max_line_length) const;
+        const std::string& msg,
+        const int first_line_offset,
+        const WarnStyle& ws) const;
 
     std::map<Type,
         std::map<Importance,

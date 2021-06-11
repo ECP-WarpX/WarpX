@@ -7,11 +7,14 @@
 
 #include "MsgLogger.H"
 
-#include <AMReX_Config.H>
+//#include <AMReX_Config.H>
+//#include <AMReX_ParallelDescriptor.H>
 
 #include <algorithm>
 
 using namespace MsgLogger;
+
+Logger::Logger(){};
 
 void Logger::record_entry(
     Type type,
@@ -19,44 +22,87 @@ void Logger::record_entry(
     std::string topic,
     std::string text)
 {
-    #ifdef AMREX_USE_OMP
-    #pragma omp critical
-    #endif
-    {
-        m_entries[type][importance][topic].push_back(text);
-    }
+    m_entries[type][importance][topic].push_back(text);
 }
 
-void Logger::print_warnings(std::stringstream& ss)
+void Logger::record_collective_entry(
+        Type type,
+        Importance importance,
+        std::string topic,
+        std::string text,
+        bool affects_me,
+        MPI_Comm comm,
+        int ranks_per_line)
+{
+    bool is_someone_affected = false;
+
+    int world_rank;
+    MPI_Comm_rank(comm, &world_rank);
+    int world_size;
+    MPI_Comm_size(comm, &world_size);
+
+    auto flag_vector = std::vector<char>(world_size);
+
+    const char c_affects_me = affects_me;
+    MPI_Allgather(&c_affects_me, 1, MPI_CHAR, flag_vector.data(), 1, MPI_CHAR, comm);
+
+    for(auto& el : flag_vector){
+        if(el){
+            is_someone_affected = true;
+            break;
+        }
+    }
+
+    if(!is_someone_affected) return;
+
+    std::stringstream ss_collective_text;
+
+    ss_collective_text << text << "\n";
+
+    int counter = 0;
+
+    for (int rr = 0; rr < flag_vector.size(); ++rr){
+        if (flag_vector[rr]){
+            if(counter != 0) ss_collective_text << " ";
+            ss_collective_text << rr;
+            counter++;
+        }
+        if(counter >= ranks_per_line){
+            counter = 0;
+            ss_collective_text << "\n";
+        }
+    }
+
+    if (counter != 0) ss_collective_text << "\n";
+
+    m_entries[type][importance][topic].push_back(ss_collective_text.str());
+}
+
+void Logger::print_warnings(
+    std::stringstream& ss,
+    const WarnStyle& ws)
+
 {
     auto& all_warnings = m_entries[Type::warning];
 
     if (all_warnings.empty()){
-        ss << "\n * No warnings have been raised!\n\n";
+        ss << ws.no_warning_msg << "\n";
         return;
     }
 
-    const auto low_prefix           = "* [!  ]";
-    const auto medium_prefix        = "* [!! ]";
-    const auto high_prefix          = "* [!!!]";
-    const auto new_line_skip        = "*       ";
-    const auto max_line_length      = 60;
-
     ss << "\n";
-    ss << "******************* WARNINGS! ********************* \n";
+    ss << ws.header << "\n";
 
     for (auto& by_topic : all_warnings[Importance::high])
-        aux_print_entries(high_prefix, by_topic.first, by_topic.second, max_line_length, ss);
+        aux_print_entries(ws.high_prefix, by_topic.first, by_topic.second, ws, ss);
 
     for (auto& by_topic : all_warnings[Importance::medium])
-        aux_print_entries(medium_prefix, by_topic.first, by_topic.second, max_line_length, ss);
+        aux_print_entries(ws.medium_prefix, by_topic.first, by_topic.second, ws, ss);
 
     for (auto& by_topic : all_warnings[Importance::low])
-        aux_print_entries(low_prefix, by_topic.first, by_topic.second, max_line_length, ss);
+        aux_print_entries(ws.low_prefix, by_topic.first, by_topic.second, ws, ss);
 
-    ss << "*************************************************** \n";
-    ss << "\n\n";
-
+    ss << ws.footer << "\n";
 }
 
 void
@@ -64,42 +110,36 @@ Logger::aux_print_entries(
     const std::string& prefix,
     const std::string& topic,
     const std::vector<std::string>& entries,
-    const int max_line_length,
+    const WarnStyle& ws,
     std::stringstream& ss) const
 {
-    const int first_line_offset;
+    const std::string first_line_prefix =
+        prefix + ws.topic_left + topic + ws.topic_right;
+    const auto first_line_offset = first_line_prefix.length();
     for(const auto& msg : entries){
-        ss << prefix
-            << " [ " << topic << " ] "
-            << aux_print_formatter(
+        ss << first_line_prefix <<
+            aux_msg_formatter(
                 msg,
-                prefix,
-                max_line_length,
-                first_line_offset) << "\n";
+                first_line_offset,
+                ws);
     }
 }
 
 std::string
 Logger::aux_msg_formatter(
-        std::string msg,
-        std::string& new_line_skip,
-        const int max_line_length) const
+        const std::string& msg,
+        const int first_line_offset,
+        const WarnStyle& ws) const
 {
     std::stringstream ss_out;
 
     std::stringstream ss_in{msg};
     std::string line;
-    while(std::getline(msg,line,'\n')){
-        std::stringstream ss_line{line};
-        std::string word;
-        while (std::getline(ss_line, word, " "))
-        {
-
-        }
-
-
-        ss_out << '\n';
+    bool is_first = true;
+    while(std::getline(ss_in, line,'\n')){
+        if(!is_first) ss_out << ws.new_line_prefix;
+        ss_out << line << '\n';
+        is_first = false;
     }
-
     return ss_out.str();
 }
