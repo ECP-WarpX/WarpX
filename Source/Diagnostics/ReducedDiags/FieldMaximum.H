@@ -18,11 +18,17 @@ class FieldMaximum : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     FieldMaximum(std::string rd_name);
 
-    /** This function computes the maximum value of Ex, Ey, Ez, |E|, Bx, By, Bz and |B| */
+    /**
+     * This function computes the maximum value of Ex, Ey, Ez, |E|, Bx, By, Bz and |B|
+     *
+     * @param[in] step current time step
+     */
     virtual void ComputeDiags(int step) override final;
 
 };

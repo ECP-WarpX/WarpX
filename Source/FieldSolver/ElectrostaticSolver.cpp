@@ -106,7 +106,6 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #endif
 
     // Allocate fields for charge
-    // Also, zero out the phi data
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     // Use number of guard cells used for local deposition of rho
@@ -116,7 +115,6 @@ WarpX::AddSpaceChargeFieldLabFrame ()
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
         rho[lev]->setVal(0.);
-        phi_fp[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)

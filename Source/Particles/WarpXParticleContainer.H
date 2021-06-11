@@ -237,6 +237,9 @@ public:
     // Update optional sub-class-specific injection location.
     virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
 
+    // Inject a continuous flux of particles from a defined plane
+    virtual void ContinuousFluxInjection(amrex::Real /*dt*/) {}
+
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
     /// This is needed when solving Poisson's equation with periodic boundary conditions.

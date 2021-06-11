@@ -2,9 +2,9 @@
   "ele_schwinger": {
     "particle_cpu": 631.0,
     "particle_id": 610043.0,
-    "particle_momentum_x": 7.391180107793151e-28,
+    "particle_momentum_x": 7.939037050234352e-28,
     "particle_momentum_y": 3.285213368501547e-15,
-    "particle_momentum_z": 2.961356471242178e-27,
+    "particle_momentum_z": 3.152771050884970e-27,
     "particle_position_x": 0.000317125,
     "particle_position_y": 0.0003152062394752397,
     "particle_position_z": 0.00031790625000000005,
@@ -24,9 +24,9 @@
   "pos_schwinger": {
     "particle_cpu": 631.0,
     "particle_id": 1017026.0,
-    "particle_momentum_x": 7.723864257907636e-28,
+    "particle_momentum_x": 8.089055188895933e-28,
     "particle_momentum_y": 3.285213368501216e-15,
-    "particle_momentum_z": 3.0442268768192416e-27,
+    "particle_momentum_z": 3.162350330679359e-27,
     "particle_position_x": 0.000317125,
     "particle_position_y": 0.0003147937605247603,
     "particle_position_z": 0.00031790625000000005,

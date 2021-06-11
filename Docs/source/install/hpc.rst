@@ -26,10 +26,12 @@ HPC Systems
 
    hpc/cori
    hpc/summit
+   hpc/spock
    hpc/juwels
    hpc/lassen
    hpc/quartz
    hpc/lawrencium
+   hpc/ookami
 
 .. tip::
 

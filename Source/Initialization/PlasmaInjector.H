@@ -51,6 +51,7 @@ public:
     bool overlapsWith (const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept;
 
     int num_particles_per_cell;
+    amrex::Real num_particles_per_cell_real;
 
     amrex::Vector<int> num_particles_per_cell_each_dim;
 
@@ -97,6 +98,11 @@ public:
     //! openPMD::Series to load from in external_file injection
     std::unique_ptr<openPMD::Series> m_openpmd_input_series;
 #endif
+
+    bool surface_flux = false; // inject from a surface
+    amrex::Real surface_flux_pos; // surface location
+    int flux_normal_axis;
+    int flux_direction; // -1 for left, +1 for right
 
     bool radially_weighted = true;
 

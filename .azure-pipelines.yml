@@ -3,6 +3,9 @@
 pool:
   vmImage: 'ubuntu-18.04'
 
+pr:
+  autoCancel: true
+
 jobs:
 - job:
   variables:

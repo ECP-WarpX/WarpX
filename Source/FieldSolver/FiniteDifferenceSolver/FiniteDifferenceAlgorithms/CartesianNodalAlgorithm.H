@@ -56,6 +56,14 @@ struct CartesianNodalAlgorithm {
     }
 
     /**
+     * \brief Returns maximum number of guard cells required by the field-solve
+     */
+    static amrex::IntVect GetMaxGuardCell () {
+        // The nodal solver requires one guard cell in each dimension
+        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
+    }
+
+    /**
      * Perform derivative along x
      * (For a solver on a staggered grid, `UpwardDx` and `DownwardDx` take into
      * account the staggering; but for `CartesianNodalAlgorithm`, they are equivalent) */

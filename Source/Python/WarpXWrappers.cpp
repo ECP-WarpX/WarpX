@@ -221,6 +221,11 @@ extern "C"
       ConvertLabParamsToBoost();
     }
 
+    void warpx_ReadBCParams()
+    {
+      ReadBCParams();
+    }
+
     void warpx_CheckGriddingForRZSpectral()
     {
       CheckGriddingForRZSpectral();
