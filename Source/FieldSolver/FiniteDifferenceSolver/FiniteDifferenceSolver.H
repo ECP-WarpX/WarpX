@@ -38,6 +38,7 @@ class FiniteDifferenceSolver
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+                       std::unique_ptr<amrex::MultiFab> const& Gfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
                        int lev, amrex::Real const dt );
 
@@ -53,6 +54,10 @@ class FiniteDifferenceSolver
                        std::unique_ptr<amrex::MultiFab> const& rhofield,
                        int const rhocomp,
                        amrex::Real const dt );
+
+        void EvolveG (std::unique_ptr<amrex::MultiFab>& Gfield,
+                      std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
+                      amrex::Real const dt);
 
         void ApplySilverMuellerBoundary(
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
@@ -146,12 +151,12 @@ class FiniteDifferenceSolver
         void ComputeDivECylindrical (
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
-
 #else
         template< typename T_Algo >
         void EvolveBCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+            std::unique_ptr<amrex::MultiFab> const& Gfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
             int lev, amrex::Real const dt );
 
@@ -171,6 +176,12 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             int const rhocomp,
             amrex::Real const dt );
+
+        template< typename T_Algo >
+        void EvolveGCartesian (
+            std::unique_ptr<amrex::MultiFab>& Gfield,
+            std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
+            amrex::Real const dt);
 
         template< typename T_Algo >
         void ComputeDivECartesian (
@@ -205,7 +216,6 @@ class FiniteDifferenceSolver
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt );
-
 #endif
 
 };

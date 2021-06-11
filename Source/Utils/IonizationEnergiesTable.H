@@ -11,9 +11,11 @@
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_REAL.H>
-#include <map>
 
-std::map<std::string, int> ion_map_ids = {
+#include <map>
+#include <string>
+
+static std::map<std::string, int> const ion_map_ids = {
     {"H", 0},
     {"He", 1},
     {"Li", 2},

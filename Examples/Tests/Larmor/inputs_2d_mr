@@ -56,10 +56,8 @@ positron.single_particle_vel = 0.45825756949558416  0.0  0.0   # gamma*beta
 electron.single_particle_weight = 1.0e12
 positron.single_particle_weight = 1.0e12
 
-# interpolation
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+# Order of particle shape factors
+algo.particle_shape = 3
 
 # Moving window
 warpx.do_moving_window = 0

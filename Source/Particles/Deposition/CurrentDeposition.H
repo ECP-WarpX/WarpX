@@ -106,12 +106,17 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     constexpr int CELL = amrex::IndexType::CELL;
 
     // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
-    amrex::Real* cost_real = (amrex::Real*) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
-    *cost_real = 0.;
+#if defined(WARPX_USE_GPUCLOCK)
+    amrex::Real* cost_real = nullptr;
+    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
+        *cost_real = 0.;
+    }
+#endif
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
-#if (defined WARPX_USE_GPUCLOCK)
+#if defined(WARPX_USE_GPUCLOCK)
             KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
@@ -170,8 +175,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // There are only two possible centerings, node or cell centered, so at most only two shape factor
             // arrays will be needed.
             // Keep these double to avoid bug in single precision
-            double sx_node[depos_order + 1];
-            double sx_cell[depos_order + 1];
+            double sx_node[depos_order + 1] = {0.};
+            double sx_cell[depos_order + 1] = {0.};
             int j_node = 0;
             int j_cell = 0;
             Compute_shape_factor< depos_order > const compute_shape_factor;
@@ -200,8 +205,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // y direction
             // Keep these double to avoid bug in single precision
             const double ymid = ( (yp - ymin) + relative_t*vy )*dyi;
-            double sy_node[depos_order + 1];
-            double sy_cell[depos_order + 1];
+            double sy_node[depos_order + 1] = {0.};
+            double sy_cell[depos_order + 1] = {0.};
             int k_node = 0;
             int k_cell = 0;
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
@@ -227,8 +232,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // z direction
             // Keep these double to avoid bug in single precision
             const double zmid = ((zp - zmin) + relative_t*vz)*dzi;
-            double sz_node[depos_order + 1];
-            double sz_cell[depos_order + 1];
+            double sz_node[depos_order + 1] = {0.};
+            double sz_cell[depos_order + 1] = {0.};
             int l_node = 0;
             int l_cell = 0;
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
@@ -297,7 +302,13 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
         }
     );
-    amrex::The_Managed_Arena()->free(cost_real);
+#if defined(WARPX_USE_GPUCLOCK)
+    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        amrex::Gpu::streamSynchronize();
+        *cost += *cost_real;
+        amrex::The_Managed_Arena()->free(cost_real);
+    }
+#endif
 }
 
 /**
@@ -386,12 +397,17 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
-    amrex::Real* cost_real = (amrex::Real*) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
-    *cost_real = 0.;
+#if defined(WARPX_USE_GPUCLOCK)
+    amrex::Real* cost_real = nullptr;
+    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
+        *cost_real = 0.;
+    }
+#endif
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
-#if (defined WARPX_USE_GPUCLOCK)
+#if defined(WARPX_USE_GPUCLOCK)
             KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
@@ -617,7 +633,13 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
         }
     );
-    amrex::The_Managed_Arena()->free(cost_real);
+#if defined(WARPX_USE_GPUCLOCK)
+    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        amrex::Gpu::streamSynchronize();
+        *cost += *cost_real;
+        amrex::The_Managed_Arena()->free(cost_real);
+    }
+#endif
 }
 
 /**
@@ -724,11 +746,16 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
 
     // Loop over particles and deposit (Dx,Dy,Dz) into jx_fab, jy_fab and jz_fab
-    amrex::Real* cost_real = (amrex::Real*) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
-    *cost_real = 0.;
+#if defined(WARPX_USE_GPUCLOCK)
+    amrex::Real* cost_real = nullptr;
+    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
+        *cost_real = 0.;
+    }
+#endif
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
-#if (defined WARPX_USE_GPUCLOCK)
+#if defined(WARPX_USE_GPUCLOCK)
         KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                              == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
@@ -964,7 +991,13 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         }
 #endif
     } );
-    amrex::The_Managed_Arena()->free(cost_real);
+#   if defined(WARPX_USE_GPUCLOCK)
+    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        amrex::Gpu::streamSynchronize();
+        *cost += *cost_real;
+        amrex::The_Managed_Arena()->free(cost_real);
+    }
+#   endif
 #endif // #if !(defined WARPX_DIM_RZ)
 }
 #endif // CURRENTDEPOSITION_H_

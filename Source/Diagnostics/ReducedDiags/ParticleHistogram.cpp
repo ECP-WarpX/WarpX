@@ -36,7 +36,6 @@ struct NormalizationType {
 ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     ParmParse pp_rd_name(rd_name);
 
     // read species
@@ -109,14 +108,15 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             for (int i = 0; i < m_bin_num; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(3+i) + "]";
+                ofs << "[" << c++ << "]";
                 Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" + std::to_string(1+i)
                              + "=" + std::to_string(b) + "()";
@@ -126,14 +126,12 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes the histogram
 void ParticleHistogram::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) return;
 
@@ -260,6 +258,5 @@ void ParticleHistogram::ComputeDiags (int step)
         }
         return;
     }
-
 }
 // end void ParticleHistogram::ComputeDiags

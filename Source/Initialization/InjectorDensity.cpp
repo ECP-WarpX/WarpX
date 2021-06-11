@@ -43,7 +43,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
 
     std::vector<amrex::Real> v;
     // Read parameters for the predefined plasma profile.
-    pp_species_name.getarr("predefined_profile_params", v);
+    getArrWithParser(pp_species_name, "predefined_profile_params", v);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {

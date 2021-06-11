@@ -17,6 +17,9 @@ algo.field_gathering = energy-conserving
 warpx.cfl = 1.0
 warpx.serialize_ics = 1
 
+# Order of particle shape factors
+algo.particle_shape = 1
+
 particles.species_names =  ele_para0 ele_perp0 ele_perp1 ele_perp2 pos_perp2
 
 ele_para0.species_type = "electron"
