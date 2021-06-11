@@ -9,6 +9,8 @@
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <regex>
+
 // constructor
 FieldReduction::FieldReduction (std::string rd_name)
 : ReducedDiags{rd_name}
@@ -40,6 +42,10 @@ FieldReduction::FieldReduction (std::string rd_name)
                        parser_string);
     m_parser = std::make_unique<ParserWrapper<m_nvars>>(
         makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz"}));
+
+    // Replace all newlines and possible following whitespaces with a single whitespace. This
+    // should avoid weird formatting when the string is written in the header of the output file.
+    parser_string = std::regex_replace(parser_string, std::regex(("\n\\s*")), " ");
 
     // read reduction type
     std::string reduction_type_string;
