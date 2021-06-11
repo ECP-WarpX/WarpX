@@ -231,7 +231,7 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
         }
 
-        if ((cur_time + dt[0] >= stop_time - 1.e-3*dt[0]) ||
+        if ((cur_time >= stop_time - 1.e-3*dt[0]) ||
             (step == numsteps_max-1) ||
             (synchronize_velocity_for_diagnostics &&
                 (multi_diags->DoComputeAndPack(step) ||
