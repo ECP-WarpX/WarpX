@@ -25,8 +25,6 @@ WARPX_CI_RZ_OR_NOMPI=TRUE      python prepare_file_travis.py
 grep "\[" travis-tests.ini >> travis_matrix_elements.txt
 WARPX_CI_QED=TRUE               python prepare_file_travis.py
 grep "\[" travis-tests.ini >> travis_matrix_elements.txt
-WARPX_CI_EB=TRUE               python prepare_file_travis.py
-grep "\[" travis-tests.ini >> travis_matrix_elements.txt
 
 # Check that the resulting lists are equal
 {
