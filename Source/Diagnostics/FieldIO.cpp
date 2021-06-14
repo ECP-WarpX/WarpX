@@ -10,7 +10,6 @@
 #include "Utils/CoarsenIO.H"
 
 #include <AMReX.H>
-#include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_SPACE.H>

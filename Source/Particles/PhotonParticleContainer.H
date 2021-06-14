@@ -14,12 +14,11 @@
 
 #include "Particles/WarpXParticleContainer_fwd.H"
 
-#include <AMReX_AmrCore.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
 
 #include <string>
 

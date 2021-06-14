@@ -8,10 +8,9 @@
 #ifndef WARPX_FielIO_H_
 #define WARPX_FielIO_H_
 
-#include <AMReX_DistributionMapping.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <array>
 #include <cstdint>

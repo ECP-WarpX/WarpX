@@ -3,6 +3,9 @@
 #include "Utils/CoarsenIO.H"
 #include "WarpX.H"
 
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+
 DivBFunctor::DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect crse_ratio, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_arr_mf_src(arr_mf_src), m_lev(lev)
 {}

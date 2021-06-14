@@ -9,8 +9,9 @@
 #   include <AMReX_Conduit_Blueprint.H>
 #endif
 #include <AMReX_Geometry.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifdef AMREX_USE_ASCENT
 #   include <ascent.hpp>

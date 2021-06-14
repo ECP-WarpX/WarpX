@@ -28,6 +28,7 @@
 #include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 #include "Particles/Pusher/UpdateMomentumVay.H"
+#include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Python/WarpXWrappers.h"
@@ -49,6 +50,7 @@
 #include <AMReX_Config.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuAtomic.H>
@@ -62,20 +64,25 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_Math.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParGDB.H>
 #include <AMReX_ParIter.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Particle.H>
 #include <AMReX_ParticleContainerBase.H>
 #include <AMReX_ParticleTile.H>
 #include <AMReX_Print.H>
+#include <AMReX_Random.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Scan.H>
 #include <AMReX_StructOfArrays.H>
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
+
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>

@@ -11,6 +11,8 @@
 
 #include <AMReX.H>
 
+#include <AMReX_ParmParse.H>
+
 #include <algorithm>
 #include <cstring>
 #include <ctype.h>

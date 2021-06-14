@@ -17,6 +17,7 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>

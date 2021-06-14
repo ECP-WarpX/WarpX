@@ -9,6 +9,7 @@
 #include <AMReX_IndexType.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 
 using namespace amrex;
 

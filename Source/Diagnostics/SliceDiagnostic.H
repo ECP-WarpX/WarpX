@@ -7,12 +7,9 @@
 #ifndef WARPX_SliceDiagnostic_H_
 #define WARPX_SliceDiagnostic_H_
 
-#include <AMReX_FArrayBox.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_IArrayBox.H>
-#include <AMReX_MultiFabUtil.H>
-#include <AMReX_MultiFabUtil_C.H>
 #include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
 

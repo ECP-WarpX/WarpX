@@ -4,14 +4,12 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <AMReX_Array4.H>
-#include <AMReX_Box.H>
 #include <AMReX_Dim3.H>
-#include <AMReX_FArrayBox.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifndef WARPX_FILTER_H_
 #define WARPX_FILTER_H_

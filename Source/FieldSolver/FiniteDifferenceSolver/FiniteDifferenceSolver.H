@@ -13,10 +13,10 @@
 #include "BoundaryConditions/PML_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
 
-#include <AMReX_Box.H>
 #include <AMReX_GpuContainers.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <array>
 #include <memory>

@@ -41,18 +41,16 @@
 #ifdef AMREX_USE_EB
 #   include "AMReX_EBFabFactory.H"
 #endif
-#include <AMReX_Geometry.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_LayoutData.H>
-#include <AMReX_LayoutData.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_Vector.H>
 #include <AMReX_VisMF.H>
-#include <AMReX_iMultiFab.H>
-#include <AMReX_iMultiFab.H>
+
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
 
 #include <array>
 #include <iostream>

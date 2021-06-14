@@ -45,6 +45,7 @@
 #   include <AMReX_EBFabFactory.H>
 #   include <AMReX_EBSupport.H>
 #endif
+#include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_FabFactory.H>
 #include <AMReX_Geometry.H>
@@ -62,7 +63,6 @@
 #include <AMReX_Print.H>
 #include <AMReX_Random.H>
 #include <AMReX_SPACE.H>
-#include <AMReX_ccse-mpi.H>
 #include <AMReX_iMultiFab.H>
 
 #include <algorithm>

@@ -12,6 +12,7 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 
 using namespace amrex;
 

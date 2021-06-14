@@ -15,7 +15,6 @@
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
-#include <AMReX_BLProfiler.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
@@ -24,7 +23,6 @@
 #include <AMReX_FabFactory.H>
 #include <AMReX_IArrayBox.H>
 #include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MakeType.H>

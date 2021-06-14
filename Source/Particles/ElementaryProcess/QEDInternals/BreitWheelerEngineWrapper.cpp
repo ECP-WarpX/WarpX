@@ -6,6 +6,7 @@
  */
 #include "BreitWheelerEngineWrapper.H"
 
+#include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_GpuDevice.H>
 

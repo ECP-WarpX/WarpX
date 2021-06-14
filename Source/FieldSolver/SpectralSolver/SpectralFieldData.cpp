@@ -21,6 +21,7 @@
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>

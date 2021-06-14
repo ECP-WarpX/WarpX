@@ -32,6 +32,7 @@
 #include <AMReX_Config.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuContainers.H>
@@ -40,6 +41,8 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParIter.H>
 #include <AMReX_ParmParse.H>

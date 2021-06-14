@@ -16,9 +16,10 @@
 #include "InjectorPosition_fwd.H"
 
 #include <AMReX_Dim3.H>
-#include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>

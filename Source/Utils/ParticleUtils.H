@@ -10,8 +10,9 @@
 #include "Particles/WarpXParticleContainer.H"
 
 #include <AMReX_DenseBins.H>
-#include <AMReX_MFIter.H>
 #include <AMReX_Particles.H>
+
+#include <AMReX_BaseFwd.H>
 
 namespace ParticleUtils {
 

@@ -14,7 +14,7 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/WarpXAlgorithmSelection.H"
-#ifndef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
 #   include "WarpX.H"
 #endif
 

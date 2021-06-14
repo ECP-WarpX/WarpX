@@ -20,6 +20,7 @@
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_AmrCore.H>
 #include <AMReX_AmrParGDB.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -39,6 +40,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParGDB.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -51,6 +53,7 @@
 #include <AMReX_ParticleUtil.H>
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
+
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>

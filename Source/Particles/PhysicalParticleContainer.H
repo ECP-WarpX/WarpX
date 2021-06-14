@@ -23,15 +23,13 @@
 #include "Particles/Resampling/Resampling.H"
 #include "WarpXParticleContainer.H"
 
-#include <AMReX_AmrCore.H>
-#include <AMReX_FArrayBox.H>
 #include <AMReX_GpuContainers.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
-#include <AMReX_iMultiFab.H>
+
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
 
 #include <memory>
 #include <string>

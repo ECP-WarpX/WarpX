@@ -28,7 +28,8 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_ccse-mpi.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <array>
 #include <memory>

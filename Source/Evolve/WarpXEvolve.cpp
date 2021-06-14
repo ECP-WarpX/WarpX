@@ -32,7 +32,6 @@
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_BLassert.H>
-#include <AMReX_Config.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>

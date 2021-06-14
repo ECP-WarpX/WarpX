@@ -22,6 +22,8 @@
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
+#include <AMReX_BaseFwd.H>
+
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif

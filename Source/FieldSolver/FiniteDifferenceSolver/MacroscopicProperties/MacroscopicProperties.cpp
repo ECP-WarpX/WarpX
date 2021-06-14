@@ -16,6 +16,8 @@
 #include <AMReX_Print.H>
 #include <AMReX_RealBox.H>
 
+#include <AMReX_BaseFwd.H>
+
 #include <memory>
 
 using namespace amrex;

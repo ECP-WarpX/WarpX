@@ -15,15 +15,14 @@
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX_BaseFab.H>
-#include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
-#include <AMReX_DistributionMapping.H>
 #include <AMReX_Extension.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <vector>
 

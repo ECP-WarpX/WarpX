@@ -25,9 +25,11 @@
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxList.H>
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FBI.H>
 #include <AMReX_FabArrayBase.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuLaunch.H>

@@ -6,8 +6,9 @@
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <cstdlib>
 

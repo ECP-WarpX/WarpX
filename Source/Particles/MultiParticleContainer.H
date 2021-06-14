@@ -25,20 +25,18 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 
-#include <AMReX_AmrCore.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
-#include <AMReX_DistributionMapping.H>
 #include <AMReX_GpuControl.H>
 #include <AMReX_INT.H>
-#include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
 
 #include <algorithm>
 #include <array>

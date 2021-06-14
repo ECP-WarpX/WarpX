@@ -17,6 +17,7 @@
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_REAL.H>
 
 #include <cmath>

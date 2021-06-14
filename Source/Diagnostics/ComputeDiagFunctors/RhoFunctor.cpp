@@ -11,6 +11,8 @@
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 
 #include <memory>
 

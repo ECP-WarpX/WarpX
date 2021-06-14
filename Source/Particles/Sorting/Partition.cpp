@@ -17,7 +17,8 @@
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
 #include <AMReX_StructOfArrays.H>
-#include <AMReX_iMultiFab.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <utility>
 

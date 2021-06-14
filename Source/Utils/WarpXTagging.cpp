@@ -21,6 +21,8 @@
 #include <AMReX_SPACE.H>
 #include <AMReX_TagBox.H>
 
+#include <AMReX_BaseFwd.H>
+
 using namespace amrex;
 
 void

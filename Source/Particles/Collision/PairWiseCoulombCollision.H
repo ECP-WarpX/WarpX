@@ -12,8 +12,9 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 
-#include <AMReX_MFIter.H>
 #include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <string>
 

@@ -20,6 +20,8 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Random.H>
 
+#include <AMReX_BaseFwd.H>
+
 #include <cmath>
 #include <string>
 

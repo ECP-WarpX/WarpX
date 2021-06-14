@@ -37,6 +37,8 @@
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
 
+#include <AMReX_BaseFwd.H>
+
 #include <array>
 #include <cmath>
 #include <memory>

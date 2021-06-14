@@ -14,6 +14,7 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
 
 #include <cmath>
