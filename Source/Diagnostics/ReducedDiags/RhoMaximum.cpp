@@ -7,12 +7,12 @@
 
 #include "RhoMaximum.H"
 
-#include "WarpX.H"
 #include "Diagnostics/ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/IntervalsParser.H"
+#include "WarpX.H"
 
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>

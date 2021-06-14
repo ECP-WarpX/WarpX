@@ -10,21 +10,21 @@
 
 #include "BackTransformedDiagnostic_fwd.H"
 
-#include "Particles/WarpXParticleContainer.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
 
 #include <AMReX_Box.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Geometry.H>
 
 #include <map>
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
 /** \brief
  * The capability for back-transformed lab-frame data is implemented to generate

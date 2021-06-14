@@ -3,8 +3,8 @@
 
 #include "FlushFormat_fwd.H"
 
-#include "Particles/MultiParticleContainer.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Particles/MultiParticleContainer.H"
 
 class FlushFormat
 {

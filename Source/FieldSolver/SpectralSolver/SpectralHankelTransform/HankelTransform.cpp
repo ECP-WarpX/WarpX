@@ -4,11 +4,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
-
 #include "HankelTransform.H"
+
 #include "BesselRoots.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
 #include <blas.hh>
 #include <lapack.hh>

@@ -6,10 +6,10 @@
 #include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_MultiFab.H>
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 
 #include <memory>

@@ -1,14 +1,14 @@
 #include "RhoFunctor.H"
 
-#include "WarpX.H"
-#include "Utils/CoarsenIO.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
     #include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/CoarsenIO.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
 

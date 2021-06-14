@@ -6,6 +6,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
+
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
@@ -20,10 +21,10 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
+#include <cmath>
+#include <cstdlib>
 #include <numeric>
 #include <vector>
-#include <cstdlib>
-#include <cmath>
 
 using namespace amrex;
 

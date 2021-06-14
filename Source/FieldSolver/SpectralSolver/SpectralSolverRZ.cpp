@@ -4,12 +4,12 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "SpectralAlgorithms/GalileanPsatdAlgorithmRZ.H"
+#include "SpectralAlgorithms/PsatdAlgorithmRZ.H"
 #include "SpectralKSpaceRZ.H"
 #include "SpectralSolverRZ.H"
-#include "SpectralAlgorithms/PsatdAlgorithmRZ.H"
-#include "SpectralAlgorithms/GalileanPsatdAlgorithmRZ.H"
-#include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 /* \brief Initialize the spectral Maxwell solver
  *

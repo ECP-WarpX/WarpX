@@ -8,10 +8,10 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
-#include "ReducedDiags.H"
-#include "WarpX.H"
-#include "Utils/CoarsenIO.H"
 #include "Parser/WarpXParserWrapper.H"
+#include "ReducedDiags.H"
+#include "Utils/CoarsenIO.H"
+#include "WarpX.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Box.H>

@@ -29,8 +29,8 @@
 #include <AMReX_RealBox.H>
 #include <AMReX_SPACE.H>
 
-#include <memory>
 #include <cmath>
+#include <memory>
 
 using namespace amrex;
 

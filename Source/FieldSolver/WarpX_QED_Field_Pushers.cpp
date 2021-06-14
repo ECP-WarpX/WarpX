@@ -5,10 +5,14 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "WarpX_QED_K.H"
+
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX_QED_K.H"
 
+#ifdef BL_USE_SENSEI_INSITU
+#   include <AMReX_AmrMeshInSituBridge.H>
+#endif
 #include <AMReX_Array4.H>
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
@@ -28,14 +32,11 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
-#ifdef BL_USE_SENSEI_INSITU
-#   include <AMReX_AmrMeshInSituBridge.H>
-#endif
 
 #include <array>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
-#include <cstdlib>
 
 using namespace amrex;
 

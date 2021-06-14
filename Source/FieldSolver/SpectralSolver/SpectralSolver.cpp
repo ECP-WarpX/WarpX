@@ -4,13 +4,13 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "SpectralKSpace.H"
-#include "SpectralSolver.H"
-#include "SpectralAlgorithms/PsatdAlgorithm.H"
-#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
-#include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
 #include "FieldSolver/SpectralSolver/SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithm.H"
+#include "SpectralKSpace.H"
+#include "SpectralSolver.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <memory>

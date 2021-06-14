@@ -6,19 +6,20 @@
  */
 #include "FiniteDifferenceSolver.H"
 
-#include "WarpX.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#ifdef WARPX_DIM_RZ
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
+#ifndef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#else
+#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
+#include <AMReX_Box.H>
 #include <AMReX_Config.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuAtomic.H>
@@ -33,7 +34,6 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
-#include <AMReX_Box.H>
 
 #include <array>
 #include <memory>

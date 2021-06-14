@@ -13,8 +13,8 @@
 
 #include <algorithm>
 #include <cstring>
-#include <map>
 #include <ctype.h>
+#include <map>
 #include <utility>
 
 // Define dictionary with correspondance between user-input strings,

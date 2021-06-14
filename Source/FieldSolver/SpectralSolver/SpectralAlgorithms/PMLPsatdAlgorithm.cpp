@@ -8,8 +8,8 @@
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpX_Complex.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>

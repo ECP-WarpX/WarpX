@@ -12,21 +12,13 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
-#include "Evolve/WarpXDtType.H"
-#include "Filter/BilinearFilter.H"
-#include "Utils/IntervalsParser.H"
-#include "Parallelization/GuardCellManager.H"
-#include "Parser/WarpXParserWrapper.H"
-
+#include "BoundaryConditions/PML_fwd.H"
 #include "Diagnostics/BackTransformedDiagnostic_fwd.H"
+#include "Diagnostics/MultiDiagnostics_fwd.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
+#include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
-#include "Diagnostics/MultiDiagnostics_fwd.H"
-#include "Particles/MultiParticleContainer_fwd.H"
-#include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
-#include "Filter/NCIGodfreyFilter_fwd.H"
-#include "BoundaryConditions/PML_fwd.H"
-#include "Particles/WarpXParticleContainer_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -34,32 +26,38 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
+#include "Filter/BilinearFilter.H"
+#include "Filter/NCIGodfreyFilter_fwd.H"
+#include "Parallelization/GuardCellManager.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Utils/IntervalsParser.H"
 
-#include <AMReX_AmrCore.H>
-#include <AMReX_RealVect.H>
-#include <AMReX_iMultiFab.H>
-#include <AMReX_VisMF.H>
 #include <AMReX.H>
+#include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
-#include <AMReX_GpuContainers.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_REAL.H>
-#include <AMReX_RealBox.H>
-#include <AMReX_Vector.H>
 #ifdef AMREX_USE_EB
 #   include "AMReX_EBFabFactory.H"
 #endif
-
 #include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_Vector.H>
+#include <AMReX_VisMF.H>
 #include <AMReX_iMultiFab.H>
-#include <AMReX_LayoutData.H>
+#include <AMReX_iMultiFab.H>
 
-#include <iostream>
-#include <memory>
 #include <array>
+#include <iostream>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 

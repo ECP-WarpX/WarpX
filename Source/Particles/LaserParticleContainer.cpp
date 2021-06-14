@@ -8,16 +8,16 @@
  */
 #include "LaserParticleContainer.H"
 
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/LaserParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Laser/LaserProfiles.H"
 #include "Evolve/WarpXDtType.H"
+#include "Laser/LaserProfiles.H"
+#include "Particles/LaserParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
@@ -52,16 +52,16 @@
 #   include <omp.h>
 #endif
 
-#include <limits>
-#include <cmath>
 #include <algorithm>
-#include <numeric>
-#include <ctype.h>
-#include <cstdlib>
 #include <array>
+#include <cmath>
+#include <cstdlib>
+#include <ctype.h>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <vector>
 

@@ -6,10 +6,10 @@
  */
 #include "LoadBalanceCosts.H"
 
-#include "WarpX.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
 
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
@@ -25,11 +25,11 @@
 #   include <mpi.h>
 #endif
 
-#include <memory>
 #include <algorithm>
 #include <cstdio>
 #include <iomanip>
 #include <istream>
+#include <memory>
 
 using namespace amrex;
 

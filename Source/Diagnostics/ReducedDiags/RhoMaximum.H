@@ -8,8 +8,8 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
 
-#include "ReducedDiags.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "ReducedDiags.H"
 
 #include <AMReX_Vector.H>
 

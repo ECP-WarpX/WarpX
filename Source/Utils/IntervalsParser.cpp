@@ -1,5 +1,5 @@
-#include "WarpXUtil.H"
 #include "IntervalsParser.H"
+#include "WarpXUtil.H"
 
 #include <AMReX_Utility.H>
 

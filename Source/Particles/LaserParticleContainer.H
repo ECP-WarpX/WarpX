@@ -9,19 +9,19 @@
 #ifndef WARPX_LaserParticleContainer_H_
 #define WARPX_LaserParticleContainer_H_
 
-#include "Laser/LaserProfiles.H"
 #include "Evolve/WarpXDtType.H"
+#include "Laser/LaserProfiles.H"
 #include "WarpXParticleContainer.H"
 
+#include <AMReX_AmrCore.H>
 #include <AMReX_Extension.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_Vector.H>
-#include <AMReX_AmrCore.H>
-#include <AMReX_MultiFab.H>
 
-#include <memory>
 #include <limits>
+#include <memory>
 #include <string>
 
 /**

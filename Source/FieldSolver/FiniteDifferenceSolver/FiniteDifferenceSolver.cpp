@@ -6,14 +6,16 @@
  */
 #include "FiniteDifferenceSolver.H"
 
-#include "Utils/WarpXAlgorithmSelection.H"
-#ifdef WARPX_DIM_RZ
-#   include "WarpX.H"
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#ifndef WARPX_DIM_RZ
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #else
-#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#ifndef WARPX_DIM_RZ
+#   include "WarpX.H"
 #endif
 
 #include <AMReX.H>

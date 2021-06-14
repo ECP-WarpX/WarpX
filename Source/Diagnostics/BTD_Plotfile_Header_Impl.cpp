@@ -2,9 +2,9 @@
 
 #include "WarpX.H"
 
+#include <AMReX.H>
 #include <AMReX_FileSystem.H>
 #include <AMReX_INT.H>
-#include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_Utility.H>
 

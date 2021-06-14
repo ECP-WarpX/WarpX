@@ -8,15 +8,14 @@
  */
 #include "WarpX.H"
 
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Diagnostics/MultiDiagnostics.H"
-#include "Particles/WarpXParticleContainer.H"
 
-#include <AMReX_BLProfiler.H>
-#include <AMReX_IntVect.H>
 #include <AMReX.H>
+#include <AMReX_BLProfiler.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
@@ -25,6 +24,7 @@
 #include <AMReX_FabFactory.H>
 #include <AMReX_IArrayBox.H>
 #include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MakeType.H>
@@ -38,11 +38,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <cstddef>
+#include <memory>
 #include <utility>
 #include <vector>
-#include <cmath>
-#include <memory>
-#include <cstddef>
 
 using namespace amrex;
 

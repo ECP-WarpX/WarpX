@@ -10,8 +10,8 @@
 #include <AMReX_RealBox.H>
 #include <AMReX_Vector.H>
 
-#include <string>
 #include <memory>
+#include <string>
 
 class ParticleDiag
 {

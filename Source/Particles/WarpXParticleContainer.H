@@ -12,32 +12,32 @@
 
 #include "WarpXParticleContainer_fwd.H"
 
-#include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
+#include "SpeciesPhysicalProperties.H"
 
-#include "MultiParticleContainer_fwd.H"
 #ifdef WARPX_QED
-#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
+#include "MultiParticleContainer_fwd.H"
 
-#include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_INT.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_ParIter.H>
+#include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
 #include <AMReX_StructOfArrays.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
-#include <AMReX_RealBox.H>
 
-#include <memory>
 #include <array>
 #include <iosfwd>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 

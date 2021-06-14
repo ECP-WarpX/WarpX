@@ -8,8 +8,8 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 
-#include "ReducedDiags.H"
 #include "Parser/WarpXParserWrapper.H"
+#include "ReducedDiags.H"
 
 #include <AMReX_REAL.H>
 

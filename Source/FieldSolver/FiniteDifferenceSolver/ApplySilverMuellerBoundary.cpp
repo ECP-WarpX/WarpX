@@ -6,11 +6,11 @@
  */
 #include "FiniteDifferenceSolver.H"
 
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>

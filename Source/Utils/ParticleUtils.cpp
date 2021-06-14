@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "ParticleUtils.H"
+
 #include "WarpX.H"
 
 #include <AMReX_Algorithm.H>

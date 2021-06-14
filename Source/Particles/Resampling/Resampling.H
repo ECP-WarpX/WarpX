@@ -8,6 +8,7 @@
 #define WARPX_RESAMPLING_H_
 
 #include "ResamplingTrigger.H"
+
 #include "Particles/WarpXParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>

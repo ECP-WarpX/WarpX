@@ -6,17 +6,16 @@
  */
 #include "WarpXOpenPMD.H"
 
-#include "WarpX.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FieldIO.H"
+#include "Parser/WarpXParserWrapper.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
-#include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
-#include <AMReX_ParallelDescriptor.H>
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
 #include <AMReX_BLassert.H>
@@ -29,6 +28,7 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParallelReduce.H>
 #include <AMReX_Particle.H>
 #include <AMReX_Particles.H>
@@ -37,12 +37,12 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iostream>
 #include <map>
 #include <set>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <iostream>
 
 namespace detail
 {

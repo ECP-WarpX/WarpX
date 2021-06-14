@@ -6,10 +6,11 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "WarpX_PML_kernels.H"
+
 #include "BoundaryConditions/PML.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "PML_current.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX_PML_kernels.H"
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>

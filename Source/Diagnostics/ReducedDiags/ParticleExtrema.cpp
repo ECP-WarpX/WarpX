@@ -7,9 +7,10 @@
 
 #include "ParticleExtrema.H"
 
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#if (defined WARPX_QED)
+#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#endif
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/MultiParticleContainer.H"
@@ -17,12 +18,9 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/IntervalsParser.H"
-#if (defined WARPX_QED)
-#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
-#endif
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
-#include <AMReX_REAL.H>
-#include <AMReX_ParticleReduce.H>
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -39,14 +37,16 @@
 #include <AMReX_ParIter.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_ParticleReduce.H>
 #include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
 #include <AMReX_Reduce.H>
 #include <AMReX_Tuple.H>
 #include <AMReX_Vector.H>
 
-#include <cmath>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <fstream>
 #include <map>
 #include <vector>

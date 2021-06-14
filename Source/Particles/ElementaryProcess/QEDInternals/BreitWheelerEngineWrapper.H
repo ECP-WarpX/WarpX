@@ -9,8 +9,8 @@
 
 #include "BreitWheelerEngineWrapper_fwd.H"
 
-#include "QedWrapperCommons.H"
 #include "QedChiFunctions.H"
+#include "QedWrapperCommons.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Extension.H>
@@ -19,18 +19,18 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Random.H>
 
-#include <picsar_qed/physics/gamma_functions.hpp>
-#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
-#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_core.hpp>
 #include <picsar_qed/containers/picsar_array.hpp>
 #include <picsar_qed/math/cmath_overloads.hpp>
 #include <picsar_qed/math/math_constants.h>
 #include <picsar_qed/math/vec_functions.hpp>
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_core.hpp>
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+#include <picsar_qed/physics/gamma_functions.hpp>
 #include <picsar_qed/physics/phys_constants.h>
 #include <picsar_qed/physics/unit_conversion.hpp>
 
-#include <vector>
 #include <cmath>
+#include <vector>
 
 namespace amrex { struct RandomEngine; }
 

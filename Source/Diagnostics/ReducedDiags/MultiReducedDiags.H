@@ -12,9 +12,9 @@
 
 #include "ReducedDiags.H"
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 /**
  * This class holds multiple instances of ReducedDiagnostics, and contains

@@ -6,8 +6,8 @@
  */
 #include "ResamplingTrigger.H"
 
-#include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX_BoxArray.H>
 #include <AMReX_ParmParse.H>

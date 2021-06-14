@@ -7,12 +7,14 @@
  */
 #include "SpectralFieldData.H"
 
-#include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Dim3.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_GpuAtomic.H>
 #include <AMReX_GpuComplex.H>
@@ -24,8 +26,6 @@
 #include <AMReX_PODVector.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Dim3.H>
 
 #if WARPX_USE_PSATD
 

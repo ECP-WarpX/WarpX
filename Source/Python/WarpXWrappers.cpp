@@ -6,14 +6,14 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXWrappers.h"
-#include "Initialization/WarpXAMReXInit.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
-#include "Utils/WarpXUtil.H"
-#include "WarpX_py.H"
-#include "Particles/MultiParticleContainer.H"
 #include "BoundaryConditions/PML.H"
+#include "Initialization/WarpXAMReXInit.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+#include "WarpXWrappers.h"
+#include "WarpX_py.H"
 
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
@@ -31,8 +31,8 @@
 #include <AMReX_Particles.H>
 #include <AMReX_StructOfArrays.H>
 
-#include <cstdlib>
 #include <array>
+#include <cstdlib>
 
 namespace
 {

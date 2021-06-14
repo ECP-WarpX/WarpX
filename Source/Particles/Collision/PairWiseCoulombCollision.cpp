@@ -5,14 +5,15 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PairWiseCoulombCollision.H"
-#include "ShuffleFisherYates.H"
+
 #include "ElasticCollisionPerez.H"
-#include "Utils/ParticleUtils.H"
-#include "Utils/WarpXUtil.H"
 #include "Particles/Collision/CollisionBase.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "ShuffleFisherYates.H"
+#include "Utils/ParticleUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_Algorithm.H>

@@ -7,8 +7,9 @@
  */
 
 #include <WarpX.H>
-#include <AMReX_BoxIterator.H>
+
 #include <AMReX_BaseFab.H>
+#include <AMReX_BoxIterator.H>
 #include <AMReX_Config.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>

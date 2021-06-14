@@ -1,9 +1,9 @@
 #ifndef WARPX_INTERPOLATE_H_
 #define WARPX_INTERPOLATE_H_
 
-#include <AMReX_REAL.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
 
 #include <array>
 #include <memory>

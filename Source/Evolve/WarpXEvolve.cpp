@@ -10,24 +10,24 @@
  */
 #include "WarpX.H"
 
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Python/WarpX_py.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
-#include "Parallelization/GuardCellManager.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Utils/IntervalsParser.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 #ifdef WARPX_DIM_RZ
 #   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
+#include "Parallelization/GuardCellManager.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Python/WarpX_py.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX.H>
 #include <AMReX_Array.H>

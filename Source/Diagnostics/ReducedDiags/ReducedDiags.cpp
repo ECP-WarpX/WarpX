@@ -9,10 +9,10 @@
 
 #include "WarpX.H"
 
-#include <AMReX_ParmParse.H>
-#include <AMReX_Utility.H>
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
 
 #include <fstream>
 #include <iomanip>

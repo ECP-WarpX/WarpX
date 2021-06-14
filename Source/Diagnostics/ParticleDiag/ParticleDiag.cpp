@@ -1,10 +1,10 @@
 #include "ParticleDiag.H"
 
-#include "WarpX.H"
-#include "Utils/WarpXUtil.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
-#include "Particles/WarpXParticleContainer.H"
 #include "Parser/WarpXParserWrapper.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX_ParmParse.H>
 

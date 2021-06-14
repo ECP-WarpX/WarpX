@@ -8,19 +8,19 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXParticleContainer.H"
-#include "WarpX.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/CoarsenMR.H"
-// Import low-level single-particle kernels
+
+#include "Deposition/ChargeDeposition.H"
+#include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
-#include "Deposition/CurrentDeposition.H"
-#include "Deposition/ChargeDeposition.H"
+#include "Utils/CoarsenMR.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
-#include <AMReX_AmrParGDB.H>
 #include <AMReX.H>
+#include <AMReX_AmrParGDB.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
@@ -56,8 +56,8 @@
 #   include <omp.h>
 #endif
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 using namespace amrex;
 

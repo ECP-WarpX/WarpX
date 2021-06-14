@@ -7,9 +7,9 @@
 
 #include "FieldMaximum.H"
 
-#include "WarpX.H"
 #include "Utils/CoarsenIO.H"
 #include "Utils/IntervalsParser.H"
+#include "WarpX.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
@@ -31,10 +31,10 @@
 #include <AMReX_Vector.H>
 
 #include <algorithm>
-#include <ostream>
-#include <vector>
 #include <cmath>
 #include <cstdlib>
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 

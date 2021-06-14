@@ -8,14 +8,14 @@
  */
 #include "WarpX.H"
 
-#include "WarpXComm_K.H"
-#include "WarpXSumGuardCells.H"
-#include "Utils/CoarsenMR.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "BoundaryConditions/PML.H"
 #include "Filter/BilinearFilter.H"
+#include "Utils/CoarsenMR.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpXComm_K.H"
+#include "WarpXSumGuardCells.H"
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -38,8 +38,8 @@
 #include <AMReX_Vector.H>
 
 #include <algorithm>
-#include <memory>
 #include <array>
+#include <memory>
 #include <vector>
 
 using namespace amrex;

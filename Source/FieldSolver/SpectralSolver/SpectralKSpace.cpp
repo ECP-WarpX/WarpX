@@ -21,8 +21,8 @@
 #include <AMReX_MFIter.H>
 
 #include <array>
-#include <vector>
 #include <cmath>
+#include <vector>
 
 using namespace amrex;
 

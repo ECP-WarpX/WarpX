@@ -5,13 +5,16 @@
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
-#include <AMReX_Geometry.H>
-#include <AMReX_Vector.H>
 #ifdef AMREX_USE_ASCENT
-#   include <ascent.hpp>
 #   include <AMReX_Conduit_Blueprint.H>
 #endif
+#include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Vector.H>
+
+#ifdef AMREX_USE_ASCENT
+#   include <ascent.hpp>
+#endif
 
 #include <string>
 

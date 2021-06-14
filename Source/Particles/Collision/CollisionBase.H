@@ -9,8 +9,8 @@
 
 #include "Particles/MultiParticleContainer_fwd.H"
 
-#include <AMReX_Vector.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <string>
 

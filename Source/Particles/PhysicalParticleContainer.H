@@ -10,27 +10,27 @@
 #ifndef WARPX_PhysicalParticleContainer_H_
 #define WARPX_PhysicalParticleContainer_H_
 
-#include "Initialization/PlasmaInjector.H"
-#include "WarpXParticleContainer.H"
-#include "Particles/ElementaryProcess/Ionization.H"
-#include "Particles/Gather/ScaleFields.H"
 #include "Evolve/WarpXDtType.H"
-#include "Particles/Resampling/Resampling.H"
+#include "Initialization/PlasmaInjector.H"
+#include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #    include "Particles/ElementaryProcess/QEDPairGeneration.H"
 #    include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
 #endif
+#include "Particles/Gather/ScaleFields.H"
+#include "Particles/Resampling/Resampling.H"
+#include "WarpXParticleContainer.H"
 
+#include <AMReX_AmrCore.H>
+#include <AMReX_FArrayBox.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
-#include <AMReX_AmrCore.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
 
 #include <memory>

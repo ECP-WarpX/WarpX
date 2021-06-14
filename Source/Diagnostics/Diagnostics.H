@@ -3,18 +3,18 @@
 
 #include "ParticleDiag/ParticleDiag.H"
 
-#include "FlushFormats/FlushFormat_fwd.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor_fwd.H"
+#include "FlushFormats/FlushFormat_fwd.H"
 
-#include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_REAL.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 /**
  * \brief base class for diagnostics.

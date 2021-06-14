@@ -8,18 +8,17 @@
  */
 #include "PML.H"
 
-#include "WarpX.H"
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_VisMF.H>
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -38,11 +37,12 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_SPACE.H>
+#include <AMReX_VisMF.H>
 #include <AMReX_ccse-mpi.H>
 
 #include <algorithm>
-#include <memory>
 #include <cmath>
+#include <memory>
 #include <utility>
 
 using namespace amrex;

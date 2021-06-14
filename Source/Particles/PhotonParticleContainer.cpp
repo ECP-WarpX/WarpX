@@ -7,18 +7,17 @@
  */
 #include "PhotonParticleContainer.H"
 
-#include "WarpX.H"
-#include "Particles/PhysicalParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #endif
-// Import low-level single-particle kernels
-#include "Particles/Pusher/UpdatePositionPhoton.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/Pusher/CopyParticleAttribs.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/Pusher/CopyParticleAttribs.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/UpdatePositionPhoton.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "WarpX.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>

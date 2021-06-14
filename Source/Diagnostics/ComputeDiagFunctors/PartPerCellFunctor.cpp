@@ -1,9 +1,9 @@
 #include "PartPerCellFunctor.H"
 
-#include "WarpX.H"
-#include "Utils/CoarsenIO.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/CoarsenIO.H"
+#include "WarpX.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_REAL.H>

@@ -7,14 +7,15 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
-#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Config.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_TinyProfiler.H>

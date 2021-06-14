@@ -9,8 +9,8 @@
 
 #include "WarpXParserWrapper_fwd.H"
 
-#include "Parser/WarpXParser.H"
 #include "Parser/GpuParser.H"
+#include "Parser/WarpXParser.H"
 
 #include <AMReX_Gpu.H>
 

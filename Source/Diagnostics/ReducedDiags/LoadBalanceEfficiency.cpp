@@ -6,9 +6,9 @@
  */
 #include "LoadBalanceEfficiency.H"
 
-#include "WarpX.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/IntervalsParser.H"
+#include "WarpX.H"
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>

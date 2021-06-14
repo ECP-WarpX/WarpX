@@ -6,8 +6,8 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
 #include <AMReX_Geometry.H>
-#include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Vector.H>
 
 #include <iosfwd>
 #include <string>

@@ -13,13 +13,13 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
 #include <AMReX_AmrParticles.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_REAL.H>
-#include <AMReX_Utility.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuAllocators.H>
 #include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
 #ifdef WARPX_USE_OPENPMD

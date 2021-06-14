@@ -25,6 +25,7 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MultiFabUtil.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
@@ -35,18 +36,19 @@
 #include <AMReX_Utility.H>
 #include <AMReX_VectorIO.H>
 #include <AMReX_VisMF.H>
-#include <AMReX_MultiFabUtil.H>
 
-#include <memory>
-#include <cmath>
+#ifdef WARPX_USE_HDF5
+    #include <hdf5.h>
+#endif
+
 #include <algorithm>
+#include <cmath>
 #include <fstream>
+#include <memory>
 
 using namespace amrex;
 
 #ifdef WARPX_USE_HDF5
-
-#include <hdf5.h>
 
 /*
   Helper functions for doing the HDF5 IO.

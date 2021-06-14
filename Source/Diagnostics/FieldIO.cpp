@@ -10,15 +10,15 @@
 #include "Utils/CoarsenIO.H"
 
 #include <AMReX.H>
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_ccse-mpi.H>
-#include <AMReX_DistributionMapping.H>
 
-#include <memory>
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 
 using namespace amrex;
 

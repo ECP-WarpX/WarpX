@@ -9,31 +9,31 @@
  */
 #include "PlasmaInjector.H"
 
-#include "Particles/SpeciesPhysicalProperties.H"
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
+#include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_Print.H>
 #include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuDevice.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
 #include <AMReX_RandomEngine.H>
-#include <AMReX_Config.H>
 
 #include <algorithm>
+#include <cctype>
 #include <map>
+#include <memory>
+#include <sstream>
 #include <utility>
 #include <vector>
-#include <sstream>
-#include <memory>
-#include <ctype.h>
 
 using namespace amrex;
 

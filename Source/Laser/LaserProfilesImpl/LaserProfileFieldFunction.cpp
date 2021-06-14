@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
+
 #include "Parser/WarpXParser.H"
 #include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpX_Complex.H"

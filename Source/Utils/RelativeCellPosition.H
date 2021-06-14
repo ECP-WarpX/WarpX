@@ -11,7 +11,6 @@
 
 #include <vector>
 
-
 namespace utils
 {
     /** Get the Relative Cell Position of Values in an MultiFab

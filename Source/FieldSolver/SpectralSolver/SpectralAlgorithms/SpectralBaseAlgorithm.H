@@ -7,17 +7,17 @@
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
-#include "Utils/WarpX_Complex.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "Utils/WarpX_Complex.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>
-#include <AMReX_FabArray.H>
-#include <AMReX_REAL.H>
 #include <AMReX_DistributionMapping.H>
+#include <AMReX_FabArray.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
 
 #include <array>
 #include <memory>

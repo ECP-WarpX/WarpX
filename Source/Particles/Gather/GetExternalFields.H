@@ -1,17 +1,16 @@
 #ifndef WARPX_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
 #define WARPX_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
 
-
-#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Parser/WarpXParserWrapper.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 
 #include "Particles/WarpXParticleContainer_fwd.H"
 
-#include <AMReX_REAL.H>
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
 
 enum ExternalFieldInitType { Constant, Parser };
 

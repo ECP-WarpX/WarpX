@@ -1,8 +1,9 @@
 #include "WarpX.H"
+
 #include "WarpX_PEC.H"
 
-#include <AMReX_Vector.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <array>
 #include <memory>

@@ -8,15 +8,15 @@
 #ifndef CURRENTDEPOSITION_H_
 #define CURRENTDEPOSITION_H_
 
+#include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
-#include "Parallelization/KernelTimer.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX.H>
+#include <AMReX_Arena.H>
 #include <AMReX_Array4.H>
 #include <AMReX_REAL.H>
-#include <AMReX_Arena.H>
 
 using namespace amrex::literals;
 

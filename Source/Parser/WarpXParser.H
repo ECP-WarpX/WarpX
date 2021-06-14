@@ -10,18 +10,18 @@
 #include "wp_parser_c.h"
 #include "wp_parser_y.h"
 
-#include <AMReX_REAL.H>
 #include <AMReX_Config.H>
+#include <AMReX_REAL.H>
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
 #include <array>
-#include <vector>
-#include <string>
-#include <set>
 #include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
 class WarpXParser
 {

@@ -12,6 +12,7 @@
 #include "Particles/WarpXParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
+
 #include <string>
 
 /**

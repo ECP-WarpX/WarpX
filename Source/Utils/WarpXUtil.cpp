@@ -6,12 +6,12 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "WarpXAlgorithmSelection.H"
 #include "WarpXConst.H"
-#include "WarpXUtil.H"
 #include "WarpXProfilerWrapper.H"
+#include "WarpXUtil.H"
 
-#include <AMReX_ParmParse.H>
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -24,14 +24,15 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <set>
 #include <string>
-#include <cstring>
-#include <algorithm>
-#include <array>
 
 using namespace amrex;
 

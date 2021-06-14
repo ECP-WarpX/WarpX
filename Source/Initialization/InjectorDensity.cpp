@@ -14,8 +14,8 @@
 #include <AMReX_ParmParse.H>
 
 #include <algorithm>
+#include <cctype>
 #include <vector>
-#include <ctype.h>
 
 using namespace amrex;
 
