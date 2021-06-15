@@ -10,6 +10,7 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
 
