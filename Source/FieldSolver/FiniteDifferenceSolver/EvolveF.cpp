@@ -15,7 +15,7 @@
 #endif
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#ifndef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
 #   include "WarpX.H"
 #endif
 
