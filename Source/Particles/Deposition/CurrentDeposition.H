@@ -11,6 +11,7 @@
 #include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX.H>
