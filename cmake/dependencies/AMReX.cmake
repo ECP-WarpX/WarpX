@@ -58,7 +58,8 @@ macro(find_amrex)
             set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PRECISION "SINGLE" CACHE INTERNAL "")
-            set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
+            # our numerics are not yet stable enough for DP particle data
+            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         endif()
 
         if(WarpX_SENSEI)
