@@ -10,11 +10,9 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_REAL.H>
-#include <AMReX_ParticleReduce.H>
 
 #include <iostream>
 #include <cmath>
-
 
 using namespace amrex;
 

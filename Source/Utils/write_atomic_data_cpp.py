@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2019-2020 Axel Huebl, Luca Fedeli, Maxence Thevenet
+# Copyright 2019-2021 Axel Huebl, Luca Fedeli, Maxence Thevenet
 #
 #
 # This file is part of WarpX.
@@ -34,11 +34,12 @@ cpp_string += '// Edit dev/Source/Utils/write_atomic_data_cpp.py instead!\n'
 cpp_string += '#ifndef WARPX_IONIZATION_TABLE_H_\n'
 cpp_string += '#define WARPX_IONIZATION_TABLE_H_\n\n'
 cpp_string += '#include <AMReX_AmrCore.H>\n'
-cpp_string += '#include <AMReX_REAL.H>\n'
-cpp_string += '#include <map>\n\n'
+cpp_string += '#include <AMReX_REAL.H>\n\n'
+cpp_string += '#include <map>\n'
+cpp_string += '#include <string>\n\n'
 
 # Map each element to ID in table
-cpp_string += 'std::map<std::string, int> ion_map_ids = {'
+cpp_string += 'static std::map<std::string, int> const ion_map_ids = {'
 for count, name in enumerate(ion_names):
     cpp_string += '\n    {"' + name + '", ' + str(count) + '},'
 cpp_string = cpp_string[:-1]

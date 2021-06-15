@@ -677,6 +677,18 @@ MultiParticleContainer::doContinuousInjection () const
     return warpx_do_continuous_injection;
 }
 
+/* \brief Continuous injection of a flux of particles
+ * Loop over all WarpXParticleContainer in MultiParticleContainer and
+ * calls virtual function ContinuousFluxInjection.
+ */
+void
+MultiParticleContainer::ContinuousFluxInjection (amrex::Real dt) const
+{
+    for (auto& pc : allcontainers){
+        pc->ContinuousFluxInjection(dt);
+    }
+}
+
 /* \brief Get ID of product species of each species.
  * The users specifies the name of the product species,
  * this routine get its ID.

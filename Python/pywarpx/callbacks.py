@@ -148,7 +148,7 @@ class CallbackFunctions(object):
         if isinstance(f,types.MethodType):
             # --- If the function is a method of a class instance, then save a full
             # --- reference to that instance and the method name.
-            finstance = f.im_self
+            finstance = f.__self__
             fname = f.__name__
             self.funcs.append([finstance,fname])
         elif callable(f):

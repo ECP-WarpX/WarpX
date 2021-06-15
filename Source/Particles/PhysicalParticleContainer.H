@@ -187,6 +187,14 @@ public:
     */
     void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
+    /**
+     * Create new macroparticles for this species, with a fixed
+     * number of particles per cell in a plane.
+     * @param[in] lev the index of the refinement level
+     * @param[in] dt time step size, used to partially advance the particles
+    */
+    void AddPlasmaFlux (int lev, amrex::Real dt);
+
     void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
                                     amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
 
@@ -338,6 +346,9 @@ protected:
 
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
+
+    // Continuously inject a flux of particles from a defined surface
+    void ContinuousFluxInjection (const amrex::Real dt) override;
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
