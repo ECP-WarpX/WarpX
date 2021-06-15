@@ -12,7 +12,9 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpX_Complex.H"
+#ifdef WARPX_DIM_RZ
+#   include "Utils/WarpX_Complex.H"
+#endif
 
 #include <AMReX.H>
 #include <AMReX_Arena.H>
