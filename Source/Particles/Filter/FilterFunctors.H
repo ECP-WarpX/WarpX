@@ -107,12 +107,14 @@ struct ParserFilter
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
+        using amrex::ParticleReal;
+        using amrex::Real;
         if ( !m_is_active ) return 1;
-        amrex::ParticleReal x, y, z;
+        ParticleReal x, y, z;
         get_particle_position(p, x, y, z);
-        amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
-        amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
-        amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
+        Real ux = p.rdata(PIdx::ux)/PhysConst::c;
+        Real uy = p.rdata(PIdx::uy)/PhysConst::c;
+        Real uz = p.rdata(PIdx::uz)/PhysConst::c;
         if (m_units == InputUnits::SI)
         {
             ux /= m_mass;
@@ -120,7 +122,7 @@ struct ParserFilter
             uz /= m_mass;
         }
         // ux, uy, uz are now in beta*gamma
-        if ( m_function_partparser(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
+        if ( m_function_partparser(m_t,(Real)x,(Real)y,(Real)z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
     }
 private:
