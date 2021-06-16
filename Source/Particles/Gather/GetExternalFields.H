@@ -50,6 +50,9 @@ struct GetExternalField
                       amrex::ParticleReal& field_z) const noexcept
     {
         using namespace amrex::literals;
+        using amrex::Real;
+        using amrex::ParticleReal;
+
         if (m_type == Constant)
         {
             field_x += m_field_value[0];
@@ -58,11 +61,11 @@ struct GetExternalField
         }
         else if (m_type == Parser)
         {
-            amrex::ParticleReal x, y, z;
+            ParticleReal x, y, z;
             m_get_position(i, x, y, z);
-            field_x += m_xfield_partparser(x, y, z, m_time);
-            field_y += m_yfield_partparser(x, y, z, m_time);
-            field_z += m_zfield_partparser(x, y, z, m_time);
+            field_x += m_xfield_partparser((Real) x, (Real) y, (Real) z, m_time);
+            field_y += m_yfield_partparser((Real) x, (Real) y, (Real) z, m_time);
+            field_z += m_zfield_partparser((Real) x, (Real) y, (Real) z, m_time);
         }
         else if (m_type == RepeatedPlasmaLens)
         {
