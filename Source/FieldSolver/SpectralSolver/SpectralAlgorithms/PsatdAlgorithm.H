@@ -64,11 +64,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             }
             else if (!m_J_linear_in_time && m_time_averaging)
             {
-                return SpectralAvgFieldIndex::n_fields;
+                return SpectralFieldIndexTimeAveraging::n_fields;
             }
             else // linear in J (both with and without time averaging)
             {
-                return SpectralFieldIndexLinearInJ::n_fields;
+                return SpectralFieldIndexJLinearInTime::n_fields;
             }
         };
 

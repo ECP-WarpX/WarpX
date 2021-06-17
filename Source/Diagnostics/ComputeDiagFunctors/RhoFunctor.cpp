@@ -45,12 +45,12 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    using Idx = SpectralAvgFieldIndex;
+    using IdxAvg = SpectralFieldIndexTimeAveraging;
     if (WarpX::use_kspace_filter) {
         auto & solver = warpx.get_spectral_solver_fp(m_lev);
-        solver.ForwardTransform(m_lev, *rho, Idx::rho_new);
-        solver.ApplyFilter(Idx::rho_new);
-        solver.BackwardTransform(m_lev, *rho, Idx::rho_new);
+        solver.ForwardTransform(m_lev, *rho, IdxAvg::rho_new);
+        solver.ApplyFilter(IdxAvg::rho_new);
+        solver.BackwardTransform(m_lev, *rho, IdxAvg::rho_new);
     }
 #endif
 

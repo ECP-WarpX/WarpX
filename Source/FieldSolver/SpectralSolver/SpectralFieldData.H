@@ -27,14 +27,14 @@ struct SpectralFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
 };
 
-struct SpectralFieldIndexLinearInJ {
+struct SpectralFieldIndexJLinearInTime {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx_old, Jy_old, Jz_old, rho_old, rho_new,
          Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,
          Jx_new, Jy_new, Jz_new, F, G, n_fields, divE=3 };
 };
 
 /* Index for the regular fields + averaged fields, when stored in spectral space */
-struct SpectralAvgFieldIndex {
+struct SpectralFieldIndexTimeAveraging {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };
   // n_fields is automatically the total number of fields
 };

@@ -154,8 +154,8 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             using Idx = SpectralFieldIndex;
-            using AvgIdx = SpectralAvgFieldIndex;
-            using IdxLin = SpectralFieldIndexLinearInJ;
+            using IdxAvg = SpectralFieldIndexTimeAveraging;
+            using IdxLin = SpectralFieldIndexJLinearInTime;
 
             // Record old values of the fields to be updated
             const Complex Ex_old = fields(i,j,k,Idx::Ex);
@@ -336,27 +336,27 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Y2 = Y2_arr(i,j,k);
                 const Complex Y4 = Y4_arr(i,j,k);
 
-                fields(i,j,k,AvgIdx::Ex_avg) = Psi1 * Ex_old
+                fields(i,j,k,IdxAvg::Ex_avg) = Psi1 * Ex_old
                                                - I * c2 * Psi2 * (ky * Bz_old - kz * By_old)
                                                + Y4 * Jx + (Y2 * rho_new + Y3 * rho_old) * kx;
 
-                fields(i,j,k,AvgIdx::Ey_avg) = Psi1 * Ey_old
+                fields(i,j,k,IdxAvg::Ey_avg) = Psi1 * Ey_old
                                                - I * c2 * Psi2 * (kz * Bx_old - kx * Bz_old)
                                                + Y4 * Jy + (Y2 * rho_new + Y3 * rho_old) * ky;
 
-                fields(i,j,k,AvgIdx::Ez_avg) = Psi1 * Ez_old
+                fields(i,j,k,IdxAvg::Ez_avg) = Psi1 * Ez_old
                                                - I * c2 * Psi2 * (kx * By_old - ky * Bx_old)
                                                + Y4 * Jz + (Y2 * rho_new + Y3 * rho_old) * kz;
 
-                fields(i,j,k,AvgIdx::Bx_avg) = Psi1 * Bx_old
+                fields(i,j,k,IdxAvg::Bx_avg) = Psi1 * Bx_old
                                                + I * Psi2 * (ky * Ez_old - kz * Ey_old)
                                                + I * Y1 * (ky * Jz - kz * Jy);
 
-                fields(i,j,k,AvgIdx::By_avg) = Psi1 * By_old
+                fields(i,j,k,IdxAvg::By_avg) = Psi1 * By_old
                                                + I * Psi2 * (kz * Ex_old - kx * Ez_old)
                                                + I * Y1 * (kz * Jx - kx * Jz);
 
-                fields(i,j,k,AvgIdx::Bz_avg) = Psi1 * Bz_old
+                fields(i,j,k,IdxAvg::Bz_avg) = Psi1 * Bz_old
                                                + I * Psi2 * (kx * Ey_old - ky * Ex_old)
                                                + I * Y1 * (kx * Jy - ky * Jx);
             }
