@@ -110,8 +110,6 @@ bool WarpX::galerkin_interpolation = true;
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
-int WarpX::n_damp_fields_in_domain = 0;
-int WarpX::n_zero_fields_in_domain = 0;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -996,8 +994,6 @@ WarpX::ReadParameters ()
                 WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
                 "field boundary in both lo and hi must be set to Damped for PSATD"
             );
-            pp_psatd.query("n_damp_fields_in_domain", n_damp_fields_in_domain);
-            pp_psatd.query("n_zero_fields_in_domain", n_zero_fields_in_domain);
         }
     }
 

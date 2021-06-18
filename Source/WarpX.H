@@ -182,9 +182,6 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static int n_damp_fields_in_domain;
-    static int n_zero_fields_in_domain;
-
     static bool serialize_ics;
 
     // Back transformation diagnostic
