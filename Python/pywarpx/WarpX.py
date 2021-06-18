@@ -9,6 +9,7 @@ from .Bucket import Bucket
 from .Constants import my_constants
 from .Amr import amr
 from .Geometry import geometry
+from .Boundary import boundary
 from .Algo import algo
 from .Langmuirwave import langmuirwave
 from .Interpolation import interpolation
@@ -30,6 +31,7 @@ class WarpX(Bucket):
         argv += my_constants.attrlist()
         argv += amr.attrlist()
         argv += geometry.attrlist()
+        argv += boundary.attrlist()
         argv += algo.attrlist()
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
@@ -89,6 +91,7 @@ class WarpX(Bucket):
 
     def write_inputs(self, filename='inputs', **kw):
         argv = self.create_argv_list()
+
         with open(filename, 'w') as ff:
 
             for k, v in kw.items():

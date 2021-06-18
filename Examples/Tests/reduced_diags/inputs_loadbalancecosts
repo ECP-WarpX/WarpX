@@ -27,11 +27,8 @@ algo.maxwell_solver = yee # or ckc
 algo.load_balance_intervals = 2
 #algo.load_balance_costs_update = Timers
 
-# Interpolation
-# 1: Linear; 2: Quadratic; 3: Cubic.
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 0.99999

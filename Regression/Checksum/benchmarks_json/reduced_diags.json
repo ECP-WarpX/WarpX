@@ -2,8 +2,8 @@
   "electrons": {
     "particle_cpu": 16384.0,
     "particle_id": 268451840.0,
-    "particle_momentum_x": 2.433513100910759e-19,
-    "particle_momentum_y": 2.4633148520027533e-19,
+    "particle_momentum_x": 2.433513095314209e-19,
+    "particle_momentum_y": 2.463314849025226e-19,
     "particle_momentum_z": 2.445296743879953e-19,
     "particle_position_x": 16386.79272675649,
     "particle_position_y": 16383.137717233834,

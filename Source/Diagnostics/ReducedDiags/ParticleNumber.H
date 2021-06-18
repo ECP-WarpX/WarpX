@@ -18,13 +18,17 @@ class ParticleNumber : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     ParticleNumber(std::string rd_name);
 
-    /** This function computes the total number of macroparticles and physical particles of each
-     *  species.
-     *  @param [in] step current time step
+    /**
+     * This function computes the total number of macroparticles and physical particles of each
+     * species.
+     *
+     * @param[in] step current time step
      */
     virtual void ComputeDiags(int step) override final;
 

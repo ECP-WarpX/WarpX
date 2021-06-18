@@ -59,7 +59,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         // Parallel copy the lab-frame data from "slice" MultiFab with
         // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
         // ncomp=10 and dmap of the destination Multifab, which will store the final data
-        tmp_slice_ptr->copy( *slice, 0, 0, slice->nComp() );
+        tmp_slice_ptr->ParallelCopy( *slice, 0, 0, slice->nComp() );
         // Now we will cherry pick only the user-defined fields from
         // tmp_slice_ptr to dst_mf
         const int k_lab = m_k_index_zlab[i_buffer];
