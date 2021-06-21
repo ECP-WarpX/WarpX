@@ -4,7 +4,6 @@
 #include "FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
-#include "Utils/IntervalsParser.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 
@@ -73,6 +72,8 @@ public:
      * \param[in] force_flush used to force-fully write data stored in buffers.
      */
     void FilterComputePackFlush (int step, bool force_flush=false);
+    /** Whether the last timestep is always dumped */
+    bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
 
 protected:
     /** Read Parameters of the base Diagnostics class */
@@ -106,6 +107,8 @@ protected:
      * in cylindrical geometry, this list is appended with
      * automatically-constructed names for all modes of all fields */
     amrex::Vector< std::string > m_varnames;
+    /** If true, a dump is performed at the last timestep regardless of the required dump timesteps */
+    bool m_dump_last_timestep = true;
     /** format for output files, "plotfile" or "openpmd" or "sensei" or "ascent"
      * The checkpoint format is applicable for FullDiagnostics only.
      */

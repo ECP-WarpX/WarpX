@@ -62,7 +62,10 @@ public:
     amrex::Real getMass () {return mass;}
     PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
 
-    bool doInjection () const noexcept { return h_inj_pos != nullptr;}
+    // bool: whether the initial injection of particles should be done
+    // This routine is called during initialization of the plasma. When injecting
+    // a surface flux, no injection is done doing initialization so return false.
+    bool doInjection () const noexcept { return h_inj_pos != nullptr && !surface_flux;}
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;
