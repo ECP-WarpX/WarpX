@@ -35,6 +35,7 @@ Diagnostics::BaseReadParameters ()
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
     pp_diag_name.query("format", m_format);
+    pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
