@@ -486,14 +486,10 @@ WarpXParticleContainer::DepositCurrent (
             auto & uyp = pti.GetAttribs(PIdx::uy);
             auto & uzp = pti.GetAttribs(PIdx::uz);
 
-            int* AMREX_RESTRICT ion_lev;
+            int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
             {
                 ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
-            }
-            else // no field ionization
-            {
-                ion_lev = nullptr;
             }
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
@@ -702,14 +698,10 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
 
-            int* AMREX_RESTRICT ion_lev;
+            int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
             {
                 ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
-            }
-            else // no field ionization
-            {
-                ion_lev = nullptr;
             }
 
             DepositCharge(pti, wp, ion_lev, rho[lev].get(), icomp, 0, np, thread_num, lev, lev);
