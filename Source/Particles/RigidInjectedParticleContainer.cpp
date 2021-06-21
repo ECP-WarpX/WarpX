@@ -254,9 +254,9 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     const auto GetPosition = GetParticlePosition(pti);
           auto SetPosition = SetParticlePosition(pti);
 
-    ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr();
-    ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr();
-    ParticleReal* const AMREX_RESTRICT uz = uzp.dataPtr();
+    ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr() + offset;
+    ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr() + offset;
+    ParticleReal* const AMREX_RESTRICT uz = uzp.dataPtr() + offset;
 
     if (!done_injecting_lev)
     {
@@ -271,13 +271,13 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
         uyp_save.resize(np);
         uzp_save.resize(np);
 
-        amrex::Real* const AMREX_RESTRICT xp_save_ptr = xp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT yp_save_ptr = yp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT zp_save_ptr = zp_save.dataPtr();
+        amrex::Real* const AMREX_RESTRICT xp_save_ptr = xp_save.dataPtr() + offset;
+        amrex::Real* const AMREX_RESTRICT yp_save_ptr = yp_save.dataPtr() + offset;
+        amrex::Real* const AMREX_RESTRICT zp_save_ptr = zp_save.dataPtr() + offset;
 
-        amrex::Real* const AMREX_RESTRICT uxp_save_ptr = uxp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT uyp_save_ptr = uyp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT uzp_save_ptr = uzp_save.dataPtr();
+        amrex::Real* const AMREX_RESTRICT uxp_save_ptr = uxp_save.dataPtr() + offset;
+        amrex::Real* const AMREX_RESTRICT uyp_save_ptr = uyp_save.dataPtr() + offset;
+        amrex::Real* const AMREX_RESTRICT uzp_save_ptr = uzp_save.dataPtr() + offset;
 
         amrex::ParallelFor( np,
                             [=] AMREX_GPU_DEVICE (long i) {
@@ -302,12 +302,12 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
 
     if (!done_injecting_lev) {
 
-        ParticleReal* AMREX_RESTRICT x_save = xp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT y_save = yp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT z_save = zp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT ux_save = uxp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT uy_save = uyp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT uz_save = uzp_save.dataPtr();
+        ParticleReal* AMREX_RESTRICT x_save = xp_save.dataPtr() + offset;
+        ParticleReal* AMREX_RESTRICT y_save = yp_save.dataPtr() + offset;
+        ParticleReal* AMREX_RESTRICT z_save = zp_save.dataPtr() + offset;
+        ParticleReal* AMREX_RESTRICT ux_save = uxp_save.dataPtr() + offset;
+        ParticleReal* AMREX_RESTRICT uy_save = uyp_save.dataPtr() + offset;
+        ParticleReal* AMREX_RESTRICT uz_save = uzp_save.dataPtr() + offset;
 
         // Undo the push for particles not injected yet.
         // The zp are advanced a fixed amount.

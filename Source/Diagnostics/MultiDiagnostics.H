@@ -22,6 +22,9 @@ public:
     void InitData ();
     /** \brief Called at each iteration. Compute diags and flush. */
     void FilterComputePackFlush (int step, bool force_flush=false);
+    /** \brief Called only at the last iteration. Loop over each diag and if m_dump_last_timestep
+     *         is true, compute diags and flush with force_flush=true. */
+    void FilterComputePackFlushLastTimestep (int step);
     /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
                Called when a new partitioning is generated at level, lev.
       * \param[in] lev level at this the field functors are initialized.
