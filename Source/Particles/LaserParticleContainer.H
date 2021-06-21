@@ -114,6 +114,8 @@ private:
     // Unique (smart) pointer to the laser profile
     std::unique_ptr<WarpXLaserProfiles::ILaserProfile> m_up_laser_profile;
 
+    // Flag to disable the laser (e.g., if e_max is 0)
+    bool m_enabled = true;
 };
 
 #endif
