@@ -203,7 +203,7 @@ public:
      * \param[in] relative_t relative time of deposition
      */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                         amrex::Real dt, amrex::Real relative_t);
+                         const amrex::Real dt, const amrex::Real relative_t);
 
     /**
      * \brief Deposit charge density.
@@ -216,9 +216,9 @@ public:
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                        bool local = false, bool reset = false,
-                        bool do_rz_volume_scaling = false,
-                        bool interpolate_across_levels = true,
+                        const bool local = false, const bool reset = false,
+                        const bool do_rz_volume_scaling = false,
+                        const bool interpolate_across_levels = true,
                         const int icomp = 0);
 
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);

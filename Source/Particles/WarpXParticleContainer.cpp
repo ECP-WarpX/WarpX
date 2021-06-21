@@ -464,7 +464,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 void
 WarpXParticleContainer::DepositCurrent (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-    amrex::Real dt, amrex::Real relative_t)
+    const amrex::Real dt, const amrex::Real relative_t)
 {
     // Loop over the refinement levels
     int const finest_level = J.size() - 1;
@@ -481,10 +481,10 @@ WarpXParticleContainer::DepositCurrent (
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             const long np = pti.numParticles();
-            auto& wp = pti.GetAttribs(PIdx::w);
-            auto& uxp = pti.GetAttribs(PIdx::ux);
-            auto& uyp = pti.GetAttribs(PIdx::uy);
-            auto& uzp = pti.GetAttribs(PIdx::uz);
+            auto & wp = pti.GetAttribs(PIdx::w);
+            auto & uxp = pti.GetAttribs(PIdx::ux);
+            auto & uyp = pti.GetAttribs(PIdx::uy);
+            auto & uzp = pti.GetAttribs(PIdx::uz);
 
             int* AMREX_RESTRICT ion_lev;
             if (do_field_ionization)
@@ -673,9 +673,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
 void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                                       bool local, bool reset,
-                                       bool do_rz_volume_scaling,
-                                       bool interpolate_across_levels,
+                                       const bool local, const bool reset,
+                                       const bool do_rz_volume_scaling,
+                                       const bool interpolate_across_levels,
                                        const int icomp)
 {
 #ifdef WARPX_DIM_RZ

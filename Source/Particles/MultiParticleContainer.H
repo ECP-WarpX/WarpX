@@ -136,7 +136,7 @@ public:
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   amrex::Real relative_t, const int icomp = 0);
+                   const amrex::Real relative_t, const int icomp = 0);
 
     /**
      * \brief Deposit current density.
@@ -148,7 +148,7 @@ public:
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    amrex::Real dt, amrex::Real relative_t);
+                    const amrex::Real dt, const amrex::Real relative_t);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
