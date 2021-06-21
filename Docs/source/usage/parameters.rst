@@ -1457,7 +1457,7 @@ Numerics and algorithms
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
 * ``psatd.J_linear_in_time`` (`0` or `1`; default: `0`)
-    Whether to use two distinct currents deposited at the beginning and the end of the time step, instead of one single current deposited at half time, for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
+    Whether to perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step (``psatd.J_linear_in_time = 1``), instead of using one single current deposited at half time (``psatd.J_linear_in_time = 0``), for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
