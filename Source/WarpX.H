@@ -1150,6 +1150,8 @@ private:
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
      *        with k-space filtering (if needed)
+     *
+     * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
      */
     void PSATDForwardTransformRho (const int icomp);
 
@@ -1190,6 +1192,8 @@ private:
 
     /**
      * \brief Scale averaged E,B fields to account for time integration
+     *
+     * \param[in] scale_factor scalar to multiply each field component by
      */
     void PSATDScaleAverageFields (const amrex::Real scale_factor);
 
