@@ -45,7 +45,7 @@ FieldReduction::FieldReduction (std::string rd_name)
 
     // Replace all newlines and possible following whitespaces with a single whitespace. This
     // should avoid weird formatting when the string is written in the header of the output file.
-    parser_string = std::regex_replace(parser_string, std::regex(("\n\\s*")), " ");
+    parser_string = std::regex_replace(parser_string, std::regex("\n\\s*"), " ");
 
     // read reduction type
     std::string reduction_type_string;
