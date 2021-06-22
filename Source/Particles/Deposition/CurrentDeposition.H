@@ -340,7 +340,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                                   const amrex::ParticleReal * const uxp,
                                   const amrex::ParticleReal * const uyp,
                                   const amrex::ParticleReal * const uzp,
-                                  const int * ion_lev,
+                                  const int * const ion_lev,
                                   const amrex::Array4<amrex::Real>& Jx_arr,
                                   const amrex::Array4<amrex::Real>& Jy_arr,
                                   const amrex::Array4<amrex::Real>& Jz_arr,
@@ -351,7 +351,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                                   const amrex::Dim3 lo,
                                   const amrex::Real q,
                                   const int n_rz_azimuthal_modes,
-                                  amrex::Real* cost,
+                                  amrex::Real * const cost,
                                   const long load_balance_costs_update_algo)
 {
     using namespace amrex;

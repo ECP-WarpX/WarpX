@@ -213,7 +213,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 /* \brief Current Deposition for thread thread_num
  * \param pti         : Particle iterator
  * \param wp          : Array of particle weights
- * \param uxp uyp uzp : Array of particle
+ * \param uxp uyp uzp : Array of particle momenta
  * \param ion_lev      : Pointer to array of particle ionization level. This is
                          required to have the charge of each macroparticle
                          since q is a scalar. For non-ionizable species,
@@ -233,14 +233,14 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
  *                       time of the deposition.
  */
 void
-WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
-                                       RealVector& wp, RealVector& uxp,
-                                       RealVector& uyp, RealVector& uzp,
-                                       const int * const ion_lev,
-                                       MultiFab* jx, MultiFab* jy, MultiFab* jz,
-                                       const long offset, const long np_to_depose,
-                                       int thread_num, int lev, int depos_lev,
-                                       Real dt, Real relative_time)
+WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
+                                        RealVector const & wp, const RealVector const & uxp,
+                                        RealVector const & uyp, const RealVector const & uzp,
+                                        int const * const ion_lev,
+                                        MultiFab * const jx, MultiFab * const jy, MultiFab * const jz,
+                                        long const offset, long const np_to_depose,
+                                        int const thread_num, const int lev, int const depos_lev,
+                                        Real const dt, Real const relative_time)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -376,8 +376,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     }
 
     WARPX_PROFILE_VAR_START(blp_deposit);
-    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
-    amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+    amrex::LayoutData<amrex::Real> * const costs = WarpX::getCosts(lev);
+    amrex::Real * const cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
