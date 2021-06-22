@@ -131,7 +131,11 @@ public:
      * \brief Deposit charge density.
      *
      * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
-     * \param[in] relative_t relative time of deposition
+     * \param[in] relative_t Time at which to deposit rho, relative to the time
+     *             of the current positions of the particles (expressed as
+     *             a fraction of dt). When different than 0, the particle
+     *             position will be temporarily modified to match the time
+     *             of the deposition.
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void
@@ -143,8 +147,14 @@ public:
      *
      * \param[in,out] J vector of current densities (one three-dimensional array of pointers
      *                to MultiFabs per mesh refinement level)
-     * \param[in] dt time step
-     * \param[in] relative_t relative time of deposition
+     * \param[in] dt: Time step for particle level (is used when temporarily
+     *                modifying the particle positions, either within the
+     *                Esirkepov or when `relative_t` is different than 0
+     * \param[in] relative_t: Time at which to deposit J, relative to the time of
+     *                the current positions of the particles (expressed as
+     *                a fraction of dt). When different than 0, the particle
+     *                position will be temporarily modified to match the
+     *                time of the deposition.
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
