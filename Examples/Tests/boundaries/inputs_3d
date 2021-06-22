@@ -22,6 +22,7 @@ boundary.field_hi = pec pec periodic
 boundary.particle_lo = reflecting absorbing periodic
 boundary.particle_hi = reflecting absorbing periodic
 
+warpx.do_pml = 0
 
 # Algorithms
 algo.particle_shape = 1
