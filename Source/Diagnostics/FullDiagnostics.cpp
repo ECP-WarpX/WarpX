@@ -464,7 +464,7 @@ FullDiagnostics::PrepareFieldDataForOutput ()
 }
 
 void
-FullDiagnostics::MovingWindowAndGalileanDomainShift ()
+FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
 {
     auto & warpx = WarpX::GetInstance();
 
@@ -493,7 +493,7 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift ()
     }
 
     // For Moving Window Shift
-    if (warpx.do_moving_window) {
+    if (warpx.moving_window_active(step+1)) {
         int moving_dir = warpx.moving_window_dir;
         amrex::Real moving_window_x = warpx.getmoving_window_x();
         // Get the updated lo and hi of the geom domain
