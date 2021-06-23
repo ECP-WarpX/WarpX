@@ -521,14 +521,21 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         amrex::Array4<amrex::Real> const & field_mf_array = field_mf[mfi].array();
         amrex::Array4<amrex::Real> const & field_mf_copy_array = field_mf_copy[mfi].array();
 
-        // Extend the box to include the guards cells below the axis
-        // so that they can be filled in. This is not a simple copy
-        // since the signs will change when there is anti-symmetry.
+        // The box will be extended to include the guards cells below the axis
+        // so that they can be filled in. This will not be a simple copy of the
+        // fields since the signs will change when there is anti-symmetry.
         amrex::Box const& realspace_bx_with_guards = field_mf[mfi].box();
         const int* lo_with_guards = realspace_bx_with_guards.loVect();
-        realspace_bx.growLo(0, -lo_with_guards[0]);
+
+        // Grow the lower side of realspace_bx by the number of guard cells.
+        // This assumes that the box extends over the full extent radially, so
+        // lo_with_guards[0] will be equal to minus the number of guard cells radially.
+        const int nguard_r = -lo_with_guards[0];
+        realspace_bx.growLo(0, nguard_r);
+
         // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
         realspace_bx &= realspace_bx_with_guards;
+
         ParallelFor(realspace_bx, ncomp,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
@@ -589,14 +596,21 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         amrex::Array4<amrex::Real> const & field_mf_r_copy_array = field_mf_r_copy[mfi].array();
         amrex::Array4<amrex::Real> const & field_mf_t_copy_array = field_mf_t_copy[mfi].array();
 
-        // Extend the box to include the guards cells below the axis
-        // so that they can be filled in. This is not a simple copy
-        // since the signs will change when there is anti-symmetry.
+        // The box will be extended to include the guards cells below the axis
+        // so that they can be filled in. This will not be a simple copy of the
+        // fields since the signs will change when there is anti-symmetry.
         amrex::Box const& realspace_bx_with_guards = field_mf_r[mfi].box();
         const int* lo_with_guards = realspace_bx_with_guards.loVect();
-        realspace_bx.growLo(0, -lo_with_guards[0]);
+
+        // Grow the lower side of realspace_bx by the number of guard cells.
+        // This assumes that the box extends over the full extent radially, so
+        // lo_with_guards[0] will be equal to minus the number of guard cells radially.
+        const int nguard_r = -lo_with_guards[0];
+        realspace_bx.growLo(0, nguard_r);
+
         // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
         realspace_bx &= realspace_bx_with_guards;
+
         ParallelFor(realspace_bx, 2*n_rz_azimuthal_modes-1,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
