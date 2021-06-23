@@ -106,7 +106,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
     pp_species_name.query("do_backward_propagation", do_backward_propagation);
-    pp_species_name.query("random_theta", m_random_theta);
+    pp_species_name.query("random_theta", m_rz_random_theta);
 
     // Initialize splitting
     pp_species_name.query("do_splitting", do_splitting);
