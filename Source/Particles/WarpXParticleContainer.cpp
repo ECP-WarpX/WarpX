@@ -234,8 +234,8 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
  */
 void
 WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
-                                        RealVector const & wp, const RealVector const & uxp,
-                                        RealVector const & uyp, const RealVector const & uzp,
+                                        RealVector const & wp, RealVector const & uxp,
+                                        RealVector const & uyp, RealVector const & uzp,
                                         int const * const ion_lev,
                                         MultiFab * const jx, MultiFab * const jy, MultiFab * const jz,
                                         long const offset, long const np_to_depose,
