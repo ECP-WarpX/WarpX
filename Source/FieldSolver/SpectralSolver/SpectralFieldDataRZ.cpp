@@ -548,7 +548,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                 } else {
                     // Odd modes are anti-symmetric
                     int imode = (icomp + 1)/2;
-                    sign = -std::pow(-1._rt, imode+1);
+                    sign = std::pow(-1._rt, imode);
                 }
             }
             int ic = icomp + i_comp;
