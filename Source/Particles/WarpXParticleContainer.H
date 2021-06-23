@@ -382,7 +382,7 @@ protected:
     std::string physical_element;
 
     int do_resampling = 0;
-
+    bool m_rz_random_theta = false;
     int do_back_transformed_diagnostics = 1;
 
 #ifdef WARPX_QED
