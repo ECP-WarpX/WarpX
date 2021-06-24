@@ -1156,7 +1156,7 @@ Numerics and algorithms
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
 
-* ``warpx.use_filter`` (`0 or 1`)
+* ``warpx.use_filter`` (`0` or `1`; default: `1`)
     Whether to smooth the charge and currents on the mesh, after depositing
     them from the macroparticles. This uses a bilinear filter
     (see the :ref:`filtering section <theory-pic-filter>`).
