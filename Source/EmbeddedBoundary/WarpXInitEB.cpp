@@ -81,27 +81,24 @@ WarpX::ComputeEdgeLengths () {
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
+        for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
         amrex::Box const &box = mfi.validbox();
         amrex::FabType fab_type = flags[mfi].getType(box);
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 1.;
                 });
             } else if (fab_type == amrex::FabType::covered) {
                 // every cell in box is all covered
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 0.;
                 });
             } else {
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_cent).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     if (edge_cent(i, j, k) == amrex::Real(-1.0)) {
                         // This edge is all covered
                         edge_lengths_dim(i, j, k) = 0.;
@@ -140,20 +137,17 @@ WarpX::ComputeFaceAreas () {
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(1.);
                 });
             } else if (fab_type == amrex::FabType::covered) {
                 // every cell in box is all covered
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(0.);
                 });
             } else {
                 auto const &face = area_frac[idim]->const_array(mfi);
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     face_areas_dim(i, j, k) = face(i, j, k);
                 });
             }
@@ -178,8 +172,7 @@ WarpX::ScaleEdges () {
         amrex::Box const &box = mfi.validbox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
-            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                             [=](int i, int j, int k) {
+            amrex::ParallelFor(box, [=](int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
             });
         }
@@ -212,9 +205,11 @@ WarpX::ScaleAreas() {
                 full_area = cell_size[0]*cell_size[1];
             }
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
-            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                             [=](int i, int j, int k) {
+            auto const &red_areas_dim = m_area_red[maxLevel()][idim]->array(mfi);
+
+            amrex::ParallelFor(box, [=](int i, int j, int k) {
                                 face_areas_dim(i, j, k) *= full_area;
+                                red_areas_dim(i, j, k) = face_areas_dim(i, j, k);
             });
         }
     }
@@ -241,13 +236,12 @@ WarpX::MarkCells(){
             amrex::Real dy = cell_size[1];
             amrex::Real dz = cell_size[2];
 
-            amrex::LoopOnCpu(box,
-                             [=](int i, int j, int k) {
+            amrex::ParallelFor(box, [=](int i, int j, int k) {
                 // Minimal area for this cell to be stable
                 double S_stab;
                 if(idim == 0){
                     S_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
-                                                    lz(i, j, k) * dy, lz(i, j, k + 1) * dy});
+                                                    lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                 }else if(idim == 1){
                     S_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                              lz(i, j, k) * dx, lz(i + 1, j, k) * dx});

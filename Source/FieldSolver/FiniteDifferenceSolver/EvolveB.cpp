@@ -31,9 +31,10 @@ void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
     int lev, amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -59,8 +60,8 @@ void FiniteDifferenceSolver::EvolveB (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveRhoCartesianECT( Efield, edge_lengths, face_areas, Rhofield, lev );
-        EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, Rhofield, flag_unst_cell,
-                             borrowing, lending, lev, dt);
+        EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, Rhofield, Venl, flag_unst_cell,
+                             flag_intr_cell, borrowing, lev, dt);
 #endif
     } else {
         amrex::Abort("EvolveB: Unknown algorithm");
@@ -269,12 +270,17 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
     int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
+
+    Venl[0]->setVal(amrex::Real(0));
+    Venl[1]->setVal(amrex::Real(0));
+    Venl[2]->setVal(amrex::Real(0));
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -291,25 +297,23 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             // Extract field data for this grid/tile
             Array4<Real> const &B = Bfield[idim]->array(mfi);
             Array4<Real> const &Rho = Rhofield[idim]->array(mfi);
+            Array4<Real> const &Venl_dim = Venl[idim]->array(mfi);
+
             amrex::Array4<int> const &flag_unst_cell_dim = flag_unst_cell[idim]->array(mfi);
+            amrex::Array4<int> const &flag_intr_cell_dim = flag_intr_cell[idim]->array(mfi);
             amrex::Array4<Real> const &S = face_areas[idim]->array(mfi);
             amrex::Array4<Real> const &S_enl = area_enl[idim]->array(mfi);
             amrex::Array4<Real> const &S_red = area_red[idim]->array(mfi);
 
-            auto &lending_dim = (*lending[idim])[mfi];
             auto &borrowing_dim = (*borrowing[idim])[mfi];
-            auto borrowing_dim_i_face = borrowing_dim.i_face.dataPtr();
-            auto borrowing_dim_j_face = borrowing_dim.j_face.dataPtr();
-            auto borrowing_dim_k_face = borrowing_dim.k_face.dataPtr();
-            auto borrowing_dim_area = borrowing_dim.area.dataPtr();
-            auto lending_dim_i_face = lending_dim.i_face.dataPtr();
-            auto lending_dim_j_face = lending_dim.j_face.dataPtr();
-            auto lending_dim_k_face = lending_dim.k_face.dataPtr();
-            auto lending_dim_area = lending_dim.area.dataPtr();
+            auto borrowing_dim_i_face = borrowing_dim.i_face.data();
+            auto borrowing_dim_j_face = borrowing_dim.j_face.data();
+            auto borrowing_dim_k_face = borrowing_dim.k_face.data();
+            auto borrowing_dim_area = borrowing_dim.area.data();
 
-            auto lending_dim_rho_face = lending_dim.rho_face.dataPtr();
-            auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.array();
-            auto const &lending_inds = (*lending[idim])[mfi].inds.array();
+            auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.data();
+            auto const &borrowing_size = (*borrowing[idim])[mfi].size.array();
+            auto const &borrowing_inds_pointer = (*borrowing[idim])[mfi].inds_pointer.array();
 
             // Extract tileboxes for which to loop
             Box const &tb = mfi.tilebox(Bfield[idim]->ixType().toIntVect());
@@ -324,9 +328,9 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                 if (!flag_unst_cell_dim(i, j, k))
                     return;
 
-                amrex::Real V_enl = Rho(i, j, k) * S(i, j, k);
+                Venl_dim(i, j, k) = Rho(i, j, k) * S(i, j, k);
                 amrex::Real rho_enl;
-                if (borrowing_inds(i, j, k).empty()) {
+                if (borrowing_inds_pointer(i, j, k) == nullptr) {
                     amrex::Abort("EvolveBCartesianECT: face ("
                                 + std::to_string(i) + ", "
                                 + std::to_string(j) + ", "
@@ -334,29 +338,28 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                                 + ") wasn't extended correctly");
                 }
                 // First we compute the rho of the enlarged face
-                for (int ind : borrowing_inds(i, j, k)) {
+                for (int offset = 0; offset<borrowing_size(i,j,k); offset++) {
+                    int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
                     int ip = borrowing_dim_i_face[ind];
                     int jp = borrowing_dim_j_face[ind];
                     int kp = borrowing_dim_k_face[ind];
-                    V_enl = V_enl + Rho(ip, jp, kp) * borrowing_dim_area[ind];
+
+                    Venl_dim(i, j, k) += Rho(ip, jp, kp) * borrowing_dim_area[ind];
+
                 }
 
-                rho_enl = V_enl / S_enl(i, j, k);
+                rho_enl = Venl_dim(i, j, k) / S_enl(i, j, k);
 
                 //Now we have to insert the computed rho_enl in the lending FaceInfoBox in the
                 // correct position
-                for (int ind : borrowing_inds(i, j, k)) {
+                for (int offset = 0; offset < borrowing_size(i, j, k); offset++) {
+                    int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
                     int ip = borrowing_dim_i_face[ind];
                     int jp = borrowing_dim_j_face[ind];
                     int kp = borrowing_dim_k_face[ind];
-                    for (int ind2 : lending_inds(ip, jp, kp)) {
-                        int ip2 = lending_dim_i_face[ind2];
-                        int jp2 = lending_dim_j_face[ind2];
-                        int kp2 = lending_dim_k_face[ind2];
-                        if (ip2 == i and jp2 == j and kp2 == k) {
-                            lending_dim_rho_face[ind2] = rho_enl;
-                        }
-                    }
+
+                    Venl_dim(ip, jp, kp) += rho_enl * borrowing_dim_area[ind];
+
                 }
 
                 B(i, j, k) = B(i, j, k) - dt * rho_enl;
@@ -372,19 +375,15 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                 if (flag_unst_cell_dim(i, j, k))
                     return;
 
-                if (lending_inds(i, j, k).empty()) {
+                if (not flag_intr_cell_dim(i, j, k)) {
                     //Stable cell which hasn't been intruded
                     B(i, j, k) = B(i, j, k) - dt * Rho(i, j, k);
+
                 } else {
-
                     //Stable cell which has been intruded
-                    amrex::Real Venl = Rho(i, j, k) * S_red(i, j, k);
+                    Venl_dim(i, j, k) += Rho(i, j, k) * S_red(i, j, k);
+                    B(i, j, k) = B(i, j, k) - dt * Venl_dim(i, j, k) / S(i, j, k);
 
-                    for (int ind : lending_inds(i, j, k)) {
-                        Venl = Venl + lending_dim_rho_face[ind] * lending_dim_area[ind];
-                    }
-
-                    B(i, j, k) = B(i, j, k) - dt * Venl / S(i, j, k);
                 }
 
             });

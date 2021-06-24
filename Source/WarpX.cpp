@@ -232,12 +232,13 @@ WarpX::WarpX ()
     Bfield_avg_fp.resize(nlevs_max);
 
 #ifdef AMREX_USE_EB
+    Venl.resize(nlevs_max);
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
     m_flag_unst_face.resize(nlevs_max);
     m_flag_avail_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
-    m_lending.resize(nlevs_max);
+    m_flag_intr_face.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
     m_area_red.resize(nlevs_max);
     m_area_enl.resize(nlevs_max);
@@ -1410,12 +1411,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         m_area_enl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_area_enl[x]"));
         m_area_enl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_area_enl[y]"));
         m_area_enl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_area_enl[z]"));
-        m_lending[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bx_nodal_flag), dm);
-        m_lending[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, By_nodal_flag), dm);
-        m_lending[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bz_nodal_flag), dm);
+        m_flag_intr_face[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_unst_face[x]"));
+        m_flag_intr_face[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_unst_face[y]"));
+        m_flag_intr_face[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_unst_face[z]"));
         m_borrowing[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bx_nodal_flag), dm);
         m_borrowing[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, By_nodal_flag), dm);
         m_borrowing[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bz_nodal_flag), dm);
+        Venl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Venl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Venl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Venl[lev][0]->setVal(amrex::Real(0));
+        Venl[lev][1]->setVal(amrex::Real(0));
+        Venl[lev][2]->setVal(amrex::Real(0));
+        m_flag_intr_face[lev][0]->setVal(0);
+        m_flag_intr_face[lev][1]->setVal(0);
+        m_flag_intr_face[lev][2]->setVal(0);
     }
 #endif
 

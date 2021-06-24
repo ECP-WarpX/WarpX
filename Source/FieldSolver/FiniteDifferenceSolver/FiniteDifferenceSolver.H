@@ -45,9 +45,10 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
                        std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
                        std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-                       std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
                        int lev, amrex::Real const dt );
 
         void EvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
@@ -203,9 +204,10 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
             std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
+            std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
             std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-            std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
             int lev, amrex::Real const dt
         );
 

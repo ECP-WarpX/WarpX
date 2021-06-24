@@ -45,7 +45,7 @@ void FiniteDifferenceSolver::EvolveEPML (
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
             Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee or m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveEPMLCartesian <CartesianYeeAlgorithm> (
             Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles );

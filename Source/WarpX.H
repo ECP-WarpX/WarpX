@@ -939,14 +939,15 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
     //EB grid info
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_unst_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_avail_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_intr_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_red;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_enl;
-    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_lending;
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
     //This is just needed for the ECT solver
@@ -1116,6 +1117,7 @@ private:
     std::unique_ptr<ParserWrapper<3> > m_eb_if_parser;
 #endif
 
+
     void InitEB ();
     void ComputeEdgeLengths ();
     void ComputeFaceAreas ();
@@ -1124,11 +1126,15 @@ private:
     void MarkCells();
     int CountExtFaces();
     void ComputeFaceExtensions();
-    amrex::Array1D<int, 0, 5> ComputeOneWayExtensions();
-    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 5> temp_inds);
+    amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
+    //void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 5> temp_inds);
     static amrex::RealArray AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere);
     void InitEMFieldSphere ();
 
+    int the_size_for_this_cell(amrex::Dim3 cell, double S_ext,
+                               const amrex::Array4<amrex::Real> &S_red,
+                               const amrex::Array4<int> &flag_avail_face,
+                               const amrex::Array4<int> &flag_ext_face, int idim);
 private:
     // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
@@ -1147,7 +1153,7 @@ private:
 
 public:
 
-#   ifdef WARPX_DIM_RZ
+#   ifdef static static WARPX_DIM_RZ
         SpectralSolverRZ&
 #   else
         SpectralSolver&
@@ -1158,6 +1164,7 @@ public:
 private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
+
 };
 
 #endif

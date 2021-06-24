@@ -44,7 +44,7 @@ void FiniteDifferenceSolver::EvolveE (
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee or m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
@@ -125,7 +125,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (lx(i, j, k) <= 0) return;
+                if (lx(i, j, k) <= 0 or isnan(lx(i,j,k))) return;
 #endif
                 Ex(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
@@ -136,8 +136,9 @@ void FiniteDifferenceSolver::EvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (ly(i,j,k) <= 0) return;
+                if (ly(i,j,k) <= 0 or isnan(ly(i,j,k))) return;
 #endif
+
                 Ey(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
@@ -145,9 +146,10 @@ void FiniteDifferenceSolver::EvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (lz(i,j,k) <= 0) return;
+                if (lz(i,j,k) <= 0 or isnan(lz(i,j,k))) return;
 #endif
                 Ez(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
