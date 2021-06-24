@@ -20,7 +20,7 @@ try:
     # --- If mpi4py is going to be used, this needs to be imported
     # --- before libwarpx is loaded (though don't know why)
     from mpi4py import MPI
-    if MPI.sizeof(MPI.Comm) == ctypes.sizeof(ctypes.c_int):
+    if MPI._sizeof(MPI.Comm) == ctypes.sizeof(ctypes.c_int):
         MPI_Comm = ctypes.c_int
     else:
         MPI_Comm = ctypes.c_void_p
