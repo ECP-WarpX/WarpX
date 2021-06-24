@@ -60,10 +60,31 @@ For details why this is needed, please see `PR #874 <https://github.com/ECP-Warp
 
 Forward declaration headers
 ------------
+Forward declarations can be used when a header file needs only to know that a given class exists, without any further detail (e.g., when only a pointer to an instance of
+that class is used). Forward declaration headers are a convenient way to organize forward declarations. If a forward declaration is needed for a given class ``MyClass``, declared in ``MyClass.H``,
+the forward declaration should appear in a header file named ``MyClass_fwd.H``, placed in the same folder containing ``MyClass.H``.
+Below we provide a simple example:
 
-Forward declaration headers are a convenient way to organize forward declarations (see for instance `include-what-you-use <https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYU.md>`).
+``MyClass_fwd.H``:
+.. code-block:: cpp
+  class MyClass;
 
-[TODO]
+``MyClass.H``:
+.. code-block:: cpp
+  #include “MyClass_fwd.H”
+  #include “someHeader.H”
+  class MyClass{/* stuff */};
+
+``MyClass.cpp``:
+.. code-block:: cpp
+  #include “MyClass.H”
+  class MyClass{/* stuff */};
+
+Usage:
+``SimpleUsage.H``
+.. code-block:: cpp
+  #include “MyClass_fwd.H”
+  #include <memory>
 
 WarpX-specific vocabulary
 -------------------------
