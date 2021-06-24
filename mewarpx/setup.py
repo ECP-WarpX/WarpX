@@ -10,7 +10,7 @@ requires = [
 ]
 
 extras = {
-    # "tests": ["pytest", "pytest-cov", "pytest-xdist"],
+    "tests": ["pytest", "pytest-cov", "pytest-xdist"],
     # "docs": ["sphinx", "mock", "sphinx_rtd_theme"],
     # "aws": ["awscli", "boto3", "s3fs"]
 }
