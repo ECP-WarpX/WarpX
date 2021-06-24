@@ -67,7 +67,7 @@ jobs:
             . venv/bin/activate
             cd mewarpx
             mkdir test-reports
-            pytest --runall --junitxml=test-reports/junit.xml --cov=mewarpx --cov-report=xml
+            pytest --junitxml=test-reports/junit.xml --cov=mewarpx --cov-report=xml
 
       - store_test_results:
           path: mewarpx/test-reports
