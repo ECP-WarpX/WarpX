@@ -382,6 +382,7 @@ protected:
     std::string physical_element;
 
     int do_resampling = 0;
+
     int do_back_transformed_diagnostics = 1;
 
 #ifdef WARPX_QED
