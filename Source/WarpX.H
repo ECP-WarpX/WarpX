@@ -1153,7 +1153,7 @@ private:
 
 public:
 
-#   ifdef static static WARPX_DIM_RZ
+#   ifdef WARPX_DIM_RZ
         SpectralSolverRZ&
 #   else
         SpectralSolver&
