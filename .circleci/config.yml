@@ -47,6 +47,7 @@ jobs:
             echo 'activate venv; cd'
             . venv/bin/activate
 
+            # WarpX + PyWarpX compile & install
             export WarpX_MPI=ON
             export WarpX_OPENPMD=ON
             export WarpX_PSATD=ON
@@ -54,6 +55,10 @@ jobs:
             export CC=$(which clang)
             export CXX=$(which clang++)
             python3 -m pip install -v .
+
+            # Install development mode of mewarpx
+            cd mewarpx
+            pip install -e .[complete]
 
       # run tests!
       - run:
