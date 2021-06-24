@@ -160,7 +160,7 @@ WarpX::ComputeOneWayExtensions() {
         int* borrowing_x_k_face = borrowing_x.k_face.data();
         double* borrowing_x_rho_area = borrowing_x.rho_face.data();
         double* borrowing_x_area = borrowing_x.area.data();
-        
+
         auto const &Sx_red = m_area_red[maxLevel()][idim]->array(mfi);
         auto const &Sx_enl = m_area_enl[maxLevel()][idim]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
