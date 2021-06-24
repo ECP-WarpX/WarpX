@@ -116,6 +116,10 @@ extern "C" {
 
   int warpx_finestLevel ();
 
+  int warpx_getMyProc ();
+  int warpx_getNProcs ();
+
+
   void mypc_Redistribute ();
 
 #ifdef __cplusplus

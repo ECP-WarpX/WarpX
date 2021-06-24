@@ -479,6 +479,14 @@ extern "C"
         return warpx.finestLevel ();
     }
 
+    int warpx_getMyProc () {
+        return amrex::ParallelDescriptor::MyProc();
+    }
+
+    int warpx_getNProcs () {
+        return amrex::ParallelDescriptor::NProcs();
+    }
+
     void mypc_Redistribute () {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         mypc.Redistribute();
