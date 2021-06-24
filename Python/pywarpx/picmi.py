@@ -801,12 +801,12 @@ class Simulation(picmistandard.PICMI_Simulation):
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
 
-    def initialize_warpx(self):
+    def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
             return
 
         self.warpx_initialized = True
-        pywarpx.warpx.init()
+        pywarpx.warpx.init(mpi_comm)
 
     def write_input_file(self, file_name='inputs'):
         self.initialize_inputs()
