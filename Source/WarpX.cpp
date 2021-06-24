@@ -141,8 +141,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
-bool WarpX::use_filter        = false;
-bool WarpX::use_kspace_filter       = false;
+bool WarpX::use_filter = true;
+bool WarpX::use_kspace_filter = false;
 bool WarpX::use_filter_compensation = false;
 
 bool WarpX::serialize_ics     = false;
@@ -567,8 +567,11 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
+        // TODO When k-space filtering will be implemented also for Cartesian geometries,
+        // this code block will have to be applied in all cases (remove #ifdef condition)
 #ifdef WARPX_DIM_RZ
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        {
             // With RZ spectral, only use k-space filtering
             use_kspace_filter = use_filter;
             use_filter = false;
