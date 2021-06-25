@@ -14,8 +14,8 @@
  */
 
 #include <AMReX_AmrCore.H>
-#include <AMReX_GpuQualifiers.H>
 #include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
 
 /**
  * PICSAR uses PXRMP_GPU to decorate methods which should be

@@ -1,10 +1,15 @@
 #ifndef WARPX_MULTIDIAGNOSTICS_H_
 #define WARPX_MULTIDIAGNOSTICS_H_
 
-#include "FullDiagnostics.H"
-#include "BTDiagnostics.H"
+#include "Diagnostics.H"
+
+#include "MultiDiagnostics_fwd.H"
+
+#include <AMReX_Vector.H>
 
 #include <memory>
+#include <string>
+#include <vector>
 
 /** All types of diagnostics. */
 enum struct DiagTypes {Full, BackTransformed};

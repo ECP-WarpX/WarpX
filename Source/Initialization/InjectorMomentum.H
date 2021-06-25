@@ -10,13 +10,20 @@
 
 #include "CustomMomentumProb.H"
 #include "Parser/GpuParser.H"
+#include "Parser/WarpXParser.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_Gpu.H>
+#include <AMReX.H>
+#include <AMReX_Config.H>
 #include <AMReX_Dim3.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <cmath>
-
+#include <string>
 
 // struct whose getMomentum returns constant momentum.
 struct InjectorMomentumConstant

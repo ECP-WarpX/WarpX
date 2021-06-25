@@ -10,24 +10,29 @@
 #ifndef WARPX_PhysicalParticleContainer_H_
 #define WARPX_PhysicalParticleContainer_H_
 
+#include "Evolve/WarpXDtType.H"
 #include "Initialization/PlasmaInjector.H"
-#include "WarpXParticleContainer.H"
-#include "Filter/NCIGodfreyFilter.H"
 #include "Particles/ElementaryProcess/Ionization.H"
-#include "Particles/Gather/ScaleFields.H"
-
 #ifdef WARPX_QED
-#    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-#    include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
-
 #    include "Particles/ElementaryProcess/QEDPairGeneration.H"
 #    include "Particles/ElementaryProcess/QEDPhotonEmission.H"
+#    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
+#    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
 #endif
+#include "Particles/Gather/ScaleFields.H"
+#include "Particles/Resampling/Resampling.H"
+#include "WarpXParticleContainer.H"
 
-#include <AMReX_IArrayBox.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
 
-#include <map>
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
+#include <memory>
+#include <string>
 
 /**
  * PhysicalParticleContainer is the ParticleContainer class containing plasma

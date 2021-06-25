@@ -9,6 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDMOMENTUM_H_
 
 #include "ReducedDiags.H"
+
 #include <string>
 
 /**

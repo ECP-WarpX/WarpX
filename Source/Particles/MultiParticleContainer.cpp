@@ -10,19 +10,61 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
-#include "SpeciesPhysicalProperties.H"
-#include "WarpX.H"
+#include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
-    #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
-    #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
-    #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
+#   include "Particles/ElementaryProcess/QEDPairGeneration.H"
+#   include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #endif
+#include "Particles/LaserParticleContainer.H"
+#include "Particles/ParticleCreation/FilterCopyTransform.H"
+#ifdef WARPX_QED
+#   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#endif
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/ParticleCreation/SmartCreate.H"
+#include "Particles/ParticleCreation/SmartUtils.H"
+#include "Particles/PhotonParticleContainer.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/RigidInjectedParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "SpeciesPhysicalProperties.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_Particles.H>
+#include <AMReX_Print.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
-#include <limits>
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace amrex;

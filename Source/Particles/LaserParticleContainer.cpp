@@ -6,18 +6,64 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
-#include "Particles/MultiParticleContainer.H"
+#include "LaserParticleContainer.H"
+
+#include "Evolve/WarpXDtType.H"
+#include "Laser/LaserProfiles.H"
+#include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Extension.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particles.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_TinyProfiler.H>
+#include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
 
-#include <limits>
-#include <cmath>
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
+
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <ctype.h>
+#include <functional>
+#include <limits>
+#include <map>
+#include <memory>
 #include <numeric>
+#include <string>
+#include <vector>
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;

@@ -6,8 +6,25 @@
  */
 
 #include "RhoMaximum.H"
+
 #include "Diagnostics/ComputeDiagFunctors/RhoFunctor.H"
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
 #include "WarpX.H"
+
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
+#include <algorithm>
+#include <ostream>
+#include <vector>
 
 using namespace amrex::literals;
 
