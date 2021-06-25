@@ -197,7 +197,6 @@ WarpX::WarpX ()
     t_new.resize(nlevs_max, 0.0);
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
-    walltime = 0;
 
     // Particle Container
     mypc = std::make_unique<MultiParticleContainer>(this);

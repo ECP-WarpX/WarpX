@@ -909,7 +909,6 @@ private:
     amrex::Vector<amrex::Real> t_new;
     amrex::Vector<amrex::Real> t_old;
     amrex::Vector<amrex::Real> dt;
-    amrex::Real walltime;
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
