@@ -1318,8 +1318,10 @@ Numerics and algorithms
 * ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
     Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
 
-* ``warpx.do_multi_J_n_depositions`` (integer; default: `1`)
+* ``warpx.do_multi_J_n_depositions`` (integer)
     Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.

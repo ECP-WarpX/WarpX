@@ -172,7 +172,7 @@ int WarpX::self_fields_max_iters = 200;
 
 int WarpX::do_subcycling = 0;
 int WarpX::do_multi_J = 0;
-int WarpX::do_multi_J_n_depositions = 1;
+int WarpX::do_multi_J_n_depositions;
 int WarpX::J_linear_in_time = 0;
 bool WarpX::safe_guard_cells = 0;
 
@@ -451,7 +451,10 @@ WarpX::ReadParameters ()
         pp_warpx.query("regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
         pp_warpx.query("do_multi_J", do_multi_J);
-        pp_warpx.query("do_multi_J_n_depositions", do_multi_J_n_depositions);
+        if (do_multi_J)
+        {
+            pp_warpx.get("do_multi_J_n_depositions", do_multi_J_n_depositions);
+        }
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};
