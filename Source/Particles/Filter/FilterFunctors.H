@@ -7,10 +7,10 @@
 #ifndef FILTERFUNCTORS_H
 #define FILTERFUNCTORS_H
 
-#include "WarpX.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
 #include <AMReX_Gpu.H>
 #include <AMReX_Random.H>

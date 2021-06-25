@@ -1,12 +1,20 @@
-#include "WarpX.H"
 #include "RhoFunctor.H"
-#include "Utils/CoarsenIO.H"
 
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+    #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+    #include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/CoarsenIO.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+
+#include <memory>
 
 RhoFunctor::RhoFunctor (const int lev,
                         const amrex::IntVect crse_ratio,

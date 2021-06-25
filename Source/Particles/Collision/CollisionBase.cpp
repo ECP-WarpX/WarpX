@@ -6,6 +6,8 @@
  */
 #include "CollisionBase.H"
 
+#include <AMReX_ParmParse.H>
+
 CollisionBase::CollisionBase (std::string collision_name)
 {
 

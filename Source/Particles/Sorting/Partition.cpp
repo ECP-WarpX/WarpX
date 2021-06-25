@@ -4,12 +4,23 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "SortingUtils.H"
 #include "Particles/PhysicalParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "SortingUtils.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
 #include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
+#include <AMReX_StructOfArrays.H>
 
+#include <AMReX_BaseFwd.H>
+
+#include <utility>
 
 using namespace amrex;
 

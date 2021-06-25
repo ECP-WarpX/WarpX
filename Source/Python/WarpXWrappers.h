@@ -8,15 +8,12 @@
 #ifndef WARPX_WRAPPERS_H_
 #define WARPX_WRAPPERS_H_
 
-#include <AMReX.H>
-#include <AMReX_BLProfiler.H>
+#include <AMReX_Config.H>
+#include <AMReX_REAL.H>
 
 #ifdef BL_USE_MPI
 #   include <mpi.h>
 #endif
-
-#include <AMReX_REAL.H>
-
 
 #ifdef __cplusplus
 extern "C" {

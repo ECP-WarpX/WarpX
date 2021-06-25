@@ -5,25 +5,44 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXOpenPMD.H"
-#include "FieldIO.H"  // for getReversedVec
+
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "FieldIO.H"
+#include "Parser/WarpXParserWrapper.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
-#include <AMReX_AmrParticles.H>
+#include <AMReX.H>
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParallelReduce.H>
+#include <AMReX_Particle.H>
+#include <AMReX_Particles.H>
+#include <AMReX_Periodicity.H>
+#include <AMReX_StructOfArrays.H>
 
 #include <algorithm>
 #include <cstdint>
+#include <iostream>
 #include <map>
 #include <set>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <iostream>
-#include <fstream>
-
 
 namespace detail
 {

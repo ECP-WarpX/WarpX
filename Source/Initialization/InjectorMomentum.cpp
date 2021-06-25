@@ -6,8 +6,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "InjectorMomentum.H"
-#include "PlasmaInjector.H"
-
 
 using namespace amrex;
 

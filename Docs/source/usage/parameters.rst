@@ -1588,6 +1588,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Use a negative number or 0 to disable data dumping.
     This is ``0`` (disabled) by default.
     example: ``diag1.intervals = 10,20:25:1``.
+    Note that by default the last timestep is dumped regardless of this parameter. This can be
+    changed using the parameter ``<diag_name>.dump_last_timestep`` described below.
+
+* ``<diag_name>.dump_last_timestep`` (`bool` optional, default `1`)
+    If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. So far, only ``Full`` is supported.

@@ -7,9 +7,19 @@
 #ifndef WARPX_SPECTRAL_SOLVER_H_
 #define WARPX_SPECTRAL_SOLVER_H_
 
+#include "SpectralSolver_fwd.H"
+
 #include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "SpectralFieldData.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealVect.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 #ifdef WARPX_USE_PSATD
 /**

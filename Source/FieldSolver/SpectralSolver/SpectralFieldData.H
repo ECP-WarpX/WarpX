@@ -8,13 +8,23 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
-#include "Utils/WarpX_Complex.H"
-#include "SpectralKSpace.H"
+#include "SpectralFieldData_fwd.H"
+
 #include "AnyFFT.H"
+#include "SpectralKSpace.H"
+#include "Utils/WarpX_Complex.H"
 
+#include <AMReX_BaseFab.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_IndexType.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Vector.H>
 
-#include <string>
+#include <AMReX_BaseFwd.H>
+
+#include <vector>
 
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;

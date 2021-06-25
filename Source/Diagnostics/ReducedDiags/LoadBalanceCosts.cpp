@@ -4,11 +4,31 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "WarpX.H"
 #include "LoadBalanceCosts.H"
-#include "Utils/WarpXUtil.H"
 
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+
+#ifdef AMREX_USE_MPI
+#   include <mpi.h>
+#endif
+
+#include <algorithm>
+#include <cstdio>
+#include <iomanip>
+#include <istream>
 #include <memory>
 
 using namespace amrex;

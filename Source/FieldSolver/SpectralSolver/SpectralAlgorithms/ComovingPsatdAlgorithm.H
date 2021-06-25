@@ -1,7 +1,18 @@
 #ifndef WARPX_COMOVING_PSATD_ALGORITHM_H_
 #define WARPX_COMOVING_PSATD_ALGORITHM_H_
 
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "SpectralBaseAlgorithm.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 #if WARPX_USE_PSATD
 
