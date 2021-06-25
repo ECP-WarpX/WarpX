@@ -783,8 +783,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         {
             IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
+#ifdef WARPX_DIM_RZ
             Real theta_offset = 0._rt;
             if (rz_random_theta) theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi;
+#endif
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;

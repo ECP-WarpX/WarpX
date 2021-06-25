@@ -506,7 +506,7 @@ Particle initialization
 
 * ``<species_name>.random_theta`` (`bool`) optional (default `1`)
     When using RZ, whether to randomize the azimuthal position of particles.
-    This is used when ``<species_name>.injection_style = nuniformpercell``.
+    This is used when ``<species_name>.injection_style = NUniformPerCell``.
 
 * ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
     Split particles of the species when crossing the boundary from a lower
