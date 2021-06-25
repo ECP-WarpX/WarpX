@@ -5,9 +5,12 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "CollisionHandler.H"
+
 #include "PairWiseCoulombCollision.H"
 #include "BackgroundMCCCollision.H"
 #include <AMReX_ParmParse.H>
+
+#include <vector>
 
 CollisionHandler::CollisionHandler()
 {

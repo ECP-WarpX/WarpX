@@ -4,8 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "Utils/WarpXConst.H"
 #include "SpectralHankelTransformer.H"
+
+#include "Utils/WarpXConst.H"
 
 #include <memory>
 
