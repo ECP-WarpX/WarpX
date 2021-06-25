@@ -71,9 +71,11 @@ Below we provide a simple example:
 
 ``MyClass_fwd.H``:
 .. code-block:: cpp
+
   class MyClass;
 
 ``MyClass.H``:
+
 .. code-block:: cpp
 
    #include "MyClass_fwd.H"
@@ -81,13 +83,14 @@ Below we provide a simple example:
    class MyClass{/* stuff */};
 
 ``MyClass.cpp``:
+
 .. code-block:: cpp
 
    #include "MyClass.H"
    class MyClass{/* stuff */};
 
-Usage:
-``SimpleUsage.H``
+Usage: in ``SimpleUsage.H``
+
 .. code-block:: cpp
 
    #include "MyClass_fwd.H"
