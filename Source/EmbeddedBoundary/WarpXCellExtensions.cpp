@@ -46,10 +46,15 @@ WarpX::ComputeFaceExtensions(){
 #endif
 }
 
-int WarpX::the_size_for_this_cell(amrex::Dim3 cell, amrex::Real S_ext,
-                                  const amrex::Array4<amrex::Real>& S_red,
-                                  const amrex::Array4<int>& flag_avail_face,
-                                  const amrex::Array4<int>& flag_ext_face, int idim) {
+/**
+* \brief For the face of cell pointing in direction idim, compute the number of faces
+* we need to intrude. For the one-way extension this function returns only one or zero: one if the
+* face can be extended withe the one-way extension, zeros if it can't.
+*/
+int WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
+                                          const amrex::Array4<amrex::Real>& S_red,
+                                          const amrex::Array4<int>& flag_avail_face,
+                                          const amrex::Array4<int>& flag_ext_face, int idim) {
     int i = cell.x;
     int j = cell.y;
     int k = cell.z;
@@ -197,7 +202,6 @@ WarpX::ComputeOneWayExtensions() {
             int nborrow = borrowing_x_size(i, j, k);
             if (nborrow == 0) {
                 borrowing_x_inds_pointer(i, j, k) = nullptr;
-                //I will probably need to do the same with the lending pointers
             } else{
                 borrowing_x_inds_pointer(i, j, k) = borrowing_x_inds + ps;
 
@@ -422,7 +426,6 @@ WarpX::ComputeOneWayExtensions() {
                 int nborrow = borrowing_size_z(i, j, k);
                 if (nborrow == 0) {
                     borrowing_inds_pointer_z(i, j, k) = nullptr;
-                    //I will probably need to do the same with the lending pointers
                 } else{
                     borrowing_inds_pointer_z(i, j, k) = inds_ptr_borrowing_z + ps;
 
