@@ -51,14 +51,15 @@ WarpX::ComputeFaceExtensions(){
 * we need to intrude. For the one-way extension this function returns only one or zero: one if the
 * face can be extended withe the one-way extension, zeros if it can't.
 */
-int WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
-                                          const amrex::Array4<amrex::Real>& S_red,
-                                          const amrex::Array4<int>& flag_avail_face,
-                                          const amrex::Array4<int>& flag_ext_face, int idim) {
+int
+WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
+                                      const amrex::Array4<amrex::Real>& S_red,
+                                      const amrex::Array4<int>& flag_avail_face,
+                                      const amrex::Array4<int>& flag_ext_face, int idim) {
     int i = cell.x;
     int j = cell.y;
     int k = cell.z;
-    int nelems = 0;
+    int n_borrow = 0;
     bool stop = false;
     if(idim == 0){
         for (int j_n = -1; j_n < 2; j_n++) {
@@ -73,7 +74,7 @@ int WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                     if (S_red(i, j + j_n, k + k_n) > S_ext
                         and flag_avail_face(i, j + j_n, k + k_n)
                         and flag_ext_face(i, j, k) and not stop) {
-                        nelems += 1;
+                        n_borrow += 1;
                         stop = true;
                     }
                 }
@@ -92,13 +93,13 @@ int WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                     if (S_red(i + i_n, j, k + k_n) > S_ext
                         and flag_avail_face(i + i_n, j, k + k_n)
                         and flag_ext_face(i, j, k) and not stop) {
-                        nelems += 1;
+                        n_borrow += 1;
                         stop = true;
                     }
                 }
             }
         }
-    }else if(idim == 2){
+    }else if(idim == 2) {
         for (int i_n = -1; i_n < 2; i_n++) {
             for (int j_n = -1; j_n < 2; j_n++) {
                 //This if makes sure that we don't visit the "diagonal neighbours"
@@ -111,16 +112,14 @@ int WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                     if (S_red(i + i_n, j + j_n, k) > S_ext
                         and flag_avail_face(i + i_n, j + j_n, k)
                         and flag_ext_face(i, j, k) and not stop) {
-                        nelems += 1;
+                        n_borrow += 1;
                         stop = true;
                     }
                 }
             }
         }
-    }else{
-        amrex::Abort("Template argument should be 0, 1 or 2");
     }
-    return nelems;
+    return n_borrow;
 }
 
 /**
@@ -186,8 +185,8 @@ WarpX::ComputeOneWayExtensions() {
             amrex::Real Sx_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                                   lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
             amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
-            int n_borrow = the_size_for_this_cell(cell, Sx_ext, Sx_red, flag_avail_face_x,
-                                                  flag_ext_face_x, idim);
+            int n_borrow = ComputeNBorrowOneCellExtension(cell, Sx_ext, Sx_red, flag_avail_face_x,
+                                                          flag_ext_face_x, idim);
 
             //int n_borrow = 1;
             //int n_lend = 1;
@@ -299,8 +298,8 @@ WarpX::ComputeOneWayExtensions() {
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
-                int n_borrow = the_size_for_this_cell(cell, Sy_ext, Sy_red, flag_avail_face_y,
-                                                      flag_ext_face_y, idim);
+                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sy_ext, Sy_red, flag_avail_face_y,
+                                                              flag_ext_face_y, idim);
 
                 borrowing_size_y(i, j, k) = n_borrow;
                 return n_borrow;
@@ -411,8 +410,8 @@ WarpX::ComputeOneWayExtensions() {
                 amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                                       ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                int n_borrow = the_size_for_this_cell(cell, Sz_ext, Sz_red, flag_avail_face_z,
-                                                      flag_ext_face_z, idim);
+                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sz_ext, Sz_red, flag_avail_face_z,
+                                                              flag_ext_face_z, idim);
 
 
                 borrowing_size_z(i, j, k) = n_borrow;
