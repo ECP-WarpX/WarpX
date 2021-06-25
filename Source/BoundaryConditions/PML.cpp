@@ -40,7 +40,6 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
-#include <AMReX_ccse-mpi.H>
 
 #include <algorithm>
 #include <cmath>

@@ -11,7 +11,7 @@
 #include <AMReX_Print.H>
 
 #if defined(AMREX_USE_MPI)
-        #include <mpi.h>
+#   include <mpi.h>
 #endif
 
 #include <string>

@@ -13,7 +13,6 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_SPACE.H>
-#include <AMReX_ccse-mpi.H>
 
 #include <algorithm>
 #include <cstdint>
