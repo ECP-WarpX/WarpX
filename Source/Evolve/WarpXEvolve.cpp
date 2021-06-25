@@ -66,11 +66,11 @@ WarpX::Evolve (int numsteps)
 
     bool early_params_checked = false; // check typos in inputs after step 1
 
-    Real walltime, walltime_start = amrex::second();
+    static Real evolve_time = 0;
 
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
-        Real walltime_beg_step = amrex::second();
+        Real evolve_time_beg_step = amrex::second();
 
         multi_diags->NewIteration();
 
@@ -281,11 +281,11 @@ WarpX::Evolve (int numsteps)
 
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
                       << " DT = " << dt[0] << "\n";
-        Real walltime_end_step = amrex::second();
-        walltime = walltime_end_step - walltime_start;
-        amrex::Print()<< "Walltime = " << walltime
-                      << " s; This step = " << walltime_end_step-walltime_beg_step
-                      << " s; Avg. per step = " << walltime/(step+1) << " s\n";
+        Real evolve_time_end_step = amrex::second();
+        evolve_time += evolve_time_end_step - evolve_time_beg_step;
+        amrex::Print()<< "Evolve time = " << evolve_time
+                      << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
+                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
