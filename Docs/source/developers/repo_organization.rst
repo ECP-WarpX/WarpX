@@ -70,6 +70,7 @@ the forward declaration should appear in a header file named ``MyClass_fwd.H``, 
 Below we provide a simple example:
 
 ``MyClass_fwd.H``:
+
 .. code-block:: cpp
 
   class MyClass;
