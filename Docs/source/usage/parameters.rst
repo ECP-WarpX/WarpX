@@ -1126,8 +1126,8 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`)
-    Set to ``pairwisecoulomb`` for pairwise Coulomb collisions. This is the
-    default to maintain backward compatibility.
+    The type of collsion. The types implemented are ``pairwisecoulomb`` for pairwise Coulomb collisions and 
+``background_mcc`` for collisions between particles and a neutral background. If not specified, it defaults to ``pairwisecoulomb``.
 
 * ``<collision_name>.species`` (`strings`, two species names separated by spaces)
     The names of two species, between which the collision will be considered.
@@ -1150,7 +1150,7 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     Execute collision every # time steps.
     The default value is 1.
 
-A non-relativistic Monte Carlo treatment for particles colliding with a neutral,
+The ``background_mcc`` scattering type is a non-relativistic Monte Carlo treatment for particles colliding with a neutral,
 uniform background gas is also available. The implementation follows the so-called
 null collision strategy discussed for example in `Birdsall (IEEE Transactions on
 Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.

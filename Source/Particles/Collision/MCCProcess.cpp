@@ -64,7 +64,7 @@ MCCProcess::init()
     m_energy_hi = m_energies[m_grid_size-1];
     m_sigma_lo = m_sigmas[0];
     m_sigma_hi = m_sigmas[m_grid_size-1];
-    m_dE = m_energies[1] - m_energies[0];
+    m_dE = (m_energy_hi - m_energy_lo)/(m_grid_size - 1.);
 
     // sanity check cross-section energy grid
     sanityCheckEnergyGrid(m_energies, m_dE);
