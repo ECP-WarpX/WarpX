@@ -21,11 +21,11 @@ try:
     # --- before libwarpx is loaded (though don't know why)
     from mpi4py import MPI
     if MPI._sizeof(MPI.Comm) == ctypes.sizeof(ctypes.c_int):
-        MPI_Comm = ctypes.c_int
+        _MPI_Comm_type = ctypes.c_int
     else:
-        MPI_Comm = ctypes.c_void_p
+        _MPI_Comm_type = ctypes.c_void_p
 except ImportError:
-    pass
+    _MPI_Comm_type = ctypes.c_void_p
 
 # --- Is there a better way of handling constants?
 clight = 2.99792458e+8 # m/s
@@ -140,7 +140,7 @@ def _array1d_from_pointer(pointer, dtype, size):
 
 # set the arg and return types of the wrapped functions
 libwarpx.amrex_init.argtypes = (ctypes.c_int, _LP_LP_c_char)
-libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, MPI_Comm)
+libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MPI_Comm_type)
 libwarpx.warpx_getParticleStructs.restype = _LP_particle_p
 libwarpx.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getEfield.restype = _LP_LP_c_real
@@ -253,7 +253,7 @@ def amrex_init(argv, mpi_comm=None):
         libwarpx.amrex_init(argc, argvC)
     else:
         comm_ptr = MPI._addressof(mpi_comm)
-        comm_val = MPI_Comm.from_address(comm_ptr)
+        comm_val = _MPI_Comm_type.from_address(comm_ptr)
         libwarpx.amrex_init_with_inited_mpi(argc, argvC, comm_val)
 
 def initialize(argv=None, mpi_comm=None):
