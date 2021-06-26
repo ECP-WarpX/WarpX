@@ -6,8 +6,11 @@
  */
 #include "BackgroundMCCCollision.H"
 #include "MCCScattering.H"
+#include "Particles/ParticleCreation/FilterCopyTransform.H"
+#include "Particles/ParticleCreation/SmartCopy.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX_ParmParse.H>
