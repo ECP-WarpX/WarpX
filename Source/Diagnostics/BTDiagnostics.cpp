@@ -95,7 +95,7 @@ BTDiagnostics::ReadParameters ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.end_moving_window_step < 0,
         "The moving window must not stop when using the boosted frame diagnostic.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
-        "The moving window must not stop when using the boosted frame diagnostic.");
+        "The moving window must start at step zero for the boosted frame diagnostic.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == AMREX_SPACEDIM-1,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
