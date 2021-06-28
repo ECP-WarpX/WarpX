@@ -280,15 +280,15 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
         }
 
-        Real walltime_end_step = amrex::second();
-        walltime = walltime_end_step - walltime_start;
+        Real evolve_time_end_step = amrex::second();
+        evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         if (verbose) {
             amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
                         << " DT = " << dt[0] << "\n";
-            amrex::Print()<< "Walltime = " << walltime
-                        << " s; This step = " << walltime_end_step-walltime_beg_step
-                        << " s; Avg. per step = " << walltime/(step+1) << " s\n";
+            amrex::Print()<< "Evolve time = " << evolve_time
+                      << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
+                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
         }
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
