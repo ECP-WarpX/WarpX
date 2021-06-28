@@ -745,8 +745,6 @@ class MCCCollisions(object):
                     val = val.name
                 collision.add_new_attr(process+'_'+key, val)
 
-        pywarpx.Collisions.collisions_list.append(collision)
-
 
 class Simulation(picmistandard.PICMI_Simulation):
     def init(self, kw):
