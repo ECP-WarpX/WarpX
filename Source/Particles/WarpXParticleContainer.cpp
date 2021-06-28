@@ -519,10 +519,10 @@ WarpXParticleContainer::DepositCurrent (
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             const long np = pti.numParticles();
-            auto & wp = pti.GetAttribs(PIdx::w);
-            auto & uxp = pti.GetAttribs(PIdx::ux);
-            auto & uyp = pti.GetAttribs(PIdx::uy);
-            auto & uzp = pti.GetAttribs(PIdx::uz);
+            const auto & wp = pti.GetAttribs(PIdx::w);
+            const auto & uxp = pti.GetAttribs(PIdx::ux);
+            const auto & uyp = pti.GetAttribs(PIdx::uy);
+            const auto & uzp = pti.GetAttribs(PIdx::uz);
 
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)

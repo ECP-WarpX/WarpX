@@ -789,8 +789,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAvgLin (
 #endif
         const Real* kz_s = modified_kz_vec[mfi].dataPtr();
 
-        Array4<Real> C = C_coef[mfi].array();
-        Array4<Real> S_ck = S_ck_coef[mfi].array();
+        Array4<Real const> C = C_coef[mfi].array();
+        Array4<Real const> S_ck = S_ck_coef[mfi].array();
 
         Array4<Complex> X5 = X5_coef[mfi].array();
         Array4<Complex> X6 = X6_coef[mfi].array();
