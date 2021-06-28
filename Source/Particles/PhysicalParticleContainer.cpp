@@ -10,31 +10,98 @@
  */
 #include "PhysicalParticleContainer.H"
 
+#include "Filter/NCIGodfreyFilter.H"
+#include "Initialization/InjectorDensity.H"
+#include "Initialization/InjectorMomentum.H"
+#include "Initialization/InjectorPosition.H"
 #include "MultiParticleContainer.H"
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
+#ifdef WARPX_QED
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#endif
+#include "Particles/Gather/FieldGather.H"
+#include "Particles/Gather/GetExternalFields.H"
+#include "Particles/Pusher/CopyParticleAttribs.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/PushSelector.H"
+#include "Particles/Pusher/UpdateMomentumBoris.H"
+#include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
+#include "Particles/Pusher/UpdateMomentumHigueraCary.H"
+#include "Particles/Pusher/UpdateMomentumVay.H"
+#include "Particles/Pusher/UpdatePosition.H"
+#include "Particles/SpeciesPhysicalProperties.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "Python/WarpXWrappers.h"
 #include "Utils/IonizationEnergiesTable.H"
-#include "Particles/Gather/FieldGather.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/Pusher/CopyParticleAttribs.H"
-#include "Particles/Pusher/PushSelector.H"
-#include "Particles/Gather/GetExternalFields.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
-#include <AMReX_Geometry.H>
-#include <AMReX_Print.H>
 #include <AMReX.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuElixir.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_Math.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParGDB.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particle.H>
+#include <AMReX_ParticleContainerBase.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_Print.H>
+#include <AMReX_Random.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Scan.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_TinyProfiler.H>
+#include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
+
+
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
-#include <sstream>
+#include <map>
+#include <random>
 #include <string>
+#include <utility>
+#include <vector>
 
 using namespace amrex;
 

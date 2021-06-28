@@ -6,8 +6,18 @@
  */
 
 #include "FieldReduction.H"
-#include "WarpX.H"
+
+#include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
+
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <ostream>
 
 #include <regex>
 

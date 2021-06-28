@@ -5,20 +5,50 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <AMReX_MultiFabUtil.H>
-#include <AMReX_MultiFabUtil_C.H>
-
 #include "BackTransformedDiagnostic.H"
-#include "SliceDiagnostic.H"
+
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFabUtil.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Scan.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Utility.H>
+#include <AMReX_VectorIO.H>
+#include <AMReX_VisMF.H>
+
+#ifdef WARPX_USE_HDF5
+    #include <hdf5.h>
+#endif
+
+#include <algorithm>
+#include <cmath>
+#include <fstream>
 #include <memory>
 
 using namespace amrex;
 
 #ifdef WARPX_USE_HDF5
-
-#include <hdf5.h>
 
 /*
   Helper functions for doing the HDF5 IO.

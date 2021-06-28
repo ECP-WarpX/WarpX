@@ -11,7 +11,7 @@
 
 // #ifdef WARPX_USE_GPUCLOCK
 
-#include <limits.h>
+#include <climits>
 
 /**
  * \brief Defines a timer object to be used on GPU; measures summed thread cycles.

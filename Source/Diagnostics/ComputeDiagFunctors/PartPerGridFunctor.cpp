@@ -1,5 +1,23 @@
 #include "PartPerGridFunctor.H"
+
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/CoarsenIO.H"
+#include "WarpX.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_INT.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <memory>
 
 PartPerGridFunctor::PartPerGridFunctor(const amrex::MultiFab * const mf_src, const int lev, const amrex::IntVect crse_ratio, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev)

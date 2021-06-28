@@ -6,20 +6,37 @@
  */
 
 #include "ParticleHistogram.H"
-#include "WarpX.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Utils/WarpXUtil.H"
-#include "Particles/Filter/FilterFunctors.H"
 
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuAtomic.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_Math.H>
-#include <AMReX_ParticleReduce.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <memory>
-
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 

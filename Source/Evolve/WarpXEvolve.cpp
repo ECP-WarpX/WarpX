@@ -9,17 +9,44 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "FieldSolver/WarpX_QED_K.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Python/WarpX_py.H"
+
+#include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "Evolve/WarpXDtType.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
+#ifdef WARPX_DIM_RZ
+#   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#endif
+#include "Parallelization/GuardCellManager.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Python/WarpX_py.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 
-#include <cmath>
-#include <limits>
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <array>
+#include <memory>
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 
@@ -39,11 +66,11 @@ WarpX::Evolve (int numsteps)
 
     bool early_params_checked = false; // check typos in inputs after step 1
 
-    Real walltime, walltime_start = amrex::second();
+    static Real evolve_time = 0;
 
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
-        Real walltime_beg_step = amrex::second();
+        Real evolve_time_beg_step = amrex::second();
 
         multi_diags->NewIteration();
 
