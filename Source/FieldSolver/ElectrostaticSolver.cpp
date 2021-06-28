@@ -333,10 +333,14 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         rho[lev]->mult(-1._rt/PhysConst::ep0);
     }
 
+    int verbosity = 2;
+    ParmParse pp_warpx("warpx");
+    pp_warpx.query("solver_verbosity", verbosity);
+
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
     MLMG mlmg(linop);
-    mlmg.setVerbose(2);
+    mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
 }
@@ -415,9 +419,12 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
     }
+    int verbosity;
+    ParmParse pp_warpx("warpx");
+    pp_warpx.query("solver_verbosity", verbosity);
 
     MLMG mlmg(linop);
-    mlmg.setVerbose(2);
+    mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
 }

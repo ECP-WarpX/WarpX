@@ -524,7 +524,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         self.do_pml = kw.pop('warpx_do_pml', None)
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
-
         if self.method == 'PSATD':
             self.psatd_periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
             self.psatd_fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
@@ -579,11 +578,11 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
-
+        self.solver_verbosity = kw.pop('warpx_solver_verbosity', 2)
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
-
+        pywarpx.warpx.solver_verbosity = self.solver_verbosity
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = 'relativistic'
         else:
