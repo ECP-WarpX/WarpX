@@ -69,17 +69,20 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual int getRequiredNumberOfFields () const override final
         {
-            if (!m_J_linear_in_time && !m_time_averaging)
-            {
-                return SpectralFieldIndex::n_fields;
-            }
-            else if (!m_J_linear_in_time && m_time_averaging)
-            {
-                return SpectralFieldIndexTimeAveraging::n_fields;
-            }
-            else // linear in J (both with and without time averaging)
+            if (m_J_linear_in_time)
             {
                 return SpectralFieldIndexJLinearInTime::n_fields;
+            }
+            else
+            {
+                if (m_time_averaging)
+                {
+                    return SpectralFieldIndexTimeAveraging::n_fields;
+                }
+                else
+                {
+                    return SpectralFieldIndex::n_fields;
+                }
             }
         };
 
