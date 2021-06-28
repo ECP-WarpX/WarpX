@@ -14,6 +14,7 @@
 
 #include "Evolve/WarpXDtType.H"
 #include "Particles/ParticleBoundaries.H"
+#include "SpeciesPhysicalProperties.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
