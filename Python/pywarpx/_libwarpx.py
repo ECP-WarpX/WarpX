@@ -24,7 +24,6 @@ try:
         _MPI_Comm_type = ctypes.c_int
     else:
         _MPI_Comm_type = ctypes.c_void_p
-        MPI = None
 except ImportError:
     MPI = None
     _MPI_Comm_type = ctypes.c_void_p

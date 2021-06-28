@@ -37,9 +37,9 @@ extern "C" {
 
     void amrex_init (int argc, char* argv[]);
 
-    #ifdef BL_USE_MPI
+#ifdef AMREX_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm);
-    #endif
+#endif
 
     void amrex_finalize (int finalize_mpi);
 
