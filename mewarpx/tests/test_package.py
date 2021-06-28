@@ -1,6 +1,4 @@
 """Test basic package aspects"""
-from __future__ import print_function
-
 # Native python imports
 from builtins import next
 import csv
