@@ -145,6 +145,8 @@ SpectralFieldData::ForwardTransform (const int lev,
 #endif
 
     // Loop over boxes
+    // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
+    //       the FFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -247,6 +249,8 @@ SpectralFieldData::BackwardTransform( const int lev,
 #endif
 
     // Loop over boxes
+    // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
+    //       the iFFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
