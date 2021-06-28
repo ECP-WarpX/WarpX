@@ -1,12 +1,19 @@
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
+#include "MacroscopicProperties_fwd.H"
 
 #include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXConst.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
 
-
+#include <memory>
+#include <string>
 
 /**
  * \brief This class contains the macroscopic properties of the medium needed to

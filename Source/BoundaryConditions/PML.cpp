@@ -6,23 +6,45 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "PML.H"
+
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
-#include "Utils/WarpXConst.H"
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#endif
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_Print.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FBI.H>
+#include <AMReX_FabArrayBase.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
 
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
-
 #include <algorithm>
+#include <cmath>
 #include <memory>
-
+#include <utility>
 
 using namespace amrex;
 

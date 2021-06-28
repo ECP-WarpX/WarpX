@@ -10,21 +10,36 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
-#include "Parser/WarpXParserWrapper.H"
-#include "Utils/WarpXConst.H"
-#include "SpeciesPhysicalProperties.H"
+#include "WarpXParticleContainer_fwd.H"
+
 #include "Evolve/WarpXDtType.H"
-#include "Particles/Resampling/Resampling.H"
+#include "SpeciesPhysicalProperties.H"
 
 #ifdef WARPX_QED
-#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
+#include "MultiParticleContainer_fwd.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_INT.H>
+#include <AMReX_ParIter.H>
 #include <AMReX_Particles.H>
-#include <AMReX_AmrCore.H>
+#include <AMReX_REAL.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Vector.H>
 
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
+#include <array>
+#include <iosfwd>
+#include <map>
 #include <memory>
+#include <string>
+#include <utility>
 
 enum struct ParticleBC { none=0, absorbing };
 
@@ -103,9 +118,6 @@ public:
         return GetStructOfArrays().GetIntData(comp);
     }
 };
-
-// Forward-declaration needed by WarpXParticleContainer below
-class MultiParticleContainer;
 
 /**
  * WarpXParticleContainer is the base polymorphic class from which all concrete
@@ -199,7 +211,7 @@ public:
                        bool do_rz_volume_scaling = false );
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
-    virtual void DepositCharge(WarpXParIter& pti,
+    virtual void DepositCharge (WarpXParIter& pti,
                                RealVector& wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
@@ -210,22 +222,22 @@ public:
                                int lev,
                                int depos_lev);
 
-    virtual void DepositCurrent(WarpXParIter& pti,
-                                RealVector& wp,
-                                RealVector& uxp,
-                                RealVector& uyp,
-                                RealVector& uzp,
-                                const int * const ion_lev,
-                                amrex::MultiFab* jx,
-                                amrex::MultiFab* jy,
-                                amrex::MultiFab* jz,
-                                const long offset,
-                                const long np_to_depose,
-                                int thread_num,
-                                int lev,
-                                int depos_lev,
-                                amrex::Real dt,
-                                amrex::Real relative_time);
+    virtual void DepositCurrent (WarpXParIter& pti,
+                                RealVector const & wp,
+                                RealVector const & uxp,
+                                RealVector const & uyp,
+                                RealVector const & uzp,
+                                int const * const ion_lev,
+                                amrex::MultiFab* const jx,
+                                amrex::MultiFab* const jy,
+                                amrex::MultiFab* const jz,
+                                long const offset,
+                                long const np_to_depose,
+                                int const thread_num,
+                                int const lev,
+                                int const depos_lev,
+                                amrex::Real const dt,
+                                amrex::Real const relative_time);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and

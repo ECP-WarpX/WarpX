@@ -4,30 +4,32 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "LoadBalanceCosts.H"
-#include "LoadBalanceEfficiency.H"
-#include "ParticleHistogram.H"
-#include "BeamRelevant.H"
-#include "ParticleEnergy.H"
-#include "ParticleMomentum.H"
-#include "ParticleExtrema.H"
-#include "FieldEnergy.H"
-#include "FieldMomentum.H"
-#include "FieldMaximum.H"
-#include "RhoMaximum.H"
-#include "ParticleNumber.H"
-#include "FieldReduction.H"
 #include "MultiReducedDiags.H"
 
-#include <AMReX_ParmParse.H>
-#include <AMReX_ParallelDescriptor.H>
+#include "BeamRelevant.H"
+#include "FieldEnergy.H"
+#include "FieldMaximum.H"
+#include "FieldMomentum.H"
+#include "FieldReduction.H"
+#include "LoadBalanceCosts.H"
+#include "LoadBalanceEfficiency.H"
+#include "ParticleEnergy.H"
+#include "ParticleExtrema.H"
+#include "ParticleHistogram.H"
+#include "ParticleMomentum.H"
+#include "ParticleNumber.H"
+#include "RhoMaximum.H"
+#include "Utils/IntervalsParser.H"
 
-#include <fstream>
-#include <map>
+#include <AMReX.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
+#include <map>
 
 using namespace amrex;
 

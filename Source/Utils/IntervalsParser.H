@@ -1,8 +1,8 @@
 #ifndef WARPX_INTERVALSPARSER_H_
 #define WARPX_INTERVALSPARSER_H_
 
-#include <string>
 #include <limits>
+#include <string>
 #include <vector>
 
 /**

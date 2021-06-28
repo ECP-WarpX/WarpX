@@ -9,7 +9,8 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_BEAMRELEVANT_H_
 
 #include "ReducedDiags.H"
-#include <fstream>
+
+#include <string>
 
 /**
  *  This class contains diagnostics that are relevant to beam.

@@ -2,7 +2,16 @@
 #define WARPX_FLUSHFORMATPLOTFILE_H_
 
 #include "FlushFormat.H"
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
+
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <iosfwd>
+#include <string>
 
 /**
  * \brief This class aims at dumping diags data to disk using the AMReX Plotfile format.

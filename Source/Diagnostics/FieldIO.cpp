@@ -6,20 +6,16 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "FieldIO.H"
-#include "WarpX.H"
+
 #include "Utils/CoarsenIO.H"
-#include "Utils/WarpXUtil.H"
-
-#ifdef WARPX_USE_PSATD
-#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
-#endif
-
-#ifdef WARPX_USE_OPENPMD
-#   include <openPMD/openPMD.hpp>
-#endif
 
 #include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_SPACE.H>
 
+#include <algorithm>
+#include <cstdint>
 #include <memory>
 
 using namespace amrex;

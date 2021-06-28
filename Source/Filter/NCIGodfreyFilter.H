@@ -7,8 +7,11 @@
 #ifndef WARPX_GODFREY_FILTER_H_
 #define WARPX_GODFREY_FILTER_H_
 
+#include "NCIGodfreyFilter_fwd.H"
+
 #include "Filter.H"
 
+#include <AMReX_REAL.H>
 
 enum class godfrey_coeff_set { Ex_Ey_Bz=0, Bx_By_Ez=1 };
 
