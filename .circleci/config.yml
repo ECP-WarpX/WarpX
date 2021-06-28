@@ -1,0 +1,86 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@1.2.3
+
+jobs:
+
+  build_and_test_job:
+    docker:
+      # specify the version you desire here
+      # This is a CircleCI convenience image with CI & python packages
+      # pre-installed.
+      - image: cimg/python:3.9
+
+    working_directory: ~/WarpX
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v3-dependencies-{{ checksum "mewarpx/setup.py" }}-{{ checksum ".circleci/config.yml" }}
+
+      - run:
+          name: install dependencies
+          command: |
+            .github/workflows/dependencies/pyfull.sh
+
+            python3 -m venv venv
+            . venv/bin/activate
+
+            python3 -m pip install --upgrade pip setuptools wheel
+
+      - save_cache:
+          paths:
+            - ./venv
+          key: v3-dependencies-{{ checksum "mewarpx/setup.py" }}-{{ checksum ".circleci/config.yml" }}
+
+      - run:
+          name: build WarpX install mewarpx
+          command: |
+            echo 'activate venv; cd'
+            . venv/bin/activate
+
+            # WarpX + PyWarpX compile & install
+            export WarpX_MPI=ON
+            export WarpX_OPENPMD=ON
+            export WarpX_PSATD=ON
+            export WarpX_QED_TABLE_GEN=ON
+            export CC=$(which clang)
+            export CXX=$(which clang++)
+            python3 -m pip install -v .
+
+            # Install development mode of mewarpx
+            cd mewarpx
+            pip install -e .[complete]
+
+      # run tests!
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            cd mewarpx
+            mkdir test-reports
+            pytest --junitxml=test-reports/junit.xml --cov=mewarpx --cov-report=xml
+
+      - store_test_results:
+          path: mewarpx/test-reports
+
+      - store_artifacts:
+          path: mewarpx/test-reports
+          destination: test-reports
+
+      - codecov/upload
+
+# https://circleci.com/docs/2.0/workflows/
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build_and_test_job
