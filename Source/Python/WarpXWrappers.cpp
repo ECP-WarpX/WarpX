@@ -125,19 +125,10 @@ extern "C"
         warpx_amrex_init(argc, argv);
     }
 
-#ifdef BL_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm)
     {
         warpx_amrex_init(argc, argv, true, mpicomm);
     }
-#else
-    // This shouldn't be called, but is here just in case, since the 
-    // function needs to be clared
-    void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm)
-    {
-        warpx_amrex_init(argc, argv);
-    }
-#endif
 
     void amrex_finalize (int /*finalize_mpi*/)
     {
