@@ -7,7 +7,7 @@
 #include "CollisionHandler.H"
 
 #include "PairWiseCoulombCollision.H"
-
+#include "BackgroundMCCCollision.H"
 #include <AMReX_ParmParse.H>
 
 #include <vector>
@@ -34,6 +34,12 @@ CollisionHandler::CollisionHandler()
 
         if (type == "pairwisecoulomb") {
             allcollisions[i] = std::make_unique<PairWiseCoulombCollision>(collision_names[i]);
+        }
+        else if (type == "background_mcc") {
+            allcollisions[i] = std::make_unique<BackgroundMCCCollision>(collision_names[i]);
+        }
+        else{
+            amrex::Abort("Unknown collision type.");
         }
 
     }
