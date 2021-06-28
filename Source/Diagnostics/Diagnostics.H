@@ -1,13 +1,20 @@
 #ifndef WARPX_DIAGNOSTICS_H_
 #define WARPX_DIAGNOSTICS_H_
 
-#include "FlushFormats/FlushFormat.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
+
+#include "ComputeDiagFunctors/ComputeDiagFunctor_fwd.H"
+#include "FlushFormats/FlushFormat_fwd.H"
+
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
+#include <string>
+#include <vector>
 
 /**
  * \brief base class for diagnostics.

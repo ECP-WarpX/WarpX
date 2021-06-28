@@ -7,24 +7,35 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
+#include "BoundaryConditions/PML.H"
 #include "FieldIO.H"
-#include "SliceDiagnostic.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/CoarsenIO.H"
-
-#ifdef WARPX_USE_OPENPMD
-#   include "Diagnostics/WarpXOpenPMD.H"
-#endif
-
-#include <AMReX_MultiFabUtil.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_buildInfo.H>
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+#include <AMReX_VisMF.H>
 
+#include <array>
+#include <istream>
 #include <memory>
+#include <string>
+#include <utility>
 
 using namespace amrex;
 

@@ -8,7 +8,8 @@
 #ifndef UTILS_WARPXALGORITHMSELECTION_H_
 #define UTILS_WARPXALGORITHMSELECTION_H_
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_BaseFwd.H>
+
 #include <string>
 
 /**

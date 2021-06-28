@@ -9,14 +9,21 @@
 #ifndef WARPX_LaserParticleContainer_H_
 #define WARPX_LaserParticleContainer_H_
 
+#include "Evolve/WarpXDtType.H"
 #include "Laser/LaserProfiles.H"
-
 #include "WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
-#include "Parser/WarpXParser.H"
 
-#include <memory>
+#include <AMReX_Extension.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
 #include <limits>
+#include <memory>
+#include <string>
 
 /**
  * The main method to inject a laser pulse in WarpX is to use an artificial
@@ -114,6 +121,8 @@ private:
     // Unique (smart) pointer to the laser profile
     std::unique_ptr<WarpXLaserProfiles::ILaserProfile> m_up_laser_profile;
 
+    // Flag to disable the laser (e.g., if e_max is 0)
+    bool m_enabled = true;
 };
 
 #endif

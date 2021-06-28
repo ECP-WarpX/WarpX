@@ -8,9 +8,18 @@
 #ifndef WARPX_FINITE_DIFFERENCE_SOLVER_H_
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
-#include <AMReX_MultiFab.H>
-#include "MacroscopicProperties/MacroscopicProperties.H"
-#include "BoundaryConditions/PML.H"
+#include "FiniteDifferenceSolver_fwd.H"
+
+#include "BoundaryConditions/PML_fwd.H"
+#include "MacroscopicProperties/MacroscopicProperties_fwd.H"
+
+#include <AMReX_GpuContainers.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 /**
  * \brief Top-level class for the electromagnetic finite-difference solver

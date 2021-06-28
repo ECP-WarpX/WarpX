@@ -6,17 +6,30 @@
  */
 
 #include "ParticleMomentum.H"
-#include "WarpX.H"
+
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/SpeciesPhysicalProperties.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
 #include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
-#include <AMReX_REAL.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParticleReduce.H>
+#include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Reduce.H>
+#include <AMReX_Tuple.H>
+#include <AMReX_Vector.H>
 
-#include <cmath>
+#include <algorithm>
 #include <limits>
-#include <vector>
+#include <map>
 #include <ostream>
 #include <string>
+#include <vector>
 
 using namespace amrex;
 

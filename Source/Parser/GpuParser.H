@@ -9,10 +9,10 @@
 
 #include "Parser/WarpXParser.H"
 
-#include <AMReX_Gpu.H>
-#include <AMReX_Array.H>
-#include <AMReX_TypeTraits.H>
 #include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Gpu.H>
+#include <AMReX_TypeTraits.H>
 
 // When compiled for CPU, wrap WarpXParser and enable threading.
 // When compiled for GPU, store one copy of the parser in

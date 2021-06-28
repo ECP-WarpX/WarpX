@@ -7,20 +7,47 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "BoundaryConditions/WarpX_PML_kernels.H"
-#include "BoundaryConditions/PML_current.H"
-#include "WarpX_FDTD.H"
-#include "WarpXPushFieldsEM_K.H"
 
+#include "BoundaryConditions/PML.H"
+#include "Evolve/WarpXDtType.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#if defined(WARPX_DIM_RZ) || defined(WARPX_USE_PSATD)
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#   ifdef WARPX_DIM_RZ
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   elif defined(WARPX_USE_PSATD)
+#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#   endif
+#endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpXPushFieldsEM_K.H"
+#include "WarpX_FDTD.H"
+
+#include <AMReX.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-
-#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
 #include <AMReX_Math.H>
-#include <limits>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
+#include <array>
+#include <cmath>
+#include <memory>
 
 using namespace amrex;
 

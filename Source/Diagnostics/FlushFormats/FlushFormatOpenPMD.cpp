@@ -1,10 +1,16 @@
 #include "FlushFormatOpenPMD.H"
+
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 
 using namespace amrex;

@@ -6,17 +6,33 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "WarpXAlgorithmSelection.H"
 #include "WarpXConst.H"
+#include "WarpXProfilerWrapper.H"
 #include "WarpXUtil.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <set>
 #include <string>
-
 
 using namespace amrex;
 

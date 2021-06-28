@@ -5,11 +5,38 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PairWiseCoulombCollision.H"
-#include "ShuffleFisherYates.H"
+
 #include "ElasticCollisionPerez.H"
+#include "Particles/Collision/CollisionBase.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "ShuffleFisherYates.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_DenseBins.H>
+#include <AMReX_Extension.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particles.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
+
+#include <cmath>
 
 using namespace amrex::literals;
 

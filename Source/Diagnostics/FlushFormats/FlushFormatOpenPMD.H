@@ -1,11 +1,18 @@
 #ifndef WARPX_FLUSHFORMATOPENPMD_H_
 #define WARPX_FLUSHFORMATOPENPMD_H_
 
-#include "FlushFormat.H"
 #include "Diagnostics/WarpXOpenPMD.H"
+#include "FlushFormat.H"
+
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
+
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
-
+#include <string>
 
 /**
  * \brief This class aims at dumping diags data to disk using the openPMD standard.

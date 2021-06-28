@@ -12,54 +12,52 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
+#include "BoundaryConditions/PML_fwd.H"
+#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
+#include "Diagnostics/MultiDiagnostics_fwd.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
-#include "Particles/MultiParticleContainer.H"
-#include "BoundaryConditions/PML.H"
-#include "Diagnostics/BackTransformedDiagnostic.H"
-#include "Diagnostics/MultiDiagnostics.H"
-#include "Filter/BilinearFilter.H"
-#include "Filter/NCIGodfreyFilter.H"
-#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/IntervalsParser.H"
-#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
-
-#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
 #   else
-#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
-
+#include "Filter/BilinearFilter.H"
+#include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Parallelization/GuardCellManager.H"
-
-#ifdef WARPX_USE_OPENPMD
-#   include "Diagnostics/WarpXOpenPMD.H"
-#endif
-
 #include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Utils/IntervalsParser.H"
 
+#include <AMReX.H>
 #include <AMReX_AmrCore.H>
-#include <AMReX_BLProfiler.H>
-#include <AMReX_Print.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_RealVect.H>
-#include <AMReX_iMultiFab.H>
-#include <AMReX_VisMF.H>
-#include <AMReX_LayoutData.H>
-#include <AMReX_Interpolater.H>
-#include <AMReX_FillPatchUtil.H>
-
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
+#ifdef AMREX_USE_EB
+#   include "AMReX_EBFabFactory.H"
 #endif
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_Vector.H>
+#include <AMReX_VisMF.H>
 
-#include <iostream>
-#include <memory>
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
 #include <array>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 enum struct PatchType : int
 {

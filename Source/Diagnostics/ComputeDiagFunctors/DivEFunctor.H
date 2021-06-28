@@ -3,6 +3,10 @@
 
 #include "ComputeDiagFunctor.H"
 
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+
 /**
  * \brief Functor to compute divE into mf_out.
  */
