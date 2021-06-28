@@ -75,8 +75,9 @@ WarpX::Evolve (int numsteps)
         multi_diags->NewIteration();
 
         // Start loop on time steps
-        amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
-
+        if (verbose) {
+            amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
+        }
         if (warpx_py_beforestep) warpx_py_beforestep();
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -293,14 +294,16 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
         }
 
-        amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
-                      << " DT = " << dt[0] << "\n";
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
-        amrex::Print()<< "Evolve time = " << evolve_time
+
+        if (verbose) {
+            amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
+                        << " DT = " << dt[0] << "\n";
+            amrex::Print()<< "Evolve time = " << evolve_time
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
                       << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
-
+        }
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
