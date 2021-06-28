@@ -11,8 +11,6 @@ import time
 import shutil
 import yt
 
-from minerva import util as minutil
-
 constants = picmi.constants
 
 ##########################
@@ -69,8 +67,8 @@ print('  Diag time = %.3e s (%i timesteps)' % (DIAG_INTERVAL, diag_steps))
 # physics components
 ##########################
 
-v_rms_elec = np.sqrt(minutil.kb_J * T_ELEC / minutil.m_e)
-v_rms_ion = np.sqrt(minutil.kb_J * T_INERT / M_ION)
+v_rms_elec = np.sqrt(constants.kb * T_ELEC / constants.m_e)
+v_rms_ion = np.sqrt(constants.kb * T_INERT / M_ION)
 
 uniform_plasma_elec = picmi.UniformDistribution(
     density = PLASMA_DENSITY,
