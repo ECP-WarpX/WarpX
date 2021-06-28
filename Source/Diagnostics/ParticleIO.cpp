@@ -7,9 +7,32 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "Particles/Filter/FilterFunctors.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/RigidInjectedParticleContainer.H"
+#include "Particles/SpeciesPhysicalProperties.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParticleIO.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <array>
+#include <istream>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace amrex;
 

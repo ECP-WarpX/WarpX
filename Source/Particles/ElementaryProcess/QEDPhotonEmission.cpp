@@ -6,8 +6,15 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "WarpX.H"
 #include "Particles/ElementaryProcess/QEDPhotonEmission.H"
+
+#include "WarpX.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_IntVect.H>
+
+#include <array>
 
 PhotonEmissionTransformFunc::
 PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor,

@@ -9,16 +9,16 @@
 
 #include "Parser/WarpXParserWrapper.H"
 
-#include <AMReX_REAL.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
-#include <map>
-#include <string>
-#include <memory>
 #include <functional>
 #include <limits>
+#include <map>
+#include <memory>
+#include <string>
 #include <utility>
 
 

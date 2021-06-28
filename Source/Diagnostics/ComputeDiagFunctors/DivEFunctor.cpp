@@ -1,7 +1,15 @@
 #include "DivEFunctor.H"
+
 #include "Utils/CoarsenIO.H"
+#ifdef WARPX_DIM_RZ
+#   include "Utils/WarpXAlgorithmSelection.H"
+#endif
+#include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 
 DivEFunctor::DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev,
                          const amrex::IntVect crse_ratio,

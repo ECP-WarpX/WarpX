@@ -1,5 +1,13 @@
 #include "MultiDiagnostics.H"
+
+#include "Diagnostics/BTDiagnostics.H"
+#include "Diagnostics/FullDiagnostics.H"
+
 #include <AMReX_ParmParse.H>
+#include <AMReX.H>
+#include <AMReX_REAL.H>
+
+#include <algorithm>
 
 using namespace amrex;
 
@@ -65,6 +73,17 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     for (auto& diag : alldiags){
         diag->FilterComputePackFlush (step, force_flush);
+    }
+}
+
+void
+MultiDiagnostics::FilterComputePackFlushLastTimestep (int step)
+{
+    for (auto& diag : alldiags){
+        if (diag->DoDumpLastTimestep()){
+            constexpr bool force_flush = true;
+            diag->FilterComputePackFlush (step, force_flush);
+        }
     }
 }
 

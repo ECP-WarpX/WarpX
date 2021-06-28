@@ -5,7 +5,22 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "ParticleUtils.H"
+
 #include "WarpX.H"
+
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Box.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_REAL.H>
+#include <AMReX_SPACE.H>
 
 namespace ParticleUtils {
 

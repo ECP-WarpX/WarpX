@@ -8,8 +8,8 @@
 #ifndef FIELDGATHER_H_
 #define FIELDGATHER_H_
 
-#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Gather/GetExternalFields.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpX_Complex.H"
 

@@ -4,6 +4,18 @@
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 namespace PEC {
 using namespace amrex;

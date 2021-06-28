@@ -7,10 +7,11 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_RZ_H_
 #define WARPX_SPECTRAL_FIELD_DATA_RZ_H_
 
-#include "SpectralKSpaceRZ.H"
+#include "SpectralBinomialFilter.H"
 #include "SpectralFieldData.H"
 #include "SpectralHankelTransform/SpectralHankelTransformer.H"
-#include "SpectralBinomialFilter.H"
+#include "SpectralKSpaceRZ.H"
+
 #include <AMReX_MultiFab.H>
 
 /* \brief Class that stores the fields in spectral space, and performs the
