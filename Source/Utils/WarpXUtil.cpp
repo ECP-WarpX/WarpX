@@ -25,6 +25,7 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 
 #include <algorithm>
 #include <array>
@@ -223,13 +224,13 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
+Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
     // Since queryWithParser recursively calls this routine, keep track of symbols
     // in case an infinite recursion is found (a symbol's value depending on itself).
     static std::set<std::string> recursive_symbols;
 
-    WarpXParser parser(parse_function);
+    Parser parser(parse_function);
     parser.registerVariables(varnames);
     ParmParse pp_my_constants("my_constants");
     std::set<std::string> symbols = parser.symbols();
@@ -292,7 +293,9 @@ queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Re
         Store_parserString(a_pp, str, str_val);
 
         auto parser = makeParser(str_val, {});
-        val = parser.eval();
+        auto exe = parser.compileHost<0>();
+
+        val = exe();
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
@@ -306,7 +309,8 @@ getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real
     Store_parserString(a_pp, str, str_val);
 
     auto parser = makeParser(str_val, {});
-    val = parser.eval();
+    auto exe = parser.compileHost<0>();
+    val = exe();
 }
 
 int
@@ -323,7 +327,8 @@ queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::v
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
             auto parser = makeParser(tmp_str_arr[i], {});
-            val[i] = parser.eval();
+            auto exe = parser.compileHost<0>();
+            val[i] = exe();
         }
     }
     // return the same output as amrex::ParmParse::query
@@ -341,7 +346,8 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
         auto parser = makeParser(tmp_str_arr[i], {});
-        val[i] = parser.eval();
+        auto exe = parser.compileHost<0>();
+        val[i] = exe();
     }
 }
 
@@ -357,7 +363,8 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
         auto parser = makeParser(tmp_str_arr[i], {});
-        val[i] = parser.eval();
+        auto exe = parser.compileHost<0>();
+        val[i] = exe();
     }
 }
 

@@ -9,8 +9,6 @@
 #define INJECTOR_MOMENTUM_H_
 
 #include "CustomMomentumProb.H"
-#include "Parser/GpuParser.H"
-#include "Parser/WarpXParser.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
@@ -18,6 +16,7 @@
 #include <AMReX_Dim3.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Parser.H>
 #include <AMReX_Random.H>
 
 #include <AMReX_BaseFwd.H>
@@ -326,9 +325,9 @@ private:
 // struct whose getMomentumm returns local momentum computed from parser.
 struct InjectorMomentumParser
 {
-    InjectorMomentumParser (WarpXParser const& a_ux_parser,
-                            WarpXParser const& a_uy_parser,
-                            WarpXParser const& a_uz_parser) noexcept
+    InjectorMomentumParser (amrex::ParserExecutor<3> const& a_ux_parser,
+                            amrex::ParserExecutor<3> const& a_uy_parser,
+                            amrex::ParserExecutor<3> const& a_uz_parser) noexcept
         : m_ux_parser(a_ux_parser), m_uy_parser(a_uy_parser),
           m_uz_parser(a_uz_parser) {}
 
@@ -347,7 +346,7 @@ struct InjectorMomentumParser
         return amrex::XDim3{m_ux_parser(x,y,z),m_uy_parser(x,y,z),m_uz_parser(x,y,z)};
     }
 
-    GpuParser<3> m_ux_parser, m_uy_parser, m_uz_parser;
+    amrex::ParserExecutor<3> m_ux_parser, m_uy_parser, m_uz_parser;
 };
 
 // Base struct for momentum injector.
@@ -371,9 +370,9 @@ struct InjectorMomentum
 
     // This constructor stores a InjectorMomentumParser in union object.
     InjectorMomentum (InjectorMomentumParser* t,
-                      WarpXParser const& a_ux_parser,
-                      WarpXParser const& a_uy_parser,
-                      WarpXParser const& a_uz_parser)
+                      amrex::ParserExecutor<3> const& a_ux_parser,
+                      amrex::ParserExecutor<3> const& a_uy_parser,
+                      amrex::ParserExecutor<3> const& a_uz_parser)
         : type(Type::parser),
           object(t, a_ux_parser, a_uy_parser, a_uz_parser)
     { }
@@ -563,9 +562,9 @@ private:
                 amrex::Real u_over_r) noexcept
             : radial_expansion(u_over_r) {}
         Object (InjectorMomentumParser*,
-                WarpXParser const& a_ux_parser,
-                WarpXParser const& a_uy_parser,
-                WarpXParser const& a_uz_parser) noexcept
+                amrex::ParserExecutor<3> const& a_ux_parser,
+                amrex::ParserExecutor<3> const& a_uy_parser,
+                amrex::ParserExecutor<3> const& a_uz_parser) noexcept
             : parser(a_ux_parser, a_uy_parser, a_uz_parser) {}
         InjectorMomentumConstant constant;
         InjectorMomentumCustom   custom;
