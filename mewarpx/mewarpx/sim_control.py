@@ -8,7 +8,7 @@ import time
 import numpy as np
 import psutil
 
-from pywarpx._libwarpx import get_particle_id
+from pywarpx import _libwarpx
 from mewarpx.mwxrun import mwxrun
 
 # Get module-level logger
@@ -20,15 +20,19 @@ class SimControl:
     set of user defined functions and criteria
 
     """
-    def __init__(self, criteria=None,
-                criteria_args=None, **kwargs):
+    def __init__(self, criteria, criteria_args, max_loops=None, **kwargs):
         """
         Generate and install functions to perform after a step #.
         Arguments:
-        diag_steps (int): Number of steps between each output
+        
+        criteria: list of user defined functions that return True or False value
+
+        criteria_args: list of kwargs for each criteria
         """
-        self.crit_list = []
-        self.crit_args_list = []
+
+        self.crit_list = criteria
+        self.crit_args_list = criteria_args
+        self.max_loops = max_loops
         self.check_increment = 0
 
     def add_checker(self, criteria=None, crit_args=None):
@@ -39,6 +43,17 @@ class SimControl:
             self.crit_args_list.append({})
 
     def check_criteria(self):
+        """
+        Evaluates each criteria in the crit_list
+        returns True is all criteria are True otherwise returns False
+
+        Example Sim run:
+
+        steps_per_loop = 10
+        while (sim_control.check_criteria()):
+            sim.step(steps_per_loop)
+
+        """
         if self.check_increment > 0:
             keep_going = False
             for i, func in enumerate(self.crit_list):
@@ -46,16 +61,11 @@ class SimControl:
                 if not keep_going:
                     print(("Termination due to criteria {}").format(func.__name__))
                     return keep_going
+            self.check_increment += 1
+            if self.max_loops:
+                if self.check_increment >= self.max_loops:
+                    keep_going = False
             return keep_going
         else:
             self.check_increment += 1
             return True
-
-
-def particle_checker(species_number, minimum, maximum, level=0):
-    particle_ids = get_particle_id(species_number, level)
-    print("HELLO: "+str(len(particle_ids)))
-    if (len(particle_ids) > minimum) & (len(particle_ids) < maximum):
-        return True
-    else:
-        return False
