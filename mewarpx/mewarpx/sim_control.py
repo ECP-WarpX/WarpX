@@ -1,4 +1,4 @@
-""" Control code used to terminate simulation based on 
+""" Control code used to terminate simulation based on
 a set of user defined criteria
 """
 
@@ -24,7 +24,7 @@ class SimControl:
         """
         Generate and install functions to perform after a step #.
         Arguments:
-        
+
         criteria: list of user defined functions that return True or False value
 
         criteria_args: list of kwargs for each criteria
