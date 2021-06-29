@@ -1126,15 +1126,20 @@ private:
     void MarkCells();
     int CountExtFaces();
     void ComputeFaceExtensions();
+    void InitBorrowing();
     amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
-    //void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 5> temp_inds);
-    //static amrex::RealArray AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere);
-    //void InitEMFieldSphere ();
+    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds);
 
-    static int the_size_for_this_cell(amrex::Dim3 cell, double S_ext,
-                                      const amrex::Array4<amrex::Real> &S_red,
-                                      const amrex::Array4<int> &flag_avail_face,
-                                      const amrex::Array4<int> &flag_ext_face, int idim);
+    static int ComputeNBorrowOneCellExtension(amrex::Dim3 cell, double S_ext,
+                                              const amrex::Array4<amrex::Real> &S_red,
+                                              const amrex::Array4<int> &flag_avail_face,
+                                              const amrex::Array4<int> &flag_ext_face, int idim);
+
+    static int ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, double S_ext,
+                                                 const amrex::Array4<amrex::Real> &S_red,
+                                                 const amrex::Array4<amrex::Real> &S,
+                                                 const amrex::Array4<int> &flag_avail_face,
+                                                 const amrex::Array4<int> &flag_ext_face, int idim);
 private:
     // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
