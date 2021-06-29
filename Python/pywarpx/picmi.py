@@ -579,7 +579,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
-        self.solver_verbosity = kw.pop('warpx_solver_verbosity', 2)
+        self.solver_verbosity = kw.pop('warpx_solver_verbosity', None)
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()

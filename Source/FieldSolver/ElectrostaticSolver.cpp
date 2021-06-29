@@ -419,7 +419,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
     }
-    int verbosity;
+    int verbosity = 2;
     ParmParse pp_warpx("warpx");
     pp_warpx.query("solver_verbosity", verbosity);
 
