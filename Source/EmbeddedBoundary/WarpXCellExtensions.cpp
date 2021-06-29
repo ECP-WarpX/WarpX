@@ -733,7 +733,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     borrowing_x_inds_pointer(i, j, k) = borrowing_x_inds + ps;
                     Sx_enl(i, j, k) = Sx(i, j, k);
                     amrex::Real Sx_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
-                                                  lz(i, j, k) * dy, lz(i, j, k + 1) * dy});
+                                                  lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                     amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
                     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
                     for(int j_loc = 0; j_loc <= 2; j_loc++){
