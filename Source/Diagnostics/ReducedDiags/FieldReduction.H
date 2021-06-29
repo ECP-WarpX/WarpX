@@ -8,9 +8,33 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
+#include "Parser/WarpXParserWrapper.H"
 #include "ReducedDiags.H"
-#include "WarpX.H"
 #include "Utils/CoarsenIO.H"
+#include "WarpX.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Reduce.H>
+#include <AMReX_Tuple.H>
+
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <vector>
+
 
 /**
  * This class contains a function that computes an arbitrary reduction of the fields. The function

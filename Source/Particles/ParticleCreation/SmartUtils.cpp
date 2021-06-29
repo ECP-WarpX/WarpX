@@ -7,6 +7,9 @@
  */
 #include "SmartUtils.H"
 
+#include <algorithm>
+#include <utility>
+
 PolicyVec getPolicies (const NameMap& names) noexcept
 {
     PolicyVec policies;

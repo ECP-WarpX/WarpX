@@ -1,4 +1,5 @@
 #include "FlushFormatSensei.H"
+
 #include "WarpX.H"
 
 #ifdef BL_USE_SENSEI_INSITU

@@ -6,12 +6,19 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Filter.H"
-#include "WarpX.H"
 
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
+#include "Utils/WarpXProfilerWrapper.H"
 
+#include <AMReX_Array4.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+
+#include <algorithm>
 
 using namespace amrex;
 

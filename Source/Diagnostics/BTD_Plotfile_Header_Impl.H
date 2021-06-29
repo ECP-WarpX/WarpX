@@ -1,10 +1,15 @@
 #ifndef BTD_PLOTFILE_HEADER_IMPL_H
 #define BTD_PLOTFILE_HEADER_IMPL_H
 
-#include <string>
+#include <AMReX_Array.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_REAL.H>
+#include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
 
+#include <string>
 
 /**
  * \brief Class to read, modify, and write plotfile header when

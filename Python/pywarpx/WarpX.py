@@ -16,6 +16,7 @@ from .Interpolation import interpolation
 from .Lasers import lasers, lasers_list
 from . import Particles
 from .Particles import particles, particles_list
+from .Collisions import collisions, collisions_list
 from .PSATD import psatd
 from .Diagnostics import diagnostics
 
@@ -53,6 +54,10 @@ class WarpX(Bucket):
         argv += particles.attrlist()
         for particle in particles_list:
             argv += particle.attrlist()
+
+        argv += collisions.attrlist()
+        for collision in collisions_list:
+            argv += collision.attrlist()
 
         argv += lasers.attrlist()
         for laser in lasers_list:

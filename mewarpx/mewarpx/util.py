@@ -1,7 +1,14 @@
 """
 Utility functions for mewarpx.
 """
+import inspect
+import os
+
 from pywarpx import geometry
+
+# http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-t
+mewarpx_dir = os.path.dirname(os.path.abspath(
+    inspect.getfile(inspect.currentframe())))
 
 
 def init_libwarpx(ndim, rz):

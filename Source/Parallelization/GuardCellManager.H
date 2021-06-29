@@ -7,7 +7,9 @@
 #ifndef GUARDCELLMANAGER_H_
 #define GUARDCELLMANAGER_H_
 
+#include <AMReX_Array.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
 
 /**

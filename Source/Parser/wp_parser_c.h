@@ -3,13 +3,13 @@
 
 #include "wp_parser_y.h"
 
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_GpuPrint.H>
-#include <AMReX_Extension.H>
-#include <AMReX_Math.H>
-#include <AMReX_REAL.H>
-#include <AMReX_Print.H>
 #include <AMReX.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuPrint.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
 
 #include <cassert>
 #include <cmath>

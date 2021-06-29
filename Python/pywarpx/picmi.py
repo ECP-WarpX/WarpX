@@ -19,7 +19,7 @@ picmistandard.register_codename(codename)
 
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
-    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'none':'none'
+    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none'
 }
 
 class constants:
@@ -32,6 +32,7 @@ class constants:
     m_e = 9.1093837015e-31
     m_p = 1.67262192369e-27
     hbar = 1.054571817e-34
+    kb = 1.380649e-23
 
 picmistandard.register_constants(constants)
 
@@ -714,6 +715,37 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
+class MCCCollisions(object):
+    """Custom class to handle setup of MCC collisions in WarpX. If collision
+    initialization is added to picmistandard this can be changed to inherit
+    that functionality."""
+
+    def __init__(self, name, species, background_density,
+                 background_temperature, scattering_processes,
+                 background_mass=None):
+        self.name = name
+        self.species = species
+        self.background_density = background_density
+        self.background_temperature = background_temperature
+        self.background_mass = background_mass
+        self.scattering_processes = scattering_processes
+
+    def initialize_inputs(self):
+        collision = pywarpx.Collisions.newcollision(self.name)
+        collision.type = 'background_mcc'
+        collision.species = self.species.name
+        collision.background_density = self.background_density
+        collision.background_temperature = self.background_temperature
+        collision.background_mass = self.background_mass
+
+        collision.scattering_processes = self.scattering_processes.keys()
+        for process, kw in self.scattering_processes.items():
+            for key, val in kw.items():
+                if key == 'species':
+                    val = val.name
+                collision.add_new_attr(process+'_'+key, val)
+
+
 class Simulation(picmistandard.PICMI_Simulation):
     def init(self, kw):
 
@@ -732,6 +764,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_particles_wt = kw.pop('warpx_costs_heuristic_particles_wt', None)
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
+
+        self.collisions = kw.pop('warpx_collisions', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -790,6 +824,12 @@ class Simulation(picmistandard.PICMI_Simulation):
                                               self.initialize_self_fields[i],
                                               self.injection_plane_positions[i],
                                               self.injection_plane_normal_vectors[i])
+
+        if self.collisions is not None:
+            pywarpx.collisions.collision_names = []
+            for collision in self.collisions:
+                pywarpx.collisions.collision_names.append(collision.name)
+                collision.initialize_inputs()
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
