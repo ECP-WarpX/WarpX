@@ -7,7 +7,7 @@
 
 struct FaceInfoBox {
   amrex::Gpu::DeviceVector<int> i_face, j_face, k_face;
-  amrex::Gpu::DeviceVector<amrex::Real> area, rho_face;
+  amrex::Gpu::DeviceVector<amrex::Real> area;
   // this vector stores the indices to access in the previous vectors
   amrex::Gpu::DeviceVector<int> inds;
   //number of entries of inds which correspond to this element
