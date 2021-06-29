@@ -8,9 +8,19 @@
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "Utils/WarpX_Complex.H"
 
-#include <AMReX.H>
+#include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
+
+#include <AMReX_BaseFab.H>
+#include <AMReX_Config.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 #if WARPX_USE_PSATD
 
@@ -75,24 +85,13 @@ class SpectralBaseAlgorithm
         using SpectralComplexCoefficients = \
             amrex::FabArray< amrex::BaseFab <Complex> >;
 
-        // Constructor
+        /**
+        * \brief Constructor
+        */
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
                               const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal)
-          // Compute and assign the modified k vectors
-          : modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
-#if (AMREX_SPACEDIM==3)
-            modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,nodal))
-#else
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
-#endif
-          {
-#if (AMREX_SPACEDIM!=3)
-            amrex::ignore_unused(norder_y);
-#endif
-          }
+                              const int norder_z, const bool nodal);
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

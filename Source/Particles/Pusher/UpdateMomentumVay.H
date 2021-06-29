@@ -10,8 +10,8 @@
 
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_REAL.H>
 #include <AMReX_FArrayBox.H>
+#include <AMReX_REAL.H>
 
 
 /** \brief Push the particle's positions over one timestep,

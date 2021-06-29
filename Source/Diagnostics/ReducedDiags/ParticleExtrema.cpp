@@ -6,19 +6,50 @@
  */
 
 #include "ParticleExtrema.H"
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
+
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #if (defined WARPX_QED)
-#include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
+#include "Particles/Gather/FieldGather.H"
+#include "Particles/Gather/GetExternalFields.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/SpeciesPhysicalProperties.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
-#include <AMReX_REAL.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Box.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_ParticleReduce.H>
+#include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Reduce.H>
+#include <AMReX_Tuple.H>
+#include <AMReX_Vector.H>
 
-#include <iostream>
+#include <algorithm>
+#include <array>
 #include <cmath>
-#include <limits>
-
+#include <fstream>
+#include <map>
+#include <vector>
 
 using namespace amrex;
 

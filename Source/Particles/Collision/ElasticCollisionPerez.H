@@ -7,8 +7,8 @@
 #ifndef WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 #define WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 
-#include "UpdateMomentumPerezElastic.H"
 #include "ComputeTemperature.H"
+#include "UpdateMomentumPerezElastic.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Random.H>

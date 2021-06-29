@@ -6,23 +6,45 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "PML.H"
+
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
-#include "Utils/WarpXConst.H"
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#endif
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_Print.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FBI.H>
+#include <AMReX_FabArrayBase.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
 
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
-
 #include <algorithm>
+#include <cmath>
 #include <memory>
-
+#include <utility>
 
 using namespace amrex;
 
@@ -430,6 +452,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
+          const bool J_linear_in_time,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
@@ -581,7 +604,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml,
-            periodic_single_box, update_with_rho, fft_do_time_averaging, m_dive_cleaning, m_divb_cleaning);
+            periodic_single_box, update_with_rho, fft_do_time_averaging,
+            J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
     }
 
@@ -688,7 +712,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml,
-                periodic_single_box, update_with_rho, fft_do_time_averaging, m_dive_cleaning, m_divb_cleaning);
+                periodic_single_box, update_with_rho, fft_do_time_averaging,
+                J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
         }
     }

@@ -7,6 +7,8 @@
 #ifndef WARPX_SPECTRAL_SOLVER_RZ_H_
 #define WARPX_SPECTRAL_SOLVER_RZ_H_
 
+#include "SpectralSolverRZ_fwd.H"
+
 #include "SpectralAlgorithms/SpectralBaseAlgorithmRZ.H"
 #include "SpectralFieldDataRZ.H"
 

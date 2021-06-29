@@ -8,6 +8,8 @@
 #ifndef WARPX_SUM_GUARD_CELLS_H_
 #define WARPX_SUM_GUARD_CELLS_H_
 
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX_MultiFab.H>
 
 /** \brief Sum the values of `mf`, where the different boxes overlap

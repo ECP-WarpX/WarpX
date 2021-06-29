@@ -4,19 +4,48 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
 
-#include <AMReX_ParallelDescriptor.H>
+#include "Parallelization/GuardCellManager.H"
+#include "Parser/WarpXParser.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LO_BCTYPES.H>
+#include <AMReX_MFIter.H>
 #include <AMReX_MLMG.H>
 #ifdef WARPX_DIM_RZ
-#include <AMReX_MLNodeLaplacian.H>
+    #include <AMReX_MLNodeLaplacian.H>
 #else
-#include <AMReX_MLNodeTensorLaplacian.H>
+    #include <AMReX_MLNodeTensorLaplacian.H>
 #endif
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
 
-#include <WarpX.H>
-
+#include <array>
 #include <memory>
+#include <string>
 
 using namespace amrex;
 

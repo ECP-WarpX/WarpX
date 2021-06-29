@@ -1,19 +1,35 @@
 #include "BTDiagnostics.H"
+
 #include "BTD_Plotfile_Header_Impl.H"
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/BackTransformFunctor.H"
+#include "ComputeDiagFunctors/CellCenterFunctor.H"
+#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
+#include "Diagnostics/Diagnostics.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
-
+#include <AMReX.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_CoordSys.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FileSystem.H>
+#include <AMReX_ParallelContext.H>
 #include <AMReX_ParallelDescriptor.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_VisMF.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
 
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <memory>
+#include <vector>
 
 using namespace amrex::literals;
 

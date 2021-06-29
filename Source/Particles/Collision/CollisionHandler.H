@@ -8,10 +8,14 @@
 #define WARPX_PARTICLES_COLLISION_COLLISIONHANDLER_H_
 
 #include "CollisionBase.H"
+
+#include "Particles/MultiParticleContainer_fwd.H"
+
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
-// Forward declaration needed
-class MultiParticleContainer;
+#include <memory>
+#include <string>
 
 /* \brief CollisionHandler is a light weight class that contains the
  * list of collisions to be done.

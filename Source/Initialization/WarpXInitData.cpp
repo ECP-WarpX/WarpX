@@ -9,20 +9,60 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
+#include "BoundaryConditions/PML.H"
+#include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Parser/GpuParser.H"
-#include "Utils/WarpXUtil.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParmParse.H>
-
+#include <AMReX.H>
+#include <AMReX_AmrCore.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
 
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <iostream>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 
 using namespace amrex;
 
@@ -221,7 +261,7 @@ WarpX::InitPML ()
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
-                             do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
@@ -249,7 +289,7 @@ WarpX::InitPML ()
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
-                                   do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }

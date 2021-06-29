@@ -1,10 +1,40 @@
+#include "Parser/WarpXParser.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLProfiler.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
 #include <AMReX_Config.H>
 #ifdef AMREX_USE_EB
 #   include <AMReX_EB2.H>
+#endif
+#include <AMReX_FabArray.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Loop.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#ifdef AMREX_USE_EB
 #   include <AMReX_ParmParse.H>
 #endif
+#include <AMReX_REAL.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
+
+#include <array>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <vector>
 
 #ifdef AMREX_USE_EB
 namespace {
