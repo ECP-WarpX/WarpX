@@ -553,7 +553,7 @@ WarpX::ReadParameters ()
         }
 
         pp_warpx.query("n_buffer", n_buffer);
-        pp_warpx.query("const_dt", const_dt);
+        queryWithParser(pp_warpx, "const_dt", const_dt);
 
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
