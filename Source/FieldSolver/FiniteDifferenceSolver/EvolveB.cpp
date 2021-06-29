@@ -59,7 +59,6 @@ void FiniteDifferenceSolver::EvolveB (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
-        EvolveRhoCartesianECT( Efield, edge_lengths, face_areas, Rhofield, lev );
         EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, Rhofield, Venl, flag_unst_cell,
                              flag_intr_cell, borrowing, lev, dt);
 #endif
@@ -251,7 +250,6 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
                     Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
 
             }
-
         );
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
@@ -338,7 +336,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                                 + ") wasn't extended correctly");
                 }
                 // First we compute the rho of the enlarged face
-                for (int offset = 0; offset<borrowing_size(i,j,k); offset++) {
+                for (int offset = 0; offset<borrowing_size(i, j, k); offset++) {
                     int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
                     int ip = borrowing_dim_i_face[ind];
                     int jp = borrowing_dim_j_face[ind];
@@ -350,8 +348,6 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
                 rho_enl = Venl_dim(i, j, k) / S_enl(i, j, k);
 
-                //Now we have to insert the computed rho_enl in the lending FaceInfoBox in the
-                // correct position
                 for (int offset = 0; offset < borrowing_size(i, j, k); offset++) {
                     int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
                     int ip = borrowing_dim_i_face[ind];
@@ -372,8 +368,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
-                if (flag_unst_cell_dim(i, j, k))
-                    return;
+                if (flag_unst_cell_dim(i, j, k)) return;
 
                 if (not flag_intr_cell_dim(i, j, k)) {
                     //Stable cell which hasn't been intruded

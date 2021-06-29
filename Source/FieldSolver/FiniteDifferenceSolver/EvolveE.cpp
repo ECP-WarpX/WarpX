@@ -29,6 +29,8 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
@@ -47,7 +49,9 @@ void FiniteDifferenceSolver::EvolveE (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee or m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
-
+        if (m_fdtd_algo == MaxwellSolverAlgo::Yee or m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+            EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, Rhofield, lev);
+        }
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
@@ -143,6 +147,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
                     - PhysConst::mu0 * jy(i, j, k) );
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){

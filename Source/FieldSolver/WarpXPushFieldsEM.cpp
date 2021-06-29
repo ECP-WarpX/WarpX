@@ -268,10 +268,12 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], m_edge_lengths[lev],
+                                       m_face_areas[lev], Rhofield[lev],
                                        F_fp[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
                                        current_cp[lev], m_edge_lengths[lev],
+                                       m_face_areas[lev], Rhofield[lev],
                                        F_cp[lev], lev, a_dt );
     }
 
