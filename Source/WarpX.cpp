@@ -555,6 +555,12 @@ WarpX::ReadParameters ()
         pp_warpx.query("n_buffer", n_buffer);
         pp_warpx.query("const_dt", const_dt);
 
+        // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
+        // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
+#ifdef WARPX_DIM_RZ
+        if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) WarpX::use_filter = false;
+#endif
+
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
         pp_warpx.query("use_filter", use_filter);
@@ -570,10 +576,23 @@ WarpX::ReadParameters ()
         // TODO When k-space filtering will be implemented also for Cartesian geometries,
         // this code block will have to be applied in all cases (remove #ifdef condition)
 #ifdef WARPX_DIM_RZ
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        {
             // With RZ spectral, only use k-space filtering
             use_kspace_filter = use_filter;
             use_filter = false;
+        }
+        else // FDTD
+        {
+            // Filter currently not working with FDTD solver in RZ geometry
+            // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
+            if (use_filter)
+            {
+                amrex::Print() << "\nWARNING:"
+                               << "\nFilter currently not working with FDTD solver in RZ geometry:"
+                               << "\nwe recommend setting warpx.use_filter = 0 in the input file.\n"
+                               << std::endl;
+            }
         }
 #endif
 
