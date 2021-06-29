@@ -11,7 +11,7 @@
 #include <AMReX.H>
 #include <AMReX_BLProfiler.H>
 
-#ifdef BL_USE_MPI
+#ifdef AMREX_USE_MPI
 #   include <mpi.h>
 #endif
 
