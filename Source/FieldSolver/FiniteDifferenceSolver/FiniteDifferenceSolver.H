@@ -55,6 +55,8 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
                        std::unique_ptr<amrex::MultiFab> const& Ffield,
                        int lev, amrex::Real const dt );
 
