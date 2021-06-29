@@ -790,8 +790,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                     *(borrowing_x_i_face + ps + count) = i;
                                     *(borrowing_x_j_face + ps + count) = j + j_n;
                                     *(borrowing_x_k_face + ps + count) = k + k_n;
-                                    *(borrowing_x_area + ps + count) = Sx_ext;
-
+                                    *(borrowing_x_area + ps + count) = patch;
 
                                     flag_intr_face_x(i, j + j_n, k + k_n) = true;
                                     Sx_enl(i, j, k) += patch;
@@ -855,10 +854,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sy_ext, Sy_red, Sy,
                                                                flag_avail_face_y, flag_ext_face_y,
                                                                idim);
-              //if(i == 4 and j == 12 and k == 12 and idim == 1) {
-              //    std::cout<<n_borrow<<std::endl;
-              //    std::cout<<"##############"<<std::endl;
-              //}
+
                 borrowing_y_size(i, j, k) = n_borrow;
                 return n_borrow;
             },
@@ -942,7 +938,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                     *(borrowing_y_i_face + ps + count) = i + i_n;
                                     *(borrowing_y_j_face + ps + count) = j;
                                     *(borrowing_y_k_face + ps + count) = k + k_n;
-                                    *(borrowing_y_area + ps + count) = Sy_ext;
+                                    *(borrowing_y_area + ps + count) = patch;
 
                                     flag_intr_face_y(i + i_n, j, k + k_n) = true;
                                     Sy_enl(i, j, k) += patch;
@@ -1090,7 +1086,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                     *(borrowing_z_i_face + ps + count) = i + i_n;
                                     *(borrowing_z_j_face + ps + count) = j + j_n;
                                     *(borrowing_z_k_face + ps + count) = k;
-                                    *(borrowing_z_area + ps + count) = Sz_ext;
+                                    *(borrowing_z_area + ps + count) = patch;
 
                                     flag_intr_face_z(i + i_n, j + j_n, k) = true;
 
