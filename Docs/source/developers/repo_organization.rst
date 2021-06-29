@@ -1,24 +1,30 @@
 .. _developers-repo-structure:
 
-WarpX structure
+WarpX Structure
 ===============
 
-Repo organization
+Repo Organization
 -----------------
 
-All the WarpX source code is located in ``Source/``. All sub-directories have a pretty straightforward name. The PIC loop is part of the WarpX class, in function ``WarpX::EvolveEM`` implemented in ``Source/WarpXEvolveEM.cpp``. The core of the PIC loop (i.e., without diagnostics etc.) is in ``WarpX::OneStep_nosub`` (when subcycling is OFF) or ``WarpX::OneStep_sub1`` (when subcycling is ON, with method 1).
+All the WarpX source code is located in ``Source/``.
+All sub-directories have a pretty straightforward name.
+The PIC loop is part of the WarpX class, in function ``WarpX::EvolveEM`` implemented in ``Source/WarpXEvolveEM.cpp``.
+The core of the PIC loop (i.e., without diagnostics etc.) is in ``WarpX::OneStep_nosub`` (when subcycling is OFF) or ``WarpX::OneStep_sub1`` (when subcycling is ON, with method 1).
 
 Code organization
 -----------------
 
 The main WarpX class is WarpX, implemented in ``Source/WarpX.cpp``.
 
-Build system
+Build System
 ------------
 
-WarpX uses the AMReX build system (GNUMake).
-Each sub-folder contains a file ``Make.package`` with the names of source files (``.cpp``) that are added to the build.
+WarpX uses the :ref:`CMake build system generator <building-cmake>`.
+Each sub-folder contains a file ``CMakeLists.txt`` with the names of the source files (``.cpp``) that are added to the build.
 Do not list header files (``.H``) here.
+
+For experienced developers, we also support AMReX' :ref:`GNUmake build script collection <developers-gnumake>`.
+The file ``Make.package`` in each sub-folder has the same purpose as the ``CMakeLists.txt`` file, please add new ``.cpp`` files to both dirs.
 
 C++ Includes
 ------------
@@ -62,7 +68,7 @@ Each of these groups of header files should ideally be sorted alphabetically, an
 
 For details why this is needed, please see `PR #874 <https://github.com/ECP-WarpX/WarpX/pull/874#issuecomment-607038803>`_, `PR #1947 <https://github.com/ECP-WarpX/WarpX/pull/1947>`_, the `LLVM guidelines <https://llvm.org/docs/CodingStandards.html#include-style>`_, and `include-what-you-use <https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYU.md>`_.
 
-Forward declaration headers
+Forward Declaration Headers
 ---------------------------
 Forward declarations can be used when a header file needs only to know that a given class exists, without any further detail (e.g., when only a pointer to an instance of
 that class is used). Forward declaration headers are a convenient way to organize forward declarations. If a forward declaration is needed for a given class ``MyClass``, declared in ``MyClass.H``,
@@ -97,7 +103,3 @@ Usage: in ``SimpleUsage.H``
    #include "MyClass_fwd.H"
    #include <memory>
 
-WarpX-specific vocabulary
--------------------------
-
-- ``Evolve`` is a generic term to advance a quantity (this comes from AMReX). For instance, ``WarpX::EvolveE(dt)`` advances the electric field for duration ``dt``, ``PhysicalParticleContainer::Evolve(...)`` does field gather + particle push + current deposition for all particles in ``PhysicalParticleContainer``, and ``WarpX::EvolveEM`` is the central ``WarpX`` function that performs 1 PIC iteration.
