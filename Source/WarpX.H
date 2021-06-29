@@ -33,6 +33,7 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>

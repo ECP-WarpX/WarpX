@@ -9,6 +9,8 @@
 
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <AMReX_AmrCore.H>
+
 /**
  *  This allows a different boundary condition on each edge of the grid.
  */
