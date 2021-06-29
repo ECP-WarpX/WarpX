@@ -30,5 +30,16 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type)
             PEC::ApplyPECtoBfield( Bfield_cp[lev], lev, patch_type);
         }
     }
+
+
+    if (lev == 0) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if ( (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller) ||
+               (WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller) ) {
+                m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary( Efield_fp[lev],
+                                     Bfield_fp[lev], Geom(lev).Domain(), dt[lev]);
+            }
+        }
+    }
 }
 
