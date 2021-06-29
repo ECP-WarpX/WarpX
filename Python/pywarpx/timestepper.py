@@ -61,7 +61,7 @@ class TimeStepper(object):
 
         self.cur_time += dt
 
-        libwarpx.warpx_MoveWindow();
+        libwarpx.warpx_MoveWindow(self.istep,false);
 
         #if mpi.rank == 0:
         print("STEP %d ends. TIME = %e DT = %e"%(self.istep, self.cur_time, dt))

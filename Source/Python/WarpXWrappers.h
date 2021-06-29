@@ -95,7 +95,7 @@ extern "C" {
                                                   int* num_tiles, int** particles_per_tile);
 
   void warpx_ComputeDt ();
-  void warpx_MoveWindow ();
+  void warpx_MoveWindow (int step, bool move_j);
 
   void warpx_EvolveE (amrex::Real dt);
   void warpx_EvolveB (amrex::Real dt);
