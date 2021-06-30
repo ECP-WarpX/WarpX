@@ -6,9 +6,27 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralFieldData.H"
+
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
-#include <map>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
 
 #if WARPX_USE_PSATD
 
@@ -127,6 +145,8 @@ SpectralFieldData::ForwardTransform (const int lev,
 #endif
 
     // Loop over boxes
+    // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
+    //       the FFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -229,6 +249,8 @@ SpectralFieldData::BackwardTransform( const int lev,
 #endif
 
     // Loop over boxes
+    // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
+    //       the iFFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {

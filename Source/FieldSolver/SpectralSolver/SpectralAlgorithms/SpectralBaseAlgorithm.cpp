@@ -5,9 +5,45 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralBaseAlgorithm.H"
-#include <cmath>
+
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX_Array4.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_REAL.H>
+
+#include <array>
+#include <memory>
 
 using namespace amrex;
+
+/**
+ * \brief Constructor
+ */
+SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
+    const amrex::DistributionMapping& dm,
+    const int norder_x, const int norder_y,
+    const int norder_z, const bool nodal):
+    // Compute and assign the modified k vectors
+        modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
+#if (AMREX_SPACEDIM==3)
+        modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
+        modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,nodal))
+#else
+        modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
+#endif
+    {
+#if (AMREX_SPACEDIM!=3)
+        amrex::ignore_unused(norder_y);
+#endif
+    }
 
 /**
  * \brief Compute spectral divergence of E

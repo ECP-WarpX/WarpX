@@ -6,8 +6,20 @@
  */
 
 #include "FieldReduction.H"
-#include "WarpX.H"
+
+#include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
+
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <ostream>
+
+#include <regex>
 
 // constructor
 FieldReduction::FieldReduction (std::string rd_name)
@@ -41,6 +53,10 @@ FieldReduction::FieldReduction (std::string rd_name)
     m_parser = std::make_unique<ParserWrapper<m_nvars>>(
         makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz"}));
 
+    // Replace all newlines and possible following whitespaces with a single whitespace. This
+    // should avoid weird formatting when the string is written in the header of the output file.
+    parser_string = std::regex_replace(parser_string, std::regex("\n\\s*"), " ");
+
     // read reduction type
     std::string reduction_type_string;
     pp_rd_name.get("reduction_type", reduction_type_string);
@@ -53,19 +69,19 @@ FieldReduction::FieldReduction (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             ofs << m_sep;
-            ofs << "[3]" + reduction_type_string + " of " + parser_string + " (SI units)";
+            ofs << "[" << c++ << "]" + reduction_type_string + " of " + parser_string + " (SI units)";
 
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 

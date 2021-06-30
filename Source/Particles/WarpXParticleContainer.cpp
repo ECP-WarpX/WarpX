@@ -7,22 +7,60 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "MultiParticleContainer.H"
 #include "WarpXParticleContainer.H"
-#include "WarpX.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/CoarsenMR.H"
-// Import low-level single-particle kernels
+
+#include "Deposition/ChargeDeposition.H"
+#include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
-#include "Deposition/CurrentDeposition.H"
-#include "Deposition/ChargeDeposition.H"
+#include "Utils/CoarsenMR.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
-#include <AMReX_AmrParGDB.H>
 #include <AMReX.H>
+#include <AMReX_AmrCore.H>
+#include <AMReX_AmrParGDB.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParGDB.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParallelReduce.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particle.H>
+#include <AMReX_ParticleContainerBase.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_ParticleTransformation.H>
+#include <AMReX_ParticleUtil.H>
+#include <AMReX_TinyProfiler.H>
+#include <AMReX_Utility.H>
 
-#include <limits>
 
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
+
+#include <algorithm>
+#include <cmath>
 
 using namespace amrex;
 
@@ -213,7 +251,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 /* \brief Current Deposition for thread thread_num
  * \param pti         : Particle iterator
  * \param wp          : Array of particle weights
- * \param uxp uyp uzp : Array of particle
+ * \param uxp uyp uzp : Array of particle momenta
  * \param ion_lev      : Pointer to array of particle ionization level. This is
                          required to have the charge of each macroparticle
                          since q is a scalar. For non-ionizable species,
@@ -233,14 +271,14 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
  *                       time of the deposition.
  */
 void
-WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
-                                       RealVector& wp, RealVector& uxp,
-                                       RealVector& uyp, RealVector& uzp,
-                                       const int * const ion_lev,
-                                       MultiFab* jx, MultiFab* jy, MultiFab* jz,
-                                       const long offset, const long np_to_depose,
-                                       int thread_num, int lev, int depos_lev,
-                                       Real dt, Real relative_time)
+WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
+                                        RealVector const & wp, RealVector const & uxp,
+                                        RealVector const & uyp, RealVector const & uzp,
+                                        int const * const ion_lev,
+                                        MultiFab * const jx, MultiFab * const jy, MultiFab * const jz,
+                                        long const offset, long const np_to_depose,
+                                        int const thread_num, const int lev, int const depos_lev,
+                                        Real const dt, Real const relative_time)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -376,8 +414,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     }
 
     WARPX_PROFILE_VAR_START(blp_deposit);
-    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
-    amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+    amrex::LayoutData<amrex::Real> * const costs = WarpX::getCosts(lev);
+    amrex::Real * const cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
@@ -459,6 +497,47 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
+}
+
+void
+WarpXParticleContainer::DepositCurrent (
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+    const amrex::Real dt, const amrex::Real relative_t)
+{
+    // Loop over the refinement levels
+    int const finest_level = J.size() - 1;
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        // Loop over particle tiles and deposit current on each level
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+        {
+        int thread_num = omp_get_thread_num();
+#else
+        int thread_num = 0;
+#endif
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            const long np = pti.numParticles();
+            const auto & wp = pti.GetAttribs(PIdx::w);
+            const auto & uxp = pti.GetAttribs(PIdx::ux);
+            const auto & uyp = pti.GetAttribs(PIdx::uy);
+            const auto & uzp = pti.GetAttribs(PIdx::uz);
+
+            int* AMREX_RESTRICT ion_lev = nullptr;
+            if (do_field_ionization)
+            {
+                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+            }
+
+            DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
+                           J[lev][0].get(), J[lev][1].get(), J[lev][2].get(),
+                           0, np, thread_num, lev, lev, dt, relative_t/dt);
+        }
+#ifdef AMREX_USE_OMP
+        }
+#endif
+    }
 }
 
 /* \brief Charge Deposition for thread thread_num
@@ -628,18 +707,21 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
 void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                                        bool local, bool reset,
-                                        bool do_rz_volume_scaling)
+                                       const bool local, const bool reset,
+                                       const bool do_rz_volume_scaling,
+                                       const bool interpolate_across_levels,
+                                       const int icomp)
 {
 #ifdef WARPX_DIM_RZ
     (void)do_rz_volume_scaling;
 #endif
     // Loop over the refinement levels
     int const finest_level = rho.size() - 1;
-    for (int lev = 0; lev <= finest_level; ++lev) {
-
-        // Reset the `rho` array if `reset` is True
-        if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrowVect());
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        // Reset the rho array if reset is True
+        int const nc = WarpX::ncomps;
+        if (reset) rho[lev]->setVal(0., icomp*nc, nc, rho[lev]->nGrowVect());
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP
@@ -654,21 +736,21 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
 
-            int* AMREX_RESTRICT ion_lev;
-            if (do_field_ionization){
+            int* AMREX_RESTRICT ion_lev = nullptr;
+            if (do_field_ionization)
+            {
                 ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
-            } else {
-                ion_lev = nullptr;
             }
 
-            DepositCharge(pti, wp, ion_lev, rho[lev].get(), 0, 0, np, thread_num, lev, lev);
+            DepositCharge(pti, wp, ion_lev, rho[lev].get(), icomp, 0, np, thread_num, lev, lev);
         }
 #ifdef AMREX_USE_OMP
         }
 #endif
 
 #ifdef WARPX_DIM_RZ
-        if (do_rz_volume_scaling) {
+        if (do_rz_volume_scaling)
+        {
             WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
         }
 #else
@@ -676,22 +758,24 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 #endif
 
         // Exchange guard cells
-        if (!local) rho[lev]->SumBoundary( m_gdb->Geom(lev).periodicity() );
+        if (local == false) rho[lev]->SumBoundary(m_gdb->Geom(lev).periodicity());
     }
 
     // Now that the charge has been deposited at each level,
     // we average down from fine to crse
-    for (int lev = finest_level - 1; lev >= 0; --lev) {
-        const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
-        BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
-        coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
-        MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
-        coarsened_fine_data.setVal(0.0);
-
-        int const refinement_ratio = 2;
-
-        CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
-        rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
+    if (interpolate_across_levels)
+    {
+        for (int lev = finest_level - 1; lev >= 0; --lev)
+        {
+            const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
+            BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
+            coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
+            MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
+            coarsened_fine_data.setVal(0.0);
+            const int refinement_ratio = 2;
+            CoarsenMR::Coarsen(coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio));
+            rho[lev]->ParallelAdd(coarsened_fine_data, m_gdb->Geom(lev).periodicity());
+        }
     }
 }
 
@@ -751,7 +835,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (!local) rho->SumBoundary(gm.periodicity());
+    if (local == false) rho->SumBoundary(gm.periodicity());
 
     return rho;
 }
@@ -776,7 +860,7 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
         }
     }
 
-    if (!local) ParallelDescriptor::ReduceRealSum(total_charge);
+    if (local == false) ParallelDescriptor::ReduceRealSum(total_charge);
     total_charge *= this->charge;
     return total_charge;
 }
@@ -852,7 +936,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
         }
     }
 
-    if (!local) {
+    if (local == false) {
         ParallelDescriptor::ReduceRealSum(vx_total);
         ParallelDescriptor::ReduceRealSum(vy_total);
         ParallelDescriptor::ReduceRealSum(vz_total);
@@ -891,7 +975,7 @@ Real WarpXParticleContainer::maxParticleVelocity(bool local) {
         }
     }
 
-    if (!local) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
+    if (local == false) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
     return max_v;
 }
 

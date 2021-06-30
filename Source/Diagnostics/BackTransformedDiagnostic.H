@@ -8,17 +8,24 @@
 #ifndef WARPX_BackTransformedDiagnostic_H_
 #define WARPX_BackTransformedDiagnostic_H_
 
-#include "Particles/MultiParticleContainer.H"
-#include "Utils/WarpXConst.H"
+#include "BackTransformedDiagnostic_fwd.H"
 
-#include <AMReX_Geometry.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_VisMF.H>
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <map>
+#include <memory>
+#include <string>
 #include <vector>
-
 
 /** \brief
  * The capability for back-transformed lab-frame data is implemented to generate

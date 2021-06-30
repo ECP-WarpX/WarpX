@@ -5,7 +5,11 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Resampling.H"
+
 #include "LevelingThinning.H"
+
+#include <AMReX.H>
+#include <AMReX_ParmParse.H>
 
 Resampling::Resampling (const std::string species_name)
 {

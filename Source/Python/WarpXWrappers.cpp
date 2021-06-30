@@ -6,16 +6,33 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXWrappers.h"
+#include "BoundaryConditions/PML.H"
 #include "Initialization/WarpXAMReXInit.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+#include "WarpXWrappers.h"
 #include "WarpX_py.H"
 
 #include <AMReX.H>
-#include <AMReX_BLProfiler.H>
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_Particles.H>
+#include <AMReX_StructOfArrays.H>
 
+#include <array>
+#include <cstdlib>
 
 namespace
 {
@@ -219,6 +236,11 @@ extern "C"
     void warpx_ConvertLabParamsToBoost()
     {
       ConvertLabParamsToBoost();
+    }
+
+    void warpx_ReadBCParams()
+    {
+      ReadBCParams();
     }
 
     void warpx_CheckGriddingForRZSpectral()

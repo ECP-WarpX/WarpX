@@ -1,6 +1,8 @@
 #ifndef WARPX_COMPUTEDIAGFUNCTOR_H_
 #define WARPX_COMPUTEDIAGFUNCTOR_H_
 
+#include "ComputeDiagFunctor_fwd.H"
+
 #include <AMReX.H>
 #include <AMReX_MultiFab.H>
 

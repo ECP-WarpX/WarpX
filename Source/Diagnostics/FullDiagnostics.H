@@ -2,6 +2,9 @@
 #define WARPX_FULLDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
+#include "Utils/IntervalsParser.H"
+
+#include <string>
 
 class
 FullDiagnostics final : public Diagnostics

@@ -5,8 +5,22 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
+
+#include "Parser/WarpXParser.H"
+#include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpX_Complex.H"
 
+#include <AMReX.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
+#include <memory>
+#include <set>
+#include <string>
 
 using namespace amrex;
 

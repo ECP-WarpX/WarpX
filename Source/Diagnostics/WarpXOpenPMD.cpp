@@ -5,29 +5,93 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXOpenPMD.H"
-#include "FieldIO.H"  // for getReversedVec
+
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "FieldIO.H"
+#include "Parser/WarpXParserWrapper.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
-#include <AMReX_AmrParticles.H>
+#include <AMReX.H>
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParallelReduce.H>
+#include <AMReX_Particle.H>
+#include <AMReX_Particles.H>
+#include <AMReX_Periodicity.H>
+#include <AMReX_StructOfArrays.H>
 
 #include <algorithm>
 #include <cstdint>
+#include <iostream>
 #include <map>
 #include <set>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <iostream>
-#include <fstream>
-
 
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
+    /** Create the option string
+     *
+     * @return JSON option string for openPMD::Series
+     */
+    inline std::string
+    getSeriesOptions (std::string const & operator_type,
+                      std::map< std::string, std::string > const & operator_parameters)
+    {
+        std::string options;
+
+        std::string op_parameters;
+        for (const auto& kv : operator_parameters) {
+            if (op_parameters.size() > 0u) op_parameters.append(",\n");
+            op_parameters.append(std::string(12, ' '))         /* just pretty alignment */
+                    .append("\"").append(kv.first).append("\": ")    /* key */
+                    .append("\"").append(kv.second).append("\""); /* value (as string) */
+        }
+        if (operator_type.size() > 0u) {
+            options = R"END(
+{
+  "adios2": {
+    "dataset": {
+      "operators": [
+        {
+          "type": ")END";
+            options += operator_type + "\"";
+        }
+        if (operator_type.size() > 0u && op_parameters.size() > 0u) {
+            options += R"END(
+         ,"parameters": {
+)END";
+            options += op_parameters + "}";
+        }
+        if (operator_type.size() > 0u)
+            options += R"END(
+        }
+      ]
+    }
+  }
+}
+)END";
+        if (options.size() == 0u) options = "{}";
+        return options;
+    }
+
     /** Unclutter a real_names to openPMD record
      *
      * @param fullName name as in real_names variable
@@ -195,8 +259,12 @@ namespace detail
 }
 
 #ifdef WARPX_USE_OPENPMD
-WarpXOpenPMDPlot::WarpXOpenPMDPlot(openPMD::IterationEncoding ie,
-    std::string openPMDFileType, std::vector<bool> fieldPMLdirections)
+WarpXOpenPMDPlot::WarpXOpenPMDPlot (
+    openPMD::IterationEncoding ie,
+    std::string openPMDFileType,
+    std::string operator_type,
+    std::map< std::string, std::string > operator_parameters,
+    std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
    m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
@@ -213,6 +281,8 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot(openPMD::IterationEncoding ie,
 #else
     m_OpenPMDFileType = "json";
 #endif
+
+    m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters);
 }
 
 WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
@@ -308,7 +378,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
                 filepath, access,
-                amrex::ParallelDescriptor::Communicator()
+                amrex::ParallelDescriptor::Communicator(),
+                m_OpenPMDoptions
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -316,7 +387,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
     } else {
-        m_Series = std::make_unique<openPMD::Series>(filepath, access);
+        m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
         m_MPISize = 1;
         m_MPIRank = 1;
     }

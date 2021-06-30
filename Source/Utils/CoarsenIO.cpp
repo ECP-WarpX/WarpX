@@ -1,5 +1,19 @@
 #include "CoarsenIO.H"
 
+#include <AMReX_BLProfiler.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+
 using namespace amrex;
 
 void
@@ -115,6 +129,6 @@ CoarsenIO::Coarsen ( MultiFab& mf_dst,
         // 2) interpolate from mf_src to mf_tmp (start writing into component 0)
         CoarsenIO::Loop( mf_tmp, mf_src, 0, scomp, ncomp, ngrowvect, crse_ratio );
         // 3) copy from mf_tmp to mf_dst (with different BoxArray or DistributionMapping)
-        mf_dst.copy( mf_tmp, 0, dcomp, ncomp );
+        mf_dst.ParallelCopy( mf_tmp, 0, dcomp, ncomp );
     }
 }

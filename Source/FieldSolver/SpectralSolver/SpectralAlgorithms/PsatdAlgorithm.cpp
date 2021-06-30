@@ -5,7 +5,20 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithm.H"
+
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX_Array4.H>
+#include <AMReX_BLProfiler.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
 
 #include <cmath>
 
@@ -23,7 +36,8 @@ PsatdAlgorithm::PsatdAlgorithm(
     const amrex::Array<amrex::Real,3>& v_galilean,
     const amrex::Real dt,
     const bool update_with_rho,
-    const bool time_averaging)
+    const bool time_averaging,
+    const bool J_linear_in_time)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
     // Initialize the centered finite-order modified k vectors:
@@ -39,7 +53,8 @@ PsatdAlgorithm::PsatdAlgorithm(
     m_v_galilean(v_galilean),
     m_dt(dt),
     m_update_with_rho(update_with_rho),
-    m_time_averaging(time_averaging)
+    m_time_averaging(time_averaging),
+    m_J_linear_in_time(J_linear_in_time)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -52,6 +67,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     X2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
+    // Allocate these coefficients only with Galilean PSATD
     if (m_is_galilean)
     {
         X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
@@ -60,8 +76,8 @@ PsatdAlgorithm::PsatdAlgorithm(
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
-    // Allocate these coefficients only with averaged Galilean PSATD
-    if (time_averaging)
+    // Allocate these coefficients only with time averaging
+    if (time_averaging && !J_linear_in_time)
     {
         Psi1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         Psi2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
@@ -69,8 +85,15 @@ PsatdAlgorithm::PsatdAlgorithm(
         Y3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         Y2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         Y4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
+    }
+    // Allocate these coefficients only with time averaging
+    // and with the assumption that J is linear in time
+    else if (time_averaging && J_linear_in_time)
+    {
+        X5_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+        X6_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+        InitializeSpectralCoefficientsAvgLin(spectral_kspace, dm, dt);
     }
 }
 
@@ -79,7 +102,10 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging  = m_time_averaging;
+    const bool J_linear_in_time = m_J_linear_in_time;
     const bool is_galilean     = m_is_galilean;
+
+    const amrex::Real dt = m_dt;
 
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi)
@@ -112,7 +138,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         amrex::Array4<const Complex> Y3_arr;
         amrex::Array4<const Complex> Y4_arr;
 
-        if (time_averaging)
+        if (time_averaging && !J_linear_in_time)
         {
             Psi1_arr = Psi1_coef[mfi].array();
             Psi2_arr = Psi2_coef[mfi].array();
@@ -120,6 +146,14 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             Y2_arr = Y2_coef[mfi].array();
             Y3_arr = Y3_coef[mfi].array();
             Y4_arr = Y4_coef[mfi].array();
+        }
+
+        Array4<const Complex> X5_arr;
+        Array4<const Complex> X6_arr;
+        if (time_averaging && J_linear_in_time)
+        {
+            X5_arr = X5_coef[mfi].array();
+            X6_arr = X6_coef[mfi].array();
         }
 
         // Extract pointers for the k vectors
@@ -133,7 +167,8 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             using Idx = SpectralFieldIndex;
-            using AvgIdx = SpectralAvgFieldIndex;
+            using IdxAvg = SpectralFieldIndexTimeAveraging;
+            using IdxLin = SpectralFieldIndexJLinearInTime;
 
             // Record old values of the fields to be updated
             const Complex Ex_old = fields(i,j,k,Idx::Ex);
@@ -160,7 +195,9 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             const     amrex::Real kz = modified_kz_arr[j];
 #endif
             // Physical constants and imaginary unit
-            const amrex::Real c2 = std::pow(PhysConst::c, 2);
+            constexpr Real c2 = PhysConst::c * PhysConst::c;
+            constexpr Real ep0 = PhysConst::ep0;
+            constexpr Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // These coefficients are initialized in the function InitializeSpectralCoefficients
@@ -226,9 +263,83 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                                     - I * T2 * S_ck * (kx * Ey_old - ky * Ex_old)
                                     + I * X1 * (kx * Jy - ky * Jx);
 
-            // Additional update equations for averaged Galilean algorithm
+            if (J_linear_in_time)
+            {
+                const Complex Jx_new = fields(i,j,k,IdxLin::Jx_new);
+                const Complex Jy_new = fields(i,j,k,IdxLin::Jy_new);
+                const Complex Jz_new = fields(i,j,k,IdxLin::Jz_new);
 
-            if (time_averaging)
+                const Complex F_old = fields(i,j,k,IdxLin::F);
+                const Complex G_old = fields(i,j,k,IdxLin::G);
+
+                fields(i,j,k,Idx::Ex) += -X1 * (Jx_new - Jx) / dt + I * c2 * S_ck * F_old * kx;
+
+                fields(i,j,k,Idx::Ey) += -X1 * (Jy_new - Jy) / dt + I * c2 * S_ck * F_old * ky;
+
+                fields(i,j,k,Idx::Ez) += -X1 * (Jz_new - Jz) / dt + I * c2 * S_ck * F_old * kz;
+
+                fields(i,j,k,Idx::Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
+                    + I * c2 * S_ck * G_old * kx;
+
+                fields(i,j,k,Idx::By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
+                    + I * c2 * S_ck * G_old * ky;
+
+                fields(i,j,k,Idx::Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx));
+                    + I * c2 * S_ck * G_old * kz;
+
+                const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;
+                const Complex k_dot_dJ = kx * (Jx_new - Jx) + ky * (Jy_new - Jy) + kz * (Jz_new - Jz);
+                const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
+                const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
+
+                fields(i,j,k,IdxLin::F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
+                    - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
+
+                fields(i,j,k,IdxLin::G) = C * G_old + I * S_ck * k_dot_B;
+
+                if (time_averaging)
+                {
+                    const Complex X5 = X5_arr(i,j,k);
+                    const Complex X6 = X6_arr(i,j,k);
+
+                    // TODO: Here the code is *accumulating* the average,
+                    // because it is meant to be used with sub-cycling
+                    // maybe this should be made more generic
+
+                    fields(i,j,k,IdxLin::Ex_avg) += S_ck * Ex_old
+                        + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
+                        + I * X5 * rho_old * kx + I * X6 * rho_new * kx
+                        + X3/c2 * Jx - X2/c2 * Jx_new + I * c2 * ep0 * X1 * F_old * kx;
+
+                    fields(i,j,k,IdxLin::Ey_avg) += S_ck * Ey_old
+                        + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
+                        + I * X5 * rho_old * ky + I * X6 * rho_new * ky
+                        + X3/c2 * Jy - X2/c2 * Jy_new + I * c2 * ep0 * X1 * F_old * ky;
+
+                    fields(i,j,k,IdxLin::Ez_avg) += S_ck * Ez_old
+                        + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
+                        + I * X5 * rho_old * kz + I * X6 * rho_new * kz
+                        + X3/c2 * Jz - X2/c2 * Jz_new + I * c2 * ep0 * X1 * F_old * kz;
+
+                    fields(i,j,k,IdxLin::Bx_avg) += S_ck * Bx_old
+                        - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
+                        - I * X5/c2 * (ky * Jz - kz * Jy) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
+                        + I * c2 * ep0 * X1 * G_old * kx;
+
+                    fields(i,j,k,IdxLin::By_avg) += S_ck * By_old
+                        - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
+                        - I * X5/c2 * (kz * Jx - kx * Jz) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
+                        + I * c2 * ep0 * X1 * G_old * ky;
+
+                    fields(i,j,k,IdxLin::Bz_avg) += S_ck * Bz_old
+                        - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
+                        - I * X5/c2 * (kx * Jy - ky * Jx) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
+                        + I * c2 * ep0 * X1 * G_old * kz;
+                }
+            }
+
+            // Additional update equations for averaged Galilean algorithm
+            if (time_averaging && !J_linear_in_time)
             {
                 // These coefficients are initialized in the function InitializeSpectralCoefficients below
                 const Complex Psi1 = Psi1_arr(i,j,k);
@@ -238,27 +349,27 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Y2 = Y2_arr(i,j,k);
                 const Complex Y4 = Y4_arr(i,j,k);
 
-                fields(i,j,k,AvgIdx::Ex_avg) = Psi1 * Ex_old
+                fields(i,j,k,IdxAvg::Ex_avg) = Psi1 * Ex_old
                                                - I * c2 * Psi2 * (ky * Bz_old - kz * By_old)
                                                + Y4 * Jx + (Y2 * rho_new + Y3 * rho_old) * kx;
 
-                fields(i,j,k,AvgIdx::Ey_avg) = Psi1 * Ey_old
+                fields(i,j,k,IdxAvg::Ey_avg) = Psi1 * Ey_old
                                                - I * c2 * Psi2 * (kz * Bx_old - kx * Bz_old)
                                                + Y4 * Jy + (Y2 * rho_new + Y3 * rho_old) * ky;
 
-                fields(i,j,k,AvgIdx::Ez_avg) = Psi1 * Ez_old
+                fields(i,j,k,IdxAvg::Ez_avg) = Psi1 * Ez_old
                                                - I * c2 * Psi2 * (kx * By_old - ky * Bx_old)
                                                + Y4 * Jz + (Y2 * rho_new + Y3 * rho_old) * kz;
 
-                fields(i,j,k,AvgIdx::Bx_avg) = Psi1 * Bx_old
+                fields(i,j,k,IdxAvg::Bx_avg) = Psi1 * Bx_old
                                                + I * Psi2 * (ky * Ez_old - kz * Ey_old)
                                                + I * Y1 * (ky * Jz - kz * Jy);
 
-                fields(i,j,k,AvgIdx::By_avg) = Psi1 * By_old
+                fields(i,j,k,IdxAvg::By_avg) = Psi1 * By_old
                                                + I * Psi2 * (kz * Ex_old - kx * Ez_old)
                                                + I * Y1 * (kz * Jx - kx * Jz);
 
-                fields(i,j,k,AvgIdx::Bz_avg) = Psi1 * Bz_old
+                fields(i,j,k,IdxAvg::Bz_avg) = Psi1 * Bz_old
                                                + I * Psi2 * (kx * Ey_old - ky * Ex_old)
                                                + I * Y1 * (kx * Jy - ky * Jx);
             }
@@ -655,6 +766,76 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
 
             // Y4 (multiplies J in the update equation for <E>)
             Y4(i,j,k) = (Psi2(i,j,k) + I * ep0 * w_c * Y1(i,j,k)) / ep0;
+        });
+    }
+}
+
+void PsatdAlgorithm::InitializeSpectralCoefficientsAvgLin (
+    const SpectralKSpace& spectral_kspace,
+    const amrex::DistributionMapping& dm,
+    const amrex::Real dt)
+{
+    const BoxArray& ba = spectral_kspace.spectralspace_ba;
+
+    // Loop over boxes and allocate the corresponding coefficients for each box
+    for (MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
+    {
+        const Box& bx = ba[mfi];
+
+        // Extract pointers for the k vectors
+        const Real* kx_s = modified_kx_vec[mfi].dataPtr();
+#if (AMREX_SPACEDIM==3)
+        const Real* ky_s = modified_ky_vec[mfi].dataPtr();
+#endif
+        const Real* kz_s = modified_kz_vec[mfi].dataPtr();
+
+        Array4<Real const> C = C_coef[mfi].array();
+        Array4<Real const> S_ck = S_ck_coef[mfi].array();
+
+        Array4<Complex> X5 = X5_coef[mfi].array();
+        Array4<Complex> X6 = X6_coef[mfi].array();
+
+        // Loop over indices within one box
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            // Calculate norm of k vector
+            const Real knorm_s = std::sqrt(
+                std::pow(kx_s[i], 2) +
+#if (AMREX_SPACEDIM==3)
+                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
+#else
+                std::pow(kz_s[j], 2));
+#endif
+            // Physical constants and imaginary unit
+            constexpr Real c = PhysConst::c;
+            constexpr Real c2 = c*c;
+            constexpr Real ep0 = PhysConst::ep0;
+
+            // Auxiliary coefficients
+            const Real dt3 = dt * dt * dt;
+
+            const Real om_s  = c * knorm_s;
+            const Real om2_s = om_s * om_s;
+            const Real om4_s = om2_s * om2_s;
+
+            if (om_s != 0.)
+            {
+                X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2_s - (1._rt - C(i,j,k)) / (om4_s * dt)
+                                        - 0.5_rt * dt / om2_s);
+            }
+            else
+            {
+                X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
+            }
+
+            if (om_s != 0.)
+            {
+                X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4_s * dt) - 0.5_rt * dt / om2_s);
+            }
+            else
+            {
+                X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+            }
         });
     }
 }
