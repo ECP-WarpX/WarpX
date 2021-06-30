@@ -56,7 +56,7 @@ WarpX::InitBorrowing() {
         auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
         borrowing_x.inds_pointer.resize(box);
         borrowing_x.size.resize(box);
-        borrowing_x.size.setVal(0);
+        borrowing_x.size.setVal<amrex::RunOn::Host>(0);
         amrex::Long ncells = box.numPts();
         borrowing_x.inds.resize(8 * ncells);
         borrowing_x.i_face.resize(8 * ncells);
@@ -71,7 +71,7 @@ WarpX::InitBorrowing() {
         auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
         borrowing_y.inds_pointer.resize(box);
         borrowing_y.size.resize(box);
-        borrowing_y.size.setVal(0);
+        borrowing_y.size.setVal<amrex::RunOn::Host>(0);
         amrex::Long ncells = box.numPts();
         borrowing_y.inds.resize(8 * ncells);
         borrowing_y.i_face.resize(8 * ncells);
@@ -86,7 +86,7 @@ WarpX::InitBorrowing() {
         auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
         borrowing_z.inds_pointer.resize(box);
         borrowing_z.size.resize(box);
-        borrowing_z.size.setVal(0);
+        borrowing_z.size.setVal<amrex::RunOn::Host>(0);
         amrex::Long ncells = box.numPts();
         borrowing_z.inds.resize(8 * ncells);
         borrowing_z.i_face.resize(8 * ncells);
