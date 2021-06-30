@@ -1149,12 +1149,12 @@ private:
     amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
     void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds);
 
-    static int ComputeNBorrowOneCellExtension(amrex::Dim3 cell, double S_ext,
+    static int ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                               const amrex::Array4<amrex::Real> &S_red,
                                               const amrex::Array4<int> &flag_avail_face,
                                               const amrex::Array4<int> &flag_ext_face, int idim);
 
-    static int ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, double S_ext,
+    static int ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                                  const amrex::Array4<amrex::Real> &S_red,
                                                  const amrex::Array4<amrex::Real> &S,
                                                  const amrex::Array4<int> &flag_avail_face,
