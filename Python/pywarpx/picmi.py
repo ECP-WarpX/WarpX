@@ -81,6 +81,7 @@ class Species(picmistandard.PICMI_Species):
         # For the relativistic electrostatic solver
         self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
+        self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
 
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
@@ -103,7 +104,8 @@ class Species(picmistandard.PICMI_Species):
                                              initialize_self_fields = int(initialize_self_fields),
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
-                                             self_fields_max_iters = self.self_fields_max_iters)
+                                             self_fields_max_iters = self.self_fields_max_iters,
+                                             self_fields_verbosity = self.self_fields_verbosity)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -579,17 +581,17 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
-        self.solver_verbosity = kw.pop('warpx_solver_verbosity', None)
+        self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
-        pywarpx.warpx.solver_verbosity = self.solver_verbosity
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = 'relativistic'
         else:
             pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
+            pywarpx.warpx.self_fields_verbosity = self.self_fields_verbosity
             pywarpx.boundary.potential_lo_x = self.grid.potential_xmin
             pywarpx.boundary.potential_lo_y = self.grid.potential_ymin
             pywarpx.boundary.potential_lo_z = self.grid.potential_zmin

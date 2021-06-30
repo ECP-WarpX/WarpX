@@ -169,6 +169,7 @@ bool WarpX::do_dynamic_scheduling = true;
 int WarpX::do_electrostatic;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
 int WarpX::self_fields_max_iters = 200;
+int WarpX::self_fields_verbosity = 2;
 
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
@@ -540,6 +541,7 @@ WarpX::ReadParameters ()
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
             pp_warpx.query("self_fields_max_iters", self_fields_max_iters);
+            pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
             // Note that with the relativistic version, these parameters would be
             // input for each species.
         }
