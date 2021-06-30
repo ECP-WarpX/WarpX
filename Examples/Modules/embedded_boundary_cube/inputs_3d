@@ -14,13 +14,7 @@ warpx.cfl = 1
 
 algo.maxwell_solver = ect
 
-eb2.init_em_field = false
-eb2.geom_type = cane
-#eb2.box_lo = -0.53 -0.53 -0.53
-#eb2.box_hi = 0.53 0.53 0.53
-#eb2.box_has_fluid_inside = true
-# Alternatively one could use parser to build EB
-# Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.
+
 my_constants.xmin = -0.53
 my_constants.ymin = -0.53
 my_constants.zmin = -0.53
@@ -32,7 +26,6 @@ my_constants.theta = pi/8
 
 warpx.eb_implicit_function = "max(max(max(x+xmin,-(x+xmax)), max(y*cos(-theta)-z*sin(-theta)+ymin,-(y*cos(-theta)-z*sin(-theta)+ymax))), max(y*sin(-theta)+z*cos(-theta)+zmin,-(y*sin(-theta)+z*cos(-theta)+zmax)))"
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 my_constants.m = 0
 my_constants.n = 1
 my_constants.p = 1
@@ -45,16 +38,10 @@ my_constants.z_cent = 0.
 my_constants.h_2 = (m * pi / Lx) ** 2 + (n * pi / Ly) ** 2 + (p * pi / Lz) ** 2
 my_constants.mu_0 = 1.25663706212e-06
 
-#my_constants.ddx_u = 0.0125
-#my_constants.ddy_u = 0.0125
-#my_constants.ddz_u = 0.0125
-#my_constants.ddx_d = 0.0125
-#my_constants.ddy_d = 0.0125
-#my_constants.ddz_d = 0.0125
-
-warpx.Bx_external_grid_function(x,y,z) = -2/h_2 * (m * pi / Lx) * (p * pi / Lz) * sin(m * pi / Lx * (x - Lx / 2 - x_cent)) * cos(n * pi / Ly * (y*cos(-theta)-z*sin(-theta) - Ly / 2 - y_cent)) * cos(p * pi / Lz * (y*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))*mu_0 #*(x>-Lx/2+x_cent+x_cent-ddx_d)*(x<Lx/2+x_cent+ddx_u)*(y*cos(-theta)-z*sin(-theta)>-Ly/2+y_cent-ddy_d)*(y*cos(-theta)-z*sin(-theta)<Ly/2+y_cent+ddy_u)*(y*sin(-theta)+z*cos(-theta)>-Lz/2+z_cent-ddz_d)*(y*sin(-theta)+z*cos(-theta)<Lz/2+z_cent+ddz_u)
-warpx.By_external_grid_function(x,y,z) = -2/h_2 * (n * pi / Ly) * (p * pi / Lz) * cos(m * pi / Lx * (x - Lx / 2 - x_cent)) * sin(n * pi / Ly * (y*cos(-theta)-z*sin(-theta) - Ly / 2 - y_cent)) * cos(p * pi / Lz * (y*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))*mu_0 #*(x>-Lx/2+x_cent+x_cent-ddx_d)*(x<Lx/2+x_cent+ddx_u)*(y*cos(-theta)-z*sin(-theta)>-Ly/2+y_cent-ddy_d)*(y*cos(-theta)-z*sin(-theta)<Ly/2+y_cent+ddy_u)*(y*sin(-theta)+z*cos(-theta)>-Lz/2+z_cent-ddz_d)*(y*sin(-theta)+z*cos(-theta)<Lz/2+z_cent+ddz_u)
-warpx.Bz_external_grid_function(x,y,z) = cos(m * pi / Lx * (x - Lx / 2 - x_cent)) * cos(n * pi / Ly * (y*cos(-theta)-z*sin(-theta) - Ly / 2 - y_cent)) * sin(p * pi / Lz * (y*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))*mu_0 #*(x>-Lx/2+x_cent-ddx_d)*(x<Lx/2+x_cent+ddx_u)*(y*cos(-theta)-z*sin(-theta)>-Ly/2+y_cent-ddy_d)*(y*cos(-theta)-z*sin(-theta)<Ly/2+y_cent+ddy_u)*(y*sin(-theta)+z*cos(-theta)>-Lz/2+z_cent-ddz_d)*(y*sin(-theta)+z*cos(-theta)<Lz/2+z_cent+ddz_u)
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z) = -2/h_2 * mu_0 * (m * pi / Lx) * (p * pi / Lz) * sin(m * pi / Lx * (x - Lx / 2 - x_cent)) * cos(n * pi / Ly * (y*cos(-theta)-z*sin(-theta) - Ly / 2 - y_cent)) * cos(p * pi / Lz * (y*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))
+warpx.By_external_grid_function(x,y,z) = -2/h_2 * mu_0 * (n * pi / Ly) * (p * pi / Lz) * cos(m * pi / Lx * (x - Lx / 2 - x_cent)) * sin(n * pi / Ly * (y*cos(-theta)-z*sin(-theta) - Ly / 2 - y_cent)) * cos(p * pi / Lz * (y*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))
+warpx.Bz_external_grid_function(x,y,z) = mu_0*cos(m * pi / Lx * (x - Lx / 2 - x_cent)) * cos(n * pi / Ly * (y*cos(-theta)-z*sin(-theta) - Ly / 2 - y_cent)) * sin(p * pi / Lz * (y*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))
 
 diagnostics.diags_names = diag1
 diag1.intervals = 1
