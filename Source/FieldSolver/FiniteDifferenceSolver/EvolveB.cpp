@@ -350,6 +350,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
                 Venl_dim(i, j, k) = Rho(i, j, k) * S(i, j, k);
                 amrex::Real rho_enl;
+                /*
                 if (borrowing_inds_pointer(i, j, k) == nullptr) {
                     amrex::Abort("EvolveBCartesianECT: face ("
                                 + std::to_string(i) + ", "
@@ -357,6 +358,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                                 + std::to_string(k)
                                 + ") wasn't extended correctly");
                 }
+                */
                 // First we compute the rho of the enlarged face
                 for (int offset = 0; offset<borrowing_size(i, j, k); offset++) {
                     int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
