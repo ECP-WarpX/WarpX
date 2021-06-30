@@ -20,7 +20,7 @@ class SimControl:
     set of user defined functions and criteria
 
     """
-    def __init__(self, criteria, criteria_args, max_loops=None, **kwargs):
+    def __init__(self, max_loops, criteria=None, criteria_args=None, **kwargs):
         """
         Generate and install functions to perform after a step #.
         Arguments:
@@ -33,19 +33,21 @@ class SimControl:
         self.crit_list = criteria
         self.crit_args_list = criteria_args
         self.max_loops = max_loops
+        if not self.max_loops >= 1:
+            raise AssertionError("max_loops must be >= 1")
         self.check_increment = 0
 
-    def add_checker(self, criteria=None, crit_args=None):
+    def add_checker(self, criteria, crit_args=None):
         self.crit_list.append(criteria)
         if crit_args:
             self.crit_args_list.append(crit_args)
         else:
-            self.crit_args_list.append({})
+            self.crit_list.append(crit_args)
 
     def check_criteria(self):
         """
         Evaluates each criteria in the crit_list
-        returns True is all criteria are True otherwise returns False
+        returns True if all criteria are True otherwise returns False
 
         Example Sim run:
 
@@ -54,18 +56,14 @@ class SimControl:
             sim.step(steps_per_loop)
 
         """
-        if self.check_increment > 0:
-            keep_going = False
-            for i, func in enumerate(self.crit_list):
-                keep_going = self.crit_list[i](**self.crit_args_list[i])
-                if not keep_going:
-                    print(("Termination due to criteria {}").format(func.__name__))
-                    return keep_going
-            self.check_increment += 1
-            if self.max_loops:
-                if self.check_increment >= self.max_loops:
-                    keep_going = False
-            return keep_going
-        else:
-            self.check_increment += 1
-            return True
+
+        self.check_increment += 1
+        if self.check_increment >= self.max_loops:
+            print('Max loops reached!')
+
+        for i, func in enumerate(self.crit_list):
+            if not self.crit_list[i](**self.crit_args_list[i]):
+                print(('Termination due to criteria {}')).format(func.__name__)
+                return False
+
+        return True
