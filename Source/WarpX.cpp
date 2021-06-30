@@ -142,7 +142,7 @@ bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
 bool WarpX::use_filter = true;
-bool WarpX::use_kspace_filter       = false;
+bool WarpX::use_kspace_filter = true;
 bool WarpX::use_filter_compensation = false;
 
 bool WarpX::serialize_ics     = false;
