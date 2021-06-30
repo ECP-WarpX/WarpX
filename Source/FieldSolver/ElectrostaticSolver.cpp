@@ -193,7 +193,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const verbosity) const
 {
 #ifdef WARPX_DIM_RZ
-    computePhiRZ( rho, phi, beta, required_precision, max_iters );
+    computePhiRZ( rho, phi, beta, required_precision, max_iters, verbosity );
 #else
     computePhiCartesian( rho, phi, beta, required_precision, max_iters, verbosity );
 #endif
