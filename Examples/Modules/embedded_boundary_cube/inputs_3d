@@ -12,7 +12,7 @@ warpx.do_pml = 1
 warpx.const_dt = 1e-6
 warpx.cfl = 1
 
-#salgo.maxwell_solver = ect
+algo.maxwell_solver = ect
 
 eb2.init_em_field = false
 eb2.geom_type = cane
