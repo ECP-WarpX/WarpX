@@ -698,10 +698,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_x(i, j, k)) {
-                    //borrowing_x_size(i, j, k) = 0;
                     return 0;
                 }
-                //one cell extension, therefore the_size_for_this_cell(cell) = 1 or 0
                 amrex::Real Sx_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                 amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
@@ -844,10 +842,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_y(i, j, k)){
-                    //borrowing_y_size(i, j, k) = 0;
                     return 0;
                 }
-                //one cell extension, therefore the_size_for_this_cell(cell) = 1 or 0
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
@@ -993,10 +989,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_z(i, j, k)) {
-                    //borrowing_z_size(i, j, k) = 0;
                     return 0;
                 }
-                //one cell extension, therefore the_size_for_this_cell(cell) = 1 or 0
                 amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                                     ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
