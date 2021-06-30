@@ -220,7 +220,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
-                   int const max_iters
+                   int const max_iters,
                    int const verbosity) const
 {
     // Create a new geometry with the z coordinate scaled by gamma
