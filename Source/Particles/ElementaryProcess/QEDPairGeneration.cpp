@@ -6,8 +6,16 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "WarpX.H"
 #include "Particles/ElementaryProcess/QEDPairGeneration.H"
+
+#include "WarpX.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_IntVect.H>
+
+#include <algorithm>
+#include <array>
 
 PairGenerationTransformFunc::
 PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,

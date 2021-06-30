@@ -5,8 +5,14 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "ResamplingTrigger.H"
-#include "WarpX.H"
+
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+
+#include <AMReX_BoxArray.H>
+#include <AMReX_ParmParse.H>
+
+#include <vector>
 
 ResamplingTrigger::ResamplingTrigger (const std::string species_name)
 {

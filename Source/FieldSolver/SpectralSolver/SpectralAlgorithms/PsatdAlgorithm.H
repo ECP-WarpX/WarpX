@@ -7,7 +7,18 @@
 #ifndef WARPX_PSATD_ALGORITHM_H_
 #define WARPX_PSATD_ALGORITHM_H_
 
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "SpectralBaseAlgorithm.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 #if WARPX_USE_PSATD
 /* \brief Class that updates the field in spectral space
@@ -30,6 +41,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
+         * \param[in] J_linear_in_time whether to use two currents computed at the beginning and the end
+         *            of the time interval (instead of using one current computed at half time)
          */
         PsatdAlgorithm (
             const SpectralKSpace& spectral_kspace,
@@ -41,7 +54,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Array<amrex::Real,3>& v_galilean,
             const amrex::Real dt,
             const bool update_with_rho,
-            const bool time_averaging);
+            const bool time_averaging,
+            const bool J_linear_in_time);
 
         /**
          * \brief Updates the E and B fields in spectral space, according to the relevant PSATD equations
@@ -55,12 +69,22 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual int getRequiredNumberOfFields () const override final
         {
-            if (m_time_averaging) {
-                return SpectralAvgFieldIndex::n_fields;
-            } else {
-                return SpectralFieldIndex::n_fields;
+            if (m_J_linear_in_time)
+            {
+                return SpectralFieldIndexJLinearInTime::n_fields;
             }
-        }
+            else
+            {
+                if (m_time_averaging)
+                {
+                    return SpectralFieldIndexTimeAveraging::n_fields;
+                }
+                else
+                {
+                    return SpectralFieldIndex::n_fields;
+                }
+            }
+        };
 
         /**
          * \brief Initializes the coefficients used in \c pushSpectralFields to update the E and B fields
@@ -70,6 +94,19 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dt time step of the simulation
          */
         void InitializeSpectralCoefficients (
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm,
+            const amrex::Real dt);
+
+        /**
+         * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
+         *        required only when using time averaging with the assumption that J is linear in time
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
+         * \param[in] dt time step of the simulation
+         */
+        void InitializeSpectralCoefficientsAvgLin (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
@@ -127,6 +164,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
+        SpectralComplexCoefficients X5_coef, X6_coef;
+
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
 
@@ -142,6 +181,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
+        bool m_J_linear_in_time;
         bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD

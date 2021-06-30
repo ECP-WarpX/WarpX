@@ -7,9 +7,21 @@
  */
 
 #include <WarpX.H>
+
+#include <AMReX_BaseFab.H>
 #include <AMReX_BoxIterator.H>
-#include <array>
-#include <algorithm>
+#include <AMReX_Config.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_TagBox.H>
+
+#include <AMReX_BaseFwd.H>
 
 using namespace amrex;
 

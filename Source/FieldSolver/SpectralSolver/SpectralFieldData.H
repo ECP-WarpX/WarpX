@@ -8,13 +8,23 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
-#include "Utils/WarpX_Complex.H"
-#include "SpectralKSpace.H"
+#include "SpectralFieldData_fwd.H"
+
 #include "AnyFFT.H"
+#include "SpectralKSpace.H"
+#include "Utils/WarpX_Complex.H"
 
+#include <AMReX_BaseFab.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_IndexType.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Vector.H>
 
-#include <string>
+#include <AMReX_BaseFwd.H>
+
+#include <vector>
 
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
@@ -27,8 +37,14 @@ struct SpectralFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
 };
 
+struct SpectralFieldIndexJLinearInTime {
+  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx_old, Jy_old, Jz_old, rho_old, rho_new,
+         Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,
+         Jx_new, Jy_new, Jz_new, F, G, n_fields, divE=3 };
+};
+
 /* Index for the regular fields + averaged fields, when stored in spectral space */
-struct SpectralAvgFieldIndex {
+struct SpectralFieldIndexTimeAveraging {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };
   // n_fields is automatically the total number of fields
 };

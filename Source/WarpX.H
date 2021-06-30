@@ -12,6 +12,10 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
+#include "BoundaryConditions/PML_fwd.H"
+#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
+#include "Diagnostics/MultiDiagnostics_fwd.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
 #include "Particles/MultiParticleContainer.H"
 #include "BoundaryConditions/PML.H"
@@ -28,40 +32,47 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
 #   else
-#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
-
+#include "Filter/BilinearFilter.H"
+#include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Parallelization/GuardCellManager.H"
-
-#ifdef WARPX_USE_OPENPMD
-#   include "Diagnostics/WarpXOpenPMD.H"
-#endif
-
 #include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Utils/IntervalsParser.H"
 
+#include <AMReX.H>
 #include <AMReX_AmrCore.H>
-#include <AMReX_BLProfiler.H>
-#include <AMReX_Print.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_RealVect.H>
-#include <AMReX_iMultiFab.H>
-#include <AMReX_VisMF.H>
-#include <AMReX_LayoutData.H>
-#include <AMReX_Interpolater.H>
-#include <AMReX_FillPatchUtil.H>
-
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
+#ifdef AMREX_USE_EB
+#   include "AMReX_EBFabFactory.H"
 #endif
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_Vector.H>
+#include <AMReX_VisMF.H>
 
-#include <iostream>
-#include <memory>
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
 #include <array>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 enum struct PatchType : int
 {
@@ -208,6 +219,9 @@ public:
     static amrex::IntVect sort_bin_size;
 
     static int do_subcycling;
+    static int do_multi_J;
+    static int do_multi_J_n_depositions;
+    static int J_linear_in_time;
 
     static bool do_device_synchronize_before_profile;
     static bool safe_guard_cells;
@@ -772,6 +786,11 @@ private:
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
 
+    /**
+     * \brief Perform one PIC iteration, with the multiple J deposition per time step
+     */
+    void OneStep_multiJ (const amrex::Real t);
+
     void RestrictCurrentFromFineToCoarsePatch (int lev);
     void AddCurrentFromFineLevelandSumBoundary (int lev);
     void StoreCurrent (int lev);
@@ -1141,9 +1160,88 @@ private:
                                                  const amrex::Array4<int> &flag_avail_face,
                                                  const amrex::Array4<int> &flag_ext_face, int idim);
 private:
-    // void EvolvePSATD (int numsteps);
-    void PushPSATD (amrex::Real dt);
-    void PushPSATD (int lev, amrex::Real dt);
+
+    void PushPSATD ();
+
+#ifdef WARPX_USE_PSATD
+
+    /**
+     * \brief Forward FFT of E,B on all mesh refinement levels
+     */
+    void PSATDForwardTransformEB ();
+
+    /**
+     * \brief Backward FFT of E,B on all mesh refinement levels,
+     *        with field damping in the guard cells (if needed)
+     */
+    void PSATDBackwardTransformEB ();
+
+    /**
+     * \brief Backward FFT of averaged E,B on all mesh refinement levels
+     */
+    void PSATDBackwardTransformEBavg ();
+
+    /**
+     * \brief Forward FFT of J on all mesh refinement levels,
+     *        with k-space filtering (if needed)
+     */
+    void PSATDForwardTransformJ ();
+
+    /**
+     * \brief Forward FFT of rho on all mesh refinement levels,
+     *        with k-space filtering (if needed)
+     *
+     * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
+     */
+    void PSATDForwardTransformRho (const int icomp);
+
+    /**
+     * \brief Copy rho_new to rho_old in spectral space
+     */
+    void PSATDMoveRhoNewToRhoOld ();
+
+    /**
+     * \brief Copy J_new to J_old in spectral space (when J is linear in time)
+     */
+    void PSATDMoveJNewToJOld ();
+
+    /**
+     * \brief Forward FFT of F on all mesh refinement levels
+     */
+    void PSATDForwardTransformF ();
+
+    /**
+     * \brief Backward FFT of F on all mesh refinement levels
+     */
+    void PSATDBackwardTransformF ();
+
+    /**
+     * \brief Forward FFT of G on all mesh refinement levels
+     */
+    void PSATDForwardTransformG ();
+
+    /**
+     * \brief Backward FFT of G on all mesh refinement levels
+     */
+    void PSATDBackwardTransformG ();
+
+    /**
+     * \brief Update all necessary fields in spectral space
+     */
+    void PSATDPushSpectralFields ();
+
+    /**
+     * \brief Scale averaged E,B fields to account for time integration
+     *
+     * \param[in] scale_factor scalar to multiply each field component by
+     */
+    void PSATDScaleAverageFields (const amrex::Real scale_factor);
+
+    /**
+     * \brief Set averaged E,B fields to zero before new iteration
+     */
+    void PSATDEraseAverageFields ();
+#endif
 
     int fftw_plan_measure = 1; // used with PSATD
 
@@ -1169,7 +1267,6 @@ public:
 private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
-
 };
 
 #endif

@@ -8,8 +8,20 @@
 #ifndef WARPX_RigidInjectedParticleContainer_H_
 #define WARPX_RigidInjectedParticleContainer_H_
 
+#include "Evolve/WarpXDtType.H"
+#include "Particles/Gather/ScaleFields.H"
 #include "PhysicalParticleContainer.H"
+
+#include "WarpXParticleContainer_fwd.H"
+
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
+#include <iosfwd>
+#include <string>
 
 /**
  * When injecting a particle beam (typically for a plasma wakefield

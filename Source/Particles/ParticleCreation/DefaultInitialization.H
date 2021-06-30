@@ -8,12 +8,12 @@
 #ifndef DEFAULTINITIALIZATION_H_
 #define DEFAULTINITIALIZATION_H_
 
-#include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_REAL.H>
 
+#include <cmath>
 #include <map>
 #include <string>
-#include <cmath>
 
 /**
  * \brief This set of initialization policies describes what happens

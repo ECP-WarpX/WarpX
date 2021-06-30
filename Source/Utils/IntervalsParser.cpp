@@ -1,5 +1,10 @@
-#include "WarpXUtil.H"
 #include "IntervalsParser.H"
+#include "WarpXUtil.H"
+
+#include <AMReX_Utility.H>
+
+#include <algorithm>
+#include <memory>
 
 SliceParser::SliceParser (const std::string& instr)
 {

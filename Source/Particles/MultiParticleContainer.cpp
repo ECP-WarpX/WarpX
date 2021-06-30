@@ -10,19 +10,61 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
-#include "SpeciesPhysicalProperties.H"
-#include "WarpX.H"
+#include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
-    #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
-    #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
-    #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
+#   include "Particles/ElementaryProcess/QEDPairGeneration.H"
+#   include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #endif
+#include "Particles/LaserParticleContainer.H"
+#include "Particles/ParticleCreation/FilterCopyTransform.H"
+#ifdef WARPX_QED
+#   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#endif
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/ParticleCreation/SmartCreate.H"
+#include "Particles/ParticleCreation/SmartUtils.H"
+#include "Particles/PhotonParticleContainer.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/RigidInjectedParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "SpeciesPhysicalProperties.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_Particles.H>
+#include <AMReX_Print.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
-#include <limits>
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace amrex;
@@ -379,6 +421,72 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
     return zero_rho;
 }
 
+void
+MultiParticleContainer::DepositCurrent (
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+    const amrex::Real dt, const amrex::Real relative_t)
+{
+    // Reset the J arrays
+    for (int lev = 0; lev < J.size(); ++lev)
+    {
+        J[lev][0]->setVal(0.0, J[lev][0]->nGrowVect());
+        J[lev][1]->setVal(0.0, J[lev][1]->nGrowVect());
+        J[lev][2]->setVal(0.0, J[lev][2]->nGrowVect());
+    }
+
+    // Call the deposition kernel for each species
+    for (int ispecies = 0; ispecies < nSpecies(); ispecies++)
+    {
+        WarpXParticleContainer& species = GetParticleContainer(ispecies);
+        species.DepositCurrent(J, dt, relative_t);
+    }
+
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev < J.size(); ++lev)
+    {
+        WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(J[lev][0].get(), J[lev][1].get(), J[lev][2].get(), lev);
+    }
+#endif
+}
+
+void
+MultiParticleContainer::DepositCharge (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    const amrex::Real relative_t, const int icomp)
+{
+    // Reset the rho array
+    for (int lev = 0; lev < rho.size(); ++lev)
+    {
+        int const nc = WarpX::ncomps;
+        rho[lev]->setVal(0.0, icomp*nc, nc, rho[lev]->nGrowVect());
+    }
+
+    // Push the particles in time, if needed
+    if (relative_t != 0.) PushX(relative_t);
+
+    // Call the deposition kernel for each species
+    for (int ispecies = 0; ispecies < nSpecies(); ispecies++)
+    {
+        WarpXParticleContainer& species = GetParticleContainer(ispecies);
+        bool const local = true;
+        bool const reset = false;
+        bool const do_rz_volume_scaling = false;
+        bool const interpolate_across_levels = false;
+        species.DepositCharge(rho, local, reset, do_rz_volume_scaling,
+                              interpolate_across_levels, icomp);
+    }
+
+    // Push the particles back in time
+    if (relative_t != 0.) PushX(-relative_t);
+
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev < rho.size(); ++lev)
+    {
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+    }
+#endif
+}
+
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
@@ -609,6 +717,18 @@ MultiParticleContainer::doContinuousInjection () const
         }
     }
     return warpx_do_continuous_injection;
+}
+
+/* \brief Continuous injection of a flux of particles
+ * Loop over all WarpXParticleContainer in MultiParticleContainer and
+ * calls virtual function ContinuousFluxInjection.
+ */
+void
+MultiParticleContainer::ContinuousFluxInjection (amrex::Real dt) const
+{
+    for (auto& pc : allcontainers){
+        pc->ContinuousFluxInjection(dt);
+    }
 }
 
 /* \brief Get ID of product species of each species.

@@ -6,11 +6,43 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "Parallelization/GuardCellManager.H"
 #include "WarpX.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXConst.H"
 
+#include "BoundaryConditions/PML.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <cmath>
+#include <memory>
+#include <string>
 
 using namespace amrex;
 

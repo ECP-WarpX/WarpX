@@ -6,8 +6,25 @@
  */
 
 #include "RhoMaximum.H"
+
 #include "Diagnostics/ComputeDiagFunctors/RhoFunctor.H"
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
 #include "WarpX.H"
+
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
+#include <algorithm>
+#include <ostream>
+#include <vector>
 
 using namespace amrex::literals;
 
@@ -15,7 +32,6 @@ using namespace amrex::literals;
 RhoMaximum::RhoMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
@@ -79,27 +95,22 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
-            constexpr int shift_max_rho = 3;
-            constexpr int shift_min_rho = 4;
-            constexpr int shift_first_species = 5;
+            ofs << "[" << c++ << "]time(s)";
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_max_rho+noutputs_per_level*lev) + "]";
-                ofs << "max_rho_lev"+std::to_string(lev)+" (C/m^3)";
+                ofs << "[" << c++ << "]max_rho_lev" + std::to_string(lev) + " (C/m^3)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_min_rho+noutputs_per_level*lev) + "]";
-                ofs << "min_rho_lev"+std::to_string(lev)+" (C/m^3)";
+                ofs << "[" << c++ << "]min_rho_lev" + std::to_string(lev) + " (C/m^3)";
                 for (int i = 0; i < n_charged_species; ++i)
                 {
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(shift_first_species+i+noutputs_per_level*lev) + "]";
-                    ofs << "max_" + species_names[indices_charged_species[i]]
-                                  + "_|rho|_lev"+std::to_string(lev)+" (C/m^3)";
+                    ofs << "[" << c++ << "]max_" + species_names[indices_charged_species[i]]
+                                         + "_|rho|_lev" + std::to_string(lev) + " (C/m^3)";
                 }
             }
             ofs << std::endl;
@@ -107,7 +118,6 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
@@ -165,6 +175,5 @@ void RhoMaximum::ComputeDiags (int step)
 
     /* m_data now contains up-to-date values for:
      *  [max(rho), min(rho), max(|rho_charged_species1|), max(|rho_charged_species2|), ...] */
-
 }
 // end void RhoMaximum::ComputeDiags

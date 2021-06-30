@@ -7,6 +7,12 @@
 
 #include "AnyFFT.H"
 
+#include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+
+#include <fftw3.h>
+
 namespace AnyFFT
 {
 #ifdef AMREX_USE_FLOAT

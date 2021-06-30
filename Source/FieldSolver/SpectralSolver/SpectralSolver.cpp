@@ -4,34 +4,19 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "FieldSolver/SpectralSolver/SpectralAlgorithms/SpectralBaseAlgorithm.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithm.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
-#include "SpectralAlgorithms/PsatdAlgorithm.H"
-#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
-#include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
-#include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 
 #include <memory>
 
 #if WARPX_USE_PSATD
 
-/* \brief Initialize the spectral Maxwell solver
- *
- * This function selects the spectral algorithm to be used, allocates the
- * corresponding coefficients for the discretized field update equation,
- * and prepares the structures that store the fields in spectral space.
- *
- * \param norder_x Order of accuracy of the spatial derivatives along x
- * \param norder_y Order of accuracy of the spatial derivatives along y
- * \param norder_z Order of accuracy of the spatial derivatives along z
- * \param nodal    Whether the solver is applied to a nodal or staggered grid
- * \param dx       Cell size along each dimension
- * \param dt       Time step
- * \param pml      Whether the boxes in which the solver is applied are PML boxes
- * \param periodic_single_box Whether the full simulation domain consists of a single periodic box (i.e. the global domain is not MPI parallelized)
- */
 SpectralSolver::SpectralSolver(
                 const int lev,
                 const amrex::BoxArray& realspace_ba,
@@ -44,9 +29,10 @@ SpectralSolver::SpectralSolver(
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
                 const bool fft_do_time_averaging,
+                const bool J_linear_in_time,
                 const bool dive_cleaning,
-                const bool divb_cleaning) {
-
+                const bool divb_cleaning)
+{
     // Initialize all structures using the same distribution mapping dm
 
     // - Initialize k space object (Contains info about the size of
@@ -70,14 +56,13 @@ SpectralSolver::SpectralSolver(
         // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging);
+                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time);
         }
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldData( lev, realspace_ba, k_space, dm,
                     algorithm->getRequiredNumberOfFields(), periodic_single_box);
-
 }
 
 void
