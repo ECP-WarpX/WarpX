@@ -298,9 +298,9 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
 
-    Venl[0]->setVal(amrex::Real(0));
-    Venl[1]->setVal(amrex::Real(0));
-    Venl[2]->setVal(amrex::Real(0));
+    Venl[0]->setVal(0);
+    Venl[1]->setVal(0);
+    Venl[2]->setVal(0);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
