@@ -10,34 +10,25 @@ class SimControl:
     set of user defined functions and criteria
 
     """
-    def __init__(self, max_loops, criteria=None, criteria_args=None, **kwargs):
+    def __init__(self, max_steps,
+        criteria=None,
+        **kwargs
+        ):
         """
         Generate and install functions to perform after a step #.
         Arguments:
 
-        criteria: list of user defined functions that return True or False value
+        max_steps: Maximum number of steps to perform in the simulation, when
+        step == max_steps check_criteria returns False
 
-        criteria_args: list of kwargs for each criteria
-        """
+        criteria: list of user defined functions or list of user defined tuples(function, kwargs)
+        that each return a True or False value
 
-        self.crit_list = criteria
-        self.crit_args_list = criteria_args
-        self.max_loops = max_loops
-        if not self.max_loops >= 1:
-            raise AssertionError("max_loops must be >= 1")
-        self.check_increment = 0
 
-    def add_checker(self, criteria, crit_args=None):
-        self.crit_list.append(criteria)
-        if crit_args:
-            self.crit_args_list.append(crit_args)
-        else:
-            self.crit_list.append(crit_args)
+        Functions:
 
-    def check_criteria(self):
-        """
-        Evaluates each criteria in the crit_list
-        returns True if all criteria are True otherwise returns False
+        check_criteria: Evaluates each criteria in the crit_list and returns True if
+        all criteria are True otherwise returns False
 
         Example Sim run:
 
@@ -47,13 +38,45 @@ class SimControl:
 
         """
 
-        self.check_increment += 1
-        if self.check_increment >= self.max_loops:
-            print('Max loops reached!')
+        self.crit_list = []
+        self.crit_args_list = []
+        self.max_steps = max_steps
+        if self.max_steps < 1:
+            raise AssertionError("max_steps must be >= 1")
+        self.initialize_criteria(criteria)
 
-        for i, func in enumerate(self.crit_list):
-            if not self.crit_list[i](**self.crit_args_list[i]):
-                print(('Termination due to criteria {}')).format(func.__name__)
-                return False
+    def initialize_criteria(self, criteria):
+        if criteria:
+            for crit in criteria:
+                if callable(crit):
+                    self.crit_list.append(crit)
+                    self.crit_args_list.append({})
+                else:
+                    self.crit_list.append(crit[0])
+                    self.crit_args_list.append(crit[1])
 
-        return True
+    def add_checker(self, criteria):
+        if callable(criteria):
+            self.crit_list.append(criteria)
+            self.crit_args_list.append({})
+        else:
+            self.crit_list.append(criteria[0])
+            self.crit_args_list.append(criteria[1])
+
+    def check_criteria(self):
+        if mwxrun.get_it() >= self.max_steps:
+            print('SimControl: Max steps reached!')
+            return False
+
+        all_good = True
+        terminate_statement = 'SimControl: Termination from criteria: '
+        for i, criteria in enumerate(self.crit_list):
+            all_good = all_good and criteria(**self.crit_args_list[i])
+            if not criteria(**self.crit_args_list[i]):
+                add_statement = "{criteria_name} ".format(criteria_name=criteria.__name__)
+                terminate_statement += add_statement
+
+        if not all_good:
+            print(terminate_statement)
+
+        return all_good
