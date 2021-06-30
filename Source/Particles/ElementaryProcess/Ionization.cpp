@@ -6,8 +6,16 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "WarpX.H"
 #include "Particles/ElementaryProcess/Ionization.H"
+
+#include "WarpX.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_IntVect.H>
+
+#include <algorithm>
+#include <array>
 
 IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
                                             amrex::FArrayBox const& exfab,

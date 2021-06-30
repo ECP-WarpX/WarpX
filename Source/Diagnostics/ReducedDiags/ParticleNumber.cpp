@@ -6,7 +6,24 @@
  */
 
 #include "ParticleNumber.H"
+
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
 #include "WarpX.H"
+
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParticleReduce.H>
+#include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
+
+#include <algorithm>
+#include <map>
+#include <ostream>
+#include <vector>
 
 using namespace amrex::literals;
 

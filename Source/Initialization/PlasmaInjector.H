@@ -9,24 +9,25 @@
 #ifndef PLASMA_INJECTOR_H_
 #define PLASMA_INJECTOR_H_
 
-#include "Particles/SpeciesPhysicalProperties.H"
-#include "InjectorPosition.H"
 #include "InjectorDensity.H"
 #include "InjectorMomentum.H"
+#include "Particles/SpeciesPhysicalProperties.H"
 
-#include "Utils/WarpXConst.H"
-#include "Parser/WarpXParser.H"
+#include "InjectorPosition_fwd.H"
 
+#include <AMReX_Dim3.H>
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Utility.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
-#include <array>
+#include <limits>
 #include <memory>
+#include <string>
 
 ///
 /// The PlasmaInjector class parses and stores information about the plasma
@@ -62,7 +63,10 @@ public:
     amrex::Real getMass () {return mass;}
     PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
 
-    bool doInjection () const noexcept { return h_inj_pos != nullptr;}
+    // bool: whether the initial injection of particles should be done
+    // This routine is called during initialization of the plasma. When injecting
+    // a surface flux, no injection is done doing initialization so return false.
+    bool doInjection () const noexcept { return h_inj_pos != nullptr && !surface_flux;}
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;

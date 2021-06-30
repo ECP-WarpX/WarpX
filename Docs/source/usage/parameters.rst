@@ -1315,6 +1315,14 @@ Numerics and algorithms
     ``amr.max_level = 1``. More information can be found at
     https://ieeexplore.ieee.org/document/8659392.
 
+* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+
+* ``warpx.do_multi_J_n_depositions`` (integer)
+    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+
+
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
     If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
@@ -1450,6 +1458,9 @@ Numerics and algorithms
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
+* ``psatd.J_linear_in_time`` (`0` or `1`; default: `0`)
+    Whether to perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step (``psatd.J_linear_in_time = 1``), instead of using one single current deposited at half time (``psatd.J_linear_in_time = 0``), for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
+
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
@@ -1579,6 +1590,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Use a negative number or 0 to disable data dumping.
     This is ``0`` (disabled) by default.
     example: ``diag1.intervals = 10,20:25:1``.
+    Note that by default the last timestep is dumped regardless of this parameter. This can be
+    changed using the parameter ``<diag_name>.dump_last_timestep`` described below.
+
+* ``<diag_name>.dump_last_timestep`` (`bool` optional, default `1`)
+    If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. So far, only ``Full`` is supported.
