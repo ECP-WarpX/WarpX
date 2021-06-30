@@ -650,12 +650,15 @@ public:
      * \param[in] xfield_parser, parser function to initialize x-field
      * \param[in] yfield_parser, parser function to initialize y-field
      * \param[in] zfield_parser, parser function to initialize z-field
+     * \param[in] zfield_parser, geometric data, can be m_edge_lengths or m_face_areass
      * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
-         HostDeviceParser<3> const& zfield_parser, const int lev);
+         HostDeviceParser<3> const& zfield_parser,
+         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data,
+         const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`

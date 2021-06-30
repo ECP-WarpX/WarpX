@@ -541,6 +541,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  getParser(Bxfield_parser),
                                                  getParser(Byfield_parser),
                                                  getParser(Bzfield_parser),
+                                                 m_face_areas[lev],
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
@@ -549,6 +550,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     getParser(Bxfield_parser),
                                                     getParser(Byfield_parser),
                                                     getParser(Bzfield_parser),
+                                                    m_face_areas[lev],
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
@@ -557,6 +559,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     getParser(Bxfield_parser),
                                                     getParser(Byfield_parser),
                                                     getParser(Bzfield_parser),
+                                                    m_face_areas[lev],
                                                     lev);
        }
     }
@@ -590,6 +593,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  getParser(Exfield_parser),
                                                  getParser(Eyfield_parser),
                                                  getParser(Ezfield_parser),
+                                                 m_edge_lengths[lev],
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
@@ -598,6 +602,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     getParser(Exfield_parser),
                                                     getParser(Eyfield_parser),
                                                     getParser(Ezfield_parser),
+                                                    m_edge_lengths[lev],
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
@@ -606,6 +611,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     getParser(Exfield_parser),
                                                     getParser(Eyfield_parser),
                                                     getParser(Ezfield_parser),
+                                                    m_edge_lengths[lev],
                                                     lev);
        }
     }
@@ -646,7 +652,9 @@ void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
        HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
-       HostDeviceParser<3> const& zfield_parser, const int lev)
+       HostDeviceParser<3> const& zfield_parser,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data,
+       const int lev)
 {
 
     const auto dx_lev = geom[lev].CellSizeArray();
@@ -664,8 +672,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        auto const& mfyfab = mfy->array(mfi);
        auto const& mfzfab = mfz->array(mfi);
 
+       amrex::Array4<amrex::Real> const& geom_data_x = geom_data[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& geom_data_y = geom_data[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& geom_data_z = geom_data[2]->array(mfi);
+
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+              if(geom_data_x(i, j, k)<=0) return;
+#endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
                 amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
@@ -684,6 +699,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 mfxfab(i,j,k) = xfield_parser(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+              if(geom_data_y(i, j, k)<=0) return;
+#endif
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
@@ -700,6 +718,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 mfyfab(i,j,k)  = yfield_parser(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+              if(geom_data_z(i, j, k)<=0) return;
+#endif
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
