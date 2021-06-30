@@ -1,18 +1,8 @@
 """ Control code used to terminate simulation based on
 a set of user defined criteria
 """
-
-import logging
-import time
-
-import numpy as np
-import psutil
-
-from pywarpx import _libwarpx
 from mewarpx.mwxrun import mwxrun
 
-# Get module-level logger
-logger = logging.getLogger(__name__)
 
 class SimControl:
     """
