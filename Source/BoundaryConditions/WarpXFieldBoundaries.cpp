@@ -1,4 +1,5 @@
 #include "WarpX.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 #include "WarpX_PEC.H"
 
