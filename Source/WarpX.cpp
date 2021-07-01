@@ -20,10 +20,10 @@
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#endif
-#ifdef WARPX_DIM_RZ
-#   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-#endif
+#   ifdef WARPX_DIM_RZ
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   endif // RZ ifdef
+#endif // use PSATD ifdef
 #include "FieldSolver/WarpX_FDTD.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Parser/WarpXParserWrapper.H"
