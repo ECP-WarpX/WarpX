@@ -141,14 +141,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
-// In RZ geometry, when using the PSATD executable with a FDTD runtime solver,
-// the defaults are WarpX::use_filter = false (set later on in the code below)
-// and WarpX::use_kspace_filter = false (set here).
-// However, if warpx.use_filter = true is set in the input file, the default for
-// WarpX::use_kspace_filter = false set here makes sure to avoid runtime crashes
-// (which would occur if WarpX::use_kspace_filter = true was set here instead).
 bool WarpX::use_filter = true;
-bool WarpX::use_kspace_filter       = false;
+bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
 
 bool WarpX::serialize_ics     = false;
