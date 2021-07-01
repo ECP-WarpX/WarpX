@@ -10,32 +10,28 @@ class SimControl:
     set of user defined functions and criteria
 
     """
-    def __init__(self, max_steps,
-        criteria=None,
-        **kwargs
-        ):
+    def __init__(self, max_steps, criteria=None, **kwargs):
         """
         Generate and install functions to perform after a step #.
+
         Arguments:
 
-        max_steps: Maximum number of steps to perform in the simulation, when
-        step == max_steps check_criteria returns False
+            max_steps: Maximum number of steps to perform in the simulation,
+            when step == max_steps check_criteria returns False
 
-        criteria: list of user defined functions or list of user defined tuples(function, kwargs)
-        that each return a True or False value
-
+            criteria: list of user defined functions or list of user defined
+            tuples(function, kwargs) that each return a True or False value
 
         Functions:
 
-        check_criteria: Evaluates each criteria in the crit_list and returns True if
-        all criteria are True otherwise returns False
+            check_criteria: Evaluates each criteria in the crit_list and
+            returns True if all criteria are True otherwise returns False
 
-        Example Sim run:
+        Example Sim run::
 
-        steps_per_loop = 10
-        while (sim_control.check_criteria()):
-            sim.step(steps_per_loop)
-
+            steps_per_loop = 10
+            while (sim_control.check_criteria()):
+                sim.step(steps_per_loop)
         """
 
         self.crit_list = []
@@ -64,6 +60,7 @@ class SimControl:
             self.crit_args_list.append(criteria[1])
 
     def check_criteria(self):
+        """Return True if all installed criteria are True, else False."""
         if mwxrun.get_it() >= self.max_steps:
             print('SimControl: Max steps reached!')
             return False
