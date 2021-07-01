@@ -241,8 +241,12 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
             pinned_tile.push_back_real(i, 0.0);
         }
 
-        particle_tile.resize(pinned_tile.numParticles());
-        amrex::copyParticles(particle_tile, pinned_tile);
+        auto old_np = particle_tile.numParticles();
+        auto new_np = old_np + pinned_tile.numParticles();
+        particle_tile.resize(new_np);
+        amrex::copyParticles(
+            particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles()
+        );
     }
 
     Redistribute();
