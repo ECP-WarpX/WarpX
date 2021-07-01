@@ -14,7 +14,10 @@
 
 using namespace MsgLogger;
 
-Logger::Logger(){};
+Logger::Logger()
+{
+    bool m_am_I_IO_proc = true;
+};
 
 void Logger::record_entry(
     Type type,
@@ -22,9 +25,86 @@ void Logger::record_entry(
     std::string topic,
     std::string text)
 {
-    m_entries[type][importance][topic].push_back(text);
+    m_entries[type][importance][topic].push_back(
+        Entry{text,1});
 }
 
+void Logger::print_all_warnings(
+    std::stringstream& ss,
+    const WarnStyle& ws)
+{
+
+    ss << "\n";
+    ss << ws.header << "\n";
+
+    for (auto& tagged_entry_map : m_entries_archive){
+        ss << ws.tag_prefix << tagged_entry_map.tag << "\n";
+
+        ss << 
+    }
+
+    auto& all_warnings = m_entries[Type::warning];
+
+    if (all_warnings.empty()){
+        ss << ws.no_warning_msg << "\n";
+        return;
+    }
+
+
+
+    for (auto& by_topic : all_warnings[Importance::high])
+        aux_print_entries(ws.high_prefix, by_topic.first, by_topic.second, ws, ss);
+
+    for (auto& by_topic : all_warnings[Importance::medium])
+        aux_print_entries(ws.medium_prefix, by_topic.first, by_topic.second, ws, ss);
+
+    for (auto& by_topic : all_warnings[Importance::low])
+        aux_print_entries(ws.low_prefix, by_topic.first, by_topic.second, ws, ss);
+
+    ss << ws.footer << "\n";
+}
+
+void
+Logger::aux_print_entries(
+    const std::string& prefix,
+    const std::string& topic,
+    const std::vector<Entry>& entries,
+    const WarnStyle& ws,
+    std::stringstream& ss) const
+{
+    const std::string first_line_prefix =
+        prefix + ws.topic_left + topic + ws.topic_right;
+    const auto first_line_offset = first_line_prefix.length();
+    for(const auto& entry : entries){
+        ss << first_line_prefix <<
+            aux_msg_formatter(
+                entry.msg,
+                first_line_offset,
+                ws);
+    }
+}
+
+std::string
+Logger::aux_msg_formatter(
+        const std::string& msg,
+        const int first_line_offset,
+        const WarnStyle& ws) const
+{
+    std::stringstream ss_out;
+
+    std::stringstream ss_in{msg};
+    std::string line;
+    bool is_first = true;
+    while(std::getline(ss_in, line,'\n')){
+        if(!is_first) ss_out << ws.new_line_prefix;
+        ss_out << line << '\n';
+        is_first = false;
+    }
+    return ss_out.str();
+}
+
+
+/*
 void Logger::record_collective_entry(
         Type type,
         Importance importance,
@@ -77,69 +157,4 @@ void Logger::record_collective_entry(
 
     m_entries[type][importance][topic].push_back(ss_collective_text.str());
 }
-
-void Logger::print_warnings(
-    std::stringstream& ss,
-    const WarnStyle& ws)
-
-{
-    auto& all_warnings = m_entries[Type::warning];
-
-    if (all_warnings.empty()){
-        ss << ws.no_warning_msg << "\n";
-        return;
-    }
-
-    ss << "\n";
-    ss << ws.header << "\n";
-
-    for (auto& by_topic : all_warnings[Importance::high])
-        aux_print_entries(ws.high_prefix, by_topic.first, by_topic.second, ws, ss);
-
-    for (auto& by_topic : all_warnings[Importance::medium])
-        aux_print_entries(ws.medium_prefix, by_topic.first, by_topic.second, ws, ss);
-
-    for (auto& by_topic : all_warnings[Importance::low])
-        aux_print_entries(ws.low_prefix, by_topic.first, by_topic.second, ws, ss);
-
-    ss << ws.footer << "\n";
-}
-
-void
-Logger::aux_print_entries(
-    const std::string& prefix,
-    const std::string& topic,
-    const std::vector<std::string>& entries,
-    const WarnStyle& ws,
-    std::stringstream& ss) const
-{
-    const std::string first_line_prefix =
-        prefix + ws.topic_left + topic + ws.topic_right;
-    const auto first_line_offset = first_line_prefix.length();
-    for(const auto& msg : entries){
-        ss << first_line_prefix <<
-            aux_msg_formatter(
-                msg,
-                first_line_offset,
-                ws);
-    }
-}
-
-std::string
-Logger::aux_msg_formatter(
-        const std::string& msg,
-        const int first_line_offset,
-        const WarnStyle& ws) const
-{
-    std::stringstream ss_out;
-
-    std::stringstream ss_in{msg};
-    std::string line;
-    bool is_first = true;
-    while(std::getline(ss_in, line,'\n')){
-        if(!is_first) ss_out << ws.new_line_prefix;
-        ss_out << line << '\n';
-        is_first = false;
-    }
-    return ss_out.str();
-}
+*/

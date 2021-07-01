@@ -7,8 +7,6 @@
 #ifndef WARPX_MSG_LOGGER_H_
 #define WARPX_MSG_LOGGER_H_
 
-#include <mpi.h> //for tests
-
 #include <vector>
 #include <map>
 #include <string>
@@ -16,18 +14,23 @@
 
 namespace MsgLogger{
 
-enum class Type{
+enum class Type
+{
     warning
 };
 
-enum class Importance{
+enum class Importance
+{
     low,
     medium,
     high
 };
 
-struct WarnStyle{
+struct WarnStyle
+{
     std::string header;
+    std::string tag_prefix;
+    std::string tag_delimiter;
     std::string low_prefix;
     std::string medium_prefix;
     std::string high_prefix;
@@ -40,12 +43,33 @@ struct WarnStyle{
 
 const auto default_warn_style =
     WarnStyle{
-        "******************* WARNINGS! *********************",
+        "******************* WARNINGS **********************",
+        "*---> ",
+        "*__________________________________________________",
+
         "* [!  ]", "* [!! ]", "* [!!!]",
         "*       ",
         " [ ", " ] ",
         "***************************************************",
         "* No warnings have been raised!"};
+
+struct Entry
+{
+    std::string msg;
+    int counter = 0;
+}
+
+typedef
+    std::map<Type,
+        std::map<Importance,
+            std::map<std::string,
+                std::vector<Entry>>>> EntryMap;
+
+struct TaggedEntryMap
+{
+    std::string tag;
+    EntryMap entry_map;
+}
 
 class Logger
 {
@@ -59,25 +83,23 @@ public:
         std::string topic,
         std::string text);
 
-    void record_collective_entry(
-        Type type,
-        Importance importance,
-        std::string topic,
-        std::string text,
-        bool affects_me,
-        MPI_Comm comm,
-        int ranks_per_line = 15);
+    void collective_gather_entries(
+        const std::string& tag_name,
+        bool flush_non_IO_procs = true);
 
-    void print_warnings(std::stringstream& ss,
+    void print_all_warnings(std::stringstream& ss,
         const WarnStyle& ws = default_warn_style);
 
 private:
 
     void
+
+    aux_print_warn_epoch
+
     aux_print_entries(
         const std::string& prefix,
         const std::string& topic,
-        const std::vector<std::string>& entries,
+        const std::vector<Entry>& entries,
         const WarnStyle& ws,
         std::stringstream& ss) const;
 
@@ -87,10 +109,10 @@ private:
         const int first_line_offset,
         const WarnStyle& ws) const;
 
-    std::map<Type,
-        std::map<Importance,
-            std::map<std::string,
-                std::vector<std::string>>>> m_entries;
+    EntryMap m_entries;
+    std::vector<TaggedEntryMap> m_entries_archive;
+
+    bool m_am_I_IO_proc = false;
 };
 
 }
