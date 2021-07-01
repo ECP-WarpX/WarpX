@@ -22,9 +22,14 @@ jobs:
       - checkout
 
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v3-dependencies-{{ checksum "mewarpx/setup.py" }}-{{ checksum ".circleci/config.yml" }}
+      # This is being disabled as of 7/1/21. We found that it was caching a
+      # venv with symlinks to python 3.9.5, whereas now python 3.9.6 only was
+      # available, breaking all CircleCI builds. Furthermore, there is little
+      # being stored by this cache, making it not very valuable. We can
+      # reevaluate caching later if it becomes a limiting factor.
+      # - restore_cache:
+      #     keys:
+      #       - v3-dependencies-{{ checksum "mewarpx/setup.py" }}-{{ checksum ".circleci/config.yml" }}
 
       - run:
           name: install dependencies
@@ -36,10 +41,10 @@ jobs:
 
             python3 -m pip install --upgrade pip setuptools wheel
 
-      - save_cache:
-          paths:
-            - ./venv
-          key: v3-dependencies-{{ checksum "mewarpx/setup.py" }}-{{ checksum ".circleci/config.yml" }}
+      # - save_cache:
+      #     paths:
+      #       - ./venv
+      #     key: v3-dependencies-{{ checksum "mewarpx/setup.py" }}-{{ checksum ".circleci/config.yml" }}
 
       - run:
           name: build WarpX install mewarpx
