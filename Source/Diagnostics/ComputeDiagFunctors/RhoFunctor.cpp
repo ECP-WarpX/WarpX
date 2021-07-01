@@ -58,7 +58,8 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
         auto & solver = warpx.get_spectral_solver_fp(m_lev);
         solver.ForwardTransform(m_lev, *rho, IdxAvg::rho_new);
         solver.ApplyFilter(IdxAvg::rho_new);
-        solver.BackwardTransform(m_lev, *rho, IdxAvg::rho_new);
+        // Do not fill guard cells by passing fill_guards = amrex::IntVect(0)
+        solver.BackwardTransform(m_lev, *rho, IdxAvg::rho_new, amrex::IntVect(0));
     }
 #endif
 

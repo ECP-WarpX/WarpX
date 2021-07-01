@@ -402,7 +402,8 @@ void
 PMLPsatdAlgorithm::CurrentCorrection (const int /*lev*/,
                                       SpectralFieldData& /*field_data*/,
                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
-                                      const std::unique_ptr<amrex::MultiFab>& /*rho*/)
+                                      const std::unique_ptr<amrex::MultiFab>& /*rho*/,
+                                      const amrex::IntVect& /*fill_guards*/)
 {
     amrex::Abort("Current correction not implemented for PML PSATD");
 }
@@ -410,7 +411,8 @@ PMLPsatdAlgorithm::CurrentCorrection (const int /*lev*/,
 void
 PMLPsatdAlgorithm::VayDeposition (const int /*lev*/,
                                   SpectralFieldData& /*field_data*/,
-                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
+                                  const amrex::IntVect& /*fill_guards*/)
 {
     amrex::Abort("Vay deposition not implemented for PML PSATD");
 }

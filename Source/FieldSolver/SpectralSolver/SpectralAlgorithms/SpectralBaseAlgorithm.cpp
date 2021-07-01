@@ -53,7 +53,8 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     const int lev,
     SpectralFieldData& field_data,
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-    amrex::MultiFab& divE )
+    amrex::MultiFab& divE,
+    const amrex::IntVect& fill_guards)
 {
     using Idx = SpectralFieldIndex;
 
@@ -101,5 +102,5 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     }
 
     // Backward Fourier transform
-    field_data.BackwardTransform(lev, divE, Idx::divE, 0 );
+    field_data.BackwardTransform(lev, divE, Idx::divE, 0, fill_guards);
 }

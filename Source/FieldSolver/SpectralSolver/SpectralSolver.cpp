@@ -76,13 +76,14 @@ SpectralSolver::ForwardTransform( const int lev,
 }
 
 void
-SpectralSolver::BackwardTransform( const int lev,
+SpectralSolver::BackwardTransform (const int lev,
                                    amrex::MultiFab& mf,
                                    const int field_index,
-                                   const int i_comp )
+                                   const int i_comp,
+                                   const amrex::IntVect& fill_guards)
 {
     WARPX_PROFILE("SpectralSolver::BackwardTransform");
-    field_data.BackwardTransform( lev, mf, field_index, i_comp );
+    field_data.BackwardTransform(lev, mf, field_index, i_comp, fill_guards);
 }
 
 void

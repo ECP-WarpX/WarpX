@@ -59,7 +59,8 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
         virtual void CurrentCorrection (const int lev,
                                         SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                        const std::unique_ptr<amrex::MultiFab>& rho) override final;
+                                        const std::unique_ptr<amrex::MultiFab>& rho,
+                                        const amrex::IntVect& fill_guards) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -74,7 +75,8 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual void VayDeposition (const int lev,
                                     SpectralFieldData& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                    const amrex::IntVect& fill_guards) override final;
 
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;

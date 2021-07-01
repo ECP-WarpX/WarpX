@@ -96,10 +96,11 @@ class SpectralSolver
          * \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `mf`
          */
-        void BackwardTransform( const int lev,
+        void BackwardTransform (const int lev,
                                 amrex::MultiFab& mf,
                                 const int field_index,
-                                const int i_comp=0 );
+                                const int i_comp=0,
+                                const amrex::IntVect& fill_guards = amrex::IntVect(0));
 
         /**
          * \brief Update the fields in spectral space, over one timestep
@@ -110,10 +111,12 @@ class SpectralSolver
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithm from objects of class SpectralSolver
           */
-        void ComputeSpectralDivE ( const int lev,
-                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                                   amrex::MultiFab& divE ) {
-            algorithm->ComputeSpectralDivE( lev, field_data, Efield, divE );
+        void ComputeSpectralDivE (const int lev,
+                                  const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                  amrex::MultiFab& divE,
+                                  const amrex::IntVect& fill_guards)
+        {
+            algorithm->ComputeSpectralDivE(lev, field_data, Efield, divE, fill_guards);
         }
 
         /**
@@ -126,10 +129,12 @@ class SpectralSolver
          *                        storing the three components of the current density
          * \param[in]     rho     unique pointer to MultiFab storing the charge density
          */
-        void CurrentCorrection ( const int lev,
-                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                 const std::unique_ptr<amrex::MultiFab>& rho ) {
-            algorithm->CurrentCorrection( lev, field_data, current, rho );
+        void CurrentCorrection (const int lev,
+                                std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                const std::unique_ptr<amrex::MultiFab>& rho,
+                                const amrex::IntVect& fill_guards)
+        {
+            algorithm->CurrentCorrection(lev, field_data, current, rho, fill_guards);
         }
 
         /**
@@ -141,9 +146,11 @@ class SpectralSolver
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          *                        the three components of the current density
          */
-        void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+        void VayDeposition (const int lev,
+                            std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                            const amrex::IntVect& fill_guards)
         {
-            algorithm->VayDeposition(lev, field_data, current);
+            algorithm->VayDeposition(lev, field_data, current, fill_guards);
         }
 
         /**

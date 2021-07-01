@@ -1258,39 +1258,41 @@ PushPMLPSATDSinglePatch (
     solver.pushSpectralFields();
 
     // Perform backward Fourier transforms
-    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exy, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exz, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyx, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyz, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezx, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezy, PMLComp::zy);
-    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxy, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxz, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byx, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byz, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzx, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzy, PMLComp::zy);
+    // (do not fill guard cells in PML)
+    const amrex::IntVect& fill_guards = amrex::IntVect(0);
+    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exy, PMLComp::xy, fill_guards);
+    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exz, PMLComp::xz, fill_guards);
+    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyx, PMLComp::yx, fill_guards);
+    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyz, PMLComp::yz, fill_guards);
+    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezx, PMLComp::zx, fill_guards);
+    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezy, PMLComp::zy, fill_guards);
+    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxy, PMLComp::xy, fill_guards);
+    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxz, PMLComp::xz, fill_guards);
+    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byx, PMLComp::yx, fill_guards);
+    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byz, PMLComp::yz, fill_guards);
+    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzx, PMLComp::zx, fill_guards);
+    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzy, PMLComp::zy, fill_guards);
 
     // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
-        solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exx, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyy, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezz, PMLComp::zz);
-        solver.BackwardTransform(lev, *pml_F, SpIdx::Fx, PMLComp::x);
-        solver.BackwardTransform(lev, *pml_F, SpIdx::Fy, PMLComp::y);
-        solver.BackwardTransform(lev, *pml_F, SpIdx::Fz, PMLComp::z);
+        solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exx, PMLComp::xx, fill_guards);
+        solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyy, PMLComp::yy, fill_guards);
+        solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezz, PMLComp::zz, fill_guards);
+        solver.BackwardTransform(lev, *pml_F, SpIdx::Fx, PMLComp::x, fill_guards);
+        solver.BackwardTransform(lev, *pml_F, SpIdx::Fy, PMLComp::y, fill_guards);
+        solver.BackwardTransform(lev, *pml_F, SpIdx::Fz, PMLComp::z, fill_guards);
     }
 
     // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
-        solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxx, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byy, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzz, PMLComp::zz);
-        solver.BackwardTransform(lev, *pml_G, SpIdx::Gx, PMLComp::x);
-        solver.BackwardTransform(lev, *pml_G, SpIdx::Gy, PMLComp::y);
-        solver.BackwardTransform(lev, *pml_G, SpIdx::Gz, PMLComp::z);
+        solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxx, PMLComp::xx, fill_guards);
+        solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byy, PMLComp::yy, fill_guards);
+        solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzz, PMLComp::zz, fill_guards);
+        solver.BackwardTransform(lev, *pml_G, SpIdx::Gx, PMLComp::x, fill_guards);
+        solver.BackwardTransform(lev, *pml_G, SpIdx::Gy, PMLComp::y, fill_guards);
+        solver.BackwardTransform(lev, *pml_G, SpIdx::Gz, PMLComp::z, fill_guards);
     }
 }
 #endif

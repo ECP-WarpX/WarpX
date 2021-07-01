@@ -96,6 +96,8 @@ Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 bool WarpX::fft_do_time_averaging = false;
 
+amrex::IntVect WarpX::fill_guards = amrex::IntVect(1);
+
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
@@ -1064,6 +1066,19 @@ WarpX::ReadParameters ()
         }
     }
 
+    // Whether to fill the guard cells with inverse FFTs based on the boundary conditions
+    WarpX::fill_guards = amrex::IntVect(1);
+    for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+    {
+         if (WarpX::field_boundary_lo[dir] != FieldBoundaryType::Periodic &&
+             WarpX::field_boundary_hi[dir] != FieldBoundaryType::Periodic &&
+             WarpX::field_boundary_lo[dir] != FieldBoundaryType::Damped &&
+             WarpX::field_boundary_hi[dir] != FieldBoundaryType::Damped)
+         {
+                 WarpX::fill_guards[dir] = 0;
+         }
+    }
+
     if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
@@ -1978,7 +1993,8 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_PSATD
-        spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
+        // Do not fill guard cells by passing fill_guards = amrex::IntVect(0)
+        spectral_solver_fp[lev]->ComputeSpectralDivE(lev, Efield_aux[lev], divE, amrex::IntVect(0));
 #else
         amrex::Abort("ComputeDivE: PSATD requested but not compiled");
 #endif

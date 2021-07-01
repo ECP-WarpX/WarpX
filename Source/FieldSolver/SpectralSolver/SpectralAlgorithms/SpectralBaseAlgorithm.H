@@ -55,7 +55,8 @@ class SpectralBaseAlgorithm
         virtual void CurrentCorrection (const int lev,
                                         SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                        const std::unique_ptr<amrex::MultiFab>& rho) = 0;
+                                        const std::unique_ptr<amrex::MultiFab>& rho,
+                                        const amrex::IntVect& fill_guards) = 0;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -68,15 +69,17 @@ class SpectralBaseAlgorithm
          */
         virtual void VayDeposition (const int lev,
                                     SpectralFieldData& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) = 0;
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                    const amrex::IntVect& fill_guards) = 0;
 
         /**
          * \brief Compute spectral divergence of E
          */
-        void ComputeSpectralDivE ( const int lev,
-                                   SpectralFieldData& field_data,
-                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                                   amrex::MultiFab& divE );
+        void ComputeSpectralDivE (const int lev,
+                                  SpectralFieldData& field_data,
+                                  const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                  amrex::MultiFab& divE,
+                                  const amrex::IntVect& fill_guards);
 
     protected: // Meant to be used in the subclasses
 

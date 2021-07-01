@@ -410,7 +410,8 @@ void
 ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
                                            SpectralFieldData& field_data,
                                            std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                           const std::unique_ptr<amrex::MultiFab>& rho)
+                                           const std::unique_ptr<amrex::MultiFab>& rho,
+                                           const amrex::IntVect& fill_guards)
 {
     // Profiling
     BL_PROFILE("ComovingAlgorithm::CurrentCorrection");
@@ -504,15 +505,16 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
     }
 
     // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx::Jx, 0);
-    field_data.BackwardTransform(lev, *current[1], Idx::Jy, 0);
-    field_data.BackwardTransform(lev, *current[2], Idx::Jz, 0);
+    field_data.BackwardTransform(lev, *current[0], Idx::Jx, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[1], Idx::Jy, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[2], Idx::Jz, 0, fill_guards);
 }
 
 void
 ComovingPsatdAlgorithm::VayDeposition (const int /*lev*/,
                                        SpectralFieldData& /*field_data*/,
-                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
+                                       const amrex::IntVect& /*fill_guards*/)
 {
     amrex::Abort("Vay deposition not implemented for comoving PSATD");
 }
