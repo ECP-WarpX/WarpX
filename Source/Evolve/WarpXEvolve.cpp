@@ -15,9 +15,10 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
 #ifdef WARPX_USE_PSATD
-#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   ifdef WARPX_DIM_RZ
-#      include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   else
+#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
 #endif
 #include "Parallelization/GuardCellManager.H"
