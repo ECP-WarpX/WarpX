@@ -10,17 +10,17 @@ class SimControl:
     set of user defined functions and criteria
 
     """
-    def __init__(self, max_steps, criteria=None, **kwargs):
+    def __init__(self, max_steps, criteria=None):
         """
         Generate and install functions to perform after a step #.
 
         Arguments:
 
             max_steps: Maximum number of steps to perform in the simulation,
-            when step == max_steps check_criteria returns False
+                when step == max_steps check_criteria returns False
 
             criteria: list of user defined functions or list of user defined
-            tuples(function, kwargs) that each return a True or False value
+                tuples(function, kwargs) that each return a True or False value
 
         Functions:
 
