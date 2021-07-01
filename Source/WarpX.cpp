@@ -96,7 +96,8 @@ Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 bool WarpX::fft_do_time_averaging = false;
 
-amrex::IntVect WarpX::fill_guards = amrex::IntVect(1);
+// Default set below, before query
+amrex::IntVect WarpX::fill_guards;
 
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
@@ -1064,19 +1065,16 @@ WarpX::ReadParameters ()
                 "field boundary in both lo and hi must be set to Damped for PSATD"
             );
         }
-    }
 
-    // Whether to fill the guard cells with inverse FFTs based on the boundary conditions
-    WarpX::fill_guards = amrex::IntVect(1);
-    for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
-    {
-         if (WarpX::field_boundary_lo[dir] != FieldBoundaryType::Periodic &&
-             WarpX::field_boundary_hi[dir] != FieldBoundaryType::Periodic &&
-             WarpX::field_boundary_lo[dir] != FieldBoundaryType::Damped &&
-             WarpX::field_boundary_hi[dir] != FieldBoundaryType::Damped)
-         {
-                 WarpX::fill_guards[dir] = 0;
-         }
+        // Whether to fill the guard cells with inverse FFTs
+        // TODO Choose appropriate defaults depending on the boundary conditions
+        amrex::Vector<int> parse_fill_guards(AMREX_SPACEDIM, 1);
+        pp_psatd.queryarr("fill_guards", parse_fill_guards);
+        fill_guards[0] = parse_fill_guards[0];
+        fill_guards[1] = parse_fill_guards[1];
+#if (AMREX_SPACEDIM == 3)
+        fill_guards[2] = parse_fill_guards[2];
+#endif
     }
 
     if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
@@ -1993,8 +1991,7 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
     if ( WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_PSATD
-        // Do not fill guard cells by passing fill_guards = amrex::IntVect(0)
-        spectral_solver_fp[lev]->ComputeSpectralDivE(lev, Efield_aux[lev], divE, amrex::IntVect(0));
+        spectral_solver_fp[lev]->ComputeSpectralDivE(lev, Efield_aux[lev], divE, WarpX::fill_guards);
 #else
         amrex::Abort("ComputeDivE: PSATD requested but not compiled");
 #endif
