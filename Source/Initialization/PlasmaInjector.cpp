@@ -221,7 +221,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (part_pos_s == "nfluxpercell") {
         surface_flux = true;
-        pp_species_name.query("num_particles_per_cell", num_particles_per_cell_real);
+        queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,

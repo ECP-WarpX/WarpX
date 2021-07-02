@@ -554,7 +554,7 @@ WarpX::ReadParameters ()
         }
 
         pp_warpx.query("n_buffer", n_buffer);
-        pp_warpx.query("const_dt", const_dt);
+        queryWithParser(pp_warpx, "const_dt", const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
