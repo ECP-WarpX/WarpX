@@ -1,6 +1,6 @@
 # --- Test if MPI_communicator is correctly passed from Python to CPP
 # --- This test should be run with MPI enabled
-# --- Inputs taken from langmuir_2d. Runs 1 step, and will check
+# --- Inputs taken from langmuir_2d. Runs 10 steps, and will check
 # --- if the correct amount of processors are initialized in AMReX.
 
 from mpi4py import MPI
@@ -10,10 +10,6 @@ constants = picmi.constants
 ##########################
 # MPI communicator setup
 ##########################
-
-# must initialize everything separately on separate processors
-# so we need to create comm first before setting params,
-# and importing packages
 
 # split processor 0 into separate communicator from others
 comm_world = MPI.COMM_WORLD
@@ -107,13 +103,11 @@ sim.add_species(electrons,
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)
 
-
 ##########################
 # simulation run
 ##########################
 
 sim.step(max_steps, mpi_comm=new_comm)
-
 
 ##########################
 # test
