@@ -57,7 +57,9 @@ option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
-option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
+option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"   OFF)
+# Modern electron variable option
+option(ME_Solver           "Flag that allows for installing custom field solver" OFF)
 # TODO: sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
@@ -301,6 +303,10 @@ if(WIN32)
     target_compile_definitions(WarpX PRIVATE YY_NO_UNISTD_H)
 endif()
 
+# Modern Electron Variables
+if(ME_Solver)
+    target_compile_definitions(WarpX PUBLIC ME_SOLVER)
+endif()
 
 # Warnings ####################################################################
 #

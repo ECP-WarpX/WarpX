@@ -51,6 +51,7 @@ extern "C" {
     void warpx_set_callback_py_afterEsolve (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_beforedeposition (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_afterdeposition (WARPX_CALLBACK_PY_FUNC_0);
+    void warpx_set_callback_py_fieldsolver (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_particlescraper (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_particleloader (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_beforestep (WARPX_CALLBACK_PY_FUNC_0);

@@ -1,5 +1,9 @@
 CEXE_sources += WarpXPushFieldsEM.cpp
-CEXE_sources += ElectrostaticSolver.cpp
+ifeq ($(ME_SOLVER),TRUE)
+  CEXE_sources += ElectrostaticSolver_ME.cpp
+else
+  CEXE_sources += ElectrostaticSolver.cpp
+endif
 CEXE_sources += WarpX_QED_Field_Pushers.cpp
 ifeq ($(USE_PSATD),TRUE)
   include $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/Make.package

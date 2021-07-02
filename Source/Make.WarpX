@@ -99,6 +99,14 @@ ifeq ($(USE_EB),TRUE)
   USERSuffix := $(USERSuffix).EB
 endif
 
+ifeq ($(ME_SOLVER),TRUE)
+  CXXFLAGS += -DME_SOLVER
+  CFLAGS   += -DME_SOLVER
+  FFLAGS   += -DME_SOLVER
+  F90FLAGS += -DME_SOLVER
+  USERSuffix := $(USERSuffix).ME_SOLVER
+endif
+
 ifeq ($(QED),TRUE)
   INCLUDE_LOCATIONS += $(PICSAR_HOME)/multi_physics/QED/include
   CXXFLAGS += -DWARPX_QED

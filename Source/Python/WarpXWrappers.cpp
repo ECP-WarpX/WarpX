@@ -187,6 +187,10 @@ extern "C"
     {
         warpx_py_afterdeposition = callback;
     }
+    void warpx_set_callback_py_fieldsolver (WARPX_CALLBACK_PY_FUNC_0 callback)
+    {
+        warpx_py_fieldsolver = callback;
+    }
     void warpx_set_callback_py_particlescraper (WARPX_CALLBACK_PY_FUNC_0 callback)
     {
         warpx_py_particlescraper = callback;

@@ -28,6 +28,8 @@ Functions can be called at the following times:
  - afterdeposition <installafterdeposition>: after particle deposition (for charge and/or current)
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
+ - fieldsolver <installfieldsolver>: In place of the AddSpaceChargeFieldLabFrame() call but only in
+                                     an electrostatic simulation with ME_Solver = ON
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
@@ -231,6 +233,7 @@ _beforeEsolve = CallbackFunctions('beforeEsolve')
 _afterEsolve = CallbackFunctions('afterEsolve')
 _beforedeposition = CallbackFunctions('beforedeposition')
 _afterdeposition = CallbackFunctions('afterdeposition')
+_fieldsolver = CallbackFunctions('fieldsolver')
 _particlescraper = CallbackFunctions('particlescraper')
 _particleloader = CallbackFunctions('particleloader')
 _beforestep = CallbackFunctions('beforestep')
@@ -252,6 +255,8 @@ _c_beforedeposition = _CALLBACK_FUNC_0(_beforedeposition)
 libwarpx.warpx_set_callback_py_beforedeposition(_c_beforedeposition)
 _c_afterdeposition = _CALLBACK_FUNC_0(_afterdeposition)
 libwarpx.warpx_set_callback_py_afterdeposition(_c_afterdeposition)
+_c_fieldsolver = _CALLBACK_FUNC_0(_fieldsolver)
+libwarpx.warpx_set_callback_py_fieldsolver(_c_fieldsolver)
 _c_particlescraper = _CALLBACK_FUNC_0(_particlescraper)
 libwarpx.warpx_set_callback_py_particlescraper(_c_particlescraper)
 _c_particleloader = _CALLBACK_FUNC_0(_particleloader)
@@ -277,6 +282,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
     if ff is None: ff = sys.stdout
     for c in [_afterinit,_beforeEsolve,_afterEsolve,
               _beforedeposition,_afterdeposition,
+              _fieldsolver,
               _particlescraper,
               _particleloader,
               _beforestep,_afterstep,
@@ -371,6 +377,24 @@ def uninstallafterdeposition(f):
 def isinstalledafterdeposition(f):
     "Checks if the function is called after a particle deposition"
     return _afterdeposition.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromfieldsolver(f):
+    installfieldsolver(f)
+    return f
+def installfieldsolver(f):
+    """Adds a function to perform the field solve. Note that the C++ object
+    warpx_py_fieldsolver is declared as a nullptr but once the call to set it
+    to _c_fieldsolver below is executed it is no longer a nullptr, and therefore
+    if (warpx_py_fieldsolver) evaluates to True. For this reason a fieldsolver
+    cannot be uninstalled with the uninstallfuncinlist functionality at present."""
+    if _fieldsolver.hasfuncsinstalled():
+        raise RuntimeError('Only one field solver can be installed.')
+    libwarpx.warpx_set_callback_py_fieldsolver(_c_fieldsolver)
+    _fieldsolver.installfuncinlist(f)
+def isinstalledfieldsolver(f):
+    """Checks if the function is called for a field solve"""
+    return _fieldsolver.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticlescraper(f):
@@ -484,4 +508,3 @@ def isinstalledappliedfields(f):
     "Checks if the function is called when which applies fields"
     raise Exception('applied fields call back not implemented yet')
     return _appliedfields.isinstalledfuncinlist(f)
-

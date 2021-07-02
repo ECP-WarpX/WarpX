@@ -97,6 +97,8 @@ class CMakeBuild(build_ext):
             #        see PICSAR and openPMD below
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
+            ## Modern electron variables
+            '-DME_Solver:BOOL=' + ME_Solver,
             ## Unix: rpath to current dir when packaged
             ##       needed for shared (here non-default) builds and ADIOS1
             ##       wrapper libraries
@@ -186,6 +188,8 @@ WarpX_DIMS = os.environ.get('WarpX_DIMS', '2;3;RZ')
 BUILD_PARALLEL = os.environ.get('BUILD_PARALLEL', '2')
 BUILD_SHARED_LIBS = os.environ.get('WarpX_BUILD_SHARED_LIBS',
                                    'OFF')
+# Modern Electron Build Variables
+ME_Solver = os.environ.get('ME_Solver', 'OFF')
 #BUILD_TESTING = os.environ.get('WarpX_BUILD_TESTING',
 #                               'OFF')
 #BUILD_EXAMPLES = os.environ.get('WarpX_BUILD_EXAMPLES',
@@ -206,6 +210,12 @@ if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
     WarpX_MPI = "ON"
 else:
     WarpX_MPI = "OFF"
+
+# Modern Electron variables read environment variables
+if ME_Solver.upper() in ['1', 'ON', 'TRUE', 'YES']:
+    ME_Solver = "ON"
+else:
+    ME_Solver = "OFF"
 
 # for CMake
 cxx_modules = []     # values: warpx_2d, warpx_3d, warpx_rz

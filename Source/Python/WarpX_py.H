@@ -18,6 +18,7 @@ extern "C" {
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterEsolve;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforedeposition;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterdeposition;
+    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_fieldsolver;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_particlescraper;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_particleloader;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforestep;
