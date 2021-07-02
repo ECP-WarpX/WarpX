@@ -55,7 +55,7 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     const int lev,
     SpectralFieldData& field_data,
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-    amrex::MultiFab& divE)
+    amrex::MultiFab& divE )
 {
     using Idx = SpectralFieldIndex;
 

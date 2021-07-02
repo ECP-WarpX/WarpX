@@ -73,10 +73,10 @@ class SpectralBaseAlgorithm
         /**
          * \brief Compute spectral divergence of E
          */
-        void ComputeSpectralDivE (const int lev,
-                                  SpectralFieldData& field_data,
-                                  const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                                  amrex::MultiFab& divE);
+        void ComputeSpectralDivE ( const int lev,
+                                   SpectralFieldData& field_data,
+                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE );
 
     protected: // Meant to be used in the subclasses
 
