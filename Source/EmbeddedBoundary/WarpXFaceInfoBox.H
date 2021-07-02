@@ -55,7 +55,7 @@ struct FaceInfoBox {
 * \brief writes into i_face and j_face the intruded neighbors indices;
 */
     static std::vector<int> uint8_to_inds(uint8_t mask){
-        
+
          if(mask & ul){
              return std::vector<int>{-1, -1};
          }else if(mask & l){
