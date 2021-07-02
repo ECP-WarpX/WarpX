@@ -97,7 +97,7 @@ Overall simulation parameters
 * ``warpx.self_fields_verbosity`` (`integer`, default: 2)
     The vebosity used for MLMG solver for space-charge fields calculation. Currently
     MLMG solver looks for verbosity levels from 0-5. A higher number results in more
-    verbose output. This only applies when warpx.do_electrostatic = labframe.
+    verbose output.
 
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
