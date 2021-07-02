@@ -119,29 +119,23 @@ sim.step(max_steps, mpi_comm=new_comm)
 # test
 ##########################
 
+# NOTE: Some tests are done in this input PICMI file. These tests
+# check that amrex initialized the correct amount of procs and
+# that the procs ranks in amrex are correct.
+# If any of these tests fail, the terminal will print that the
+# program crashed.
+
 comm_world_size = comm_world.size
 new_comm_size = new_comm.size
 
 from pywarpx import wx
 
 if color == 0:
-    # NOTE: Some tests are done in this input PICMI file. These tests
-    # check that amrex initialized the correct amount of procs and
-    # that the procs ranks in amrex are correct.
-    # If any of these tests fail, the terminal will print that the
-    # program crashed.
-
     # verify that communicator contains correct number of procs (1)
     assert wx.libwarpx.warpx_getNProcs() == comm_world_size - 2
     assert wx.libwarpx.warpx_getNProcs() == new_comm_size
 
 else:
-    # NOTE: Some tests are done in this input PICMI file. These tests
-    # check that amrex initialized the correct amount of procs and
-    # that the procs ranks in amrex are correct.
-    # If any of these tests fail, the terminal will print that the
-    # program crashed.
-
     # verify that amrex initialized with 1 fewer proc than comm world
     assert wx.libwarpx.warpx_getNProcs() == comm_world_size - 1
     assert wx.libwarpx.warpx_getNProcs() == new_comm_size
