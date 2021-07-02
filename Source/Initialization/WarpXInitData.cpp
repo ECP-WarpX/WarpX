@@ -126,18 +126,6 @@ WarpX::InitData ()
         PostRestart();
     }
 
-#ifdef AMREX_USE_EB
-    ComputeEdgeLengths();
-    ComputeFaceAreas();
-    ScaleEdges();
-    ScaleAreas();
-
-    if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
-        MarkCells();
-        ComputeFaceExtensions();
-    }
-
-#endif
     ComputeMaxStep();
 
     ComputePMLFactors();
@@ -513,6 +501,19 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         }
     }
 
+#ifdef AMREX_USE_EB
+    ComputeEdgeLengths();
+    ComputeFaceAreas();
+    ScaleEdges();
+    ScaleAreas();
+
+    if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+        MarkCells();
+        ComputeFaceExtensions();
+    }
+
+#endif
+
     // if the input string for the B-field is "parse_b_ext_grid_function",
     // then the analytical expression or function must be
     // provided in the input file.
@@ -700,7 +701,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-              if(geom_data_y(i, j, k)<=0) return;
+              if(geom_data_y(i, j, k)<=0){
+                  return;
+              }
 #endif
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
