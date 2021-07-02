@@ -968,8 +968,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_avail_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_intr_face;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_red;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_enl;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
     //This is just needed for the ECT solver
