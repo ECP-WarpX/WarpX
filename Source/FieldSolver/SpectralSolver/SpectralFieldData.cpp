@@ -295,7 +295,7 @@ SpectralFieldData::BackwardTransform (const int lev,
         // Copy the temporary field tmpRealField to the real-space field mf and
         // normalize, dividing by N, since (FFT + inverse FFT) results in a factor N
         {
-            amrex::Box mf_box = mfi.fabbox();
+            amrex::Box mf_box = (m_periodic_single_box) ? mfi.validbox() : mfi.fabbox();
             amrex::Array4<amrex::Real> mf_arr = mf[mfi].array();
             amrex::Array4<const amrex::Real> tmp_arr = tmpRealField[mfi].array();
 
