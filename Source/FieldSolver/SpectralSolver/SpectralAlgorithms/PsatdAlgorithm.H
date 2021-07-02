@@ -51,6 +51,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const int norder_y,
             const int norder_z,
             const bool nodal,
+            const amrex::IntVect& fill_guards,
             const amrex::Array<amrex::Real,3>& v_galilean,
             const amrex::Real dt,
             const bool update_with_rho,
@@ -135,15 +136,12 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
-         * \param[in] fill_guards    Whether to fill the guard cells while performing
-         *                           the inverse FFT of J
          */
         virtual void CurrentCorrection (
             const int lev,
             SpectralFieldData& field_data,
             std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-            const std::unique_ptr<amrex::MultiFab>& rho,
-            const amrex::IntVect& fill_guards) override final;
+            const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -155,14 +153,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
-         * \param[in] fill_guards    Whether to fill the guard cells while performing
-         *                           the inverse FFT of J
          */
         virtual void VayDeposition (
             const int lev,
             SpectralFieldData& field_data,
-            std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-            const amrex::IntVect& fill_guards) override final;
+            std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
 

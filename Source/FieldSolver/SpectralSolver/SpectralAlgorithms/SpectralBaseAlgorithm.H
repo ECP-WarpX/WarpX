@@ -55,8 +55,7 @@ class SpectralBaseAlgorithm
         virtual void CurrentCorrection (const int lev,
                                         SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                        const std::unique_ptr<amrex::MultiFab>& rho,
-                                        const amrex::IntVect& fill_guards) = 0;
+                                        const std::unique_ptr<amrex::MultiFab>& rho) = 0;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -69,8 +68,7 @@ class SpectralBaseAlgorithm
          */
         virtual void VayDeposition (const int lev,
                                     SpectralFieldData& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                    const amrex::IntVect& fill_guards) = 0;
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) = 0;
 
         /**
          * \brief Compute spectral divergence of E
@@ -78,10 +76,11 @@ class SpectralBaseAlgorithm
         void ComputeSpectralDivE (const int lev,
                                   SpectralFieldData& field_data,
                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                                  amrex::MultiFab& divE,
-                                  const amrex::IntVect& fill_guards);
+                                  amrex::MultiFab& divE);
 
     protected: // Meant to be used in the subclasses
+
+        amrex::IntVect m_fill_guards;
 
         using SpectralRealCoefficients = \
             amrex::FabArray< amrex::BaseFab <amrex::Real> >;
@@ -94,7 +93,8 @@ class SpectralBaseAlgorithm
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
                               const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal);
+                              const int norder_z, const bool nodal,
+                              const amrex::IntVect& fill_guards);
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

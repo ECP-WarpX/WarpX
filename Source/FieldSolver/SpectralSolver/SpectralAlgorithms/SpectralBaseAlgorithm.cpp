@@ -30,8 +30,10 @@ using namespace amrex;
 SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const int norder_x, const int norder_y,
-    const int norder_z, const bool nodal):
+    const int norder_z, const bool nodal,
+    const amrex::IntVect& fill_guards):
     // Compute and assign the modified k vectors
+        m_fill_guards(fill_guards),
         modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
 #if (AMREX_SPACEDIM==3)
         modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
@@ -53,8 +55,7 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     const int lev,
     SpectralFieldData& field_data,
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-    amrex::MultiFab& divE,
-    const amrex::IntVect& fill_guards)
+    amrex::MultiFab& divE)
 {
     using Idx = SpectralFieldIndex;
 
@@ -62,6 +63,8 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     field_data.ForwardTransform(lev, *Efield[0], Idx::Ex, 0 );
     field_data.ForwardTransform(lev, *Efield[1], Idx::Ey, 0 );
     field_data.ForwardTransform(lev, *Efield[2], Idx::Ez, 0 );
+
+    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){

@@ -32,10 +32,11 @@ using namespace amrex;
 PMLPsatdAlgorithm::PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                                      const DistributionMapping& dm,
                                      const int norder_x, const int norder_y,
-                                     const int norder_z, const bool nodal, const Real dt,
+                                     const int norder_z, const bool nodal,
+                                     const amrex::IntVect& fill_guards, const Real dt,
                                      const bool dive_cleaning, const bool divb_cleaning)
      // Initialize members of base class
-     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal, fill_guards),
        m_dt(dt),
        m_dive_cleaning(dive_cleaning),
        m_divb_cleaning(divb_cleaning)
@@ -402,8 +403,7 @@ void
 PMLPsatdAlgorithm::CurrentCorrection (const int /*lev*/,
                                       SpectralFieldData& /*field_data*/,
                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
-                                      const std::unique_ptr<amrex::MultiFab>& /*rho*/,
-                                      const amrex::IntVect& /*fill_guards*/)
+                                      const std::unique_ptr<amrex::MultiFab>& /*rho*/)
 {
     amrex::Abort("Current correction not implemented for PML PSATD");
 }
@@ -411,8 +411,7 @@ PMLPsatdAlgorithm::CurrentCorrection (const int /*lev*/,
 void
 PMLPsatdAlgorithm::VayDeposition (const int /*lev*/,
                                   SpectralFieldData& /*field_data*/,
-                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
-                                  const amrex::IntVect& /*fill_guards*/)
+                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for PML PSATD");
 }

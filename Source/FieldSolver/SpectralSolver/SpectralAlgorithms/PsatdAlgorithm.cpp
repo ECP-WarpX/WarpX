@@ -33,13 +33,14 @@ PsatdAlgorithm::PsatdAlgorithm(
     const int norder_y,
     const int norder_z,
     const bool nodal,
+    const amrex::IntVect& fill_guards,
     const amrex::Array<amrex::Real,3>& v_galilean,
     const amrex::Real dt,
     const bool update_with_rho,
     const bool time_averaging,
     const bool J_linear_in_time)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal, fill_guards),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
     // (argument nodal = true), for both nodal and staggered simulations
@@ -845,8 +846,7 @@ PsatdAlgorithm::CurrentCorrection (
     const int lev,
     SpectralFieldData& field_data,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-    const std::unique_ptr<amrex::MultiFab>& rho,
-    const amrex::IntVect& fill_guards)
+    const std::unique_ptr<amrex::MultiFab>& rho)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithm::CurrentCorrection");
@@ -859,6 +859,8 @@ PsatdAlgorithm::CurrentCorrection (
     field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0);
     field_data.ForwardTransform(lev, *rho, Idx::rho_old, 0);
     field_data.ForwardTransform(lev, *rho, Idx::rho_new, 1);
+
+    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -961,8 +963,7 @@ void
 PsatdAlgorithm::VayDeposition (
     const int lev,
     SpectralFieldData& field_data,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-    const amrex::IntVect& fill_guards)
+    std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithm::VayDeposition()");
@@ -975,6 +976,8 @@ PsatdAlgorithm::VayDeposition (
     field_data.ForwardTransform(lev, *current[0], Idx::Jx, 0, IntVect(1));
     field_data.ForwardTransform(lev, *current[1], Idx::Jy, 0, IntVect(1));
     field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0, IntVect(1));
+
+    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi)

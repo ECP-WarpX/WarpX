@@ -32,6 +32,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
                                 const int norder_y,
                                 const int norder_z,
                                 const bool nodal,
+                                const amrex::IntVect& fill_guards,
                                 const amrex::Array<amrex::Real,3>& v_comoving,
                                 const amrex::Real dt,
                                 const bool update_with_rho);
@@ -66,8 +67,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
         virtual void CurrentCorrection (const int lev,
                                         SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                        const std::unique_ptr<amrex::MultiFab>& rho,
-                                        const amrex::IntVect& fill_guards) override final;
+                                        const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space.
@@ -81,8 +81,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual void VayDeposition (const int lev,
                                     SpectralFieldData& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                    const amrex::IntVect& fill_guards) override final;
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
 

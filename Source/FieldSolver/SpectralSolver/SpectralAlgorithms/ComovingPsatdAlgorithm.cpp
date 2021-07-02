@@ -24,11 +24,12 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
                                                 const DistributionMapping& dm,
                                                 const int norder_x, const int norder_y,
                                                 const int norder_z, const bool nodal,
+                                                const amrex::IntVect& fill_guards,
                                                 const amrex::Array<amrex::Real, 3>& v_comoving,
                                                 const amrex::Real dt,
                                                 const bool update_with_rho)
      // Members initialization
-     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal, fill_guards),
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument nodal = false is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, false)),
@@ -410,8 +411,7 @@ void
 ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
                                            SpectralFieldData& field_data,
                                            std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                           const std::unique_ptr<amrex::MultiFab>& rho,
-                                           const amrex::IntVect& fill_guards)
+                                           const std::unique_ptr<amrex::MultiFab>& rho)
 {
     // Profiling
     BL_PROFILE("ComovingAlgorithm::CurrentCorrection");
@@ -424,6 +424,8 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
     field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0);
     field_data.ForwardTransform(lev, *rho, Idx::rho_old, 0);
     field_data.ForwardTransform(lev, *rho, Idx::rho_new, 1);
+
+    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -513,8 +515,7 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
 void
 ComovingPsatdAlgorithm::VayDeposition (const int /*lev*/,
                                        SpectralFieldData& /*field_data*/,
-                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
-                                       const amrex::IntVect& /*fill_guards*/)
+                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for comoving PSATD");
 }

@@ -71,6 +71,7 @@ class SpectralSolver
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
+                        const amrex::IntVect& fill_guards,
                         const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::Array<amrex::Real,3>& v_comoving,
                         const amrex::RealVect dx,
@@ -99,8 +100,7 @@ class SpectralSolver
         void BackwardTransform (const int lev,
                                 amrex::MultiFab& mf,
                                 const int field_index,
-                                const int i_comp=0,
-                                const amrex::IntVect& fill_guards = amrex::IntVect(0));
+                                const int i_comp=0);
 
         /**
          * \brief Update the fields in spectral space, over one timestep
@@ -113,10 +113,9 @@ class SpectralSolver
           */
         void ComputeSpectralDivE (const int lev,
                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                                  amrex::MultiFab& divE,
-                                  const amrex::IntVect& fill_guards)
+                                  amrex::MultiFab& divE)
         {
-            algorithm->ComputeSpectralDivE(lev, field_data, Efield, divE, fill_guards);
+            algorithm->ComputeSpectralDivE(lev, field_data, Efield, divE);
         }
 
         /**
@@ -131,10 +130,9 @@ class SpectralSolver
          */
         void CurrentCorrection (const int lev,
                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                const std::unique_ptr<amrex::MultiFab>& rho,
-                                const amrex::IntVect& fill_guards)
+                                const std::unique_ptr<amrex::MultiFab>& rho)
         {
-            algorithm->CurrentCorrection(lev, field_data, current, rho, fill_guards);
+            algorithm->CurrentCorrection(lev, field_data, current, rho);
         }
 
         /**
@@ -147,10 +145,9 @@ class SpectralSolver
          *                        the three components of the current density
          */
         void VayDeposition (const int lev,
-                            std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                            const amrex::IntVect& fill_guards)
+                            std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
         {
-            algorithm->VayDeposition(lev, field_data, current, fill_guards);
+            algorithm->VayDeposition(lev, field_data, current);
         }
 
         /**
@@ -190,6 +187,10 @@ class SpectralSolver
             // The last argument represents the number of components to perform this operation
             field_data.fields.mult(scale_factor, icomp, 1);
         }
+
+    protected:
+
+        amrex::IntVect m_fill_guards;
 
     private:
 
