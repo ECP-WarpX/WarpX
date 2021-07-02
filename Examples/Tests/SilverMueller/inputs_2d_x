@@ -21,10 +21,10 @@ geometry.prob_hi     =  20.e-6  40.e-6
 warpx.verbose = 1
 
 # Algorithms
-
 warpx.cfl = 1.0
 warpx.do_pml = 0
 warpx.do_silver_mueller = 1
+warpx.use_filter = 0
 
 warpx.do_moving_window = 0
 # warpx.moving_window_dir = z

@@ -1156,11 +1156,15 @@ Numerics and algorithms
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
 
-* ``warpx.use_filter`` (`0 or 1`)
-    Whether to smooth the charge and currents on the mesh, after depositing
-    them from the macroparticles. This uses a bilinear filter
-    (see the :ref:`filtering section <theory-pic-filter>`).
-    When using the RZ spectral solver, the filtering is done in k-space.
+* ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
+    Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
+    This uses a bilinear filter (see the :ref:`filtering section <theory-pic-filter>`).
+    The default is `1` in all cases, except for simulations in RZ geometry using the FDTD solver.
+    With the RZ PSATD solver, the filtering is done in :math:`k`-space.
+
+    .. warning::
+
+       Known bug: filter currently not working with FDTD solver in RZ geometry (see https://github.com/ECP-WarpX/WarpX/issues/1943).
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
