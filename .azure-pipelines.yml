@@ -12,7 +12,6 @@ jobs:
     WARPX_CI_NUM_MAKE_JOBS: 2
     WARPX_CI_CCACHE: 'TRUE'
     WARPX_CI_OPENPMD: 'TRUE'
-    WARPX_CI_PSATD: 'TRUE'
     FFTW_HOME: '/usr/'
     BLASPP_HOME: '/usr/local/'
     LAPACKPP_HOME: '/usr/local/'
