@@ -58,11 +58,9 @@ WarpX::InitBorrowing() {
         borrowing_x.size.resize(box);
         borrowing_x.size.setVal<amrex::RunOn::Host>(0);
         amrex::Long ncells = box.numPts();
-        borrowing_x.inds.resize(8 * ncells);
-        borrowing_x.i_face.resize(8 * ncells);
-        borrowing_x.j_face.resize(8 * ncells);
-        borrowing_x.k_face.resize(8 * ncells);
-        borrowing_x.area.resize(8 * ncells);
+        borrowing_x.inds.resize(8*ncells);
+        borrowing_x.neigh_faces.resize(8*ncells);
+        borrowing_x.area.resize(8*ncells);
     }
 
     idim = 1;
@@ -73,11 +71,9 @@ WarpX::InitBorrowing() {
         borrowing_y.size.resize(box);
         borrowing_y.size.setVal<amrex::RunOn::Host>(0);
         amrex::Long ncells = box.numPts();
-        borrowing_y.inds.resize(8 * ncells);
-        borrowing_y.i_face.resize(8 * ncells);
-        borrowing_y.j_face.resize(8 * ncells);
-        borrowing_y.k_face.resize(8 * ncells);
-        borrowing_y.area.resize(8 * ncells);
+        borrowing_y.inds.resize(8*ncells);
+        borrowing_y.neigh_faces.resize(8*ncells);
+        borrowing_y.area.resize(8*ncells);
     }
 
     idim = 2;
@@ -88,11 +84,9 @@ WarpX::InitBorrowing() {
         borrowing_z.size.resize(box);
         borrowing_z.size.setVal<amrex::RunOn::Host>(0);
         amrex::Long ncells = box.numPts();
-        borrowing_z.inds.resize(8 * ncells);
-        borrowing_z.i_face.resize(8 * ncells);
-        borrowing_z.j_face.resize(8 * ncells);
-        borrowing_z.k_face.resize(8 * ncells);
-        borrowing_z.area.resize(8 * ncells);
+        borrowing_z.inds.resize(8*ncells);
+        borrowing_z.neigh_faces.resize(8*ncells);
+        borrowing_z.area.resize(8*ncells);
     }
 }
 
@@ -354,9 +348,7 @@ WarpX::ComputeOneWayExtensions() {
         auto const &borrowing_x_size = borrowing_x.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_x_inds = borrowing_x.inds.data();
-        int* borrowing_x_i_face = borrowing_x.i_face.data();
-        int* borrowing_x_j_face = borrowing_x.j_face.data();
-        int* borrowing_x_k_face = borrowing_x.k_face.data();
+        uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         double* borrowing_x_area = borrowing_x.area.data();
 
         auto const &Sx_red = m_area_red[maxLevel()][idim]->array(mfi);
@@ -418,9 +410,11 @@ WarpX::ComputeOneWayExtensions() {
                                 *(borrowing_x_inds + ps) = ps;
                                 // Store the information about the intruded face in the dataset of the
                                 // faces which are borrowing area
-                                *(borrowing_x_i_face + ps) = i;
-                                *(borrowing_x_j_face + ps) = j + j_n;
-                                *(borrowing_x_k_face + ps) = k + k_n;
+                                FaceInfoBox::addConnectedNeighbor(j_n, k_n, ps,
+                                                                 borrowing_x_neigh_faces);
+                                //*(borrowing_x_i_face + ps) = i;
+                                //*(borrowing_x_j_face + ps) = j + j_n;
+                                //*(borrowing_x_k_face + ps) = k + k_n;
                                 *(borrowing_x_area + ps) = Sx_ext;
 
                                 flag_intr_face_x(i, j + j_n, k + k_n) = true;
@@ -454,9 +448,7 @@ WarpX::ComputeOneWayExtensions() {
         auto const &borrowing_y_size = borrowing_y.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_y_inds = borrowing_y.inds.data();
-        int* borrowing_y_i_face = borrowing_y.i_face.data();
-        int* borrowing_y_j_face = borrowing_y.j_face.data();
-        int* borrowing_y_k_face = borrowing_y.k_face.data();
+        uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         double* borrowing_y_area = borrowing_y.area.data();
         auto const &Sy_red = m_area_red[maxLevel()][idim]->array(mfi);
         auto const &Sy_enl = m_area_enl[maxLevel()][idim]->array(mfi);
@@ -518,9 +510,8 @@ WarpX::ComputeOneWayExtensions() {
                                     *(borrowing_y_inds + ps) = ps;
                                     // Store the information about the intruded face in the dataset of the
                                     // faces which are borrowing area
-                                    *(borrowing_y_i_face + ps) = i + i_n;
-                                    *(borrowing_y_j_face + ps) = j;
-                                    *(borrowing_y_k_face + ps) = k + k_n;
+                                    FaceInfoBox::addConnectedNeighbor(i_n, k_n, ps,
+                                                                      borrowing_y_neigh_faces);
                                     *(borrowing_y_area + ps) = Sy_ext;
 
                                     flag_intr_face_y(i + i_n, j, k + k_n) = true;
@@ -555,9 +546,7 @@ WarpX::ComputeOneWayExtensions() {
         auto const &borrowing_z_size = borrowing_z.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_z_inds = borrowing_z.inds.data();
-        int* borrowing_z_i_face = borrowing_z.i_face.data();
-        int* borrowing_z_j_face = borrowing_z.j_face.data();
-        int* borrowing_z_k_face = borrowing_z.k_face.data();
+        uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         double* borrowing_z_area = borrowing_z.area.data();
 
         auto const &Sz_red = m_area_red[maxLevel()][idim]->array(mfi);
@@ -619,13 +608,10 @@ WarpX::ComputeOneWayExtensions() {
                                     Sz_red(i + i_n, j + j_n, k) -= Sz_ext;
                                     // Insert the index of the face info
                                     *(borrowing_z_inds + ps) = ps;
-                                    // advance the borrowing index
                                     // Store the information about the intruded face in the dataset of the
                                     // faces which are borrowing area
-                                    // TODO: I need to add the correct offset
-                                    *(borrowing_z_i_face+ps) = i + i_n;
-                                    *(borrowing_z_j_face+ps) = j + j_n;
-                                    *(borrowing_z_k_face+ps) = k;
+                                    FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps,
+                                                                      borrowing_z_neigh_faces);
                                     *(borrowing_z_area+ps) = Sz_ext;
 
                                     flag_intr_face_z(i + i_n, j + j_n, k) = true;
@@ -677,9 +663,10 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         auto const &borrowing_x_size = borrowing_x.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_x_inds = borrowing_x.inds.data();
-        int* borrowing_x_i_face = borrowing_x.i_face.data();
-        int* borrowing_x_j_face = borrowing_x.j_face.data();
-        int* borrowing_x_k_face = borrowing_x.k_face.data();
+        //int* borrowing_x_i_face = borrowing_x.i_face.data();
+        //int* borrowing_x_j_face = borrowing_x.j_face.data();
+        //int* borrowing_x_k_face = borrowing_x.k_face.data();
+        uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         double* borrowing_x_area = borrowing_x.area.data();
 
         auto const &Sx_red = m_area_red[maxLevel()][idim]->array(mfi);
@@ -785,9 +772,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                     *(borrowing_x_inds + ps + count) = ps + count;
                                     // Store the information about the intruded face in the dataset of the
                                     // faces which are borrowing area
-                                    *(borrowing_x_i_face + ps + count) = i;
-                                    *(borrowing_x_j_face + ps + count) = j + j_n;
-                                    *(borrowing_x_k_face + ps + count) = k + k_n;
+                                    FaceInfoBox::addConnectedNeighbor(j_n, k_n, ps + count,
+                                                                      borrowing_x_neigh_faces);
                                     *(borrowing_x_area + ps + count) = patch;
 
                                     flag_intr_face_x(i, j + j_n, k + k_n) = true;
@@ -822,9 +808,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         auto const &borrowing_y_size = borrowing_y.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_y_inds = borrowing_y.inds.data();
-        int* borrowing_y_i_face = borrowing_y.i_face.data();
-        int* borrowing_y_j_face = borrowing_y.j_face.data();
-        int* borrowing_y_k_face = borrowing_y.k_face.data();
+        uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         double* borrowing_y_area = borrowing_y.area.data();
         auto const &Sy_red = m_area_red[maxLevel()][idim]->array(mfi);
         auto const &Sy_enl = m_area_enl[maxLevel()][idim]->array(mfi);
@@ -928,12 +912,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                 if (local_avail(i_n + 1, k_n + 1)) {
                                     amrex::Real patch = Sy_ext * Sy(i + i_n, j, k + k_n) / denom;
                                     *(borrowing_y_inds + ps + count) = ps + count;
-
-                                    // Store the information about the intruded face in the dataset of the
-                                    // faces which are borrowing area
-                                    *(borrowing_y_i_face + ps + count) = i + i_n;
-                                    *(borrowing_y_j_face + ps + count) = j;
-                                    *(borrowing_y_k_face + ps + count) = k + k_n;
+                                    FaceInfoBox::addConnectedNeighbor(i_n, k_n, ps + count,
+                                                                      borrowing_y_neigh_faces);
                                     *(borrowing_y_area + ps + count) = patch;
 
                                     flag_intr_face_y(i + i_n, j, k + k_n) = true;
@@ -968,9 +948,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         auto const &borrowing_z_size = borrowing_z.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_z_inds = borrowing_z.inds.data();
-        int* borrowing_z_i_face = borrowing_z.i_face.data();
-        int* borrowing_z_j_face = borrowing_z.j_face.data();
-        int* borrowing_z_k_face = borrowing_z.k_face.data();
+        uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         double* borrowing_z_area = borrowing_z.area.data();
 
         auto const &Sz_red = m_area_red[maxLevel()][idim]->array(mfi);
@@ -1074,12 +1052,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                 if(local_avail(i_n + 1, j_n + 1)){
                                     amrex::Real patch = Sz_ext * Sz(i + i_n, j + j_n, k) / denom;
                                     *(borrowing_z_inds + ps + count) = ps + count;
-
-                                    // Store the information about the intruded face in the dataset of the
-                                    // faces which are borrowing area
-                                    *(borrowing_z_i_face + ps + count) = i + i_n;
-                                    *(borrowing_z_j_face + ps + count) = j + j_n;
-                                    *(borrowing_z_k_face + ps + count) = k;
+                                    FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps + count,
+                                                                      borrowing_z_neigh_faces);
                                     *(borrowing_z_area + ps + count) = patch;
 
                                     flag_intr_face_z(i + i_n, j + j_n, k) = true;

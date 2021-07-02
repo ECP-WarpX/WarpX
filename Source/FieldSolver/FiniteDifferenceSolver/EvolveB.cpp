@@ -326,9 +326,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             amrex::Array4<Real> const &S_red = area_red[idim]->array(mfi);
 
             auto &borrowing_dim = (*borrowing[idim])[mfi];
-            auto borrowing_dim_i_face = borrowing_dim.i_face.data();
-            auto borrowing_dim_j_face = borrowing_dim.j_face.data();
-            auto borrowing_dim_k_face = borrowing_dim.k_face.data();
+            auto borrowing_dim_neigh_faces = borrowing_dim.neigh_faces.data();
             auto borrowing_dim_area = borrowing_dim.area.data();
 
             auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.data();
@@ -362,9 +360,21 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                 // First we compute the rho of the enlarged face
                 for (int offset = 0; offset<borrowing_size(i, j, k); offset++) {
                     int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
-                    int ip = borrowing_dim_i_face[ind];
-                    int jp = borrowing_dim_j_face[ind];
-                    int kp = borrowing_dim_k_face[ind];
+                    auto vec = FaceInfoBox::uint8_to_inds(borrowing_dim_neigh_faces[ind]);
+                    int ip, jp, kp;
+                    if(idim == 0){
+                        ip = i;
+                        jp = j + vec[0];
+                        kp = k + vec[1];
+                    }else if(idim == 1){
+                        ip = i + vec[0];
+                        jp = j;
+                        kp = k + vec[1];
+                    }else{
+                        ip = i + vec[0];
+                        jp = j + vec[1];
+                        kp = k;
+                    }
 
                     Venl_dim(i, j, k) += Rho(ip, jp, kp) * borrowing_dim_area[ind];
 
@@ -374,9 +384,21 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
                 for (int offset = 0; offset < borrowing_size(i, j, k); offset++) {
                     int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
-                    int ip = borrowing_dim_i_face[ind];
-                    int jp = borrowing_dim_j_face[ind];
-                    int kp = borrowing_dim_k_face[ind];
+                    auto vec = FaceInfoBox::uint8_to_inds(borrowing_dim_neigh_faces[ind]);
+                    int ip, jp, kp;
+                    if(idim == 0){
+                        ip = i;
+                        jp = j + vec[0];
+                        kp = k + vec[1];
+                    }else if(idim == 1){
+                        ip = i + vec[0];
+                        jp = j;
+                        kp = k + vec[1];
+                    }else{
+                        ip = i + vec[0];
+                        jp = j + vec[1];
+                        kp = k;
+                    }
 
                     Venl_dim(ip, jp, kp) += rho_enl * borrowing_dim_area[ind];
 
