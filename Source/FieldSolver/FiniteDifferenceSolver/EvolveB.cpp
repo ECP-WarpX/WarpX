@@ -360,15 +360,15 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                     int ip, jp, kp;
                     if(idim == 0){
                         ip = i;
-                        jp = j + vec[0];
-                        kp = k + vec[1];
+                        jp = j + vec(0);
+                        kp = k + vec(1);
                     }else if(idim == 1){
-                        ip = i + vec[0];
+                        ip = i + vec(0);
                         jp = j;
-                        kp = k + vec[1];
+                        kp = k + vec(1);
                     }else{
-                        ip = i + vec[0];
-                        jp = j + vec[1];
+                        ip = i + vec(0);
+                        jp = j + vec(1);
                         kp = k;
                     }
 
@@ -384,15 +384,15 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                     int ip, jp, kp;
                     if(idim == 0){
                         ip = i;
-                        jp = j + vec[0];
-                        kp = k + vec[1];
+                        jp = j + vec(0);
+                        kp = k + vec(1);
                     }else if(idim == 1){
-                        ip = i + vec[0];
+                        ip = i + vec(0);
                         jp = j;
-                        kp = k + vec[1];
+                        kp = k + vec(1);
                     }else{
-                        ip = i + vec[0];
-                        jp = j + vec[1];
+                        ip = i + vec(0);
+                        jp = j + vec(1);
                         kp = k;
                     }
 

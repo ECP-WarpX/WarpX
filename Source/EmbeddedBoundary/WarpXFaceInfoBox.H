@@ -54,27 +54,36 @@ struct FaceInfoBox {
 /**
 * \brief writes into i_face and j_face the intruded neighbors indices;
 */
-    static std::vector<int> uint8_to_inds(uint8_t mask){
+    static amrex::Array1D<int, 0, 1> uint8_to_inds(uint8_t mask){
+        amrex::Array1D<int, 0, 1> res;
 
-         if(mask & ul){
-             return std::vector<int>{-1, -1};
-         }else if(mask & l){
-             return std::vector<int>{-1, 0};
-         }else if(mask & bl){
-             return std::vector<int>{-1, 1};
-         }else if(mask & u){
-             return std::vector<int>{0, -1};
-         }else if(mask & d){
-             return std::vector<int>{0, 1};
-         }else if(mask & ur){
-             return std::vector<int>{1, -1};
-         }else if(mask & r){
-             return std::vector<int>{1, 0};
-         }else if(mask & br){
-             return std::vector<int>{1, 1};
-         }
+        if(mask & ul){
+            res(0) = -1;
+            res(1) = -1;
+        }else if(mask & l){
+            res(0) = -1;
+            res(1) = 0;
+        }else if(mask & bl){
+            res(0) = -1;
+            res(1) = 1;
+        }else if(mask & u){
+            res(0) = 0;
+            res(1) = -1;
+        }else if(mask & d){
+            res(0) = -1;
+            res(1) = 1;
+        }else if(mask & ur){
+            res(0) = 1;
+            res(1) = -1;
+        }else if(mask & r){
+            res(0) = 1;
+            res(1) = 0;
+        }else if(mask & br){
+            res(0) = 1;
+            res(1) = 1;
+        }
 
-        return std::vector<int>{-2, -2};
+        return res;
     }
 };
 
