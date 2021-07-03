@@ -585,6 +585,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
+
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = 'relativistic'
         else:
