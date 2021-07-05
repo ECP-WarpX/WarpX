@@ -869,7 +869,7 @@ WarpX::ReadParameters ()
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
 
-        if (species_names.size() > 0 || lasers_names.size() > 0) {
+        if (!species_names.empty() || !lasers_names.empty()) {
             int particle_shape;
             if (pp_algo.query("particle_shape", particle_shape) == false)
             {

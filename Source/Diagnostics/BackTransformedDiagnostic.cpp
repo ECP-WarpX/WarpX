@@ -920,7 +920,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
         if (WarpX::do_back_transformed_particles) {
 
             if (lf_diags->m_t_lab != prev_t_lab ) {
-               if (tmp_particle_buffer.size()>0)
+               if (!tmp_particle_buffer.empty())
                {
                   tmp_particle_buffer.clear();
                   tmp_particle_buffer.shrink_to_fit();

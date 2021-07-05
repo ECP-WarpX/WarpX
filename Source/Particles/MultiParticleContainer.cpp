@@ -490,7 +490,7 @@ MultiParticleContainer::DepositCharge (
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    if (allcontainers.size() == 0)
+    if (!allcontainers.empty())
     {
         std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
         return rho;
@@ -562,7 +562,7 @@ MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 Vector<Long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
-    if (allcontainers.size() == 0)
+    if (allcontainers.empty())
     {
         const Vector<Long> r = GetZeroParticlesInGrid(lev);
         return r;
