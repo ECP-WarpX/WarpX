@@ -490,7 +490,7 @@ MultiParticleContainer::DepositCharge (
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    if (!allcontainers.empty())
+    if (allcontainers.empty())
     {
         std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
         return rho;
