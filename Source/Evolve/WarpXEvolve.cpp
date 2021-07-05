@@ -457,6 +457,7 @@ void
 WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
 #ifdef WARPX_DIM_RZ
+    amrex::ignore_unused(cur_time);
     amrex::Abort("multi-J algorithm not implemented for RZ geometry");
 #else
 #ifdef WARPX_USE_PSATD
