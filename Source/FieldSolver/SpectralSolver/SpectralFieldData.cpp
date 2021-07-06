@@ -317,10 +317,14 @@ SpectralFieldData::BackwardTransform (const int lev,
 #elif (AMREX_SPACEDIM == 3)
             const int lo_k = amrex::lbound(mf_box).z;
 #endif
-            // Do not fill guard cells (shrink box by passing negative number of cells)
-            for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+            // If necessary, do not fill the guard cells
+            // (shrink box by passing negative number of cells)
+            if (m_periodic_single_box == false)
             {
-                 if (static_cast<bool>(fill_guards[dir]) == false) mf_box.grow(dir, -mf_ng[dir]);
+                for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+                {
+                    if (static_cast<bool>(fill_guards[dir]) == false) mf_box.grow(dir, -mf_ng[dir]);
+                }
             }
 
             // Loop over cells within full box, including ghost cells

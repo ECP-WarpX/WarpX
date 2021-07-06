@@ -96,8 +96,7 @@ Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 bool WarpX::fft_do_time_averaging = false;
 
-// Default set below, before query
-amrex::IntVect WarpX::fill_guards;
+amrex::IntVect WarpX::fill_guards = amrex::IntVect(0);
 
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
@@ -1066,15 +1065,17 @@ WarpX::ReadParameters ()
             );
         }
 
-        // Whether to fill the guard cells with inverse FFTs
-        // TODO Choose appropriate defaults depending on the boundary conditions
-        amrex::Vector<int> parse_fill_guards(AMREX_SPACEDIM, 1);
-        pp_psatd.queryarr("fill_guards", parse_fill_guards);
-        fill_guards[0] = parse_fill_guards[0];
-        fill_guards[1] = parse_fill_guards[1];
-#if (AMREX_SPACEDIM == 3)
-        fill_guards[2] = parse_fill_guards[2];
-#endif
+        // Whether to fill the guard cells with inverse FFTs:
+        // WarpX::fill_guards = amrex::IntVect(0) by default,
+        // except for non-periodic directions with damping.
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+        {
+            if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped)
+            {
+                WarpX::fill_guards[dir] = 1;
+            }
+        }
     }
 
     if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
