@@ -32,6 +32,55 @@
 
 using namespace amrex;
 
+SpectralFieldIndexNew::SpectralFieldIndexNew (const bool update_with_rho,
+                                              const bool time_averaging,
+                                              const bool J_linear_in_time,
+                                              const bool dive_cleaning,
+                                              const bool divb_cleaning)
+{
+    int c = 0;
+
+    Ex = c++;
+    Ey = c++;
+    Ez = c++;
+
+    Bx = c++;
+    By = c++;
+    Bz = c++;
+
+    Jx = c++;
+    Jy = c++;
+    Jz = c++;
+
+    // TODO Do not always allocate
+    rho_old = c++;
+    rho_new = c++;
+    divE = c++;
+
+    if (time_averaging)
+    {
+        Ex_avg = c++;
+        Ey_avg = c++;
+        Ez_avg = c++;
+
+        Bx_avg = c++;
+        By_avg = c++;
+        Bz_avg = c++;
+    }
+
+    if (J_linear_in_time)
+    {
+        Jx_new = c++;
+        Jy_new = c++;
+        Jz_new = c++;
+
+        F = c++;
+        G = c++;
+    }
+
+    n_fields = c;
+}
+
 /* \brief Initialize fields in spectral space, and FFT plans */
 SpectralFieldData::SpectralFieldData( const int lev,
                                       const amrex::BoxArray& realspace_ba,

@@ -184,6 +184,8 @@ class SpectralSolver
             field_data.fields.mult(scale_factor, icomp, 1);
         }
 
+        SpectralFieldIndexNew m_spectral_index;
+
     private:
 
         void ReadParameters ();

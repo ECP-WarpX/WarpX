@@ -29,25 +29,25 @@
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
 
-/** Index for the regular fields, when stored in spectral space:
- *  - n_fields is automatically the total number of fields
- *  - divE reuses the memory slot for Bx, since Bx is not used when computing divE
- */
-struct SpectralFieldIndex {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
-};
+///** Index for the regular fields, when stored in spectral space:
+// *  - n_fields is automatically the total number of fields
+// *  - divE reuses the memory slot for Bx, since Bx is not used when computing divE
+// */
+//struct SpectralFieldIndex {
+//  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
+//};
 
-struct SpectralFieldIndexJLinearInTime {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx_old, Jy_old, Jz_old, rho_old, rho_new,
-         Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,
-         Jx_new, Jy_new, Jz_new, F, G, n_fields, divE=3 };
-};
+//struct SpectralFieldIndexJLinearInTime {
+//  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx_old, Jy_old, Jz_old, rho_old, rho_new,
+//         Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,
+//         Jx_new, Jy_new, Jz_new, F, G, n_fields, divE=3 };
+//};
 
-/* Index for the regular fields + averaged fields, when stored in spectral space */
-struct SpectralFieldIndexTimeAveraging {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };
-  // n_fields is automatically the total number of fields
-};
+///* Index for the regular fields + averaged fields, when stored in spectral space */
+//struct SpectralFieldIndexTimeAveraging {
+//  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };
+//  // n_fields is automatically the total number of fields
+//};
 
 /** Index for the PML fields, when stored in spectral space,
  *  (n_fields is automatically set to the total number of fields)
@@ -56,6 +56,59 @@ struct SpectralFieldIndexTimeAveraging {
 struct SpectralPMLIndex {
   enum {Exx=0, Exy, Exz, Eyx, Eyy, Eyz, Ezx, Ezy, Ezz,
         Bxx  , Bxy, Bxz, Byx, Byy, Byz, Bzx, Bzy, Bzz, Fx, Fy, Fz, Gx, Gy, Gz, n_fields};
+};
+
+class SpectralFieldIndexNew
+{
+    public:
+
+        /**
+         * \brief Constructor
+         */
+        SpectralFieldIndexNew (const bool update_with_rho,
+                               const bool time_averaging,
+                               const bool J_linear_in_time,
+                               const bool dive_cleaning,
+                               const bool divb_cleaning);
+
+        /**
+         * \brief Default constructor
+         */
+        SpectralFieldIndexNew() = default;
+
+        /**
+         * \brief Default destructor
+         */
+        ~SpectralFieldIndexNew () = default;
+
+    // Total number of fields that are actually allocated
+    int n_fields;
+
+    // Indices overwritten in the constructor, for the fields that are actually allocated
+    // (index -1 will never be used, unless there is some bug in the code implementation)
+    int Ex = -1;
+    int Ey = -1;
+    int Ez = -1;
+    int Bx = -1;
+    int By = -1;
+    int Bz = -1;
+    int rho_old = -1;
+    int rho_new = -1;
+    int divE = -1;
+    int Ex_avg = -1;
+    int Ey_avg = -1;
+    int Ez_avg = -1;
+    int Bx_avg = -1;
+    int By_avg = -1;
+    int Bz_avg = -1;
+    int Jx = -1;
+    int Jy = -1;
+    int Jz = -1;
+    int Jx_new = -1;
+    int Jy_new = -1;
+    int Jz_new = -1;
+    int F = -1;
+    int G = -1;
 };
 
 /** \brief Class that stores the fields in spectral space, and performs the

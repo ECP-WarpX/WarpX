@@ -47,6 +47,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         PsatdAlgorithm (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
+            const SpectralFieldIndexNew& spectral_index,
             const int norder_x,
             const int norder_y,
             const int norder_z,
@@ -69,22 +70,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual int getRequiredNumberOfFields () const override final
         {
-            if (m_J_linear_in_time)
-            {
-                return SpectralFieldIndexJLinearInTime::n_fields;
-            }
-            else
-            {
-                if (m_time_averaging)
-                {
-                    return SpectralFieldIndexTimeAveraging::n_fields;
-                }
-                else
-                {
-                    return SpectralFieldIndex::n_fields;
-                }
-            }
-        }
+            return m_spectral_index.n_fields;
+        };
 
         /**
          * \brief Initializes the coefficients used in \c pushSpectralFields to update the E and B fields
@@ -168,6 +155,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
+
+        SpectralFieldIndexNew m_spectral_index;
 
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;

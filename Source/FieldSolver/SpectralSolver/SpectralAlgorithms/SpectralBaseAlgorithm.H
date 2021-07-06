@@ -11,6 +11,7 @@
 #include "Utils/WarpX_Complex.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>
@@ -90,8 +91,11 @@ class SpectralBaseAlgorithm
         */
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
+                              const SpectralFieldIndexNew& spectral_index,
                               const int norder_x, const int norder_y,
                               const int norder_z, const bool nodal);
+
+        SpectralFieldIndexNew m_spectral_index;
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

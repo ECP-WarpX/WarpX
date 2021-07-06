@@ -25,7 +25,8 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                           amrex::DistributionMapping const & dm,
                                           int const n_field_required,
                                           int const n_modes)
-    : n_rz_azimuthal_modes(n_modes)
+    : n_rz_azimuthal_modes(n_modes),
+      m_n_fields(n_field_required)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
 
@@ -281,7 +282,7 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     amrex::Box const& spectralspace_bx = tmpSpectralField[mfi].box();
     int const nz = spectralspace_bx.length(1);
     amrex::Real inv_nz = 1._rt/nz;
-    constexpr int n_fields = SpectralFieldIndex::n_fields;
+    const int n_fields = m_n_fields;
 
     ParallelFor(spectralspace_bx, modes,
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
@@ -319,7 +320,7 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
     amrex::Box const& spectralspace_bx = tmpSpectralField[mfi].box();
 
     int const modes = n_rz_azimuthal_modes;
-    constexpr int n_fields = SpectralFieldIndex::n_fields;
+    const int n_fields = m_n_fields;
     ParallelFor(spectralspace_bx, modes,
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
         int const ic = field_index + mode*n_fields;
@@ -607,7 +608,7 @@ SpectralFieldDataRZ::ApplyFilter (int const field_index)
         amrex::Array4<Complex> const& fields_arr = fields[mfi].array();
 
         int const modes = n_rz_azimuthal_modes;
-        constexpr int n_fields = SpectralFieldIndex::n_fields;
+        const int n_fields = m_n_fields;
 
         amrex::Box const& spectralspace_bx = fields[mfi].box();
         int const nr = spectralspace_bx.length(0);
@@ -635,7 +636,7 @@ SpectralFieldDataRZ::ApplyFilter (int const field_index1, int const field_index2
         amrex::Array4<Complex> const& fields_arr = fields[mfi].array();
 
         int const modes = n_rz_azimuthal_modes;
-        constexpr int n_fields = SpectralFieldIndex::n_fields;
+        const int n_fields = m_n_fields;
 
         amrex::Box const& spectralspace_bx = fields[mfi].box();
         int const nr = spectralspace_bx.length(0);

@@ -111,6 +111,8 @@ class SpectralSolverRZ
          */
         void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current);
 
+        SpectralFieldIndexNew m_spectral_index;
+
     private:
 
         SpectralKSpaceRZ k_space; // Save the instance to initialize filtering

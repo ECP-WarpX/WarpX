@@ -19,6 +19,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #   else
@@ -191,6 +192,10 @@ int WarpX::do_nodal = false;
 bool WarpX::do_device_synchronize_before_profile = true;
 #else
 bool WarpX::do_device_synchronize_before_profile = false;
+#endif
+
+#ifdef WARPX_USE_PSATD
+SpectralFieldIndexNew WarpX::spectral_index;
 #endif
 
 WarpX* WarpX::m_instance = nullptr;
@@ -1571,6 +1576,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                  dx,
                                  pml_flag_false);
 #   endif
+
+    // Instantiate spectral index object
+    WarpX::spectral_index = spectral_solver_fp[0]->m_spectral_index;
+
 #endif
     } // MaxwellSolverAlgo::PSATD
     else {

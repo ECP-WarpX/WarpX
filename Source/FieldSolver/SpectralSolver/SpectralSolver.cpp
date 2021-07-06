@@ -40,29 +40,35 @@ SpectralSolver::SpectralSolver(
     // as well as the value of the corresponding k coordinates)
     const SpectralKSpace k_space= SpectralKSpace(realspace_ba, dm, dx);
 
+    m_spectral_index = SpectralFieldIndexNew(update_with_rho, fft_do_time_averaging,
+                                             J_linear_in_time, dive_cleaning, divb_cleaning);
+
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
     if (pml) {
         algorithm = std::make_unique<PMLPsatdAlgorithm>(
-            k_space, dm, norder_x, norder_y, norder_z, nodal, dt, dive_cleaning, divb_cleaning);
+            k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+            dt, dive_cleaning, divb_cleaning);
     }
     else {
         // Comoving PSATD algorithm
         if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
             algorithm = std::make_unique<ComovingPsatdAlgorithm>(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                v_comoving, dt, update_with_rho);
         }
         // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time);
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time);
         }
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans
-    field_data = SpectralFieldData( lev, realspace_ba, k_space, dm,
-                    algorithm->getRequiredNumberOfFields(), periodic_single_box);
+    field_data = SpectralFieldData(lev, realspace_ba, k_space, dm,
+                                   m_spectral_index.n_fields, periodic_single_box);
 }
 
 void
