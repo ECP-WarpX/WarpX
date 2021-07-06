@@ -56,9 +56,8 @@ void FiniteDifferenceSolver::EvolveE (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-
+        ignore_unused(edge_lengths);
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
-
 #else
     if (m_do_nodal) {
 
