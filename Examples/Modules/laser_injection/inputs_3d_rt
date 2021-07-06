@@ -24,6 +24,7 @@ warpx.verbose = 1
 
 # Algorithms
 warpx.do_pml = 0
+warpx.use_filter = 0
 
 # CFL
 warpx.cfl = 1.0

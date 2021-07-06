@@ -189,8 +189,10 @@ guardCellManager::Init (
             ng_alloc_F[i_dim] = ng_required;
             ng_alloc_Rho[i_dim] = ng_required;
             ng_alloc_F_int = ng_required;
+            ng_alloc_G_int = ng_required;
         }
         ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
+        ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
     }
 
     // Compute number of cells required for Field Solver

@@ -1203,11 +1203,15 @@ Numerics and algorithms
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
 
-* ``warpx.use_filter`` (`0 or 1`)
-    Whether to smooth the charge and currents on the mesh, after depositing
-    them from the macroparticles. This uses a bilinear filter
-    (see the :ref:`filtering section <theory-pic-filter>`).
-    When using the RZ spectral solver, the filtering is done in k-space.
+* ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
+    Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
+    This uses a bilinear filter (see the :ref:`filtering section <theory-pic-filter>`).
+    The default is `1` in all cases, except for simulations in RZ geometry using the FDTD solver.
+    With the RZ PSATD solver, the filtering is done in :math:`k`-space.
+
+    .. warning::
+
+       Known bug: filter currently not working with FDTD solver in RZ geometry (see https://github.com/ECP-WarpX/WarpX/issues/1943).
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
@@ -1362,6 +1366,14 @@ Numerics and algorithms
     ``amr.max_level = 1``. More information can be found at
     https://ieeexplore.ieee.org/document/8659392.
 
+* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+
+* ``warpx.do_multi_J_n_depositions`` (integer)
+    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+
+
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
     If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
@@ -1496,6 +1508,9 @@ Numerics and algorithms
 
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
+
+* ``psatd.J_linear_in_time`` (`0` or `1`; default: `0`)
+    Whether to perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step (``psatd.J_linear_in_time = 1``), instead of using one single current deposited at half time (``psatd.J_linear_in_time = 0``), for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
