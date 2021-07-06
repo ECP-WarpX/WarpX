@@ -655,6 +655,7 @@ WarpX::ReadParameters ()
             }
         }
 
+        pp_warpx.query("do_pml", do_pml);
         pp_warpx.query("pml_ncell", pml_ncell);
         pp_warpx.query("pml_delta", pml_delta);
         pp_warpx.query("pml_has_particles", pml_has_particles);
