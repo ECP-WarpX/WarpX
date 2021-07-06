@@ -33,6 +33,7 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -136,8 +137,8 @@ public:
     static int macroscopic_solver_algo;
     static amrex::Vector<int> field_boundary_lo;
     static amrex::Vector<int> field_boundary_hi;
-    static amrex::Vector<int> particle_boundary_lo;
-    static amrex::Vector<int> particle_boundary_hi;
+    static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
+    static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
 
     // If true, the current is deposited on a nodal grid and then centered onto a staggered grid

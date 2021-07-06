@@ -94,6 +94,31 @@ struct GetParticlePosition
         z = p.pos(1);
 #endif
     }
+
+    /** \brief Extract the position coordinates of the particle as stored
+     *         located at index `i + a_offset` and store them in the variables
+     *         `x`, `y`, `z`
+     *         This is only different for RZ since this returns (r, theta, z)
+     *         in that case. */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void AsStored (const int i, RType& x, RType& y, RType& z) const noexcept
+    {
+        const PType& p = m_structs[i];
+#ifdef WARPX_DIM_RZ
+        RType r = p.pos(0);
+        x = p.pos(0);
+        y = m_theta[i];
+        z = p.pos(1);
+#elif WARPX_DIM_3D
+        x = p.pos(0);
+        y = p.pos(1);
+        z = p.pos(2);
+#else
+        x = p.pos(0);
+        y = m_snan;
+        z = p.pos(1);
+#endif
+    }
 };
 
 /** \brief Functor that can be used to modify the positions of the macroparticles,
@@ -132,6 +157,30 @@ struct SetParticlePosition
 #ifdef WARPX_DIM_RZ
         m_theta[i] = std::atan2(y, x);
         m_structs[i].pos(0) = std::sqrt(x*x + y*y);
+        m_structs[i].pos(1) = z;
+#elif WARPX_DIM_3D
+        m_structs[i].pos(0) = x;
+        m_structs[i].pos(1) = y;
+        m_structs[i].pos(2) = z;
+#else
+        m_structs[i].pos(0) = x;
+        m_structs[i].pos(1) = z;
+#endif
+    }
+
+    /** \brief Set the position of the particle at index `i + a_offset`
+     *         to `x`, `y`, `z`
+     *         This is only different for RZ since the input should
+     *         be (r, theta, z) in that case. */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void AsStored (const int i, RType x, RType y, RType z) const noexcept
+    {
+#if defined(WARPX_DIM_XZ)
+        amrex::ignore_unused(y);
+#endif
+#ifdef WARPX_DIM_RZ
+        m_structs[i].pos(0) = x;
+        m_theta[i] = y;
         m_structs[i].pos(1) = z;
 #elif WARPX_DIM_3D
         m_structs[i].pos(0) = x;
