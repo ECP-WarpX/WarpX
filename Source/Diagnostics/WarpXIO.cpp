@@ -123,7 +123,14 @@ WarpX::InitFromCheckpoint ()
             }
         }
 
-        is >> moving_window_x;
+        int do_moving_window_before_restart;
+
+        is >> do_moving_window_before_restart;
+        GotoNextLine(is);
+
+        if (do_moving_window_before_restart) {
+            is >> moving_window_x;
+        }
         GotoNextLine(is);
 
         is >> is_synchronized;

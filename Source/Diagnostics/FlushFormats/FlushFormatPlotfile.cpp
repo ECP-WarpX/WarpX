@@ -266,6 +266,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         }
         HeaderFile << "\n";
 
+        HeaderFile << warpx.getdo_moving_window() << "\n";
+
         HeaderFile << warpx.getmoving_window_x() << "\n";
 
         HeaderFile << warpx.getis_synchronized() << "\n";
