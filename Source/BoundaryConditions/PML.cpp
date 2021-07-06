@@ -482,7 +482,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     const BoxArray& ba = (do_pml_in_domain)?
           MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
           MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-    if (ba.size() == 0) {
+    if (ba.empty()) {
         m_ok = false;
         return;
     } else {

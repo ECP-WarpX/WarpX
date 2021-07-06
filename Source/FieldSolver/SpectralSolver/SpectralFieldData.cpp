@@ -117,7 +117,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
 
 SpectralFieldData::~SpectralFieldData()
 {
-    if (tmpRealField.size() > 0){
+    if (!tmpRealField.empty()){
         for ( MFIter mfi(tmpRealField); mfi.isValid(); ++mfi ){
             AnyFFT::DestroyPlan(forward_plan[mfi]);
             AnyFFT::DestroyPlan(backward_plan[mfi]);
