@@ -320,6 +320,7 @@ public:
     amrex::Real self_fields_required_precision =
         amrex::Real(1.e-11);
     int self_fields_max_iters = 200;
+    int self_fields_verbosity = 2;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;

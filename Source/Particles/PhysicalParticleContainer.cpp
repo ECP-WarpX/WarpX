@@ -185,6 +185,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("initialize_self_fields", initialize_self_fields);
     queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
     pp_species_name.query("self_fields_max_iters", self_fields_max_iters);
+    pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
     pp_species_name.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
