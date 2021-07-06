@@ -33,9 +33,12 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MLMG.H>
 #ifdef WARPX_DIM_RZ
-    #include <AMReX_MLNodeLaplacian.H>
+#    include <AMReX_MLNodeLaplacian.H>
 #else
-    #include <AMReX_MLNodeTensorLaplacian.H>
+#    include <AMReX_MLNodeTensorLaplacian.H>
+#    ifdef AMREX_USE_EB
+#        include <AMReX_MLEBNodeFDLaplacian.H>
+#    endif
 #endif
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
@@ -324,7 +327,17 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
+#ifndef AMREX_USE_EB    
     MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
+#else
+    LPInfo info;
+    Vector<EBFArrayBoxFactory const*> eb_factory;
+    eb_factory.resize(max_level);
+    for (int lev = 0; lev <= max_level; ++lev) {
+      eb_factory[lev] = &WarpX::fieldEBFactory(lev);
+    }
+    MLEBNodeFDLaplacian linop( geom_scaled, boxArray(), dmap, info, eb_factory );
+#endif
     for (int lev = 0; lev <= max_level; ++lev) {
         linop.setSigma( lev, *sigma[lev] );
     }
