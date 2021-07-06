@@ -1,21 +1,21 @@
-/* Copyright 2020 Yinjian Zhao, David Grote
+/* Copyright 2020 Yinjian Zhao, David Grote, Neil Zaim
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PairWiseCoulombCollision.H"
+#include "BinaryCollision.H"
 
-#include "ElasticCollisionPerez.H"
 #include "Particles/Collision/CollisionBase.H"
+#include "Particles/Collision/PairWiseCoulombCollisionFunc.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "ShuffleFisherYates.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
 #include <AMReX_Algorithm.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -32,6 +32,7 @@
 #include <AMReX_PODVector.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
 #include <AMReX_StructOfArrays.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
@@ -40,18 +41,23 @@
 
 using namespace amrex::literals;
 
-PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_name)
+BinaryCollision::BinaryCollision (std::string const collision_name)
     : CollisionBase(collision_name)
 {
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 2,
-                                     "Pair wise Coulomb must have exactly two species.");
+    if(m_species_names.size() != 2)
+        amrex::Abort("Binary collision " + collision_name + " must have exactly two species.");
 
     amrex::ParmParse pp_collision_name(collision_name);
 
-    // default Coulomb log, if < 0, will be computed automatically
-    m_CoulombLog = -1.0_rt;
-    queryWithParser(pp_collision_name, "CoulombLog", m_CoulombLog);
+    // For legacy, pairwisecoulomb is the default
+    std::string type = "pairwisecoulomb";
+    pp_collision_name.query("type", type);
+
+    if (type == "pairwisecoulomb") {
+        m_binary_collision_functor =
+                                 std::make_unique<PairWiseCoulombCollisionFunc>(collision_name);
+    }
 
     if (m_species_names[0] == m_species_names[1])
         m_isSameSpecies = true;
@@ -61,7 +67,7 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
 }
 
 void
-PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
+BinaryCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
 {
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
@@ -90,7 +96,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
             }
             amrex::Real wt = amrex::second();
 
-            doCoulombCollisionsWithinTile( lev, mfi, species1, species2 );
+            doCollisionsWithinTile( lev, mfi, species1, species2 );
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
@@ -119,14 +125,13 @@ using namespace ParticleUtils;
  * @param ndt user input number of time stpes between collisions
  *
  */
-void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
+void BinaryCollision::doCollisionsWithinTile
     ( int const lev, amrex::MFIter const& mfi,
     WarpXParticleContainer& species_1,
     WarpXParticleContainer& species_2)
 {
 
     int const ndt = m_ndt;
-    amrex::Real CoulombLog = m_CoulombLog;
 
     if ( m_isSameSpecies ) // species_1 == species_2
     {
@@ -191,13 +196,12 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
                 // Call the function in order to perform collisions
-                ElasticCollisionPerez(
+                (*m_binary_collision_functor)(
                     cell_start_1, cell_half_1,
                     cell_half_1, cell_stop_1,
                     indices_1, indices_1,
                     ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
-                    q1, q1, m1, m1, amrex::Real(-1.0), amrex::Real(-1.0),
-                    dt*ndt, CoulombLog, dV, engine );
+                    q1, q1, m1, m1, dt*ndt, dV, engine );
             }
         );
     }
@@ -283,12 +287,11 @@ void PairWiseCoulombCollision::doCoulombCollisionsWithinTile
                 auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
                 // Call the function in order to perform collisions
-                ElasticCollisionPerez(
+                (*m_binary_collision_functor)(
                     cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                     indices_1, indices_2,
                     ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
-                    q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
-                    dt*ndt, CoulombLog, dV, engine );
+                    q1, q2, m1, m2, dt*ndt, dV, engine );
             }
         );
     } // end if ( m_isSameSpecies)

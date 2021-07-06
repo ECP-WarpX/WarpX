@@ -17,12 +17,11 @@
 /** \brief Prepare information for and call
  *        UpdateMomentumPerezElastic().
  * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
- * @param[in] I1e,I2e is the start index for I1,I2 (exclusive).
- * @param[in] I1 and I2 are the index arrays.
+ * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
+ * @param[in] I1 and I2 are the index arrays. They determine all elements that will be used.
  * @param[in,out] u1 and u2 are the velocity arrays (u=v*gamma),
  *                they could be either different or the same,
  *                their lengths are not needed,
- * @param[in] I1 and I2 determine all elements that will be used.
  * @param[in] w1 and w2 are arrays of weights.
  * @param[in] q1 and q2 are charges. m1 and m2 are masses.
  * @param[in] T1 and T2 are temperatures (Joule)
