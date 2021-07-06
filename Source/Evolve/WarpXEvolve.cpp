@@ -572,6 +572,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         amrex::Abort("multi-J algorithm not implemented for FDTD");
     }
 #else
+    amrex::ignore_unused(cur_time);
     amrex::Abort("multi-J algorithm not implemented for FDTD");
 #endif // WARPX_USE_PSATD
 #endif // not WARPX_DIM_RZ
