@@ -404,8 +404,8 @@ WarpX::PushPSATD ()
         }
         ApplyEfieldBoundary(lev, PatchType::fine);
         if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-        ApplyBfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse);
+        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
     }
 #endif
 }
