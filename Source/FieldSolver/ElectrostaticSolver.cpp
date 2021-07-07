@@ -327,7 +327,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
-#ifndef AMREX_USE_EB    
+#ifndef AMREX_USE_EB
     MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
 #else
     LPInfo info;
@@ -336,7 +336,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     for (int lev = 0; lev <= max_level; ++lev) {
       eb_factory[lev] = &WarpX::fieldEBFactory(lev);
     }
-    MLEBNodeFDLaplacian linop( geom_scaled, boxArray(), dmap, info, eb_factory );
+    MLEBNodeFDLaplacian linop(geom_scaled, boxArray(), dmap, info, eb_factory);
 #endif
     for (int lev = 0; lev <= max_level; ++lev) {
         linop.setSigma( lev, *sigma[lev] );
@@ -411,9 +411,20 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
+#ifndef AMREX_USE_EB
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
+#else
+    LPInfo info;
+    Vector<EBFArrayBoxFactory const*> eb_factory;
+    eb_factory.resize(max_level);
+    for (int lev = 0; lev <= max_level; ++lev) {
+      eb_factory[lev] = &WarpX::fieldEBFactory(lev);
+    }
+    MLEBNodeFDLaplacian linop( Geom(), boxArray(), dmap, info, eb_factory);
+#endif
 
     // Set the value of beta
+#ifndef AMREX_USE_EB
     amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if (AMREX_SPACEDIM==2)
         {{ beta[0], beta[2] }};  // beta_x and beta_z
@@ -421,6 +432,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
         {{ beta[0], beta[1], beta[2] }};
 #endif
     linop.setBeta( beta_solver );
+#endif
 
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
