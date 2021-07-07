@@ -8,7 +8,6 @@
 #ifndef PAIRWISE_COULOMB_COLLISION_FUNC_H_
 #define PAIRWISE_COULOMB_COLLISION_FUNC_H_
 
-#include "BinaryCollision.H"
 #include "ElasticCollisionPerez.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
@@ -23,7 +22,7 @@
  * \brief This functor performs pairwise Coulomb collision on a single cell by calling the function
  *        ElasticCollisionPerez. It also reads and contains the Coulomb logarithm.
  */
-class PairWiseCoulombCollisionFunc: public BinaryCollisionFunc {
+class PairWiseCoulombCollisionFunc{
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
@@ -76,7 +75,7 @@ public:
         amrex::Real const  q1, amrex::Real const  q2,
         amrex::Real const  m1, amrex::Real const  m2,
         amrex::Real const  dt, amrex::Real const dV,
-        amrex::RandomEngine const& engine) const override final
+        amrex::RandomEngine const& engine) const
         {
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,
@@ -88,6 +87,5 @@ public:
 private:
     amrex::Real m_CoulombLog;
 };
-
 
 #endif // PAIRWISE_COULOMB_COLLISION_FUNC_H_
