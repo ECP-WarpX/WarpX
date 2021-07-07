@@ -335,7 +335,12 @@ public:
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
-    int  MoveWindow (bool move_j);
+
+    /** \brief Move the moving window
+     * \param step Time step
+     * \param move_j whether the current is shifted or not
+     */
+    int  MoveWindow (const int step, bool move_j);
 
     /**
      * \brief
@@ -551,7 +556,19 @@ public:
     static int self_fields_max_iters;
     static int self_fields_verbosity;
 
-    static int do_moving_window;
+    static int do_moving_window; // boolean
+    static int start_moving_window_step; // the first step to move window
+    static int end_moving_window_step; // the last step to move window
+    /** Returns true if the moving window is active for the provided step
+     *
+     * @param step time step
+     * @return true if active, else false
+     */
+    static int moving_window_active (int const step) {
+        bool const step_before_end = (step < end_moving_window_step) || (end_moving_window_step < 0);
+        bool const step_after_start = (step >= start_moving_window_step);
+        return do_moving_window && step_before_end && step_after_start;
+    }
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;

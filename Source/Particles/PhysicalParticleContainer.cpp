@@ -647,7 +647,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     static int rrfac = 1;
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
-    if (WarpX::do_moving_window and WarpX::refine_plasma
+    if (WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma
         and do_continuous_injection and nlevs == 2)
     {
         refine_injection = true;

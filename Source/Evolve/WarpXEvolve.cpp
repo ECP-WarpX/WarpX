@@ -248,7 +248,7 @@ WarpX::Evolve (int numsteps)
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
-        int num_moved = MoveWindow(move_j);
+        int num_moved = MoveWindow(step+1, move_j);
 
         mypc->ContinuousFluxInjection(dt[0]);
 
@@ -724,7 +724,7 @@ WarpX::OneStep_sub1 (Real curtime)
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
 
     if (do_pml) {
-        if (do_moving_window){
+        if (moving_window_active(istep[0]+1)){
             // Exchance guard cells of PMLs only (0 cells are exchanged for the
             // regular B field MultiFab). This is required as B and F have just been
             // evolved.
