@@ -74,7 +74,7 @@ CMake Option                  Default & Values                             Descr
 ============================= ============================================ =========================================================
 ``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
 ``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
-``CMAKE_VERBOSE_MAKEFILES``   ON/**OFF**                                   Print all compiler commands to the terminal during build
+``CMAKE_VERBOSE_MAKEFILE``    ON/**OFF**                                   Print all compiler commands to the terminal during build
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
