@@ -22,7 +22,7 @@ using namespace amrex;
 
 ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
                                                 const DistributionMapping& dm,
-                                                const SpectralFieldIndexNew& spectral_index,
+                                                const SpectralFieldIndex& spectral_index,
                                                 const int norder_x, const int norder_y,
                                                 const int norder_z, const bool nodal,
                                                 const amrex::Array<amrex::Real, 3>& v_comoving,
@@ -65,7 +65,7 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
 void
 ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 {
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi){
@@ -418,7 +418,7 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
     // Profiling
     BL_PROFILE("ComovingAlgorithm::CurrentCorrection");
 
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of J and rho
     field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0);

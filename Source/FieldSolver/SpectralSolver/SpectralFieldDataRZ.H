@@ -82,7 +82,7 @@ class SpectralFieldDataRZ
 
     private:
 
-        SpectralFieldIndexNew m_spectral_index;
+        SpectralFieldIndex m_spectral_index;
         int m_n_fields;
 
         // tempHTransformed and tmpSpectralField store fields

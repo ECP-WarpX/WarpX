@@ -18,7 +18,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
     public:
         PsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                          amrex::DistributionMapping const & dm,
-                         const SpectralFieldIndexNew& spectral_index,
+                         const SpectralFieldIndex& spectral_index,
                          int const n_rz_azimuthal_modes, int const norder_z,
                          bool const nodal, amrex::Real const dt_step,
                          bool const update_with_rho);
@@ -64,7 +64,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 
     private:
 
-        SpectralFieldIndexNew m_spectral_index;
+        SpectralFieldIndex m_spectral_index;
 
         bool coefficients_initialized;
         // Note that dt is saved to use in InitializeSpectralCoefficients

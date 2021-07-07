@@ -29,7 +29,7 @@ using namespace amrex;
  */
 SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
-    const SpectralFieldIndexNew& spectral_index,
+    const SpectralFieldIndex& spectral_index,
     const int norder_x, const int norder_y,
     const int norder_z, const bool nodal):
     // Compute and assign the modified k vectors
@@ -57,7 +57,7 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
     amrex::MultiFab& divE )
 {
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of E
     field_data.ForwardTransform(lev, *Efield[0], Idx.Ex, 0 );

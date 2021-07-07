@@ -47,7 +47,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         PsatdAlgorithm (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const SpectralFieldIndexNew& spectral_index,
+            const SpectralFieldIndex& spectral_index,
             const int norder_x,
             const int norder_y,
             const int norder_z,
@@ -156,7 +156,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
 
-        SpectralFieldIndexNew m_spectral_index;
+        SpectralFieldIndex m_spectral_index;
 
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;

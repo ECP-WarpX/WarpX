@@ -28,7 +28,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          */
         ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
                                 const amrex::DistributionMapping& dm,
-                                const SpectralFieldIndexNew& spectral_index,
+                                const SpectralFieldIndex& spectral_index,
                                 const int norder_x,
                                 const int norder_y,
                                 const int norder_z,
@@ -89,7 +89,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
-        SpectralFieldIndexNew m_spectral_index;
+        SpectralFieldIndex m_spectral_index;
 
         // k vectors
         KVectorComponent kx_vec;

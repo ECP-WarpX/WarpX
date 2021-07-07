@@ -29,7 +29,7 @@ using namespace amrex;
 PsatdAlgorithm::PsatdAlgorithm(
     const SpectralKSpace& spectral_kspace,
     const DistributionMapping& dm,
-    const SpectralFieldIndexNew& spectral_index,
+    const SpectralFieldIndex& spectral_index,
     const int norder_x,
     const int norder_y,
     const int norder_z,
@@ -109,7 +109,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
     const amrex::Real dt = m_dt;
 
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi)
@@ -850,7 +850,7 @@ PsatdAlgorithm::CurrentCorrection (
     // Profiling
     BL_PROFILE("PsatdAlgorithm::CurrentCorrection");
 
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of J and rho
     field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0);
@@ -965,7 +965,7 @@ PsatdAlgorithm::VayDeposition (
     // Profiling
     BL_PROFILE("PsatdAlgorithm::VayDeposition()");
 
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of D (temporarily stored in current):
     // D is nodal and does not match the staggering of J, therefore we pass the

@@ -685,7 +685,7 @@ public:
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
 
-    static SpectralFieldIndexNew spectral_index;
+    static SpectralFieldIndex spectral_index;
 
 #endif
 

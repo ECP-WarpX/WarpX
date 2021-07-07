@@ -195,7 +195,7 @@ bool WarpX::do_device_synchronize_before_profile = false;
 #endif
 
 #ifdef WARPX_USE_PSATD
-SpectralFieldIndexNew WarpX::spectral_index;
+SpectralFieldIndex WarpX::spectral_index;
 #endif
 
 WarpX* WarpX::m_instance = nullptr;

@@ -17,7 +17,7 @@ using amrex::operator""_rt;
 /* \brief Initialize coefficients for the update equation */
 PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     amrex::DistributionMapping const & dm,
-                                    const SpectralFieldIndexNew& spectral_index,
+                                    const SpectralFieldIndex& spectral_index,
                                     int const n_rz_azimuthal_modes, int const norder_z,
                                     bool const nodal, amrex::Real const dt,
                                     bool const update_with_rho)
@@ -54,7 +54,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
         coefficients_initialized = true;
     }
 
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi){
@@ -225,7 +225,7 @@ PsatdAlgorithmRZ::CurrentCorrection (const int lev,
     // Profiling
     WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
 
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of J and rho
     field_data.ForwardTransform( lev,

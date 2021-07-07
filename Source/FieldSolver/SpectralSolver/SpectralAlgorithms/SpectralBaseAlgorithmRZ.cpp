@@ -22,7 +22,7 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
 {
     using amrex::operator""_rt;
 
-    const SpectralFieldIndexNew& Idx = m_spectral_index;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of E
     field_data.ForwardTransform( lev,

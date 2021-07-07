@@ -29,7 +29,7 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
     public:
         PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const amrex::DistributionMapping& dm,
-                         const SpectralFieldIndexNew& spectral_index,
+                         const SpectralFieldIndex& spectral_index,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
                          const amrex::Real dt,
@@ -78,7 +78,7 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
-        SpectralFieldIndexNew m_spectral_index;
+        SpectralFieldIndex m_spectral_index;
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;
         amrex::Real m_dt;
         bool m_dive_cleaning;

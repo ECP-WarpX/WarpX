@@ -32,11 +32,11 @@
 
 using namespace amrex;
 
-SpectralFieldIndexNew::SpectralFieldIndexNew (const bool update_with_rho,
-                                              const bool time_averaging,
-                                              const bool J_linear_in_time,
-                                              const bool dive_cleaning,
-                                              const bool divb_cleaning)
+SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
+                                        const bool time_averaging,
+                                        const bool J_linear_in_time,
+                                        const bool dive_cleaning,
+                                        const bool divb_cleaning)
 {
     int c = 0;
 

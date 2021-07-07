@@ -40,8 +40,8 @@ SpectralSolver::SpectralSolver(
     // as well as the value of the corresponding k coordinates)
     const SpectralKSpace k_space= SpectralKSpace(realspace_ba, dm, dx);
 
-    m_spectral_index = SpectralFieldIndexNew(update_with_rho, fft_do_time_averaging,
-                                             J_linear_in_time, dive_cleaning, divb_cleaning);
+    m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
+                                          J_linear_in_time, dive_cleaning, divb_cleaning);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space

@@ -42,7 +42,7 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     //   as well as the value of the corresponding k coordinates.
 
     // Pass fft_do_time_averaging = 0, J_linear_in_time = 0, dive_cleaning = 0, divb_cleaning = 0
-    m_spectral_index = SpectralFieldIndexNew(update_with_rho, 0, 0, 0, 0);
+    m_spectral_index = SpectralFieldIndex(update_with_rho, 0, 0, 0, 0);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space

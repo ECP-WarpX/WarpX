@@ -91,11 +91,11 @@ class SpectralBaseAlgorithm
         */
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
-                              const SpectralFieldIndexNew& spectral_index,
+                              const SpectralFieldIndex& spectral_index,
                               const int norder_x, const int norder_y,
                               const int norder_z, const bool nodal);
 
-        SpectralFieldIndexNew m_spectral_index;
+        SpectralFieldIndex m_spectral_index;
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;
