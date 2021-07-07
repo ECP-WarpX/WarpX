@@ -1,4 +1,54 @@
 if(WarpX_PSATD)
+    # Helper Functions ############################################################
+    #
+    option(WarpX_FFTW_IGNORE_OMP "Ignore FFTW3 OpenMP support, even if found" OFF)
+    mark_as_advanced(WarpX_FFTW_IGNORE_OMP)
+
+    # Set the WarpX_FFTW_OMP=1 define on WarpX::thirdparty::FFT if TRUE and print
+    # a message
+    #
+    function(fftw_add_define HAS_FFTW_OMP_LIB)
+        if(HAS_FFTW_OMP_LIB)
+            message(STATUS "FFTW: Found OpenMP support")
+            target_compile_definitions(WarpX::thirdparty::FFT INTERFACE WarpX_FFTW_OMP=1)
+        else()
+            message(STATUS "FFTW: Could NOT find OpenMP support")
+        endif()
+    endfunction()
+
+    # Check if the PkgConfig target location has an _omp library, e.g.,
+    # libfftw3(f)_omp.a shipped and if yes, set the WarpX_FFTW_OMP=1 define.
+    #
+    function(fftw_check_omp library_paths fftw_precision_suffix)
+        if(WarpX_FFTW_IGNORE_OMP)
+            fftw_add_define(FALSE)
+            return()
+        endif()
+
+        find_library(HAS_FFTW_OMP_LIB fftw3${fftw_precision_suffix}_omp
+            PATHS ${library_paths}
+            NO_DEFAULT_PATH
+            NO_PACKAGE_ROOT_PATH
+            NO_CMAKE_PATH
+            NO_CMAKE_ENVIRONMENT_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH
+            NO_CMAKE_FIND_ROOT_PATH
+        )
+        if(HAS_FFTW_OMP_LIB)
+            # the .pc files here forget to link the _omp.a/so files
+            # explicitly - we add those manually to avoid any trouble,
+            # e.g., in static builds.
+            target_link_libraries(WarpX::thirdparty::FFT INTERFACE ${HAS_FFTW_OMP_LIB})
+        endif()
+
+        fftw_add_define("${HAS_FFTW_OMP_LIB}")
+    endfunction()
+
+
+    # Various FFT implementations that we want to use #############################
+    #
+
     # cuFFT  (CUDA)
     #   TODO: check if `find_package` search works
 
@@ -29,20 +79,18 @@ if(WarpX_PSATD)
         endif()
         mark_as_advanced(WarpX_FFTW_SEARCH)
 
-        if(WarpX_FFTW_SEARCH STREQUAL CMAKE)
-            if(WarpX_PRECISION STREQUAL "DOUBLE")
-                find_package(FFTW3 CONFIG REQUIRED)
-            else()
-                find_package(FFTW3f CONFIG REQUIRED)
-            endif()
+        # floating point precision suffixes: float, double and quad precision
+        if(WarpX_PRECISION STREQUAL "DOUBLE")
+            set(HFFTWp "")
         else()
-            if(WarpX_PRECISION STREQUAL "DOUBLE")
-                find_package(PkgConfig REQUIRED QUIET)
-                pkg_check_modules(fftw3 REQUIRED IMPORTED_TARGET fftw3)
-            else()
-                find_package(PkgConfig REQUIRED QUIET)
-                pkg_check_modules(fftw3f REQUIRED IMPORTED_TARGET fftw3f)
-            endif()
+            set(HFFTWp "f")
+        endif()
+
+        if(WarpX_FFTW_SEARCH STREQUAL CMAKE)
+            find_package(FFTW3${HFFTWp} CONFIG REQUIRED)
+        else()
+            find_package(PkgConfig REQUIRED QUIET)
+            pkg_check_modules(fftw3${HFFTWp} REQUIRED IMPORTED_TARGET fftw3${HFFTWp})
         endif()
     endif()
 
@@ -53,28 +101,25 @@ if(WarpX_PSATD)
     elseif(WarpX_COMPUTE STREQUAL HIP)
         make_third_party_includes_system(roc::rocfft FFT)
     else()
-        if(WarpX_PRECISION STREQUAL "DOUBLE")
-            if(FFTW3_FOUND)
-                # subtargets: fftw3, fftw3_threads, fftw3_omp
-                if(WarpX_COMPUTE STREQUAL OMP AND TARGET FFTW3::fftw3_omp)
-                    make_third_party_includes_system(FFTW3::fftw3_omp FFT)
-                else()
-                    make_third_party_includes_system(FFTW3::fftw3 FFT)
-                endif()
+        if(FFTW3_FOUND)
+            # subtargets: fftw3(p), fftw3(p)_threads, fftw3(p)_omp
+            if(WarpX_COMPUTE STREQUAL OMP AND
+               TARGET FFTW3::fftw3${HFFTWp}_omp AND
+               NOT WarpX_FFTW_IGNORE_OMP)
+                make_third_party_includes_system(FFTW3::fftw3${HFFTWp}_omp FFT)
+                fftw_add_define(TRUE)
             else()
-                make_third_party_includes_system(PkgConfig::fftw3 FFT)
+                make_third_party_includes_system(FFTW3::fftw3${HFFTWp} FFT)
+                fftw_add_define(FALSE)
             endif()
         else()
-            if(FFTW3f_FOUND)
-                # subtargets: fftw3f, fftw3f_threads, fftw3f_omp
-                if(WarpX_COMPUTE STREQUAL OMP AND TARGET FFTW3::fftw3f_omp)
-                    make_third_party_includes_system(FFTW3::fftw3f_omp FFT)
-                else()
-                    make_third_party_includes_system(FFTW3::fftw3f FFT)
-                endif()
+            make_third_party_includes_system(PkgConfig::fftw3${HFFTWp} FFT)
+            if(WarpX_COMPUTE STREQUAL OMP AND
+               NOT WarpX_FFTW_IGNORE_OMP)
+                fftw_check_omp("${fftw3${HFFTWp}_LIBRARY_DIRS}" "${HFFTWp}")
             else()
-                make_third_party_includes_system(PkgConfig::fftw3f FFT)
+                fftw_add_define(FALSE)
             endif()
         endif()
     endif()
-endif()
+endif(WarpX_PSATD)

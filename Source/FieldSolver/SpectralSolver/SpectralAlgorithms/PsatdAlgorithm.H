@@ -85,7 +85,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
                     return SpectralFieldIndex::n_fields;
                 }
             }
-        };
+        }
 
         /**
          * \brief Initializes the coefficients used in \c pushSpectralFields to update the E and B fields

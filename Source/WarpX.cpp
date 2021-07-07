@@ -18,12 +18,13 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #ifdef WARPX_USE_PSATD
-#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#endif
-#ifdef WARPX_DIM_RZ
-#   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-#endif
+#   ifdef WARPX_DIM_RZ
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   else
+#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#   endif // RZ ifdef
+#endif // use PSATD ifdef
 #include "FieldSolver/WarpX_FDTD.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Parser/WarpXParserWrapper.H"
@@ -91,6 +92,8 @@ std::string WarpX::str_Ey_ext_grid_function;
 std::string WarpX::str_Ez_ext_grid_function;
 
 int WarpX::do_moving_window = 0;
+int WarpX::start_moving_window_step = 0;
+int WarpX::end_moving_window_step = -1;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
@@ -117,8 +120,8 @@ int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::particle_boundary_lo(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::particle_boundary_hi(AMREX_SPACEDIM,0);
+amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
+amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
 bool WarpX::do_current_centering = false;
 
@@ -143,8 +146,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
-bool WarpX::use_filter        = false;
-bool WarpX::use_kspace_filter       = false;
+bool WarpX::use_filter = true;
+bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
 
 bool WarpX::serialize_ics     = false;
@@ -171,6 +174,7 @@ bool WarpX::do_dynamic_scheduling = true;
 int WarpX::do_electrostatic;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
 int WarpX::self_fields_max_iters = 200;
+int WarpX::self_fields_verbosity = 2;
 
 int WarpX::do_subcycling = 0;
 int WarpX::do_multi_J = 0;
@@ -479,6 +483,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
         {
+            pp_warpx.query("start_moving_window_step", start_moving_window_step);
+            pp_warpx.query("end_moving_window_step", end_moving_window_step);
             std::string s;
             pp_warpx.get("moving_window_dir", s);
             if (s == "x" || s == "X") {
@@ -550,12 +556,19 @@ WarpX::ReadParameters ()
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
             pp_warpx.query("self_fields_max_iters", self_fields_max_iters);
+            pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
             // Note that with the relativistic version, these parameters would be
             // input for each species.
         }
 
         pp_warpx.query("n_buffer", n_buffer);
-        pp_warpx.query("const_dt", const_dt);
+        queryWithParser(pp_warpx, "const_dt", const_dt);
+
+        // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
+        // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
+#ifdef WARPX_DIM_RZ
+        if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) WarpX::use_filter = false;
+#endif
 
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
@@ -569,11 +582,25 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
+        // TODO When k-space filtering will be implemented also for Cartesian geometries,
+        // this code block will have to be applied in all cases (remove #ifdef condition)
 #ifdef WARPX_DIM_RZ
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             // With RZ spectral, only use k-space filtering
             use_kspace_filter = use_filter;
             use_filter = false;
+        }
+        else // FDTD
+        {
+            // Filter currently not working with FDTD solver in RZ geometry
+            // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
+            if (use_filter)
+            {
+                amrex::Print() << "\nWARNING:"
+                               << "\nFilter currently not working with FDTD solver in RZ geometry:"
+                               << "\nwe recommend setting warpx.use_filter = 0 in the input file.\n"
+                               << std::endl;
+            }
         }
 #endif
 
@@ -850,7 +877,7 @@ WarpX::ReadParameters ()
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
 
-        if (species_names.size() > 0 || lasers_names.size() > 0) {
+        if (!species_names.empty() || !lasers_names.empty()) {
             int particle_shape;
             if (pp_algo.query("particle_shape", particle_shape) == false)
             {

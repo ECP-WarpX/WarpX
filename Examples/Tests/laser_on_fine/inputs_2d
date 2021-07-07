@@ -34,6 +34,7 @@ warpx.verbose = 1
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
+warpx.use_filter = 0
 
 # CFL
 warpx.cfl = 1.0

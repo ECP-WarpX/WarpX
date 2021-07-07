@@ -33,6 +33,7 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -136,8 +137,8 @@ public:
     static int macroscopic_solver_algo;
     static amrex::Vector<int> field_boundary_lo;
     static amrex::Vector<int> field_boundary_hi;
-    static amrex::Vector<int> particle_boundary_lo;
-    static amrex::Vector<int> particle_boundary_hi;
+    static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
+    static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
 
     // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
@@ -337,7 +338,12 @@ public:
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
-    int  MoveWindow (bool move_j);
+
+    /** \brief Move the moving window
+     * \param step Time step
+     * \param move_j whether the current is shifted or not
+     */
+    int  MoveWindow (const int step, bool move_j);
 
     /**
      * \brief
@@ -551,8 +557,21 @@ public:
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
     static int self_fields_max_iters;
+    static int self_fields_verbosity;
 
-    static int do_moving_window;
+    static int do_moving_window; // boolean
+    static int start_moving_window_step; // the first step to move window
+    static int end_moving_window_step; // the last step to move window
+    /** Returns true if the moving window is active for the provided step
+     *
+     * @param step time step
+     * @return true if active, else false
+     */
+    static int moving_window_active (int const step) {
+        bool const step_before_end = (step < end_moving_window_step) || (end_moving_window_step < 0);
+        bool const step_after_start = (step >= start_moving_window_step);
+        return do_moving_window && step_before_end && step_after_start;
+    }
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
@@ -596,17 +615,20 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
-                     const int max_iters=200) const;
+                     const int max_iters=200,
+                     const int verbosity=2) const;
     void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
-                       int const max_iters) const;
+                       int const max_iters,
+                       int const verbosity) const;
     void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
-                       int const max_iters) const;
+                       int const max_iters,
+                       int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
