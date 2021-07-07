@@ -29,15 +29,6 @@
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
 
-/** Index for the PML fields, when stored in spectral space,
- *  (n_fields is automatically set to the total number of fields)
- *  TODO How to include the diagonal components only when needed?
- */
-struct SpectralPMLIndex {
-  enum {Exx=0, Exy, Exz, Eyx, Eyy, Eyz, Ezx, Ezy, Ezz,
-        Bxx  , Bxy, Bxz, Byx, Byy, Byz, Bzx, Bzy, Bzz, Fx, Fy, Fz, Gx, Gy, Gz, n_fields};
-};
-
 class SpectralFieldIndex
 {
     public:
@@ -49,7 +40,10 @@ class SpectralFieldIndex
                             const bool time_averaging,
                             const bool J_linear_in_time,
                             const bool dive_cleaning,
-                            const bool divb_cleaning);
+                            const bool divb_cleaning,
+                            const bool pml,
+                            const bool pml_dive_cleaning,
+                            const bool pml_divb_cleaning);
 
         /**
          * \brief Default constructor
@@ -65,30 +59,31 @@ class SpectralFieldIndex
     int n_fields;
 
     // Indices overwritten in the constructor, for the fields that are actually allocated
-    // (index -1 will never be used, unless there is some bug in the code implementation)
-    int Ex = -1;
-    int Ey = -1;
-    int Ez = -1;
-    int Bx = -1;
-    int By = -1;
-    int Bz = -1;
-    int Jx = -1;
-    int Jy = -1;
-    int Jz = -1;
-    int rho_old = -1;
-    int rho_new = -1;
-    int divE = -1;
-    int Ex_avg = -1;
-    int Ey_avg = -1;
-    int Ez_avg = -1;
-    int Bx_avg = -1;
-    int By_avg = -1;
-    int Bz_avg = -1;
-    int Jx_new = -1;
-    int Jy_new = -1;
-    int Jz_new = -1;
-    int F = -1;
-    int G = -1;
+    // (index -1 will never be used, unless there is some bug in the code implementation,
+    // which would result in a runtime crash due to out-of-bound accesses that can be detected
+    // by running the code in DEBUG mode)
+
+    // Always
+    int Ex = -1, Ey = -1, Ez = -1;
+    int Bx = -1, By = -1, Bz = -1;
+    int Jx = -1, Jy = -1, Jz = -1;
+    int rho_old = -1, rho_new = -1, divE = -1;
+
+    // Time averaging
+    int Ex_avg = -1, Ey_avg = -1, Ez_avg = -1;
+    int Bx_avg = -1, By_avg = -1, Bz_avg = -1;
+
+    // J linear in time
+    int Jx_new = -1, Jy_new = -1, Jz_new = -1;
+    int F = -1, G = -1;
+
+    // PML
+    int Exy = -1, Exz = -1, Eyx = -1, Eyz = -1, Ezx = -1, Ezy = -1;
+    int Bxy = -1, Bxz = -1, Byx = -1, Byz = -1, Bzx = -1, Bzy = -1;
+
+    // PML with div(E) and/or div(B) cleaning
+    int Exx = -1, Eyy = -1, Ezz = -1, Bxx = -1, Byy = -1, Bzz = -1;
+    int Fx  = -1, Fy  = -1, Fz  = -1, Gx  = -1, Gy  = -1, Gz  = -1;
 };
 
 /** \brief Class that stores the fields in spectral space, and performs the

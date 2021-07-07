@@ -187,8 +187,8 @@ public:
 private:
     bool m_ok;
 
-    bool m_dive_cleaning;
-    bool m_divb_cleaning;
+    bool m_pml_dive_cleaning;
+    bool m_pml_divb_cleaning;
 
     const amrex::Geometry* m_geom;
     const amrex::Geometry* m_cgeom;

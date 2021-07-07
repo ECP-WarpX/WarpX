@@ -75,13 +75,15 @@ class SpectralSolver
                         const amrex::Array<amrex::Real,3>& v_comoving,
                         const amrex::RealVect dx,
                         const amrex::Real dt,
-                        const bool pml = false,
-                        const bool periodic_single_box = false,
-                        const bool update_with_rho = false,
-                        const bool fft_do_time_averaging = false,
-                        const bool J_linear_in_time = false,
-                        const bool dive_cleaning = false,
-                        const bool divb_cleaning = false);
+                        const bool pml,
+                        const bool periodic_single_box,
+                        const bool update_with_rho,
+                        const bool fft_do_time_averaging,
+                        const bool J_linear_in_time,
+                        const bool dive_cleaning,
+                        const bool divb_cleaning,
+                        const bool pml_dive_cleaning,
+                        const bool pml_divb_cleaning);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`

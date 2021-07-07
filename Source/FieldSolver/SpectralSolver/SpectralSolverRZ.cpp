@@ -41,8 +41,16 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     //   the spectral space corresponding to each box in `realspace_ba`,
     //   as well as the value of the corresponding k coordinates.
 
-    // Pass fft_do_time_averaging = 0, J_linear_in_time = 0, dive_cleaning = 0, divb_cleaning = 0
-    m_spectral_index = SpectralFieldIndex(update_with_rho, 0, 0, 0, 0);
+    const bool time_averaging = false;
+    const bool J_linear_in_time = false;
+    const bool dive_cleaning = false;
+    const bool divb_cleaning = false;
+    const bool pml = false;
+    const bool pml_dive_cleaning = false;
+    const bool pml_divb_cleaning = false;
+    m_spectral_index = SpectralFieldIndex(update_with_rho, time_averaging, J_linear_in_time,
+                                          dive_cleaning, divb_cleaning, pml,
+                                          pml_dive_cleaning, pml_divb_cleaning);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space

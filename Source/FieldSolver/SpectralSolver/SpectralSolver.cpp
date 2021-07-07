@@ -31,7 +31,9 @@ SpectralSolver::SpectralSolver(
                 const bool fft_do_time_averaging,
                 const bool J_linear_in_time,
                 const bool dive_cleaning,
-                const bool divb_cleaning)
+                const bool divb_cleaning,
+                const bool pml_dive_cleaning,
+                const bool pml_divb_cleaning)
 {
     // Initialize all structures using the same distribution mapping dm
 
@@ -41,7 +43,8 @@ SpectralSolver::SpectralSolver(
     const SpectralKSpace k_space= SpectralKSpace(realspace_ba, dm, dx);
 
     m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
-                                          J_linear_in_time, dive_cleaning, divb_cleaning);
+                                          J_linear_in_time, dive_cleaning, divb_cleaning,
+                                          pml, pml_dive_cleaning, pml_divb_cleaning);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
@@ -49,7 +52,7 @@ SpectralSolver::SpectralSolver(
     if (pml) {
         algorithm = std::make_unique<PMLPsatdAlgorithm>(
             k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-            dt, dive_cleaning, divb_cleaning);
+            dt, pml_dive_cleaning, pml_divb_cleaning);
     }
     else {
         // Comoving PSATD algorithm
