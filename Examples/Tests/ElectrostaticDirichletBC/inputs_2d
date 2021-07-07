@@ -3,6 +3,7 @@ warpx.verbose = 0
 warpx.const_dt = 7.5e-10
 warpx.do_electrostatic = labframe
 warpx.self_fields_required_precision = 1e-06
+warpx.use_filter = 0
 amr.n_cell = 64 8
 amr.max_grid_size = 32
 amr.max_level = 0

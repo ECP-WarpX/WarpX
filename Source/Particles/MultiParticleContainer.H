@@ -137,6 +137,39 @@ public:
     */
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
 
+    /**
+     * \brief Deposit charge density.
+     *
+     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in] relative_t Time at which to deposit rho, relative to the time
+     *             of the current positions of the particles (expressed as
+     *             a fraction of dt). When different than 0, the particle
+     *             position will be temporarily modified to match the time
+     *             of the deposition.
+     * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
+     */
+    void
+    DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                   const amrex::Real relative_t, const int icomp = 0);
+
+    /**
+     * \brief Deposit current density.
+     *
+     * \param[in,out] J vector of current densities (one three-dimensional array of pointers
+     *                to MultiFabs per mesh refinement level)
+     * \param[in] dt: Time step for particle level (is used when temporarily
+     *                modifying the particle positions, either within the
+     *                Esirkepov or when `relative_t` is different than 0
+     * \param[in] relative_t: Time at which to deposit J, relative to the time of
+     *                the current positions of the particles (expressed as
+     *                a fraction of dt). When different than 0, the particle
+     *                position will be temporarily modified to match the
+     *                time of the deposition.
+     */
+    void
+    DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+                    const amrex::Real dt, const amrex::Real relative_t);
+
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
@@ -320,8 +353,8 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    /** Whether to absorb particles exiting the domain */
-    ParticleBC m_boundary_conditions = ParticleBC::none;
+    /** Controls boundaries for particles exiting the domain */
+    ParticleBoundaries m_boundary_conditions;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,

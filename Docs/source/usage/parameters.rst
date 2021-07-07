@@ -94,6 +94,11 @@ Overall simulation parameters
     ``self_fields_required_precision``, this parameter may be increased.
     This only applies when warpx.do_electrostatic = labframe.
 
+* ``warpx.self_fields_verbosity`` (`integer`, default: 2)
+    The vebosity used for MLMG solver for space-charge fields calculation. Currently
+    MLMG solver looks for verbosity levels from 0-5. A higher number results in more
+    verbose output.
+
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
@@ -150,6 +155,12 @@ Setting up the field mesh
 * ``warpx.moving_window_v`` (`float`)
     The speed of moving window, in units of the speed of light
     (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
+
+* ``warpx.start_moving_window_step`` (`integer`; 0 by default)
+    The timestep at which the moving window starts.
+
+* ``warpx.end_moving_window_step`` (`integer`; default is ``-1`` for false)
+    The timestep at which the moving window ends.
 
 * ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
@@ -223,6 +234,11 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
     * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+    * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain. When
+    ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
+
+* ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
+    For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -402,11 +418,6 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
     Not currently available in the RZ configuration.
-
-* ``particles.boundary_conditions`` (`string`) optional (default `none`)
-    Boundary conditions applied to particles. Options are:
-    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
-    * ``absorbing``: particles exiting the simulation domain are discarded.
 
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
@@ -1203,11 +1214,15 @@ Numerics and algorithms
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
 
-* ``warpx.use_filter`` (`0 or 1`)
-    Whether to smooth the charge and currents on the mesh, after depositing
-    them from the macroparticles. This uses a bilinear filter
-    (see the :ref:`filtering section <theory-pic-filter>`).
-    When using the RZ spectral solver, the filtering is done in k-space.
+* ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
+    Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
+    This uses a bilinear filter (see the :ref:`filtering section <theory-pic-filter>`).
+    The default is `1` in all cases, except for simulations in RZ geometry using the FDTD solver.
+    With the RZ PSATD solver, the filtering is done in :math:`k`-space.
+
+    .. warning::
+
+       Known bug: filter currently not working with FDTD solver in RZ geometry (see https://github.com/ECP-WarpX/WarpX/issues/1943).
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
@@ -1362,6 +1377,14 @@ Numerics and algorithms
     ``amr.max_level = 1``. More information can be found at
     https://ieeexplore.ieee.org/document/8659392.
 
+* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+
+* ``warpx.do_multi_J_n_depositions`` (integer)
+    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+
+
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
     If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
@@ -1496,6 +1519,9 @@ Numerics and algorithms
 
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
+
+* ``psatd.J_linear_in_time`` (`0` or `1`; default: `0`)
+    Whether to perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step (``psatd.J_linear_in_time = 1``), instead of using one single current deposited at half time (``psatd.J_linear_in_time = 0``), for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
