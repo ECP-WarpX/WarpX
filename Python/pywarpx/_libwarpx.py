@@ -20,6 +20,7 @@ try:
     # --- If mpi4py is going to be used, this needs to be imported
     # --- before libwarpx is loaded, because mpi4py calls MPI_Init
     from mpi4py import MPI
+    # --- Change MPI Comm type depending on MPICH (int) or OpenMPI (void*)
     if MPI._sizeof(MPI.Comm) == ctypes.sizeof(ctypes.c_int):
         _MPI_Comm_type = ctypes.c_int
     else:
