@@ -194,10 +194,6 @@ bool WarpX::do_device_synchronize_before_profile = true;
 bool WarpX::do_device_synchronize_before_profile = false;
 #endif
 
-#ifdef WARPX_USE_PSATD
-SpectralFieldIndex WarpX::spectral_index;
-#endif
-
 WarpX* WarpX::m_instance = nullptr;
 
 WarpX&
@@ -1576,10 +1572,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                  dx,
                                  pml_flag_false);
 #   endif
-
-    // Instantiate spectral index object
-    WarpX::spectral_index = spectral_solver_fp[0]->m_spectral_index;
-
 #endif
     } // MaxwellSolverAlgo::PSATD
     else {

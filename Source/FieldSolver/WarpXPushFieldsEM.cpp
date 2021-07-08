@@ -98,7 +98,7 @@ namespace {
 void
 WarpX::PSATDForwardTransformEB ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -116,7 +116,7 @@ WarpX::PSATDForwardTransformEB ()
 void
 WarpX::PSATDBackwardTransformEB ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -145,7 +145,7 @@ WarpX::PSATDBackwardTransformEB ()
 void
 WarpX::PSATDBackwardTransformEBavg ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -163,7 +163,7 @@ WarpX::PSATDBackwardTransformEBavg ()
 void
 WarpX::PSATDForwardTransformF ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -179,7 +179,7 @@ WarpX::PSATDForwardTransformF ()
 void
 WarpX::PSATDBackwardTransformF ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -195,7 +195,7 @@ WarpX::PSATDBackwardTransformF ()
 void
 WarpX::PSATDForwardTransformG ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -211,7 +211,7 @@ WarpX::PSATDForwardTransformG ()
 void
 WarpX::PSATDBackwardTransformG ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -227,7 +227,7 @@ WarpX::PSATDBackwardTransformG ()
 void
 WarpX::PSATDForwardTransformJ ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     const int idx_jx = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jx_new)
                                                  : static_cast<int>(Idx.Jx);
@@ -266,7 +266,7 @@ WarpX::PSATDForwardTransformJ ()
 void
 WarpX::PSATDForwardTransformRho (const int icomp)
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     // Select index in k space
     const int dst_comp = (icomp == 0) ? Idx.rho_old : Idx.rho_new;
@@ -316,7 +316,7 @@ WarpX::PSATDPushSpectralFields ()
 void
 WarpX::PSATDMoveRhoNewToRhoOld ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -332,7 +332,7 @@ WarpX::PSATDMoveRhoNewToRhoOld ()
 void
 WarpX::PSATDMoveJNewToJOld ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -352,7 +352,7 @@ WarpX::PSATDMoveJNewToJOld ()
 void
 WarpX::PSATDEraseAverageFields ()
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -378,7 +378,7 @@ WarpX::PSATDEraseAverageFields ()
 void
 WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
 {
-    auto Idx = WarpX::spectral_index;
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {

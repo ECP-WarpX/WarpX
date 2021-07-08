@@ -1220,7 +1220,7 @@ PushPMLPSATDSinglePatch (
     std::unique_ptr<amrex::MultiFab>& pml_F,
     std::unique_ptr<amrex::MultiFab>& pml_G)
 {
-    auto Idx = solver.m_spectral_index;
+    const SpectralFieldIndex& Idx = solver.m_spectral_index;
 
     // Perform forward Fourier transforms
     solver.ForwardTransform(lev, *pml_E[0], Idx.Exy, PMLComp::xy);

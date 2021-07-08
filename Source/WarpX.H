@@ -675,7 +675,6 @@ public:
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
 #ifdef WARPX_USE_PSATD
-
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_y;
@@ -684,9 +683,6 @@ public:
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
-
-    static SpectralFieldIndex spectral_index;
-
 #endif
 
 protected:
