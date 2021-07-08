@@ -372,7 +372,8 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                             int const verbosity) const
 {
 
-    // Define the boundary conditions
+#ifndef AMREX_USE_EB
+    // Without embedded boundaries: set potential at the box boundary
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
     std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
     Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
@@ -400,14 +401,26 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
             );
         }
     }
-
-    // set the boundary potential values if needed
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
-#ifndef AMREX_USE_EB
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
+
+    // Set the value of beta
+    amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
+#   if (AMREX_SPACEDIM==2)
+        {{ beta[0], beta[2] }};  // beta_x and beta_z
+#   else
+        {{ beta[0], beta[1], beta[2] }};
+#   endif
+    linop.setBeta( beta_solver );
+
+    // Solve the Poisson equation
+    linop.setDomainBC( lobc, hibc );
+
 #else
+
+    // With embedded boundary: extract EB info
     LPInfo info;
     Vector<EBFArrayBoxFactory const*> eb_factory;
     eb_factory.resize(max_level+1);
@@ -415,21 +428,11 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
       eb_factory[lev] = &WarpX::fieldEBFactory(lev);
     }
     MLEBNodeFDLaplacian linop( Geom(), boxArray(), dmap, info, eb_factory);
-#endif
 
-    // Set the value of beta
-#ifndef AMREX_USE_EB
-    amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#if (AMREX_SPACEDIM==2)
-        {{ beta[0], beta[2] }};  // beta_x and beta_z
-#else
-        {{ beta[0], beta[1], beta[2] }};
+    // TODO: Modify this
+    linop.setSigma({AMREX_D_DECL(1.0, 1.0, 1.0)});
+    linop.setEBDirichlet(0.);
 #endif
-    linop.setBeta( beta_solver );
-#endif
-
-    // Solve the Poisson equation
-    linop.setDomainBC( lobc, hibc );
 
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
