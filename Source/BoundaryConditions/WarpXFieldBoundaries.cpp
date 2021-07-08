@@ -5,11 +5,21 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-
+#include <AMReX_Print.H>
 #include <array>
 #include <memory>
 
+#include <AMReX.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <memory>
 using namespace amrex::literals;
+using namespace amrex;
 
 void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 {
@@ -32,16 +42,18 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         }
     }
 
-
     if (lev == 0) {
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if ( (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller) ||
-               (WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller) ) {
-                if (a_dt_type == DtType::FirstHalf) {
-                    m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary( Efield_fp[lev],
-                                         Bfield_fp[lev], Geom(lev).Domain(), dt[lev]);
+        if (a_dt_type == DtType::FirstHalf) {
+            bool applySilverMueller = false;
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if ( (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller) ||
+                   (WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller) ) {
+                    applySilverMueller = true;
                 }
             }
+            if(applySilverMueller) m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
+                                         Efield_fp[lev], Bfield_fp[lev],
+                                         Geom(lev).Domain(), dt[lev]);
         }
     }
 }
