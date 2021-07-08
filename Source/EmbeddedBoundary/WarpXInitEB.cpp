@@ -87,14 +87,12 @@ WarpX::InitEB ()
         ParserIF pif(*m_eb_if_parser);
         auto gshop = amrex::EB2::makeShop(pif);
         amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel());
-        amrex::Print() << "Building with IF \n";
     } else {
         amrex::ParmParse pp_eb2("eb2");
         if (!pp_eb2.contains("geom_type")) {
             std::string geom_type = "all_regular";
             pp_eb2.add("geom_type", geom_type); // use all_regular by default
         }
-        amrex::Print() << "Building withOUT IF \n";
         amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
     }
 
@@ -264,7 +262,6 @@ WarpX::ComputeLevelset () {
     if (m_eb_if_parser) {
         ParserIF pif(*m_eb_if_parser);
         auto gshop = amrex::EB2::makeShop(pif);
-        amrex::Print() << "Filling level set \n";
         amrex::FillImpFunc(*m_level_set[maxLevel()], gshop, Geom(maxLevel()));
         m_level_set[maxLevel()]->negate(m_level_set[maxLevel()]->nGrow()); // signed distance f = - imp. f.
     } else {
