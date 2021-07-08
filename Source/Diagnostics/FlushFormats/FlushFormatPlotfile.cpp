@@ -266,8 +266,6 @@ FlushFormatPlotfile::WriteWarpXHeader(
         }
         HeaderFile << "\n";
 
-        HeaderFile << warpx.getdo_moving_window() << "\n";
-
         HeaderFile << warpx.getmoving_window_x() << "\n";
 
         HeaderFile << warpx.getis_synchronized() << "\n";
@@ -291,6 +289,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         WriteHeaderParticle(HeaderFile, particle_diags);
 
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
+
+        HeaderFile << warpx.getdo_moving_window() << "\n";
     }
 }
 

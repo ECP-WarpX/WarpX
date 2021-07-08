@@ -123,14 +123,8 @@ WarpX::InitFromCheckpoint ()
             }
         }
 
-        int do_moving_window_before_restart;
-
-        is >> do_moving_window_before_restart;
-        GotoNextLine(is);
-
-        if (do_moving_window_before_restart) {
-            is >> moving_window_x;
-        }
+        amrex::Real moving_window_x_checkpoint;
+        is >> moving_window_x_checkpoint;
         GotoNextLine(is);
 
         is >> is_synchronized;
@@ -171,6 +165,14 @@ WarpX::InitFromCheckpoint ()
         mypc->ReadHeader(is);
         is >> current_injection_position;
         GotoNextLine(is);
+
+        int do_moving_window_before_restart;
+        is >> do_moving_window_before_restart;
+        GotoNextLine(is);
+
+        if (do_moving_window_before_restart) {
+            moving_window_x = moving_window_x_checkpoint;
+        }
     }
 
     const int nlevs = finestLevel()+1;
