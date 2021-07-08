@@ -281,6 +281,8 @@ public:
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
 
+    void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& level_set);
+
     std::string m_B_ext_particle_s = "default";
     std::string m_E_ext_particle_s = "default";
     // External fields added to particle fields.

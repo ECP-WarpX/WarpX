@@ -25,6 +25,7 @@
 #include <AMReX_MultiFab.H>
 #ifdef AMREX_USE_EB
 #   include <AMReX_ParmParse.H>
+#   include <AMReX_EB_utils.H>
 #endif
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
@@ -86,12 +87,14 @@ WarpX::InitEB ()
         ParserIF pif(*m_eb_if_parser);
         auto gshop = amrex::EB2::makeShop(pif);
         amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel());
+        amrex::Print() << "Building with IF \n";
     } else {
         amrex::ParmParse pp_eb2("eb2");
         if (!pp_eb2.contains("geom_type")) {
             std::string geom_type = "all_regular";
             pp_eb2.add("geom_type", geom_type); // use all_regular by default
         }
+        amrex::Print() << "Building withOUT IF \n";
         amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
     }
 
@@ -151,7 +154,7 @@ WarpX::ComputeEdgeLengths () {
 }
 
 /**
- * \brief Compute the ara of the mesh faces. Here the area is a value in [0, 1].
+ * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
  *        An edge of area 0 is fully covered.
  */
 void
@@ -247,6 +250,25 @@ WarpX::ScaleAreas() {
                                 face_areas_dim(i, j, k) *= full_area;
             });
         }
+    }
+#endif
+}
+
+/**
+ * \brief Compute the level set function used for particle-boundary interaction.
+ */
+void
+WarpX::ComputeLevelset () {
+#ifdef AMREX_USE_EB
+    BL_PROFILE("ComputeLevelset");
+    if (m_eb_if_parser) {
+        ParserIF pif(*m_eb_if_parser);
+        auto gshop = amrex::EB2::makeShop(pif);
+        amrex::Print() << "Filling level set \n";
+        amrex::FillImpFunc(*m_level_set[maxLevel()], gshop, Geom(maxLevel()));
+        m_level_set[maxLevel()]->negate(m_level_set[maxLevel()]->nGrow()); // signed distance f = - imp. f.
+    } else {
+        m_level_set[maxLevel()]->setVal(100.0); // some positive value
     }
 #endif
 }

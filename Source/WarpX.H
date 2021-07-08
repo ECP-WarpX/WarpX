@@ -968,6 +968,9 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
 
+    //EB level set
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_level_set;
+
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
@@ -1138,6 +1141,9 @@ private:
     void ComputeFaceAreas ();
     void ScaleEdges ();
     void ScaleAreas ();
+    void ComputeLevelset ();
+
+    void ScrapeParticles ();
 
 private:
 

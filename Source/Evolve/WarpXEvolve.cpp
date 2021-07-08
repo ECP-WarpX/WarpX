@@ -278,6 +278,8 @@ WarpX::Evolve (int numsteps)
             }
         }
 
+        // interact with particles with EB walls (if present)
+        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_level_set));
 
         if (sort_intervals.contains(step+1)) {
             amrex::Print() << "re-sorting particles \n";
