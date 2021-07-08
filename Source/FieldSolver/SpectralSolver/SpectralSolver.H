@@ -71,6 +71,7 @@ class SpectralSolver
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
+                        const amrex::IntVect& fill_guards,
                         const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::Array<amrex::Real,3>& v_comoving,
                         const amrex::RealVect dx,
@@ -187,6 +188,10 @@ class SpectralSolver
         }
 
         SpectralFieldIndex m_spectral_index;
+
+    protected:
+
+        amrex::IntVect m_fill_guards;
 
     private:
 

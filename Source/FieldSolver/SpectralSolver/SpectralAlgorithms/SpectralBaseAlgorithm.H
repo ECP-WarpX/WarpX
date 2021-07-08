@@ -81,6 +81,8 @@ class SpectralBaseAlgorithm
 
     protected: // Meant to be used in the subclasses
 
+        amrex::IntVect m_fill_guards;
+
         using SpectralRealCoefficients = \
             amrex::FabArray< amrex::BaseFab <amrex::Real> >;
         using SpectralComplexCoefficients = \
@@ -93,7 +95,8 @@ class SpectralBaseAlgorithm
                               const amrex::DistributionMapping& dm,
                               const SpectralFieldIndex& spectral_index,
                               const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal);
+                              const int norder_z, const bool nodal,
+                              const amrex::IntVect& fill_guards);
 
         SpectralFieldIndex m_spectral_index;
 

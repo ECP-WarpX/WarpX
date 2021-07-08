@@ -23,6 +23,7 @@ SpectralSolver::SpectralSolver(
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
                 const int norder_z, const bool nodal,
+                const amrex::IntVect& fill_guards,
                 const amrex::Array<amrex::Real,3>& v_galilean,
                 const amrex::Array<amrex::Real,3>& v_comoving,
                 const amrex::RealVect dx, const amrex::Real dt,
@@ -52,19 +53,19 @@ SpectralSolver::SpectralSolver(
     if (pml) {
         algorithm = std::make_unique<PMLPsatdAlgorithm>(
             k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-            dt, pml_dive_cleaning, pml_divb_cleaning);
+            fill_guards, dt, pml_dive_cleaning, pml_divb_cleaning);
     }
     else {
         // Comoving PSATD algorithm
         if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
             algorithm = std::make_unique<ComovingPsatdAlgorithm>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                v_comoving, dt, update_with_rho);
+                fill_guards, v_comoving, dt, update_with_rho);
         }
         // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards,
                 v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time);
         }
     }
@@ -72,6 +73,8 @@ SpectralSolver::SpectralSolver(
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldData(lev, realspace_ba, k_space, dm,
                                    m_spectral_index.n_fields, periodic_single_box);
+
+    m_fill_guards = fill_guards;
 }
 
 void
@@ -91,7 +94,7 @@ SpectralSolver::BackwardTransform( const int lev,
                                    const int i_comp )
 {
     WARPX_PROFILE("SpectralSolver::BackwardTransform");
-    field_data.BackwardTransform( lev, mf, field_index, i_comp );
+    field_data.BackwardTransform(lev, mf, field_index, i_comp, m_fill_guards);
 }
 
 void

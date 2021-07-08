@@ -153,6 +153,9 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
+    // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
+    static amrex::IntVect fill_guards;
+
     // div(E) and div(B) cleaning
     static bool do_dive_cleaning;
     static bool do_divb_cleaning;
