@@ -8,8 +8,13 @@
 #ifndef CHARGEDEPOSITION_H_
 #define CHARGEDEPOSITION_H_
 
+#include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#ifdef WARPX_DIM_RZ
+#   include "Utils/WarpX_Complex.H"
+#endif
 
 #include <AMReX.H>
 
@@ -76,13 +81,18 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     constexpr int CELL = amrex::IndexType::CELL;
 
     // Loop over particles and deposit into rho_fab
-    amrex::Real* cost_real = (amrex::Real*) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
-    *cost_real = 0.;
+#if defined(WARPX_USE_GPUCLOCK)
+    amrex::Real* cost_real = nullptr;
+    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
+        *cost_real = 0.;
+    }
+#endif
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
-#if (defined AMREX_USE_GPU)
-            KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+#if defined(WARPX_USE_GPUCLOCK)
+            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
             // --- Get particle quantities
@@ -177,7 +187,13 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
         }
         );
-        amrex::The_Managed_Arena()->free(cost_real);
+#if defined(WARPX_USE_GPUCLOCK)
+        if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+            amrex::Gpu::streamSynchronize();
+            *cost += *cost_real;
+            amrex::The_Managed_Arena()->free(cost_real);
+        }
+#endif
 
 #ifndef WARPX_DIM_RZ
         amrex::ignore_unused(n_rz_azimuthal_modes);

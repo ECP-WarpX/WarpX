@@ -2,12 +2,22 @@
 #define WARPX_FLUSHFORMATASCENT_H_
 
 #include "FlushFormat.H"
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
+
+#ifdef AMREX_USE_ASCENT
+#   include <AMReX_Conduit_Blueprint.H>
+#endif
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifdef AMREX_USE_ASCENT
 #   include <ascent.hpp>
-#   include <AMReX_Conduit_Blueprint.H>
 #endif
+
+#include <string>
 
 /**
  * \brief This class aims at dumping performing in-situ diagnostics with ASCENT.

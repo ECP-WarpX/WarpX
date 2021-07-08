@@ -9,17 +9,28 @@
 #ifndef WARPX_PML_H_
 #define WARPX_PML_H_
 
-#include "Utils/WarpXProfilerWrapper.H"
+#include "PML_fwd.H"
 
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
 #include <AMReX_MultiFab.H>
-#include <AMReX_Geometry.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <array>
-
+#include <memory>
+#include <string>
+#include <vector>
 
 struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 {
@@ -104,6 +115,7 @@ public:
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
+         const bool J_linear_in_time,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
@@ -169,6 +181,8 @@ public:
     void Restart (const std::string& dir);
 
     static void Exchange (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom, int do_pml_in_domain);
+
+    ~PML () = default;
 
 private:
     bool m_ok;

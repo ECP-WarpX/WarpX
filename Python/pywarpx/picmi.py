@@ -17,6 +17,11 @@ import periodictable
 codename = 'warpx'
 picmistandard.register_codename(codename)
 
+# dictionary to map field boundary conditions from picmistandard to WarpX
+BC_map = {
+    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none'
+}
+
 class constants:
     # --- Put the constants in their own namespace
     # --- Values from WarpXConst.H
@@ -76,6 +81,7 @@ class Species(picmistandard.PICMI_Species):
         # For the relativistic electrostatic solver
         self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
+        self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
 
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
@@ -98,7 +104,8 @@ class Species(picmistandard.PICMI_Species):
                                              initialize_self_fields = int(initialize_self_fields),
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
-                                             self_fields_max_iters = self.self_fields_max_iters)
+                                             self_fields_max_iters = self.self_fields_max_iters,
+                                             self_fields_verbosity = self.self_fields_verbosity)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -375,10 +382,15 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
         # Geometry
         pywarpx.geometry.coord_sys = 1  # RZ
-        pywarpx.geometry.is_periodic = '0 %d'%(self.bc_zmin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_rmin, self.bc_zmin]]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_rmax, self.bc_zmax]]
+        pywarpx.boundary.particle_lo = [self.bc_rmin_particles, self.bc_zmin_particles]
+        pywarpx.boundary.particle_hi = [self.bc_rmax_particles, self.bc_zmax_particles]
 
         if self.moving_window_zvelocity is not None:
             if np.isscalar(self.moving_window_zvelocity):
@@ -422,9 +434,14 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
-        pywarpx.geometry.is_periodic = '%d %d'%(self.bc_xmin=='periodic', self.bc_ymin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin]]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax]]
+        pywarpx.boundary.particle_lo = [self.bc_xmin_particles, self.bc_ymin_particles]
+        pywarpx.boundary.particle_hi = [self.bc_xmax_particles, self.bc_ymax_particles]
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -468,9 +485,18 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
-        pywarpx.geometry.is_periodic = '%d %d %d'%(self.bc_xmin=='periodic', self.bc_ymin=='periodic', self.bc_zmin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin, self.bc_zmin]]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax, self.bc_zmax]]
+        pywarpx.boundary.particle_lo = [
+            self.bc_xmin_particles, self.bc_ymin_particles, self.bc_zmin_particles
+        ]
+        pywarpx.boundary.particle_hi = [
+            self.bc_xmax_particles, self.bc_ymax_particles, self.bc_zmax_particles
+        ]
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -555,7 +581,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
-
+        self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
@@ -566,6 +592,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
+            pywarpx.warpx.self_fields_verbosity = self.self_fields_verbosity
             pywarpx.boundary.potential_lo_x = self.grid.potential_xmin
             pywarpx.boundary.potential_lo_y = self.grid.potential_ymin
             pywarpx.boundary.potential_lo_z = self.grid.potential_zmin

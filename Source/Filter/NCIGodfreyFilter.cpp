@@ -5,15 +5,20 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "NCIGodfreyFilter.H"
+
 #include "Utils/NCIGodfreyTables.H"
-#include "WarpX.H"
 
-#include <AMReX_REAL.H>
+#include <AMReX.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Vector.H>
 
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
-
+#include <vector>
 
 using namespace amrex;
 

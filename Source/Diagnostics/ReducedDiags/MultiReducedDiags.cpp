@@ -4,34 +4,38 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "LoadBalanceCosts.H"
-#include "LoadBalanceEfficiency.H"
-#include "ParticleHistogram.H"
-#include "BeamRelevant.H"
-#include "ParticleEnergy.H"
-#include "ParticleExtrema.H"
-#include "FieldEnergy.H"
-#include "FieldMaximum.H"
-#include "RhoMaximum.H"
-#include "ParticleNumber.H"
 #include "MultiReducedDiags.H"
 
-#include <AMReX_ParmParse.H>
-#include <AMReX_ParallelDescriptor.H>
+#include "BeamRelevant.H"
+#include "FieldEnergy.H"
+#include "FieldMaximum.H"
+#include "FieldMomentum.H"
+#include "FieldReduction.H"
+#include "LoadBalanceCosts.H"
+#include "LoadBalanceEfficiency.H"
+#include "ParticleEnergy.H"
+#include "ParticleExtrema.H"
+#include "ParticleHistogram.H"
+#include "ParticleMomentum.H"
+#include "ParticleNumber.H"
+#include "RhoMaximum.H"
+#include "Utils/IntervalsParser.H"
 
-#include <fstream>
-#include <map>
+#include <AMReX.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
+#include <map>
 
 using namespace amrex;
 
 // constructor
 MultiReducedDiags::MultiReducedDiags ()
 {
-
     // read reduced diags names
     ParmParse pp_warpx("warpx");
     m_plot_rd = pp_warpx.queryarr("reduced_diags_names", m_rd_names);
@@ -43,8 +47,11 @@ MultiReducedDiags::MultiReducedDiags ()
     const auto reduced_diags_dictionary =
         std::map<std::string, std::function<std::unique_ptr<ReducedDiags>(CS)>>{
             {"ParticleEnergy",        [](CS s){return std::make_unique<ParticleEnergy>(s);}},
+            {"ParticleMomentum",      [](CS s){return std::make_unique<ParticleMomentum>(s);}},
             {"FieldEnergy",           [](CS s){return std::make_unique<FieldEnergy>(s);}},
+            {"FieldMomentum",         [](CS s){return std::make_unique<FieldMomentum>(s);}},
             {"FieldMaximum",          [](CS s){return std::make_unique<FieldMaximum>(s);}},
+            {"FieldReduction",        [](CS s){return std::make_unique<FieldReduction>(s);}},
             {"RhoMaximum",            [](CS s){return std::make_unique<RhoMaximum>(s);}},
             {"BeamRelevant",          [](CS s){return std::make_unique<BeamRelevant>(s);}},
             {"LoadBalanceCosts",      [](CS s){return std::make_unique<LoadBalanceCosts>(s);}},
@@ -60,15 +67,14 @@ MultiReducedDiags::MultiReducedDiags ()
 
             // read reduced diags type
             std::string rd_type;
-            pp_rd_name.query("type", rd_type);
+            pp_rd_name.get("type", rd_type);
 
             if(reduced_diags_dictionary.count(rd_type) == 0)
-                Abort("No matching reduced diagnostics type found.");
+                Abort(rd_type + " is not a valid type for reduced diagnostic " + rd_name);
 
             return reduced_diags_dictionary.at(rd_type)(rd_name);
         });
     // end loop over all reduced diags
-
 }
 // end constructor
 
@@ -87,7 +93,6 @@ void MultiReducedDiags::ComputeDiags (int step)
 // function to write data
 void MultiReducedDiags::WriteToFile (int step)
 {
-
     // Only the I/O rank does
     if ( !ParallelDescriptor::IOProcessor() ) { return; }
 
@@ -99,7 +104,6 @@ void MultiReducedDiags::WriteToFile (int step)
 
         // call the write to file function
         m_multi_rd[i_rd]->WriteToFile(step);
-
     }
     // end loop over all reduced diags
 }

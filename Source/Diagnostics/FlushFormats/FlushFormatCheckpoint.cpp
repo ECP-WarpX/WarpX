@@ -1,8 +1,18 @@
 #include "FlushFormatCheckpoint.H"
-#include "WarpX.H"
-#include "Utils/WarpXProfilerWrapper.H"
 
-#include <AMReX_buildInfo.H>
+#include "BoundaryConditions/PML.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
+
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParticleIO.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_VisMF.H>
 
 using namespace amrex;
 

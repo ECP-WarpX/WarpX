@@ -8,15 +8,12 @@
 #ifndef WARPX_WRAPPERS_H_
 #define WARPX_WRAPPERS_H_
 
-#include <AMReX.H>
-#include <AMReX_BLProfiler.H>
+#include <AMReX_Config.H>
+#include <AMReX_REAL.H>
 
 #ifdef BL_USE_MPI
 #   include <mpi.h>
 #endif
-
-#include <AMReX_REAL.H>
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +75,8 @@ extern "C" {
 
     void warpx_ConvertLabParamsToBoost();
 
+    void warpx_ReadBCParams();
+
     void warpx_CheckGriddingForRZSpectral();
 
     amrex::Real warpx_getProbLo(int dir);
@@ -93,7 +92,7 @@ extern "C" {
                                                   int* num_tiles, int** particles_per_tile);
 
   void warpx_ComputeDt ();
-  void warpx_MoveWindow ();
+  void warpx_MoveWindow (int step, bool move_j);
 
   void warpx_EvolveE (amrex::Real dt);
   void warpx_EvolveB (amrex::Real dt);

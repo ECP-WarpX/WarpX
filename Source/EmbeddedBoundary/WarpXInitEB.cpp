@@ -1,11 +1,75 @@
+#include "Parser/WarpXParser.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLProfiler.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
 #include <AMReX_Config.H>
 #ifdef AMREX_USE_EB
 #   include <AMReX_EB2.H>
+#endif
+#include <AMReX_FabArray.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Loop.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#ifdef AMREX_USE_EB
 #   include <AMReX_ParmParse.H>
 #endif
+#include <AMReX_REAL.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
 
+#include <array>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <vector>
+
+#ifdef AMREX_USE_EB
+namespace {
+    class ParserIF
+        : public amrex::GPUable
+    {
+    public:
+        ParserIF (const ParserWrapper<3>& a_parser)
+            : m_parser(a_parser.getParser())
+            {}
+
+        ParserIF (const ParserIF& rhs) noexcept = default;
+        ParserIF (ParserIF&& rhs) noexcept = default;
+        ParserIF& operator= (const ParserIF& rhs) = delete;
+        ParserIF& operator= (ParserIF&& rhs) = delete;
+
+        AMREX_GPU_HOST_DEVICE inline
+        amrex::Real operator() (AMREX_D_DECL(amrex::Real x, amrex::Real y,
+                                             amrex::Real z)) const noexcept {
+#if (AMREX_SPACEDIM == 2)
+            return m_parser(x,amrex::Real(0.0),y);
+#else
+            return m_parser(x,y,z);
+#endif
+        }
+
+        inline amrex::Real operator() (const amrex::RealArray& p) const noexcept {
+            return this->operator()(AMREX_D_DECL(p[0],p[1],p[2]));
+        }
+
+    private:
+        HostDeviceParser<3> m_parser;
+    };
+}
+#endif
 
 void
 WarpX::InitEB ()
@@ -13,12 +77,23 @@ WarpX::InitEB ()
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
-    amrex::ParmParse pp_eb2("eb2");
-    if (!pp_eb2.contains("geom_type")) {
-        std::string geom_type = "all_regular";
-        pp_eb2.add("geom_type", geom_type); // use all_regular by default
+    amrex::ParmParse pp_warpx("warpx");
+    std::string impf;
+    pp_warpx.query("eb_implicit_function", impf);
+    if (! impf.empty()) {
+        WarpXParser wp = makeParser(impf, {"x", "y", "z"});
+        m_eb_if_parser = std::make_unique<ParserWrapper<3> >(wp);
+        ParserIF pif(*m_eb_if_parser);
+        auto gshop = amrex::EB2::makeShop(pif);
+        amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel());
+    } else {
+        amrex::ParmParse pp_eb2("eb2");
+        if (!pp_eb2.contains("geom_type")) {
+            std::string geom_type = "all_regular";
+            pp_eb2.add("geom_type", geom_type); // use all_regular by default
+        }
+        amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
     }
-    amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
 
 #endif
 }
@@ -65,7 +140,8 @@ WarpX::ComputeEdgeLengths () {
                         edge_lengths_dim(i, j, k) = 1.;
                     } else {
                         // This edge is cut.
-                        edge_lengths_dim(i, j, k) = 1 - abs(amrex::Real(2.0)*edge_cent(i, j, k));
+                        edge_lengths_dim(i, j, k) = 1 - amrex::Math::abs(amrex::Real(2.0)
+                                                                        * edge_cent(i, j, k));
                     }
                 });
             }

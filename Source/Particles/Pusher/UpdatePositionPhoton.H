@@ -10,9 +10,9 @@
 
 #include "Utils/WarpXConst.H"
 
+#include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_REAL.H>
-#include <AMReX.H>
 
 /**
  * \brief Push the position of a photon particle over one timestep,

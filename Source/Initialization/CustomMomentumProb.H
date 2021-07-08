@@ -7,10 +7,10 @@
 #ifndef CUSTOM_MOMENTUM_PROB_H
 #define CUSTOM_MOMENTUM_PROB_H
 
-#include <AMReX_ParmParse.H>
-#include <AMReX_Gpu.H>
 #include <AMReX_Arena.H>
 #include <AMReX_Dim3.H>
+#include <AMReX_Gpu.H>
+#include <AMReX_ParmParse.H>
 
 // An example of Custom Momentum Profile
 

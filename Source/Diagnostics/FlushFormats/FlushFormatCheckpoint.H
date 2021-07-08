@@ -3,6 +3,15 @@
 
 #include "FlushFormatPlotfile.H"
 
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
+
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <string>
+
 class FlushFormatCheckpoint final : public FlushFormatPlotfile
 {
     /** Flush fields and particles to plotfile */
