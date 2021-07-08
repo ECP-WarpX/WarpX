@@ -32,10 +32,11 @@ using namespace amrex;
 PMLPsatdAlgorithm::PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                                      const DistributionMapping& dm,
                                      const int norder_x, const int norder_y,
-                                     const int norder_z, const bool nodal, const Real dt,
+                                     const int norder_z, const bool nodal,
+                                     const amrex::IntVect& fill_guards, const Real dt,
                                      const bool dive_cleaning, const bool divb_cleaning)
      // Initialize members of base class
-     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal, fill_guards),
        m_dt(dt),
        m_dive_cleaning(dive_cleaning),
        m_divb_cleaning(divb_cleaning)

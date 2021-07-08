@@ -94,6 +94,11 @@ Overall simulation parameters
     ``self_fields_required_precision``, this parameter may be increased.
     This only applies when warpx.do_electrostatic = labframe.
 
+* ``warpx.self_fields_verbosity`` (`integer`, default: 2)
+    The vebosity used for MLMG solver for space-charge fields calculation. Currently
+    MLMG solver looks for verbosity levels from 0-5. A higher number results in more
+    verbose output.
+
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
@@ -150,6 +155,12 @@ Setting up the field mesh
 * ``warpx.moving_window_v`` (`float`)
     The speed of moving window, in units of the speed of light
     (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
+
+* ``warpx.start_moving_window_step`` (`integer`; 0 by default)
+    The timestep at which the moving window starts.
+
+* ``warpx.end_moving_window_step`` (`integer`; default is ``-1`` for false)
+    The timestep at which the moving window ends.
 
 * ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
@@ -223,6 +234,11 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
     * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+    * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain. When
+    ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
+
+* ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
+    For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -402,11 +418,6 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
     Not currently available in the RZ configuration.
-
-* ``particles.boundary_conditions`` (`string`) optional (default `none`)
-    Boundary conditions applied to particles. Options are:
-    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
-    * ``absorbing``: particles exiting the simulation domain are discarded.
 
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection

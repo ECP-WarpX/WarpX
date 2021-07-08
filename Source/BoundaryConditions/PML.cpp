@@ -482,7 +482,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     const BoxArray& ba = (do_pml_in_domain)?
           MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
           MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-    if (ba.size() == 0) {
+    if (ba.empty()) {
         m_ok = false;
         return;
     } else {
@@ -603,9 +603,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         Array<Real,3> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml,
-            periodic_single_box, update_with_rho, fft_do_time_averaging,
-            J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+            nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+            v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
+            fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
     }
 
@@ -711,9 +711,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             Array<Real,3> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml,
-                periodic_single_box, update_with_rho, fft_do_time_averaging,
-                J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+                nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+                v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
+                fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
         }
     }
