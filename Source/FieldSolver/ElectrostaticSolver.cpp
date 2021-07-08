@@ -372,7 +372,6 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                             int const verbosity) const
 {
 
-#ifndef AMREX_USE_EB
     // Without embedded boundaries: set potential at the box boundary
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
     std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
@@ -401,6 +400,8 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
             );
         }
     }
+
+#ifndef AMREX_USE_EB
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
@@ -414,9 +415,6 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
         {{ beta[0], beta[1], beta[2] }};
 #   endif
     linop.setBeta( beta_solver );
-
-    // Solve the Poisson equation
-    linop.setDomainBC( lobc, hibc );
 
 #else
 
@@ -434,6 +432,9 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     linop.setEBDirichlet(0.);
 #endif
 
+    // Solve the Poisson equation
+    linop.setDomainBC( lobc, hibc );
+    
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
     }
