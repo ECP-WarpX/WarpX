@@ -42,93 +42,54 @@ SpectralFieldIndex::SpectralFieldIndex (const bool current_correction,
                                         const bool pml_dive_cleaning,
                                         const bool pml_divb_cleaning)
 {
-    // TODO Use these to allocate rho_old, rho_new, divE, F, and G only when needed
-    amrex::ignore_unused(update_with_rho, dive_cleaning, divb_cleaning);
+    // TODO Use these to allocate F and G only when needed
+    amrex::ignore_unused(dive_cleaning, divb_cleaning);
 
     int c = 0;
 
     if (pml == false)
     {
-        Ex = c++;
-        Ey = c++;
-        Ez = c++;
-
-        Bx = c++;
-        By = c++;
-        Bz = c++;
-
-        Jx = c++;
-        Jy = c++;
-        Jz = c++;
+        Ex = c++; Ey = c++; Ez = c++;
+        Bx = c++; By = c++; Bz = c++;
+        Jx = c++; Jy = c++; Jz = c++;
 
         // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
         divE = 3;
 
-        const bool store_rho = (update_with_rho) || (current_correction) || (J_linear_in_time);
-        if (store_rho)
+        if (update_with_rho || current_correction || J_linear_in_time)
         {
-            rho_old = c++;
-            rho_new = c++;
+            rho_old = c++; rho_new = c++;
         }
 
         if (time_averaging)
         {
-            Ex_avg = c++;
-            Ey_avg = c++;
-            Ez_avg = c++;
-
-            Bx_avg = c++;
-            By_avg = c++;
-            Bz_avg = c++;
+            Ex_avg = c++; Ey_avg = c++; Ez_avg = c++;
+            Bx_avg = c++; By_avg = c++; Bz_avg = c++;
         }
 
         if (J_linear_in_time)
         {
-            Jx_new = c++;
-            Jy_new = c++;
-            Jz_new = c++;
+            Jx_new = c++; Jy_new = c++; Jz_new = c++;
 
-            // TODO Do not always allocate these
-            F = c++;
-            G = c++;
+            // TODO Allocate F and G only when needed
+            F = c++; G = c++;
         }
     }
     else // PML
     {
-        Exy = c++;
-        Exz = c++;
-        Eyx = c++;
-        Eyz = c++;
-        Ezx = c++;
-        Ezy = c++;
-
-        Bxy = c++;
-        Bxz = c++;
-        Byx = c++;
-        Byz = c++;
-        Bzx = c++;
-        Bzy = c++;
+        Exy = c++; Exz = c++; Eyx = c++; Eyz = c++; Ezx = c++; Ezy = c++;
+        Bxy = c++; Bxz = c++; Byx = c++; Byz = c++; Bzx = c++; Bzy = c++;
 
         if (pml_dive_cleaning)
         {
-            Exx = c++;
-            Eyy = c++;
-            Ezz = c++;
-
-            Fx = c++;
-            Fy = c++;
-            Fz = c++;
+            Exx = c++; Eyy = c++; Ezz = c++;
+            Fx  = c++; Fy  = c++; Fz  = c++;
         }
 
         if (pml_divb_cleaning)
         {
-            Bxx = c++;
-            Byy = c++;
-            Bzz = c++;
-
-            Gx = c++;
-            Gy = c++;
-            Gz = c++;
+            Bxx = c++; Byy = c++; Bzz = c++;
+            Gx  = c++; Gy  = c++; Gz  = c++;
         }
     }
 
