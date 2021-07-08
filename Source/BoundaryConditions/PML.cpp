@@ -594,6 +594,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         // Flags passed to the spectral solver constructor
         const bool in_pml = true;
         const bool periodic_single_box = false;
+        const bool current_correction = false;
         const bool update_with_rho = false;
         const bool fft_do_time_averaging = false;
         const bool dive_cleaning = false;
@@ -606,9 +607,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
-            v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
-            fft_do_time_averaging, J_linear_in_time, dive_cleaning, divb_cleaning,
-            m_pml_dive_cleaning, m_pml_divb_cleaning);
+            v_comoving_zero, dx, dt, in_pml, periodic_single_box, current_correction,
+            update_with_rho, fft_do_time_averaging, J_linear_in_time, dive_cleaning,
+            divb_cleaning, m_pml_dive_cleaning, m_pml_divb_cleaning);
 #endif
     }
 
@@ -705,6 +706,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             // Flags passed to the spectral solver constructor
             const bool in_pml = true;
             const bool periodic_single_box = false;
+            const bool current_correction = false;
             const bool update_with_rho = false;
             const bool fft_do_time_averaging = false;
             const bool dive_cleaning = false;
@@ -717,9 +719,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
-                v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
-                fft_do_time_averaging, J_linear_in_time, dive_cleaning, divb_cleaning,
-                m_pml_dive_cleaning, m_pml_divb_cleaning);
+                v_comoving_zero, cdx, dt, in_pml, periodic_single_box, current_correction,
+                update_with_rho, fft_do_time_averaging, J_linear_in_time, dive_cleaning,
+                divb_cleaning, m_pml_dive_cleaning, m_pml_divb_cleaning);
 #endif
         }
     }

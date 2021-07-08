@@ -1870,6 +1870,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 solver_dt,
                                                 pml_flag,
                                                 fft_periodic_single_box,
+                                                WarpX::current_correction,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
                                                 J_linear_in_time,

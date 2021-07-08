@@ -32,7 +32,8 @@
 
 using namespace amrex;
 
-SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
+SpectralFieldIndex::SpectralFieldIndex (const bool current_correction,
+                                        const bool update_with_rho,
                                         const bool time_averaging,
                                         const bool J_linear_in_time,
                                         const bool dive_cleaning,
@@ -60,12 +61,15 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
         Jy = c++;
         Jz = c++;
 
-        // TODO Do not always allocate these
-        rho_old = c++;
-        rho_new = c++;
-
         // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
         divE = 3;
+
+        const bool store_rho = (update_with_rho) || (current_correction) || (J_linear_in_time);
+        if (store_rho)
+        {
+            rho_old = c++;
+            rho_new = c++;
+        }
 
         if (time_averaging)
         {
