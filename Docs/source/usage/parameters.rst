@@ -1165,8 +1165,7 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
 * ``<collision_name>.ndt`` (`int`) optional
-    Only for ``pairwisecoulomb``. Execute collision every # time steps.
-    The default value is 1.
+    Execute collision every # time steps. The default value is 1.
 
 * ``<collision_name>.background_density`` (`float`)
     Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.

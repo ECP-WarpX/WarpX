@@ -26,7 +26,7 @@ void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
     using std::sin;
 
     // generate random unit vector in 3 dimensions
-    // https://math.stackexchange.com/questions/44689/how-to-find-a-random-axis-or-unit-vector-in-3d
+    // https://mathworld.wolfram.com/SpherePointPicking.html
     amrex::Real theta = amrex::Random(engine) * 2.0 * MathConst::pi;
     z = 2.0 * amrex::Random(engine) - 1.0;
     amrex::Real xy = sqrt(1 - z*z);
@@ -244,9 +244,9 @@ public:
     * standard from the FilterCopyTransfrom::filterCopyTransformParticles
     * function.
     *
-    * @param[in,out] dst1 target species 1 (either electrons or positrons)
-    * @param[in,out] dst2 target species 2 (either electrons or positrons)
-    * @param[in] src source species (photons)
+    * @param[in,out] dst1 target species 1 (electrons)
+    * @param[in,out] dst2 target species 2 (ions)
+    * @param[in] src source species (electrons)
     * @param[in] i_src particle index of the source species
     * @param[in] i_dst1 particle index of target species 1
     * @param[in] i_dst2 particle index of target species 2
