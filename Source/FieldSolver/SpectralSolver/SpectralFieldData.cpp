@@ -63,7 +63,9 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
         // TODO Do not always allocate these
         rho_old = c++;
         rho_new = c++;
-        divE = c++;
+
+        // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
+        divE = 3;
 
         if (time_averaging)
         {
