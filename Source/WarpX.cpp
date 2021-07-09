@@ -1818,6 +1818,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   m_v_galilean,
                                                   dx_vect,
                                                   dt[lev],
+                                                  WarpX::current_correction,
                                                   update_with_rho);
     spectral_solver[lev] = std::move(pss);
 
