@@ -36,8 +36,7 @@ class SpectralFieldIndex
         /**
          * \brief Constructor
          */
-        SpectralFieldIndex (const bool current_correction,
-                            const bool update_with_rho,
+        SpectralFieldIndex (const bool update_with_rho,
                             const bool time_averaging,
                             const bool J_linear_in_time,
                             const bool dive_cleaning,

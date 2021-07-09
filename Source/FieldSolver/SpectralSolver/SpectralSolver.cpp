@@ -28,7 +28,6 @@ SpectralSolver::SpectralSolver(
                 const amrex::Array<amrex::Real,3>& v_comoving,
                 const amrex::RealVect dx, const amrex::Real dt,
                 const bool pml, const bool periodic_single_box,
-                const bool current_correction,
                 const bool update_with_rho,
                 const bool fft_do_time_averaging,
                 const bool J_linear_in_time,
@@ -44,7 +43,7 @@ SpectralSolver::SpectralSolver(
     // as well as the value of the corresponding k coordinates)
     const SpectralKSpace k_space= SpectralKSpace(realspace_ba, dm, dx);
 
-    m_spectral_index = SpectralFieldIndex(current_correction, update_with_rho, fft_do_time_averaging,
+    m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
                                           J_linear_in_time, dive_cleaning, divb_cleaning,
                                           pml, pml_dive_cleaning, pml_divb_cleaning);
 

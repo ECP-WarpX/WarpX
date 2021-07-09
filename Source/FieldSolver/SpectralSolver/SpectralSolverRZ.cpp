@@ -32,7 +32,6 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
                                     int const norder_z, bool const nodal,
                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                     amrex::RealVect const dx, amrex::Real const dt,
-                                    const bool current_correction,
                                     bool const update_with_rho)
     : k_space(realspace_ba, dm, dx)
 {
@@ -49,8 +48,8 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     const bool pml = false;
     const bool pml_dive_cleaning = false;
     const bool pml_divb_cleaning = false;
-    m_spectral_index = SpectralFieldIndex(current_correction, update_with_rho, time_averaging,
-                                          J_linear_in_time, dive_cleaning, divb_cleaning, pml,
+    m_spectral_index = SpectralFieldIndex(update_with_rho, time_averaging, J_linear_in_time,
+                                          dive_cleaning, divb_cleaning, pml,
                                           pml_dive_cleaning, pml_divb_cleaning);
 
     // - Select the algorithm depending on the input parameters

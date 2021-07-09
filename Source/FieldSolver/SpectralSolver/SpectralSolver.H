@@ -78,7 +78,6 @@ class SpectralSolver
                         const amrex::Real dt,
                         const bool pml,
                         const bool periodic_single_box,
-                        const bool current_correction,
                         const bool update_with_rho,
                         const bool fft_do_time_averaging,
                         const bool J_linear_in_time,
