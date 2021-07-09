@@ -216,16 +216,16 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             if (update_with_rho)
             {
                 fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
-                                        + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                        + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
+                                       + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
+                                       + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
 
                 fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
-                                        + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                        + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
+                                       + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
+                                       + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
 
                 fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
-                                        + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                        + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
+                                       + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
+                                       + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
             }
 
             // Update equations for E in the formulation without rho
@@ -237,32 +237,32 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
 
                 fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
-                                        + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                        + X4 * Jx + X2 * k_dot_E * kx + X3 * k_dot_J * kx;
+                                       + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
+                                       + X4 * Jx + X2 * k_dot_E * kx + X3 * k_dot_J * kx;
 
                 fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
-                                        + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                        + X4 * Jy + X2 * k_dot_E * ky + X3 * k_dot_J * ky;
+                                       + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
+                                       + X4 * Jy + X2 * k_dot_E * ky + X3 * k_dot_J * ky;
 
                 fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
-                                        + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                        + X4 * Jz + X2 * k_dot_E * kz + X3 * k_dot_J * kz;
+                                       + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
+                                       + X4 * Jz + X2 * k_dot_E * kz + X3 * k_dot_J * kz;
             }
 
             // Update equations for B
             // T2 = 1 always with standard PSATD (zero Galilean velocity)
 
             fields(i,j,k,Idx.Bx) = T2 * C * Bx_old
-                                    - I * T2 * S_ck * (ky * Ez_old - kz * Ey_old)
-                                    + I * X1 * (ky * Jz - kz * Jy);
+                                   - I * T2 * S_ck * (ky * Ez_old - kz * Ey_old)
+                                   + I * X1 * (ky * Jz - kz * Jy);
 
             fields(i,j,k,Idx.By) = T2 * C * By_old
-                                    - I * T2 * S_ck * (kz * Ex_old - kx * Ez_old)
-                                    + I * X1 * (kz * Jx - kx * Jz);
+                                   - I * T2 * S_ck * (kz * Ex_old - kx * Ez_old)
+                                   + I * X1 * (kz * Jx - kx * Jz);
 
             fields(i,j,k,Idx.Bz) = T2 * C * Bz_old
-                                    - I * T2 * S_ck * (kx * Ey_old - ky * Ex_old)
-                                    + I * X1 * (kx * Jy - ky * Jx);
+                                   - I * T2 * S_ck * (kx * Ey_old - ky * Ex_old)
+                                   + I * X1 * (kx * Jy - ky * Jx);
 
             if (J_linear_in_time)
             {
@@ -351,28 +351,28 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Y4 = Y4_arr(i,j,k);
 
                 fields(i,j,k,Idx.Ex_avg) = Psi1 * Ex_old
-                                               - I * c2 * Psi2 * (ky * Bz_old - kz * By_old)
-                                               + Y4 * Jx + (Y2 * rho_new + Y3 * rho_old) * kx;
+                                           - I * c2 * Psi2 * (ky * Bz_old - kz * By_old)
+                                           + Y4 * Jx + (Y2 * rho_new + Y3 * rho_old) * kx;
 
                 fields(i,j,k,Idx.Ey_avg) = Psi1 * Ey_old
-                                               - I * c2 * Psi2 * (kz * Bx_old - kx * Bz_old)
-                                               + Y4 * Jy + (Y2 * rho_new + Y3 * rho_old) * ky;
+                                           - I * c2 * Psi2 * (kz * Bx_old - kx * Bz_old)
+                                           + Y4 * Jy + (Y2 * rho_new + Y3 * rho_old) * ky;
 
                 fields(i,j,k,Idx.Ez_avg) = Psi1 * Ez_old
-                                               - I * c2 * Psi2 * (kx * By_old - ky * Bx_old)
-                                               + Y4 * Jz + (Y2 * rho_new + Y3 * rho_old) * kz;
+                                           - I * c2 * Psi2 * (kx * By_old - ky * Bx_old)
+                                           + Y4 * Jz + (Y2 * rho_new + Y3 * rho_old) * kz;
 
                 fields(i,j,k,Idx.Bx_avg) = Psi1 * Bx_old
-                                               + I * Psi2 * (ky * Ez_old - kz * Ey_old)
-                                               + I * Y1 * (ky * Jz - kz * Jy);
+                                           + I * Psi2 * (ky * Ez_old - kz * Ey_old)
+                                           + I * Y1 * (ky * Jz - kz * Jy);
 
                 fields(i,j,k,Idx.By_avg) = Psi1 * By_old
-                                               + I * Psi2 * (kz * Ex_old - kx * Ez_old)
-                                               + I * Y1 * (kz * Jx - kx * Jz);
+                                           + I * Psi2 * (kz * Ex_old - kx * Ez_old)
+                                           + I * Y1 * (kz * Jx - kx * Jz);
 
                 fields(i,j,k,Idx.Bz_avg) = Psi1 * Bz_old
-                                               + I * Psi2 * (kx * Ey_old - ky * Ex_old)
-                                               + I * Y1 * (kx * Jy - ky * Jx);
+                                           + I * Psi2 * (kx * Ey_old - ky * Ex_old)
+                                           + I * Y1 * (kx * Jy - ky * Jx);
             }
         });
     }
