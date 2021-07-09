@@ -60,11 +60,15 @@ class SpectralSolver
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
          * \param[in] J_linear_in_time whether to use two currents computed at the beginning and
          *                             the end of the time interval (instead of using one current
-         *                             compute at half time)
-         * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in Gauss law
-         *                          (new field F in the field update equations)
-         * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in magnetic Gauss law
-         *                          (new field G in the field update equations)
+         *                             computed at half time)
+         * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in
+         *                          Gauss law (new field F in the update equations)
+         * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
+         *                          div(B) = 0 law (new field G in the update equations)
+         * \param[in] pml_dive_cleaning whether to use div(E) cleaning to account for errors in
+         *                              Gauss law in the PML (new field F in the update equations)
+         * \param[in] pml_divb_cleaning whether to use div(B) cleaning to account for errors in
+         *                              div(B) = 0 law in the PML (new field G in the update equations)
          */
         SpectralSolver (const int lev,
                         const amrex::BoxArray& realspace_ba,

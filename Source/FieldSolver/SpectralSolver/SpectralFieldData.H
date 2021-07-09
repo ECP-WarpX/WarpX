@@ -34,7 +34,24 @@ class SpectralFieldIndex
     public:
 
         /**
-         * \brief Constructor
+         * \brief Constructor of the class SpectralFieldIndex
+         *
+         * Set integer indices to access data in spectral space
+         * and total number of fields to be stored.
+         *
+         * \param[in] update_with_rho   whether rho is used in the field update equations
+         * \param[in] time_averaging    whether the time averaging algorithm is used
+         * \param[in] J_linear_in_time  whether to use two currents computed at the beginning and
+         *                              the end of the time interval (instead of using one current
+         *                              computed at half time)
+         * \param[in] dive_cleaning     whether to use div(E) cleaning to account for errors in
+         *                              Gauss law (new field F in the update equations)
+         * \param[in] divb_cleaning     whether to use div(B) cleaning to account for errors in
+         *                              div(B) = 0 law (new field G in the update equations)
+         * \param[in] pml_dive_cleaning whether to use div(E) cleaning to account for errors in
+         *                              Gauss law in the PML (new field F in the update equations)
+         * \param[in] pml_divb_cleaning whether to use div(B) cleaning to account for errors in
+         *                              div(B) = 0 law in the PML (new field G in the update equations)
          */
         SpectralFieldIndex (const bool update_with_rho,
                             const bool time_averaging,

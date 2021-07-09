@@ -33,6 +33,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
+         * \param[in] spectral_index object containing indices to access data in spectral space
          * \param[in] norder_x order of the spectral solver along x
          * \param[in] norder_y order of the spectral solver along y
          * \param[in] norder_z order of the spectral solver along z
