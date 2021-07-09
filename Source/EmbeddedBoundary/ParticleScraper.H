@@ -34,37 +34,34 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& level_set,
 {
     BL_PROFILE("scrapeParticles");
 
-    using ParIter = typename PC::ParIterType;
     for (int lev = lev_min; lev <= lev_max; ++lev)
     {
-        const auto& ls = *level_set[lev];
-        const auto& geom = pc.Geom(lev);
-        const auto plo = geom.ProbLoArray();
-        const auto dxi = geom.InvCellSizeArray();
-        for(ParIter pti(pc, lev); pti.isValid(); ++pti)
+        const auto dxi = pc.Geom(lev).InvCellSizeArray();
+        for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
+            const auto getPosition = GetParticlePosition(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
-            auto pstruct = tile.GetArrayOfStructs()().data();
-            auto phi = ls[pti].array();  // signed distance function
+            auto phi = (*level_set[lev])[pti].array();  // signed distance function
             amrex::ParallelForRNG( np,
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
-                auto& p = pstruct[ip];
+                amrex::ParticleReal xp, yp, zp;
+                getPosition(ip, xp, yp, zp);
 
                 int i, j, k;
-                amrex::Real W[3][2];
+                amrex::Real W[AMREX_SPACEDIM][2];
+                LevelSet::compute_weights(xp, yp, zp, i, j, k, W);
 
-                LevelSet::compute_weights(p, i, j, k, W, plo, dxi);
-                amrex::Real phi_value  = LevelSet::interp_ls(p, i, j, k, W, phi, plo);
-                amrex::RealVect normal = LevelSet::interp_normal(p, i, j, k, W, phi, plo, dxi);
+                amrex::Real phi_value  = LevelSet::interp_ls(i, j, k, W, phi);
+                amrex::RealVect normal = LevelSet::interp_normal(i, j, k, W, phi, dxi);
 
                 // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
                 amrex::RealVect pos;
-                pos[0] = p.pos(0) - normal[0]*phi_value;
-                pos[1] = p.pos(1) - normal[1]*phi_value;
-                pos[2] = p.pos(2) - normal[2]*phi_value;
+                pos[0] = xp - normal[0]*phi_value;
+                pos[1] = yp - normal[1]*phi_value;
+                pos[2] = zp - normal[2]*phi_value;
 
                 LevelSet::normalize(normal);
 

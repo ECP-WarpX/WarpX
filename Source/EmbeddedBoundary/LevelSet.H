@@ -17,28 +17,25 @@ namespace LevelSet
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::Real dot_product (const amrex::RealVect& a, const amrex::RealVect& b) noexcept
 {
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+    return AMREX_D_TERM(a[0]*b[0], + a[1]*b[1], + a[2]*b[2]);
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void normalize (amrex::RealVect& a) noexcept
 {
     amrex::Real inv_norm = 1.0/std::sqrt(dot_product(a,a));
-    a[0] *= inv_norm;
-    a[1] *= inv_norm;
-    a[2] *= inv_norm;
+    AMREX_D_DECL(a[0] *= inv_norm,
+                 a[1] *= inv_norm,
+                 a[2] *= inv_norm);
 }
 
-template <typename P>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void compute_weights (const P& p, int& i, int& j, int& k, amrex::Real W[3][2],
-                      amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                      amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) noexcept
+void compute_weights (const amrex::ParticleReal x,
+                      const amrex::ParticleReal y,
+                      const amrex::ParticleReal z,
+                      int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2]) noexcept
 {
-    amrex::Real x = (p.pos(0) - plo[0]) * dxi[0];
-    amrex::Real y = (p.pos(1) - plo[1]) * dxi[1];
-    amrex::Real z = (p.pos(2) - plo[2]) * dxi[2];
-
+#if (defined WARPX_DIM_3D)
     i = static_cast<int>(amrex::Math::floor(x));
     j = static_cast<int>(amrex::Math::floor(y));
     k = static_cast<int>(amrex::Math::floor(z));
@@ -50,15 +47,25 @@ void compute_weights (const P& p, int& i, int& j, int& k, amrex::Real W[3][2],
     W[0][0] = 1.0 - W[0][1];
     W[1][0] = 1.0 - W[1][1];
     W[2][0] = 1.0 - W[2][1];
+#elif (defined WARPX_DIM_XZ)
+    i = static_cast<int>(amrex::Math::floor(x));
+    j = static_cast<int>(amrex::Math::floor(z));
+    k = 0;
+
+    W[0][1] = x - i;
+    W[1][1] = y - j;
+
+    W[0][0] = 1.0 - W[0][1];
+    W[1][0] = 1.0 - W[1][1];
+#endif
 }
 
-template <typename P>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-amrex::Real interp_ls (const P& p, int i, int j, int k, const amrex::Real W[3][2],
-                       amrex::Array4<const amrex::Real> const& phi,
-                       amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo) noexcept
+amrex::Real interp_ls (int i, int j, int k, const amrex::Real W[AMREX_SPACEDIM][2],
+                       amrex::Array4<const amrex::Real> const& phi) noexcept
 {
     amrex::Real phi_value = 0;
+#if (defined WARPX_DIM_3D)
     phi_value += phi(i,   j  , k  ) * W[0][0] * W[1][0] * W[2][0];
     phi_value += phi(i+1, j  , k  ) * W[0][1] * W[1][0] * W[2][0];
     phi_value += phi(i,   j+1, k  ) * W[0][0] * W[1][1] * W[2][0];
@@ -67,17 +74,23 @@ amrex::Real interp_ls (const P& p, int i, int j, int k, const amrex::Real W[3][2
     phi_value += phi(i+1, j  , k+1) * W[0][1] * W[1][0] * W[2][1];
     phi_value += phi(i  , j+1, k+1) * W[0][0] * W[1][1] * W[2][1];
     phi_value += phi(i+1, j+1, k+1) * W[0][1] * W[1][1] * W[2][1];
+#elif (defined WARPX_DIM_XZ)
+    phi_value += phi(i,   j ,  k) * W[0][0] * W[1][0];
+    phi_value += phi(i+1, j ,  k) * W[0][1] * W[1][0];
+    phi_value += phi(i,   j+1, k) * W[0][0] * W[1][1];
+    phi_value += phi(i+1, j+1, k) * W[0][1] * W[1][1];
+#endif
     return phi_value;
 }
 
-template <typename P>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-amrex::RealVect interp_normal (const P& p, int i, int j, int k, const amrex::Real W[3][2],
+amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SPACEDIM][2],
                                amrex::Array4<const amrex::Real> const& phi,
-                               amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                                amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) noexcept
 {
+#if (defined WARPX_DIM_3D)
     amrex::RealVect normal{0.0, 0.0, 0.0};
+
     normal[0] -= phi(i,   j  , k  ) * dxi[0] * W[1][0] * W[2][0];
     normal[0] += phi(i+1, j  , k  ) * dxi[0] * W[1][0] * W[2][0];
     normal[0] -= phi(i,   j+1, k  ) * dxi[0] * W[1][1] * W[2][0];
@@ -104,7 +117,19 @@ amrex::RealVect interp_normal (const P& p, int i, int j, int k, const amrex::Rea
     normal[2] += phi(i  , j+1, k+1) * dxi[2] * W[0][0] * W[1][1];
     normal[2] -= phi(i+1, j+1, k  ) * dxi[2] * W[0][1] * W[1][1];
     normal[2] += phi(i+1, j+1, k+1) * dxi[2] * W[0][1] * W[1][1];
+#elif (defined WARPX_DIM_XZ)
+    amrex::RealVect normal{0.0, 0.0};
 
+    normal[0] -= phi(i,   j  , k) * dxi[0] * W[1][0];
+    normal[0] += phi(i+1, j  , k) * dxi[0] * W[1][0];
+    normal[0] -= phi(i,   j+1, k) * dxi[0] * W[1][1];
+    normal[0] += phi(i+1, j+1, k) * dxi[0] * W[1][1];
+
+    normal[1] -= phi(i,   j  , k) * dxi[1] * W[0][0];
+    normal[1] += phi(i  , j+1, k) * dxi[1] * W[0][0];
+    normal[1] -= phi(i+1, j  , k) * dxi[1] * W[0][1];
+    normal[1] += phi(i+1, j+1, k) * dxi[1] * W[0][1];
+#endif
     return normal;
 }
 }
