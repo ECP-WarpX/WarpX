@@ -30,6 +30,8 @@
 #include "Parser/WarpXParserWrapper.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Python/WarpXWrappers.h"
+#include "Utils/MsgLogger/MsgLogger.H"
+#include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -216,6 +218,9 @@ WarpX::ResetInstance ()
 WarpX::WarpX ()
 {
     m_instance = this;
+
+    m_p_warn_manager = std::make_unique<Utils::WarnManager>();
+
     ReadParameters();
 
     BackwardCompatibility();
@@ -400,19 +405,25 @@ void
 WarpX::RecordWarning(
         std::string topic,
         std::string text,
-        Utils::MsgLogger::Priority priority)
+        WarnPriority priority)
 {
+
+auto msg_priority = Utils::MsgLogger::Priority::high;
+if(priority == WarnPriority::low) msg_priority = Utils::MsgLogger::Priority::low;
+if(priority == WarnPriority::medium) msg_priority = Utils::MsgLogger::Priority::medium;
+
 #ifdef WARPX_ALWAYS_WARN_IMMEDIATELY
     amrex::Warning(
-        "[" + std::string(Utils::MsgLogger::PriorityToString(priority)) + "]" +
-        "[" + topic + "] : " + text);
+        "WARNING: "
+        "[" + std::string(Utils::MsgLogger::PriorityToString(msg_priority)) + "]" +
+        "[" + topic + "] " + text);
 #endif
 
 #ifdef AMREX_USE_OMP
     #pragma omp critical
 #endif
     {
-        m_warn_manager.record_warning(topic, text, priority);
+        m_p_warn_manager->record_warning(topic, text, msg_priority);
     }
 }
 

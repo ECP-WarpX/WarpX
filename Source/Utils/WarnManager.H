@@ -1,9 +1,12 @@
 #ifndef WARPX_WARN_MANAGER_H_
 #define WARPX_WARN_MANAGER_H_
 
-#include <string>
+#include "WarnManager_fwd.H"
 
 #include "MsgLogger/MsgLogger.H"
+
+#include <string>
+
 
 namespace Utils
 {

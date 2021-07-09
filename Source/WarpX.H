@@ -33,8 +33,7 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
-#include "Utils/MsgLogger/MsgLogger.H"
-#include "Utils/WarnManager.H"
+#include "Utils/WarnManager_fwd.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -68,6 +67,13 @@ enum struct PatchType : int
     coarse
 };
 
+enum class WarnPriority
+{
+    low,
+    medium,
+    high
+};
+
 class WarpX
     : public amrex::AmrCore
 {
@@ -89,7 +95,7 @@ public:
     void RecordWarning(
         std::string topic,
         std::string text,
-        Utils::MsgLogger::Priority priority = Utils::MsgLogger::Priority::medium);
+        WarnPriority priority = WarnPriority::medium);
 
     void InitData ();
 
@@ -941,7 +947,7 @@ private:
 #   endif
 #endif
 
-    Utils::WarnManager m_warn_manager;
+    std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

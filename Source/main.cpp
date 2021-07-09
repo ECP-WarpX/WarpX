@@ -59,6 +59,13 @@ int main(int argc, char* argv[])
     {
         WarpX warpx;
 
+        warpx.RecordWarning("TEST", "test_msg");
+        warpx.RecordWarning("TEST", "test_msg");
+        warpx.RecordWarning("TEST", "test_msg_2");
+        warpx.RecordWarning("TEST_2", "test_msg_2");
+        warpx.RecordWarning("TEST_2", "test_msg_2", WarnPriority::high);
+        warpx.RecordWarning("TEST_2", "test_msg_2", WarnPriority::low);
+
         warpx.InitData();
 
         warpx.Evolve();

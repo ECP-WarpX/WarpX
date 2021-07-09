@@ -1,0 +1,5 @@
+
+namespace Utils
+{
+    class WarnManager;
+}
