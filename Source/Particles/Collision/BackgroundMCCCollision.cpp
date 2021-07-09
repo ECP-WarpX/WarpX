@@ -183,7 +183,8 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     }
 
     // Loop over refinement levels
-    for (int lev = 0, auto const flvl = species1.finestLevel(); lev <= flvl; ++lev) {
+    auto const flvl = species1.finestLevel();
+    for (int lev = 0; lev <= flvl; ++lev) {
 
         // firstly loop over particles box by box and do all particle conserving
         // scattering
