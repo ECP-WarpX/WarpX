@@ -33,6 +33,8 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/MsgLogger/MsgLogger.H"
+#include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -84,6 +86,10 @@ public:
 
     int Verbose () const { return verbose; }
 
+    void RecordWarning(
+        std::string topic,
+        std::string text,
+        Utils::MsgLogger::Priority priority = Utils::MsgLogger::Priority::medium);
 
     void InitData ();
 
@@ -934,6 +940,8 @@ private:
                                    const bool pml_flag=false);
 #   endif
 #endif
+
+    Utils::WarnManager m_warn_manager;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

@@ -394,6 +394,28 @@ WarpX::~WarpX ()
     delete reduced_diags;
 }
 
+#define WARPX_ALWAYS_WARN_IMMEDIATELY //DEBUG
+
+void
+WarpX::RecordWarning(
+        std::string topic,
+        std::string text,
+        Utils::MsgLogger::Priority priority)
+{
+#ifdef WARPX_ALWAYS_WARN_IMMEDIATELY
+    amrex::Warning(
+        "[" + std::string(Utils::MsgLogger::PriorityToString(priority)) + "]" +
+        "[" + topic + "] : " + text);
+#endif
+
+#ifdef AMREX_USE_OMP
+    #pragma omp critical
+#endif
+    {
+        m_warn_manager.record_warning(topic, text, priority);
+    }
+}
+
 void
 WarpX::ReadParameters ()
 {
@@ -596,10 +618,9 @@ WarpX::ReadParameters ()
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             if (use_filter)
             {
-                amrex::Print() << "\nWARNING:"
-                               << "\nFilter currently not working with FDTD solver in RZ geometry:"
-                               << "\nwe recommend setting warpx.use_filter = 0 in the input file.\n"
-                               << std::endl;
+                this->RecordWarning("Filter",
+                    "Filter currently not working with FDTD solver in RZ geometry."
+                    "We recommend setting warpx.use_filter = 0 in the input file.");
             }
         }
 #endif
@@ -900,9 +921,10 @@ WarpX::ReadParameters ()
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
             {
-                amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
-                               " some numerical artifact will be present at the interface between coarse and fine patch."
-                               "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+                this->RecordWarning("Particles",
+                    "When algo.particle_shape > 1,"
+                    "some numerical artifact will be present at the interface between coarse and fine patch."
+                    "We recommend setting algo.particle_shape = 1 in order to avoid this issue");
             }
         }
     }
