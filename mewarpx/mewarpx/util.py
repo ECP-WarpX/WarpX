@@ -1,6 +1,7 @@
 """
 Utility functions for mewarpx.
 """
+import errno
 import inspect
 import os
 
@@ -30,3 +31,18 @@ def init_libwarpx(ndim, rz):
     # This just quiets linters like pyflakes by using the otherwise-unused
     # variable
     assert pywarpx._libwarpx
+
+
+# https://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
+def mkdir_p(path):
+    """Make directory and parent directories if they don't exist.
+
+    Do not throw error if all directories already exist.
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
