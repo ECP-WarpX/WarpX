@@ -4,6 +4,16 @@
 #
 # License: BSD-3-Clause-LBNL
 
+# This setups up an interface between Warp and WarpX, allowing access to WarpX data using
+# classes from Warp.
+
+# The routine warp_species will return an instance of the Species class from Warp,
+# giving nearly all of the capability of that class, including accessing the data
+# using down selection and all of the plots.
+
+# The class WarpX_EM3D inherits from Warp's EM3D class. It primarily provides
+# access to the field plotting routines.
+
 import warp
 from . import fields
 from pywarpx import PGroup
