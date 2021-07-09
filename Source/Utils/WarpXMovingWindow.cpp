@@ -67,9 +67,15 @@ WarpX::UpdatePlasmaInjectionPosition (Real a_dt)
 }
 
 int
-WarpX::MoveWindow (bool move_j)
+WarpX::MoveWindow (const int step, bool move_j)
 {
-    if (do_moving_window == 0) return 0;
+    if (step == start_moving_window_step) {
+        amrex::Print() << "Starting moving window\n";
+    }
+    if (step == end_moving_window_step) {
+        amrex::Print() << "Stopping moving window\n";
+    }
+    if (moving_window_active(step) == false) return 0;
 
     // Update the continuous position of the moving window,
     // and of the plasma injection

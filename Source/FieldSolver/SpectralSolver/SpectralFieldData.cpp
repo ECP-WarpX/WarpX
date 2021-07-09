@@ -117,7 +117,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
 
 SpectralFieldData::~SpectralFieldData()
 {
-    if (tmpRealField.size() > 0){
+    if (!tmpRealField.empty()){
         for ( MFIter mfi(tmpRealField); mfi.isValid(); ++mfi ){
             AnyFFT::DestroyPlan(forward_plan[mfi]);
             AnyFFT::DestroyPlan(backward_plan[mfi]);
@@ -223,10 +223,11 @@ SpectralFieldData::ForwardTransform (const int lev,
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `mf` */
 void
-SpectralFieldData::BackwardTransform( const int lev,
+SpectralFieldData::BackwardTransform (const int lev,
                                       MultiFab& mf,
                                       const int field_index,
-                                      const int i_comp )
+                                      const int i_comp,
+                                      const amrex::IntVect& fill_guards)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -247,6 +248,9 @@ SpectralFieldData::BackwardTransform( const int lev,
     const int sj = (is_nodal_y) ? 1 : 0;
     const int sk = (is_nodal_z) ? 1 : 0;
 #endif
+
+    // Numbers of guard cells
+    const amrex::IntVect& mf_ng = mf.nGrowVect();
 
     // Loop over boxes
     // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
@@ -295,7 +299,7 @@ SpectralFieldData::BackwardTransform( const int lev,
         // Copy the temporary field tmpRealField to the real-space field mf and
         // normalize, dividing by N, since (FFT + inverse FFT) results in a factor N
         {
-            amrex::Box const& mf_box = (m_periodic_single_box) ? mfi.validbox() : mfi.fabbox();
+            amrex::Box mf_box = (m_periodic_single_box) ? mfi.validbox() : mfi.fabbox();
             amrex::Array4<amrex::Real> mf_arr = mf[mfi].array();
             amrex::Array4<const amrex::Real> tmp_arr = tmpRealField[mfi].array();
 
@@ -317,6 +321,16 @@ SpectralFieldData::BackwardTransform( const int lev,
 #elif (AMREX_SPACEDIM == 3)
             const int lo_k = amrex::lbound(mf_box).z;
 #endif
+            // If necessary, do not fill the guard cells
+            // (shrink box by passing negative number of cells)
+            if (m_periodic_single_box == false)
+            {
+                for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+                {
+                    if (static_cast<bool>(fill_guards[dir]) == false) mf_box.grow(dir, -mf_ng[dir]);
+                }
+            }
+
             // Loop over cells within full box, including ghost cells
             ParallelFor(mf_box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {

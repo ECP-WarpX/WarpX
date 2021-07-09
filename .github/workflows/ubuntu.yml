@@ -13,11 +13,17 @@ jobs:
         .github/workflows/dependencies/gcc.sh
     - name: build WarpX
       run: |
-        cmake -S . -B build            \
+        cmake -S . -B build_3D         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
-        cmake --build build -j 2
+        cmake --build build_3D -j 2
+        cmake -S . -B build_RZ         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_DIMS=RZ              \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_QED=OFF
+        cmake --build build_RZ -j 2
 
   build_pyfull:
     name: Clang pywarpx [Linux]
@@ -182,6 +188,8 @@ jobs:
 
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
+    if: false
+    # dpcpp 2021.3.0 hangs in WarpX.cpp
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2

@@ -11,6 +11,7 @@ amr.max_level = 0
 algo.maxwell_solver = ckc
 warpx.do_pml = 1
 warpx.cfl = .999
+warpx.use_filter = 0
 
 # Order of particle shape factors
 algo.particle_shape = 1

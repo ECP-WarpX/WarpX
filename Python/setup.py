@@ -54,7 +54,7 @@ else:
     package_data = {}
 
 setup(name = 'pywarpx',
-      version = '21.06',
+      version = '21.07',
       packages = ['pywarpx'],
       package_dir = {'pywarpx': 'pywarpx'},
       description = """Wrapper of WarpX""",

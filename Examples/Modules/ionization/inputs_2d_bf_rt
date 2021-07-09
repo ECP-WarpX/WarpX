@@ -16,6 +16,7 @@ warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0
 warpx.gamma_boost = 2.
 warpx.boost_direction = z
+warpx.use_filter = 0
 
 # Order of particle shape factors
 algo.particle_shape = 1
