@@ -152,6 +152,9 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
+    // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
+    static amrex::IntVect fill_guards;
+
     // div(E) and div(B) cleaning
     static bool do_dive_cleaning;
     static bool do_divb_cleaning;
@@ -517,6 +520,7 @@ public:
     void sett_new (int lev, amrex::Real time) {t_new[lev] = time;}
     amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
+    int getdo_moving_window() const {return do_moving_window;}
     amrex::Real getmoving_window_x() const {return moving_window_x;}
     amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
