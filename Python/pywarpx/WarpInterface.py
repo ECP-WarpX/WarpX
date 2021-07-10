@@ -4,7 +4,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
-# This setups up an interface between Warp and WarpX, allowing access to WarpX data using
+# This sets up an interface between Warp and WarpX, allowing access to WarpX data using
 # classes from Warp.
 
 # The routine warp_species will return an instance of the Species class from Warp,
@@ -186,4 +186,3 @@ class WarpX_EM3D(warp.EM3D):
         self.nz = picmi_grid.number_of_cells[-1]
 
         self.zgrid = 0.  # --- This should be obtained from WarpX
-
