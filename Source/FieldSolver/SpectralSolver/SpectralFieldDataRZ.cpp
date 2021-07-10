@@ -651,10 +651,18 @@ SpectralFieldDataRZ::InitFilter (amrex::IntVect const & filter_npass_each_dir, b
 
 /* \brief Apply K-space filtering on a scalar */
 void
-SpectralFieldDataRZ::ApplyFilter (int const field_index)
+SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
         auto const & filter_r_arr = filter_r.dataPtr();
@@ -674,15 +682,31 @@ SpectralFieldDataRZ::ApplyFilter (int const field_index)
             int const ir = i + nr*mode;
             fields_arr(i,j,k,ic) *= filter_r_arr[ir]*filter_z_arr[j];
         });
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
 /* \brief Apply K-space filtering on a vector */
 void
-SpectralFieldDataRZ::ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
+                                  int const field_index2, int const field_index3)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
         auto const & filter_r_arr = filter_r.dataPtr();
@@ -706,5 +730,12 @@ SpectralFieldDataRZ::ApplyFilter (int const field_index1, int const field_index2
             fields_arr(i,j,k,ic2) *= filter_r_arr[ir]*filter_z_arr[j];
             fields_arr(i,j,k,ic3) *= filter_r_arr[ir]*filter_z_arr[j];
         });
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
