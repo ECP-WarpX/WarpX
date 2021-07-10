@@ -24,11 +24,12 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
                                                 const DistributionMapping& dm,
                                                 const int norder_x, const int norder_y,
                                                 const int norder_z, const bool nodal,
+                                                const amrex::IntVect& fill_guards,
                                                 const amrex::Array<amrex::Real, 3>& v_comoving,
                                                 const amrex::Real dt,
                                                 const bool update_with_rho)
      // Members initialization
-     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal, fill_guards),
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument nodal = false is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, false)),
@@ -424,6 +425,8 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
     field_data.ForwardTransform(lev, *rho, Idx::rho_old, 0);
     field_data.ForwardTransform(lev, *rho, Idx::rho_new, 1);
 
+    const amrex::IntVect& fill_guards = m_fill_guards;
+
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
 
@@ -504,9 +507,9 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
     }
 
     // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx::Jx, 0);
-    field_data.BackwardTransform(lev, *current[1], Idx::Jy, 0);
-    field_data.BackwardTransform(lev, *current[2], Idx::Jz, 0);
+    field_data.BackwardTransform(lev, *current[0], Idx::Jx, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[1], Idx::Jy, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[2], Idx::Jz, 0, fill_guards);
 }
 
 void

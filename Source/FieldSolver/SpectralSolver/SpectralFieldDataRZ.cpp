@@ -398,6 +398,8 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        amrex::MultiFab const & field_mf, int const field_index,
                                        int const i_comp)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
     bool const is_nodal_z = field_mf.is_nodal(1);
@@ -419,6 +421,12 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         // Perform the Hankel transform first.
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf does not.
@@ -434,6 +442,12 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
 
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit, field_index, is_nodal_z);
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
@@ -445,6 +459,8 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        amrex::MultiFab const & field_mf_r, int const field_index_r,
                                        amrex::MultiFab const & field_mf_t, int const field_index_t)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
     bool const is_nodal_z = field_mf_r.is_nodal(1);
@@ -460,6 +476,12 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf_r); mfi.isValid(); ++mfi){
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
 
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
 
@@ -484,6 +506,12 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit_p, field_index_r, is_nodal_z);
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit_m, field_index_t, is_nodal_z);
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
@@ -494,6 +522,8 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                                         amrex::MultiFab& field_mf, int const field_index,
                                         int const i_comp)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf.is_nodal(1);
 
@@ -508,6 +538,12 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
 
         amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
@@ -555,6 +591,12 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
             field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp);
         });
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
@@ -565,6 +607,8 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                                         amrex::MultiFab& field_mf_r, int const field_index_r,
                                         amrex::MultiFab& field_mf_t, int const field_index_t)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf_r.is_nodal(1);
 
@@ -578,6 +622,12 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf_r); mfi.isValid(); ++mfi){
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
 
         amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
@@ -636,6 +686,12 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
             }
         });
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 
 }

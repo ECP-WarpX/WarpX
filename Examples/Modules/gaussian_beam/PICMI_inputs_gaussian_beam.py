@@ -60,7 +60,8 @@ part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
 sim = picmi.Simulation(solver = solver,
                        max_steps = 10,
                        verbose = 1,
-                       warpx_current_deposition_algo = 'direct')
+                       warpx_current_deposition_algo = 'direct',
+                       warpx_use_filter = 0)
 
 sim.add_species(electrons, layout=picmi.PseudoRandomLayout(n_macroparticles=number_sim_particles))
 sim.add_species(protons, layout=picmi.PseudoRandomLayout(n_macroparticles=number_sim_particles))

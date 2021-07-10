@@ -6,7 +6,8 @@
  */
 #include "CollisionHandler.H"
 
-#include "PairWiseCoulombCollision.H"
+#include "BinaryCollision.H"
+#include "PairWiseCoulombCollisionFunc.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -33,7 +34,8 @@ CollisionHandler::CollisionHandler()
         collision_types[i] = type;
 
         if (type == "pairwisecoulomb") {
-            allcollisions[i] = std::make_unique<PairWiseCoulombCollision>(collision_names[i]);
+            allcollisions[i] =
+               std::make_unique<BinaryCollision<PairWiseCoulombCollisionFunc>>(collision_names[i]);
         }
 
     }
