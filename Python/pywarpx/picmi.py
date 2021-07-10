@@ -804,12 +804,12 @@ class Simulation(picmistandard.PICMI_Simulation):
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
 
-    def initialize_warpx(self):
+    def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
             return
 
         self.warpx_initialized = True
-        pywarpx.warpx.init()
+        pywarpx.warpx.init(mpi_comm)
 
     def write_input_file(self, file_name='inputs'):
         self.initialize_inputs()
@@ -820,9 +820,9 @@ class Simulation(picmistandard.PICMI_Simulation):
             kw['stop_time'] = self.max_time
         pywarpx.warpx.write_inputs(file_name, **kw)
 
-    def step(self, nsteps=None):
+    def step(self, nsteps=None, mpi_comm=None):
         self.initialize_inputs()
-        self.initialize_warpx()
+        self.initialize_warpx(mpi_comm)
         if nsteps is None:
             if self.max_steps is not None:
                 nsteps = self.max_steps
