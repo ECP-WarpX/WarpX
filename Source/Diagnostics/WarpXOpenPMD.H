@@ -9,24 +9,30 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/MultiParticleContainer.H" // PIdx
-#include "Particles/PhysicalParticleContainer.H"
 
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
 #include <AMReX_AmrParticles.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_ParIter.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
 
 //
 // helper class
@@ -93,11 +99,17 @@ public:
 
   /** Initialize openPMD I/O routines
    *
-   * @param oneFilePerTS write one file per timestep
+   * @param ie  iteration encoding from openPMD: "group, file, variable"
    * @param filetype file backend, e.g. "bp" or "h5"
+   * @param operator_type openPMD-api backend operator (compressor) for ADIOS2
+   * @param operator_parameters openPMD-api backend operator parameters for ADIOS2
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
-  WarpXOpenPMDPlot (bool oneFilePerTS, std::string filetype, std::vector<bool> fieldPMLdirections);
+  WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
+                    std::string filetype,
+                    std::string operator_type,
+                    std::map< std::string, std::string > operator_parameters,
+                    std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
 
@@ -128,6 +140,23 @@ public:
 
 private:
   void Init (openPMD::Access access, bool isBTD);
+
+
+  inline openPMD::Iteration& GetIteration(int iteration) const
+  {
+    // so BTD will be able to revisit previous steps, so we do not use steps with these two encodings,
+    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
+          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
+    {
+        openPMD::Iteration& it = m_Series->iterations[iteration];
+        return it;
+    } else {
+        auto iterations = m_Series->writeIterations();
+        openPMD::Iteration& it = iterations[iteration];
+        return it;
+    }
+  }
+
 
   /** This function does initial setup for the fields when interation is newly created
    *  @param[in] meshes   The meshes in a series
@@ -243,8 +272,9 @@ private:
   //int m_NumSoAIntAttributes = PIdx::nattribs; //! WarpX' additional int particle attributes in SoA
   int m_NumAoSIntAttributes = 0; //! WarpX definition: no additional int attributes in particle AoS
 
-  bool m_OneFilePerTS = true;  //! write in openPMD fileBased manner for individual time steps
+  openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::fileBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
+  std::string m_OpenPMDoptions = "{}"; //! JSON option string for openPMD::Series constructor
   int m_CurrentStep  = -1;
 
   // meta data

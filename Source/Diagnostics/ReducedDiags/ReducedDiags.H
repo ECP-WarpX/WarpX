@@ -14,7 +14,6 @@
 
 #include <string>
 #include <vector>
-#include <fstream>
 
 /**
  *  Base class for reduced diagnostics. Each type of reduced diagnostics is
@@ -46,23 +45,34 @@ public:
     /// output data
     std::vector<amrex::Real> m_data;
 
-    /** constructor
-     *  @param[in] rd_name reduced diags name */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     ReducedDiags(std::string rd_name);
 
-    /** Virtual destructor for polymorphism
+    /**
+     * Virtual destructor for polymorphism
      */
     virtual ~ReducedDiags() = default;
 
-    /// function to compute diags
+    /**
+     * function to compute diags
+     *
+     * @param[in] step current time step
+     */
     virtual void ComputeDiags(int step) = 0;
 
-    /** write to file function
-     *  @param[in] step time step */
+    /**
+     * write to file function
+     *
+     * @param[in] step current time step
+     */
     virtual void WriteToFile(int step) const;
 
-    /** This function queries deprecated input parameters and abort
-     *  the run if one of them is specified.
+    /**
+     * This function queries deprecated input parameters and aborts
+     * the run if one of them is specified.
      */
     void BackwardCompatibility ();
 

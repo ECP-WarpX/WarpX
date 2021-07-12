@@ -1,8 +1,15 @@
-#include "WarpX.H"
 #include "ParticleDiag.H"
+
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX_ParmParse.H>
+
+#include <map>
+#include <vector>
 
 using namespace amrex;
 

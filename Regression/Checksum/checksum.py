@@ -51,7 +51,8 @@ class Checksum:
         ds = yt.load(self.plotfile)
         grid_fields = [item for item in ds.field_list if item[0] == 'boxlib']
         species_list = set([item[0] for item in ds.field_list if
-                            item[1][:9] == 'particle_' and item[0] != 'all'])
+                            item[1][:9] == 'particle_' and item[0] != 'all' and
+                            item[0] != 'nbody'])
 
         data = {}
 

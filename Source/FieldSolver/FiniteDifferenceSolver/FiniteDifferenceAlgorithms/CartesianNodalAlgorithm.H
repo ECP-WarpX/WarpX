@@ -10,10 +10,10 @@
 
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_REAL.H>
+#include <AMReX.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
-#include <AMReX.H>
+#include <AMReX_REAL.H>
 
 #include <array>
 #include <cmath>

@@ -6,17 +6,33 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "WarpXAlgorithmSelection.H"
 #include "WarpXConst.H"
+#include "WarpXProfilerWrapper.H"
 #include "WarpXUtil.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <set>
 #include <string>
-
 
 using namespace amrex;
 
@@ -238,8 +254,14 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
         } else if (std::strcmp(it->c_str(), "m_p") == 0) {
             parser.setConstant(*it, PhysConst::m_p);
             it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "m_u") == 0) {
+            parser.setConstant(*it, PhysConst::m_u);
+            it = symbols.erase(it);
         } else if (std::strcmp(it->c_str(), "epsilon0") == 0) {
             parser.setConstant(*it, PhysConst::ep0);
+            it = symbols.erase(it);
+        }  else if (std::strcmp(it->c_str(), "mu0") == 0) {
+            parser.setConstant(*it, PhysConst::mu0);
             it = symbols.erase(it);
         } else if (std::strcmp(it->c_str(), "clight") == 0) {
             parser.setConstant(*it, PhysConst::c);
@@ -512,11 +534,11 @@ void ReadBCParams ()
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         // Get field boundary type
-        WarpX::field_boundary_lo[idim] = GetBCTypeInteger(field_BC_lo[idim], true);
-        WarpX::field_boundary_hi[idim] = GetBCTypeInteger(field_BC_hi[idim], true);
+        WarpX::field_boundary_lo[idim] = GetFieldBCTypeInteger(field_BC_lo[idim]);
+        WarpX::field_boundary_hi[idim] = GetFieldBCTypeInteger(field_BC_hi[idim]);
         // Get particle boundary type
-        WarpX::particle_boundary_lo[idim] = GetBCTypeInteger(particle_BC_lo[idim], false);
-        WarpX::particle_boundary_hi[idim] = GetBCTypeInteger(particle_BC_hi[idim], false);
+        WarpX::particle_boundary_lo[idim] = GetParticleBCTypeInteger(particle_BC_lo[idim]);
+        WarpX::particle_boundary_hi[idim] = GetParticleBCTypeInteger(particle_BC_hi[idim]);
 
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic ||
             WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ||

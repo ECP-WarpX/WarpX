@@ -1,15 +1,15 @@
 #ifndef WP_PARSER_Y_H_
 #define WP_PARSER_Y_H_
 
-#include <AMReX_GpuQualifiers.H>
 #include <AMReX_GpuPrint.H>
-#include <AMReX_REAL.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_Math.H>
 #include <AMReX_Print.H>
+#include <AMReX_REAL.H>
 
 #include <cmath>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <type_traits>

@@ -1,11 +1,17 @@
 #ifndef WARPX_PARTICLEDIAG_H_
 #define WARPX_PARTICLEDIAG_H_
 
-#include "Parser/WarpXParserWrapper.H"
-#include "Utils/WarpXUtil.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "ParticleDiag_fwd.H"
+
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Parser/WarpXParserWrapper_fwd.H"
+
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
 
 #include <memory>
+#include <string>
 
 class ParticleDiag
 {

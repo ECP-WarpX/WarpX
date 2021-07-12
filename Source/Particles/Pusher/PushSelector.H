@@ -8,12 +8,13 @@
 #define WARPX_PARTICLES_PUSHER_PUSHSELECTOR_H_
 
 // Import low-level single-particle kernels
-#include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/Pusher/UpdateMomentumBoris.H"
-#include "Particles/Pusher/UpdateMomentumVay.H"
 #include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
+#include "Particles/Pusher/UpdateMomentumVay.H"
+#include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_REAL.H>
 

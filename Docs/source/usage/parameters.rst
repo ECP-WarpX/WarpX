@@ -18,6 +18,11 @@ Overall simulation parameters
 * ``max_step`` (`integer`)
     The number of PIC cycles to perform.
 
+* ``stop_time`` (`float`; in seconds)
+    The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
+    ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
+    when the first criterion is hit.
+
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
     (The corresponding Lorentz transformation is assumed to be along ``warpx.boost_direction``.)
@@ -89,6 +94,11 @@ Overall simulation parameters
     ``self_fields_required_precision``, this parameter may be increased.
     This only applies when warpx.do_electrostatic = labframe.
 
+* ``warpx.self_fields_verbosity`` (`integer`, default: 2)
+    The vebosity used for MLMG solver for space-charge fields calculation. Currently
+    MLMG solver looks for verbosity levels from 0-5. A higher number results in more
+    verbose output.
+
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
@@ -145,6 +155,12 @@ Setting up the field mesh
 * ``warpx.moving_window_v`` (`float`)
     The speed of moving window, in units of the speed of light
     (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
+
+* ``warpx.start_moving_window_step`` (`integer`; 0 by default)
+    The timestep at which the moving window starts.
+
+* ``warpx.end_moving_window_step`` (`integer`; default is ``-1`` for false)
+    The timestep at which the moving window ends.
 
 * ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
@@ -218,6 +234,11 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
     Options are:
     * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+    * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain. When
+    ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
+
+* ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
+    For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -345,7 +366,9 @@ WarpX provides a few pre-defined constants, that can be used for any parameter t
 q_e      elementary charge
 m_e      electron mass
 m_p      proton mass
+m_u      unified atomic mass unit (Dalton)
 epsilon0 vacuum permittivity
+mu0      vacuum permeability
 clight   speed of light
 pi       math constant pi
 ======== ===================
@@ -395,11 +418,6 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
     Not currently available in the RZ configuration.
-
-* ``particles.boundary_conditions`` (`string`) optional (default `none`)
-    Boundary conditions applied to particles. Options are:
-    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
-    * ``absorbing``: particles exiting the simulation domain are discarded.
 
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
@@ -483,6 +501,14 @@ Particle initialization
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
+    * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
+      The density specified by the density profile is interpreted to have the units of #/m^2/s.
+      This requires the additional parameters:
+      ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
+      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
+      ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
+      ``<species_name>.num_particles_per_cell`` (`double`)
+
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
@@ -557,6 +583,14 @@ Particle initialization
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m`` as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
+
+    * ``gaussianflux``: Gaussian momentum flux distribution, which is Gaussian in the plane and v*Gaussian normal to the plane.
+      It can only be used when ``injection_style = NFluxPerCell``.
+      This requires additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
+      ``<species_name>.flux_direction``, for the average momenta along each direction
+      ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
+      well as standard deviations along each direction ``<species_name>.ux_th``,
+      ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
       temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
@@ -1133,11 +1167,15 @@ Numerics and algorithms
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
 
-* ``warpx.use_filter`` (`0 or 1`)
-    Whether to smooth the charge and currents on the mesh, after depositing
-    them from the macroparticles. This uses a bilinear filter
-    (see the :ref:`filtering section <theory-pic-filter>`).
-    When using the RZ spectral solver, the filtering is done in k-space.
+* ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
+    Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
+    This uses a bilinear filter (see the :ref:`filtering section <theory-pic-filter>`).
+    The default is `1` in all cases, except for simulations in RZ geometry using the FDTD solver.
+    With the RZ PSATD solver, the filtering is done in :math:`k`-space.
+
+    .. warning::
+
+       Known bug: filter currently not working with FDTD solver in RZ geometry (see https://github.com/ECP-WarpX/WarpX/issues/1943).
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
@@ -1292,6 +1330,14 @@ Numerics and algorithms
     ``amr.max_level = 1``. More information can be found at
     https://ieeexplore.ieee.org/document/8659392.
 
+* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+
+* ``warpx.do_multi_J_n_depositions`` (integer)
+    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+
+
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
     If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
@@ -1427,6 +1473,9 @@ Numerics and algorithms
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
+* ``psatd.J_linear_in_time`` (`0` or `1`; default: `0`)
+    Whether to perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step (``psatd.J_linear_in_time = 1``), instead of using one single current deposited at half time (``psatd.J_linear_in_time = 0``), for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
+
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
@@ -1556,6 +1605,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Use a negative number or 0 to disable data dumping.
     This is ``0`` (disabled) by default.
     example: ``diag1.intervals = 10,20:25:1``.
+    Note that by default the last timestep is dumped regardless of this parameter. This can be
+    changed using the parameter ``<diag_name>.dump_last_timestep`` described below.
+
+* ``<diag_name>.dump_last_timestep`` (`bool` optional, default `1`)
+    If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. So far, only ``Full`` is supported.
@@ -1591,8 +1645,34 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
-* ``<diag_name>.openpmd_tspf`` (`bool`, optional, default ``true``) only read if ``<diag_name>.format = openpmd``.
-    Whether to write one file per timestep.
+* ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
+     openPMD file output encoding (file based will write one file per timestep).
+     `variable based` is not supported for back-transformed diagnostics.
+     Default: ``f`` (full diagnostics)
+
+* ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
+    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+* ``<diag_name>.adios2_operator.parameters.*`` optional,
+    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
+
+    .. code-block::
+
+        <diag_name>.adios2_operator.type = blosc
+        <diag_name>.adios2_operator.parameters.compressor = zstd
+        <diag_name>.adios2_operator.parameters.clevel = 1
+        <diag_name>.adios2_operator.parameters.doshuffle = BLOSC_BITSHUFFLE
+        <diag_name>.adios2_operator.parameters.threshold = 2048
+        <diag_name>.adios2_operator.parameters.nthreads = 6  # per MPI rank (and thus per GPU)
+
+    or for the lossy ZFP compressor using very strong compression per scalar:
+
+    .. code-block::
+
+        <diag_name>.adios2_operator.type = zfp
+        <diag_name>.adios2_operator.parameters.precision = 3
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
@@ -1766,55 +1846,62 @@ Reduced Diagnostics
     If ``warpx.reduced_diags_names`` is not provided in the input file,
     no reduced diagnostics will be done.
     This is then used in the rest of the input deck;
-    in this documentation we use `<reduced_diags_name>` as a placeholder.
+    in this documentation we use ``<reduced_diags_name>`` as a placeholder.
 
 * ``<reduced_diags_name>.type`` (`string`)
-    The type of reduced diagnostics associated with this `<reduced_diags_name>`.
-    For example, ``ParticleEnergy`` and ``FieldEnergy``.
-    All available types will be described below in detail.
+    The type of reduced diagnostics associated with this ``<reduced_diags_name>``.
+    For example, ``ParticleEnergy``, ``FieldEnergy``, etc.
+    All available types are described below in detail.
     For all reduced diagnostics,
     the first and the second columns in the output file are
     the time step and the corresponding physical time in seconds, respectively.
 
     * ``ParticleEnergy``
-        This type computes both the total and the mean
-        relativistic particle kinetic energy among all species.
+        This type computes the total and mean relativistic particle kinetic energy among all species:
 
         .. math::
 
-            E_p = \sum_{i=1}^N ( \sqrt{ p_i^2 c^2 + m_0^2 c^4 } - m_0 c^2 ) w_i
+            E_p = \sum_{i=1}^N w_i \, \left( \sqrt{|\boldsymbol{p}_i|^2 c^2 + m_0^2 c^4} - m_0 c^2 \right)
 
-        where :math:`p` is the relativistic momentum,
-        :math:`c` is the speed of light,
-        :math:`m_0` is the rest mass,
-        :math:`N` is the number of particles,
-        :math:`w` is the individual particle weight.
+        where :math:`\boldsymbol{p}_i` is the relativistic momentum of the :math:`i`-th particle, :math:`c` is the speed of light, :math:`m_0` is the rest mass, :math:`N` is the number of particles, and :math:`w_i` is the weight of the :math:`i`-th particle.
 
-        The output columns are
-        total :math:`E_p` of all species,
-        :math:`E_p` of each species,
-        total mean energy :math:`E_p / \sum w_i`,
-        mean energy of each species.
+        The output columns are the total energy of all species, the total energy per species, the total mean energy :math:`E_p / \sum_i w_i` of all species, and the total mean energy per species.
+
+    * ``ParticleMomentum``
+        This type computes the total and mean relativistic particle momentum among all species:
+
+        .. math::
+
+            \boldsymbol{P}_p = \sum_{i=1}^N w_i \, \boldsymbol{p}_i
+
+        where :math:`\boldsymbol{p}_i` is the relativistic momentum of the :math:`i`-th particle, :math:`N` is the number of particles, and :math:`w_i` is the weight of the :math:`i`-th particle.
+
+        The output columns are the components of the total momentum of all species, the total momentum per species, the total mean momentum :math:`\boldsymbol{P}_p / \sum_i w_i` of all species, and the total mean momentum per species.
 
     * ``FieldEnergy``
-        This type computes the electric and magnetic field energy.
+        This type computes the electromagnetic field energy
 
         .. math::
 
-            E_f = \sum [ \varepsilon_0 E^2 / 2 + B^2 / ( 2 \mu_0 ) ] \Delta V
+            E_f = \frac{1}{2} \sum_{\text{cells}} \left( \varepsilon_0 |\boldsymbol{E}|^2 + \frac{|\boldsymbol{B}|^2}{\mu_0} \right) \Delta V
 
-        where
-        :math:`E` is the electric field,
-        :math:`B` is the magnetic field,
-        :math:`\varepsilon_0` is the vacuum permittivity,
-        :math:`\mu_0` is the vacuum permeability,
-        :math:`\Delta V` is the cell volume (or area for 2D),
-        the sum is over all cells.
+        where :math:`\boldsymbol{E}` is the electric field, :math:`\boldsymbol{B}` is the magnetic field, :math:`\varepsilon_0` is the vacuum permittivity, :math:`\mu_0` is the vacuum permeability, :math:`\Delta V` is the cell volume (or cell area in 2D), and the sum is over all cells.
 
-        The output columns are
-        total field energy :math:`E_f`,
-        :math:`E` field energy,
-        :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
+        The output columns are the total field energy :math:`E_f`, the :math:`\boldsymbol{E}` field energy, and the :math:`\boldsymbol{B}` field energy, at each mesh refinement level.
+
+    * ``FieldMomentum``
+        This type computes the electromagnetic field momentum
+
+        .. math::
+
+            \boldsymbol{P}_f = \varepsilon_0 \sum_{\text{cells}} \left( \boldsymbol{E} \times \boldsymbol{B} \right) \Delta V
+
+        where :math:`\boldsymbol{E}` is the electric field, :math:`\boldsymbol{B}` is the magnetic field, :math:`\varepsilon_0` is the vacuum permittivity, :math:`\Delta V` is the cell volume (or cell area in 2D), and the sum is over all cells.
+
+        The output columns are the components of the total field momentum :math:`\boldsymbol{P}_f` at each mesh refinement level.
+
+        Note that the fields are *not* averaged on the cell centers before their energy is
+        computed.
 
     * ``FieldMaximum``
         This type computes the maximum value of each component of the electric and magnetic fields
@@ -1848,6 +1935,25 @@ Reduced Diagnostics
 
         Note that the charge densities are averaged on the cell centers before their maximum values
         are computed.
+
+    * ``FieldReduction``
+        This type computes an arbitrary reduction of the positions and the electromagnetic fields.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)`` (`string`)
+            An analytic function to be reduced must be provided, using the math parser.
+
+        * ``<reduced_diags_name>.reduction_type`` (`string`)
+            The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
+            ``Integral``.
+            ``Integral`` computes the spatial integral of the function defined in the parser by
+            summing its value on all grid points and multiplying the result by the volume of a
+            cell.
+            Please be also aware that measuring maximum quantities might be very noisy in PIC
+            simulations.
+
+        The only output column is the reduced value.
+
+        Note that the fields are averaged on the cell centers before the reduction is performed.
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the
@@ -2132,8 +2238,10 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
-    **Note: implementation of this feature is in progress.**
-    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement, cylindrical coordinates or single precision.
+    Schwinger process requires either ``warpx.do_nodal=1`` or
+    ``algo.field_gathering=momentum-conserving`` (so that different field components are computed
+    at the same location in the grid) and does not currently support mesh refinement, cylindrical
+    coordinates or single precision.
 
 * ``qed_schwinger.ele_product_species`` (`string`)
     If Schwinger process is activated, an electron product species must be specified

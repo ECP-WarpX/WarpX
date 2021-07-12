@@ -9,20 +9,60 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
+#include "BoundaryConditions/PML.H"
+#include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Parser/GpuParser.H"
-#include "Utils/WarpXUtil.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParmParse.H>
-
+#include <AMReX.H>
+#include <AMReX_AmrCore.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
 
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <iostream>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 
 using namespace amrex;
 
@@ -92,6 +132,7 @@ WarpX::InitData ()
     ScaleEdges();
     ScaleAreas();
 #endif
+    ComputeMaxStep();
 
     ComputePMLFactors();
 
@@ -122,7 +163,12 @@ WarpX::InitData ()
 
     if (restart_chkfile.empty())
     {
-        multi_diags->FilterComputePackFlush( -1, true );
+        // Loop through species and calculate their space-charge field
+        bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+        ComputeSpaceChargeField(reset_fields);
+
+        // Write full diagnostics before the first iteration.
+        multi_diags->FilterComputePackFlush( -1 );
 
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
@@ -171,10 +217,6 @@ WarpX::InitFromScratch ()
     mypc->AllocData();
     mypc->InitData();
 
-    // Loop through species and calculate their space-charge field
-    bool const reset_fields = false; // Do not erase previous user-specified values on the grid
-    ComputeSpaceChargeField(reset_fields);
-
     InitPML();
 }
 
@@ -220,7 +262,7 @@ WarpX::InitPML ()
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
-                             do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
@@ -248,7 +290,7 @@ WarpX::InitPML ()
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
-                                   do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
@@ -264,6 +306,74 @@ WarpX::ComputePMLFactors ()
             pml[lev]->ComputePMLFactors(dt[lev]);
         }
     }
+}
+
+void
+WarpX::ComputeMaxStep ()
+{
+    if (do_compute_max_step_from_zmax) {
+        computeMaxStepBoostAccelerator(geom[0]);
+    }
+
+    // Make max_step and stop_time self-consistent, assuming constant dt.
+
+    // If max_step is the limiting condition, decrease stop_time consistently
+    if (stop_time > t_new[0] + dt[0]*(max_step - istep[0]) ) {
+        stop_time = t_new[0] + dt[0]*(max_step - istep[0]);
+    }
+    // If stop_time is the limiting condition instead, decrease max_step consistently
+    else {
+        // The static_cast should not overflow since stop_time is the limiting condition here
+        max_step = static_cast<int>(istep[0] + std::ceil( (stop_time-t_new[0])/dt[0] ));
+    }
+}
+
+/* \brief computes max_step for wakefield simulation in boosted frame.
+ * \param geom: Geometry object that contains simulation domain.
+ *
+ * max_step is set so that the simulation stop when the lower corner of the
+ * simulation box passes input parameter zmax_plasma_to_compute_max_step.
+ */
+void
+WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
+    // Sanity checks: can use zmax_plasma_to_compute_max_step only if
+    // the moving window and the boost are all in z direction.
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
+        "Can use zmax_plasma_to_compute_max_step only if " +
+        "moving window along z. TODO: all directions.");
+    if (gamma_boost > 1){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
+            (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
+            (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
+            "Can use zmax_plasma_to_compute_max_step in boosted frame only if " +
+            "warpx.boost_direction = z. TODO: all directions.");
+    }
+
+    // Lower end of the simulation domain. All quantities are given in boosted
+    // frame except zmax_plasma_to_compute_max_step.
+    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
+    // End of the plasma: Transform input argument
+    // zmax_plasma_to_compute_max_step to boosted frame.
+    const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
+    // Plasma velocity
+    const Real v_plasma_boost = -beta_boost * PhysConst::c;
+    // Get time at which the lower end of the simulation domain passes the
+    // upper end of the plasma (in the z direction).
+    const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost)/
+        (moving_window_v-v_plasma_boost);
+    // Divide by dt, and update value of max_step.
+    int computed_max_step;
+    if (do_subcycling){
+        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
+    } else {
+        computed_max_step =
+            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
+    }
+    max_step = computed_max_step;
+    Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
+           <<computed_max_step<<std::endl;
 }
 
 void

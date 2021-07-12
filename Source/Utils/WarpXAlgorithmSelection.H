@@ -8,7 +8,8 @@
 #ifndef UTILS_WARPXALGORITHMSELECTION_H_
 #define UTILS_WARPXALGORITHMSELECTION_H_
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_BaseFwd.H>
+
 #include <string>
 
 /**
@@ -109,12 +110,20 @@ struct FieldBoundaryType {
 
 /** Particle boundary conditions at the domain boundary
  */
-struct ParticleBoundaryType {
-    enum {
+enum struct ParticleBoundaryType {
         Absorbing = 0,     //!< particles crossing domain boundary are removed
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
         Periodic = 3
+};
+
+/** MPI reductions
+ */
+struct ReductionType {
+    enum {
+        Maximum = 0,
+        Minimum = 1,
+        Sum = 2
     };
 };
 
@@ -125,6 +134,11 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
  *  else select BCType for particles.
  */
 int
-GetBCTypeInteger( std::string BCType, bool field );
+GetFieldBCTypeInteger( std::string BCType );
+
+/** Select BC Type for particles.
+ */
+ParticleBoundaryType
+GetParticleBCTypeInteger( std::string BCType );
 
 #endif // UTILS_WARPXALGORITHMSELECTION_H_

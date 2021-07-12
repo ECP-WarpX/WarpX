@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 21.05)
+project(WarpX VERSION 21.07)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -16,10 +16,13 @@ endif()
 
 # CMake policies ##############################################################
 #
+# AMReX 21.06+ supports CUDA_ARCHITECTURES with CMake 3.20+
 # CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
-if(POLICY CMP0104)
-    cmake_policy(SET CMP0104 OLD)
+if(CMAKE_VERSION VERSION_LESS 3.20)
+    if(POLICY CMP0104)
+        cmake_policy(SET CMP0104 OLD)
+    endif()
 endif()
 
 
@@ -42,10 +45,13 @@ set_default_install_dirs()
 
 # Options and Variants ########################################################
 #
+include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
-option(WarpX_GPUCLOCK      "Add GPU kernel timers (cost function)"      ON)
+cmake_dependent_option(WarpX_GPUCLOCK
+                           "Add GPU kernel timers (cost function)"      ON
+                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
 option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)

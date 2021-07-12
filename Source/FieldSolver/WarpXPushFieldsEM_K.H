@@ -9,6 +9,7 @@
 #define WarpXPushFieldsEM_K_h
 
 #include "Utils/WarpXConst.H"
+
 #include <AMReX.H>
 
 /*

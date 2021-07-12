@@ -27,6 +27,7 @@ warpx.verbose = 1
 warpx.do_pml = 0
 algo.field_gathering = energy-conserving
 algo.current_deposition = esirkepov
+warpx.use_filter = 0
 
 # Order of particle shape factors
 algo.particle_shape = 1

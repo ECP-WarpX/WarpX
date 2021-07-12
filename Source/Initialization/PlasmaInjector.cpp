@@ -8,19 +8,32 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PlasmaInjector.H"
+
+#include "Initialization/InjectorDensity.H"
+#include "Initialization/InjectorMomentum.H"
+#include "Initialization/InjectorPosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuDevice.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
+#include <AMReX_RandomEngine.H>
 
-#include <functional>
-#include <sstream>
-#include <string>
+#include <algorithm>
+#include <cctype>
+#include <map>
 #include <memory>
+#include <sstream>
+#include <utility>
+#include <vector>
 
 using namespace amrex;
 
@@ -206,6 +219,58 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             xmin, xmax, ymin, ymax, zmin, zmax);
         parseDensity(pp_species_name);
         parseMomentum(pp_species_name);
+    } else if (part_pos_s == "nfluxpercell") {
+        surface_flux = true;
+        queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
+            "Error: For accurate use of WarpX cylindrical geometry the number "
+            "of particles should be at least two times n_rz_azimuthal_modes "
+            "(Please visit PR#765 for more information.)");
+#endif
+        pp_species_name.get("surface_flux_pos", surface_flux_pos);
+        std::string flux_normal_axis_string;
+        pp_species_name.get("flux_normal_axis", flux_normal_axis_string);
+        flux_normal_axis = -1;
+#ifdef WARPX_DIM_RZ
+        if      (flux_normal_axis_string == "r" || flux_normal_axis_string == "R") {
+            flux_normal_axis = 0;
+        }
+#else
+        if      (flux_normal_axis_string == "x" || flux_normal_axis_string == "X") {
+            flux_normal_axis = 0;
+        }
+#endif
+#ifdef WARPX_DIM_3D
+        else if (flux_normal_axis_string == "y" || flux_normal_axis_string == "Y") {
+            flux_normal_axis = 1;
+        }
+#endif
+        else if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
+            flux_normal_axis = AMREX_SPACEDIM-1;
+        }
+#ifdef WARPX_DIM_3D
+        std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
+#else
+#    ifdef WARPX_DIM_RZ
+        std::string flux_normal_axis_help = "'r' or 'z'.";
+#    else
+        std::string flux_normal_axis_help = "'x' or 'z'.";
+#    endif
+#endif
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
+            "Error: Invalid value for flux_normal_axis. It must be " + flux_normal_axis_help);
+        pp_species_name.get("flux_direction", flux_direction);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
+            "Error: flux_direction must be -1 or +1.");
+        // Construct InjectorPosition with InjectorPositionRandom.
+        h_inj_pos = std::make_unique<InjectorPosition>(
+            (InjectorPositionRandomPlane*)nullptr,
+            xmin, xmax, ymin, ymax, zmin, zmax,
+            flux_normal_axis);
+        parseDensity(pp_species_name);
+        parseMomentum(pp_species_name);
     } else if (part_pos_s == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
@@ -217,7 +282,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #if WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_each_dim[1]>=2*WarpX::n_rz_azimuthal_modes,
-            "Error: For accurate use of WarpX cylindrical gemoetry the number "
+            "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles in the theta direction should be at least two times "
             "n_rz_azimuthal_modes (Please visit PR#765 for more information.)");
 #endif
@@ -446,6 +511,25 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumGaussian.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussian*)nullptr,
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th));
+    } else if (mom_dist_s == "gaussianflux") {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(surface_flux,
+            "Error: gaussianflux can only be used with injection_style = NFluxPerCell");
+        Real ux_m = 0.;
+        Real uy_m = 0.;
+        Real uz_m = 0.;
+        Real ux_th = 0.;
+        Real uy_th = 0.;
+        Real uz_th = 0.;
+        queryWithParser(pp, "ux_m", ux_m);
+        queryWithParser(pp, "uy_m", uy_m);
+        queryWithParser(pp, "uz_m", uz_m);
+        queryWithParser(pp, "ux_th", ux_th);
+        queryWithParser(pp, "uy_th", uy_th);
+        queryWithParser(pp, "uz_th", uz_th);
+        // Construct InjectorMomentum with InjectorMomentumGaussianFlux.
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussianFlux*)nullptr,
+                                             ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
+                                             flux_normal_axis, flux_direction));
     } else if (mom_dist_s == "maxwell_boltzmann"){
         Real beta = 0.;
         Real theta = 10.;

@@ -5,6 +5,7 @@ OPENBC_HOME ?= ../../../openbc_poisson
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
+USE_GPU_RDC   = FALSE
 BL_NO_FORT    = TRUE
 ifeq ($(USE_DPCPP),TRUE)
   CXXSTD        = c++17
@@ -35,6 +36,7 @@ ifeq ($(USE_ASCENT_INSITU),TRUE)
   endif
   USE_CONDUIT = TRUE
   USE_ASCENT = TRUE
+  USE_GPU_RDC = TRUE
 endif
 
 ifndef USE_PYTHON_MAIN
@@ -89,6 +91,7 @@ include $(AMREX_HOME)/Src/LinearSolvers/MLMG/Make.package
 ifeq ($(USE_SENSEI_INSITU),TRUE)
   include $(AMREX_HOME)/Src/Amr/Make.package
   include $(AMREX_HOME)/Src/Extern/SENSEI/Make.package
+  USE_GPU_RDC = TRUE
 endif
 
 ifeq ($(USE_EB),TRUE)

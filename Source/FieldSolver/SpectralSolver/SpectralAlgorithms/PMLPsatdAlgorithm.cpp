@@ -5,10 +5,24 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PMLPsatdAlgorithm.H"
+
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
 
 #include <cmath>
-
 
 #if WARPX_USE_PSATD
 
@@ -18,10 +32,11 @@ using namespace amrex;
 PMLPsatdAlgorithm::PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                                      const DistributionMapping& dm,
                                      const int norder_x, const int norder_y,
-                                     const int norder_z, const bool nodal, const Real dt,
+                                     const int norder_z, const bool nodal,
+                                     const amrex::IntVect& fill_guards, const Real dt,
                                      const bool dive_cleaning, const bool divb_cleaning)
      // Initialize members of base class
-     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal, fill_guards),
        m_dt(dt),
        m_dive_cleaning(dive_cleaning),
        m_divb_cleaning(divb_cleaning)
@@ -399,6 +414,10 @@ PMLPsatdAlgorithm::VayDeposition (const int /*lev*/,
                                   std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for PML PSATD");
+}
+
+int PMLPsatdAlgorithm::getRequiredNumberOfFields() const {
+    return SpectralPMLIndex::n_fields;
 }
 
 #endif // WARPX_USE_PSATD

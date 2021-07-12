@@ -7,164 +7,126 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "BoundaryConditions/WarpX_PML_kernels.H"
-#include "BoundaryConditions/PML_current.H"
-#include "WarpX_FDTD.H"
-#include "WarpXPushFieldsEM_K.H"
 
+#include "BoundaryConditions/PML.H"
+#include "Evolve/WarpXDtType.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#if defined(WARPX_USE_PSATD)
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#   ifdef WARPX_DIM_RZ
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   else
+#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#   endif
+#endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpXPushFieldsEM_K.H"
+#include "WarpX_FDTD.H"
+
+#include <AMReX.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-
-#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
 #include <AMReX_Math.H>
-#include <limits>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
+#include <array>
+#include <cmath>
+#include <memory>
 
 using namespace amrex;
 
 #ifdef WARPX_USE_PSATD
 namespace {
+
     void
-    PushPSATDSinglePatch (
+    ForwardTransformVect (
         const int lev,
 #ifdef WARPX_DIM_RZ
         SpectralSolverRZ& solver,
 #else
         SpectralSolver& solver,
 #endif
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield,
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield_avg,
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield_avg,
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-        std::unique_ptr<amrex::MultiFab>& rho ) {
-
+        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const int compx, const int compy, const int compz)
+    {
 #ifdef WARPX_DIM_RZ
-        amrex::ignore_unused(Efield_avg, Bfield_avg);
-#endif
-
-        using Idx = SpectralAvgFieldIndex;
-
-        // Perform forward Fourier transform
-#ifdef WARPX_DIM_RZ
-        solver.ForwardTransform(lev,
-                                *Efield[0], Idx::Ex,
-                                *Efield[1], Idx::Ey);
+        solver.ForwardTransform(lev, *vector_field[0], compx, *vector_field[1], compy);
 #else
-        solver.ForwardTransform(lev, *Efield[0], Idx::Ex);
-        solver.ForwardTransform(lev, *Efield[1], Idx::Ey);
+        solver.ForwardTransform(lev, *vector_field[0], compx);
+        solver.ForwardTransform(lev, *vector_field[1], compy);
 #endif
-        solver.ForwardTransform(lev, *Efield[2], Idx::Ez);
-#ifdef WARPX_DIM_RZ
-        solver.ForwardTransform(lev,
-                                *Bfield[0], Idx::Bx,
-                                *Bfield[1], Idx::By);
-#else
-        solver.ForwardTransform(lev, *Bfield[0], Idx::Bx);
-        solver.ForwardTransform(lev, *Bfield[1], Idx::By);
-#endif
-        solver.ForwardTransform(lev, *Bfield[2], Idx::Bz);
-#ifdef WARPX_DIM_RZ
-        solver.ForwardTransform(lev,
-                                *current[0], Idx::Jx,
-                                *current[1], Idx::Jy);
-#else
-        solver.ForwardTransform(lev, *current[0], Idx::Jx);
-        solver.ForwardTransform(lev, *current[1], Idx::Jy);
-#endif
-        solver.ForwardTransform(lev, *current[2], Idx::Jz);
+        solver.ForwardTransform(lev, *vector_field[2], compz);
+    }
 
-        if (rho) {
-            solver.ForwardTransform(lev, *rho, Idx::rho_old, 0);
-            solver.ForwardTransform(lev, *rho, Idx::rho_new, 1);
-        }
+    void
+    BackwardTransformVect (
+        const int lev,
 #ifdef WARPX_DIM_RZ
-        if (WarpX::use_kspace_filter) {
-            solver.ApplyFilter(Idx::rho_old);
-            solver.ApplyFilter(Idx::rho_new);
-            solver.ApplyFilter(Idx::Jx, Idx::Jy, Idx::Jz);
-        }
-#endif
-        // Advance fields in spectral space
-        solver.pushSpectralFields();
-        // Perform backward Fourier Transform
-#ifdef WARPX_DIM_RZ
-        solver.BackwardTransform(lev,
-                                 *Efield[0], Idx::Ex,
-                                 *Efield[1], Idx::Ey);
+        SpectralSolverRZ& solver,
 #else
-        solver.BackwardTransform(lev, *Efield[0], Idx::Ex);
-        solver.BackwardTransform(lev, *Efield[1], Idx::Ey);
+        SpectralSolver& solver,
 #endif
-        solver.BackwardTransform(lev, *Efield[2], Idx::Ez);
+        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const int compx, const int compy, const int compz)
+    {
 #ifdef WARPX_DIM_RZ
-        solver.BackwardTransform(lev,
-                                 *Bfield[0], Idx::Bx,
-                                 *Bfield[1], Idx::By);
+        solver.BackwardTransform(lev, *vector_field[0], compx, *vector_field[1], compy);
 #else
-        solver.BackwardTransform(lev, *Bfield[0], Idx::Bx);
-        solver.BackwardTransform(lev, *Bfield[1], Idx::By);
+        solver.BackwardTransform(lev, *vector_field[0], compx);
+        solver.BackwardTransform(lev, *vector_field[1], compy);
 #endif
-        solver.BackwardTransform(lev, *Bfield[2], Idx::Bz);
-
-#ifndef WARPX_DIM_RZ
-        if (WarpX::fft_do_time_averaging){
-            solver.BackwardTransform(lev, *Efield_avg[0], Idx::Ex_avg);
-            solver.BackwardTransform(lev, *Efield_avg[1], Idx::Ey_avg);
-            solver.BackwardTransform(lev, *Efield_avg[2], Idx::Ez_avg);
-
-            solver.BackwardTransform(lev, *Bfield_avg[0], Idx::Bx_avg);
-            solver.BackwardTransform(lev, *Bfield_avg[1], Idx::By_avg);
-            solver.BackwardTransform(lev, *Bfield_avg[2], Idx::Bz_avg);
-        }
-#endif
+        solver.BackwardTransform(lev, *vector_field[2], compz);
     }
 }
-#endif
+
+using IdxAvg = SpectralFieldIndexTimeAveraging;
+using IdxLin = SpectralFieldIndexJLinearInTime;
 
 void
-WarpX::PushPSATD (amrex::Real a_dt)
+WarpX::PSATDForwardTransformEB ()
 {
-#ifndef WARPX_USE_PSATD
-    amrex::ignore_unused(a_dt);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                                     "PushFieldsEM: PSATD solver selected but not built.");
-#else
-    for (int lev = 0; lev <= finest_level; ++lev) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dt[lev] == a_dt, "dt must be consistent");
-        PushPSATD(lev, a_dt);
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
 
-        // Evolve the fields in the PML boxes
-        if (do_pml && pml[lev]->ok()) {
-            pml[lev]->PushPSATD(lev);
+        if (spectral_solver_cp[lev])
+        {
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
         }
-        ApplyEfieldBoundary(lev,PatchType::fine);
-        if (lev > 0) ApplyEfieldBoundary(lev,PatchType::coarse);
-        ApplyBfieldBoundary(lev,PatchType::fine);
-        if (lev > 0) ApplyBfieldBoundary(lev,PatchType::coarse);
     }
-#endif
 }
 
 void
-WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
-#ifndef WARPX_USE_PSATD
-    amrex::ignore_unused(lev);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                                     "PushFieldsEM: PSATD solver selected but not built.");
-#else
-    if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                                         "WarpX::PushPSATD: only supported for PSATD solver.");
-    }
-    // Update the fields on the fine and coarse patch
-    PushPSATDSinglePatch( lev, *spectral_solver_fp[lev],
-        Efield_fp[lev], Bfield_fp[lev], Efield_avg_fp[lev], Bfield_avg_fp[lev], current_fp[lev], rho_fp[lev] );
-    if (spectral_solver_cp[lev]) {
-        PushPSATDSinglePatch( lev, *spectral_solver_cp[lev],
-             Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
+WarpX::PSATDBackwardTransformEB ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
+
+        if (spectral_solver_cp[lev])
+        {
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
+        }
     }
 
     // Damp the fields in the guard cells along z
@@ -172,12 +134,278 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
     if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped &&
         WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped)
     {
-        DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
-
-        if (WarpX::fft_do_time_averaging)
+        for (int lev = 0; lev <= finest_level; ++lev)
         {
-            DampFieldsInGuards(Efield_avg_fp[lev], Bfield_avg_fp[lev]);
+            DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
         }
+    }
+}
+
+void
+WarpX::PSATDBackwardTransformEBavg ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_avg_fp[lev], IdxAvg::Ex_avg, IdxAvg::Ey_avg, IdxAvg::Ez_avg);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_avg_fp[lev], IdxAvg::Bx_avg, IdxAvg::By_avg, IdxAvg::Bz_avg);
+
+        if (spectral_solver_cp[lev])
+        {
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_avg_cp[lev], IdxAvg::Ex_avg, IdxAvg::Ey_avg, IdxAvg::Ez_avg);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_avg_cp[lev], IdxAvg::Bx_avg, IdxAvg::By_avg, IdxAvg::Bz_avg);
+        }
+    }
+}
+
+void
+WarpX::PSATDForwardTransformF ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (F_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *F_fp[lev], IdxLin::F);
+
+        if (spectral_solver_cp[lev])
+        {
+            if (F_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *F_cp[lev], IdxLin::F);
+        }
+    }
+}
+
+void
+WarpX::PSATDBackwardTransformF ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], IdxLin::F);
+
+        if (spectral_solver_cp[lev])
+        {
+            if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], IdxLin::F);
+        }
+    }
+}
+
+void
+WarpX::PSATDForwardTransformG ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (G_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *G_fp[lev], IdxLin::G);
+
+        if (spectral_solver_cp[lev])
+        {
+            if (G_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *G_cp[lev], IdxLin::G);
+        }
+    }
+}
+
+void
+WarpX::PSATDBackwardTransformG ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (G_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], IdxLin::G);
+
+        if (spectral_solver_cp[lev])
+        {
+            if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], IdxLin::G);
+        }
+    }
+}
+
+void
+WarpX::PSATDForwardTransformJ ()
+{
+    const int idx_jx = (WarpX::J_linear_in_time) ? static_cast<int>(IdxLin::Jx_new)
+                                                 : static_cast<int>(IdxAvg::Jx);
+    const int idx_jy = (WarpX::J_linear_in_time) ? static_cast<int>(IdxLin::Jy_new)
+                                                 : static_cast<int>(IdxAvg::Jy);
+    const int idx_jz = (WarpX::J_linear_in_time) ? static_cast<int>(IdxLin::Jz_new)
+                                                 : static_cast<int>(IdxAvg::Jz);
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev], idx_jx, idx_jy, idx_jz);
+
+        if (spectral_solver_cp[lev])
+        {
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev], idx_jx, idx_jy, idx_jz);
+        }
+    }
+
+#ifdef WARPX_DIM_RZ
+    // Apply filter in k space if needed
+    if (WarpX::use_kspace_filter)
+    {
+        for (int lev = 0; lev <= finest_level; ++lev)
+        {
+            spectral_solver_fp[lev]->ApplyFilter(IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
+
+            if (spectral_solver_cp[lev])
+            {
+                spectral_solver_cp[lev]->ApplyFilter(IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
+            }
+        }
+    }
+#endif
+}
+
+void
+WarpX::PSATDForwardTransformRho (const int icomp)
+{
+    // Select index in k space
+    const int dst_comp = (icomp == 0) ? IdxAvg::rho_old : IdxAvg::rho_new;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (rho_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *rho_fp[lev], dst_comp, icomp);
+
+        if (spectral_solver_cp[lev])
+        {
+            if (rho_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *rho_cp[lev], dst_comp, icomp);
+        }
+    }
+
+#ifdef WARPX_DIM_RZ
+    // Apply filter in k space if needed
+    if (WarpX::use_kspace_filter)
+    {
+        for (int lev = 0; lev <= finest_level; ++lev)
+        {
+            spectral_solver_fp[lev]->ApplyFilter(dst_comp);
+
+            if (spectral_solver_cp[lev])
+            {
+                spectral_solver_cp[lev]->ApplyFilter(dst_comp);
+            }
+        }
+    }
+#endif
+}
+
+void
+WarpX::PSATDPushSpectralFields ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->pushSpectralFields();
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->pushSpectralFields();
+        }
+    }
+}
+
+#ifndef WARPX_DIM_RZ
+void
+WarpX::PSATDMoveRhoNewToRhoOld ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->CopySpectralDataComp(IdxAvg::rho_new, IdxAvg::rho_old);
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->CopySpectralDataComp(IdxAvg::rho_new, IdxAvg::rho_old);
+        }
+    }
+}
+
+void
+WarpX::PSATDMoveJNewToJOld ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->CopySpectralDataComp(IdxLin::Jx_new, IdxLin::Jx_old);
+        spectral_solver_fp[lev]->CopySpectralDataComp(IdxLin::Jy_new, IdxLin::Jy_old);
+        spectral_solver_fp[lev]->CopySpectralDataComp(IdxLin::Jz_new, IdxLin::Jz_old);
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->CopySpectralDataComp(IdxLin::Jx_new, IdxLin::Jx_old);
+            spectral_solver_cp[lev]->CopySpectralDataComp(IdxLin::Jy_new, IdxLin::Jy_old);
+            spectral_solver_cp[lev]->CopySpectralDataComp(IdxLin::Jz_new, IdxLin::Jz_old);
+        }
+    }
+}
+
+void
+WarpX::PSATDEraseAverageFields ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Ex_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Ey_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Ez_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Bx_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::By_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Bz_avg);
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Ex_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Ey_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Ez_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Bx_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::By_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Bz_avg);
+        }
+    }
+}
+
+void
+WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Ex_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Ey_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Ez_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Bx_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::By_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Bz_avg, scale_factor);
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Ex_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Ey_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Ez_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Bx_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::By_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Bz_avg, scale_factor);
+        }
+    }
+}
+#endif // not WARPX_DIM_RZ
+#endif // WARPX_USE_PSATD
+
+void
+WarpX::PushPSATD ()
+{
+#ifndef WARPX_USE_PSATD
+    amrex::Abort("PushFieldsEM: PSATD solver selected but not built");
+#else
+
+    PSATDForwardTransformEB();
+    PSATDForwardTransformJ();
+    PSATDForwardTransformRho(0); // rho old
+    PSATDForwardTransformRho(1); // rho new
+    PSATDPushSpectralFields();
+    PSATDBackwardTransformEB();
+    if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
+
+    // Evolve the fields in the PML boxes
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (do_pml && pml[lev]->ok())
+        {
+            pml[lev]->PushPSATD(lev);
+        }
+        ApplyEfieldBoundary(lev, PatchType::fine);
+        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
+        ApplyBfieldBoundary(lev, PatchType::fine);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse);
     }
 #endif
 }
