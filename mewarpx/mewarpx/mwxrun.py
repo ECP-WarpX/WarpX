@@ -44,6 +44,9 @@ class MEWarpXRun(object):
         self.simulation.initialize_inputs()
         self.simulation.initialize_warpx()
 
+        self.me = _libwarpx.libwarpx.warpx_getMyProc()
+        self.n_procs = _libwarpx.libwarpx.warpx_getNProcs()
+
         self._set_geom_str()
         self._set_grid_params()
 
@@ -151,6 +154,10 @@ class MEWarpXRun(object):
         """Return the timestep."""
         return _libwarpx.libwarpx.warpx_getdt(self.lev)
 
+    def get_t(self):
+        """Return the simulation time."""
+        return (self.get_it() - 1.0) * self.get_dt()
+
     def get_npart(self):
         """Get total number of particles in simulation, across all processors.
         """
@@ -174,5 +181,58 @@ class MEWarpXRun(object):
 
         return npart_dict
 
+    def get_rho_grid(self):
+        """Get rho segments on the grid for each tile of each processor.
+
+        Returns:
+            A list of numpy arrays, the list has an array for every tile and
+            each array has dimensions given by the number of cells in that tile.
+        """
+        return _libwarpx.get_mesh_charge_density_fp(self.lev)
+
+    def get_gathered_rho_grid(self):
+        """Get the full rho on the grid on the root processor.
+
+        Returns:
+            A list with only 1 element - a numpy array with rho on the full
+            domain. In place of the numpy array, a reference to an unpopulated
+            multifab object is returned on processors other than root.
+
+        """
+        return _libwarpx.get_gathered_charge_density_fp(self.lev)
+
+    def get_phi_grid(self):
+        """Get phi segments on the grid for each tile of each processor.
+
+        Returns:
+            A list of numpy arrays, the list has an array for every tile and
+            each array has dimensions given by the number of cells in that tile.
+        """
+        return _libwarpx.get_mesh_phi_fp(self.lev)
+
+    def get_gathered_phi_grid(self):
+        """Get the full phi on the grid on the root processor.
+
+        Returns:
+            A list with only 1 element - a numpy array with phi on the full
+            domain. In place of the numpy array, a reference to an unpopulated
+            multifab object is returned on processors other than root.
+        """
+        return _libwarpx.get_gathered_phi_fp(self.lev)
+
+    def set_phi_grid(self, phi_data):
+        """Sets phi segments on the grid to input phi data"""
+        # only proc 0 has the gathered phi grid so only it should set
+        # the phi grid
+        if self.me == 0:
+            # get phi multifab from warpx
+            phi_ptr = _libwarpx.get_pointer_full_phi_fp(self.lev)
+            try:
+                phi_ptr[0][:] = phi_data
+            except ValueError as e:
+                if 'could not broadcast input array from shape' in str(e):
+                    print("Phi data must be the same shape as the phi multifab")
+                raise
+        _libwarpx.set_phi_grid_fp(self.lev)
 
 mwxrun = MEWarpXRun()

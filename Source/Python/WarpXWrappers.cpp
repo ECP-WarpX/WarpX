@@ -340,9 +340,20 @@ extern "C"
 
     WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp)
     WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().getrho_fp)
+    WARPX_GET_SCALAR(warpx_getGatheredChargeDensityFP, WarpX::GetInstance().getGatheredRho_fp)
 
     WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp)
     WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp)
+
+    WARPX_GET_SCALAR(warpx_getPhiFP, WarpX::GetInstance().getphi_fp)
+    WARPX_GET_SCALAR(warpx_getGatheredPhiFP, WarpX::GetInstance().getGatheredPhi_fp)
+
+    WARPX_GET_SCALAR(warpx_getPointerFullPhiFP, *WarpX::GetInstance().get_pointer_full_phi_fp)
+
+    void warpx_setPhiGridFP(int lev) {
+        WarpX::GetInstance().setPhiGrid_fp(lev);
+        return;
+    }
 
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
@@ -509,6 +520,14 @@ extern "C"
     void mypc_Redistribute () {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         mypc.Redistribute();
+    }
+
+    int warpx_getMyProc() {
+        return amrex::ParallelDescriptor::MyProc();
+    }
+
+    int warpx_getNProcs() {
+        return amrex::ParallelDescriptor::NProcs();
     }
 
 }

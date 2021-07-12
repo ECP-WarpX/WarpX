@@ -1,15 +1,20 @@
 """
-Monte-Carlo Collision script benchmark against case 1 results from
+Monte-Carlo Collision script based on case 1 from
 Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 """
+
+from mewarpx import util as mwxutil
+mwxutil.init_libwarpx(ndim=2, rz=False)
+
+from mewarpx.mwxrun import mwxrun
+from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
+from mewarpx.mcc_wrapper import MCC
+from mewarpx.diags_store import diag_base
+
 from pywarpx import picmi
 import pywarpx
 
 import numpy as np
-import time
-
-import shutil
-import yt
 
 constants = picmi.constants
 
@@ -36,36 +41,37 @@ T_ELEC = 30000.0 # K
 ##########################
 
 # --- Grid
-nx = 128
-ny = 16
+nx = 8
+nz = 128
 
 xmin = 0.0
-ymin = 0.0
-xmax = D_CA
-ymax = D_CA / nx * ny
+zmin = 0.0
+xmax = D_CA / nz * nx
+zmax = D_CA
 
-number_per_cell_each_dim = [32, 16]
+number_per_cell_each_dim = [16, 32]
 
 DT = 1.0 / (400 * FREQ)
 
 # Total simulation time in seconds
-TOTAL_TIME = 10.0 * DT # 1280 / FREQ
+TOTAL_TIME = 500.0 * DT # 1280 / FREQ
 # Time (in seconds) between diagnostic evaluations
-DIAG_INTERVAL = 2.0 * DT # 32 / FREQ
+# DIAG_INTERVAL = 100.0 * DT # 32 / FREQ
 
 # --- Number of time steps
 max_steps = int(TOTAL_TIME / DT)
-diag_steps = int(DIAG_INTERVAL / DT)
-diagnostic_intervals = "::%i" % diag_steps #"%i:" % (max_steps - diag_steps + 1)
+diag_steps = 100
+diagnostic_intervals = "400::10"
 
 print('Setting up simulation with')
 print('  dt = %.3e s' % DT)
 print('  Total time = %.3e s (%i timesteps)' % (TOTAL_TIME, max_steps))
-print('  Diag time = %.3e s (%i timesteps)' % (DIAG_INTERVAL, diag_steps))
 
 ##########################
 # physics components
 ##########################
+
+anode_voltage = lambda t: VOLTAGE * np.sin(2.0 * np.pi * FREQ * t)
 
 v_rms_elec = np.sqrt(constants.kb * T_ELEC / constants.m_e)
 v_rms_ion = np.sqrt(constants.kb * T_INERT / M_ION)
@@ -95,49 +101,9 @@ ions = picmi.Species(
 )
 
 # MCC collisions
-cross_sec_direc = '../../../warpx-data/MCC_cross_sections/He/'
-mcc_electrons = picmi.MCCCollisions(
-    name='coll_elec',
-    species=electrons,
-    background_density=N_INERT,
-    background_temperature=T_INERT,
-    background_mass=ions.mass,
-    scattering_processes={
-        'elastic' : {
-            'cross_section' : cross_sec_direc+'electron_scattering.dat'
-        },
-        'excitation1' : {
-            'cross_section': cross_sec_direc+'excitation_1.dat',
-            'energy' : 19.82
-        },
-        'excitation2' : {
-            'cross_section': cross_sec_direc+'excitation_2.dat',
-            'energy' : 20.61
-        },
-        'ionization' : {
-            'cross_section' : cross_sec_direc+'ionization.dat',
-            'energy' : 24.55,
-            'species' : ions
-        },
-    }
-)
-
-mcc_ions = picmi.MCCCollisions(
-    name='coll_ion',
-    species=ions,
-    background_density=N_INERT,
-    background_temperature=T_INERT,
-    scattering_processes={
-        'elastic' : {
-            'cross_section' : cross_sec_direc+'ion_scattering.dat'
-        },
-        'back' : {
-            'cross_section' : cross_sec_direc+'ion_back_scatter.dat'
-        },
-        # 'charge_exchange' : {
-        #    'cross_section' : cross_sec_direc+'charge_exchange.dat'
-        # }
-    }
+mcc_wrapper = MCC(
+    electrons, ions, T_INERT=T_INERT, N_INERT=N_INERT,
+    exclude_collisions=['charge_exchange']
 )
 
 ##########################
@@ -145,23 +111,26 @@ mcc_ions = picmi.MCCCollisions(
 ##########################
 
 grid = picmi.Cartesian2DGrid(
-    number_of_cells = [nx, ny],
-    lower_bound = [xmin, ymin],
-    upper_bound = [xmax, ymax],
-    bc_xmin = 'dirichlet',
-    bc_xmax = 'dirichlet',
-    bc_ymin = 'periodic',
-    bc_ymax = 'periodic',
-    warpx_potential_hi_x = "%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
-    lower_boundary_conditions_particles=['absorbing', 'periodic'],
-    upper_boundary_conditions_particles=['absorbing', 'periodic'],
+    number_of_cells = [nx, nz],
+    lower_bound = [xmin, zmin],
+    upper_bound = [xmax, zmax],
+    lower_boundary_conditions=['periodic', 'dirichlet'],
+    upper_boundary_conditions=['periodic', 'dirichlet'],
+    lower_boundary_conditions_particles=['periodic', 'absorbing'],
+    upper_boundary_conditions_particles=['periodic', 'absorbing'],
+    warpx_potential_hi_z = anode_voltage, #"%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
     moving_window_velocity = None,
-    warpx_max_grid_size = nx//4
+    warpx_max_grid_size = nz//4
 )
 
-solver = picmi.ElectrostaticSolver(
-    grid=grid, method='Multigrid', required_precision=1e-6
-)
+##########################
+# declare solver
+##########################
+
+# solver = picmi.ElectrostaticSolver(
+#    grid=grid, method='Multigrid', required_precision=1e-12
+# )
+solver = PoissonSolverPseudo1D(grid=grid)
 
 ##########################
 # diagnostics
@@ -173,52 +142,77 @@ field_diag = picmi.FieldDiagnostic(
     period = diagnostic_intervals,
     data_list = ['rho_electrons', 'rho_he_ions', 'phi'],
     write_dir = 'diags/',
-    # warpx_file_prefix = 'diags',
-    #warpx_format = 'openpmd',
-    #warpx_openpmd_backend='h5'
 )
-'''
-restart_dumps = picmi.FieldDiagnostic(
-    name = 'checkpoints',
-    warpx_format = 'checkpoint',
-    grid = grid,
-    period = diagnostic_intervals//2,
-    write_dir = './restarts',
-    # warpx_file_prefix = 'diags',
-)
-'''
+
 ##########################
 # simulation setup
 ##########################
 
-sim = picmi.Simulation(
-    solver = solver,
-    time_step_size = DT,
-    max_steps = max_steps,
-    warpx_collisions=[mcc_electrons, mcc_ions]
-)
+mwxrun.simulation.solver = solver
+mwxrun.simulation.time_step_size = DT
+mwxrun.simulation.max_steps = max_steps
 
-sim.add_species(
+mwxrun.simulation.add_species(
     electrons,
     layout = picmi.GriddedLayout(
         n_macroparticle_per_cell=number_per_cell_each_dim, grid=grid
     )
 )
-sim.add_species(
+mwxrun.simulation.add_species(
     ions,
     layout = picmi.GriddedLayout(
         n_macroparticle_per_cell=number_per_cell_each_dim, grid=grid
     )
 )
 
-sim.add_diagnostic(field_diag)
+mwxrun.simulation.add_diagnostic(field_diag)
 # sim.add_diagnostic(restart_dumps)
+
+##########################
+# WarpX and mewarpx initialization
+##########################
+
+mwxrun.init_run()
+
+##########################
+# Add ME diagnostic
+##########################
+
+diag_base.TextDiag(diag_steps=diag_steps, preset_string='perfdebug')
 
 ##########################
 # simulation run
 ##########################
 
-#sim.write_input_file(file_name = 'input2d')
+mwxrun.simulation.step()
 
-# step the simulation to the point where output should start
-sim.step(max_steps)
+##########################
+# collect diagnostics
+##########################
+
+if mwxrun.me == 0:
+    import glob
+    import yt
+
+    data_dirs = glob.glob('diags/diags*')
+    if len(data_dirs) == 0:
+        raise RuntimeError("No data files found.")
+
+    for ii, data in enumerate(data_dirs):
+
+        datafolder = data
+        print('Reading ', datafolder, '\n')
+        ds = yt.load( datafolder )
+        grid_data = ds.covering_grid(
+            level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
+        )
+        if ii == 0:
+            rho_data = np.mean(
+                grid_data['rho_he_ions'].to_ndarray()[:,:,0], axis=0
+            ) / constants.q_e
+        else:
+            rho_data += np.mean(
+                grid_data['rho_he_ions'].to_ndarray()[:,:,0], axis=0
+            ) / constants.q_e
+    rho_data /= (ii + 1)
+    np.save('direct_solver_avg_rho_data.npy', rho_data)

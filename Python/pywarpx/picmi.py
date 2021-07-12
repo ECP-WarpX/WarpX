@@ -33,6 +33,7 @@ class constants:
     m_p = 1.67262192369e-27
     hbar = 1.054571817e-34
     kb = 1.380649e-23
+    torr_SI = 133.322368421
 
 picmistandard.register_constants(constants)
 

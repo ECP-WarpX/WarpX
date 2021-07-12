@@ -113,6 +113,8 @@ extern "C" {
   amrex::Real warpx_stopTime ();
 
   int warpx_finestLevel ();
+  int warpx_getMyProc();
+  int warpx_getNProcs();
 
   int warpx_getMyProc ();
   int warpx_getNProcs ();

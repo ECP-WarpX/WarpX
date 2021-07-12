@@ -6,6 +6,7 @@ import inspect
 import os
 
 from pywarpx import geometry
+from mewarpx import mwxconstants as constants
 
 # http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-t
 mewarpx_dir = os.path.dirname(os.path.abspath(
@@ -46,3 +47,17 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def ideal_gas_density(p, T):
+    """Calculate neutral gas density (in 1/cm^3) from the ideal gas law using
+    pressure in Torr.
+
+    Arguments:
+        p (float): Gas pressure (Torr)
+        T (float): Mean gas temperature (K)
+
+    Returns:
+        N (float): Number density of gas atoms/molecules (1/cm^3)
+    """
+    return (p * constants.torr_cgs) / (constants.kb_cgs * T)

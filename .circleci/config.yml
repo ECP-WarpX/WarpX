@@ -54,9 +54,10 @@ jobs:
 
             # WarpX + PyWarpX compile & install
             export WarpX_MPI=ON
-            export WarpX_OPENPMD=ON
-            export WarpX_PSATD=ON
-            export WarpX_QED_TABLE_GEN=ON
+            export WarpX_OPENPMD=OFF
+            export WarpX_PSATD=OFF
+            export WarpX_QED=OFF
+            export ME_Solver=ON
             export CC=$(which clang)
             export CXX=$(which clang++)
             python3 -m pip install -v .
@@ -64,6 +65,18 @@ jobs:
             # Install development mode of mewarpx
             cd mewarpx
             pip install -e .[complete]
+
+      - run:
+          name: download warpx-data
+          command: |
+            cd ../
+            git clone --depth 1 https://github.com/ModernElectron/warpx-data.git
+            cd warpx-data
+            # Check out a branch with the same name if it exists.
+            if git branch -r | grep -q origin/"$CIRCLE_BRANCH"; then
+              git checkout "$CIRCLE_BRANCH"
+            fi
+            cd ../WarpX
 
       # run tests!
       - run:

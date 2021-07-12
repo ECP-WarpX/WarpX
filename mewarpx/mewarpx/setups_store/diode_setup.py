@@ -7,7 +7,7 @@ from pywarpx.picmi import constants
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
-
+from mewarpx import mcc_wrapper, poisson_pseudo_1d
 
 class DiodeRun_V1(object):
 
@@ -143,6 +143,8 @@ class DiodeRun_V1(object):
     NY = None
     # number of cells in the z direction
     NZ = None
+    # should the direct solver be used?
+    DIRECT_SOLVER = False
 
     def __init__(self, dim=1, rz=False, **kwargs):
         for kw in list(kwargs.keys()):
@@ -381,13 +383,18 @@ class DiodeRun_V1(object):
                 "1D solving is not yet implemented in mewarpx")
             # self.solver = poisson1d.PoissonSolver1D()
         elif self.dim in [2, 3]:
-            self.solver = picmi.ElectrostaticSolver(
-                grid=self.grid,
-                method='Multigrid',
-                required_precision=1e-6,
-                maximum_iterations=10000
-            )
-            # self.solver.self_fields_verbosity = 2 if self.NONINTERAC else 0
+            if self.DIRECT_SOLVER:
+                self.solver = poisson_pseudo_1d.PoissonSolverPseudo1D(
+                    grid=self.grid
+                )
+            else:
+                self.solver = picmi.ElectrostaticSolver(
+                    grid=self.grid,
+                    method='Multigrid',
+                    required_precision=1e-6,
+                    maximum_iterations=10000
+                )
+                # self.solver.self_fields_verbosity = 2 if self.NONINTERAC else 0
 
     def init_conductors(self):
         raise NotImplementedError(
@@ -523,51 +530,16 @@ class DiodeRun_V1(object):
         )
         self.SPECIES.append(self.ions)
 
-        # MCC collisions
-        cross_sec_direc = '../../../warpx-data/MCC_cross_sections/He/'
-        mcc_electrons = picmi.MCCCollisions(
-            name='coll_elec',
-            species=self.electrons,
-            background_density=self.N_INERT,
-            background_temperature=self.T_INERT,
-            background_mass=self.ions.mass,
-            scattering_processes={
-                'elastic': {
-                    'cross_section': cross_sec_direc+'electron_scattering.dat'
-                },
-                'excitation1': {
-                    'cross_section': cross_sec_direc+'excitation_1.dat',
-                    'energy': 19.82
-                },
-                'excitation2': {
-                    'cross_section': cross_sec_direc+'excitation_2.dat',
-                    'energy': 20.61
-                },
-                'ionization': {
-                    'cross_section': cross_sec_direc+'ionization.dat',
-                    'energy': 24.55,
-                    'species': self.ions
-                },
-            }
-        )
+        if not hasattr(self, "exclude_collisions"):
+            self.exclude_collisions = None
 
-        mcc_ions = picmi.MCCCollisions(
-            name='coll_ion',
-            species=self.ions,
-            background_density=self.N_INERT,
-            background_temperature=self.T_INERT,
-            scattering_processes={
-                'elastic': {
-                    'cross_section': cross_sec_direc+'ion_scattering.dat'
-                },
-                'back': {
-                    'cross_section': cross_sec_direc+'ion_back_scatter.dat'
-                },
-                # 'charge_exchange': {
-                #    'cross_section': cross_sec_direc+'charge_exchange.dat'
-                # }
-            }
-        )
+        mcc_wrapper.MCC(
+            electron_species=self.electrons,
+            ion_species=self.ions,
+            T_INERT=self.T_INERT,
+            P_INERT=self.P_INERT,
+            N_INERT=self.N_INERT,
+            exclude_collisions = self.exclude_collisions)
 
     def init_reflection(self):
         raise NotImplementedError(
