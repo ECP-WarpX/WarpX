@@ -578,8 +578,8 @@ void ReadBCParams ()
                 (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
 #if (AMREX_SPACEDIM==3)
                 &&
-                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
+                (WarpX::field_boundary_lo[2] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[2] == FieldBoundaryType::Absorbing_SilverMueller)
 #endif
                 , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
         }
