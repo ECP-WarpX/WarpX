@@ -17,6 +17,7 @@ geometry.prob_hi     =  20.e-6    20.e-6
 warpx.serialize_ics = 1
 warpx.verbose = 1
 warpx.cfl = 1.0
+warpx.use_filter = 0
 
 # Order of particle shape factors
 algo.particle_shape = 1

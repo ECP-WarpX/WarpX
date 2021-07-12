@@ -6,14 +6,19 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BilinearFilter.H"
-#include "WarpX.H"
 
+#include "Utils/WarpXProfilerWrapper.H"
+
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
-
+#include <array>
+#include <vector>
 
 using namespace amrex;
 

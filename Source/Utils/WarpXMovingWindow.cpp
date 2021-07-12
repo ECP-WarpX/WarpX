@@ -6,11 +6,43 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "Parallelization/GuardCellManager.H"
 #include "WarpX.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXConst.H"
 
+#include "BoundaryConditions/PML.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <cmath>
+#include <memory>
+#include <string>
 
 using namespace amrex;
 
@@ -35,9 +67,15 @@ WarpX::UpdatePlasmaInjectionPosition (Real a_dt)
 }
 
 int
-WarpX::MoveWindow (bool move_j)
+WarpX::MoveWindow (const int step, bool move_j)
 {
-    if (do_moving_window == 0) return 0;
+    if (step == start_moving_window_step) {
+        amrex::Print() << "Starting moving window\n";
+    }
+    if (step == end_moving_window_step) {
+        amrex::Print() << "Stopping moving window\n";
+    }
+    if (moving_window_active(step) == false) return 0;
 
     // Update the continuous position of the moving window,
     // and of the plasma injection

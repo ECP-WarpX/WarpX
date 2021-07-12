@@ -7,28 +7,52 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
 
-#include "RigidInjectedParticleContainer.H"
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Gather/FieldGather.H"
+#include "Particles/Gather/GetExternalFields.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdateMomentumBoris.H"
-#include "Pusher/UpdateMomentumVay.H"
 #include "Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Pusher/UpdateMomentumHigueraCary.H"
-#include "Pusher/GetAndSetPosition.H"
-#include "Gather/ScaleFields.H"
-#include "Gather/FieldGather.H"
+#include "Pusher/UpdateMomentumVay.H"
+#include "RigidInjectedParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particles.H>
+#include <AMReX_StructOfArrays.H>
 
-#include <limits>
-#include <sstream>
 #include <algorithm>
-
+#include <array>
+#include <cmath>
+#include <map>
 
 using namespace amrex;
 

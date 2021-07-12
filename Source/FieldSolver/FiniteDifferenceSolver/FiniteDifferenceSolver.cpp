@@ -4,17 +4,26 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "FiniteDifferenceSolver.H"
 
+#ifndef WARPX_DIM_RZ
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#else
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#endif
 #include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_DIM_RZ
-#    include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
-#    include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#    include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
-#    include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#   include "WarpX.H"
 #endif
-#include "FiniteDifferenceSolver.H"
-#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_Vector.H>
+
+#include <vector>
 
 /* This function initializes the stencil coefficients for the chosen finite-difference algorithm */
 FiniteDifferenceSolver::FiniteDifferenceSolver (

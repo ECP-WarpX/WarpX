@@ -8,19 +8,32 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PlasmaInjector.H"
+
+#include "Initialization/InjectorDensity.H"
+#include "Initialization/InjectorMomentum.H"
+#include "Initialization/InjectorPosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuDevice.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
+#include <AMReX_RandomEngine.H>
 
-#include <functional>
-#include <sstream>
-#include <string>
+#include <algorithm>
+#include <cctype>
+#include <map>
 #include <memory>
+#include <sstream>
+#include <utility>
+#include <vector>
 
 using namespace amrex;
 
@@ -208,7 +221,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (part_pos_s == "nfluxpercell") {
         surface_flux = true;
-        pp_species_name.query("num_particles_per_cell", num_particles_per_cell_real);
+        queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,

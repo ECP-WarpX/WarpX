@@ -1,3 +1,5 @@
+.. _glossary:
+
 Glossary
 ========
 
@@ -42,6 +44,8 @@ Terms
 * **accelerator:** depending on context, either a *particle accelerator* in physics or a *hardware accelerator* (e.g. GPU) in computing
 * **AMReX:** `C++ library for block-structured adaptive mesh-refinement <https://amrex-codes.github.io/>`__, a primary dependency of WarpX
 * **boosted frame:** a :ref:`Lorentz-boosted frame of reference <theory-boostedframe>` for a simulation
+* **evolve:** this is a generic term to advance a quantity (same nomenclature in AMReX).
+              For instance, ``WarpX::EvolveE(dt)`` advances the electric field for duration ``dt``, ``PhysicalParticleContainer::Evolve(...)`` does field gather + particle push + current deposition for all particles in ``PhysicalParticleContainer``, and ``WarpX::EvolveEM`` is the central ``WarpX`` function that performs 1 PIC iteration.
 * **Frontier:** an `Exascale supercomputer at OLCF <https://www.olcf.ornl.gov/frontier/>`__
 * **laser:** most of the time, we mean a `laser pulse <https://en.wikipedia.org/wiki/Ultrashort_pulse>`__
 * **openPMD**: `Open Standard for Particle-Mesh Data Files <https://www.openPMD.org>`__, a community meta-data project for scientific data

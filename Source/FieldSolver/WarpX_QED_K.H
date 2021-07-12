@@ -9,8 +9,9 @@
 #define WarpX_QED_K_h
 
 #include "Utils/WarpXConst.H"
-#include <AMReX_FArrayBox.H>
+
 #include <AMReX.H>
+#include <AMReX_FArrayBox.H>
 
 #include <cmath>
 

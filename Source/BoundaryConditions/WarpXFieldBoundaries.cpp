@@ -1,8 +1,13 @@
 #include "WarpX.H"
+
 #include "WarpX_PEC.H"
-#include <AMReX.H>
+
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
+
+#include <array>
+#include <memory>
+
 using namespace amrex::literals;
 
 void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)

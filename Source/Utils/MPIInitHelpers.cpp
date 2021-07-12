@@ -6,12 +6,16 @@
  */
 #include "MPIInitHelpers.H"
 
-#include <AMReX.H>
+#include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
 
-#include <utility>
+#if defined(AMREX_USE_MPI)
+#   include <mpi.h>
+#endif
 
+#include <string>
+#include <utility>
 
 namespace utils
 {

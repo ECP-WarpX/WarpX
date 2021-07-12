@@ -21,9 +21,9 @@ geometry.prob_hi     =  30.e-6  120.e-6
 warpx.verbose = 1
 
 # Algorithms
-
 warpx.cfl = 1.0
 warpx.do_pml = 1
+warpx.use_filter = 0
 
 warpx.do_moving_window = 0
 # warpx.moving_window_dir = z

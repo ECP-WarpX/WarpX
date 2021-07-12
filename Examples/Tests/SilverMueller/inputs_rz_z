@@ -22,10 +22,10 @@ warpx.verbose = 1
 warpx.n_rz_azimuthal_modes = 2
 
 # Algorithms
-
 warpx.cfl = 1.0
 warpx.do_pml = 0
 warpx.do_silver_mueller = 1
+warpx.use_filter = 0
 
 warpx.do_moving_window = 0
 

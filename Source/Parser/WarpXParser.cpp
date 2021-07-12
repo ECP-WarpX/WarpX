@@ -4,9 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpXParser.H"
 
 #include <algorithm>
-#include "WarpXParser.H"
 
 WarpXParser::WarpXParser (std::string const& func_body)
 {

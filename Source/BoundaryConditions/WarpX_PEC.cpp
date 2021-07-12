@@ -1,10 +1,18 @@
 #include "BoundaryConditions/WarpX_PEC.H"
-#include "WarpX.H"
-#include <AMReX.H>
-#include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
-using namespace amrex::literals;
 
+#include "WarpX.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
+
+using namespace amrex::literals;
 
 bool
 PEC::isAnyBoundaryPEC() {
