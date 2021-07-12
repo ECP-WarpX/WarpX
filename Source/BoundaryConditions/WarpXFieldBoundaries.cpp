@@ -42,6 +42,9 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         }
     }
 
+    // Silver-Mueller boundaries are only applied on the first half-push of B
+    // This is because the formula used for Silver-Mueller assumes that 
+    // E and B are staggered in time, which is only true after the first half-push
     if (lev == 0) {
         if (a_dt_type == DtType::FirstHalf) {
             bool applySilverMueller = false;
@@ -57,4 +60,3 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         }
     }
 }
-

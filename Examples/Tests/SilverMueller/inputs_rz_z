@@ -13,7 +13,6 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 1
-#geometry.is_periodic = 0   0   0
 geometry.prob_lo     =  0.e-6 -20.e-6
 geometry.prob_hi     =  40.e-6  20.e-6
 
