@@ -239,11 +239,11 @@ WarpX::PSATDForwardTransformJ ()
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
+            spectral_solver_fp[lev]->ApplyFilter(lev, IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
+                spectral_solver_cp[lev]->ApplyFilter(lev, IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
             }
         }
     }
@@ -272,11 +272,11 @@ WarpX::PSATDForwardTransformRho (const int icomp)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(dst_comp);
+            spectral_solver_fp[lev]->ApplyFilter(lev, dst_comp);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(dst_comp);
+                spectral_solver_cp[lev]->ApplyFilter(lev, dst_comp);
             }
         }
     }
