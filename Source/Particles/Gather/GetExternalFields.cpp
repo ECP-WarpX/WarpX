@@ -5,6 +5,7 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
+
     if (mypc.m_E_ext_particle_s=="constant" || mypc.m_E_ext_particle_s=="default")
     {
         m_type = Constant;
@@ -20,6 +21,12 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
         m_xfield_partparser = getParser(mypc.m_Ex_particle_parser);
         m_yfield_partparser = getParser(mypc.m_Ey_particle_parser);
         m_zfield_partparser = getParser(mypc.m_Ez_particle_parser);
+    }
+    else if (mypc.m_E_ext_particle_s=="electro-static-field")
+    {
+        m_type = ElectroStatic;
+        m_time = warpx.gett_new(a_pti.GetLevel());
+        
     }
 }
 
