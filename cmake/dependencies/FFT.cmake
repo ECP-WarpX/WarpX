@@ -16,17 +16,15 @@ if(WarpX_PSATD)
         endif()
     endfunction()
 
-    # Check if the PkgConfig target location has an _omp library, e.g.,
-    # libfftw3(f)_omp.a shipped and if yes, set the WarpX_FFTW_OMP=1 define.
+    # Check if the found FFTW install location has an _omp library, e.g.,
+    # libfftw3(f)_omp.(a|so) shipped and if yes, set the WarpX_FFTW_OMP=1 define.
     #
     function(fftw_check_omp library_paths fftw_precision_suffix)
-        if(WarpX_FFTW_IGNORE_OMP)
-            fftw_add_define(FALSE)
-            return()
-        endif()
-
         find_library(HAS_FFTW_OMP_LIB fftw3${fftw_precision_suffix}_omp
             PATHS ${library_paths}
+            # this is intentional, so we don't mix different FFTW installs
+            # and only check what is in the location hinted by the
+            # "library_paths" variable
             NO_DEFAULT_PATH
             NO_PACKAGE_ROOT_PATH
             NO_CMAKE_PATH
@@ -88,9 +86,17 @@ if(WarpX_PSATD)
 
         if(WarpX_FFTW_SEARCH STREQUAL CMAKE)
             find_package(FFTW3${HFFTWp} CONFIG REQUIRED)
+            set(WarpX_FFTW_LIBRARY_DIRS "${FFTW3${HFFTWp}_LIBRARY_DIRS}")
+            message(STATUS "Found FFTW: ${FFTW3${HFFTWp}_DIR} (found version \"${FFTW3${HFFTWp}_VERSION}\")")
         else()
             find_package(PkgConfig REQUIRED QUIET)
             pkg_check_modules(fftw3${HFFTWp} REQUIRED IMPORTED_TARGET fftw3${HFFTWp})
+            message(STATUS "Found FFTW: ${fftw3${HFFTWp}_PREFIX}")
+            if(fftw3${HFFTWp}_LIBRARY_DIRS)
+                set(WarpX_FFTW_LIBRARY_DIRS "${fftw3${HFFTWp}_LIBRARY_DIRS}")
+            else()
+                set(WarpX_FFTW_LIBRARY_DIRS "${fftw3${HFFTWp}_LIBDIR}")
+            endif()
         endif()
     endif()
 
@@ -101,25 +107,19 @@ if(WarpX_PSATD)
     elseif(WarpX_COMPUTE STREQUAL HIP)
         make_third_party_includes_system(roc::rocfft FFT)
     else()
-        if(FFTW3_FOUND)
-            # subtargets: fftw3(p), fftw3(p)_threads, fftw3(p)_omp
-            if(WarpX_COMPUTE STREQUAL OMP AND
-               TARGET FFTW3::fftw3${HFFTWp}_omp AND
-               NOT WarpX_FFTW_IGNORE_OMP)
-                make_third_party_includes_system(FFTW3::fftw3${HFFTWp}_omp FFT)
-                fftw_add_define(TRUE)
-            else()
-                make_third_party_includes_system(FFTW3::fftw3${HFFTWp} FFT)
-                fftw_add_define(FALSE)
-            endif()
+        if(WarpX_FFTW_SEARCH STREQUAL CMAKE)
+            make_third_party_includes_system(FFTW3::fftw3${HFFTWp} FFT)
         else()
             make_third_party_includes_system(PkgConfig::fftw3${HFFTWp} FFT)
-            if(WarpX_COMPUTE STREQUAL OMP AND
-               NOT WarpX_FFTW_IGNORE_OMP)
-                fftw_check_omp("${fftw3${HFFTWp}_LIBRARY_DIRS}" "${HFFTWp}")
+        endif()
+        if(WarpX_COMPUTE STREQUAL OMP)
+            if(WarpX_FFTW_IGNORE_OMP)
+                message(STATUS "FFTW: Requested to IGNORE OpenMP support")
             else()
-                fftw_add_define(FALSE)
+                fftw_check_omp("${WarpX_FFTW_LIBRARY_DIRS}" "${HFFTWp}")
             endif()
+        else()
+            message(STATUS "FFTW: Did NOT search for OpenMP support (WarpX_COMPUTE!=OMP)")
         endif()
     endif()
 endif(WarpX_PSATD)

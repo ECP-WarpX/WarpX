@@ -142,12 +142,10 @@ extern "C"
         warpx_amrex_init(argc, argv);
     }
 
-#ifdef BL_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm)
     {
         warpx_amrex_init(argc, argv, true, mpicomm);
     }
-#endif
 
     void amrex_finalize (int /*finalize_mpi*/)
     {
@@ -431,9 +429,9 @@ extern "C"
         WarpX& warpx = WarpX::GetInstance();
         warpx.ComputeDt ();
     }
-    void warpx_MoveWindow () {
+    void warpx_MoveWindow (int step,bool move_j) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.MoveWindow (true);
+        warpx.MoveWindow (step, move_j);
     }
 
     void warpx_EvolveE (amrex::Real dt) {
@@ -498,6 +496,14 @@ extern "C"
     int warpx_finestLevel () {
         WarpX& warpx = WarpX::GetInstance();
         return warpx.finestLevel ();
+    }
+
+    int warpx_getMyProc () {
+        return amrex::ParallelDescriptor::MyProc();
+    }
+
+    int warpx_getNProcs () {
+        return amrex::ParallelDescriptor::NProcs();
     }
 
     void mypc_Redistribute () {

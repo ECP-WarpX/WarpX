@@ -80,6 +80,8 @@ class SpectralBaseAlgorithm
 
     protected: // Meant to be used in the subclasses
 
+        amrex::IntVect m_fill_guards;
+
         using SpectralRealCoefficients = \
             amrex::FabArray< amrex::BaseFab <amrex::Real> >;
         using SpectralComplexCoefficients = \
@@ -91,7 +93,8 @@ class SpectralBaseAlgorithm
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
                               const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal);
+                              const int norder_z, const bool nodal,
+                              const amrex::IntVect& fill_guards);
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

@@ -117,7 +117,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi, beta, pc.self_fields_required_precision, pc.self_fields_max_iters );
+    computePhi( rho, phi, beta, pc.self_fields_required_precision, pc.self_fields_max_iters, pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
@@ -168,7 +168,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi_fp, beta, self_fields_required_precision, self_fields_max_iters );
+    computePhi( rho, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi_fp, beta );
@@ -189,12 +189,13 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
-                   int const max_iters) const
+                   int const max_iters,
+                   int const verbosity) const
 {
 #ifdef WARPX_DIM_RZ
-    computePhiRZ( rho, phi, beta, required_precision, max_iters );
+    computePhiRZ( rho, phi, beta, required_precision, max_iters, verbosity );
 #else
-    computePhiCartesian( rho, phi, beta, required_precision, max_iters );
+    computePhiCartesian( rho, phi, beta, required_precision, max_iters, verbosity );
 #endif
 
 }
@@ -219,7 +220,8 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
-                   int const max_iters) const
+                   int const max_iters,
+                   int const verbosity) const
 {
     // Create a new geometry with the z coordinate scaled by gamma
     amrex::Real const gamma = std::sqrt(1._rt/(1. - beta[2]*beta[2]));
@@ -336,7 +338,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
     MLMG mlmg(linop);
-    mlmg.setVerbose(2);
+    mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
 }
@@ -362,7 +364,8 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                             amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                             std::array<Real, 3> const beta,
                             Real const required_precision,
-                            int const max_iters) const
+                            int const max_iters,
+                            int const verbosity) const
 {
 
     // Define the boundary conditions
@@ -417,7 +420,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     }
 
     MLMG mlmg(linop);
-    mlmg.setVerbose(2);
+    mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
 }

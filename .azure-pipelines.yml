@@ -48,7 +48,7 @@ jobs:
       sudo update-alternatives --set python /usr/bin/python3
       python -m pip install --upgrade pip
       python -m pip install --upgrade wheel
-      python -m pip install --upgrade cmake matplotlib==3.2.2 mpi4py numpy scipy yt
+      python -m pip install --upgrade cmake matplotlib==3.2.2 mpi4py numpy scipy yt==3.6.1
       export CEI_CMAKE="$HOME/.local/bin/cmake"
       export CEI_SUDO="sudo"
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
@@ -58,10 +58,12 @@ jobs:
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
         python -m pip install --upgrade openpmd-api
       fi
-      cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
-        -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-      cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
-        -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+      if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" || "${WARPX_CI_PYTHON_MAIN:-FALSE}" == "TRUE" ]]; then
+        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
+          -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
+          -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+      fi
     displayName: 'Install dependencies'
 
   - script: |

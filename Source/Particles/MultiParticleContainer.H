@@ -353,8 +353,8 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    /** Whether to absorb particles exiting the domain */
-    ParticleBC m_boundary_conditions = ParticleBC::none;
+    /** Controls boundaries for particles exiting the domain */
+    ParticleBoundaries m_boundary_conditions;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,

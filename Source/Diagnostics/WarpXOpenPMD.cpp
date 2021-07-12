@@ -59,12 +59,12 @@ namespace detail
 
         std::string op_parameters;
         for (const auto& kv : operator_parameters) {
-            if (op_parameters.size() > 0u) op_parameters.append(",\n");
+            if (!op_parameters.empty()) op_parameters.append(",\n");
             op_parameters.append(std::string(12, ' '))         /* just pretty alignment */
                     .append("\"").append(kv.first).append("\": ")    /* key */
                     .append("\"").append(kv.second).append("\""); /* value (as string) */
         }
-        if (operator_type.size() > 0u) {
+        if (!operator_type.empty()) {
             options = R"END(
 {
   "adios2": {
@@ -74,13 +74,13 @@ namespace detail
           "type": ")END";
             options += operator_type + "\"";
         }
-        if (operator_type.size() > 0u && op_parameters.size() > 0u) {
+        if (!operator_type.empty() && !op_parameters.empty()) {
             options += R"END(
          ,"parameters": {
 )END";
             options += op_parameters + "}";
         }
-        if (operator_type.size() > 0u)
+        if (!operator_type.empty())
             options += R"END(
         }
       ]
@@ -88,7 +88,7 @@ namespace detail
   }
 }
 )END";
-        if (options.size() == 0u) options = "{}";
+        if (options.empty()) options = "{}";
         return options;
     }
 
@@ -395,7 +395,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     m_Series->setIterationEncoding( m_Encoding );
 
     // input file / simulation setup author
-    if( WarpX::authors.size() > 0u )
+    if( !WarpX::authors.empty())
         m_Series->setAuthor( WarpX::authors );
     // more natural naming for PIC
     m_Series->setMeshesPath( "fields" );
