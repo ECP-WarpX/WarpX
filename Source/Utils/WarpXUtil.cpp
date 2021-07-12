@@ -569,19 +569,31 @@ void ReadBCParams ()
         }
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
             WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller){
+#if (AMREX_SPACEDIM == 3)
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-#ifndef WARPX_DIM_RZ
                 (WarpX::field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
-#endif
+                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[2] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[2] == FieldBoundaryType::Absorbing_SilverMueller)
+                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
+#else
+#ifndef WARPX_DIM_RZ
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
                 (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
                 (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
                 (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
-#if (AMREX_SPACEDIM==3)
-                &&
-                (WarpX::field_boundary_lo[2] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[2] == FieldBoundaryType::Absorbing_SilverMueller)
-#endif
                 , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
+#else
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
+                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
+#endif
+#endif
         }
     }
 #ifdef WARPX_DIM_RZ
