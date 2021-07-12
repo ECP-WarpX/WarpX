@@ -567,6 +567,10 @@ void ReadBCParams ()
                 amrex::Abort(" PEC boundary not implemented for PSATD, yet!");
             }
         }
+    }
+    // temporarily check : If silver mueller is selected for one boundary, it should be
+    // selected at all valid boundaries.
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
             WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller){
 #if (AMREX_SPACEDIM == 3)
