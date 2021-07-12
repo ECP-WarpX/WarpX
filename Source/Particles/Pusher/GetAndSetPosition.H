@@ -105,7 +105,6 @@ struct GetParticlePosition
     {
         const PType& p = m_structs[i];
 #ifdef WARPX_DIM_RZ
-        RType r = p.pos(0);
         x = p.pos(0);
         y = m_theta[i];
         z = p.pos(1);

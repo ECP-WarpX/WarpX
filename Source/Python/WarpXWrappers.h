@@ -11,7 +11,7 @@
 #include <AMReX_Config.H>
 #include <AMReX_REAL.H>
 
-#ifdef BL_USE_MPI
+#ifdef AMREX_USE_MPI
 #   include <mpi.h>
 #endif
 
@@ -34,7 +34,7 @@ extern "C" {
 
     void amrex_init (int argc, char* argv[]);
 
-#ifdef BL_USE_MPI
+#ifdef AMREX_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm);
 #endif
 
@@ -112,6 +112,10 @@ extern "C" {
   amrex::Real warpx_stopTime ();
 
   int warpx_finestLevel ();
+
+  int warpx_getMyProc ();
+  int warpx_getNProcs ();
+
 
   void mypc_Redistribute ();
 
