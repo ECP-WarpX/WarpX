@@ -567,6 +567,22 @@ void ReadBCParams ()
                 amrex::Abort(" PEC boundary not implemented for PSATD, yet!");
             }
         }
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
+            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+#ifndef WARPX_DIM_RZ
+                (WarpX::field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+#endif
+                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
+#if (AMREX_SPACEDIM==3)
+                &&
+                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
+#endif
+                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
+        }
     }
 #ifdef WARPX_DIM_RZ
     // Ensure code aborts if PEC is specified at r=0 for RZ
