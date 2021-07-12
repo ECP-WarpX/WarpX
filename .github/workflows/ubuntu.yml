@@ -188,8 +188,6 @@ jobs:
 
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
-    if: false
-    # dpcpp 2021.3.0 hangs in WarpX.cpp
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
