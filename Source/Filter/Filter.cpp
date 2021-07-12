@@ -27,6 +27,7 @@ using namespace amrex;
 /* \brief Apply stencil on MultiFab (GPU version, 2D/3D).
  * \param dstmf Destination MultiFab
  * \param srcmf source MultiFab
+ * \param[in] lev mesh refinement level
  * \param scomp first component of srcmf on which the filter is applied
  * \param dcomp first component of dstmf on which the filter is applied
  * \param ncomp Number of components on which the filter is applied.
@@ -181,6 +182,7 @@ void Filter::DoFilter (const Box& tbx,
 /* \brief Apply stencil on MultiFab (CPU version, 2D/3D).
  * \param dstmf Destination MultiFab
  * \param srcmf source MultiFab
+ * \param[in] lev mesh refinement level
  * \param scomp first component of srcmf on which the filter is applied
  * \param dcomp first component of dstmf on which the filter is applied
  * \param ncomp Number of components on which the filter is applied.
