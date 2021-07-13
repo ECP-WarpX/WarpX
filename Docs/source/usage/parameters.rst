@@ -224,6 +224,8 @@ Domain Boundary Conditions
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
+    * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
+
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
@@ -511,6 +513,10 @@ Particle initialization
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
     number of particles per theta is at least two times the number of azimuthal modes requested.
     (It is recommended to do a convergence scan of the number of particles per theta)
+
+* ``<species_name>.random_theta`` (`bool`) optional (default `1`)
+    When using RZ geometry, whether to randomize the azimuthal position of particles.
+    This is used when ``<species_name>.injection_style = NUniformPerCell``.
 
 * ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
     Split particles of the species when crossing the boundary from a lower
@@ -1127,20 +1133,31 @@ Collision initialization
 
 WarpX provides a relativistic elastic Monte Carlo binary collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+A non-relativistic Monte Carlo treatment for particles colliding
+with a neutral, uniform background gas is also available. The implementation follows the so-called
+null collision strategy discussed for example in `Birdsall (IEEE Transactions on
+Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
     This is then used in the rest of the input deck;
     in this documentation we use ``<collision_name>`` as a placeholder.
 
-* ``<collision_name>.species`` (`strings`, two species names separated by spaces)
-    The names of two species, between which the collision will be considered.
+* ``<collision_name>.type`` (`string`) optional
+    The type of collsion. The types implemented are ``pairwisecoulomb`` for pairwise Coulomb collisions and
+    ``background_mcc`` for collisions between particles and a neutral background. If not specified, it defaults to ``pairwisecoulomb``.
+
+* ``<collision_name>.species`` (`strings`)
+    If using ``pairwisecoulomb`` type this should be the names of two species,
+    between which the collision will be considered.
     The number of provided ``<collision_name>.species`` should match
     the number of collision names, i.e. ``collisions.collision_names``.
+    If using ``background_mcc`` type this should be the name of the species for
+    which collisions will be included. Only one species name should be given.
 
 * ``<collision_name>.CoulombLog`` (`float`) optional
-    A provided fixed Coulomb logarithm of the collision type
-    ``<collision_name>``.
+    Only for ``pairwisecoulomb``. A provided fixed Coulomb logarithm of the
+    collision type ``<collision_name>``.
     For example, a typical Coulomb logarithm has a form of
     :math:`\ln(\lambda_D/R)`,
     where :math:`\lambda_D` is the Debye length,
@@ -1151,8 +1168,43 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
 * ``<collision_name>.ndt`` (`int`) optional
-    Execute collision every # time steps.
-    The default value is 1.
+    Execute collision every # time steps. The default value is 1.
+
+* ``<collision_name>.background_density`` (`float`)
+    Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.
+
+* ``<collision_name>.background_temperature`` (`float`)
+    Only for ``background_mcc``. The temperature of the neutral background gas in Kelvin.
+
+* ``<collision_name>.background_mass`` (`float`) optional
+    Only for ``background_mcc``. The mass of the background gas in kg. If not
+    given the mass of the colliding species will be used unless ionization is
+    included in which case the mass of the product species will be used.
+
+* ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
+    Only for ``background_mcc``. The MCC scattering processes that should be
+    included. Available options are ``elastic``, ``back`` & ``charge_exchange``
+    for ions and ``elastic``, ``excitationX`` & ``ionization`` for electrons.
+    Multiple excitation events can be included for electrons corresponding to
+    excitation to different levels, the ``X`` above can be changed to a unique
+    identifier for each excitation process. For each scattering process specified
+    a path to a cross-section data file must  also be given. We use
+    ``<scattering_process>`` as a placeholder going forward.
+
+* ``<collision_name>.<scattering_process>_cross_section`` (`string`)
+    Only for ``background_mcc``. Path to the file containing cross-section data
+    for the given scattering processes. The cross-section file must have exactly
+    2 columns of data, the first containing equally spaced energies in eV and the
+    second the corresponding cross-section in :math:`m^2`.
+
+* ``<collision_name>.<scattering_process>_energy`` (`float`)
+    Only for ``background_mcc``. If the scattering process is either
+    ``excitationX`` or ``ionization`` the energy cost of that process must be given in eV.
+
+* ``<collision_name>.ionization_species`` (`float`)
+    Only for ``background_mcc``. If the scattering process is ``ionization`` the
+    produced species must also be given. For example if argon properties is used
+    for the background gas, a species of argon ions should be specified here.
 
 .. _running-cpp-parameters-numerics:
 
