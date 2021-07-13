@@ -160,11 +160,11 @@ public:
     *            by the neutral density.
     */
     ImpactIonizationFilterFunc(
-        MCCProcess mcc_process,
+        MCCProcess const& mcc_process,
         amrex::Real const mass,
         amrex::Real const total_collision_prob,
         amrex::Real const nu_max_norm
-    ) : m_mcc_process(mcc_process), m_mass(mass),
+    ) : m_mcc_process(mcc_process.executor()), m_mass(mass),
         m_total_collision_prob(total_collision_prob),
         m_nu_max_norm(nu_max_norm){ }
 
@@ -209,7 +209,7 @@ public:
     }
 
 private:
-    MCCProcess m_mcc_process;
+    MCCProcess::Executor m_mcc_process;
     amrex::Real m_mass;
     amrex::Real m_total_collision_prob = 0;
     amrex::Real m_nu_max_norm;
