@@ -35,6 +35,8 @@ namespace PhysConst
     static constexpr double xi  = 1.3050122447005176e-52; //(2.*alpha*alpha*ep0*ep0*hbar*hbar*hbar)/(45.*m_e*m_e*m_e*m_e*c*c*c*c*c);
     static constexpr auto xi_c2 = static_cast<amrex::Real>( 1.1728865132395492e-35 ); // This should be usable for single precision, though
     // very close to smallest number possible (1.2e-38)
+
+    static constexpr auto kb   = static_cast<amrex::Real>( 1.380649e-23 );  // Boltzmann's constant, J/K (exact)
 }
 
 #endif
