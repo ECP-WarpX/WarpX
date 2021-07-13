@@ -48,6 +48,11 @@ void ParseGeometryInput()
     getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
+#ifdef WARPX_DIM_RZ
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
+        "Lower bound of radial coordinate in RZ geometry (prob_lo[0]) must be non-negative");
+#endif
+
     pp_geometry.addarr("prob_lo", prob_lo);
     pp_geometry.addarr("prob_hi", prob_hi);
 }
