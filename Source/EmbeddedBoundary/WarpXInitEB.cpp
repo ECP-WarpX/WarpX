@@ -256,16 +256,16 @@ WarpX::ScaleAreas() {
  * \brief Compute the level set function used for particle-boundary interaction.
  */
 void
-WarpX::ComputeLevelset () {
+WarpX::ComputeDistanceToEB () {
 #ifdef AMREX_USE_EB
-    BL_PROFILE("ComputeLevelset");
+    BL_PROFILE("ComputeDistanceToEB");
     if (m_eb_if_parser) {
         ParserIF pif(*m_eb_if_parser);
         auto gshop = amrex::EB2::makeShop(pif);
-        amrex::FillImpFunc(*m_level_set[maxLevel()], gshop, Geom(maxLevel()));
-        m_level_set[maxLevel()]->negate(m_level_set[maxLevel()]->nGrow()); // signed distance f = - imp. f.
+        amrex::FillImpFunc(*m_distance_to_eb[maxLevel()], gshop, Geom(maxLevel()));
+        m_distance_to_eb[maxLevel()]->negate(m_distance_to_eb[maxLevel()]->nGrow()); // signed distance f = - imp. f.
     } else {
-        m_level_set[maxLevel()]->setVal(100.0); // some positive value
+        m_distance_to_eb[maxLevel()]->setVal(100.0); // some positive value
     }
 #endif
 }

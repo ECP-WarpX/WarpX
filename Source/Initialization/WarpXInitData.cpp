@@ -131,7 +131,7 @@ WarpX::InitData ()
     ComputeFaceAreas();
     ScaleEdges();
     ScaleAreas();
-    ComputeLevelset();
+    ComputeDistanceToEB();
 #endif
     ComputeMaxStep();
 

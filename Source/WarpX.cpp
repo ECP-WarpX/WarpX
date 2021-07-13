@@ -276,7 +276,7 @@ WarpX::WarpX ()
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
-    m_level_set.resize(nlevs_max);
+    m_distance_to_eb.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
 
@@ -1510,7 +1510,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
       constexpr int nc_ls = 1;
       constexpr int ng_ls = 2;
-      m_level_set[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_level_set"));
+      m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
     }
 #endif
 

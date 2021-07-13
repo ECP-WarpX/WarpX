@@ -1,6 +1,6 @@
 CEXE_headers += ParticleScraper.H
 CEXE_headers += ParticleBoundaryProcess.H
-CEXE_headers += LevelSet.H
+CEXE_headers += DistanceToEB.H
 
 CEXE_sources += WarpXInitEB.cpp
 

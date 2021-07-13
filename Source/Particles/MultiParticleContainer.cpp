@@ -1599,11 +1599,11 @@ void MultiParticleContainer::CheckQEDProductSpecies()
 
 }
 
-void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& level_set)
+void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
 {
 #if AMREX_USE_EB
     for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, level_set, ParticleBoundaryProcess::Absorb());
+        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
     }
 #endif
 }

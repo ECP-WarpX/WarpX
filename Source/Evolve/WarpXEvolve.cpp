@@ -280,7 +280,7 @@ WarpX::Evolve (int numsteps)
 
         // interact with particles with EB walls (if present)
 #ifdef AMREX_USE_EB
-        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_level_set));
+        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
 #endif
         if (sort_intervals.contains(step+1)) {
             amrex::Print() << "re-sorting particles \n";

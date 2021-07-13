@@ -4,14 +4,14 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef LEVELSET_H_
-#define LEVELSET_H_
+#ifndef DISTANCETOEB_H_
+#define DISTANCETOEB_H_
 
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_Array.H>
 
-namespace LevelSet
+namespace DistanceToEB
 {
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -61,8 +61,8 @@ void compute_weights (const amrex::ParticleReal x,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-amrex::Real interp_ls (int i, int j, int k, const amrex::Real W[AMREX_SPACEDIM][2],
-                       amrex::Array4<const amrex::Real> const& phi) noexcept
+amrex::Real interp_distance (int i, int j, int k, const amrex::Real W[AMREX_SPACEDIM][2],
+                             amrex::Array4<const amrex::Real> const& phi) noexcept
 {
     amrex::Real phi_value = 0;
 #if (defined WARPX_DIM_3D)
