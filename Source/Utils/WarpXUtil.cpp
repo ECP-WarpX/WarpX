@@ -49,8 +49,18 @@ void ParseGeometryInput()
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
 #ifdef WARPX_DIM_RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
-        "Lower bound of radial coordinate in RZ geometry (prob_lo[0]) must be non-negative");
+    ParmParse pp_algo("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
+    }
+    else
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
+    }
 #endif
 
     pp_geometry.addarr("prob_lo", prob_lo);
