@@ -458,7 +458,8 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                          particle_diags[i].m_uniform_stride);
       ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                 compileParser<7>(particle_diags[i].m_particle_filter_parser.get()),
+                                 compileParser<ParticleDiag::m_nvars>
+                                     (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass());
       parser_filter.m_units = InputUnits::SI;
       GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
