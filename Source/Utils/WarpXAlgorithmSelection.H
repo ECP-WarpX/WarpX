@@ -103,7 +103,8 @@ struct FieldBoundaryType {
         PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
         Damped = 4,   // Fields in the guard cells are damped for PSATD
                      //in the moving window direction
-        None = 5     // The fields values at the boundary are not updated. This is
+        Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
+        None = 6     // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
     };
 };

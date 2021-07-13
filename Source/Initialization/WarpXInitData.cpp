@@ -164,6 +164,11 @@ WarpX::InitData ()
 
     if (restart_chkfile.empty())
     {
+        // Loop through species and calculate their space-charge field
+        bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+        ComputeSpaceChargeField(reset_fields);
+
+        // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
 
         // Write reduced diagnostics before the first iteration.
@@ -212,10 +217,6 @@ WarpX::InitFromScratch ()
 
     mypc->AllocData();
     mypc->InitData();
-
-    // Loop through species and calculate their space-charge field
-    bool const reset_fields = false; // Do not erase previous user-specified values on the grid
-    ComputeSpaceChargeField(reset_fields);
 
     InitPML();
 }

@@ -22,7 +22,7 @@ public:
     // Apply stencil on MultiFab.
     // Guard cells are handled inside this function
     void ApplyStencil(amrex::MultiFab& dstmf,
-                              const amrex::MultiFab& srcmf, int scomp=0,
+                              const amrex::MultiFab& srcmf, const int lev, int scomp=0,
                               int dcomp=0, int ncomp=10000);
 
     // Apply stencil on a FabArray.
