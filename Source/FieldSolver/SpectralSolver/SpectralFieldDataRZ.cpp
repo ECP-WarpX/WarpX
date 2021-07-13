@@ -545,7 +545,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         }
         amrex::Real wt = amrex::second();
 
-        amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
+        amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
         FABZBackwardTransform(mfi, realspace_bx, field_index, tempHTransformedSplit, is_nodal_z);
 
@@ -553,7 +553,43 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf does not.
         multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(tempHTransformedSplit[mfi], field_mf_copy[mfi]);
-        field_mf[mfi].copy<amrex::RunOn::Device>(field_mf_copy[mfi], 0, i_comp*ncomp, ncomp);
+
+        amrex::Array4<amrex::Real> const & field_mf_array = field_mf[mfi].array();
+        amrex::Array4<amrex::Real> const & field_mf_copy_array = field_mf_copy[mfi].array();
+
+        // The box will be extended to include the guards cells below the axis
+        // so that they can be filled in. This will not be a simple copy of the
+        // fields since the signs will change when there is anti-symmetry.
+        amrex::Box const& realspace_bx_with_guards = field_mf[mfi].box();
+        const int* lo_with_guards = realspace_bx_with_guards.loVect();
+
+        // Grow the lower side of realspace_bx by the number of guard cells.
+        // This assumes that the box extends over the full extent radially, so
+        // lo_with_guards[0] will be equal to minus the number of guard cells radially.
+        const int nguard_r = -lo_with_guards[0];
+        realspace_bx.growLo(0, nguard_r);
+
+        // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
+        realspace_bx &= realspace_bx_with_guards;
+
+        ParallelFor(realspace_bx, ncomp,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
+            int ii = i;
+            amrex::Real sign = +1._rt;
+            if (i < 0) {
+                ii = -i - 1;
+                if (icomp == 0) {
+                    // Mode zero is symmetric
+                    sign = +1._rt;
+                } else {
+                    // Odd modes are anti-symmetric
+                    int imode = (icomp + 1)/2;
+                    sign = std::pow(-1._rt, imode);
+                }
+            }
+            int ic = icomp + i_comp;
+            field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp);
+        });
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -593,7 +629,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         }
         amrex::Real wt = amrex::second();
 
-        amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
+        amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
         FABZBackwardTransform(mfi, realspace_bx, field_index_r, tempHTransformedSplit_p, is_nodal_z);
         FABZBackwardTransform(mfi, realspace_bx, field_index_t, tempHTransformedSplit_m, is_nodal_z);
@@ -610,15 +646,43 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         amrex::Array4<amrex::Real> const & field_mf_r_copy_array = field_mf_r_copy[mfi].array();
         amrex::Array4<amrex::Real> const & field_mf_t_copy_array = field_mf_t_copy[mfi].array();
 
+        // The box will be extended to include the guards cells below the axis
+        // so that they can be filled in. This will not be a simple copy of the
+        // fields since the signs will change when there is anti-symmetry.
+        amrex::Box const& realspace_bx_with_guards = field_mf_r[mfi].box();
+        const int* lo_with_guards = realspace_bx_with_guards.loVect();
+
+        // Grow the lower side of realspace_bx by the number of guard cells.
+        // This assumes that the box extends over the full extent radially, so
+        // lo_with_guards[0] will be equal to minus the number of guard cells radially.
+        const int nguard_r = -lo_with_guards[0];
+        realspace_bx.growLo(0, nguard_r);
+
+        // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
+        realspace_bx &= realspace_bx_with_guards;
+
         ParallelFor(realspace_bx, 2*n_rz_azimuthal_modes-1,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
+            int ii = i;
+            amrex::Real sign = +1._rt;
+            if (i < 0) {
+                ii = -i - 1;
+                if (icomp == 0) {
+                    // Mode zero is anti-symmetric
+                    sign = -1._rt;
+                } else {
+                    // Even modes are anti-symmetric
+                    int imode = (icomp + 1)/2;
+                    sign = std::pow(-1._rt, imode+1);
+                }
+            }
             if (icomp == 0) {
-                // mode 0
-                field_mf_r_array(i,j,k,icomp) = field_mf_r_copy_array(i,j,k,icomp);
-                field_mf_t_array(i,j,k,icomp) = field_mf_t_copy_array(i,j,k,icomp);
+                // mode zero
+                field_mf_r_array(i,j,k,icomp) = sign*field_mf_r_copy_array(ii,j,k,icomp);
+                field_mf_t_array(i,j,k,icomp) = sign*field_mf_t_copy_array(ii,j,k,icomp);
             } else {
-                field_mf_r_array(i,j,k,icomp) = field_mf_r_copy_array(i,j,k,icomp+1);
-                field_mf_t_array(i,j,k,icomp) = field_mf_t_copy_array(i,j,k,icomp+1);
+                field_mf_r_array(i,j,k,icomp) = sign*field_mf_r_copy_array(ii,j,k,icomp+1);
+                field_mf_t_array(i,j,k,icomp) = sign*field_mf_t_copy_array(ii,j,k,icomp+1);
             }
         });
 
@@ -651,10 +715,18 @@ SpectralFieldDataRZ::InitFilter (amrex::IntVect const & filter_npass_each_dir, b
 
 /* \brief Apply K-space filtering on a scalar */
 void
-SpectralFieldDataRZ::ApplyFilter (int const field_index)
+SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
         auto const & filter_r_arr = filter_r.dataPtr();
@@ -674,15 +746,31 @@ SpectralFieldDataRZ::ApplyFilter (int const field_index)
             int const ir = i + nr*mode;
             fields_arr(i,j,k,ic) *= filter_r_arr[ir]*filter_z_arr[j];
         });
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
 /* \brief Apply K-space filtering on a vector */
 void
-SpectralFieldDataRZ::ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
+                                  int const field_index2, int const field_index3)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
         auto const & filter_r_arr = filter_r.dataPtr();
@@ -706,5 +794,12 @@ SpectralFieldDataRZ::ApplyFilter (int const field_index1, int const field_index2
             fields_arr(i,j,k,ic2) *= filter_r_arr[ir]*filter_z_arr[j];
             fields_arr(i,j,k,ic3) *= filter_r_arr[ir]*filter_z_arr[j];
         });
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }

@@ -10,6 +10,7 @@
 #include "MCCProcess.H"
 #include "Utils/WarpXConst.H"
 #include <AMReX_Random.H>
+#include <AMReX_REAL.H>
 
 /** @file
  *
@@ -24,12 +25,13 @@ void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
     using std::sqrt;
     using std::cos;
     using std::sin;
+    using namespace amrex::literals;
 
     // generate random unit vector in 3 dimensions
-    // https://math.stackexchange.com/questions/44689/how-to-find-a-random-axis-or-unit-vector-in-3d
-    amrex::Real theta = amrex::Random(engine) * 2.0 * MathConst::pi;
-    z = 2.0 * amrex::Random(engine) - 1.0;
-    amrex::Real xy = sqrt(1 - z*z);
+    // https://mathworld.wolfram.com/SpherePointPicking.html
+    amrex::Real const theta = amrex::Random(engine) * 2.0_rt * MathConst::pi;
+    z = 2.0_rt * amrex::Random(engine) - 1.0_rt;
+    amrex::Real const xy = sqrt(1_rt - z*z);
     x = xy * cos(theta);
     y = xy * sin(theta);
 }
@@ -82,7 +84,7 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
     uz -= uCOM_z;
 
     // istropically scatter the particle
-    amrex::Real mag = sqrt(ux*ux + uy*uy + uz*uz);
+    amrex::Real const mag = sqrt(ux*ux + uy*uy + uz*uz);
     RandomizeVelocity(ux, uy, uz, mag, engine);
 
     // transform back to lab frame
@@ -108,9 +110,10 @@ void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
                       const amrex::ParticleReal uCOM_z)
 {
     // transform to COM frame, reverse particle velocity and transform back
-    ux = -1.0 * ux + 2.0 * uCOM_x;
-    uy = -1.0 * uy + 2.0 * uCOM_y;
-    uz = -1.0 * uz + 2.0 * uCOM_z;
+    using namespace amrex::literals;
+    ux = -1.0_prt * ux + 2.0_prt * uCOM_x;
+    uy = -1.0_prt * uy + 2.0_prt * uCOM_y;
+    uz = -1.0_prt * uz + 2.0_prt * uCOM_z;
 }
 
 
@@ -192,7 +195,7 @@ public:
 
         // calculate kinetic energy
         const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
-        const ParticleReal E_coll = 0.5 * m_mass * v_coll2 / PhysConst::q_e;
+        const ParticleReal E_coll = 0.5_prt * m_mass * v_coll2 / PhysConst::q_e;
         const ParticleReal v_coll = sqrt(v_coll2);
 
         // get collision cross-section
@@ -244,9 +247,9 @@ public:
     * standard from the FilterCopyTransfrom::filterCopyTransformParticles
     * function.
     *
-    * @param[in,out] dst1 target species 1 (either electrons or positrons)
-    * @param[in,out] dst2 target species 2 (either electrons or positrons)
-    * @param[in] src source species (photons)
+    * @param[in,out] dst1 target species 1 (electrons)
+    * @param[in,out] dst2 target species 2 (ions)
+    * @param[in] src source species (electrons)
     * @param[in] i_src particle index of the source species
     * @param[in] i_dst1 particle index of target species 1
     * @param[in] i_dst2 particle index of target species 2
@@ -276,14 +279,14 @@ public:
 
         // calculate kinetic energy
         const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
-        const ParticleReal E_coll = 0.5 * m_mass1 * v_coll2 / PhysConst::q_e;
+        const ParticleReal E_coll = 0.5_prt * m_mass1 * v_coll2 / PhysConst::q_e;
 
         // get the left over energy
         amrex::Real E_remaining = E_coll - m_energy_cost;
 
         // each electron gets half the energy (could change this later)
         amrex::Real vp = sqrt(
-            2.0 / m_mass1 * PhysConst::q_e * E_remaining / 2.0
+            2.0_prt / m_mass1 * PhysConst::q_e * E_remaining / 2.0_prt
         );
 
         // isotropically scatter electrons
@@ -291,9 +294,9 @@ public:
         RandomizeVelocity(e_ux, e_uy, e_uz, vp, engine);
 
         // get velocities for the ion from a Maxwellian distribution
-        i_ux = m_ion_vel_std * RandomNormal(0, 1.0, engine);
-        i_uy = m_ion_vel_std * RandomNormal(0, 1.0, engine);
-        i_uz = m_ion_vel_std * RandomNormal(0, 1.0, engine);
+        i_ux = m_ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
+        i_uy = m_ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
+        i_uz = m_ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
     }
 
 private:

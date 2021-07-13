@@ -92,8 +92,8 @@ mark_as_advanced(WarpX_PARSER_DEPTH)
 
 option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 
-# change the default build type to RelWithDebInfo (or Release) instead of Debug
-set_default_build_type("RelWithDebInfo")
+# change the default build type to Release (or RelWithDebInfo) instead of Debug
+set_default_build_type("Release")
 
 # Option to enable interprocedural optimization
 # (also know as "link-time optimization" or "whole program optimization")

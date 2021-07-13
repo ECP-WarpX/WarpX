@@ -535,7 +535,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
-            self.psatd_use_damp_fields_in_z_guard = kw.pop('warpx_use_damp_fields_in_z_guard', None)
 
     def initialize_inputs(self):
 
@@ -551,7 +550,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
-            pywarpx.psatd.use_damp_fields_in_z_guard = self.psatd_use_damp_fields_in_z_guard
 
             if self.grid.guard_cells is not None:
                 pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
@@ -768,6 +766,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_particles_wt = kw.pop('warpx_costs_heuristic_particles_wt', None)
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
+        self.amr_check_input = kw.pop('warpx_amr_check_input', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
 
@@ -806,6 +805,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
+
+        pywarpx.amr.check_input = self.amr_check_input
 
         particle_shape = self.particle_shape
         for s in self.species:

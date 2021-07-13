@@ -14,6 +14,7 @@
 #include "WarpX.H"
 
 #include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
 #include <string>
@@ -91,6 +92,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 amrex::Real
 BackgroundMCCCollision::get_nu_max(amrex::Gpu::ManagedVector<MCCProcess*> const& mcc_processes)
 {
+    using namespace amrex::literals;
     amrex::Real nu, nu_max = 0.0;
 
     for (double E = 1e-4; E < 5000; E+=0.2) {
@@ -104,7 +106,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Gpu::ManagedVector<MCCProcess*> const&
 
         // calculate collision frequency
         nu = (
-              m_background_density * std::sqrt(2.0 / m_mass1 * PhysConst::q_e)
+              m_background_density * std::sqrt(2.0_rt / m_mass1 * PhysConst::q_e)
               * sigma_E * std::sqrt(E)
               );
         if (nu > nu_max) {
@@ -118,6 +120,7 @@ void
 BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
 {
     WARPX_PROFILE("BackgroundMCCCollision::doCollisions()");
+    using namespace amrex::literals;
 
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
@@ -139,12 +142,12 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
 
         // calculate total collision probability
         auto coll_n = m_nu_max * dt;
-        m_total_collision_prob = 1.0 - std::exp(-coll_n);
+        m_total_collision_prob = 1.0_rt - std::exp(-coll_n);
 
         // dt has to be small enough that a linear expansion of the collision
         // probability is sufficiently accurately, otherwise the MCC results
         // will be very heavily affected by small changes in the timestep
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1,
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1_rt,
             "dt is too large to ensure accurate MCC results"
         );
 
@@ -154,9 +157,9 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
 
             // calculate total ionization probability
             auto coll_n_ioniz = m_nu_max_ioniz * dt;
-            m_total_collision_prob_ioniz = 1.0 - std::exp(-coll_n_ioniz);
+            m_total_collision_prob_ioniz = 1.0_rt - std::exp(-coll_n_ioniz);
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1,
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_rt,
                 "dt is too large to ensure accurate MCC results"
             );
 
@@ -180,7 +183,8 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     }
 
     // Loop over refinement levels
-    for (int lev = 0; lev <= species1.finestLevel(); ++lev) {
+    auto const flvl = species1.finestLevel();
+    for (int lev = 0; lev <= flvl; ++lev) {
 
         // firstly loop over particles box by box and do all particle conserving
         // scattering
@@ -207,6 +211,8 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
 void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 ( WarpXParIter& pti )
 {
+    using namespace amrex::literals;
+
     // So that CUDA code gets its intrinsic, not the host-only C++ library version
     using std::sqrt;
 
@@ -247,9 +253,9 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
 
                               // get velocities of gas particles from a Maxwellian distribution
-                              ua_x = vel_std * amrex::RandomNormal(0, 1.0, engine);
-                              ua_y = vel_std * amrex::RandomNormal(0, 1.0, engine);
-                              ua_z = vel_std * amrex::RandomNormal(0, 1.0, engine);
+                              ua_x = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
+                              ua_y = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
+                              ua_z = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
 
                               // calculate the center of momentum velocity
                               uCOM_x = (mass1 * ux[ip] + mass_a * ua_x) / (mass1 + mass_a);
@@ -266,7 +272,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               // account for.
                               if (mass_a / mass1 > 1e3) {
                                   v_coll2 = ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip];
-                                  E_coll = 0.5 * mass1 * v_coll2 / PhysConst::q_e;
+                                  E_coll = 0.5_rt * mass1 * v_coll2 / PhysConst::q_e;
                               }
                               else {
                                   v_coll2 = (
@@ -275,7 +281,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                              + (uz[ip] - ua_z)*(uz[ip] - ua_z)
                                              );
                                   E_coll = (
-                                            0.5 * mass1 * mass_a / (mass1 + mass_a) * v_coll2
+                                            0.5_rt * mass1 * mass_a / (mass1 + mass_a) * v_coll2
                                             / PhysConst::q_e
                                             );
                               }
@@ -311,7 +317,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   else if (scattering_process.m_type == MCCProcessType::EXCITATION) {
                                       // get the new velocity magnitude
                                       amrex::Real vp = sqrt(
-                                                            2.0 / mass1 * PhysConst::q_e
+                                                            2.0_rt / mass1 * PhysConst::q_e
                                                             * (E_coll - scattering_process.m_energy_penalty)
                                                             );
                                       RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
