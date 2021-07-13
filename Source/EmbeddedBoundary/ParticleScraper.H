@@ -13,6 +13,43 @@
 
 #include <EmbeddedBoundary/DistanceToEB.H>
 
+/**
+ * \brief Interact particles with the embedded boundary walls.
+ *
+ *  This function detects which particles have entered into the region
+ *  covered by the embedded boundaries and applies an operation on those
+ *  that have. Boundary collision detection is performed using a signed
+ *  distance function, which is generated automatically when WarpX is
+ *  compiled with EB support.
+ *
+ *  The operation to be performed is specified by the callable function
+ *  passed in to this function as an argument. This function can access the
+ *  position at which the particle hit the boundary, and also the associated
+ *  normal vector. Particles can be `absorbed` by setting their ids to negative
+ *  to flag them for removal. Likewise, the can be reflected back into the domain
+ *  by modifying their data appropriately and leaving their ids alone.
+ *
+ *  This version operates only at the specified level.
+ *
+ * \tparam pc a type of amrex ParticleContainer
+ * \tparam F a callable type, e.g. a lambda function or functor
+ *
+ * \param pc the particle container to test for boundary interactions.
+ * \param distance_to_eb a set of MultiFabs that store the signed distance function
+ * \param lev the mesh refinement level to work on.
+ * \param f the callable that defines what to do when a particle hits the boundary.
+ *
+ *        The form of the callable should model:
+ *        template <typename PData>
+ *        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+ *        void operator() (const PData& ptd, int i,
+ *                         const amrex::RealVect& pos, const amrex::RealVect& normal,
+ *                         amrex::RandomEngine const& engine);
+ *
+ *        where ptd is the particle tile, i the index of the particle operated on,
+ *        pos and normal the location of the collision and the boundary normal vector.
+ *        engine is for random number generation, if needed.
+ */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
@@ -20,6 +57,42 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
 }
 
+/**
+ * \brief Interact particles with the embedded boundary walls.
+ *
+ *  This function detects which particles have entered into the region
+ *  covered by the embedded boundaries and applies an operation on those
+ *  that have. Boundary collision detection is performed using a signed
+ *  distance function, which is generated automatically when WarpX is
+ *  compiled with EB support.
+ *
+ *  The operation to be performed is specified by the callable function
+ *  passed in to this function as an argument. This function can access the
+ *  position at which the particle hit the boundary, and also the associated
+ *  normal vector. Particles can be `absorbed` by setting their ids to negative
+ *  to flag them for removal. Likewise, the can be reflected back into the domain
+ *  by modifying their data appropriately and leaving their ids alone.
+ *
+ *  This version operates over all the levels in the pc.
+ *
+ * \tparam pc a type of amrex ParticleContainer
+ * \tparam F a callable type, e.g. a lambda function or functor
+ *
+ * \param pc the particle container to test for boundary interactions.
+ * \param distance_to_eb a set of MultiFabs that store the signed distance function
+ * \param f the callable that defines what to do when a particle hits the boundary.
+ *
+ *        The form of the callable should model:
+ *        template <typename PData>
+ *        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+ *        void operator() (const PData& ptd, int i,
+ *                         const amrex::RealVect& pos, const amrex::RealVect& normal,
+ *                         amrex::RandomEngine const& engine);
+ *
+ *        where ptd is the particle tile, i the index of the particle operated on,
+ *        pos and normal the location of the collision and the boundary normal vector.
+ *        engine is for random number generation, if needed.
+ */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
@@ -27,6 +100,44 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
 }
 
+/**
+ * \brief Interact particles with the embedded boundary walls.
+ *
+ *  This function detects which particles have entered into the region
+ *  covered by the embedded boundaries and applies an operation on those
+ *  that have. Boundary collision detection is performed using a signed
+ *  distance function, which is generated automatically when WarpX is
+ *  compiled with EB support.
+ *
+ *  The operation to be performed is specified by the callable function
+ *  passed in to this function as an argument. This function can access the
+ *  position at which the particle hit the boundary, and also the associated
+ *  normal vector. Particles can be `absorbed` by setting their ids to negative
+ *  to flag them for removal. Likewise, the can be reflected back into the domain
+ *  by modifying their data appropriately and leaving their ids alone.
+ *
+ *  This version operates only at the specified levels.
+ *
+ * \tparam pc a type of amrex ParticleContainer
+ * \tparam F a callable type, e.g. a lambda function or functor
+ *
+ * \param pc the particle container to test for boundary interactions.
+ * \param distance_to_eb a set of MultiFabs that store the signed distance function
+ * \param lev_min the minimum mesh refinement level to work on.
+ * \param lev_max the maximum mesh refinement level to work on.
+ * \param f the callable that defines what to do when a particle hits the boundary.
+ *
+ *        The form of the callable should model:
+ *        template <typename PData>
+ *        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+ *        void operator() (const PData& ptd, int i,
+ *                         const amrex::RealVect& pos, const amrex::RealVect& normal,
+ *                         amrex::RandomEngine const& engine);
+ *
+ *        where ptd is the particle tile, i the index of the particle operated on,
+ *        pos and normal the location of the collision and the boundary normal vector.
+ *        engine is for random number generation, if needed.
+ */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
