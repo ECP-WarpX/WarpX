@@ -1853,8 +1853,6 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
 
-    const bool pml_dive_cleaning = false;
-    const bool pml_divb_cleaning = false;
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
                                                 dm,
@@ -1873,9 +1871,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_do_time_averaging,
                                                 J_linear_in_time,
                                                 do_dive_cleaning,
-                                                do_divb_cleaning,
-                                                pml_dive_cleaning,
-                                                pml_divb_cleaning);
+                                                do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
 }
 #   endif
