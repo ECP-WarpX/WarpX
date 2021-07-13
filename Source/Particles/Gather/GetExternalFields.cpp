@@ -29,6 +29,26 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
         m_yfield_partparser = getParser(mypc.m_Ey_particle_parser);
         m_zfield_partparser = getParser(mypc.m_Ez_particle_parser);
     }
+    else if (mypc.m_E_ext_particle_s=="repeated_plasma_lens")
+    {
+        m_type = RepeatedPlasmaLens;
+        m_dt = warpx.getdt(a_pti.GetLevel());
+        m_get_position = GetParticlePosition(a_pti, a_offset);
+        auto& attribs = a_pti.GetAttribs();
+        m_ux = attribs[PIdx::uy].dataPtr() + a_offset;
+        m_uy = attribs[PIdx::uz].dataPtr() + a_offset;
+        m_uz = attribs[PIdx::uz].dataPtr() + a_offset;
+        m_repeated_plasma_lens_period = mypc.m_repeated_plasma_lens_period;
+        int const n_lenses = static_cast<int>(mypc.m_repeated_plasma_lens_starts.size());
+        m_repeated_plasma_lens_starts.resize(n_lenses);
+        m_repeated_plasma_lens_lengths.resize(n_lenses);
+        m_repeated_plasma_lens_strengths.resize(n_lenses);
+        for (int i=0 ; i < n_lenses ; i++) {
+            m_repeated_plasma_lens_starts[i] = mypc.m_repeated_plasma_lens_starts[i];
+            m_repeated_plasma_lens_lengths[i] = mypc.m_repeated_plasma_lens_lengths[i];
+            m_repeated_plasma_lens_strengths[i] = mypc.m_repeated_plasma_lens_strengths[i];
+        }
+    }
 }
 
 GetExternalBField::GetExternalBField (const WarpXParIter& a_pti, int a_offset) noexcept

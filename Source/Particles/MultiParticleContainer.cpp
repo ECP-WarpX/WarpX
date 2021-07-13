@@ -218,6 +218,16 @@ MultiParticleContainer::ReadParameters ()
 
         }
 
+        // if the input string for E_ext_particle_s is
+        // "repeated_plasma_lens" then the plasma lens properties
+        // must be provided in the input file.
+        if (m_E_ext_particle_s == "repeated_plasma_lens") {
+            queryWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_starts", m_repeated_plasma_lens_starts);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", m_repeated_plasma_lens_lengths);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_strengths", m_repeated_plasma_lens_strengths);
+        }
+
 
         // particle species
         pp_particles.queryarr("species_names", species_names);
