@@ -511,6 +511,8 @@ Particle initialization
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
       ``<species_name>.num_particles_per_cell`` (`double`)
 
+    * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
+
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
