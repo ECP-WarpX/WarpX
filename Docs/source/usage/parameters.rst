@@ -1753,8 +1753,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given
     dimension must be a multiple of the ``coarsening_ratio`` multiplied by ``numprocs`` in that dimension.
 
-* ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
+* ``<diag_name>.file_prefix`` (`string`) optional (default `diags/<diag_name>`)
     Root for output file names. Supports sub-directories.
+
+* ``<diag_name>.file_min_digits`` (`int`) optional (default `5`)
+    The minimum number of digits used for the iteration number appended to the diagnostic file names.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
     Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.

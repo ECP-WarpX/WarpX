@@ -53,7 +53,7 @@ FlushFormatSensei::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, bool plot_raw_fields,
+    const std::string prefix, int /*file_min_digits*/, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
     bool /*isBTD*/, int /*snapshotID*/,
     const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/) const
