@@ -66,7 +66,7 @@ namespace {
         }
 
     private:
-        amrex::ParserExecutor<3> m_parser;
+        amrex::ParserExecutor<3> m_parser; //! function parser with three arguments (x,y,z)
     };
 }
 #endif
