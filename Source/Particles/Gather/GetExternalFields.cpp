@@ -43,11 +43,16 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
         m_repeated_plasma_lens_starts.resize(m_n_lenses);
         m_repeated_plasma_lens_lengths.resize(m_n_lenses);
         m_repeated_plasma_lens_strengths.resize(m_n_lenses);
-        for (int i=0 ; i < m_n_lenses ; i++) {
-            m_repeated_plasma_lens_starts[i] = mypc.m_repeated_plasma_lens_starts[i];
-            m_repeated_plasma_lens_lengths[i] = mypc.m_repeated_plasma_lens_lengths[i];
-            m_repeated_plasma_lens_strengths[i] = mypc.m_repeated_plasma_lens_strengths[i];
-        }
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                   mypc.m_repeated_plasma_lens_starts.begin(), mypc.m_repeated_plasma_lens_starts.end(),
+                   m_repeated_plasma_lens_starts.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                   mypc.m_repeated_plasma_lens_lengths.begin(), mypc.m_repeated_plasma_lens_lengths.end(),
+                   m_repeated_plasma_lens_lengths.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                   mypc.m_repeated_plasma_lens_strengths.begin(), mypc.m_repeated_plasma_lens_strengths.end(),
+                   m_repeated_plasma_lens_strengths.begin());
+
     }
 }
 
