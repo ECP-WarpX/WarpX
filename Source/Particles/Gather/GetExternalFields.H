@@ -35,6 +35,7 @@ struct GetExternalField
     amrex::Vector<amrex::Real> m_repeated_plasma_lens_starts;
     amrex::Vector<amrex::Real> m_repeated_plasma_lens_lengths;
     amrex::Vector<amrex::Real> m_repeated_plasma_lens_strengths;
+    int m_n_lenses;
     amrex::Real m_dt;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
@@ -78,7 +79,7 @@ struct GetExternalField
 
             // This assumes that zl > 0.
             int i_lens = static_cast<int>(std::floor(zl/m_repeated_plasma_lens_period));
-            i_lens = i_lens % static_cast<int>(m_repeated_plasma_lens_starts.size());
+            i_lens = i_lens % m_n_lenses;
             amrex::Real const lens_start = m_repeated_plasma_lens_starts[i_lens] + i_lens*m_repeated_plasma_lens_period;
             amrex::Real const lens_end = lens_start + m_repeated_plasma_lens_lengths[i_lens];
 
