@@ -434,7 +434,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
-    
+
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
     }
