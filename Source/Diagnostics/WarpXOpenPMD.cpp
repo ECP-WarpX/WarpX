@@ -302,19 +302,22 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   //
   // OpenPMD supports timestepped names
   //
-  if (m_Encoding == openPMD::IterationEncoding::fileBased)
-      filename = filename.append("_%06T");
+  if (m_Encoding == openPMD::IterationEncoding::fileBased) {
+      std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
+      filename = filename.append(fileSuffix);
+  }
   filename.append(".").append(m_OpenPMDFileType);
   filepath.append(filename);
   return filename;
 }
 
-void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix,
+void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_min_digits,
                                 bool isBTD)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
     m_dirPrefix = dirPrefix;
+    m_file_min_digits = file_min_digits;
 
     if( ! isBTD ) {
         if (m_CurrentStep >= ts) {

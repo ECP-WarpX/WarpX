@@ -112,7 +112,7 @@ FlushFormatOpenPMD::WriteToFile (
         output_iteration = snapshotID;
 
     // Set step and output directory name.
-    m_OpenPMDPlotWriter->SetStep(output_iteration, prefix, isBTD);
+    m_OpenPMDPlotWriter->SetStep(output_iteration, prefix, file_min_digits, isBTD);
 
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
