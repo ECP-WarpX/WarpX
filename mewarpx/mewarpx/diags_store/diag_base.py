@@ -3,7 +3,7 @@ import logging
 import time
 
 import numpy as np
-import psutil
+# import psutil
 
 from pywarpx import callbacks
 
@@ -290,10 +290,11 @@ class TextDiag(WarpXDiagnostic):
 
         Returns string.
         """
-        memstr = ""
-        for name in namedtuple._fields:
-            value = getattr(namedtuple, name)
-            if name != 'percent':
-                value = psutil._common.bytes2human(value)
-            memstr += '%-10s : %7s\n' % (name.capitalize(), value)
-        return memstr
+        raise NotImplementedError("Need new iproc implementation to use.")
+        # memstr = ""
+        # for name in namedtuple._fields:
+        #     value = getattr(namedtuple, name)
+        #     if name != 'percent':
+        #         value = psutil._common.bytes2human(value)
+        #     memstr += '%-10s : %7s\n' % (name.capitalize(), value)
+        # return memstr

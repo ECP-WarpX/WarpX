@@ -85,6 +85,7 @@ jobs:
             . venv/bin/activate
             cd mewarpx
             mkdir test-reports
+            export OMP_NUM_THREADS=1
             pytest --junitxml=test-reports/junit.xml --cov=mewarpx --cov-report=xml
 
       - store_test_results:
