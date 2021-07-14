@@ -418,8 +418,4 @@ PMLPsatdAlgorithm::VayDeposition (const int /*lev*/,
     amrex::Abort("Vay deposition not implemented for PML PSATD");
 }
 
-int PMLPsatdAlgorithm::getRequiredNumberOfFields() const {
-    return m_spectral_index.n_fields;
-}
-
 #endif // WARPX_USE_PSATD

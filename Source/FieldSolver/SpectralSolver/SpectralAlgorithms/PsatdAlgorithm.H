@@ -68,14 +68,6 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
 
         /**
-         * \brief Returns the number of fields stored in spectral space
-         */
-        virtual int getRequiredNumberOfFields () const override final
-        {
-            return m_spectral_index.n_fields;
-        };
-
-        /**
          * \brief Initializes the coefficients used in \c pushSpectralFields to update the E and B fields
          *
          * \param[in] spectral_kspace spectral space

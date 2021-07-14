@@ -44,7 +44,6 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
 
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields() const override final;
 
         /**
          * \brief Virtual function for current correction in Fourier space

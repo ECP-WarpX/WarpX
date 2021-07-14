@@ -26,9 +26,6 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                                   bool const update_with_rho);
         // Redefine functions from base class
         virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
-        virtual int getRequiredNumberOfFields () const override final {
-            return m_spectral_index.n_fields;
-        }
 
         void InitializeSpectralCoefficients (SpectralFieldDataRZ const & f);
 
