@@ -26,7 +26,7 @@ public:
 
     virtual ~BackgroundMCCCollision () = default;
 
-    amrex::Real get_nu_max (amrex::Vector<MCCProcess const*> const& mcc_processes);
+    amrex::Real get_nu_max (amrex::Vector<MCCProcess> const& mcc_processes);
 
     /** Perform the collisions
      *
@@ -58,8 +58,8 @@ public:
 
 private:
 
-    amrex::Vector<std::unique_ptr<MCCProcess> > m_scattering_processes;
-    amrex::Vector<std::unique_ptr<MCCProcess> > m_ionization_processes;
+    amrex::Vector<MCCProcess> m_scattering_processes;
+    amrex::Vector<MCCProcess> m_ionization_processes;
     amrex::Gpu::DeviceVector<MCCProcess::Executor> m_scattering_processes_exe;
     amrex::Gpu::DeviceVector<MCCProcess::Executor> m_ionization_processes_exe;
 

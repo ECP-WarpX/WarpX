@@ -38,6 +38,12 @@ public:
                 const amrex::Real energy
                 );
 
+    MCCProcess (MCCProcess const&) = delete;
+    MCCProcess& operator= (MCCProcess const&) = delete;
+
+    MCCProcess (MCCProcess &&) = default;
+    MCCProcess& operator= (MCCProcess &&) = default;
+
     /** Read the given cross-section data file to memory.
      *
      * @param cross_section_file the path to the file containing the cross-
