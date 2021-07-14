@@ -48,6 +48,7 @@ Diagnostics::BaseReadParameters ()
     amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
+    pp_diag_name.query("file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 

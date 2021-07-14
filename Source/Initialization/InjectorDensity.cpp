@@ -25,7 +25,6 @@ void InjectorDensity::clear ()
     {
     case Type::parser:
     {
-        object.parser.m_parser.clear();
         break;
     }
     case Type::custom:
