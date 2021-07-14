@@ -253,7 +253,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
     // get collision parameters
     auto scattering_processes = m_scattering_processes_exe.data();
-    auto process_count        = m_scattering_processes_exe.size();
+    int const process_count   = m_scattering_processes_exe.size();
 
     amrex::Real total_collision_prob = m_total_collision_prob;
     amrex::Real nu_max = m_nu_max;

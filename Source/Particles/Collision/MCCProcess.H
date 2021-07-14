@@ -88,7 +88,7 @@ public:
             }
         }
 
-        amrex::Real* m_sigmas_data;
+        amrex::Real* m_sigmas_data = nullptr;
         amrex::Real m_energy_lo, m_energy_hi, m_sigma_lo, m_sigma_hi, m_dE;
         amrex::Real m_energy_penalty;
         MCCProcessType m_type;
