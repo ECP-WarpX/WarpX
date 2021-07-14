@@ -12,20 +12,21 @@
 #include "MCCProcess.H"
 
 #include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 #include <AMReX_GpuContainers.H>
 
+#include <memory>
 #include <string>
 
-class BackgroundMCCCollision
+class BackgroundMCCCollision final
     : public CollisionBase
 {
 public:
-    template <typename T>
-    using VectorType = amrex::Gpu::ManagedVector<T>;
-
     BackgroundMCCCollision (std::string collision_name);
 
-    amrex::Real get_nu_max ( VectorType<MCCProcess*> const& mcc_processes );
+    virtual ~BackgroundMCCCollision () = default;
+
+    amrex::Real get_nu_max (amrex::Vector<MCCProcess> const& mcc_processes);
 
     /** Perform the collisions
      *
@@ -57,8 +58,10 @@ public:
 
 private:
 
-    VectorType< MCCProcess* > m_scattering_processes;
-    VectorType< MCCProcess* > m_ionization_processes;
+    amrex::Vector<MCCProcess> m_scattering_processes;
+    amrex::Vector<MCCProcess> m_ionization_processes;
+    amrex::Gpu::DeviceVector<MCCProcess::Executor> m_scattering_processes_exe;
+    amrex::Gpu::DeviceVector<MCCProcess::Executor> m_ionization_processes_exe;
 
     bool init_flag = false;
     bool ionization_flag = false;

@@ -58,9 +58,9 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             pp.get(kw_energy.c_str(), energy);
         }
 
-        auto process = new MCCProcess(scattering_process, cross_section_file, energy);
+        MCCProcess process(scattering_process, cross_section_file, energy);
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(process->m_type != MCCProcessType::INVALID,
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != MCCProcessType::INVALID,
                                          "Cannot add an unknown MCC process type");
 
         // if the scattering process is ionization get the secondary species
@@ -68,7 +68,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         // m_ionization_processes is only used to make it simple to calculate
         // the maximum collision frequency with the same function used for
         // particle conserving processes
-        if (process->m_type == MCCProcessType::IONIZATION) {
+        if (process.type() == MCCProcessType::IONIZATION) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
                                              "Background MCC only supports a single ionization process");
             ionization_flag = true;
@@ -77,20 +77,43 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             pp.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);
 
-            m_ionization_processes.push_back(process);
+            m_ionization_processes.push_back(std::move(process));
         } else {
-            m_scattering_processes.push_back(process);
+            m_scattering_processes.push_back(std::move(process));
         }
-
-        amrex::Gpu::synchronize();
     }
+
+#ifdef AMREX_USE_GPU
+    amrex::Gpu::HostVector<MCCProcess::Executor> h_scattering_processes_exe;
+    amrex::Gpu::HostVector<MCCProcess::Executor> h_ionization_processes_exe;
+    for (auto const& p : m_scattering_processes) {
+        h_scattering_processes_exe.push_back(p.executor());
+    }
+    for (auto const& p : m_ionization_processes) {
+        h_ionization_processes_exe.push_back(p.executor());
+    }
+    m_scattering_processes_exe.resize(h_scattering_processes_exe.size());
+    m_ionization_processes_exe.resize(h_ionization_processes_exe.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
+                          h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_ionization_processes_exe.begin(),
+                          h_ionization_processes_exe.end(), m_ionization_processes_exe.begin());
+    amrex::Gpu::streamSynchronize();
+#else
+    for (auto const& p : m_scattering_processes) {
+        m_scattering_processes_exe.push_back(p.executor());
+    }
+    for (auto const& p : m_ionization_processes) {
+        m_ionization_processes_exe.push_back(p.executor());
+    }
+#endif
 }
 
 /** Calculate the maximum collision frequency using a fixed energy grid that
  *  ranges from 1e-4 to 5000 eV in 0.2 eV increments
  */
 amrex::Real
-BackgroundMCCCollision::get_nu_max(amrex::Gpu::ManagedVector<MCCProcess*> const& mcc_processes)
+BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processes)
 {
     using namespace amrex::literals;
     amrex::Real nu, nu_max = 0.0;
@@ -101,7 +124,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Gpu::ManagedVector<MCCProcess*> const&
         // loop through all collision pathways
         for (const auto &scattering_process : mcc_processes) {
             // get collision cross-section
-            sigma_E += scattering_process->getCrossSection(E);
+            sigma_E += scattering_process.getCrossSection(E);
         }
 
         // calculate collision frequency
@@ -229,8 +252,8 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     amrex::Real vel_std = sqrt(PhysConst::kb * T_a / mass_a);
 
     // get collision parameters
-    auto scattering_processes = m_scattering_processes.data();
-    auto process_count = m_scattering_processes.size();
+    auto scattering_processes = m_scattering_processes_exe.data();
+    int const process_count   = m_scattering_processes_exe.size();
 
     amrex::Real total_collision_prob = m_total_collision_prob;
     amrex::Real nu_max = m_nu_max;
@@ -288,8 +311,8 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               v_coll = sqrt(v_coll2);
 
                               // loop through all collision pathways
-                              for (size_t i = 0; i < process_count; i++) {
-                                  auto const& scattering_process = **(scattering_processes + i);
+                              for (int i = 0; i < process_count; i++) {
+                                  auto const& scattering_process = *(scattering_processes + i);
 
                                   // get collision cross-section
                                   sigma_E = scattering_process.getCrossSection(E_coll);
@@ -348,7 +371,7 @@ void BackgroundMCCCollision::doBackgroundIonization
     const auto CopyIon = copy_factory_ion.getSmartCopy();
 
     const auto Filter = ImpactIonizationFilterFunc(
-                                                   *m_ionization_processes[0],
+                                                   m_ionization_processes[0],
                                                    m_mass1, m_total_collision_prob_ioniz,
                                                    m_nu_max_ioniz / m_background_density
                                                    );
@@ -368,7 +391,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         const auto np_ion = ion_tile.numParticles();
 
         auto Transform = ImpactIonizationTransformFunc(
-                                                       m_ionization_processes[0]->m_energy_penalty, m_mass1, vel_std
+                                                       m_ionization_processes[0].getEnergyPenalty(), m_mass1, vel_std
                                                        );
 
         const auto num_added = filterCopyTransformParticles<1>(

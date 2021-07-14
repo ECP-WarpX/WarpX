@@ -27,7 +27,6 @@
 #endif // use PSATD ifdef
 #include "FieldSolver/WarpX_FDTD.H"
 #include "Filter/NCIGodfreyFilter.H"
-#include "Parser/WarpXParserWrapper.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Python/WarpXWrappers.h"
 #include "Utils/WarpXAlgorithmSelection.H"
