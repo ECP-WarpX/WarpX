@@ -65,7 +65,6 @@ MCCProcess::init (const std::string& scattering_process, const amrex::Real energ
 #ifdef AMREX_USE_GPU
     m_exe_d = m_exe_h;
     m_sigmas_d.resize(m_sigmas_h.size());
-    m_exe_d.m_sigmas_data = m_sigmas_d.data();
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_sigmas_h.begin(), m_sigmas_h.end(),
                           m_sigmas_d.begin());
     amrex::Gpu::streamSynchronize();
