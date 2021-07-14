@@ -27,18 +27,27 @@ using namespace amrex;
 /* \brief Apply stencil on MultiFab (GPU version, 2D/3D).
  * \param dstmf Destination MultiFab
  * \param srcmf source MultiFab
+ * \param[in] lev mesh refinement level
  * \param scomp first component of srcmf on which the filter is applied
  * \param dcomp first component of dstmf on which the filter is applied
  * \param ncomp Number of components on which the filter is applied.
  */
 void
-Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, int scomp, int dcomp, int ncomp)
+Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int scomp, int dcomp, int ncomp)
 {
     WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     for (MFIter mfi(dstmf); mfi.isValid(); ++mfi)
     {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         const auto& src = srcmf.array(mfi);
         const auto& dst = dstmf.array(mfi);
         const Box& tbx = mfi.growntilebox();
@@ -62,6 +71,13 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, int scomp, int dco
 
         // Apply filter
         DoFilter(tbx, tmp, dst, 0, dcomp, ncomp);
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
@@ -166,15 +182,19 @@ void Filter::DoFilter (const Box& tbx,
 /* \brief Apply stencil on MultiFab (CPU version, 2D/3D).
  * \param dstmf Destination MultiFab
  * \param srcmf source MultiFab
+ * \param[in] lev mesh refinement level
  * \param scomp first component of srcmf on which the filter is applied
  * \param dcomp first component of dstmf on which the filter is applied
  * \param ncomp Number of components on which the filter is applied.
  */
 void
-Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, int scomp, int dcomp, int ncomp)
+Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, const int lev, int scomp, int dcomp, int ncomp)
 {
     WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
+
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
 #ifdef AMREX_USE_OMP
 // never runs on GPU since in the else branch of AMREX_USE_GPU
 #pragma omp parallel
@@ -182,6 +202,13 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, int 
     {
         FArrayBox tmpfab;
         for (MFIter mfi(dstmf,true); mfi.isValid(); ++mfi){
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            amrex::Real wt = amrex::second();
+
             const auto& srcfab = srcmf[mfi];
             auto& dstfab = dstmf[mfi];
             const Box& tbx = mfi.growntilebox();
@@ -194,6 +221,13 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, int 
             tmpfab.copy(srcfab, ibx, scomp, ibx, 0, ncomp);
             // Apply filter
             DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+            }
         }
     }
 }

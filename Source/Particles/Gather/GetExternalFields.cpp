@@ -26,9 +26,9 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
         m_type = Parser;
         m_time = warpx.gett_new(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
-        m_xfield_partparser = getParser(mypc.m_Ex_particle_parser);
-        m_yfield_partparser = getParser(mypc.m_Ey_particle_parser);
-        m_zfield_partparser = getParser(mypc.m_Ez_particle_parser);
+        m_xfield_partparser = mypc.m_Ex_particle_parser->compile<4>();
+        m_yfield_partparser = mypc.m_Ey_particle_parser->compile<4>();
+        m_zfield_partparser = mypc.m_Ez_particle_parser->compile<4>();
     }
     else if (mypc.m_E_ext_particle_s=="electro-static-field")
     {
@@ -54,8 +54,8 @@ GetExternalBField::GetExternalBField (const WarpXParIter& a_pti, int a_offset) n
         m_type = Parser;
         m_time = warpx.gett_new(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
-        m_xfield_partparser = getParser(mypc.m_Bx_particle_parser);
-        m_yfield_partparser = getParser(mypc.m_By_particle_parser);
-        m_zfield_partparser = getParser(mypc.m_Bz_particle_parser);
+        m_xfield_partparser = mypc.m_Bx_particle_parser->compile<4>();
+        m_yfield_partparser = mypc.m_By_particle_parser->compile<4>();
+        m_zfield_partparser = mypc.m_Bz_particle_parser->compile<4>();
     }
 }

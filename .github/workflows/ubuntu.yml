@@ -78,6 +78,7 @@ jobs:
           -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE     \
           -DWarpX_PSATD=ON             \
+          -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
         cmake --build build_sp -j 2
 
@@ -188,8 +189,6 @@ jobs:
 
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
-    if: false
-    # dpcpp 2021.3.0 hangs in WarpX.cpp
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2

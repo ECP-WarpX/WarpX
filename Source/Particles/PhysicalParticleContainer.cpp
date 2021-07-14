@@ -173,6 +173,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
     pp_species_name.query("do_backward_propagation", do_backward_propagation);
+    pp_species_name.query("random_theta", m_rz_random_theta);
 
     // Initialize splitting
     pp_species_name.query("do_splitting", do_splitting);
@@ -844,11 +845,16 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
         const auto poffset = offset.data();
+        const bool rz_random_theta = m_rz_random_theta;
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
+#ifdef WARPX_DIM_RZ
+            Real theta_offset = 0._rt;
+            if (rz_random_theta) theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi;
+#endif
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
@@ -887,7 +893,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // choose it randomly.
                     theta = 2._rt*MathConst::pi*amrex::Random(engine);
                 } else {
-                    theta = 2._rt*MathConst::pi*r.y;
+                    theta = 2._rt*MathConst::pi*r.y + theta_offset;
                 }
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);
