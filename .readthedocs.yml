@@ -1,9 +1,33 @@
-# Copyright 2019-2020 Axel Huebl, Maxence Thevenet
-#
-# This file is part of WarpX.
-#
-# License: BSD-3-Clause-LBNL
+# .readthedocs.yaml
+# Read the Docs configuration file
+# This file is for configuring readthedocs for MEWarpX
 
-requirements_file: Docs/requirements.txt
+# Required
+version: 2
 
-formats:
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+   configuration: mewarpx/docs/conf.py
+
+# Optionally set the version of Python and requirements required to build your docs
+python:
+  version: 3.8
+  install:
+    - method: pip
+      path: mewarpx
+      extra_requirements:
+      - docs
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# original file for WarpX
+
+# # Copyright 2019-2020 Axel Huebl, Maxence Thevenet
+# #
+# # This file is part of WarpX.
+# #
+# # License: BSD-3-Clause-LBNL
+
+# requirements_file: Docs/requirements.txt
+
+# formats:
