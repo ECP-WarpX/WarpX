@@ -48,6 +48,8 @@ class SpectralFieldIndex
          *                              Gauss law (new field F in the update equations)
          * \param[in] divb_cleaning     whether to use div(B) cleaning to account for errors in
          *                              div(B) = 0 law (new field G in the update equations)
+         * \param[in] pml               whether the indices are used to access spectral data
+         *                              for the PML spectral solver
          */
         SpectralFieldIndex (const bool update_with_rho,
                             const bool time_averaging,
