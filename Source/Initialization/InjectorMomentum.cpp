@@ -14,12 +14,6 @@ void InjectorMomentum::clear ()
     switch (type)
     {
     case Type::parser:
-    {
-        object.parser.m_ux_parser.clear();
-        object.parser.m_uy_parser.clear();
-        object.parser.m_uz_parser.clear();
-        break;
-    }
     case Type::gaussian:
     case Type::gaussianflux:
     case Type::boltzmann:

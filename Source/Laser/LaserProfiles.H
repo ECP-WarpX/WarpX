@@ -7,10 +7,9 @@
 #ifndef WARPX_LaserProfiles_H_
 #define WARPX_LaserProfiles_H_
 
-#include "Parser/WarpXParserWrapper.H"
-
 #include <AMReX_Gpu.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
@@ -208,8 +207,7 @@ private:
         std::string field_function;
     } m_params;
 
-    WarpXParser m_parser;
-    std::unique_ptr<ParserWrapper<3> > m_gpu_parser;
+    amrex::Parser m_parser;
 };
 
 /**
