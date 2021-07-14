@@ -54,7 +54,7 @@
  *
  */
 template <typename FunctorType>
-class BinaryCollision
+class BinaryCollision final
     : public CollisionBase
 {
     // Define shortcuts for frequently-used type names
@@ -84,6 +84,8 @@ public:
             m_isSameSpecies = false;
     }
 
+    virtual ~BinaryCollision () = default;
+
     /** Perform the collisions
      *
      * @param lev AMR level of the tile
@@ -109,10 +111,10 @@ public:
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
             // Loop over all grids/tiles at this level
-    #ifdef AMREX_USE_OMP
+#ifdef AMREX_USE_OMP
             info.SetDynamic(true);
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
             for (amrex::MFIter mfi = species1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
@@ -178,18 +180,18 @@ public:
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-    #if defined WARPX_DIM_XZ
+#if defined WARPX_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
-    #elif defined WARPX_DIM_RZ
+#elif defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
             const auto lo = lbound(cbx);
             const auto hi = ubound(cbx);
             int const nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-    #elif (AMREX_SPACEDIM == 3)
+#elif (AMREX_SPACEDIM == 3)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-    #endif
+#endif
 
             // Loop over cells
             amrex::ParallelForRNG( n_cells,
@@ -207,10 +209,10 @@ public:
                     // shuffle
                     ShuffleFisherYates(
                         indices_1, cell_start_1, cell_half_1, engine );
-    #if defined WARPX_DIM_RZ
+#if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
-    #endif
+#endif
                     // Call the function in order to perform collisions
                     binary_collision_functor(
                         cell_start_1, cell_half_1,
@@ -262,18 +264,18 @@ public:
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-    #if defined WARPX_DIM_XZ
+#if defined WARPX_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
-    #elif defined WARPX_DIM_RZ
+#elif defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
             const auto lo = lbound(cbx);
             const auto hi = ubound(cbx);
             int nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-    #elif (AMREX_SPACEDIM == 3)
+#elif (AMREX_SPACEDIM == 3)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-    #endif
+#endif
 
             // Loop over cells
             amrex::ParallelForRNG( n_cells,
@@ -298,10 +300,10 @@ public:
                     // shuffle
                     ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
-    #if defined WARPX_DIM_RZ
+#if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
-    #endif
+#endif
                     // Call the function in order to perform collisions
                     binary_collision_functor(
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,

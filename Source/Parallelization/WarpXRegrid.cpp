@@ -145,6 +145,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
                                                        {1,1,1}, // Not clear how many ghost cells we need yet
                                                        amrex::EBSupport::full);
+        ComputeEdgeLengths();
+        ComputeFaceAreas();
+        ScaleEdges();
+        ScaleAreas();
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif

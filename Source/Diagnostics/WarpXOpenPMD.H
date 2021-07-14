@@ -118,7 +118,7 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep (int ts, const std::string& dirPrefix,
+  void SetStep (int ts, const std::string& dirPrefix, int file_min_digits,
                 bool isBTD=false);
 
   /** Close the step
@@ -262,6 +262,10 @@ private:
    * be appended by the GetFileName function.
    */
   std::string m_dirPrefix;
+
+  /** This is the minimum number of digits in the step number that is used as the
+   * suffix for file names when doing file based encoding */
+  int m_file_min_digits;
 
   int m_MPIRank = 0;
   int m_MPISize = 1;
