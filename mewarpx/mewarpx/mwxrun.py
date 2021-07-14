@@ -9,15 +9,17 @@ SETUP order:
         mwxutil.init_libwarpx(ndim=ndim, rz=rz)
 
     - Import other mewarpx modules
-    - Set up PICMI things, including the Simulation object, with species added
-      to the PICMI Simulation
+    - Use ``from mewarpx.mwxrun import mwxrun`` to import the class holding
+      all the simulation information, defined here.
+    - Set up PICMI things, referring to mwxrun's ``picmi.Simulation`` object,
+    ``mwxrun.simulation``. Add PICMI species to the PICMI Simulation.
 
     - Call this class's init_run::
 
-        mwxrun.mwxrun.init_run(simulation=picmi_simulation_object)
+        mwxrun.mwxrun.init_run()
 
     - Initialize any other mewarpx objects
-    - Perform run with sim.step()
+    - Perform run with ``sim.step()``
 """
 from pywarpx import _libwarpx, picmi
 
@@ -234,5 +236,6 @@ class MEWarpXRun(object):
                     print("Phi data must be the same shape as the phi multifab")
                 raise
         _libwarpx.set_phi_grid_fp(self.lev)
+
 
 mwxrun = MEWarpXRun()
