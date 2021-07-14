@@ -257,8 +257,13 @@ void
 WarpX::ComputeDistanceToEB () {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeDistanceToEB");
-    if (m_eb_if_parser) {
-        ParserIF pif(*m_eb_if_parser);
+
+    amrex::ParmParse pp_warpx("warpx");
+    std::string impf;
+    pp_warpx.query("eb_implicit_function", impf);
+    if (! impf.empty()) {
+        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
+        ParserIF pif(eb_if_parser.compile<3>());
         auto gshop = amrex::EB2::makeShop(pif);
         amrex::FillImpFunc(*m_distance_to_eb[maxLevel()], gshop, Geom(maxLevel()));
         m_distance_to_eb[maxLevel()]->negate(m_distance_to_eb[maxLevel()]->nGrow()); // signed distance f = - imp. f.
