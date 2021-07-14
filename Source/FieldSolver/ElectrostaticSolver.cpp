@@ -429,7 +429,12 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 
     // TODO: Modify this
     linop.setSigma({AMREX_D_DECL(1.0, 1.0, 1.0)});
-    linop.setEBDirichlet(0.);
+    // get the EB potential
+    std::string potential_eb_str = "0";
+    ParmParse pp_embedded_boundary("eb2");
+    pp_embedded_boundary.query("potential", potential_eb_str);
+    auto parser_eb = makeParser(potential_eb_str, {"t"});
+    linop.setEBDirichlet(parser_eb.eval(gett_new(0)));
 #endif
 
     // Solve the Poisson equation
