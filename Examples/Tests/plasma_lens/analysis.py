@@ -19,7 +19,6 @@ import os
 import yt
 import numpy as np
 from scipy.constants import e, m_e, c
-import matplotlib.pyplot as plt
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -82,7 +81,6 @@ for i in range(len(plasma_lens_starts)):
     tt = tt + dt
     xx = xx + dt*ux
     yy = yy + dt*uy
-    zz = z_lens
     xx, ux = applylens(xx, ux, uz, plasma_lens_lengths[i], plasma_lens_strengths[i])
     yy, uy = applylens(yy, uy, uz, plasma_lens_lengths[i], plasma_lens_strengths[i])
     dt = plasma_lens_lengths[i]/uz
