@@ -25,7 +25,7 @@ public:
 
     BackgroundMCCCollision (std::string collision_name);
 
-    amrex::Real get_nu_max ( VectorType<MCCProcess*> const& mcc_processes );
+    amrex::Real get_nu_max ( VectorType<MCCProcess> const& mcc_processes );
 
     /** Perform the collisions
      *
@@ -57,8 +57,8 @@ public:
 
 private:
 
-    VectorType< MCCProcess* > m_scattering_processes;
-    VectorType< MCCProcess* > m_ionization_processes;
+    VectorType< MCCProcess > m_scattering_processes;
+    VectorType< MCCProcess > m_ionization_processes;
 
     bool init_flag = false;
     bool ionization_flag = false;

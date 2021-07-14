@@ -40,9 +40,6 @@ public:
                 const amrex::Real energy
                 );
 
-    void* operator new  ( std::size_t count );
-    void operator delete (void* ptr);
-
     /** Get the collision cross-section using a simple linear interpolator. If
      * the energy value is lower (higher) than the given energy range the
      * first (last) cross-section value is used.
@@ -84,13 +81,13 @@ public:
     static
     void readCrossSectionFile (
                                const std::string cross_section_file,
-                               VectorType<amrex::Real>& energies,
-                               VectorType<amrex::Real>& sigmas
+                               std::vector<amrex::Real>& energies,
+                               std::vector<amrex::Real>& sigmas
                                );
 
     static
     void sanityCheckEnergyGrid (
-                                const VectorType<amrex::Real>& energies,
+                                const std::vector<amrex::Real>& energies,
                                 amrex::Real dE
                                 );
 
@@ -102,11 +99,9 @@ private:
     static
     MCCProcessType parseProcessType(const std::string& process);
 
-    void init();
+    void init(const std::vector<amrex::Real>& a_energies, const std::vector<amrex::Real>& a_sigmas);
 
-    VectorType<amrex::Real> m_energies;
     amrex::Real* m_energies_data;
-    VectorType<amrex::Real> m_sigmas;
     amrex::Real* m_sigmas_data;
 
     int m_grid_size;
