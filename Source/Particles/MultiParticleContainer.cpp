@@ -223,9 +223,23 @@ MultiParticleContainer::ReadParameters ()
         // must be provided in the input file.
         if (m_E_ext_particle_s == "repeated_plasma_lens") {
             queryWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
-            getArrWithParser(pp_particles, "repeated_plasma_lens_starts", m_repeated_plasma_lens_starts);
-            getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", m_repeated_plasma_lens_lengths);
-            getArrWithParser(pp_particles, "repeated_plasma_lens_strengths", m_repeated_plasma_lens_strengths);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_starts", h_repeated_plasma_lens_starts);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", h_repeated_plasma_lens_lengths);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_strengths", h_repeated_plasma_lens_strengths);
+
+            int n_lenses = static_cast<int>(h_repeated_plasma_lens_starts.size());
+            d_repeated_plasma_lens_starts.resize(n_lenses);
+            d_repeated_plasma_lens_lengths.resize(n_lenses);
+            d_repeated_plasma_lens_strengths.resize(n_lenses);
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_starts.begin(), h_repeated_plasma_lens_starts.end(),
+                       d_repeated_plasma_lens_starts.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_lengths.begin(), h_repeated_plasma_lens_lengths.end(),
+                       d_repeated_plasma_lens_lengths.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_strengths.begin(), h_repeated_plasma_lens_strengths.end(),
+                       d_repeated_plasma_lens_strengths.begin());
         }
 
 

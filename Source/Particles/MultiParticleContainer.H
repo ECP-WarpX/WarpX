@@ -296,9 +296,12 @@ public:
     std::unique_ptr<ParserWrapper<4> > m_Ez_particle_parser;
 
     amrex::Real m_repeated_plasma_lens_period;
-    amrex::Vector<amrex::Real> m_repeated_plasma_lens_starts;
-    amrex::Vector<amrex::Real> m_repeated_plasma_lens_lengths;
-    amrex::Vector<amrex::Real> m_repeated_plasma_lens_strengths;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths;
 
 #ifdef WARPX_QED
     /**

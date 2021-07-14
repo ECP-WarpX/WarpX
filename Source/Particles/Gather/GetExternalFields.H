@@ -32,9 +32,9 @@ struct GetExternalField
     amrex::Real m_time;
 
     amrex::Real m_repeated_plasma_lens_period;
-    amrex::Gpu::DeviceVector<amrex::Real> m_repeated_plasma_lens_starts;
-    amrex::Gpu::DeviceVector<amrex::Real> m_repeated_plasma_lens_lengths;
-    amrex::Gpu::DeviceVector<amrex::Real> m_repeated_plasma_lens_strengths;
+    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_starts = nullptr;
+    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_lengths = nullptr;
+    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_strengths = nullptr;
     int m_n_lenses;
     amrex::Real m_dt;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
