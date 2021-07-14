@@ -12,7 +12,7 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
-enum ExternalFieldInitType { Constant, Parser, ElectroStatic };
+enum ExternalFieldInitType { Constant, Parser };
 
 /** \brief Base class for functors that assign external
  *         field values (E or B) to particles.
@@ -28,9 +28,6 @@ struct GetExternalField
     amrex::ParserExecutor<4> m_zfield_partparser;
     GetParticlePosition m_get_position;
     amrex::Real m_time;
-
-//    static bool m_ElectroStaticFieldInstance = False;
-    void ReadExternalElectroStaticField(); 
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (long i,
@@ -67,7 +64,6 @@ struct GetExternalEField : GetExternalField
     GetExternalEField () = default;
 
     GetExternalEField (const WarpXParIter& a_pti, int a_offset = 0) noexcept;
-    
 };
 
 /** \brief Functor that can be used to assign the external
