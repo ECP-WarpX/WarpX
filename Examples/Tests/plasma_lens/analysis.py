@@ -100,6 +100,5 @@ assert abs(ux - ux_sim) < 70., Exception('error in x particle velocity')
 assert abs(uy - uy_sim) < 70., Exception('error in y particle velocity')
 
 test_name = os.path.split(os.getcwd())[1]
-#checksumAPI.evaluate_checksum(test_name, filename)
-checksumAPI.reset_benchmark(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, filename)
 
