@@ -240,6 +240,7 @@ MultiParticleContainer::ReadParameters ()
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                        h_repeated_plasma_lens_strengths.begin(), h_repeated_plasma_lens_strengths.end(),
                        d_repeated_plasma_lens_strengths.begin());
+            amrex::Gpu::synchronize();
         }
 
 
