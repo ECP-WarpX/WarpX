@@ -35,8 +35,8 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
         m_dt = warpx.getdt(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
         auto& attribs = a_pti.GetAttribs();
-        m_ux = attribs[PIdx::uy].dataPtr() + a_offset;
-        m_uy = attribs[PIdx::uz].dataPtr() + a_offset;
+        m_ux = attribs[PIdx::ux].dataPtr() + a_offset;
+        m_uy = attribs[PIdx::uy].dataPtr() + a_offset;
         m_uz = attribs[PIdx::uz].dataPtr() + a_offset;
         m_repeated_plasma_lens_period = mypc.m_repeated_plasma_lens_period;
         m_n_lenses = static_cast<int>(mypc.h_repeated_plasma_lens_starts.size());
