@@ -119,7 +119,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 
     // Parse injection style
-    std::string injection_style;
+    std::string injection_style = "none";
     pp_species_name.query("injection_style", injection_style);
     std::transform(injection_style.begin(),
                    injection_style.end(),
@@ -462,7 +462,7 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
                                             makeParser(str_density_function,{"x","y","z"})));
     } else {
         //No need for profile definition if external file is used
-        std::string injection_style;
+        std::string injection_style = "none";
         pp.query("injection_style", injection_style);
         if (injection_style != "external_file") {
             StringParseAbortMessage("Density profile type", rho_prof_s);
@@ -611,7 +611,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                              makeParser(str_momentum_function_uz,{"x","y","z"})));
     } else {
         //No need for momentum definition if external file is used
-        std::string injection_style;
+        std::string injection_style = "none";
         pp.query("injection_style", injection_style);
         if (injection_style != "external_file") {
             StringParseAbortMessage("Momentum distribution type", mom_dist_s);
