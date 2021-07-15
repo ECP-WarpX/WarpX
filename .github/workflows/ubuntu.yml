@@ -43,6 +43,7 @@ jobs:
         export WarpX_QED_TABLE_GEN=ON
         export CC=$(which clang)
         export CXX=$(which clang++)
+        export CXXFLAGS="-Werror -Wno-error=pass-failed"
         python3 -m pip install -v .
 
     - name: run pywarpx
