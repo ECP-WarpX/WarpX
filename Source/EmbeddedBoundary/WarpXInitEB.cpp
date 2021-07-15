@@ -251,7 +251,7 @@ WarpX::ScaleAreas() {
 
 /**
  * \brief Initialize information for cell extensions.
- *        The flags convention for m_flag_info_face is as followsç
+ *        The flags convention for m_flag_info_face is as follows
  *          - 0 for unstable cells
  *          - 1 for stable cells which have not been intruded
  *          - 2 for stable cells which have been intruded
