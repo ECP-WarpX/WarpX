@@ -147,6 +147,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
     for (int lev = lev_min; lev <= lev_max; ++lev)
     {
+        const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
@@ -163,7 +164,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                DistanceToEB::compute_weights(xp, yp, zp, i, j, k, W);
+                DistanceToEB::compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
 
                 amrex::Real phi_value  = DistanceToEB::interp_distance(i, j, k, W, phi);
                 amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);

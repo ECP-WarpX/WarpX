@@ -7,6 +7,7 @@
 #ifndef DISTANCETOEB_H_
 #define DISTANCETOEB_H_
 
+#include <AMReX.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_Array.H>
@@ -30,12 +31,18 @@ void normalize (amrex::RealVect& a) noexcept
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void compute_weights (const amrex::ParticleReal x,
-                      const amrex::ParticleReal y,
-                      const amrex::ParticleReal z,
+void compute_weights (const amrex::ParticleReal xp,
+                      const amrex::ParticleReal yp,
+                      const amrex::ParticleReal zp,
+                      amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
+                      amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
                       int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2]) noexcept
 {
 #if (defined WARPX_DIM_3D)
+    amrex::Real x = (xp - plo[0]) * dxi[0];
+    amrex::Real y = (yp - plo[1]) * dxi[1];
+    amrex::Real z = (zp - plo[2]) * dxi[2];
+
     i = static_cast<int>(amrex::Math::floor(x));
     j = static_cast<int>(amrex::Math::floor(y));
     k = static_cast<int>(amrex::Math::floor(z));
@@ -48,6 +55,9 @@ void compute_weights (const amrex::ParticleReal x,
     W[1][0] = 1.0 - W[1][1];
     W[2][0] = 1.0 - W[2][1];
 #elif (defined WARPX_DIM_XZ)
+    amrex::Real x = (xp - plo[0]) * dxi[0];
+    amrex::Real z = (zp - plo[1]) * dxi[1];
+
     i = static_cast<int>(amrex::Math::floor(x));
     j = static_cast<int>(amrex::Math::floor(z));
     k = 0;
@@ -57,6 +67,8 @@ void compute_weights (const amrex::ParticleReal x,
 
     W[0][0] = 1.0 - W[0][1];
     W[1][0] = 1.0 - W[1][1];
+
+    amrex::ignore_unused(yp);
 #endif
 }
 
