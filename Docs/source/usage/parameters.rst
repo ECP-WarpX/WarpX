@@ -242,6 +242,22 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
+.. _running-cpp-parameters-eb:
+
+Embedded Boundary Conditions
+----------------------------
+
+* ``warpx.eb_implicit_function`` (`string`)
+    A function of `x`, `y`, `z` that defines the surface of the embedded
+    boundary. That surface lies where the function value is 0 ;
+    the physics simulation area is where the function value is negative ;
+    the interior of the embeddded boundary is where the function value is positive.
+
+* ``warpx.eb_potential(t)`` (`string`)
+    Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
+    the electric potential at the surface of the embedded boundary,
+    as a function of time.
+
 .. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization

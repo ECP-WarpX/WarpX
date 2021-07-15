@@ -436,7 +436,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // get the EB potential at the current time
     std::string potential_eb_str = "0";
     ParmParse pp_embedded_boundary("warpx");
-    pp_embedded_boundary.query("eb_potential", potential_eb_str);
+    pp_embedded_boundary.query("eb_potential(t)", potential_eb_str);
     auto parser_eb = makeParser(potential_eb_str, {"t"});
     linop.setEBDirichlet( parser_eb.compile<1>()(gett_new(0)) );
 #endif
