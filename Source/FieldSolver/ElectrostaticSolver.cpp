@@ -427,14 +427,18 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     }
     MLEBNodeFDLaplacian linop( Geom(), boxArray(), dmap, info, eb_factory);
 
-    // TODO: Modify this
-    linop.setSigma({AMREX_D_DECL(1.0, 1.0, 1.0)});
-    // get the EB potential
+    // Note: this assumes that the beam is propagating along
+    // one of the axes of the grid, i.e. that only *one* of the Cartesian
+    // components of `beta` is non-negligible.
+    linop.setSigma({AMREX_D_DECL(
+        1.-beta[0]*beta[0], 1.-beta[1]*beta[1], 1.-beta[2]*beta[2])});
+
+    // get the EB potential at the current time
     std::string potential_eb_str = "0";
-    ParmParse pp_embedded_boundary("eb2");
-    pp_embedded_boundary.query("potential", potential_eb_str);
+    ParmParse pp_embedded_boundary("warpx");
+    pp_embedded_boundary.query("eb_potential", potential_eb_str);
     auto parser_eb = makeParser(potential_eb_str, {"t"});
-    linop.setEBDirichlet(parser_eb.eval(gett_new(0)));
+    linop.setEBDirichlet( parser_eb.compile<1>()(gett_new(0)) );
 #endif
 
     // Solve the Poisson equation

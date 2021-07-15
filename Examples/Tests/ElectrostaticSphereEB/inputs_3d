@@ -11,11 +11,8 @@ warpx.do_pml = 0
 warpx.const_dt = 1e-6
 
 warpx.do_electrostatic = labframe
-eb2.geom_type = box
-eb2.box_lo = -0.3 -0.3 -0.3
-eb2.box_hi = 0.3 0.3 0.3
-eb2.box_has_fluid_inside = true
-
+warpx.eb_implicit_function = "-(x**2+y**2+z**2-0.2**2)"
+warpx.eb_potential = "1."
 
 particles.species_names = electron
 
