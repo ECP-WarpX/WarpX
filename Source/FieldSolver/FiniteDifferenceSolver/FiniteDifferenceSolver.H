@@ -56,8 +56,7 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
-                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
-                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
+                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
                        std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
                        int lev, amrex::Real const dt );
 
@@ -222,8 +221,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
-            std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
-            std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
+            std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
             std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
             int lev, amrex::Real const dt
         );

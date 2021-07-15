@@ -52,8 +52,7 @@ void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     int lev, amrex::Real const dt ) {
 
@@ -79,8 +78,8 @@ void FiniteDifferenceSolver::EvolveB (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
-        EvolveBCartesianECT( Bfield, face_areas, area_mod, Rhofield, Venl, flag_unst_cell,
-                             flag_intr_cell, borrowing, lev, dt);
+        EvolveBCartesianECT( Bfield, face_areas, area_mod, Rhofield, Venl, flag_info_cell,
+                             borrowing, lev, dt);
 #endif
     } else {
         amrex::Abort("EvolveB: Unknown algorithm");
@@ -288,8 +287,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_intr_cell,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     int lev, amrex::Real const dt ) {
 
@@ -316,8 +314,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             Array4<Real> const &Rho = Rhofield[idim]->array(mfi);
             Array4<Real> const &Venl_dim = Venl[idim]->array(mfi);
 
-            amrex::Array4<int> const &flag_unst_cell_dim = flag_unst_cell[idim]->array(mfi);
-            amrex::Array4<int> const &flag_intr_cell_dim = flag_intr_cell[idim]->array(mfi);
+            amrex::Array4<int> const &flag_info_cell_dim = flag_info_cell[idim]->array(mfi);
             amrex::Array4<Real> const &S = face_areas[idim]->array(mfi);
             amrex::Array4<Real> const &S_mod = area_mod[idim]->array(mfi);
 
@@ -339,20 +336,12 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 
                 if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
-                if (!flag_unst_cell_dim(i, j, k))
+                if (!(flag_info_cell_dim(i, j, k) == 0))
                     return;
 
                 Venl_dim(i, j, k) = Rho(i, j, k) * S(i, j, k);
                 amrex::Real rho_enl;
-                /*
-                if (borrowing_inds_pointer(i, j, k) == nullptr) {
-                    amrex::Abort("EvolveBCartesianECT: face ("
-                                + std::to_string(i) + ", "
-                                + std::to_string(j) + ", "
-                                + std::to_string(k)
-                                + ") wasn't extended correctly");
-                }
-                */
+
                 // First we compute the rho of the enlarged face
                 for (int offset = 0; offset<borrowing_size(i, j, k); offset++) {
                     int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
@@ -410,17 +399,16 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (S(i, j, k) <= 0 or amrex::isnan(S(i, j, k))) return;
 
-                if (flag_unst_cell_dim(i, j, k)) return;
-
-                if (not flag_intr_cell_dim(i, j, k)) {
+                if (flag_info_cell_dim(i, j, k) == 0) {
+                    return;
+                }
+                else if (flag_info_cell_dim(i, j, k) == 1) {
                     //Stable cell which hasn't been intruded
                     B(i, j, k) = B(i, j, k) - dt * Rho(i, j, k);
-
-                } else {
+                } else if (flag_info_cell_dim(i, j, k) == 2) {
                     //Stable cell which has been intruded
                     Venl_dim(i, j, k) += Rho(i, j, k) * S_mod(i, j, k);
                     B(i, j, k) = B(i, j, k) - dt * Venl_dim(i, j, k) / S(i, j, k);
-
                 }
 
             });

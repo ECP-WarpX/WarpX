@@ -247,6 +247,16 @@ WarpX::ScaleAreas() {
 #endif
 }
 
+//0 for unst, 1 for stable and available, 2 for stable, available and intruded
+
+/**
+ * \brief Initialize information for cell extensions.
+ *        The flags convention for m_flag_info_face is as followsç
+ *          - 0 for unstable cells
+ *          - 1 for stable cells which have not been intruded
+ *          - 2 for stable cells which have been intruded
+ *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
+ */
 void
 WarpX::MarkCells(){
 #ifdef AMREX_USE_EB
@@ -257,9 +267,8 @@ WarpX::MarkCells(){
             amrex::Box const &box = mfi.validbox();
 
             auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
-            auto const &flag_unst_face = m_flag_unst_face[maxLevel()][idim]->array(mfi);
+            auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            auto const &flag_avail_face = m_flag_avail_face[maxLevel()][idim]->array(mfi);
             const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
             const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
             const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
@@ -281,15 +290,19 @@ WarpX::MarkCells(){
                                              ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 }
 
-                // This face is unstable if it has less area than area_stab
-                flag_unst_face(i, j, k) = int(S(i, j, k) < S_stab and !amrex::isnan(S(i, j, k))
+                // Does this face need to be extended? This is the same as
+                // flag_info_face(i, j, k) = 0 here but it is modified later to keep track o which
+                // faces need multi-cell extension
+                flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab and !amrex::isnan(S(i, j, k))
                                               and S(i, j, k) > 0);
-                // Does this face need to be extended? This is the same as flag_unst_face here,
-                // but it is modified later to keep track o which faces still need to be extended
-                flag_ext_face(i, j, k) = flag_unst_face(i, j, k);
+                if(flag_ext_face(i, j, k)){
+                    flag_info_face(i, j, k) = 0;
+                }
                 // Is this face available to lend area to other faces?
                 // The criterion is that the face has to be interior and not already unstable itself
-                flag_avail_face(i, j, k) = int(S(i, j, k) > 0 and !flag_unst_face(i, j, k));
+                if(int(S(i, j, k) > 0 and !flag_ext_face(i, j, k))) {
+                    flag_info_face(i, j, k) = 1;
+                }
             });
         }
     }

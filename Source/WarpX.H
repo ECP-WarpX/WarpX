@@ -964,10 +964,8 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_unst_face;
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_avail_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_intr_face;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
@@ -1145,7 +1143,7 @@ private:
     void ScaleEdges ();
     void ScaleAreas ();
     void MarkCells();
-    int CountExtFaces();
+    amrex::Array1D<int, 0, 2> CountExtFaces();
     void ComputeFaceExtensions();
     void InitBorrowing();
     amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
@@ -1153,13 +1151,13 @@ private:
 
     static int ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                               const amrex::Array4<amrex::Real> &S_red,
-                                              const amrex::Array4<int> &flag_avail_face,
+                                              const amrex::Array4<int> &flag_info_face,
                                               const amrex::Array4<int> &flag_ext_face, int idim);
 
     static int ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                                  const amrex::Array4<amrex::Real> &S_red,
                                                  const amrex::Array4<amrex::Real> &S,
-                                                 const amrex::Array4<int> &flag_avail_face,
+                                                 const amrex::Array4<int> &flag_info_face,
                                                  const amrex::Array4<int> &flag_ext_face, int idim);
 private:
 

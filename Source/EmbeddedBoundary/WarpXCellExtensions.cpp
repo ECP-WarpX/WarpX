@@ -4,11 +4,12 @@
 /**
 * \brief auxiliary function to count the amount of faces which still need to be extended
 */
-int
+amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
-    int sum = 0;
+    amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        int sum = 0;
         for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             amrex::Box const &box = mfi.validbox();
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
@@ -17,9 +18,10 @@ WarpX::CountExtFaces() {
                 sum = sum + flag_ext_face(i, j, k);
             });
         }
+        sums(idim) = sum;
     }
 #endif
-    return sum;
+    return sums;
 }
 
 
@@ -30,20 +32,37 @@ WarpX::CountExtFaces() {
 void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
-    unsigned int N_ext_faces = CountExtFaces();
-    std::cout<< "Cells to be extended before:\t" << N_ext_faces <<std::endl;
+    amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
+    std::cout<< "Cells to be extended before x:\t" << N_ext_faces(0) <<std::endl;
+    std::cout<< "Cells to be extended before y:\t" << N_ext_faces(1) <<std::endl;
+    std::cout<< "Cells to be extended before z:\t" << N_ext_faces(2) <<std::endl;
+
     InitBorrowing();
     amrex::Array1D<int, 0, 2> temp_inds{0, 0, 0};
     temp_inds = ComputeOneWayExtensions();
-    unsigned int N_ext_faces_after_one_way = CountExtFaces();
-    std::cout<< "Cells to be extended after one way extension:\t" <<
-                N_ext_faces_after_one_way <<std::endl;
+    amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
+    std::cout<< "Cells to be extended after one way extension x:\t" <<
+                N_ext_faces_after_one_way(0) <<std::endl;
+    std::cout<< "Cells to be extended after one way extension y:\t" <<
+                N_ext_faces_after_one_way(1) <<std::endl;
+    std::cout<< "Cells to be extended after one way extension z:\t" <<
+                N_ext_faces_after_one_way(2) <<std::endl;
     ComputeEightWaysExtensions(temp_inds);
-    unsigned int N_ext_faces_after_eight_ways = CountExtFaces();
-    std::cout<< "Cells to be extended after eight ways extension:\t" <<
-                N_ext_faces_after_eight_ways <<std::endl;
-    if (N_ext_faces_after_eight_ways > 0) {
-        amrex::Abort("Some faces could not be extended");
+    amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
+    std::cout<< "Cells to be extended after eight ways extension x:\t" <<
+                N_ext_faces_after_eight_ways(0) <<std::endl;
+    std::cout<< "Cells to be extended after eight ways extension y:\t" <<
+             N_ext_faces_after_eight_ways(1) <<std::endl;
+    std::cout<< "Cells to be extended after eight ways extension z:\t" <<
+             N_ext_faces_after_eight_ways(2) <<std::endl;
+    if (N_ext_faces_after_eight_ways(0) > 0) {
+        amrex::Abort("Some x faces could not be extended");
+    }
+    if (N_ext_faces_after_eight_ways(1) > 0) {
+        amrex::Abort("Some y faces could not be extended");
+    }
+    if (N_ext_faces_after_eight_ways(2) > 0) {
+        amrex::Abort("Some z faces could not be extended");
     }
 #endif
 }
@@ -98,7 +117,7 @@ WarpX::InitBorrowing() {
 int
 WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                       const amrex::Array4<amrex::Real>& S_red,
-                                      const amrex::Array4<int>& flag_avail_face,
+                                      const amrex::Array4<int>& flag_info_face,
                                       const amrex::Array4<int>& flag_ext_face, int idim) {
     int i = cell.x;
     int j = cell.y;
@@ -116,7 +135,8 @@ WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i, j + j_n, k + k_n) > S_ext
-                        and flag_avail_face(i, j + j_n, k + k_n)
+                        and (flag_info_face(i, j + j_n, k + k_n) == 1 or
+                             flag_info_face(i, j + j_n, k + k_n) == 2)
                         and flag_ext_face(i, j, k) and not stop) {
                         n_borrow += 1;
                         stop = true;
@@ -135,7 +155,8 @@ WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i + i_n, j, k + k_n) > S_ext
-                        and flag_avail_face(i + i_n, j, k + k_n)
+                        and (flag_info_face(i + i_n, j, k + k_n) == 1
+                             or flag_info_face(i + i_n, j, k + k_n) == 2)
                         and flag_ext_face(i, j, k) and not stop) {
                         n_borrow += 1;
                         stop = true;
@@ -154,7 +175,8 @@ WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i + i_n, j + j_n, k) > S_ext
-                        and flag_avail_face(i + i_n, j + j_n, k)
+                        and (flag_info_face(i + i_n, j + j_n, k) == 1
+                             or flag_info_face(i + i_n, j + j_n, k) == 2)
                         and flag_ext_face(i, j, k) and not stop) {
                         n_borrow += 1;
                         stop = true;
@@ -176,7 +198,7 @@ int
 WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
                                          const amrex::Array4<amrex::Real>& S,
-                                         const amrex::Array4<int>& flag_avail_face,
+                                         const amrex::Array4<int>& flag_info_face,
                                          const amrex::Array4<int>& flag_ext_face, int idim) {
     int i = cell.x;
     int j = cell.y;
@@ -187,7 +209,8 @@ WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
     if(idim == 0) {
         for (int j_loc = 0; j_loc <= 2; j_loc++) {
             for (int k_loc = 0; k_loc <= 2; k_loc++) {
-                local_avail(j_loc, k_loc) = flag_avail_face(i, j + j_loc - 1, k + k_loc - 1);
+                local_avail(j_loc, k_loc) = (flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 1
+                                             or flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 2);
             }
         }
 
@@ -228,7 +251,8 @@ WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
     }else if(idim == 1) {
         for(int i_loc = 0; i_loc <= 2; i_loc++){
             for(int k_loc = 0; k_loc <= 2; k_loc++){
-                local_avail(i_loc, k_loc) = flag_avail_face(i + i_loc - 1, j, k + k_loc - 1);
+                local_avail(i_loc, k_loc) = (flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 1
+                                             or flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 2);
             }
         }
 
@@ -269,7 +293,8 @@ WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
     } else if(idim == 2){
         for(int i_loc = 0; i_loc <= 2; i_loc++){
             for(int j_loc = 0; j_loc <= 2; j_loc++){
-                local_avail(i_loc, j_loc) = flag_avail_face(i + i_loc - 1, j + j_loc - 1, k);
+                local_avail(i_loc, j_loc) = (flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 1
+                                             or flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 2);
             }
         }
 
@@ -340,9 +365,8 @@ WarpX::ComputeOneWayExtensions() {
         amrex::Box const &box = mfi.validbox();
 
         auto const &Sx = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_intr_face_x = m_flag_intr_face[maxLevel()][idim]->array(mfi);
         auto const &flag_ext_face_x = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_avail_face_x = m_flag_avail_face[maxLevel()][idim]->array(mfi);
+        auto const &flag_info_face_x = m_flag_info_face[maxLevel()][idim]->array(mfi);
         auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
         auto const &borrowing_x_inds_pointer = borrowing_x.inds_pointer.array();
         auto const &borrowing_x_size = borrowing_x.size.array();
@@ -372,7 +396,7 @@ WarpX::ComputeOneWayExtensions() {
             amrex::Real Sx_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                                   lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
             amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
-            int n_borrow = ComputeNBorrowOneCellExtension(cell, Sx_ext, Sx_mod, flag_avail_face_x,
+            int n_borrow = ComputeNBorrowOneCellExtension(cell, Sx_ext, Sx_mod, flag_info_face_x,
                                                           flag_ext_face_x, idim);
 
             borrowing_x_size(i, j, k) = n_borrow;
@@ -402,7 +426,8 @@ WarpX::ComputeOneWayExtensions() {
                             // If no face is available we don't do anything and we will need to use the
                             // multi-face extensions.
                             if (Sx_mod(i, j + j_n, k + k_n) > Sx_ext
-                                and flag_avail_face_x(i, j + j_n, k + k_n)
+                                and ( flag_info_face_x(i, j + j_n, k + k_n) == 1
+                                      or flag_info_face_x(i, j + j_n, k + k_n) == 2)
                                 and flag_ext_face_x(i, j, k)) {
                                 Sx_mod(i, j + j_n, k + k_n) -= Sx_ext;
                                 // Insert the index of the face info
@@ -416,7 +441,7 @@ WarpX::ComputeOneWayExtensions() {
                                 //*(borrowing_x_k_face + ps) = k + k_n;
                                 *(borrowing_x_area + ps) = Sx_ext;
 
-                                flag_intr_face_x(i, j + j_n, k + k_n) = true;
+                                flag_info_face_x(i, j + j_n, k + k_n) = 2;
                                 // Add the area to the intruding face.
                                 // TODO: this is not needed here, but it's needed in the multi-face
                                 //  extensions. Should I remove it?
@@ -439,9 +464,8 @@ WarpX::ComputeOneWayExtensions() {
         amrex::Box const &box = mfi.validbox();
 
         auto const &Sy = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_intr_face_y = m_flag_intr_face[maxLevel()][idim]->array(mfi);
         auto const &flag_ext_face_y = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_avail_face_y = m_flag_avail_face[maxLevel()][idim]->array(mfi);
+        auto const &flag_info_face_y = m_flag_info_face[maxLevel()][idim]->array(mfi);
         auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
         auto const &borrowing_y_inds_pointer = borrowing_y.inds_pointer.array();
         auto const &borrowing_y_size = borrowing_y.size.array();
@@ -464,14 +488,13 @@ WarpX::ComputeOneWayExtensions() {
                 int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_y(i, j, k)) {
-                    //borrowing_y_size(i, j, k) = 0;
                     return 0;
                 }
                 //one cell extension, therefore the_size_for_this_cell(cell) = 1 or 0
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
-                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sy_ext, Sy_mod, flag_avail_face_y,
+                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sy_ext, Sy_mod, flag_info_face_y,
                                                               flag_ext_face_y, idim);
 
                 borrowing_y_size(i, j, k) = n_borrow;
@@ -502,7 +525,8 @@ WarpX::ComputeOneWayExtensions() {
                                 // If no face is available we don't do anything and we will need to use the
                                 // multi-face extensions.
                                 if (Sy_mod(i + i_n, j, k + k_n) > Sy_ext
-                                    and flag_avail_face_y(i + i_n, j, k + k_n)
+                                    and (flag_info_face_y(i + i_n, j, k + k_n) == 1
+                                         or flag_info_face_y(i + i_n, j, k + k_n) == 2)
                                     and flag_ext_face_y(i, j, k)) {
                                     Sy_mod(i + i_n, j, k + k_n) -= Sy_ext;
                                     // Insert the index of the face info
@@ -513,7 +537,7 @@ WarpX::ComputeOneWayExtensions() {
                                                                       borrowing_y_neigh_faces);
                                     *(borrowing_y_area + ps) = Sy_ext;
 
-                                    flag_intr_face_y(i + i_n, j, k + k_n) = true;
+                                    flag_info_face_y(i + i_n, j, k + k_n) = 2;
                                     // Add the area to the intruding face.
                                     // TODO: this is not needed here, but it's needed in the multi-face
                                     //  extensions. Should I remove it?
@@ -537,9 +561,8 @@ WarpX::ComputeOneWayExtensions() {
         amrex::Box const &box = mfi.validbox();
 
         auto const &Sz = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_intr_face_z = m_flag_intr_face[maxLevel()][idim]->array(mfi);
         auto const &flag_ext_face_z = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_avail_face_z = m_flag_avail_face[maxLevel()][idim]->array(mfi);
+        auto const &flag_info_face_z = m_flag_info_face[maxLevel()][idim]->array(mfi);
         auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
         auto const &borrowing_z_inds_pointer = borrowing_z.inds_pointer.array();
         auto const &borrowing_z_size = borrowing_z.size.array();
@@ -570,7 +593,7 @@ WarpX::ComputeOneWayExtensions() {
                 amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                                       ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sz_ext, Sz_mod, flag_avail_face_z,
+                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sz_ext, Sz_mod, flag_info_face_z,
                                                               flag_ext_face_z, idim);
 
 
@@ -601,7 +624,8 @@ WarpX::ComputeOneWayExtensions() {
                                 // If no face is available we don't do anything and we will need to use the
                                 // multi-face extensions.
                                 if (Sz_mod(i + i_n, j + j_n, k) > Sz_ext
-                                    and flag_avail_face_z(i + i_n, j + j_n, k)
+                                    and (flag_info_face_z(i + i_n, j + j_n, k) == 1
+                                         or flag_info_face_z(i + i_n, j + j_n, k) == 2)
                                     and flag_ext_face_z(i, j, k)) {
                                     Sz_mod(i + i_n, j + j_n, k) -= Sz_ext;
                                     // Insert the index of the face info
@@ -612,7 +636,7 @@ WarpX::ComputeOneWayExtensions() {
                                                                       borrowing_z_neigh_faces);
                                     *(borrowing_z_area+ps) = Sz_ext;
 
-                                    flag_intr_face_z(i + i_n, j + j_n, k) = true;
+                                    flag_info_face_z(i + i_n, j + j_n, k) = 2;
                                     // Add the area to the intruding face.
                                     // TODO: this is not needed here, but it's needed in the multi-face
                                     //  extensions. Should I remove it?
@@ -653,9 +677,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         amrex::Box const &box = mfi.validbox();
 
         auto const &Sx = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_intr_face_x = m_flag_intr_face[maxLevel()][idim]->array(mfi);
         auto const &flag_ext_face_x = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_avail_face_x = m_flag_avail_face[maxLevel()][idim]->array(mfi);
+        auto const &flag_info_face_x = m_flag_info_face[maxLevel()][idim]->array(mfi);
         auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
         auto const &borrowing_x_inds_pointer = borrowing_x.inds_pointer.array();
         auto const &borrowing_x_size = borrowing_x.size.array();
@@ -685,7 +708,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                       lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                 amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
                 int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sx_ext, Sx_mod, Sx,
-                                                                flag_avail_face_x, flag_ext_face_x,
+                                                                flag_info_face_x, flag_ext_face_x,
                                                                 idim);
 
                 borrowing_x_size(i, j, k) = n_borrow;
@@ -717,7 +740,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
                     for(int j_loc = 0; j_loc <= 2; j_loc++){
                         for(int k_loc = 0; k_loc <= 2; k_loc++){
-                            local_avail(j_loc, k_loc) = flag_avail_face_x(i, j  + j_loc - 1, k + k_loc - 1);
+                            local_avail(j_loc, k_loc) = (flag_info_face_x(i, j  + j_loc - 1, k + k_loc - 1) == 1
+                                                         or flag_info_face_x(i, j  + j_loc - 1, k + k_loc - 1) == 2);
                         }
                     }
 
@@ -770,7 +794,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                                       borrowing_x_neigh_faces);
                                     *(borrowing_x_area + ps + count) = patch;
 
-                                    flag_intr_face_x(i, j + j_n, k + k_n) = true;
+                                    flag_info_face_x(i, j + j_n, k + k_n) = 2;
                                     Sx_mod(i, j, k) += patch;
                                     Sx_mod(i, j + j_n, k + k_n) -= patch;
                                     count+=1;
@@ -794,9 +818,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         amrex::Box const &box = mfi.validbox();
 
         auto const &Sy = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_intr_face_y = m_flag_intr_face[maxLevel()][idim]->array(mfi);
         auto const &flag_ext_face_y = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_avail_face_y = m_flag_avail_face[maxLevel()][idim]->array(mfi);
+        auto const &flag_info_face_y = m_flag_info_face[maxLevel()][idim]->array(mfi);
         auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
         auto const &borrowing_y_inds_pointer = borrowing_y.inds_pointer.array();
         auto const &borrowing_y_size = borrowing_y.size.array();
@@ -826,7 +849,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sy_ext, Sy_mod, Sy,
-                                                               flag_avail_face_y, flag_ext_face_y,
+                                                               flag_info_face_y, flag_ext_face_y,
                                                                idim);
 
                 borrowing_y_size(i, j, k) = n_borrow;
@@ -858,8 +881,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
                     for (int i_loc = 0; i_loc <= 2; i_loc++) {
                         for (int k_loc = 0; k_loc <= 2; k_loc++) {
-                            local_avail(i_loc, k_loc) =
-                                flag_avail_face_y(i + i_loc - 1, j, k + k_loc - 1);
+                            local_avail(i_loc, k_loc) = (flag_info_face_y(i + i_loc - 1, j, k + k_loc - 1) == 1
+                                                         or flag_info_face_y(i + i_loc - 1, j, k + k_loc - 1) == 2)   ;
                         }
                     }
 
@@ -910,7 +933,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                                       borrowing_y_neigh_faces);
                                     *(borrowing_y_area + ps + count) = patch;
 
-                                    flag_intr_face_y(i + i_n, j, k + k_n) = true;
+                                    flag_info_face_y(i + i_n, j, k + k_n) = 2;
                                     Sy_mod(i, j, k) += patch;
                                     Sy_mod(i + i_n, j, k + k_n) -= patch;
                                     count += 1;
@@ -934,9 +957,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         amrex::Box const &box = mfi.validbox();
 
         auto const &Sz = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_intr_face_z = m_flag_intr_face[maxLevel()][idim]->array(mfi);
         auto const &flag_ext_face_z = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_avail_face_z = m_flag_avail_face[maxLevel()][idim]->array(mfi);
+        auto const &flag_info_face_z = m_flag_info_face[maxLevel()][idim]->array(mfi);
         auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
         auto const &borrowing_z_inds_pointer = borrowing_z.inds_pointer.array();
         auto const &borrowing_z_size = borrowing_z.size.array();
@@ -966,7 +988,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                     ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
                 int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sz_ext, Sz_mod, Sz,
-                                                                 flag_avail_face_z, flag_ext_face_z,
+                                                                 flag_info_face_z, flag_ext_face_z,
                                                                  idim);
 
                 borrowing_z_size(i, j, k) = n_borrow;
@@ -998,7 +1020,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
                     for(int i_loc = 0; i_loc <= 2; i_loc++){
                         for(int j_loc = 0; j_loc <= 2; j_loc++){
-                            local_avail(i_loc, j_loc) = flag_avail_face_z(i + i_loc - 1, j + j_loc - 1, k);
+                            local_avail(i_loc, j_loc) = (flag_info_face_z(i + i_loc - 1, j + j_loc - 1, k) == 1
+                                                         or flag_info_face_z(i + i_loc - 1, j + j_loc - 1, k) == 2);
                         }
                     }
 
@@ -1049,7 +1072,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                                       borrowing_z_neigh_faces);
                                     *(borrowing_z_area + ps + count) = patch;
 
-                                    flag_intr_face_z(i + i_n, j + j_n, k) = true;
+                                    flag_info_face_z(i + i_n, j + j_n, k) = 2;
 
                                     Sz_mod(i, j, k) += patch;
                                     Sz_mod(i + i_n, j + j_n, k) -= patch;

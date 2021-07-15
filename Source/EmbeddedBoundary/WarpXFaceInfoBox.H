@@ -7,15 +7,14 @@
 #include<bitset>
 
 struct FaceInfoBox {
-    //amrex::Gpu::DeviceVector<int> i_face, j_face, k_face;
     amrex::Gpu::DeviceVector<uint8_t> neigh_faces;
     amrex::Gpu::DeviceVector<amrex::Real> area;
     // this vector stores the indices to access in the previous vectors
     amrex::Gpu::DeviceVector<int> inds;
     //number of entries of inds which correspond to this element
     amrex::BaseFab<int> size;
-    //each entry points an element inside the inds vector all the elements. After that element
-    // #size entries indicate the indices to access the vectors
+    //each entry points an element inside the inds vector all the elements. After that element,
+    // the next #size entries indicate the indices to access the vectors
     amrex::BaseFab<int*> inds_pointer;
 
     static const uint8_t ul = 1;
