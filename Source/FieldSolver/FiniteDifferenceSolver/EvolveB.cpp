@@ -31,6 +31,7 @@
 #include <AMReX_LayoutData.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 
