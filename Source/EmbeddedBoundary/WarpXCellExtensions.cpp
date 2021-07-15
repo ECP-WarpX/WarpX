@@ -1,5 +1,7 @@
 #include "WarpX.H"
 #include <AMReX_Scan.H>
+#include <AMReX_iMultiFab.H>
+#include <AMReX_MultiFab.H>
 
 /**
 * \brief auxiliary function to count the amount of faces which still need to be extended

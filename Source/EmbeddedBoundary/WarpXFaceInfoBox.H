@@ -4,6 +4,9 @@
 #ifndef WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_H
 #define WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_H
 
+#include <AMReX_Gpu.H>
+#include <AMReX_BaseFab.H>
+
 #include<bitset>
 
 struct FaceInfoBox {
