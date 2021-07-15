@@ -533,7 +533,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
-            self.psatd_use_damp_fields_in_z_guard = kw.pop('warpx_use_damp_fields_in_z_guard', None)
 
     def initialize_inputs(self):
 
@@ -549,7 +548,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
-            pywarpx.psatd.use_damp_fields_in_z_guard = self.psatd_use_damp_fields_in_z_guard
 
             if self.grid.guard_cells is not None:
                 pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
@@ -735,6 +733,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_particles_wt = kw.pop('warpx_costs_heuristic_particles_wt', None)
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
+        self.amr_check_input = kw.pop('warpx_amr_check_input', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -772,6 +771,8 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
+        pywarpx.amr.check_input = self.amr_check_input
+
         particle_shape = self.particle_shape
         for s in self.species:
             if s.particle_shape is not None:
@@ -804,12 +805,12 @@ class Simulation(picmistandard.PICMI_Simulation):
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
 
-    def initialize_warpx(self):
+    def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
             return
 
         self.warpx_initialized = True
-        pywarpx.warpx.init()
+        pywarpx.warpx.init(mpi_comm)
 
     def write_input_file(self, file_name='inputs'):
         self.initialize_inputs()
@@ -820,9 +821,9 @@ class Simulation(picmistandard.PICMI_Simulation):
             kw['stop_time'] = self.max_time
         pywarpx.warpx.write_inputs(file_name, **kw)
 
-    def step(self, nsteps=None):
+    def step(self, nsteps=None, mpi_comm=None):
         self.initialize_inputs()
-        self.initialize_warpx()
+        self.initialize_warpx(mpi_comm)
         if nsteps is None:
             if self.max_steps is not None:
                 nsteps = self.max_steps
@@ -1002,7 +1003,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         if np.iterable(self.species):
             species_list = self.species
         else:
-            species_list = [species]
+            species_list = [self.species]
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution

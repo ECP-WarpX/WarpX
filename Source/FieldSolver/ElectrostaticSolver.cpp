@@ -7,7 +7,6 @@
 #include "WarpX.H"
 
 #include "Parallelization/GuardCellManager.H"
-#include "Parser/WarpXParser.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -42,6 +41,7 @@
 #endif
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
@@ -573,9 +573,11 @@ WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) cons
 #endif
 
     auto parser_lo = makeParser(potential_lo_str, {"t"});
-    pot_lo = parser_lo.eval(gett_new(0));
+    auto parser_lo_exe = parser_lo.compileHost<1>();
+    pot_lo = parser_lo_exe(gett_new(0));
     auto parser_hi = makeParser(potential_hi_str, {"t"});
-    pot_hi = parser_hi.eval(gett_new(0));
+    auto parser_hi_exe = parser_hi.compileHost<1>();
+    pot_hi = parser_hi_exe(gett_new(0));
 }
 
 /* \bried Compute the electric field that corresponds to `phi`, and
