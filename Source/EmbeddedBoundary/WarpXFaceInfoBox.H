@@ -70,7 +70,7 @@ struct FaceInfoBox {
             res(0) = 0;
             res(1) = -1;
         }else if(mask & d){
-            res(0) = -1;
+            res(0) = 0;
             res(1) = 1;
         }else if(mask & ur){
             res(0) = 1;
