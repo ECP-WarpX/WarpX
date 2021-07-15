@@ -63,7 +63,7 @@ void compute_weights (const amrex::ParticleReal xp,
     k = 0;
 
     W[0][1] = x - i;
-    W[1][1] = y - j;
+    W[1][1] = z - j;
 
     W[0][0] = 1.0 - W[0][1];
     W[1][0] = 1.0 - W[1][1];
