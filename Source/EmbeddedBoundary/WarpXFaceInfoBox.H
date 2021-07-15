@@ -32,6 +32,7 @@ struct FaceInfoBox {
     /**
     * \brief add the neighbor i, j to the list of intruded neighbors.
     */
+    AMREX_GPU_HOST_DEVICE
     static void addConnectedNeighbor(int i, int j, int ind, uint8_t* neigh_face_ptr){
 
         if(i == -1 and j == -1){
@@ -53,9 +54,10 @@ struct FaceInfoBox {
         }
     }
 
-/**
-* \brief writes into i_face and j_face the intruded neighbors indices;
-*/
+    /**
+    * \brief writes into i_face and j_face the intruded neighbors indices;
+    */
+    AMREX_GPU_HOST_DEVICE
     static amrex::Array1D<int, 0, 1> uint8_to_inds(uint8_t mask){
         amrex::Array1D<int, 0, 1> res;
 
