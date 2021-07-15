@@ -1605,6 +1605,8 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
     for (auto& pc : allcontainers) {
         scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
     }
+#else
+    amrex::ignore_unused(distance_to_eb);
 #endif
 }
 
