@@ -18,6 +18,7 @@ Optional dependencies include:
 - `CUDA Toolkit 9.0+ <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_)
 - `OpenMP 3.1+ <https://www.openmp.org>`__: for threaded CPU execution (currently not fully accelerated)
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
+- `BLAS++ <https://bitbucket.org/icl/blaspp>`_ and `LAPACK++ <https://bitbucket.org/icl/lapackpp>`_: for spectral solver (PSATD) support in RZ geometry
 - `Boost 1.66.0+ <https://www.boost.org/>`__: for QED lookup tables generation support
 - `openPMD-api 0.12.0+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
@@ -38,11 +39,13 @@ Spack (macOS/Linux)
 
    spack env create warpx-dev
    spack env activate warpx-dev
-   spack add adios2
+   spack add adios2     # for openPMD
+   spack add blaspp     # for PSATD in RZ
    spack add ccache
    spack add cmake
    spack add fftw
-   spack add hdf5
+   spack add hdf5       # for openPMD
+   spack add lapackpp   # for PSATD in RZ
    spack add mpi
    spack add pkgconfig  # for fftw
    # optional:
@@ -53,7 +56,7 @@ Spack (macOS/Linux)
 
 (in new terminals, re-activate the environment with ``spack env activate warpx-dev`` again)
 
-If you also want to run runtime tests and added Python (``spack add python``) above, install also these additional Python packages in the active Spack environment:
+If you also want to run runtime tests and added Python (``spack add python`` and ``spack add py-pip``) above, install also these additional Python packages in the active Spack environment:
 
 .. code-block:: bash
 
@@ -84,7 +87,7 @@ Without MPI:
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge ccache cmake compilers git openpmd-api python numpy scipy yt fftw matplotlib mamba ninja
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy scipy yt fftw matplotlib mamba ninja
    conda activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
@@ -93,7 +96,7 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge ccache cmake compilers git openpmd-api=*=mpi_openmpi* python numpy scipy yt fftw=*=mpi_openmpi* matplotlib mamba ninja openmpi
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api=*=mpi_openmpi* python numpy scipy yt fftw=*=mpi_openmpi* matplotlib mamba ninja openmpi
    conda activate warpx-dev
 
 

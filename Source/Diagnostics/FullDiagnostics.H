@@ -69,8 +69,10 @@ private:
     void PrepareFieldDataForOutput () override;
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
+     *
+     * \param[in] step current time step
      */
-    void MovingWindowAndGalileanDomainShift () override;
+    void MovingWindowAndGalileanDomainShift (int step) override;
     /** This function queries deprecated input parameters and abort
      *  the run if one of them is specified.
      */

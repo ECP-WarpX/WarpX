@@ -346,6 +346,7 @@ protected:
     // particle and the time of the boosted frame.
     bool boost_adjust_transverse_positions = false;
     bool do_backward_propagation = false;
+    bool m_rz_random_theta = true;
 
     Resampling m_resampler;
 

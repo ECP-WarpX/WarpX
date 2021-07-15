@@ -14,7 +14,6 @@
 #include "MultiParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
-#include "Parser/WarpXParserWrapper.H"
 #include "Particles/Collision/CollisionHandler.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
@@ -286,14 +285,14 @@ public:
     // External fields added to particle fields.
     amrex::Vector<amrex::Real> m_B_external_particle;
     amrex::Vector<amrex::Real> m_E_external_particle;
-    // ParserWrapper for B_external on the particle
-    std::unique_ptr<ParserWrapper<4> > m_Bx_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_By_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Bz_particle_parser;
-    // ParserWrapper for E_external on the particle
-    std::unique_ptr<ParserWrapper<4> > m_Ex_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Ey_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Ez_particle_parser;
+    // Parser for B_external on the particle
+    std::unique_ptr<amrex::Parser> m_Bx_particle_parser;
+    std::unique_ptr<amrex::Parser> m_By_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Bz_particle_parser;
+    // Parser for E_external on the particle
+    std::unique_ptr<amrex::Parser> m_Ex_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
 
 #ifdef WARPX_QED
     /**
@@ -353,8 +352,8 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    /** Whether to absorb particles exiting the domain */
-    ParticleBC m_boundary_conditions = ParticleBC::none;
+    /** Controls boundaries for particles exiting the domain */
+    ParticleBoundaries m_boundary_conditions;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,

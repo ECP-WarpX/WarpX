@@ -24,6 +24,7 @@
 #include <AMReX_GpuDevice.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 #include <AMReX_Print.H>
 #include <AMReX_RandomEngine.H>
 
@@ -221,7 +222,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (part_pos_s == "nfluxpercell") {
         surface_flux = true;
-        pp_species_name.query("num_particles_per_cell", num_particles_per_cell_real);
+        queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
@@ -459,8 +460,9 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
     } else if (rho_prof_s == "parse_density_function") {
         Store_parserString(pp, "density_function(x,y,z)", str_density_function);
         // Construct InjectorDensity with InjectorDensityParser.
+        density_parser = std::make_unique<Parser>(makeParser(str_density_function,{"x","y","z"}));
         h_inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
-                                            makeParser(str_density_function,{"x","y","z"})));
+                                            density_parser->compile<3>()));
     } else {
         //No need for profile definition if external file is used
         std::string s_inj_style;
@@ -606,10 +608,13 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         Store_parserString(pp, "momentum_function_uz(x,y,z)",
                                                str_momentum_function_uz);
         // Construct InjectorMomentum with InjectorMomentumParser.
+        ux_parser = std::make_unique<Parser>(makeParser(str_momentum_function_ux,{"x","y","z"}));
+        uy_parser = std::make_unique<Parser>(makeParser(str_momentum_function_uy,{"x","y","z"}));
+        uz_parser = std::make_unique<Parser>(makeParser(str_momentum_function_uz,{"x","y","z"}));
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumParser*)nullptr,
-                                             makeParser(str_momentum_function_ux,{"x","y","z"}),
-                                             makeParser(str_momentum_function_uy,{"x","y","z"}),
-                                             makeParser(str_momentum_function_uz,{"x","y","z"})));
+                                             ux_parser->compile<3>(),
+                                             uy_parser->compile<3>(),
+                                             uz_parser->compile<3>()));
     } else {
         //No need for momentum definition if external file is used
         std::string s_inj_style;

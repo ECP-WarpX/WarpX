@@ -107,6 +107,11 @@ BTDiagnostics::ReadParameters ()
         "The back transformed diagnostics currently only works if the boost is in the z-direction");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.do_moving_window,
            "The moving window should be on if using the boosted frame diagnostic.");
+    // The next two asserts could be relaxed with respect to check to current step
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.end_moving_window_step < 0,
+        "The moving window must not stop when using the boosted frame diagnostic.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
+        "The moving window must start at step zero for the boosted frame diagnostic.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == AMREX_SPACEDIM-1,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -606,7 +611,7 @@ BTDiagnostics::Flush (int i_buffer)
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        labtime, m_output_species, nlev_output, file_name,
+        labtime, m_output_species, nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 

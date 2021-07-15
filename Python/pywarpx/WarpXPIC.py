@@ -4,6 +4,13 @@
 #
 # License: BSD-3-Clause-LBNL
 
+# The WarpXPIC class is the beginnings of an implementation of a standard interface
+# for running PIC codes. This is the run time equivalent to the PICMI standard.
+# This standard would specify the API for calling the various pieces of typical
+# time step loops, for example get_self_fields and put_Efields. Ideally, a user
+# could write a loop using the standard and, importing one of compliant codes, be
+# able to run a customized PIC simulation with that code.
+
 from warp.run_modes.timestepper import PICAPI
 from ._libwarpx import libwarpx
 
@@ -52,5 +59,5 @@ class WarpXPIC(PICAPI):
 
     def apply_particle_boundary_conditions(self):
         libwarpx.mypc_Redistribute() # Redistribute particles
-        libwarpx.warpx_MoveWindow() # !!! not the correct place yet
+        libwarpx.warpx_MoveWindow(self.istep,True) # !!! not the correct place yet
 

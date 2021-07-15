@@ -1,12 +1,20 @@
-# Copyright 2017-2018 Andrew Myers, David Grote, Weiqun Zhang
+# Copyright 2017-2021 Andrew Myers, David Grote, Weiqun Zhang
 #
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
 
+# This is intended to be a Python level example of how one might write a customized
+# time stepping loop. This would replace the functionality of the WarpX::Evolve routine.
+# Wrappers are available for the major pieces of a time step and they would be called
+# here in the appropriate order.
+# Note that this is intended to be an example only and may not be functional. The
+# onestep routine as written here is out of date and is not consistent with WarpX::Evolve.
+
 from ._libwarpx import libwarpx
 from . import callbacks
+
 
 class TimeStepper(object):
 
@@ -61,7 +69,7 @@ class TimeStepper(object):
 
         self.cur_time += dt
 
-        libwarpx.warpx_MoveWindow();
+        libwarpx.warpx_MoveWindow(self.istep,True);
 
         #if mpi.rank == 0:
         print("STEP %d ends. TIME = %e DT = %e"%(self.istep, self.cur_time, dt))

@@ -72,13 +72,6 @@ macro(set_default_build_type default_build_type)
             set_property(CACHE CMAKE_BUILD_TYPE
                 PROPERTY STRINGS ${CMAKE_CONFIGURATION_TYPES})
         endif()
-
-        # RelWithDebInfo uses -O2 which is sub-ideal for how it is intended to be used
-        #   https://gitlab.kitware.com/cmake/cmake/-/merge_requests/591
-        list(TRANSFORM CMAKE_C_FLAGS_RELWITHDEBINFO REPLACE "-O2" "-O3")
-        list(TRANSFORM CMAKE_CXX_FLAGS_RELWITHDEBINFO REPLACE "-O2" "-O3")
-        # FIXME: due to the "AMReX inits CUDA first" logic we will first see this with -O2 in output
-        list(TRANSFORM CMAKE_CUDA_FLAGS_RELWITHDEBINFO REPLACE "-O2" "-O3")
     endif()
 endmacro()
 
@@ -344,7 +337,6 @@ function(warpx_print_summary)
     if(MPI)
         message("    MPI (thread multiple): ${WarpX_MPI_THREAD_MULTIPLE}")
     endif()
-    message("    Parser depth: ${WarpX_PARSER_DEPTH}")
     message("    PSATD: ${WarpX_PSATD}")
     message("    PRECISION: ${WarpX_PRECISION}")
     message("    OPENPMD: ${WarpX_OPENPMD}")

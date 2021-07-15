@@ -1,7 +1,6 @@
 #include "FlushFormatPlotfile.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
-#include "Parser/WarpXParserWrapper.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Interpolate.H"
@@ -57,14 +56,14 @@ FlushFormatPlotfile::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, bool plot_raw_fields,
+    const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
     bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
     bool /*isLastBTDFlush*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
 
     Vector<std::string> rfs;
@@ -289,6 +288,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         WriteHeaderParticle(HeaderFile, particle_diags);
 
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
+
+        HeaderFile << warpx.getdo_moving_window() << "\n";
     }
 }
 
@@ -353,7 +354,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
         ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                   getParser(particle_diags[i].m_particle_filter_parser),
+                                   compileParser<ParticleDiag::m_nvars>
+                                       (particle_diags[i].m_particle_filter_parser.get()),
                                    pc->getMass());
         parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,

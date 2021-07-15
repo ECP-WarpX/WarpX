@@ -13,11 +13,17 @@ jobs:
         .github/workflows/dependencies/gcc.sh
     - name: build WarpX
       run: |
-        cmake -S . -B build            \
+        cmake -S . -B build_3D         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
-        cmake --build build -j 2
+        cmake --build build_3D -j 2
+        cmake -S . -B build_RZ         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_DIMS=RZ              \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_QED=OFF
+        cmake --build build_RZ -j 2
 
   build_pyfull:
     name: Clang pywarpx [Linux]
@@ -72,6 +78,7 @@ jobs:
           -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE     \
           -DWarpX_PSATD=ON             \
+          -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
         cmake --build build_sp -j 2
 
@@ -151,12 +158,6 @@ jobs:
         export CC=$(which icx)
 
         cmake -S . -B build_sp         \
-          -DCMAKE_C_COMPILER_ID="Clang"                  \
-          -DCMAKE_C_COMPILER_VERSION=12.0                \
-          -DCMAKE_C_STANDARD_COMPUTED_DEFAULT="11"       \
-          -DCMAKE_CXX_COMPILER_ID="Clang"                \
-          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="14"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
@@ -168,9 +169,6 @@ jobs:
         python3 -m pip install --upgrade setuptools wheel
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel -v .
         python3 -m pip install *.whl
-     # note: setting the CXX compiler ID is a work-around for
-     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
-     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
     - name: run pywarpx
       run: |
@@ -200,9 +198,6 @@ jobs:
 
         cmake -S . -B build_sp         \
           -DBUILD_SHARED_LIBS=ON       \
-          -DCMAKE_CXX_COMPILER_ID="Clang"                \
-          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
           -DWarpX_LIB=ON               \
@@ -216,9 +211,6 @@ jobs:
      #   python3 -m pip install --upgrade setuptools wheel
      #   PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
      #   python3 -m pip install *.whl
-     # note: setting the CXX compiler ID is a work-around for
-     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
-     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
   build_hip:
     name: HIP SP [Linux]
