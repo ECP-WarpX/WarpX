@@ -1,10 +1,17 @@
-max_step = 30
+max_step = 1
 amr.n_cell = 64 64 64
 amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 128
 geometry.coord_sys   = 0
-geometry.is_periodic = 0 0 0
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
+boundary.potential_lo_x = 0
+boundary.potential_hi_x = 0
+boundary.potential_lo_y = 0
+boundary.potential_hi_y = 0
+boundary.potential_lo_z = 0
+boundary.potential_hi_z = 0
 geometry.prob_lo     = -0.5 -0.5 -0.5
 geometry.prob_hi     =  0.5  0.5  0.5
 warpx.do_pml = 0
@@ -13,26 +20,14 @@ warpx.const_dt = 1e-6
 warpx.do_electrostatic = labframe
 warpx.eb_implicit_function = "-(x**2+y**2+z**2-0.2**2)"
 warpx.eb_potential = "1."
-
-particles.species_names = electron
+warpx.self_fields_required_precision = 1.e-7
 
 algo.field_gathering = momentum-conserving
 
 # Order of particle shape factors
 algo.particle_shape = 1
 
-my_constants.n0 = 1.49e6
-my_constants.R0 = 0.1
-
-electron.charge = -q_e
-electron.mass = m_e
-electron.injection_style = "NUniformPerCell"
-electron.num_particles_per_cell_each_dim = 2 2 2
-electron.profile = parse_density_function
-electron.density_function(x,y,z) = "(x*x + y*y + z*z < R0*R0)*n0"
-electron.momentum_distribution_type = constant
-
 diagnostics.diags_names = diag1
-diag1.intervals = 30
+diag1.intervals = 1
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez rho
+diag1.fields_to_plot = Ex Ey Ez rho phi
