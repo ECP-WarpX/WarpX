@@ -845,7 +845,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
         const auto poffset = offset.data();
+#ifdef WARPX_DIM_RZ
         const bool rz_random_theta = m_rz_random_theta;
+#endif
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
