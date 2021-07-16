@@ -155,7 +155,9 @@ field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = diagnostic_intervals,
-    data_list = ['rho_electrons', 'rho_he_ions', 'phi']
+    data_list = ['rho_electrons', 'rho_he_ions', 'phi'],
+    write_dir = '.',
+    warpx_file_prefix = 'Python_background_mcc_plt'
 )
 
 ##########################

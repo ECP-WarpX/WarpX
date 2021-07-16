@@ -6,11 +6,6 @@
 # diagnostics, which confirms that the PICMI MCC interface works otherwise
 # the run would've crashed.
 
-# Possible running time: ~ 19 s
-
-import numpy as np
-
-import yt
 import glob
 
 files = sorted(glob.glob('Python_background_mcc_plt*'))[1:]
