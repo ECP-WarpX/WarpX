@@ -372,7 +372,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                             int const verbosity) const
 {
 
-    // Without embedded boundaries: set potential at the box boundary
+    // Define the boundary conditions
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
     std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
     Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
@@ -401,9 +401,9 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
         }
     }
 
-#ifndef AMREX_USE_EB
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
+#ifndef AMREX_USE_EB
     // Define the linear operator (Poisson operator)
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
 
