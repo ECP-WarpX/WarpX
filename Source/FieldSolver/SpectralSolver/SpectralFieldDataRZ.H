@@ -83,6 +83,9 @@ class SpectralFieldDataRZ
 
     private:
 
+        SpectralFieldIndex m_spectral_index;
+        int m_n_fields;
+
         // tempHTransformed and tmpSpectralField store fields
         // right before/after the z Fourier transform
         SpectralField tempHTransformed; // contains Complexes
