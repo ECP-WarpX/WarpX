@@ -37,14 +37,10 @@ WarpX::ComputeDt ()
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
-#if (defined WARPX_DIM_RZ)
-        // - In RZ geometry: dz/c
-        deltat = cfl * dx[1]/PhysConst::c;
-#elif (defined WARPX_DIM_XZ)
-        // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
-        deltat = cfl * std::min( dx[0], dx[1] )/PhysConst::c;
+        // (determined by the minimum cell size in all directions)
+#if (AMREX_SPACEDIM == 2)
+        deltat = cfl * std::min(dx[0], dx[1]) / PhysConst::c;
 #else
-        // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
         deltat = cfl * std::min(dx[0], std::min(dx[1], dx[2])) / PhysConst::c;
 #endif
     } else {
