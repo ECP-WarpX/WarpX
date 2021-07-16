@@ -11,6 +11,7 @@
 #include "Utils/WarpX_Complex.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>
@@ -36,7 +37,7 @@ class SpectralBaseAlgorithm
     public:
         // Virtual member function ; meant to be overridden in subclasses
         virtual void pushSpectralFields(SpectralFieldData& f) const = 0;
-        virtual int getRequiredNumberOfFields() const = 0;
+
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
@@ -92,9 +93,12 @@ class SpectralBaseAlgorithm
         */
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
+                              const SpectralFieldIndex& spectral_index,
                               const int norder_x, const int norder_y,
                               const int norder_z, const bool nodal,
                               const amrex::IntVect& fill_guards);
+
+        SpectralFieldIndex m_spectral_index;
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

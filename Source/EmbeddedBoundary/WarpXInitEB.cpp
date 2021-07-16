@@ -1,40 +1,40 @@
-#include "Parser/WarpXParser.H"
-#include "Parser/WarpXParserWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
-#include <AMReX.H>
-#include <AMReX_Array.H>
-#include <AMReX_Array4.H>
-#include <AMReX_BLProfiler.H>
-#include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_BoxList.H>
-#include <AMReX_Config.H>
 #ifdef AMREX_USE_EB
-#   include <AMReX_EB2.H>
-#endif
-#include <AMReX_FabArray.H>
-#include <AMReX_FabFactory.H>
-#include <AMReX_GpuControl.H>
-#include <AMReX_GpuDevice.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_Loop.H>
-#include <AMReX_MFIter.H>
-#include <AMReX_MultiFab.H>
-#ifdef AMREX_USE_EB
-#   include <AMReX_ParmParse.H>
-#endif
-#include <AMReX_REAL.H>
-#include <AMReX_SPACE.H>
-#include <AMReX_Vector.H>
+#  include "Utils/WarpXUtil.H"
 
-#include <array>
-#include <cstdlib>
-#include <memory>
-#include <string>
-#include <vector>
+#  include <AMReX.H>
+#  include <AMReX_Array.H>
+#  include <AMReX_Array4.H>
+#  include <AMReX_BLProfiler.H>
+#  include <AMReX_Box.H>
+#  include <AMReX_BoxArray.H>
+#  include <AMReX_BoxList.H>
+#  include <AMReX_Config.H>
+#  include <AMReX_EB2.H>
+#  include <AMReX_EB_utils.H>
+#  include <AMReX_FabArray.H>
+#  include <AMReX_FabFactory.H>
+#  include <AMReX_GpuControl.H>
+#  include <AMReX_GpuDevice.H>
+#  include <AMReX_GpuQualifiers.H>
+#  include <AMReX_IntVect.H>
+#  include <AMReX_Loop.H>
+#  include <AMReX_MFIter.H>
+#  include <AMReX_MultiFab.H>
+#  include <AMReX_ParmParse.H>
+#  include <AMReX_Parser.H>
+#  include <AMReX_REAL.H>
+#  include <AMReX_SPACE.H>
+#  include <AMReX_Vector.H>
+
+#  include <array>
+#  include <cstdlib>
+#  include <memory>
+#  include <string>
+#  include <vector>
+
+#endif
 
 #ifdef AMREX_USE_EB
 namespace {
@@ -42,8 +42,8 @@ namespace {
         : public amrex::GPUable
     {
     public:
-        ParserIF (const ParserWrapper<3>& a_parser)
-            : m_parser(a_parser.getParser())
+        ParserIF (const amrex::ParserExecutor<3>& a_parser)
+            : m_parser(a_parser)
             {}
 
         ParserIF (const ParserIF& rhs) noexcept = default;
@@ -66,7 +66,7 @@ namespace {
         }
 
     private:
-        HostDeviceParser<3> m_parser;
+        amrex::ParserExecutor<3> m_parser; //! function parser with three arguments (x,y,z)
     };
 }
 #endif
@@ -81,10 +81,9 @@ WarpX::InitEB ()
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);
     if (! impf.empty()) {
-        WarpXParser wp = makeParser(impf, {"x", "y", "z"});
-        m_eb_if_parser = std::make_unique<ParserWrapper<3> >(wp);
-        ParserIF pif(*m_eb_if_parser);
-        auto gshop = amrex::EB2::makeShop(pif);
+        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
+        ParserIF pif(eb_if_parser.compile<3>());
+        auto gshop = amrex::EB2::makeShop(pif, eb_if_parser);
         amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel());
     } else {
         amrex::ParmParse pp_eb2("eb2");
@@ -151,7 +150,7 @@ WarpX::ComputeEdgeLengths () {
 }
 
 /**
- * \brief Compute the ara of the mesh faces. Here the area is a value in [0, 1].
+ * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
  *        An edge of area 0 is fully covered.
  */
 void
@@ -247,6 +246,29 @@ WarpX::ScaleAreas() {
                                 face_areas_dim(i, j, k) *= full_area;
             });
         }
+    }
+#endif
+}
+
+/**
+ * \brief Compute the level set function used for particle-boundary interaction.
+ */
+void
+WarpX::ComputeDistanceToEB () {
+#ifdef AMREX_USE_EB
+    BL_PROFILE("ComputeDistanceToEB");
+
+    amrex::ParmParse pp_warpx("warpx");
+    std::string impf;
+    pp_warpx.query("eb_implicit_function", impf);
+    if (! impf.empty()) {
+        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
+        ParserIF pif(eb_if_parser.compile<3>());
+        auto gshop = amrex::EB2::makeShop(pif);
+        amrex::FillImpFunc(*m_distance_to_eb[maxLevel()], gshop, Geom(maxLevel()));
+        m_distance_to_eb[maxLevel()]->negate(m_distance_to_eb[maxLevel()]->nGrow()); // signed distance f = - imp. f.
+    } else {
+        m_distance_to_eb[maxLevel()]->setVal(100.0); // some positive value
     }
 #endif
 }

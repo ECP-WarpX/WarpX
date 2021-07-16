@@ -33,6 +33,11 @@
 #include "SpeciesPhysicalProperties.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#ifdef AMREX_USE_EB
+#   include "EmbeddedBoundary/ParticleScraper.H"
+#   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
+#endif
+
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -184,11 +189,11 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bx_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
-           m_By_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_By_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
-           m_Bz_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bz_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
@@ -209,11 +214,11 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp_particles, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ex_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
-           m_Ey_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ey_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
-           m_Ez_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ez_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
         }
@@ -1592,6 +1597,17 @@ void MultiParticleContainer::CheckQEDProductSpecies()
                 "ERROR: Schwinger process product species are of wrong type");
     }
 
+}
+
+void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
+#if AMREX_USE_EB
+    for (auto& pc : allcontainers) {
+        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+    }
+#else
+    amrex::ignore_unused(distance_to_eb);
+#endif
 }
 
 #endif

@@ -86,10 +86,6 @@ endif()
 option(WarpX_MPI_THREAD_MULTIPLE "MPI thread-multiple support, i.e. for async_io" ON)
 mark_as_advanced(WarpX_MPI_THREAD_MULTIPLE)
 
-set(WarpX_PARSER_DEPTH 24 CACHE STRING
-    "Maximum parser depth for input file functions")
-mark_as_advanced(WarpX_PARSER_DEPTH)
-
 option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 
 # change the default build type to Release (or RelWithDebInfo) instead of Debug
@@ -194,7 +190,6 @@ add_subdirectory(Source/Filter)
 add_subdirectory(Source/Initialization)
 add_subdirectory(Source/Laser)
 add_subdirectory(Source/Parallelization)
-add_subdirectory(Source/Parser)
 add_subdirectory(Source/Particles)
 add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
@@ -293,14 +288,9 @@ if(WarpX_PSATD)
     target_compile_definitions(WarpX PUBLIC WARPX_USE_PSATD)
 endif()
 
-target_compile_definitions(WarpX PUBLIC
-    WARPX_PARSER_DEPTH=${WarpX_PARSER_DEPTH})
-
 # <cmath>: M_PI
-# <unistd.h>: parser
 if(WIN32)
     target_compile_definitions(WarpX PRIVATE _USE_MATH_DEFINES)
-    target_compile_definitions(WarpX PRIVATE YY_NO_UNISTD_H)
 endif()
 
 # Modern Electron Variables

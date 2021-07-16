@@ -11,16 +11,14 @@ MCCProcess::MCCProcess (
                         const std::string& scattering_process,
                         const std::string& cross_section_file,
                         const amrex::Real energy )
-    : m_type(parseProcessType(scattering_process))
-    , m_energy_penalty(energy)
 {
     amrex::Print() << "Reading file " << cross_section_file << " for "
                    << scattering_process << " scattering cross-sections.\n";
 
     // read the cross-section data file into memory
-    readCrossSectionFile(cross_section_file, m_energies, m_sigmas);
+    readCrossSectionFile(cross_section_file, m_energies, m_sigmas_h);
 
-    init();
+    init(scattering_process, energy);
 }
 
 template <typename InputVector>
@@ -29,55 +27,49 @@ MCCProcess::MCCProcess (
                         const InputVector&& energies,
                         const InputVector&& sigmas,
                         const amrex::Real energy )
-    : m_type(parseProcessType(scattering_process))
-    , m_energy_penalty(energy)
 {
-    using std::begin;
-    using std::end;
-    m_energies.insert(m_energies.begin(), begin(energies), end(energies));
-    m_sigmas  .insert(m_sigmas.begin(),   begin(sigmas),   end(sigmas));
+    m_energies.insert(m_energies.begin(), std::begin(energies), std::end(energies));
+    m_sigmas_h.insert(m_sigmas_h.begin(), std::begin(sigmas),   std::end(sigmas));
 
-    init();
-}
-
-void*
-MCCProcess::operator new ( std::size_t count )
-{
-    return amrex::The_Managed_Arena()->alloc(count);
+    init(scattering_process, energy);
 }
 
 void
-MCCProcess::operator delete ( void* ptr )
+MCCProcess::init (const std::string& scattering_process, const amrex::Real energy)
 {
-    amrex::The_Managed_Arena()->free(ptr);
-}
-
-void
-MCCProcess::init()
-{
-    m_energies_data = m_energies.data();
-    m_sigmas_data = m_sigmas.data();
+    m_exe_h.m_sigmas_data = m_sigmas_h.data();
 
     // save energy grid parameters for easy use
     m_grid_size = m_energies.size();
-    m_energy_lo = m_energies[0];
-    m_energy_hi = m_energies[m_grid_size-1];
-    m_sigma_lo = m_sigmas[0];
-    m_sigma_hi = m_sigmas[m_grid_size-1];
-    m_dE = (m_energy_hi - m_energy_lo)/(m_grid_size - 1.);
+    m_exe_h.m_energy_lo = m_energies[0];
+    m_exe_h.m_energy_hi = m_energies[m_grid_size-1];
+    m_exe_h.m_sigma_lo = m_sigmas_h[0];
+    m_exe_h.m_sigma_hi = m_sigmas_h[m_grid_size-1];
+    m_exe_h.m_dE = (m_exe_h.m_energy_hi - m_exe_h.m_energy_lo)/(m_grid_size - 1.);
+    m_exe_h.m_energy_penalty = energy;
+    m_exe_h.m_type = parseProcessType(scattering_process);
 
     // sanity check cross-section energy grid
-    sanityCheckEnergyGrid(m_energies, m_dE);
+    sanityCheckEnergyGrid(m_energies, m_exe_h.m_dE);
 
     // check that the cross-section is 0 at the energy cost if the energy
     // cost is > 0 - this is to prevent the possibility of negative left
     // over energy after a collision event
-    if (m_energy_penalty > 0) {
+    if (m_exe_h.m_energy_penalty > 0) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (getCrossSection(m_energy_penalty) == 0),
+            (getCrossSection(m_exe_h.m_energy_penalty) == 0),
             "Cross-section > 0 at energy cost for collision."
         );
     }
+
+#ifdef AMREX_USE_GPU
+    m_exe_d = m_exe_h;
+    m_sigmas_d.resize(m_sigmas_h.size());
+    m_exe_d.m_sigmas_data = m_sigmas_d.data();
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_sigmas_h.begin(), m_sigmas_h.end(),
+                          m_sigmas_d.begin());
+    amrex::Gpu::streamSynchronize();
+#endif
 }
 
 MCCProcessType
@@ -101,8 +93,8 @@ MCCProcess::parseProcessType(const std::string& scattering_process)
 void
 MCCProcess::readCrossSectionFile (
                                   const std::string cross_section_file,
-                                  MCCProcess::VectorType<amrex::Real>& energies,
-                                  MCCProcess::VectorType<amrex::Real>& sigmas )
+                                  amrex::Vector<amrex::Real>& energies,
+                                  amrex::Gpu::HostVector<amrex::Real>& sigmas )
 {
     std::ifstream infile(cross_section_file);
     double energy, sigma;
@@ -114,7 +106,7 @@ MCCProcess::readCrossSectionFile (
 
 void
 MCCProcess::sanityCheckEnergyGrid (
-                                   const VectorType<amrex::Real>& energies,
+                                   const amrex::Vector<amrex::Real>& energies,
                                    amrex::Real dE
                                    )
 {

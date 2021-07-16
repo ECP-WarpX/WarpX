@@ -50,7 +50,7 @@ FieldReduction::FieldReduction (std::string rd_name)
     std::string parser_string = "";
     Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)",
                        parser_string);
-    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
+    m_parser = std::make_unique<amrex::Parser>(
         makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz"}));
 
     // Replace all newlines and possible following whitespaces with a single whitespace. This

@@ -7,6 +7,7 @@
 #ifndef WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
 #define WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
 
+#include <AMReX_Math.H>
 #include <AMReX_Vector.H>
 #include <AMReX_RandomEngine.H>
 #include <AMReX_GpuContainers.H>
@@ -23,9 +24,6 @@ enum class MCCProcessType {
 class MCCProcess
 {
 public:
-    template <typename T>
-    using VectorType = amrex::Gpu::ManagedVector<T>;
-
     MCCProcess (
                 const std::string& scattering_process,
                 const std::string& cross_section_file,
@@ -40,38 +38,11 @@ public:
                 const amrex::Real energy
                 );
 
-    void* operator new  ( std::size_t count );
-    void operator delete (void* ptr);
+    MCCProcess (MCCProcess const&) = delete;
+    MCCProcess& operator= (MCCProcess const&) = delete;
 
-    /** Get the collision cross-section using a simple linear interpolator. If
-     * the energy value is lower (higher) than the given energy range the
-     * first (last) cross-section value is used.
-     *
-     * @param E_coll collision energy in eV
-     *
-     */
-    AMREX_GPU_HOST_DEVICE
-    amrex::Real getCrossSection (amrex::Real E_coll) const
-    {
-        if (E_coll < m_energy_lo) {
-            return m_sigma_lo;
-        } else if (E_coll > m_energy_hi) {
-            return m_sigma_hi;
-        } else {
-            using std::floor;
-            using std::ceil;
-            // calculate index of bounding energy pairs
-            amrex::Real temp = (E_coll - m_energy_lo) / m_dE;
-            int idx_1 = floor(temp);
-            int idx_2 = ceil(temp);
-
-            // linearly interpolate to the given energy value
-            temp -= idx_1;
-            return (
-                    m_sigmas_data[idx_1] + (m_sigmas_data[idx_2] - m_sigmas_data[idx_1]) * temp
-                    );
-        }
-    }
+    MCCProcess (MCCProcess &&) = default;
+    MCCProcess& operator= (MCCProcess &&) = default;
 
     /** Read the given cross-section data file to memory.
      *
@@ -84,33 +55,85 @@ public:
     static
     void readCrossSectionFile (
                                const std::string cross_section_file,
-                               VectorType<amrex::Real>& energies,
-                               VectorType<amrex::Real>& sigmas
+                               amrex::Vector<amrex::Real>& energies,
+                               amrex::Gpu::HostVector<amrex::Real>& sigmas
                                );
 
     static
     void sanityCheckEnergyGrid (
-                                const VectorType<amrex::Real>& energies,
+                                const amrex::Vector<amrex::Real>& energies,
                                 amrex::Real dE
                                 );
 
-    MCCProcessType m_type;
-    amrex::Real m_energy_penalty;
+    struct Executor {
+        /** Get the collision cross-section using a simple linear interpolator. If
+         * the energy value is lower (higher) than the given energy range the
+         * first (last) cross-section value is used.
+         *
+         * @param E_coll collision energy in eV
+         *
+         */
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+        amrex::Real getCrossSection (amrex::Real E_coll) const
+        {
+            if (E_coll < m_energy_lo) {
+                return m_sigma_lo;
+            } else if (E_coll > m_energy_hi) {
+                return m_sigma_hi;
+            } else {
+                using amrex::Math::floor;
+                using amrex::Math::ceil;
+                // calculate index of bounding energy pairs
+                amrex::Real temp = (E_coll - m_energy_lo) / m_dE;
+                int idx_1 = static_cast<int>(floor(temp));
+                int idx_2 = static_cast<int>(ceil(temp));
+
+                // linearly interpolate to the given energy value
+                temp -= idx_1;
+                return m_sigmas_data[idx_1] + (m_sigmas_data[idx_2] - m_sigmas_data[idx_1]) * temp;
+            }
+        }
+
+        amrex::Real* m_sigmas_data = nullptr;
+        amrex::Real m_energy_lo, m_energy_hi, m_sigma_lo, m_sigma_hi, m_dE;
+        amrex::Real m_energy_penalty;
+        MCCProcessType m_type;
+    };
+
+    Executor const& executor () const {
+#ifdef AMREX_USE_GPU
+        return m_exe_d;
+#else
+        return m_exe_h;
+#endif
+    }
+
+    amrex::Real getCrossSection (amrex::Real E_coll) const
+    {
+        return m_exe_h.getCrossSection(E_coll);
+    }
+
+    amrex::Real getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
+
+    MCCProcessType type () const { return m_exe_h.m_type; }
 
 private:
 
     static
     MCCProcessType parseProcessType(const std::string& process);
 
-    void init();
+    void init (const std::string& scattering_process, const amrex::Real energy);
 
-    VectorType<amrex::Real> m_energies;
-    amrex::Real* m_energies_data;
-    VectorType<amrex::Real> m_sigmas;
-    amrex::Real* m_sigmas_data;
+    amrex::Vector<amrex::Real> m_energies;
+
+#ifdef AMREX_USE_GPU
+    amrex::Gpu::DeviceVector<amrex::Real> m_sigmas_d;
+    Executor m_exe_d;
+#endif
+    amrex::Gpu::HostVector<amrex::Real> m_sigmas_h;
+    Executor m_exe_h;
 
     int m_grid_size;
-    amrex::Real m_energy_lo, m_energy_hi, m_sigma_lo, m_sigma_hi, m_dE;
 };
 
 #endif // WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
