@@ -159,6 +159,7 @@ WarpX::Evolve (int numsteps)
 
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
+
         if (warpx_py_particleinjection) warpx_py_particleinjection();
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
