@@ -32,6 +32,66 @@
 
 using namespace amrex;
 
+SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
+                                        const bool time_averaging,
+                                        const bool J_linear_in_time,
+                                        const bool dive_cleaning,
+                                        const bool divb_cleaning,
+                                        const bool pml)
+{
+    // TODO Use these to allocate rho_old, rho_new, F, and G only when needed
+    amrex::ignore_unused(update_with_rho);
+
+    int c = 0;
+
+    if (pml == false)
+    {
+        Ex = c++; Ey = c++; Ez = c++;
+        Bx = c++; By = c++; Bz = c++;
+        Jx = c++; Jy = c++; Jz = c++;
+
+        // TODO Allocate rho_old and rho_new only when needed
+        rho_old = c++; rho_new = c++;
+
+        // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
+        divE = 3;
+
+        if (time_averaging)
+        {
+            Ex_avg = c++; Ey_avg = c++; Ez_avg = c++;
+            Bx_avg = c++; By_avg = c++; Bz_avg = c++;
+        }
+
+        if (J_linear_in_time)
+        {
+            Jx_new = c++; Jy_new = c++; Jz_new = c++;
+
+            // TODO Allocate F and G only when needed
+            F = c++; G = c++;
+        }
+    }
+    else // PML
+    {
+        Exy = c++; Exz = c++; Eyx = c++; Eyz = c++; Ezx = c++; Ezy = c++;
+        Bxy = c++; Bxz = c++; Byx = c++; Byz = c++; Bzx = c++; Bzy = c++;
+
+        if (dive_cleaning)
+        {
+            Exx = c++; Eyy = c++; Ezz = c++;
+            Fx  = c++; Fy  = c++; Fz  = c++;
+        }
+
+        if (divb_cleaning)
+        {
+            Bxx = c++; Byy = c++; Bzz = c++;
+            Gx  = c++; Gy  = c++; Gz  = c++;
+        }
+    }
+
+    // This is the number of arrays that will be actually allocated in spectral space
+    n_fields = c;
+}
+
 /* \brief Initialize fields in spectral space, and FFT plans */
 SpectralFieldData::SpectralFieldData( const int lev,
                                       const amrex::BoxArray& realspace_ba,
