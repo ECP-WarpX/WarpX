@@ -1,7 +1,6 @@
 #include "WarpX.H"
 
 #ifdef AMREX_USE_EB
-
 #  include "Utils/WarpXUtil.H"
 
 #  include <AMReX.H>
@@ -13,6 +12,7 @@
 #  include <AMReX_BoxList.H>
 #  include <AMReX_Config.H>
 #  include <AMReX_EB2.H>
+#  include <AMReX_EB_utils.H>
 #  include <AMReX_FabArray.H>
 #  include <AMReX_FabFactory.H>
 #  include <AMReX_GpuControl.H>
@@ -150,7 +150,7 @@ WarpX::ComputeEdgeLengths () {
 }
 
 /**
- * \brief Compute the ara of the mesh faces. Here the area is a value in [0, 1].
+ * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
  *        An edge of area 0 is fully covered.
  */
 void
@@ -246,6 +246,29 @@ WarpX::ScaleAreas() {
                                 face_areas_dim(i, j, k) *= full_area;
             });
         }
+    }
+#endif
+}
+
+/**
+ * \brief Compute the level set function used for particle-boundary interaction.
+ */
+void
+WarpX::ComputeDistanceToEB () {
+#ifdef AMREX_USE_EB
+    BL_PROFILE("ComputeDistanceToEB");
+
+    amrex::ParmParse pp_warpx("warpx");
+    std::string impf;
+    pp_warpx.query("eb_implicit_function", impf);
+    if (! impf.empty()) {
+        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
+        ParserIF pif(eb_if_parser.compile<3>());
+        auto gshop = amrex::EB2::makeShop(pif);
+        amrex::FillImpFunc(*m_distance_to_eb[maxLevel()], gshop, Geom(maxLevel()));
+        m_distance_to_eb[maxLevel()]->negate(m_distance_to_eb[maxLevel()]->nGrow()); // signed distance f = - imp. f.
+    } else {
+        m_distance_to_eb[maxLevel()]->setVal(100.0); // some positive value
     }
 #endif
 }
