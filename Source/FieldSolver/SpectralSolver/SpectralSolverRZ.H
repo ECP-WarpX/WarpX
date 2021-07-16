@@ -34,7 +34,11 @@ class SpectralSolverRZ
                           int const norder_z, bool const nodal,
                           const amrex::Array<amrex::Real,3>& v_galilean,
                           amrex::RealVect const dx, amrex::Real const dt,
-                          bool const update_with_rho);
+                          bool const update_with_rho,
+                          const bool fft_do_time_averaging,
+                          const bool J_linear_in_time,
+                          const bool dive_cleaning,
+                          const bool divb_cleaning);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
@@ -112,9 +116,52 @@ class SpectralSolverRZ
          */
         void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current);
 
+        /**
+         * \brief Copy spectral data from component \c src_comp to component \c dest_comp
+         *        of \c field_data.fields.
+         *
+         * \param[in] src_comp  component of the source FabArray from which the data are copied
+         * \param[in] dest_comp component of the destination FabArray where the data are copied
+         */
+        void CopySpectralDataComp (const int src_comp, const int dest_comp)
+        {
+            // The last two arguments represent the number of components and
+            // the number of ghost cells to perform this operation
+            const int ncomps = m_n_rz_azimuthal_modes*2 - 1;
+            Copy(field_data.fields, field_data.fields, src_comp, dest_comp, ncomps, 0);
+        }
+
+        /**
+         * \brief Set to zero the data on component \c icomp of \c field_data.fields
+         *
+         * \param[in] icomp component of the FabArray where the data are set to zero
+         */
+        void ZeroOutDataComp (const int icomp)
+        {
+            // The last argument represents the number of components to perform this operation
+            const int ncomps = m_n_rz_azimuthal_modes*2 - 1;
+            field_data.fields.setVal(0., icomp, ncomps);
+        }
+
+        /**
+         * \brief Scale the data on component \c icomp of \c field_data.fields
+         *        by a given scale factor
+         *
+         * \param[in] icomp component of the FabArray where the data are scaled
+         * \param[in] scale_factor scale factor to use for scaling
+         */
+        void ScaleDataComp (const int icomp, const amrex::Real scale_factor)
+        {
+            // The last argument represents the number of components to perform this operation
+            const int ncomps = m_n_rz_azimuthal_modes*2 - 1;
+            field_data.fields.mult(scale_factor, icomp, ncomps);
+        }
+
         SpectralFieldIndex m_spectral_index;
 
     private:
+
+        int m_n_rz_azimuthal_modes;
 
         SpectralKSpaceRZ k_space; // Save the instance to initialize filtering
         SpectralFieldDataRZ field_data; // Store field in spectral space

@@ -23,7 +23,9 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                                   bool const nodal,
                                   const amrex::Array<amrex::Real,3>& v_galilean,
                                   amrex::Real const dt_step,
-                                  bool const update_with_rho);
+                                  bool const update_with_rho,
+                                  const bool time_averaging,
+                                  const bool J_linear_in_time);
         // Redefine functions from base class
         virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
 
@@ -67,6 +69,8 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         amrex::Real const m_dt;
         amrex::Array<amrex::Real,3> m_v_galilean;
         bool m_update_with_rho;
+        bool m_time_averaging;
+        bool m_J_linear_in_time;
 
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, T_rho_coef, X1_coef, X2_coef, X3_coef, X4_coef;

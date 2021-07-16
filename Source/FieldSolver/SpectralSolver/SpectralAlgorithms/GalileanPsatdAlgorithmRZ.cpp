@@ -22,13 +22,17 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
                                                     bool const nodal,
                                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                                     amrex::Real const dt,
-                                                    bool const update_with_rho)
+                                                    bool const update_with_rho,
+                                                    const bool time_averaging,
+                                                    const bool J_linear_in_time)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
        m_spectral_index(spectral_index),
        m_dt(dt),
        m_v_galilean(v_galilean),
-       m_update_with_rho(update_with_rho)
+       m_update_with_rho(update_with_rho),
+       m_time_averaging(time_averaging),
+       m_J_linear_in_time(J_linear_in_time)
 {
 
     // Allocate the arrays of coefficients

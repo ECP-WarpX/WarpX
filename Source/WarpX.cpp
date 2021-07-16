@@ -1454,6 +1454,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheCellVector();
         jz_nodal_flag  = IntVect::TheCellVector();
         rho_nodal_flag = IntVect::TheCellVector();
+        F_flag = IntVect::TheCellVector();
+        G_flag = IntVect::TheCellVector();
     }
 
     // With RZ multimode, there is a real and imaginary component
@@ -1832,7 +1834,11 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   m_v_galilean,
                                                   dx_vect,
                                                   dt[lev],
-                                                  update_with_rho);
+                                                  update_with_rho,
+                                                  fft_do_time_averaging,
+                                                  J_linear_in_time,
+                                                  do_dive_cleaning,
+                                                  do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
 
     if (use_kspace_filter) {
