@@ -1,10 +1,8 @@
 # --- Input file for MCC testing. There is already a test of the MCC
 # --- functionality so this just tests the PICMI interface
 
-from pywarpx import picmi
-import pywarpx
-
 import numpy as np
+from pywarpx import picmi
 
 constants = picmi.constants
 
