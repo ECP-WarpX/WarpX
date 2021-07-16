@@ -159,13 +159,12 @@ WarpX::Evolve (int numsteps)
 
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
-
+        if (warpx_py_particleinjection) warpx_py_particleinjection();
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
         if (do_electrostatic != ElectrostaticSolverAlgo::None)
         {
             const bool skip_deposition = true;
-            if (warpx_py_particleinjection) warpx_py_particleinjection();
             PushParticlesandDepose(cur_time, skip_deposition);
         }
         // Electromagnetic case: multi-J algorithm
@@ -354,7 +353,6 @@ WarpX::OneStep_nosub (Real cur_time)
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
-    if (warpx_py_particleinjection) warpx_py_particleinjection();
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
