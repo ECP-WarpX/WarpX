@@ -173,6 +173,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
     pp_species_name.query("do_backward_propagation", do_backward_propagation);
+    pp_species_name.query("random_theta", m_rz_random_theta);
 
     // Initialize splitting
     pp_species_name.query("do_splitting", do_splitting);
@@ -185,6 +186,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("initialize_self_fields", initialize_self_fields);
     queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
     pp_species_name.query("self_fields_max_iters", self_fields_max_iters);
+    pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
     pp_species_name.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
@@ -646,7 +648,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     static int rrfac = 1;
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
-    if (WarpX::do_moving_window and WarpX::refine_plasma
+    if (WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma
         and do_continuous_injection and nlevs == 2)
     {
         refine_injection = true;
@@ -843,11 +845,18 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
         const auto poffset = offset.data();
+#ifdef WARPX_DIM_RZ
+        const bool rz_random_theta = m_rz_random_theta;
+#endif
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
+#ifdef WARPX_DIM_RZ
+            Real theta_offset = 0._rt;
+            if (rz_random_theta) theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi;
+#endif
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
@@ -886,7 +895,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // choose it randomly.
                     theta = 2._rt*MathConst::pi*amrex::Random(engine);
                 } else {
-                    theta = 2._rt*MathConst::pi*r.y;
+                    theta = 2._rt*MathConst::pi*r.y + theta_offset;
                 }
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);

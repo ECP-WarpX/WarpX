@@ -41,22 +41,30 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     //   the spectral space corresponding to each box in `realspace_ba`,
     //   as well as the value of the corresponding k coordinates.
 
+    const bool time_averaging = false;
+    const bool J_linear_in_time = false;
+    const bool dive_cleaning = false;
+    const bool divb_cleaning = false;
+    const bool pml = false;
+    m_spectral_index = SpectralFieldIndex(update_with_rho, time_averaging, J_linear_in_time,
+                                          dive_cleaning, divb_cleaning, pml);
+
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
     //   PML is not supported.
     if (v_galilean[2] == 0) {
          // v_galilean is 0: use standard PSATD algorithm
         algorithm = std::make_unique<PsatdAlgorithmRZ>(
-            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt, update_with_rho);
+            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, dt, update_with_rho);
     } else {
         // Otherwise: use the Galilean algorithm
         algorithm = std::make_unique<GalileanPsatdAlgorithmRZ>(
-            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt, update_with_rho);
+            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt, update_with_rho);
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldDataRZ(lev, realspace_ba, k_space, dm,
-                                     algorithm->getRequiredNumberOfFields(),
+                                     m_spectral_index.n_fields,
                                      n_rz_azimuthal_modes);
 }
 

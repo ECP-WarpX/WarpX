@@ -102,12 +102,18 @@ protected:
         back-transform diagnostics) to be processed for diagnostics.
      */
     virtual void PrepareFieldDataForOutput () {}
-    /** Shift the diag-domain boundary for moving window and galilean simulations */
-    virtual void MovingWindowAndGalileanDomainShift () {}
+    /** Update the physical extent of the diagnostic domain for moving window and
+     *  galilean shift simulations
+     *
+     * \param[in] step current time step
+     */
+    virtual void MovingWindowAndGalileanDomainShift (int /*step*/) {}
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
     std::string m_file_prefix;
+    /** Minimum number of digits to iteration number in file name */
+    int m_file_min_digits = 5;
     /** Index of diagnostics in MultiDiagnostics::alldiags */
     int m_diag_index;
     /** Names of  each component requested by the user.

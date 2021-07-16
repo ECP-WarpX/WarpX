@@ -69,7 +69,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     std::string function_string = "";
     Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
-    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
+    m_parser = std::make_unique<amrex::Parser>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
@@ -111,7 +111,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     if (m_do_parser_filter) {
         std::string filter_string = "";
         Store_parserString(pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
-        m_parser_filter = std::make_unique<ParserWrapper<m_nvars>>(
+        m_parser_filter = std::make_unique<amrex::Parser>(
                                      makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
     }
 
@@ -165,10 +165,10 @@ void ParticleHistogram::ComputeDiags (int step)
     auto & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     // get parser
-    HostDeviceParser<m_nvars> fun_partparser = getParser(m_parser);
+    auto fun_partparser = compileParser<m_nvars>(m_parser.get());
 
     // get filter parser
-    HostDeviceParser<m_nvars> fun_filterparser = getParser(m_parser_filter);
+    auto fun_filterparser = compileParser<m_nvars>(m_parser_filter.get());
 
     // declare local variables
     auto const num_bins = m_bin_num;

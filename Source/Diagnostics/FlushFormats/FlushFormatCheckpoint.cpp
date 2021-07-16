@@ -27,7 +27,8 @@ FlushFormatCheckpoint::WriteToFile (
         const amrex::Vector<amrex::MultiFab>& /*mf*/,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double /*time*/,
-        const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
+        const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
+        const std::string prefix, int file_min_digits,
         bool /*plot_raw_fields*/,
         bool /*plot_raw_fields_guards*/,
         bool /*plot_raw_rho*/, bool /*plot_raw_F*/,
@@ -42,7 +43,7 @@ FlushFormatCheckpoint::WriteToFile (
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 
-    const std::string& checkpointname = amrex::Concatenate(prefix,iteration[0]);
+    const std::string& checkpointname = amrex::Concatenate(prefix, iteration[0], file_min_digits);
 
     amrex::Print() << "  Writing checkpoint " << checkpointname << "\n";
 

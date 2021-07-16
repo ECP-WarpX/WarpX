@@ -60,28 +60,29 @@ class SpectralSolver
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
          * \param[in] J_linear_in_time whether to use two currents computed at the beginning and
          *                             the end of the time interval (instead of using one current
-         *                             compute at half time)
-         * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in Gauss law
-         *                          (new field F in the field update equations)
-         * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in magnetic Gauss law
-         *                          (new field G in the field update equations)
+         *                             computed at half time)
+         * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in
+         *                          Gauss law (new field F in the update equations)
+         * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
+         *                          div(B) = 0 law (new field G in the update equations)
          */
         SpectralSolver (const int lev,
                         const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
+                        const amrex::IntVect& fill_guards,
                         const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::Array<amrex::Real,3>& v_comoving,
                         const amrex::RealVect dx,
                         const amrex::Real dt,
-                        const bool pml = false,
-                        const bool periodic_single_box = false,
-                        const bool update_with_rho = false,
-                        const bool fft_do_time_averaging = false,
-                        const bool J_linear_in_time = false,
-                        const bool dive_cleaning = false,
-                        const bool divb_cleaning = false);
+                        const bool pml,
+                        const bool periodic_single_box,
+                        const bool update_with_rho,
+                        const bool fft_do_time_averaging,
+                        const bool J_linear_in_time,
+                        const bool dive_cleaning,
+                        const bool divb_cleaning);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`
@@ -183,6 +184,12 @@ class SpectralSolver
             // The last argument represents the number of components to perform this operation
             field_data.fields.mult(scale_factor, icomp, 1);
         }
+
+        SpectralFieldIndex m_spectral_index;
+
+    protected:
+
+        amrex::IntVect m_fill_guards;
 
     private:
 

@@ -118,7 +118,8 @@ sim = picmi.Simulation(solver = solver,
                        verbose = 1,
                        warpx_current_deposition_algo = 'esirkepov',
                        warpx_field_gathering_algo = 'energy-conserving',
-                       warpx_particle_pusher_algo = 'boris')
+                       warpx_particle_pusher_algo = 'boris',
+                       warpx_use_filter = 0)
 
 sim.add_species(electrons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))
 sim.add_species(protons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))

@@ -29,17 +29,20 @@ using namespace amrex;
 PsatdAlgorithm::PsatdAlgorithm(
     const SpectralKSpace& spectral_kspace,
     const DistributionMapping& dm,
+    const SpectralFieldIndex& spectral_index,
     const int norder_x,
     const int norder_y,
     const int norder_z,
     const bool nodal,
+    const amrex::IntVect& fill_guards,
     const amrex::Array<amrex::Real,3>& v_galilean,
     const amrex::Real dt,
     const bool update_with_rho,
     const bool time_averaging,
     const bool J_linear_in_time)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+    m_spectral_index(spectral_index),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
     // (argument nodal = true), for both nodal and staggered simulations
@@ -107,6 +110,8 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
     const amrex::Real dt = m_dt;
 
+    const SpectralFieldIndex& Idx = m_spectral_index;
+
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi)
     {
@@ -166,24 +171,20 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            using Idx = SpectralFieldIndex;
-            using IdxAvg = SpectralFieldIndexTimeAveraging;
-            using IdxLin = SpectralFieldIndexJLinearInTime;
-
             // Record old values of the fields to be updated
-            const Complex Ex_old = fields(i,j,k,Idx::Ex);
-            const Complex Ey_old = fields(i,j,k,Idx::Ey);
-            const Complex Ez_old = fields(i,j,k,Idx::Ez);
-            const Complex Bx_old = fields(i,j,k,Idx::Bx);
-            const Complex By_old = fields(i,j,k,Idx::By);
-            const Complex Bz_old = fields(i,j,k,Idx::Bz);
+            const Complex Ex_old = fields(i,j,k,Idx.Ex);
+            const Complex Ey_old = fields(i,j,k,Idx.Ey);
+            const Complex Ez_old = fields(i,j,k,Idx.Ez);
+            const Complex Bx_old = fields(i,j,k,Idx.Bx);
+            const Complex By_old = fields(i,j,k,Idx.By);
+            const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx::Jx);
-            const Complex Jy = fields(i,j,k,Idx::Jy);
-            const Complex Jz = fields(i,j,k,Idx::Jz);
-            const Complex rho_old = fields(i,j,k,Idx::rho_old);
-            const Complex rho_new = fields(i,j,k,Idx::rho_new);
+            const Complex Jx = fields(i,j,k,Idx.Jx);
+            const Complex Jy = fields(i,j,k,Idx.Jy);
+            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex rho_old = fields(i,j,k,Idx.rho_old);
+            const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
@@ -214,17 +215,17 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             if (update_with_rho)
             {
-                fields(i,j,k,Idx::Ex) = T2 * C * Ex_old
-                                        + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                        + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
+                fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
+                                       + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
+                                       + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
 
-                fields(i,j,k,Idx::Ey) = T2 * C * Ey_old
-                                        + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                        + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
+                fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
+                                       + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
+                                       + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
 
-                fields(i,j,k,Idx::Ez) = T2 * C * Ez_old
-                                        + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                        + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
+                fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
+                                       + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
+                                       + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
             }
 
             // Update equations for E in the formulation without rho
@@ -235,56 +236,56 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
                 Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
 
-                fields(i,j,k,Idx::Ex) = T2 * C * Ex_old
-                                        + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                        + X4 * Jx + X2 * k_dot_E * kx + X3 * k_dot_J * kx;
+                fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
+                                       + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
+                                       + X4 * Jx + X2 * k_dot_E * kx + X3 * k_dot_J * kx;
 
-                fields(i,j,k,Idx::Ey) = T2 * C * Ey_old
-                                        + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                        + X4 * Jy + X2 * k_dot_E * ky + X3 * k_dot_J * ky;
+                fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
+                                       + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
+                                       + X4 * Jy + X2 * k_dot_E * ky + X3 * k_dot_J * ky;
 
-                fields(i,j,k,Idx::Ez) = T2 * C * Ez_old
-                                        + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                        + X4 * Jz + X2 * k_dot_E * kz + X3 * k_dot_J * kz;
+                fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
+                                       + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
+                                       + X4 * Jz + X2 * k_dot_E * kz + X3 * k_dot_J * kz;
             }
 
             // Update equations for B
             // T2 = 1 always with standard PSATD (zero Galilean velocity)
 
-            fields(i,j,k,Idx::Bx) = T2 * C * Bx_old
-                                    - I * T2 * S_ck * (ky * Ez_old - kz * Ey_old)
-                                    + I * X1 * (ky * Jz - kz * Jy);
+            fields(i,j,k,Idx.Bx) = T2 * C * Bx_old
+                                   - I * T2 * S_ck * (ky * Ez_old - kz * Ey_old)
+                                   + I * X1 * (ky * Jz - kz * Jy);
 
-            fields(i,j,k,Idx::By) = T2 * C * By_old
-                                    - I * T2 * S_ck * (kz * Ex_old - kx * Ez_old)
-                                    + I * X1 * (kz * Jx - kx * Jz);
+            fields(i,j,k,Idx.By) = T2 * C * By_old
+                                   - I * T2 * S_ck * (kz * Ex_old - kx * Ez_old)
+                                   + I * X1 * (kz * Jx - kx * Jz);
 
-            fields(i,j,k,Idx::Bz) = T2 * C * Bz_old
-                                    - I * T2 * S_ck * (kx * Ey_old - ky * Ex_old)
-                                    + I * X1 * (kx * Jy - ky * Jx);
+            fields(i,j,k,Idx.Bz) = T2 * C * Bz_old
+                                   - I * T2 * S_ck * (kx * Ey_old - ky * Ex_old)
+                                   + I * X1 * (kx * Jy - ky * Jx);
 
             if (J_linear_in_time)
             {
-                const Complex Jx_new = fields(i,j,k,IdxLin::Jx_new);
-                const Complex Jy_new = fields(i,j,k,IdxLin::Jy_new);
-                const Complex Jz_new = fields(i,j,k,IdxLin::Jz_new);
+                const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
+                const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
+                const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
 
-                const Complex F_old = fields(i,j,k,IdxLin::F);
-                const Complex G_old = fields(i,j,k,IdxLin::G);
+                const Complex F_old = fields(i,j,k,Idx.F);
+                const Complex G_old = fields(i,j,k,Idx.G);
 
-                fields(i,j,k,Idx::Ex) += -X1 * (Jx_new - Jx) / dt + I * c2 * S_ck * F_old * kx;
+                fields(i,j,k,Idx.Ex) += -X1 * (Jx_new - Jx) / dt + I * c2 * S_ck * F_old * kx;
 
-                fields(i,j,k,Idx::Ey) += -X1 * (Jy_new - Jy) / dt + I * c2 * S_ck * F_old * ky;
+                fields(i,j,k,Idx.Ey) += -X1 * (Jy_new - Jy) / dt + I * c2 * S_ck * F_old * ky;
 
-                fields(i,j,k,Idx::Ez) += -X1 * (Jz_new - Jz) / dt + I * c2 * S_ck * F_old * kz;
+                fields(i,j,k,Idx.Ez) += -X1 * (Jz_new - Jz) / dt + I * c2 * S_ck * F_old * kz;
 
-                fields(i,j,k,Idx::Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
+                fields(i,j,k,Idx.Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
                     + I * c2 * S_ck * G_old * kx;
 
-                fields(i,j,k,Idx::By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
+                fields(i,j,k,Idx.By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
                     + I * c2 * S_ck * G_old * ky;
 
-                fields(i,j,k,Idx::Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx));
+                fields(i,j,k,Idx.Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx));
                     + I * c2 * S_ck * G_old * kz;
 
                 const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;
@@ -292,10 +293,10 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
                 const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
 
-                fields(i,j,k,IdxLin::F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
+                fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
                     - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
 
-                fields(i,j,k,IdxLin::G) = C * G_old + I * S_ck * k_dot_B;
+                fields(i,j,k,Idx.G) = C * G_old + I * S_ck * k_dot_B;
 
                 if (time_averaging)
                 {
@@ -306,32 +307,32 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                     // because it is meant to be used with sub-cycling
                     // maybe this should be made more generic
 
-                    fields(i,j,k,IdxLin::Ex_avg) += S_ck * Ex_old
+                    fields(i,j,k,Idx.Ex_avg) += S_ck * Ex_old
                         + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
                         + I * X5 * rho_old * kx + I * X6 * rho_new * kx
                         + X3/c2 * Jx - X2/c2 * Jx_new + I * c2 * ep0 * X1 * F_old * kx;
 
-                    fields(i,j,k,IdxLin::Ey_avg) += S_ck * Ey_old
+                    fields(i,j,k,Idx.Ey_avg) += S_ck * Ey_old
                         + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
                         + I * X5 * rho_old * ky + I * X6 * rho_new * ky
                         + X3/c2 * Jy - X2/c2 * Jy_new + I * c2 * ep0 * X1 * F_old * ky;
 
-                    fields(i,j,k,IdxLin::Ez_avg) += S_ck * Ez_old
+                    fields(i,j,k,Idx.Ez_avg) += S_ck * Ez_old
                         + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
                         + I * X5 * rho_old * kz + I * X6 * rho_new * kz
                         + X3/c2 * Jz - X2/c2 * Jz_new + I * c2 * ep0 * X1 * F_old * kz;
 
-                    fields(i,j,k,IdxLin::Bx_avg) += S_ck * Bx_old
+                    fields(i,j,k,Idx.Bx_avg) += S_ck * Bx_old
                         - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
                         - I * X5/c2 * (ky * Jz - kz * Jy) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
                         + I * c2 * ep0 * X1 * G_old * kx;
 
-                    fields(i,j,k,IdxLin::By_avg) += S_ck * By_old
+                    fields(i,j,k,Idx.By_avg) += S_ck * By_old
                         - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
                         - I * X5/c2 * (kz * Jx - kx * Jz) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
                         + I * c2 * ep0 * X1 * G_old * ky;
 
-                    fields(i,j,k,IdxLin::Bz_avg) += S_ck * Bz_old
+                    fields(i,j,k,Idx.Bz_avg) += S_ck * Bz_old
                         - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
                         - I * X5/c2 * (kx * Jy - ky * Jx) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
                         + I * c2 * ep0 * X1 * G_old * kz;
@@ -349,29 +350,29 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Y2 = Y2_arr(i,j,k);
                 const Complex Y4 = Y4_arr(i,j,k);
 
-                fields(i,j,k,IdxAvg::Ex_avg) = Psi1 * Ex_old
-                                               - I * c2 * Psi2 * (ky * Bz_old - kz * By_old)
-                                               + Y4 * Jx + (Y2 * rho_new + Y3 * rho_old) * kx;
+                fields(i,j,k,Idx.Ex_avg) = Psi1 * Ex_old
+                                           - I * c2 * Psi2 * (ky * Bz_old - kz * By_old)
+                                           + Y4 * Jx + (Y2 * rho_new + Y3 * rho_old) * kx;
 
-                fields(i,j,k,IdxAvg::Ey_avg) = Psi1 * Ey_old
-                                               - I * c2 * Psi2 * (kz * Bx_old - kx * Bz_old)
-                                               + Y4 * Jy + (Y2 * rho_new + Y3 * rho_old) * ky;
+                fields(i,j,k,Idx.Ey_avg) = Psi1 * Ey_old
+                                           - I * c2 * Psi2 * (kz * Bx_old - kx * Bz_old)
+                                           + Y4 * Jy + (Y2 * rho_new + Y3 * rho_old) * ky;
 
-                fields(i,j,k,IdxAvg::Ez_avg) = Psi1 * Ez_old
-                                               - I * c2 * Psi2 * (kx * By_old - ky * Bx_old)
-                                               + Y4 * Jz + (Y2 * rho_new + Y3 * rho_old) * kz;
+                fields(i,j,k,Idx.Ez_avg) = Psi1 * Ez_old
+                                           - I * c2 * Psi2 * (kx * By_old - ky * Bx_old)
+                                           + Y4 * Jz + (Y2 * rho_new + Y3 * rho_old) * kz;
 
-                fields(i,j,k,IdxAvg::Bx_avg) = Psi1 * Bx_old
-                                               + I * Psi2 * (ky * Ez_old - kz * Ey_old)
-                                               + I * Y1 * (ky * Jz - kz * Jy);
+                fields(i,j,k,Idx.Bx_avg) = Psi1 * Bx_old
+                                           + I * Psi2 * (ky * Ez_old - kz * Ey_old)
+                                           + I * Y1 * (ky * Jz - kz * Jy);
 
-                fields(i,j,k,IdxAvg::By_avg) = Psi1 * By_old
-                                               + I * Psi2 * (kz * Ex_old - kx * Ez_old)
-                                               + I * Y1 * (kz * Jx - kx * Jz);
+                fields(i,j,k,Idx.By_avg) = Psi1 * By_old
+                                           + I * Psi2 * (kz * Ex_old - kx * Ez_old)
+                                           + I * Y1 * (kz * Jx - kx * Jz);
 
-                fields(i,j,k,IdxAvg::Bz_avg) = Psi1 * Bz_old
-                                               + I * Psi2 * (kx * Ey_old - ky * Ex_old)
-                                               + I * Y1 * (kx * Jy - ky * Jx);
+                fields(i,j,k,Idx.Bz_avg) = Psi1 * Bz_old
+                                           + I * Psi2 * (kx * Ey_old - ky * Ex_old)
+                                           + I * Y1 * (kx * Jy - ky * Jx);
             }
         });
     }
@@ -850,14 +851,16 @@ PsatdAlgorithm::CurrentCorrection (
     // Profiling
     BL_PROFILE("PsatdAlgorithm::CurrentCorrection");
 
-    using Idx = SpectralFieldIndex;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of J and rho
-    field_data.ForwardTransform(lev, *current[0], Idx::Jx, 0);
-    field_data.ForwardTransform(lev, *current[1], Idx::Jy, 0);
-    field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0);
-    field_data.ForwardTransform(lev, *rho, Idx::rho_old, 0);
-    field_data.ForwardTransform(lev, *rho, Idx::rho_new, 1);
+    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0);
+    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0);
+    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0);
+    field_data.ForwardTransform(lev, *rho, Idx.rho_old, 0);
+    field_data.ForwardTransform(lev, *rho, Idx.rho_new, 1);
+
+    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -889,11 +892,11 @@ PsatdAlgorithm::CurrentCorrection (
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx::Jx);
-            const Complex Jy = fields(i,j,k,Idx::Jy);
-            const Complex Jz = fields(i,j,k,Idx::Jz);
-            const Complex rho_old = fields(i,j,k,Idx::rho_old);
-            const Complex rho_new = fields(i,j,k,Idx::rho_new);
+            const Complex Jx = fields(i,j,k,Idx.Jx);
+            const Complex Jy = fields(i,j,k,Idx.Jy);
+            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex rho_old = fields(i,j,k,Idx.rho_old);
+            const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
             // k vector values, and coefficients
             const amrex::Real kx = modified_kx_arr[i];
@@ -925,25 +928,25 @@ PsatdAlgorithm::CurrentCorrection (
                     const Complex rho_old_mod = rho_old * amrex::exp(I * k_dot_vg * dt);
                     const Complex den = 1._rt - amrex::exp(I * k_dot_vg * dt);
 
-                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
+                    fields(i,j,k,Idx.Jx) = Jx - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
                         * kx / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
+                    fields(i,j,k,Idx.Jy) = Jy - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
                         * ky / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
+                    fields(i,j,k,Idx.Jz) = Jz - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
                         * kz / (k_norm * k_norm);
                 }
 
                 else
                 {
-                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J - I * (rho_new - rho_old) / dt)
+                    fields(i,j,k,Idx.Jx) = Jx - (k_dot_J - I * (rho_new - rho_old) / dt)
                         * kx / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J - I * (rho_new - rho_old) / dt)
+                    fields(i,j,k,Idx.Jy) = Jy - (k_dot_J - I * (rho_new - rho_old) / dt)
                         * ky / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J - I * (rho_new - rho_old) / dt)
+                    fields(i,j,k,Idx.Jz) = Jz - (k_dot_J - I * (rho_new - rho_old) / dt)
                         * kz / (k_norm * k_norm);
                 }
             }
@@ -951,9 +954,9 @@ PsatdAlgorithm::CurrentCorrection (
     }
 
     // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx::Jx, 0);
-    field_data.BackwardTransform(lev, *current[1], Idx::Jy, 0);
-    field_data.BackwardTransform(lev, *current[2], Idx::Jz, 0);
+    field_data.BackwardTransform(lev, *current[0], Idx.Jx, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[1], Idx.Jy, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[2], Idx.Jz, 0, fill_guards);
 }
 
 void
@@ -965,14 +968,16 @@ PsatdAlgorithm::VayDeposition (
     // Profiling
     BL_PROFILE("PsatdAlgorithm::VayDeposition()");
 
-    using Idx = SpectralFieldIndex;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of D (temporarily stored in current):
     // D is nodal and does not match the staggering of J, therefore we pass the
     // actual staggering of D (IntVect(1)) to the ForwardTransform function
-    field_data.ForwardTransform(lev, *current[0], Idx::Jx, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[1], Idx::Jy, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0, IntVect(1));
+    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0, IntVect(1));
+    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0, IntVect(1));
+    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0, IntVect(1));
+
+    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi)
@@ -993,11 +998,11 @@ PsatdAlgorithm::VayDeposition (
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of D
-            const Complex Dx = fields(i,j,k,Idx::Jx);
+            const Complex Dx = fields(i,j,k,Idx.Jx);
 #if (AMREX_SPACEDIM == 3)
-            const Complex Dy = fields(i,j,k,Idx::Jy);
+            const Complex Dy = fields(i,j,k,Idx.Jy);
 #endif
-            const Complex Dz = fields(i,j,k,Idx::Jz);
+            const Complex Dz = fields(i,j,k,Idx.Jz);
 
             // Imaginary unit
             constexpr Complex I = Complex{0._rt, 1._rt};
@@ -1012,25 +1017,25 @@ PsatdAlgorithm::VayDeposition (
 #endif
 
             // Compute Jx
-            if (kx_mod != 0._rt) fields(i,j,k,Idx::Jx) = I * Dx / kx_mod;
-            else                 fields(i,j,k,Idx::Jx) = 0._rt;
+            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx) = I * Dx / kx_mod;
+            else                 fields(i,j,k,Idx.Jx) = 0._rt;
 
 #if (AMREX_SPACEDIM == 3)
             // Compute Jy
-            if (ky_mod != 0._rt) fields(i,j,k,Idx::Jy) = I * Dy / ky_mod;
-            else                 fields(i,j,k,Idx::Jy) = 0._rt;
+            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy) = I * Dy / ky_mod;
+            else                 fields(i,j,k,Idx.Jy) = 0._rt;
 #endif
 
             // Compute Jz
-            if (kz_mod != 0._rt) fields(i,j,k,Idx::Jz) = I * Dz / kz_mod;
-            else                 fields(i,j,k,Idx::Jz) = 0._rt;
+            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz) = I * Dz / kz_mod;
+            else                 fields(i,j,k,Idx.Jz) = 0._rt;
         });
     }
 
     // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx::Jx, 0);
-    field_data.BackwardTransform(lev, *current[1], Idx::Jy, 0);
-    field_data.BackwardTransform(lev, *current[2], Idx::Jz, 0);
+    field_data.BackwardTransform(lev, *current[0], Idx.Jx, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[1], Idx.Jy, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[2], Idx.Jz, 0, fill_guards);
 }
 
 #endif // WARPX_USE_PSATD

@@ -184,11 +184,11 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bx_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
-           m_By_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_By_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
-           m_Bz_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bz_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
@@ -209,11 +209,11 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp_particles, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ex_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
-           m_Ey_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ey_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
-           m_Ez_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ez_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
         }
@@ -293,14 +293,20 @@ MultiParticleContainer::ReadParameters ()
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
 
-        std::string boundary_conditions = "none";
-        pp_particles.query("boundary_conditions", boundary_conditions);
-        if        (boundary_conditions == "none"){
-            m_boundary_conditions = ParticleBC::none;
-        } else if (boundary_conditions == "absorbing"){
-            m_boundary_conditions = ParticleBC::absorbing;
-        } else {
-            amrex::Abort("unknown particle BC type");
+        // The boundary conditions are read in in ReadBCParams
+        m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
+#ifdef WARPX_DIM_3D
+        m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
+#else
+        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+#endif
+
+        {
+            ParmParse pp_boundary("boundary");
+            bool flag = false;
+            pp_boundary.query("reflect_all_velocities", flag);
+            m_boundary_conditions.Set_reflect_all_velocities(flag);
         }
 
         ParmParse pp_lasers("lasers");
@@ -490,7 +496,7 @@ MultiParticleContainer::DepositCharge (
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    if (allcontainers.size() == 0)
+    if (allcontainers.empty())
     {
         std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
         return rho;
@@ -562,7 +568,7 @@ MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 Vector<Long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
-    if (allcontainers.size() == 0)
+    if (allcontainers.empty())
     {
         const Vector<Long> r = GetZeroParticlesInGrid(lev);
         return r;

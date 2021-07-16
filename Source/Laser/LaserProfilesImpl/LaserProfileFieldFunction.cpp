@@ -6,8 +6,6 @@
  */
 #include "Laser/LaserProfiles.H"
 
-#include "Parser/WarpXParser.H"
-#include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX.H>
@@ -51,8 +49,6 @@ WarpXLaserProfiles::FieldFunctionLaserProfile::init (
     for (auto const& s : symbols) { // make sure there no unknown symbols
         amrex::Abort("Laser Profile: Unknown symbol "+s);
     }
-
-    m_gpu_parser = std::make_unique< ParserWrapper<3> >(m_parser);
 }
 
 void
@@ -60,7 +56,7 @@ WarpXLaserProfiles::FieldFunctionLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
-    auto parser = getParser(m_gpu_parser);
+    auto parser = m_parser.compile<3>();
     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         amplitude[i] = parser(Xp[i], Yp[i], t);
