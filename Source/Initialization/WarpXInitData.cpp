@@ -691,9 +691,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        auto const& mfyfab = mfy->array(mfi);
        auto const& mfzfab = mfz->array(mfi);
 
+#ifdef AMREX_USE_EB
        amrex::Array4<amrex::Real> const& geom_data_x = geom_data[0]->array(mfi);
        amrex::Array4<amrex::Real> const& geom_data_y = geom_data[1]->array(mfi);
        amrex::Array4<amrex::Real> const& geom_data_z = geom_data[2]->array(mfi);
+#else
+       amrex::ignore_unused(geom_data_x);
+       amrex::ignore_unused(geom_data_y);
+       amrex::ignore_unused(geom_data_z);
+#endif
 
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
