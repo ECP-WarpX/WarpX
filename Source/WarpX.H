@@ -662,7 +662,7 @@ public:
      * \param[in] xfield_parser, parser function to initialize x-field
      * \param[in] yfield_parser, parser function to initialize y-field
      * \param[in] zfield_parser, parser function to initialize z-field
-     * \param[in] zfield_parser, geometric data, can be m_edge_lengths or m_face_areass
+     * \param[in] geom_data, geometric data, can be m_edge_lengths or m_face_areass
      * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
@@ -984,6 +984,9 @@ private:
     //This is just needed for the ECT solver
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Rhofield;
 
+    //EB level set
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
+
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
@@ -1156,6 +1159,9 @@ private:
     void InitBorrowing();
     amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
     void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds);
+    void ComputeDistanceToEB ();
+
+    void ScrapeParticles ();
 
     static int ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                               const amrex::Array4<amrex::Real> &S_red,

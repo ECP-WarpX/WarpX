@@ -242,6 +242,22 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
+.. _running-cpp-parameters-eb:
+
+Embedded Boundary Conditions
+----------------------------
+
+* ``warpx.eb_implicit_function`` (`string`)
+    A function of `x`, `y`, `z` that defines the surface of the embedded
+    boundary. That surface lies where the function value is 0 ;
+    the physics simulation area is where the function value is negative ;
+    the interior of the embeddded boundary is where the function value is positive.
+
+* ``warpx.eb_potential(t)`` (`string`)
+    Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
+    the electric potential at the surface of the embedded boundary,
+    as a function of time.
+
 .. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
@@ -449,7 +465,7 @@ Particle initialization
     When ``<species_name>.xmin`` and ``<species_name>.xmax`` are set, they delimit the region within which particles are injected.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
-* ``<species_name>.injection_style`` (`string`)
+* ``<species_name>.injection_style`` (`string`; default: ``none``)
     Determines how the (macro-)particles will be injected in the simulation.
     The number of particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are immediately assigned to a refined patch.
 
@@ -507,6 +523,8 @@ Particle initialization
       ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
       ``<species_name>.num_particles_per_cell`` (`double`)
+
+    * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis

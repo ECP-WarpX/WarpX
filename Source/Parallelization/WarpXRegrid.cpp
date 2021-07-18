@@ -149,6 +149,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         ComputeFaceAreas();
         ScaleEdges();
         ScaleAreas();
+        ComputeDistanceToEB();
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif

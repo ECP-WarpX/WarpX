@@ -1003,7 +1003,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         if np.iterable(self.species):
             species_list = self.species
         else:
-            species_list = [species]
+            species_list = [self.species]
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution

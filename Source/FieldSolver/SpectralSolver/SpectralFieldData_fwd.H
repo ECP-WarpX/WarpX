@@ -5,8 +5,5 @@
  * License: BSD-3-Clause-LBNL
  */
 
-struct SpectralFieldIndex;
-struct SpectralAvgFieldIndex;
-struct SpectralPMLIndex;
-
+class SpectralFieldIndex;
 class SpectralFieldData;

@@ -506,6 +506,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     ComputeFaceAreas();
     ScaleEdges();
     ScaleAreas();
+    ComputeDistanceToEB();
 
     const auto& period = Geom(lev).periodicity();
     m_edge_lengths[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);

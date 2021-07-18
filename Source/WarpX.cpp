@@ -273,17 +273,16 @@ WarpX::WarpX ()
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
 
-#ifdef AMREX_USE_EB
-    Venl.resize(nlevs_max);
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
+    m_distance_to_eb.resize(nlevs_max);
     m_flag_info_face.resize(nlevs_max);
     m_flag_ext_face.resize(nlevs_max);
     m_borrowing.resize(nlevs_max);
     m_area_mod.resize(nlevs_max);
-#endif
 
     Rhofield.resize(nlevs_max);
+    Venl.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
 
@@ -1506,9 +1505,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_fp[z]"));
 
 #ifdef AMREX_USE_EB
-    // EB info are needed only at the coarsest level
+    // EB info are needed only at the finest level
     if (lev == maxLevel())
     {
+        m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
+        m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
+        m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
+        m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
+        m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
+        m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
+        constexpr int nc_ls = 1;
+        constexpr int ng_ls = 2;
+        m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
         m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
         m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
         m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
@@ -1917,7 +1925,9 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
-                                                J_linear_in_time);
+                                                J_linear_in_time,
+                                                do_dive_cleaning,
+                                                do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
 }
 #   endif
