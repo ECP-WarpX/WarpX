@@ -704,7 +704,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-              if(geom_data_x(i, j, k)<=0) return;
+                if(geom_data_x(i, j, k)<=0) return;
 #endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
@@ -725,9 +725,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-              if(geom_data_y(i, j, k)<=0){
-                  return;
-              }
+                if(geom_data_y(i, j, k)<=0) return;
 #endif
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
@@ -746,7 +744,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-              if(geom_data_z(i, j, k)<=0) return;
+                if(geom_data_z(i, j, k)<=0) return;
 #endif
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
