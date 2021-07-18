@@ -87,6 +87,7 @@ class CMakeBuild(build_ext):
             ## variants
             '-DWarpX_COMPUTE=' + WarpX_COMPUTE,
             '-DWarpX_MPI:BOOL=' + WarpX_MPI,
+            '-DWarpX_EB:BOOL=' + WarpX_EB,
             '-DWarpX_OPENPMD:BOOL=' + WarpX_OPENPMD,
             '-DWarpX_PRECISION=' + WarpX_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WarpX_PSATD,
@@ -179,6 +180,7 @@ PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
 #   note: changed default for SHARED, MPI, TESTING and EXAMPLES
 WarpX_COMPUTE = os.environ.get('WarpX_COMPUTE', 'OMP')
 WarpX_MPI = os.environ.get('WarpX_MPI', 'OFF')
+WarpX_EB = os.environ.get('WarpX_EB', 'OFF')
 WarpX_OPENPMD = os.environ.get('WarpX_OPENPMD', 'OFF')
 WarpX_PRECISION = os.environ.get('WarpX_PRECISION', 'DOUBLE')
 WarpX_PSATD = os.environ.get('WarpX_PSATD', 'OFF')
@@ -210,6 +212,10 @@ if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
     WarpX_MPI = "ON"
 else:
     WarpX_MPI = "OFF"
+
+# Include embedded boundary functionality
+if WarpX_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
+    WarpX_EB = "ON"
 
 # Modern Electron variables read environment variables
 if ME_Solver.upper() in ['1', 'ON', 'TRUE', 'YES']:
