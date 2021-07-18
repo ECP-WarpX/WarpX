@@ -1171,8 +1171,7 @@ private:
     static int ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                                  const amrex::Array4<amrex::Real> &S_red,
                                                  const amrex::Array4<amrex::Real> &S,
-                                                 const amrex::Array4<int> &flag_info_face,
-                                                 const amrex::Array4<int> &flag_ext_face, int idim);
+                                                 const amrex::Array4<int> &flag_info_face, int idim);
 private:
 
     void PushPSATD ();
