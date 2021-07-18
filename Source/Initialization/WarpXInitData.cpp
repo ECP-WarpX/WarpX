@@ -507,8 +507,25 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     ScaleEdges();
     ScaleAreas();
 
+    const auto& period = Geom(lev).periodicity();
+    m_edge_lengths[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_edge_lengths[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_edge_lengths[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_face_areas[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_face_areas[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_face_areas[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_area_mod[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_area_mod[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+    m_area_mod[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+
     if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
         MarkCells();
+        m_flag_info_face[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_flag_info_face[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_flag_info_face[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_flag_ext_face[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_flag_ext_face[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_flag_ext_face[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
         ComputeFaceExtensions();
     }
 
