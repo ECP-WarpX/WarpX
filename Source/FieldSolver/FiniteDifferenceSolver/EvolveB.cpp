@@ -57,6 +57,10 @@ void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     int lev, amrex::Real const dt ) {
 
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(area_mod, Rhofield, Venl, flag_info_cell, borrowing);
+#endif
+
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
