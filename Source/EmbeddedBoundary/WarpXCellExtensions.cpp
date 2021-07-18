@@ -200,8 +200,7 @@ int
 WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
                                          const amrex::Array4<amrex::Real>& S,
-                                         const amrex::Array4<int>& flag_info_face,
-                                         const amrex::Array4<int>& flag_ext_face, int idim) {
+                                         const amrex::Array4<int>& flag_info_face, int idim) {
     int i = cell.x;
     int j = cell.y;
     int k = cell.z;
@@ -710,8 +709,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                       lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                 amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
                 int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sx_ext, Sx_mod, Sx,
-                                                                flag_info_face_x, flag_ext_face_x,
-                                                                idim);
+                                                                flag_info_face_x, idim);
 
                 borrowing_x_size(i, j, k) = n_borrow;
                 return n_borrow;
@@ -851,8 +849,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sy_ext, Sy_mod, Sy,
-                                                               flag_info_face_y, flag_ext_face_y,
-                                                               idim);
+                                                               flag_info_face_y, idim);
 
                 borrowing_y_size(i, j, k) = n_borrow;
                 return n_borrow;
@@ -990,8 +987,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                                     ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
                 int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sz_ext, Sz_mod, Sz,
-                                                                 flag_info_face_z, flag_ext_face_z,
-                                                                 idim);
+                                                                 flag_info_face_z, idim);
 
                 borrowing_z_size(i, j, k) = n_borrow;
                 return n_borrow;
