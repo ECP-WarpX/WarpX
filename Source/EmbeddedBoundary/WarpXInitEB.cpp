@@ -114,7 +114,7 @@ WarpX::ComputeEdgeLengths () {
     auto const &edge_centroid = eb_fact.getEdgeCent();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
         for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-        amrex::Box const &box = mfi.validbox();
+        amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
         amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
@@ -162,9 +162,9 @@ WarpX::ComputeFaceAreas () {
     auto const &area_frac = eb_fact.getAreaFrac();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
-        amrex::FabType fab_type = flags[mfi].getType(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
@@ -200,8 +200,8 @@ WarpX::ScaleEdges () {
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             amrex::ParallelFor(box, [=](int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
@@ -226,8 +226,8 @@ WarpX::ScaleAreas() {
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
             } else if (idim == 1) {
@@ -264,7 +264,7 @@ WarpX::MarkCells(){
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
-            amrex::Box const &box = mfi.validbox();
+            amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
 
             auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
