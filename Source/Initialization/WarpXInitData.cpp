@@ -696,9 +696,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        amrex::Array4<amrex::Real> const& geom_data_y = geom_data[1]->array(mfi);
        amrex::Array4<amrex::Real> const& geom_data_z = geom_data[2]->array(mfi);
 #else
-       amrex::ignore_unused(geom_data_x);
-       amrex::ignore_unused(geom_data_y);
-       amrex::ignore_unused(geom_data_z);
+       amrex::ignore_unused(geom_data);
 #endif
 
        amrex::ParallelFor (tbx, tby, tbz,
