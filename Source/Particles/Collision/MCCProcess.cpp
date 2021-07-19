@@ -102,6 +102,9 @@ MCCProcess::readCrossSectionFile (
         energies.push_back(energy);
         sigmas.push_back(sigma);
     }
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(energies.size() > 1,
+        "Failed to read cross-section data from file."
+    );
 }
 
 void
