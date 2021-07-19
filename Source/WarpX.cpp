@@ -430,6 +430,12 @@ if(priority == WarnPriority::medium)
 }
 
 void
+WarpX::PrintLocalWarnings(const std::string& when)
+{
+    amrex::AllPrint() << m_p_warn_manager->print_local_warnings(when);
+}
+
+void
 WarpX::ReadParameters ()
 {
     {

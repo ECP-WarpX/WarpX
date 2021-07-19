@@ -3,15 +3,16 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 namespace Utils{
 namespace MsgLogger{
 
     enum class Priority
     {
-        low,
+        high,
         medium,
-        high
+        low
     };
 
     constexpr const char* PriorityToString(const Priority& priority)
@@ -31,6 +32,12 @@ namespace MsgLogger{
         Priority priority;
     };
 
+    struct MsgWithCounter
+    {
+        Msg msg;
+        int counter;
+    };
+
     constexpr bool operator<(const Msg& l, const Msg& r)
     {
         return  (l.priority < r.priority) ||
@@ -46,6 +53,8 @@ namespace MsgLogger{
         Logger();
 
         void record_msg(Msg msg);
+
+        std::vector<MsgWithCounter> get_msg_list();
 
         private:
 

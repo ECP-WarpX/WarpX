@@ -97,6 +97,8 @@ public:
         std::string text,
         WarnPriority priority = WarnPriority::medium);
 
+    void PrintLocalWarnings(const std::string& when);
+
     void InitData ();
 
     void Evolve (int numsteps = -1);

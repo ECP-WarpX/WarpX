@@ -17,3 +17,14 @@ void Logger::record_msg(Msg msg)
         "    count   : " << m_messages[msg] << "\n" <<
         "____________________________________\n";
 }
+
+std::vector<MsgWithCounter> Logger::get_msg_list()
+{
+    auto res = std::vector<MsgWithCounter>{};
+
+    for (auto msg : m_messages){
+        res.emplace_back(MsgWithCounter{msg.first, msg.second});
+    }
+
+    return res;
+}

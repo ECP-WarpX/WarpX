@@ -59,16 +59,21 @@ int main(int argc, char* argv[])
     {
         WarpX warpx;
 
-        warpx.RecordWarning("TEST", "test_msg");
-        warpx.RecordWarning("TEST", "test_msg");
-        warpx.RecordWarning("TEST", "test_msg_2");
-        warpx.RecordWarning("TEST_2", "test_msg_2");
-        warpx.RecordWarning("TEST_2", "test_msg_2", WarnPriority::high);
-        warpx.RecordWarning("TEST_2", "test_msg_2", WarnPriority::low);
+        warpx.RecordWarning("Topic1", "test_msg");
+        warpx.RecordWarning("Topic1", "test_msg");
+        warpx.RecordWarning("Topic1", "test_msg_2");
+        warpx.RecordWarning("Topic2", "test_msg_2");
+        warpx.RecordWarning("Topic2", "test_msg_2", WarnPriority::high);
+        warpx.RecordWarning("Topic2", "test_msg_2", WarnPriority::low);
+        warpx.RecordWarning("Topic3", "test_msg_3", WarnPriority::low);
+        warpx.RecordWarning("Topic3", "test_msg_3", WarnPriority::low);
+        warpx.RecordWarning("Topic3", "test_msg_3", WarnPriority::low);
 
         warpx.InitData();
 
         warpx.Evolve();
+
+        warpx.PrintLocalWarnings("THE VERY END");
 
         if (warpx.Verbose()) {
             auto end_total = static_cast<Real>(amrex::second()) - strt_total;
