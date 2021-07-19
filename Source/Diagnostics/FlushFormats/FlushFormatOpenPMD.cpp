@@ -45,7 +45,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
            ( openPMD::IterationEncoding::groupBased != encoding ) )
       {
         std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
-        amrex::Warning(warnMsg);
+        WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
         encoding = openPMD::IterationEncoding::groupBased;
       }
     }

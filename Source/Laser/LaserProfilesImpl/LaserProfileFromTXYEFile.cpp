@@ -8,6 +8,7 @@
 
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -45,8 +46,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 {
     if (!std::numeric_limits< double >::is_iec559)
     {
-        Print() << R"(Warning: double does not comply with IEEE 754: bad
-            things will happen parsing the X, Y and T profiles for the laser!)";
+        WarpX::GetInstance().RecordWarning("Laser",
+            "(Double does not comply with IEEE 754: bad"
+            "things will happen parsing the X, Y and T profiles for the laser!)",
+            WarnPriority::high);
     }
 
     // Parse the TXYE file

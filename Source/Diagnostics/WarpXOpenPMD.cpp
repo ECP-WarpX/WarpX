@@ -325,7 +325,8 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_m
             std::string warnMsg =
                     " Warning from openPMD writer: Already written iteration:" + std::to_string(ts);
             std::cout << warnMsg << std::endl;
-            amrex::Warning(warnMsg);
+
+            WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
         }
     }
 

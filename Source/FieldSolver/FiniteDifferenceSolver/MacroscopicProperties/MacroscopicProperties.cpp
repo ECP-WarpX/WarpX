@@ -19,6 +19,7 @@
 #include <AMReX_BaseFwd.H>
 
 #include <memory>
+#include <sstream>
 
 using namespace amrex;
 
@@ -47,7 +48,11 @@ MacroscopicProperties::ReadParameters ()
         sigma_specified = true;
     }
     if (!sigma_specified) {
-        amrex::Print() << "WARNING: Material conductivity is not specified. Using default vacuum value of " << m_sigma << " in the simulation\n";
+        std::stringstream warnMsg;
+        warnMsg << "Material conductivity is not specified. Using default vacuum value of " <<
+            m_sigma << " in the simulation.";
+        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+            warnMsg.str());
     }
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
@@ -66,7 +71,11 @@ MacroscopicProperties::ReadParameters ()
         epsilon_specified = true;
     }
     if (!epsilon_specified) {
-        amrex::Print() << "WARNING: Material permittivity is not specified. Using default vacuum value of " << m_epsilon << " in the simulation\n";
+        std::stringstream warnMsg;
+        warnMsg << "Material permittivity is not specified. Using default vacuum value of " <<
+            m_epsilon << " in the simulation.";
+        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+            warnMsg.str());
     }
 
     // initialization of epsilon (permittivity) with parser
@@ -87,7 +96,11 @@ MacroscopicProperties::ReadParameters ()
         mu_specified = true;
     }
     if (!mu_specified) {
-        amrex::Print() << "WARNING: Material permittivity is not specified. Using default vacuum value of " << m_mu << " in the simulation\n";
+        std::stringstream warnMsg;
+        warnMsg << "Material permittivity is not specified. Using default vacuum value of " <<
+            m_mu << " in the simulation.";
+        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+            warnMsg.str());
     }
 
     // initialization of mu (permeability) with parser

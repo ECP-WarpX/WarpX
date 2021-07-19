@@ -409,8 +409,10 @@ WarpX::RecordWarning(
 {
 
 auto msg_priority = Utils::MsgLogger::Priority::high;
-if(priority == WarnPriority::low) msg_priority = Utils::MsgLogger::Priority::low;
-if(priority == WarnPriority::medium) msg_priority = Utils::MsgLogger::Priority::medium;
+if(priority == WarnPriority::low)
+    msg_priority = Utils::MsgLogger::Priority::low;
+if(priority == WarnPriority::medium)
+    msg_priority = Utils::MsgLogger::Priority::medium;
 
 #ifdef WARPX_ALWAYS_WARN_IMMEDIATELY
     amrex::Warning(
@@ -1286,17 +1288,23 @@ WarpX::BackwardCompatibility ()
     ParmParse pp_particles("particles");
     int nspecies;
     if (pp_particles.query("nspecies", nspecies)){
-        amrex::Print()<<"particles.nspecies is ignored. Just use particles.species_names please.\n";
+        this->RecordWarning("Species",
+            "particles.nspecies is ignored. Just use particles.species_names please.",
+            WarnPriority::low);
     }
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
-        amrex::Print()<<"collisions.ncollisions is ignored. Just use particles.collision_names please.\n";
+        this->RecordWarning("Collisions",
+            "collisions.ncollisions is ignored. Just use particles.collision_names please.",
+            WarnPriority::low);
     }
     ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
-        amrex::Print()<<"lasers.nlasers is ignored. Just use lasers.names please.\n";
+        this->RecordWarning("Laser",
+            "lasers.nlasers is ignored. Just use lasers.names please.",
+            WarnPriority::low);
     }
 }
 

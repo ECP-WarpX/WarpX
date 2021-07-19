@@ -61,7 +61,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-
+#include <sstream>
 
 using namespace amrex;
 
@@ -722,8 +722,9 @@ WarpX::PerformanceHints ()
     for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
         total_nboxes += boxArray(ilev).size();
     }
-    if (ParallelDescriptor::NProcs() > total_nboxes)
-        amrex::Print() << "\n[Warning] [Performance] Too many resources / too little work!\n"
+    if (ParallelDescriptor::NProcs() > total_nboxes){
+        std::stringstream warnMsg;
+        warnMsg << "Too many resources / too little work!\n"
             << "  It looks like you requested more compute resources than "
             << "there are total number of boxes of cells available ("
             << total_nboxes << "). "
@@ -737,6 +738,9 @@ WarpX::PerformanceHints ()
 #endif
             << "  More information:\n"
             << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
+
+        WarpX::GetInstance().RecordWarning("Performance", warnMsg.str(), WarnPriority::high);
+    }
 
     // TODO: warn if some ranks have disproportionally more work than all others
     //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down

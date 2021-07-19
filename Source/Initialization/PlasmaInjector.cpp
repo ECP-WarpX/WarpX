@@ -132,9 +132,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     bool mass_is_specified = queryWithParser(pp_species_name, "mass", mass);
 
     if ( charge_is_specified && species_is_specified ){
-        Print() << "WARNING: Both '" << species_name << ".charge' and "
-                << species_name << ".species_type' are specified\n'"
-                << species_name << ".charge' will take precedence.\n";
+        WarpX::GetInstance().RecordWarning("Species",
+            "Both '" + species_name +  ".charge' and " +
+                species_name + ".species_type' are specified.\n" +
+                species_name + ".charge' will take precedence.\n");
+
     }
     if (!charge_is_specified && !species_is_specified && injection_style != "external_file"){
         // external file will throw own assertions below if charge cannot be found
@@ -142,9 +144,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 
     if ( mass_is_specified && species_is_specified ){
-        Print() << "WARNING: Both '" << species_name << ".mass' and "
-                << species_name << ".species_type' are specified\n'"
-                << species_name << ".mass' will take precedence.\n";
+        WarpX::GetInstance().RecordWarning("Species",
+            "Both '" + species_name +  ".mass' and " +
+                species_name + ".species_type' are specified.\n" +
+                species_name + ".mass' will take precedence.\n");
     }
     if (!mass_is_specified && !species_is_specified && injection_style != "external_file"){
         // external file will throw own assertions below if mass cannot be found
@@ -339,14 +342,16 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 "'" + ps_name + ".species_type' in your input file!\n");
 
             if (charge_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".charge' and '"
-                        << ps_name << ".injection_file' specify a charge.\n'"
-                        << ps_name << ".charge' will take precedence.\n";
+                WarpX::GetInstance().RecordWarning("Species",
+                    "Both '" + ps_name + ".charge' and '" +
+                        ps_name + ".injection_file' specify a charge.\n'" +
+                        ps_name + ".charge' will take precedence.\n");
             }
             else if (species_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
-                        << ps_name << ".injection_file' specify a charge.\n'"
-                        << ps_name << ".species_type' will take precedence.\n";
+                WarpX::GetInstance().RecordWarning("Species",
+                    "Both '" + ps_name + ".species_type' and '" +
+                        ps_name + ".injection_file' specify a charge.\n'" +
+                        ps_name + ".species_type' will take precedence.\n");
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
@@ -355,14 +360,16 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 charge = p_q * charge_unit;
             }
             if (mass_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".mass' and '"
-                        << ps_name << ".injection_file' specify a mass.\n'"
-                        << ps_name << ".mass' will take precedence.\n";
+                WarpX::GetInstance().RecordWarning("Species",
+                    "Both '" + ps_name + ".mass' and '" +
+                        ps_name + ".injection_file' specify a charge.\n'" +
+                        ps_name + ".mass' will take precedence.\n");
             }
             else if (species_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
-                        << ps_name << ".injection_file' specify a mass.\n'"
-                        << ps_name << ".species_type' will take precedence.\n";
+                WarpX::GetInstance().RecordWarning("Species",
+                    "Both '" + ps_name + ".species_type' and '" +
+                        ps_name + ".injection_file' specify a mass.\n'" +
+                        ps_name + ".species_type' will take precedence.\n");
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record

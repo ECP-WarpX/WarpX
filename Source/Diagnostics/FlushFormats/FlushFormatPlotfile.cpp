@@ -534,14 +534,16 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
         if (plot_raw_F) {
             if (warpx.get_pointer_F_fp(lev) == nullptr) {
-                amrex::Warning("The user requested to write raw F data, but F_fp was not allocated");
+                WarpX::GetInstance().RecordWarning("Diagnostics",
+                    "The user requested to write raw F data, but F_fp was not allocated");
             } else {
                 WriteRawMF(warpx.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
             }
         }
         if (plot_raw_rho) {
             if (warpx.get_pointer_rho_fp(lev) == nullptr) {
-                amrex::Warning("The user requested to write raw rho data, but rho_fp was not allocated");
+                WarpX::GetInstance().RecordWarning("Diagnostics",
+                    "The user requested to write raw rho data, but rho_fp was not allocated");
             } else {
                 // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
                 // If nComp > 1, this is the upper half of the list of components.
@@ -591,9 +593,11 @@ FlushFormatPlotfile::WriteAllRawFields(
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             if (plot_raw_F) {
                 if (warpx.get_pointer_F_fp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw F data, but F_fp was not allocated");
+                    WarpX::GetInstance().RecordWarning("Diagnostics",
+                        "The user requested to write raw F data, but F_fp was not allocated");
                 } else if (warpx.get_pointer_F_cp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw F data, but F_cp was not allocated");
+                    WarpX::GetInstance().RecordWarning("Diagnostics",
+                        "The user requested to write raw F data, but F_cp was not allocated");
                 } else {
                     WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
                         dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
@@ -601,9 +605,11 @@ FlushFormatPlotfile::WriteAllRawFields(
             }
             if (plot_raw_rho) {
                 if (warpx.get_pointer_rho_fp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw rho data, but rho_fp was not allocated");
+                    WarpX::GetInstance().RecordWarning("Diagnostics",
+                        "The user requested to write raw rho data, but rho_fp was not allocated");
                 } else if (warpx.get_pointer_rho_cp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw rho data, but rho_cp was not allocated");
+                    WarpX::GetInstance().RecordWarning("Diagnostics",
+                        "The user requested to write raw rho data, but rho_cp was not allocated");
                 } else {
                     // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
                     WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
