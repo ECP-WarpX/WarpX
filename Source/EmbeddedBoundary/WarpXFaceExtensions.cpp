@@ -28,8 +28,7 @@ WarpX::CountExtFaces() {
 
 
 /**
-* \brief Compute the face extensions. For the moment it only uses the one-way extension but at a
-* later point we will also have the 4-ways and 8-ways extensions.
+* \brief Compute the face extensions.
 */
 void
 WarpX::ComputeFaceExtensions(){
