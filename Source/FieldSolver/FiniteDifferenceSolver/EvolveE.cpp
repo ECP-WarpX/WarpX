@@ -61,7 +61,7 @@ void FiniteDifferenceSolver::EvolveE (
 #else
     ignore_unused(face_areas, Rhofield);
 #endif
-    
+
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
