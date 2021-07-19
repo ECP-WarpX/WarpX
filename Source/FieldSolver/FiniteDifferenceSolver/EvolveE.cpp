@@ -54,8 +54,16 @@ void FiniteDifferenceSolver::EvolveE (
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+#ifdef AMREX_USE_EB
+    if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+        ignore_unused(face_areas, Rhofield);
+    }
+#else
+    ignore_unused(face_areas, Rhofield);
+#endif
+    
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
         ignore_unused(edge_lengths);
