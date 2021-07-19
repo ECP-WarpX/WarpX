@@ -35,27 +35,27 @@ void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
     amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
-    std::cout<< "Cells to be extended before x:\t" << N_ext_faces(0) <<std::endl;
-    std::cout<< "Cells to be extended before y:\t" << N_ext_faces(1) <<std::endl;
-    std::cout<< "Cells to be extended before z:\t" << N_ext_faces(2) <<std::endl;
+    std::cout<< "Faces to be extended before x:\t" << N_ext_faces(0) <<std::endl;
+    std::cout<< "Faces to be extended before y:\t" << N_ext_faces(1) <<std::endl;
+    std::cout<< "Faces to be extended before z:\t" << N_ext_faces(2) <<std::endl;
 
     InitBorrowing();
     amrex::Array1D<int, 0, 2> temp_inds{0, 0, 0};
     temp_inds = ComputeOneWayExtensions();
     amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
-    std::cout<< "Cells to be extended after one way extension x:\t" <<
+    std::cout<< "Faces to be extended after one way extension x:\t" <<
                 N_ext_faces_after_one_way(0) <<std::endl;
-    std::cout<< "Cells to be extended after one way extension y:\t" <<
+    std::cout<< "Faces to be extended after one way extension y:\t" <<
                 N_ext_faces_after_one_way(1) <<std::endl;
-    std::cout<< "Cells to be extended after one way extension z:\t" <<
+    std::cout<< "Faces to be extended after one way extension z:\t" <<
                 N_ext_faces_after_one_way(2) <<std::endl;
     ComputeEightWaysExtensions(temp_inds);
     amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
-    std::cout<< "Cells to be extended after eight ways extension x:\t" <<
+    std::cout<< "Faces to be extended after eight ways extension x:\t" <<
                 N_ext_faces_after_eight_ways(0) <<std::endl;
-    std::cout<< "Cells to be extended after eight ways extension y:\t" <<
+    std::cout<< "Faces to be extended after eight ways extension y:\t" <<
              N_ext_faces_after_eight_ways(1) <<std::endl;
-    std::cout<< "Cells to be extended after eight ways extension z:\t" <<
+    std::cout<< "Faces to be extended after eight ways extension z:\t" <<
              N_ext_faces_after_eight_ways(2) <<std::endl;
     if (N_ext_faces_after_eight_ways(0) > 0) {
         amrex::Abort("Some x faces could not be extended");
@@ -117,7 +117,7 @@ WarpX::InitBorrowing() {
 * face can be extended withe the one-way extension, zeros if it can't.
 */
 int
-WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
+WarpX::ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                       const amrex::Array4<amrex::Real>& S_red,
                                       const amrex::Array4<int>& flag_info_face,
                                       const amrex::Array4<int>& flag_ext_face, int idim) {
@@ -197,7 +197,7 @@ WarpX::ComputeNBorrowOneCellExtension(amrex::Dim3 cell, amrex::Real S_ext,
 * face can be extended withe the one-way extension, zeros if it can't.
 */
 int
-WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
+WarpX::ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
                                          const amrex::Array4<amrex::Real>& S,
                                          const amrex::Array4<int>& flag_info_face, int idim) {
@@ -224,16 +224,16 @@ WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
             local_avail(0, 2) * S(i, j - 1, k + 1) +
             local_avail(2, 2) * S(i, j + 1, k + 1);
 
-        bool neg_cell = true;
+        bool neg_face = true;
 
-        while (denom >= S_ext and neg_cell and denom > 0) {
-            neg_cell = false;
+        while (denom >= S_ext and neg_face and denom > 0) {
+            neg_face = false;
             for (int j_n = -1; j_n < 2; j_n++) {
                 for (int k_n = -1; k_n < 2; k_n++) {
                     if (local_avail(j_n + 1, k_n + 1)) {
                         amrex::Real patch = S_ext * S(i, j + j_n, k + k_n) / denom;
                         if (S_red(i, j + j_n, k + k_n) - patch <= 0) {
-                            neg_cell = true;
+                            neg_face = true;
                             local_avail(j_n + 1, k_n + 1) = false;
                         }
                     }
@@ -266,16 +266,16 @@ WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
             local_avail(0, 2) * S(i - 1, j, k + 1) +
             local_avail(2, 2) * S(i + 1, j, k + 1);
 
-        bool neg_cell = true;
+        bool neg_face = true;
 
-        while(denom >= S_ext and neg_cell and denom > 0){
-            neg_cell = false;
+        while(denom >= S_ext and neg_face and denom > 0){
+            neg_face = false;
             for (int i_n = -1; i_n < 2; i_n++) {
                 for (int k_n = -1; k_n < 2; k_n++) {
                     if(local_avail(i_n + 1, k_n + 1)){
                         amrex::Real patch = S_ext * S(i + i_n, j, k + k_n) / denom;
                         if(S_red(i + i_n, j, k + k_n) - patch <= 0) {
-                            neg_cell = true;
+                            neg_face = true;
                             local_avail(i_n + 1, k_n + 1) = false;
                         }
                     }
@@ -308,16 +308,16 @@ WarpX::ComputeNBorrowEightCellsExtension(amrex::Dim3 cell, amrex::Real S_ext,
             local_avail(0, 2) * S(i - 1, j + 1, k) +
             local_avail(2, 2) * S(i + 1, j + 1, k);
 
-        bool neg_cell = true;
+        bool neg_face = true;
 
-        while(denom >= S_ext and neg_cell and denom > 0){
-            neg_cell = false;
+        while(denom >= S_ext and neg_face and denom > 0){
+            neg_face = false;
             for (int i_n = -1; i_n < 2; i_n++) {
                 for (int j_n = -1; j_n < 2; j_n++) {
                     if(local_avail(i_n + 1, j_n + 1)){
                         amrex::Real patch = S_ext * S(i + i_n, j + j_n, k) / denom;
                         if(S_red(i + i_n, j + j_n, k) - patch <= 0) {
-                            neg_cell = true;
+                            neg_face = true;
                             local_avail(i_n + 1, j_n + 1) = false;
                         }
                     }
@@ -390,14 +390,13 @@ WarpX::ComputeOneWayExtensions() {
             int k = cell.z;
             // If the face doesn't need to be extended break the loop
             if (!flag_ext_face_x(i, j, k)) {
-                //borrowing_x_size(i, j, k) = 0;
                 return 0;
             }
-            //one cell extension, therefore the_size_for_this_cell(cell) = 1 or 0
+
             amrex::Real Sx_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                                   lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
             amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
-            int n_borrow = ComputeNBorrowOneCellExtension(cell, Sx_ext, Sx_mod, flag_info_face_x,
+            int n_borrow = ComputeNBorrowOneFaceExtension(cell, Sx_ext, Sx_mod, flag_info_face_x,
                                                           flag_ext_face_x, idim);
 
             borrowing_x_size(i, j, k) = n_borrow;
@@ -491,12 +490,13 @@ WarpX::ComputeOneWayExtensions() {
                 if (!flag_ext_face_y(i, j, k)) {
                     return 0;
                 }
-                //one cell extension, therefore the_size_for_this_cell(cell) = 1 or 0
+
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
-                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sy_ext, Sy_mod, flag_info_face_y,
-                                                              flag_ext_face_y, idim);
+                int n_borrow =
+                    ComputeNBorrowOneFaceExtension(cell, Sy_ext, Sy_mod, flag_info_face_y,
+                                                   flag_ext_face_y, idim);
 
                 borrowing_y_size(i, j, k) = n_borrow;
                 return n_borrow;
@@ -590,12 +590,13 @@ WarpX::ComputeOneWayExtensions() {
                     //borrowing_z_size(i, j, k) = 0;
                     return 0;
                 }
-                //one cell extension, therefore the_size_for_this_cell(cell) = 1 or 0
+
                 amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                                       ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                int n_borrow = ComputeNBorrowOneCellExtension(cell, Sz_ext, Sz_mod, flag_info_face_z,
-                                                              flag_ext_face_z, idim);
+                int n_borrow =
+                    ComputeNBorrowOneFaceExtension(cell, Sz_ext, Sz_mod, flag_info_face_z,
+                                                   flag_ext_face_z, idim);
 
 
               borrowing_z_size(i, j, k) = n_borrow;
@@ -708,8 +709,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 amrex::Real Sx_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                 amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
-                int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sx_ext, Sx_mod, Sx,
-                                                                flag_info_face_x, idim);
+                int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sx_ext, Sx_mod, Sx,
+                                                                 flag_info_face_x, idim);
 
                 borrowing_x_size(i, j, k) = n_borrow;
                 return n_borrow;
@@ -754,16 +755,16 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                         local_avail(0, 2) * Sx(i, j - 1, k + 1) +
                                         local_avail(2, 2) * Sx(i, j + 1, k + 1);
 
-                    bool neg_cell = true;
+                    bool neg_face = true;
 
-                    while(denom >= Sx_ext and neg_cell and denom > 0){
-                        neg_cell = false;
+                    while(denom >= Sx_ext and neg_face and denom > 0){
+                        neg_face = false;
                         for (int j_n = -1; j_n < 2; j_n++) {
                             for (int k_n = -1; k_n < 2; k_n++) {
                                 if(local_avail(j_n + 1, k_n + 1)){
                                     amrex::Real patch = Sx_ext * Sx(i, j + j_n, k+ k_n) / denom;
                                     if(Sx_mod(i, j + j_n, k + k_n) - patch <= 0) {
-                                        neg_cell = true;
+                                        neg_face = true;
                                         local_avail(j_n + 1, k_n + 1) = false;
                                     }
                                 }
@@ -848,8 +849,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
-                int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sy_ext, Sy_mod, Sy,
-                                                               flag_info_face_y, idim);
+                int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sy_ext, Sy_mod, Sy,
+                                                                 flag_info_face_y, idim);
 
                 borrowing_y_size(i, j, k) = n_borrow;
                 return n_borrow;
@@ -894,16 +895,16 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                         local_avail(0, 2) * Sy(i - 1, j, k + 1) +
                         local_avail(2, 2) * Sy(i + 1, j, k + 1);
 
-                    bool neg_cell = true;
+                    bool neg_face = true;
 
-                    while (denom >= Sy_ext and neg_cell and denom > 0) {
-                        neg_cell = false;
+                    while (denom >= Sy_ext and neg_face and denom > 0) {
+                        neg_face = false;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int k_n = -1; k_n < 2; k_n++) {
                                 if (local_avail(i_n + 1, k_n + 1)) {
                                     amrex::Real patch = Sy_ext * Sy(i + i_n, j, k + k_n) / denom;
                                     if (Sy_mod(i + i_n, j, k + k_n) - patch <= 0) {
-                                        neg_cell = true;
+                                        neg_face = true;
                                         local_avail(i_n + 1, k_n + 1) = false;
                                     }
                                 }
@@ -986,7 +987,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                                     ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                int n_borrow = ComputeNBorrowEightCellsExtension(cell, Sz_ext, Sz_mod, Sz,
+                int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sz_ext, Sz_mod, Sz,
                                                                  flag_info_face_z, idim);
 
                 borrowing_z_size(i, j, k) = n_borrow;
@@ -1032,16 +1033,16 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                                         local_avail(0, 2) * Sz(i - 1, j + 1, k) +
                                         local_avail(2, 2) * Sz(i + 1, j + 1, k);
 
-                    bool neg_cell = true;
+                    bool neg_face = true;
 
-                    while(denom >= Sz_ext and neg_cell and denom > 0){
-                        neg_cell = false;
+                    while(denom >= Sz_ext and neg_face and denom > 0){
+                        neg_face = false;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int j_n = -1; j_n < 2; j_n++) {
                                 if(local_avail(i_n + 1, j_n + 1)){
                                     amrex::Real patch = Sz_ext * Sz(i + i_n, j + j_n, k) / denom;
                                     if(Sz_mod(i + i_n, j + j_n, k) - patch <= 0) {
-                                        neg_cell = true;
+                                        neg_face = true;
                                         local_avail(i_n + 1, j_n + 1) = false;
                                     }
                                 }

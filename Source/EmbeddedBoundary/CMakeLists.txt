@@ -1,6 +1,6 @@
 target_sources(WarpX
   PRIVATE
     WarpXInitEB.cpp
-    WarpXCellExtensions.cpp
+    WarpXFaceExtensions.cpp
     WarpXFaceInfoBox.H
 )
