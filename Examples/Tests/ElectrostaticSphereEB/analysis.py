@@ -5,7 +5,7 @@
 # tests are otherwise the same.
 
 import sys
-sys.path.append('../../../Regression/Checksum/')
+sys.path.append('../../../../warpx/Regression/Checksum/')
 
 import checksumAPI
 
