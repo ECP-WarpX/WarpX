@@ -8,7 +8,8 @@ requires = [
     "numpy",
     "scipy",
     "psutil",
-    "pandas"
+    "pandas",
+    "yt"
 ]
 
 extras = {
