@@ -55,7 +55,7 @@ void FiniteDifferenceSolver::EvolveE (
     int lev, amrex::Real const dt ) {
 
 #ifdef AMREX_USE_EB
-    if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+    if (m_fdtd_algo != MaxwellSolverAlgo::ECT) {
         ignore_unused(face_areas, Rhofield);
     }
 #else
