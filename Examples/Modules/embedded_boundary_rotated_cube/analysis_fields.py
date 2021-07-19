@@ -55,11 +55,11 @@ for i in range(ncells[0]):
             x0 = i*dx + lo[0]
             y0 = (j+0.5)*dy + lo[1]
             z0 = k*dz + lo[2]
-            
+
             x = x0
             y = y0*np.cos(-theta)-z0*np.sin(-theta)
             z = y0*np.sin(-theta)+z0*np.cos(-theta)
-            
+
             By_th[i, j, k] = 2/h_2*mu_0*(n * pi/Ly)*(p * pi/Lz) * (np.cos(m * pi/Lx * (x - Lx/2)) *
                                                                    np.sin(n * pi/Ly * (y - Ly/2)) *
                                                                    np.cos(p * pi/Lz * (z - Lz/2)) *
@@ -70,11 +70,11 @@ for i in range(ncells[0]):
             x0 = i*dx + lo[0]
             y0 = j*dy + lo[1]
             z0 = (k+0.5)*dz + lo[2]
-            
+
             x = x0
             y = y0*np.cos(-theta)-z0*np.sin(-theta)
             z = y0*np.sin(-theta)+z0*np.cos(-theta)
-            
+
             Bz_th[i, j, k] = -mu_0*(np.cos(m * pi/Lx * (x - Lx/2)) *
                                    np.cos(n * pi/Ly * (y - Ly/2)) *
                                    np.sin(p * pi/Lz * (z - Lz/2)) *
