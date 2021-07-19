@@ -39,15 +39,16 @@ Spack (macOS/Linux)
 
    spack env create warpx-dev
    spack env activate warpx-dev
-   spack add adios2     # for openPMD
-   spack add blaspp     # for PSATD in RZ
+   spack add adios2        # for openPMD
+   spack add blaspp        # for PSATD in RZ
    spack add ccache
    spack add cmake
-   spack add fftw
-   spack add hdf5       # for openPMD
-   spack add lapackpp   # for PSATD in RZ
+   spack add fftw          # for PSATD
+   spack add hdf5          # for openPMD
+   spack add lapackpp      # for PSATD in RZ
    spack add mpi
-   spack add pkgconfig  # for fftw
+   spack add openpmd-api   # for openPMD
+   spack add pkgconfig     # for fftw
    # optional:
    # spack add python
    # spack add py-pip
@@ -69,15 +70,31 @@ Brew (macOS/Linux)
 .. code-block:: bash
 
    brew update
-   brew install adios2
+   brew tap openpmd/openpmd
+   brew install adios2      # for openPMD
    brew install ccache
    brew install cmake
-   brew install fftw
+   brew install fftw        # for PSATD
    brew install git
-   brew install hdf5-mpi
+   brew install hdf5-mpi    # for openPMD
    brew install libomp
    brew install pkg-config  # for fftw
    brew install open-mpi
+   brew install openblas    # for PSATD in RZ
+   brew install openpmd-api # for openPMD
+
+If you also want to compile with PSATD in RZ, you need to manually install BLAS++ and LAPACK++:
+
+.. code-block:: bash
+
+   sudo mkdir -p /usr/local/bin/
+   sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+   sudo chmod a+x /usr/local/bin/cmake-easyinstall
+
+   cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
+       -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+   cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
+       -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
 
 
 Conda (Linux/macOS/Windows)
