@@ -7,7 +7,6 @@
 #include "WarpX.H"
 
 #include "Parallelization/GuardCellManager.H"
-#include "Parser/WarpXParser.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -33,12 +32,16 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MLMG.H>
 #ifdef WARPX_DIM_RZ
-    #include <AMReX_MLNodeLaplacian.H>
+#    include <AMReX_MLNodeLaplacian.H>
 #else
-    #include <AMReX_MLNodeTensorLaplacian.H>
+#    include <AMReX_MLNodeTensorLaplacian.H>
+#    ifdef AMREX_USE_EB
+#        include <AMReX_MLEBNodeFDLaplacian.H>
+#    endif
 #endif
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
@@ -327,6 +330,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
 
     // Define the linear operator (Poisson operator)
     MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
+
     for (int lev = 0; lev <= max_level; ++lev) {
         linop.setSigma( lev, *sigma[lev] );
     }
@@ -397,20 +401,45 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
         }
     }
 
-    // set the boundary potential values if needed
     setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
 
+#ifndef AMREX_USE_EB
     // Define the linear operator (Poisson operator)
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
 
     // Set the value of beta
     amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#if (AMREX_SPACEDIM==2)
+#   if (AMREX_SPACEDIM==2)
         {{ beta[0], beta[2] }};  // beta_x and beta_z
-#else
+#   else
         {{ beta[0], beta[1], beta[2] }};
-#endif
+#   endif
     linop.setBeta( beta_solver );
+
+#else
+
+    // With embedded boundary: extract EB info
+    LPInfo info;
+    Vector<EBFArrayBoxFactory const*> eb_factory;
+    eb_factory.resize(max_level+1);
+    for (int lev = 0; lev <= max_level; ++lev) {
+      eb_factory[lev] = &WarpX::fieldEBFactory(lev);
+    }
+    MLEBNodeFDLaplacian linop( Geom(), boxArray(), dmap, info, eb_factory);
+
+    // Note: this assumes that the beam is propagating along
+    // one of the axes of the grid, i.e. that only *one* of the Cartesian
+    // components of `beta` is non-negligible.
+    linop.setSigma({AMREX_D_DECL(
+        1.-beta[0]*beta[0], 1.-beta[1]*beta[1], 1.-beta[2]*beta[2])});
+
+    // get the EB potential at the current time
+    std::string potential_eb_str = "0";
+    ParmParse pp_embedded_boundary("warpx");
+    pp_embedded_boundary.query("eb_potential(t)", potential_eb_str);
+    auto parser_eb = makeParser(potential_eb_str, {"t"});
+    linop.setEBDirichlet( parser_eb.compile<1>()(gett_new(0)) );
+#endif
 
     // Solve the Poisson equation
     linop.setDomainBC( lobc, hibc );
@@ -548,9 +577,11 @@ WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) cons
 #endif
 
     auto parser_lo = makeParser(potential_lo_str, {"t"});
-    pot_lo = parser_lo.eval(gett_new(0));
+    auto parser_lo_exe = parser_lo.compileHost<1>();
+    pot_lo = parser_lo_exe(gett_new(0));
     auto parser_hi = makeParser(potential_hi_str, {"t"});
-    pot_hi = parser_hi.eval(gett_new(0));
+    auto parser_hi_exe = parser_hi.compileHost<1>();
+    pot_hi = parser_hi_exe(gett_new(0));
 }
 
 /* \bried Compute the electric field that corresponds to `phi`, and

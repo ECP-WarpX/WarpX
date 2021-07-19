@@ -29,7 +29,6 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Parallelization/GuardCellManager.H"
-#include "Parser/WarpXParserWrapper.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
@@ -45,6 +44,7 @@
 #endif
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_RealVect.H>
@@ -105,7 +105,7 @@ public:
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
-                         bool useparser = false, HostDeviceParser<3> const& field_parser={});
+                         bool useparser = false, amrex::ParserExecutor<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -129,14 +129,14 @@ public:
     static std::string str_Ey_ext_grid_function;
     static std::string str_Ez_ext_grid_function;
 
-    // ParserWrapper for B_external on the grid
-    std::unique_ptr<ParserWrapper<3> > Bxfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Byfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Bzfield_parser;
-    // ParserWrapper for E_external on the grid
-    std::unique_ptr<ParserWrapper<3> > Exfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Eyfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Ezfield_parser;
+    // Parser for B_external on the grid
+    std::unique_ptr<amrex::Parser> Bxfield_parser;
+    std::unique_ptr<amrex::Parser> Byfield_parser;
+    std::unique_ptr<amrex::Parser> Bzfield_parser;
+    // Parser for E_external on the grid
+    std::unique_ptr<amrex::Parser> Exfield_parser;
+    std::unique_ptr<amrex::Parser> Eyfield_parser;
+    std::unique_ptr<amrex::Parser> Ezfield_parser;
 
     // Algorithms
     static long current_deposition_algo;
@@ -367,13 +367,13 @@ public:
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
-    void EvolveB (         amrex::Real dt);
-    void EvolveB (int lev, amrex::Real dt);
+    void EvolveB (         amrex::Real dt, DtType dt_type);
+    void EvolveB (int lev, amrex::Real dt, DtType dt_type);
     void EvolveF (         amrex::Real dt, DtType dt_type);
     void EvolveF (int lev, amrex::Real dt, DtType dt_type);
     void EvolveG (         amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, amrex::Real dt, DtType dt_type);
-    void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
+    void EvolveB (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
@@ -435,7 +435,7 @@ public:
 #endif
 
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
-    void ApplyBfieldBoundary (const int lev, PatchType patch_type);
+    void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     void DampPML ();
     void DampPML (int lev);
@@ -677,8 +677,9 @@ public:
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-         HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
-         HostDeviceParser<3> const& zfield_parser, const int lev);
+         amrex::ParserExecutor<3> const& xfield_parser,
+         amrex::ParserExecutor<3> const& yfield_parser,
+         amrex::ParserExecutor<3> const& zfield_parser, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -986,6 +987,9 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
 
+    //EB level set
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
+
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
@@ -1145,9 +1149,6 @@ private:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
-
-    // EB implicit funciton
-    std::unique_ptr<ParserWrapper<3> > m_eb_if_parser;
 #endif
 
     void InitEB ();
@@ -1156,6 +1157,9 @@ private:
     void ComputeFaceAreas ();
     void ScaleEdges ();
     void ScaleAreas ();
+    void ComputeDistanceToEB ();
+
+    void ScrapeParticles ();
 
 private:
 

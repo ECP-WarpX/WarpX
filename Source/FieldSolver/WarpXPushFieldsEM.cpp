@@ -95,21 +95,20 @@ namespace {
     }
 }
 
-using IdxAvg = SpectralFieldIndexTimeAveraging;
-using IdxLin = SpectralFieldIndexJLinearInTime;
-
 void
 WarpX::PSATDForwardTransformEB ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], Idx.Bx, Idx.By, Idx.Bz);
 
         if (spectral_solver_cp[lev])
         {
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], Idx.Bx, Idx.By, Idx.Bz);
         }
     }
 }
@@ -117,15 +116,17 @@ WarpX::PSATDForwardTransformEB ()
 void
 WarpX::PSATDBackwardTransformEB ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], Idx.Bx, Idx.By, Idx.Bz);
 
         if (spectral_solver_cp[lev])
         {
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], IdxAvg::Ex, IdxAvg::Ey, IdxAvg::Ez);
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], IdxAvg::Bx, IdxAvg::By, IdxAvg::Bz);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], Idx.Bx, Idx.By, Idx.Bz);
         }
     }
 
@@ -144,15 +145,17 @@ WarpX::PSATDBackwardTransformEB ()
 void
 WarpX::PSATDBackwardTransformEBavg ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_avg_fp[lev], IdxAvg::Ex_avg, IdxAvg::Ey_avg, IdxAvg::Ez_avg);
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_avg_fp[lev], IdxAvg::Bx_avg, IdxAvg::By_avg, IdxAvg::Bz_avg);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_avg_fp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_avg_fp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
 
         if (spectral_solver_cp[lev])
         {
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_avg_cp[lev], IdxAvg::Ex_avg, IdxAvg::Ey_avg, IdxAvg::Ez_avg);
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_avg_cp[lev], IdxAvg::Bx_avg, IdxAvg::By_avg, IdxAvg::Bz_avg);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_avg_cp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_avg_cp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
         }
     }
 }
@@ -160,13 +163,15 @@ WarpX::PSATDBackwardTransformEBavg ()
 void
 WarpX::PSATDForwardTransformF ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (F_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *F_fp[lev], IdxLin::F);
+        if (F_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *F_fp[lev], Idx.F);
 
         if (spectral_solver_cp[lev])
         {
-            if (F_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *F_cp[lev], IdxLin::F);
+            if (F_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *F_cp[lev], Idx.F);
         }
     }
 }
@@ -174,13 +179,15 @@ WarpX::PSATDForwardTransformF ()
 void
 WarpX::PSATDBackwardTransformF ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], IdxLin::F);
+        if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F);
 
         if (spectral_solver_cp[lev])
         {
-            if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], IdxLin::F);
+            if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F);
         }
     }
 }
@@ -188,13 +195,15 @@ WarpX::PSATDBackwardTransformF ()
 void
 WarpX::PSATDForwardTransformG ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (G_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *G_fp[lev], IdxLin::G);
+        if (G_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *G_fp[lev], Idx.G);
 
         if (spectral_solver_cp[lev])
         {
-            if (G_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *G_cp[lev], IdxLin::G);
+            if (G_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *G_cp[lev], Idx.G);
         }
     }
 }
@@ -202,13 +211,15 @@ WarpX::PSATDForwardTransformG ()
 void
 WarpX::PSATDBackwardTransformG ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (G_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], IdxLin::G);
+        if (G_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G);
 
         if (spectral_solver_cp[lev])
         {
-            if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], IdxLin::G);
+            if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G);
         }
     }
 }
@@ -216,12 +227,14 @@ WarpX::PSATDBackwardTransformG ()
 void
 WarpX::PSATDForwardTransformJ ()
 {
-    const int idx_jx = (WarpX::J_linear_in_time) ? static_cast<int>(IdxLin::Jx_new)
-                                                 : static_cast<int>(IdxAvg::Jx);
-    const int idx_jy = (WarpX::J_linear_in_time) ? static_cast<int>(IdxLin::Jy_new)
-                                                 : static_cast<int>(IdxAvg::Jy);
-    const int idx_jz = (WarpX::J_linear_in_time) ? static_cast<int>(IdxLin::Jz_new)
-                                                 : static_cast<int>(IdxAvg::Jz);
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
+    const int idx_jx = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jx_new)
+                                                 : static_cast<int>(Idx.Jx);
+    const int idx_jy = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jy_new)
+                                                 : static_cast<int>(Idx.Jy);
+    const int idx_jz = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jz_new)
+                                                 : static_cast<int>(Idx.Jz);
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -239,11 +252,11 @@ WarpX::PSATDForwardTransformJ ()
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
+            spectral_solver_fp[lev]->ApplyFilter(lev, Idx.Jx, Idx.Jy, Idx.Jz);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(IdxAvg::Jx, IdxAvg::Jy, IdxAvg::Jz);
+                spectral_solver_cp[lev]->ApplyFilter(lev, Idx.Jx, Idx.Jy, Idx.Jz);
             }
         }
     }
@@ -253,8 +266,10 @@ WarpX::PSATDForwardTransformJ ()
 void
 WarpX::PSATDForwardTransformRho (const int icomp)
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     // Select index in k space
-    const int dst_comp = (icomp == 0) ? IdxAvg::rho_old : IdxAvg::rho_new;
+    const int dst_comp = (icomp == 0) ? Idx.rho_old : Idx.rho_new;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -272,11 +287,11 @@ WarpX::PSATDForwardTransformRho (const int icomp)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(dst_comp);
+            spectral_solver_fp[lev]->ApplyFilter(lev, dst_comp);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(dst_comp);
+                spectral_solver_cp[lev]->ApplyFilter(lev, dst_comp);
             }
         }
     }
@@ -301,13 +316,15 @@ WarpX::PSATDPushSpectralFields ()
 void
 WarpX::PSATDMoveRhoNewToRhoOld ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        spectral_solver_fp[lev]->CopySpectralDataComp(IdxAvg::rho_new, IdxAvg::rho_old);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.rho_new, Idx.rho_old);
 
         if (spectral_solver_cp[lev])
         {
-            spectral_solver_cp[lev]->CopySpectralDataComp(IdxAvg::rho_new, IdxAvg::rho_old);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.rho_new, Idx.rho_old);
         }
     }
 }
@@ -315,17 +332,19 @@ WarpX::PSATDMoveRhoNewToRhoOld ()
 void
 WarpX::PSATDMoveJNewToJOld ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        spectral_solver_fp[lev]->CopySpectralDataComp(IdxLin::Jx_new, IdxLin::Jx_old);
-        spectral_solver_fp[lev]->CopySpectralDataComp(IdxLin::Jy_new, IdxLin::Jy_old);
-        spectral_solver_fp[lev]->CopySpectralDataComp(IdxLin::Jz_new, IdxLin::Jz_old);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz);
 
         if (spectral_solver_cp[lev])
         {
-            spectral_solver_cp[lev]->CopySpectralDataComp(IdxLin::Jx_new, IdxLin::Jx_old);
-            spectral_solver_cp[lev]->CopySpectralDataComp(IdxLin::Jy_new, IdxLin::Jy_old);
-            spectral_solver_cp[lev]->CopySpectralDataComp(IdxLin::Jz_new, IdxLin::Jz_old);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz);
         }
     }
 }
@@ -333,23 +352,25 @@ WarpX::PSATDMoveJNewToJOld ()
 void
 WarpX::PSATDEraseAverageFields ()
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Ex_avg);
-        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Ey_avg);
-        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Ez_avg);
-        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Bx_avg);
-        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::By_avg);
-        spectral_solver_fp[lev]->ZeroOutDataComp(IdxAvg::Bz_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(Idx.Ex_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(Idx.Ey_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(Idx.Ez_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(Idx.Bx_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(Idx.By_avg);
+        spectral_solver_fp[lev]->ZeroOutDataComp(Idx.Bz_avg);
 
         if (spectral_solver_cp[lev])
         {
-            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Ex_avg);
-            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Ey_avg);
-            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Ez_avg);
-            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Bx_avg);
-            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::By_avg);
-            spectral_solver_cp[lev]->ZeroOutDataComp(IdxAvg::Bz_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(Idx.Ex_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(Idx.Ey_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(Idx.Ez_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(Idx.Bx_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(Idx.By_avg);
+            spectral_solver_cp[lev]->ZeroOutDataComp(Idx.Bz_avg);
         }
     }
 }
@@ -357,23 +378,25 @@ WarpX::PSATDEraseAverageFields ()
 void
 WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
 {
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Ex_avg, scale_factor);
-        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Ey_avg, scale_factor);
-        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Ez_avg, scale_factor);
-        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Bx_avg, scale_factor);
-        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::By_avg, scale_factor);
-        spectral_solver_fp[lev]->ScaleDataComp(IdxAvg::Bz_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(Idx.Ex_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(Idx.Ey_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(Idx.Ez_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(Idx.Bx_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(Idx.By_avg, scale_factor);
+        spectral_solver_fp[lev]->ScaleDataComp(Idx.Bz_avg, scale_factor);
 
         if (spectral_solver_cp[lev])
         {
-            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Ex_avg, scale_factor);
-            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Ey_avg, scale_factor);
-            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Ez_avg, scale_factor);
-            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Bx_avg, scale_factor);
-            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::By_avg, scale_factor);
-            spectral_solver_cp[lev]->ScaleDataComp(IdxAvg::Bz_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(Idx.Ex_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(Idx.Ey_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(Idx.Ez_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(Idx.Bx_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(Idx.By_avg, scale_factor);
+            spectral_solver_cp[lev]->ScaleDataComp(Idx.Bz_avg, scale_factor);
         }
     }
 }
@@ -404,33 +427,33 @@ WarpX::PushPSATD ()
         }
         ApplyEfieldBoundary(lev, PatchType::fine);
         if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-        ApplyBfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse);
+        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
     }
 #endif
 }
 
 void
-WarpX::EvolveB (amrex::Real a_dt)
+WarpX::EvolveB (amrex::Real a_dt, DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
-        EvolveB(lev, a_dt);
+        EvolveB(lev, a_dt, a_dt_type);
     }
 }
 
 void
-WarpX::EvolveB (int lev, amrex::Real a_dt)
+WarpX::EvolveB (int lev, amrex::Real a_dt, DtType a_dt_type)
 {
     WARPX_PROFILE("WarpX::EvolveB()");
-    EvolveB(lev, PatchType::fine, a_dt);
+    EvolveB(lev, PatchType::fine, a_dt, a_dt_type);
     if (lev > 0)
     {
-        EvolveB(lev, PatchType::coarse, a_dt);
+        EvolveB(lev, PatchType::coarse, a_dt, a_dt_type);
     }
 }
 
 void
-WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
+WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
 {
 
     // Evolve B field in regular cells
@@ -453,15 +476,9 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
         }
     }
 
-    ApplyBfieldBoundary(lev, patch_type);
+    ApplyBfieldBoundary(lev, patch_type, a_dt_type);
 }
 
-void
-WarpX::ApplySilverMuellerBoundary (amrex::Real a_dt) {
-    // Only apply to level 0
-    m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
-        Efield_fp[0], Bfield_fp[0], Geom(0).Domain(), a_dt );
-}
 
 void
 WarpX::EvolveE (amrex::Real a_dt)
@@ -751,7 +768,7 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 void
 WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, MultiFab* Jz, int lev)
 {
-    const long ngJ = Jx->nGrow();
+    const amrex::IntVect ngJ = Jx->nGrowVect();
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const Real dr = dx[0];
 
@@ -793,16 +810,16 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Grow the tileboxes to include the guard cells, except for the
         // guard cells at negative radius.
         if (rmin > 0.) {
-           tbr.growLo(0, ngJ);
-           tbt.growLo(0, ngJ);
-           tbz.growLo(0, ngJ);
+           tbr.growLo(0, ngJ[0]);
+           tbt.growLo(0, ngJ[0]);
+           tbz.growLo(0, ngJ[0]);
         }
-        tbr.growHi(0, ngJ);
-        tbt.growHi(0, ngJ);
-        tbz.growHi(0, ngJ);
-        tbr.grow(1, ngJ);
-        tbt.grow(1, ngJ);
-        tbz.grow(1, ngJ);
+        tbr.growHi(0, ngJ[0]);
+        tbt.growHi(0, ngJ[0]);
+        tbz.growHi(0, ngJ[0]);
+        tbr.grow(1, ngJ[1]);
+        tbt.grow(1, ngJ[1]);
+        tbz.grow(1, ngJ[1]);
 
         // Rescale current in r-z mode since the inverse volume factor was not
         // included in the current deposition.
@@ -812,7 +829,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
             // Note that Jr(i==0) is at 1/2 dr.
-            if (rmin == 0. && 0 <= i && i < ngJ) {
+            if (rmin == 0. && 0 <= i && i < ngJ[0]) {
                 Jr_arr(i,j,0,0) -= Jr_arr(-1-i,j,0,0);
             }
             // Apply the inverse volume scaling
@@ -825,9 +842,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 // Note that Jr(i==0) is at 1/2 dr.
-                if (rmin == 0. && 0 <= i && i < ngJ) {
-                    Jr_arr(i,j,0,2*imode-1) -= Jr_arr(-1-i,j,0,2*imode-1);
-                    Jr_arr(i,j,0,2*imode) -= Jr_arr(-1-i,j,0,2*imode);
+                if (rmin == 0. && 0 <= i && i < ngJ[0]) {
+                    Jr_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jr_arr(-1-i,j,0,2*imode-1);
+                    Jr_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jr_arr(-1-i,j,0,2*imode);
                 }
                 // Apply the inverse volume scaling
                 // Since Jr is never node centered in r, no need for distinction
@@ -842,7 +859,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 1-ishift_t <= i && i <= ngJ-ishift_t) {
+            if (rmin == 0. && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
                 Jt_arr(i,j,0,0) -= Jt_arr(-ishift_t-i,j,0,0);
             }
 
@@ -858,9 +875,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 1-ishift_t <= i && i <= ngJ-ishift_t) {
-                    Jt_arr(i,j,0,2*imode-1) -= Jt_arr(-ishift_t-i,j,0,2*imode-1);
-                    Jt_arr(i,j,0,2*imode) -= Jt_arr(-ishift_t-i,j,0,2*imode);
+                if (rmin == 0. && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
+                    Jt_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1);
+                    Jt_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -880,8 +897,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jz is node centered, Jt[0] is located on the boundary.
             // If Jz is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 1-ishift_z <= i && i <= ngJ-ishift_z) {
-                Jz_arr(i,j,0,0) -= Jz_arr(-ishift_z-i,j,0,0);
+            if (rmin == 0. && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
+                Jz_arr(i,j,0,0) += Jz_arr(-ishift_z-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -896,9 +913,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 1-ishift_z <= i && i <= ngJ-ishift_z) {
-                    Jz_arr(i,j,0,2*imode-1) -= Jz_arr(-ishift_z-i,j,0,2*imode-1);
-                    Jz_arr(i,j,0,2*imode) -= Jz_arr(-ishift_z-i,j,0,2*imode);
+                if (rmin == 0. && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
+                    Jz_arr(i,j,0,2*imode-1) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1);
+                    Jz_arr(i,j,0,2*imode) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -919,7 +936,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 void
 WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
 {
-    const long ngRho = Rho->nGrow();
+    const amrex::IntVect ngRho = Rho->nGrowVect();
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const Real dr = dx[0];
 
@@ -949,23 +966,34 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Grow the tilebox to include the guard cells, except for the
         // guard cells at negative radius.
         if (rmin > 0.) {
-           tb.growLo(0, ngRho);
+           tb.growLo(0, ngRho[0]);
         }
-        tb.growHi(0, ngRho);
-        tb.grow(1, ngRho);
+        tb.growHi(0, ngRho[0]);
+        tb.grow(1, ngRho[1]);
 
         // Rescale charge in r-z mode since the inverse volume factor was not
         // included in the charge deposition.
         // Note that the loop is also over ncomps, which takes care of the RZ modes,
         // as well as the old and new rho.
-        amrex::ParallelFor(tb, Rho->nComp(),
+        int const ncomp = Rho->nComp();
+        amrex::ParallelFor(tb, ncomp,
         [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
         {
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.
             // Rho is located on the boundary
-            if (rmin == 0. && 1-ishift <= i && i <= ngRho-ishift) {
-                Rho_arr(i,j,0,icomp) -= Rho_arr(-ishift-i,j,0,icomp);
+            if (rmin == 0. && 1-ishift <= i && i <= ngRho[0]-ishift) {
+                int imode;
+                if (icomp == 0 || icomp == ncomp/2) {
+                    imode = 0;
+                }
+                else if (icomp < ncomp/2) {
+                    imode = (icomp+1)/2;
+                }
+                else {
+                    imode = (icomp - ncomp/2 + 1)/2;
+                }
+                Rho_arr(i,j,0,icomp) -= std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp);
             }
 
             // Apply the inverse volume scaling

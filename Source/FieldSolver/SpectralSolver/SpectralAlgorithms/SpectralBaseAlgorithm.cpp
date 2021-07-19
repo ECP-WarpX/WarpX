@@ -29,11 +29,13 @@ using namespace amrex;
  */
 SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
+    const SpectralFieldIndex& spectral_index,
     const int norder_x, const int norder_y,
     const int norder_z, const bool nodal,
     const amrex::IntVect& fill_guards):
-    // Compute and assign the modified k vectors
         m_fill_guards(fill_guards),
+        m_spectral_index(spectral_index),
+    // Compute and assign the modified k vectors
         modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
 #if (AMREX_SPACEDIM==3)
         modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
@@ -57,12 +59,12 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
     amrex::MultiFab& divE )
 {
-    using Idx = SpectralFieldIndex;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of E
-    field_data.ForwardTransform(lev, *Efield[0], Idx::Ex, 0 );
-    field_data.ForwardTransform(lev, *Efield[1], Idx::Ey, 0 );
-    field_data.ForwardTransform(lev, *Efield[2], Idx::Ez, 0 );
+    field_data.ForwardTransform(lev, *Efield[0], Idx.Ex, 0 );
+    field_data.ForwardTransform(lev, *Efield[1], Idx.Ey, 0 );
+    field_data.ForwardTransform(lev, *Efield[2], Idx.Ez, 0 );
 
     const amrex::IntVect& fill_guards = m_fill_guards;
 
@@ -85,9 +87,9 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
         [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the components of E
-            const Complex Ex = fields(i,j,k,Idx::Ex);
-            const Complex Ey = fields(i,j,k,Idx::Ey);
-            const Complex Ez = fields(i,j,k,Idx::Ez);
+            const Complex Ex = fields(i,j,k,Idx.Ex);
+            const Complex Ey = fields(i,j,k,Idx.Ey);
+            const Complex Ez = fields(i,j,k,Idx.Ez);
             // k vector values
             const Real kx = modified_kx_arr[i];
 #if (AMREX_SPACEDIM==3)
@@ -100,10 +102,10 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
             const Complex I = Complex{0,1};
 
             // div(E) in Fourier space
-            fields(i,j,k,Idx::divE) = I*(kx*Ex+ky*Ey+kz*Ez);
+            fields(i,j,k,Idx.divE) = I*(kx*Ex+ky*Ey+kz*Ez);
         });
     }
 
     // Backward Fourier transform
-    field_data.BackwardTransform(lev, divE, Idx::divE, 0, fill_guards);
+    field_data.BackwardTransform(lev, divE, Idx.divE, 0, fill_guards);
 }

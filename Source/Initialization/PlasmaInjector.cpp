@@ -24,6 +24,7 @@
 #include <AMReX_GpuDevice.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 #include <AMReX_Print.H>
 #include <AMReX_RandomEngine.H>
 
@@ -118,8 +119,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         mass = species::get_mass( physical_species );
     }
 
-    std::string s_inj_style;
-    pp_species_name.query("injection_style", s_inj_style);
+    // Parse injection style
+    std::string injection_style = "none";
+    pp_species_name.query("injection_style", injection_style);
+    std::transform(injection_style.begin(),
+                   injection_style.end(),
+                   injection_style.begin(),
+                   ::tolower);
 
     // parse charge and mass
     bool charge_is_specified = queryWithParser(pp_species_name, "charge", charge);
@@ -130,7 +136,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 << species_name << ".species_type' are specified\n'"
                 << species_name << ".charge' will take precedence.\n";
     }
-    if (!charge_is_specified && !species_is_specified && s_inj_style != "external_file"){
+    if (!charge_is_specified && !species_is_specified && injection_style != "external_file"){
         // external file will throw own assertions below if charge cannot be found
         amrex::Abort("Need to specify at least one of species_type or charge");
     }
@@ -140,22 +146,16 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 << species_name << ".species_type' are specified\n'"
                 << species_name << ".mass' will take precedence.\n";
     }
-    if (!mass_is_specified && !species_is_specified && s_inj_style != "external_file"){
+    if (!mass_is_specified && !species_is_specified && injection_style != "external_file"){
         // external file will throw own assertions below if mass cannot be found
         amrex::Abort("Need to specify at least one of species_type or mass");
     }
 
-    // parse injection style
-    std::string part_pos_s;
-    pp_species_name.get("injection_style", part_pos_s);
-    std::transform(part_pos_s.begin(),
-                   part_pos_s.end(),
-                   part_pos_s.begin(),
-                   ::tolower);
     num_particles_per_cell_each_dim.assign(3, 0);
-    if (part_pos_s == "python") {
+
+    if (injection_style == "none") {
         return;
-    } else if (part_pos_s == "singleparticle") {
+    } else if (injection_style == "singleparticle") {
         getArrWithParser(pp_species_name, "single_particle_pos", single_particle_pos, 0, 3);
         getArrWithParser(pp_species_name, "single_particle_vel", single_particle_vel, 0, 3);
         for (auto& x : single_particle_vel) {
@@ -164,7 +164,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         getWithParser(pp_species_name, "single_particle_weight", single_particle_weight);
         add_single_particle = true;
         return;
-    } else if (part_pos_s == "multipleparticles") {
+    } else if (injection_style == "multipleparticles") {
         getArrWithParser(pp_species_name, "multiple_particles_pos_x", multiple_particles_pos_x);
         getArrWithParser(pp_species_name, "multiple_particles_pos_y", multiple_particles_pos_y);
         getArrWithParser(pp_species_name, "multiple_particles_pos_z", multiple_particles_pos_z);
@@ -185,7 +185,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         for (auto& vz : multiple_particles_vel_z) { vz *= PhysConst::c; }
         add_multiple_particles = true;
         return;
-    } else if (part_pos_s == "gaussian_beam") {
+    } else if (injection_style == "gaussian_beam") {
         getWithParser(pp_species_name, "x_m", x_m);
         getWithParser(pp_species_name, "y_m", y_m);
         getWithParser(pp_species_name, "z_m", z_m);
@@ -204,7 +204,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     // Depending on injection type at runtime, initialize inj_pos
     // so that inj_pos->getPositionUnitBox calls
     // InjectorPosition[Random or Regular].getPositionUnitBox.
-    else if (part_pos_s == "nrandompercell") {
+    else if (injection_style == "nrandompercell") {
         pp_species_name.query("num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -219,7 +219,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             xmin, xmax, ymin, ymax, zmin, zmax);
         parseDensity(pp_species_name);
         parseMomentum(pp_species_name);
-    } else if (part_pos_s == "nfluxpercell") {
+    } else if (injection_style == "nfluxpercell") {
         surface_flux = true;
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
@@ -271,7 +271,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             flux_normal_axis);
         parseDensity(pp_species_name);
         parseMomentum(pp_species_name);
-    } else if (part_pos_s == "nuniformpercell") {
+    } else if (injection_style == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
         num_particles_per_cell_each_dim.assign(3, 1);
@@ -298,7 +298,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                                  num_particles_per_cell_each_dim[2];
         parseDensity(pp_species_name);
         parseMomentum(pp_species_name);
-    } else if (part_pos_s == "external_file") {
+    } else if (injection_style == "external_file") {
 #ifndef WARPX_USE_OPENPMD
         amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
                      " to read the external openPMD file with species data");
@@ -385,7 +385,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #endif  // WARPX_USE_OPENPMD
 
     } else {
-        StringParseAbortMessage("Injection style", part_pos_s);
+        StringParseAbortMessage("Injection style", injection_style);
     }
 
     if (h_inj_pos) {
@@ -459,13 +459,14 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
     } else if (rho_prof_s == "parse_density_function") {
         Store_parserString(pp, "density_function(x,y,z)", str_density_function);
         // Construct InjectorDensity with InjectorDensityParser.
+        density_parser = std::make_unique<Parser>(makeParser(str_density_function,{"x","y","z"}));
         h_inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
-                                            makeParser(str_density_function,{"x","y","z"})));
+                                            density_parser->compile<3>()));
     } else {
         //No need for profile definition if external file is used
-        std::string s_inj_style;
-        pp.query("injection_style", s_inj_style);
-        if (s_inj_style != "external_file") {
+        std::string injection_style = "none";
+        pp.query("injection_style", injection_style);
+        if (injection_style != "external_file") {
             StringParseAbortMessage("Density profile type", rho_prof_s);
         }
     }
@@ -606,15 +607,18 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         Store_parserString(pp, "momentum_function_uz(x,y,z)",
                                                str_momentum_function_uz);
         // Construct InjectorMomentum with InjectorMomentumParser.
+        ux_parser = std::make_unique<Parser>(makeParser(str_momentum_function_ux,{"x","y","z"}));
+        uy_parser = std::make_unique<Parser>(makeParser(str_momentum_function_uy,{"x","y","z"}));
+        uz_parser = std::make_unique<Parser>(makeParser(str_momentum_function_uz,{"x","y","z"}));
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumParser*)nullptr,
-                                             makeParser(str_momentum_function_ux,{"x","y","z"}),
-                                             makeParser(str_momentum_function_uy,{"x","y","z"}),
-                                             makeParser(str_momentum_function_uz,{"x","y","z"})));
+                                             ux_parser->compile<3>(),
+                                             uy_parser->compile<3>(),
+                                             uz_parser->compile<3>()));
     } else {
         //No need for momentum definition if external file is used
-        std::string s_inj_style;
-        pp.query("injection_style", s_inj_style);
-        if (s_inj_style != "external_file") {
+        std::string injection_style = "none";
+        pp.query("injection_style", injection_style);
+        if (injection_style != "external_file") {
             StringParseAbortMessage("Momentum distribution type", mom_dist_s);
         }
     }

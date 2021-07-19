@@ -86,6 +86,7 @@ const std::map<std::string, int> FieldBCType_algo_to_int = {
     {"pec",      FieldBoundaryType::PEC},
     {"pmc",      FieldBoundaryType::PMC},
     {"damped",   FieldBoundaryType::Damped},
+    {"absorbing_silver_mueller", FieldBoundaryType::Absorbing_SilverMueller},
     {"none",     FieldBoundaryType::None},
     {"default",  FieldBoundaryType::PML}
 };

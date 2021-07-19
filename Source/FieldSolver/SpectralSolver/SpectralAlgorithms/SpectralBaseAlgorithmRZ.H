@@ -22,7 +22,7 @@ class SpectralBaseAlgorithmRZ
     public:
         // Virtual member function ; meant to be overridden in subclasses
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) = 0;
-        virtual int getRequiredNumberOfFields() const = 0;
+
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
@@ -71,10 +71,14 @@ class SpectralBaseAlgorithmRZ
         // Constructor
         SpectralBaseAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                                 amrex::DistributionMapping const & dm,
+                                const SpectralFieldIndex& spectral_index,
                                 int const norder_z, bool const nodal)
           // Compute and assign the modified k vectors
-          : modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, nodal))
+          : m_spectral_index(spectral_index),
+            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, nodal))
           {}
+
+        SpectralFieldIndex m_spectral_index;
 
         // Modified finite-order vectors
         KVectorComponent modified_kz_vec;

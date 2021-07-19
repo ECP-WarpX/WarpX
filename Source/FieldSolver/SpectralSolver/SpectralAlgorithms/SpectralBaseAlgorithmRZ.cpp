@@ -21,14 +21,15 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
     amrex::MultiFab& divE )
 {
     using amrex::operator""_rt;
-    using Idx = SpectralFieldIndex;
+
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of E
     field_data.ForwardTransform( lev,
-                                 *Efield[0], Idx::Ex,
-                                 *Efield[1], Idx::Ey );
+                                 *Efield[0], Idx.Ex,
+                                 *Efield[1], Idx.Ey );
     field_data.ForwardTransform( lev,
-                                 *Efield[2], Idx::Ez, 0 );
+                                 *Efield[2], Idx.Ez, 0 );
 
     // Loop over boxes
     for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -44,15 +45,15 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
 
         int const nr = bx.length(0);
         int const modes = field_data.n_rz_azimuthal_modes;
-        constexpr int n_fields = SpectralFieldIndex::n_fields;
+        const int n_fields = m_spectral_index.n_fields;
 
         // Loop over indices within one box
         ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int /*k*/, int mode) noexcept
         {
-            int const ic1 = Idx::Ex + mode*n_fields;
-            int const ic2 = Idx::Ey + mode*n_fields;
-            int const ic3 = Idx::Ez + mode*n_fields;
+            int const ic1 = Idx.Ex + mode*n_fields;
+            int const ic2 = Idx.Ey + mode*n_fields;
+            int const ic3 = Idx.Ez + mode*n_fields;
 
             // Shortcuts for the components of E
             Complex const Ep = fields(i,j,0,ic1);
@@ -66,11 +67,11 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
             Complex const I = Complex{0._rt,1._rt};
 
             // div(E) in Fourier space
-            int const ic = Idx::divE + mode*n_fields;
+            int const ic = Idx.divE + mode*n_fields;
             fields(i,j,0,ic) = kr*(Ep - Em) + I*kz*Ez;
         });
     }
 
     // Backward Fourier transform
-    field_data.BackwardTransform( lev, divE, Idx::divE, 0 );
+    field_data.BackwardTransform( lev, divE, Idx.divE, 0 );
 }

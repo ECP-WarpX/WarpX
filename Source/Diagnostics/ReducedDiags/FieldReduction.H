@@ -8,7 +8,6 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
-#include "Parser/WarpXParserWrapper.H"
 #include "ReducedDiags.H"
 #include "Utils/CoarsenIO.H"
 #include "WarpX.H"
@@ -25,6 +24,7 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_Reduce.H>
@@ -63,7 +63,7 @@ private:
     /// Parser to read expression to be reduced from the input file.
     /// 9 elements are x, y, z, Ex, Ey, Ez, Bx, By, Bz
     static constexpr int m_nvars = 9;
-    std::unique_ptr<ParserWrapper<m_nvars>> m_parser;
+    std::unique_ptr<amrex::Parser> m_parser;
 
     // Type of reduction (e.g. Maximum, Minimum or Sum)
     int m_reduction_type;
@@ -127,7 +127,7 @@ public:
         }
 
         // get parser
-        HostDeviceParser<m_nvars> reduction_function_parser = getParser(m_parser);
+        auto reduction_function_parser = m_parser->compile<m_nvars>();
 
         // MFIter loop to interpolate fields to cell center and perform reduction
 #ifdef AMREX_USE_OMP
