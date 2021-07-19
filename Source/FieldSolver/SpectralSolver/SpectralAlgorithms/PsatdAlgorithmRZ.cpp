@@ -50,6 +50,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 {
 
     bool const update_with_rho = m_update_with_rho;
+    const bool J_linear_in_time = m_J_linear_in_time;
 
     if (not coefficients_initialized) {
         // This is called from here since it needs the kr values
@@ -144,22 +145,67 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             fields(i,j,k,Ep_m) = C*Ep_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old - inv_ep0*Jp)
                         + 0.5_rt*kr*rho_diff;
+
             fields(i,j,k,Em_m) = C*Em_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old - inv_ep0*Jm)
                         - 0.5_rt*kr*rho_diff;
+
             fields(i,j,k,Ez_m) = C*Ez_old
                         + S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old - inv_ep0*Jz)
                         - I*kz*rho_diff;
+
             // Update B (see WarpX online documentation: theory section)
             fields(i,j,k,Bp_m) = C*Bp_old
                         - S_ck*(-I*kr/2._rt*Ez_old + kz*Ep_old)
                         + X1*(-I*kr/2._rt*Jz + kz*Jp);
+
             fields(i,j,k,Bm_m) = C*Bm_old
                         - S_ck*(-I*kr/2._rt*Ez_old - kz*Em_old)
                         + X1*(-I*kr/2._rt*Jz - kz*Jm);
+
             fields(i,j,k,Bz_m) = C*Bz_old
                         - S_ck*I*(kr*Ep_old + kr*Em_old)
                         + X1*I*(kr*Jp + kr*Jm);
+
+            if (J_linear_in_time)
+            {
+                const auto Jp_m_new = Idx.Jx_new + Idx.n_fields*mode;
+                const auto Jm_m_new = Idx.Jy_new + Idx.n_fields*mode;
+                const auto Jz_m_new = Idx.Jz_new + Idx.n_fields*mode;
+                const auto F_m = Idx.F + Idx.n_fields*mode;
+                const auto G_m = Idx.G + Idx.n_fields*mode;
+
+                const Complex Jp_new = fields(i,j,k,Jp_m_new);
+                const Complex Jm_new = fields(i,j,k,Jm_m_new);
+                const Complex Jz_new = fields(i,j,k,Jz_m_new);
+
+                const Complex F_old = fields(i,j,k,F_m);
+                const Complex G_old = fields(i,j,k,G_m);
+
+                fields(i,j,k,Ep_m) += -X1 * (Jp_new - Jp) / dt - c2 * kr * 0.5_rt * S_ck * F_old;
+                fields(i,j,k,Em_m) += -X1 * (Jm_new - Jm) / dt + c2 * kr * 0.5_rt * S_ck * F_old;
+                fields(i,j,k,Ez_m) += -X1 * (Jz_new - Jz) / dt + I * c2 * kz * S_ck * F_old;
+
+                fields(i,j,k,Bp_m) += X2/c2 * (kz * (Jp_new - Jp) - I * kr * 0.5_rt * (Jz_new - Jz))
+                    - c2 * kr * 0.5_rt * S_ck * G_old;
+
+                fields(i,j,k,Bm_m) += -X2/c2 * (kz * (Jm_new - Jm) + I * kr * 0.5_rt * (Jz_new - Jz))
+                    + c2 * kr * 0.5_rt * S_ck * G_old;
+
+                fields(i,j,k,Bz_m) += I * X2/c2 * (kr * (Jp_new - Jp) + kr * (Jm_new - Jm))
+                    + I * c2 * kz * S_ck * G_old;
+
+                const Complex k_dot_J  = -I * (kr * (Jp - Jm) + I * kz * Jz);
+                const Complex k_dot_dJ = -I * (kr * ((Jp_new - Jp) - (Jm_new - Jm))
+                    + I * kz * (Jz_new - Jz));
+                const Complex k_dot_E = -I * (kr * (Ep_old - Em_old) + I * kz * Ez_old);
+                const Complex k_dot_B = -I * (kr * (Bp_old - Bm_old) + I * kz * Bz_old);
+
+                fields(i,j,k,F_m) = C * F_old + S_ck * (I * k_dot_E - inv_ep0 * rho_old)
+                    - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
+
+                fields(i,j,k,G_m) = C * G_old + I * S_ck * k_dot_B;
+            }
         });
     }
 }
