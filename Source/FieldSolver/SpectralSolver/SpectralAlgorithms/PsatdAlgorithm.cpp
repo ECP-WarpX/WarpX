@@ -279,13 +279,13 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
                 fields(i,j,k,Idx.Ez) += -X1 * (Jz_new - Jz) / dt + I * c2 * S_ck * F_old * kz;
 
-                fields(i,j,k,Idx.Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
+                fields(i,j,k,Idx.Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy))
                     + I * c2 * S_ck * G_old * kx;
 
-                fields(i,j,k,Idx.By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
+                fields(i,j,k,Idx.By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz))
                     + I * c2 * S_ck * G_old * ky;
 
-                fields(i,j,k,Idx.Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx));
+                fields(i,j,k,Idx.Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx))
                     + I * c2 * S_ck * G_old * kz;
 
                 const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;

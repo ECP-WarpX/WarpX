@@ -910,6 +910,17 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
+void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
+#ifdef AMREX_USE_EB
+    for (auto& pc : allcontainers) {
+        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+    }
+#else
+    amrex::ignore_unused(distance_to_eb);
+#endif
+}
+
 #ifdef WARPX_QED
 void MultiParticleContainer::InitQED ()
 {
@@ -1597,17 +1608,6 @@ void MultiParticleContainer::CheckQEDProductSpecies()
                 "ERROR: Schwinger process product species are of wrong type");
     }
 
-}
-
-void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
-{
-#ifdef AMREX_USE_EB
-    for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
-    }
-#else
-    amrex::ignore_unused(distance_to_eb);
-#endif
 }
 
 #endif
