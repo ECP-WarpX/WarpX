@@ -12,7 +12,7 @@ SETUP order:
     - Use ``from mewarpx.mwxrun import mwxrun`` to import the class holding
       all the simulation information, defined here.
     - Set up PICMI things, referring to mwxrun's ``picmi.Simulation`` object,
-    ``mwxrun.simulation``. Add PICMI species to the PICMI Simulation.
+      ``mwxrun.simulation``. Add PICMI species to the PICMI Simulation.
 
     - Call this class's init_run::
 

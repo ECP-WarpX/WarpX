@@ -10,23 +10,45 @@ Subpackages
    mewarpx.diags_store
    mewarpx.setups_store
 
+Submodules
+----------
 
-Module contents
----------------
+mewarpx.assemblies module
+-------------------------
 
-.. automodule:: mewarpx
+.. automodule:: mewarpx.assemblies
    :members:
    :undoc-members:
    :show-inheritance:
 
+mewarpx.mcc\_wrapper module
+---------------------------
 
-Submodules
-----------
+.. automodule:: mewarpx.mcc_wrapper
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+mewarpx.mwxconstants module
+---------------------------
+
+.. automodule:: mewarpx.mwxconstants
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 mewarpx.mwxrun module
 ---------------------
 
 .. automodule:: mewarpx.mwxrun
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+mewarpx.poisson\_pseudo\_1d module
+----------------------------------
+
+.. automodule:: mewarpx.poisson_pseudo_1d
    :members:
    :undoc-members:
    :show-inheritance:
@@ -55,3 +77,10 @@ mewarpx.util module
    :undoc-members:
    :show-inheritance:
 
+Module contents
+---------------
+
+.. automodule:: mewarpx
+   :members:
+   :undoc-members:
+   :show-inheritance:

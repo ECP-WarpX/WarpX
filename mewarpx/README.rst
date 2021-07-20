@@ -11,7 +11,7 @@ To use Modern Electron WarpX Tools in a project::
 
     import mewarpx
 
-Then see :ref:`package-overview` or :ref:`usage-page` for more details.
+More usage information should come in the future.
 
 Installation
 ------------
@@ -24,8 +24,7 @@ to the source will automatically be used in new ``import mewarpx`` calls.
 
 ``make devel-all`` will also install all optional dependencies. This, notably,
 will let you run ``make test``, or equivalently ``pytest``, to check that the
-whole distribution is running properly. See :ref:`testing-page` for more
-details and options in testing.
+whole distribution is running properly.
 
 For building all docs in latex format, ``latexmk``, and a number of latex
 packages, must be installed as well. Installing a **full** ``texlive``
