@@ -32,6 +32,17 @@ jobs:
       #       - v3-dependencies-{{ checksum "mewarpx/setup.py" }}-{{ checksum ".circleci/config.yml" }}
 
       - run:
+          name: Download mwxp
+          command: |
+            cd ../
+            git clone git@github.com:ModernElectron/mwxp.git
+            cd mwxp
+            # Check out a branch with the same name if it exists.
+            if git branch -r | grep -q origin/"$CIRCLE_BRANCH"; then
+              git checkout "$CIRCLE_BRANCH"
+            fi
+
+      - run:
           name: install dependencies
           command: |
             .github/workflows/dependencies/pyfull.sh
@@ -89,6 +100,17 @@ jobs:
             mkdir test-reports
             export OMP_NUM_THREADS=1
             pytest --junitxml=test-reports/junit.xml --cov=mewarpx --cov-report=xml
+
+      # Install mwxp and run its tests (minimal output)
+      - run:
+          name: install and run mwxp
+          command: |
+            . venv/bin/activate
+            cd ../mwxp
+            pip install -e .[complete]
+
+            export OMP_NUM_THREADS=1
+            pytest -q --tb=no
 
       - store_test_results:
           path: mewarpx/test-reports
