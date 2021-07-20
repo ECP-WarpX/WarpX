@@ -505,7 +505,7 @@ def get_particle_arrays(species_number, comp, level):
     return particle_data
 
 
-def get_particle_arrays_from_comp_name(species_number, comp_name, level):
+def get_particle_arrays_from_comp_name(species_name, comp_name, level):
     '''
 
     This returns a list of numpy arrays containing the particle array data
@@ -517,7 +517,7 @@ def get_particle_arrays_from_comp_name(species_number, comp_name, level):
     Parameters
     ----------
 
-        species_number : the species id that the data will be returned for
+        species_name   : the species name that the data will be returned for
         comp_name      : the component of the array data that will be returned.
 
     Returns
@@ -530,7 +530,8 @@ def get_particle_arrays_from_comp_name(species_number, comp_name, level):
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
     data = libwarpx.warpx_getParticleArraysFromCompName(
-        species_number, ctypes.c_char_p(comp_name.encode('utf-8')),
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        ctypes.c_char_p(comp_name.encode('utf-8')),
         level, ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
     )
 
@@ -689,7 +690,7 @@ def get_particle_theta(species_number, level=0):
         raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
 
 
-def get_particle_comp_index(species_number, pid_name):
+def get_particle_comp_index(species_name, pid_name):
     '''
 
     Get the component index for a given particle attribute. This is useful
@@ -699,7 +700,7 @@ def get_particle_comp_index(species_number, pid_name):
     Parameters
     ----------
 
-        species_number : id for the species of interest
+        species_name   : the species name that the data will be returned for
         pid_name       : string that is used to identify the new component
 
     Returns
@@ -709,7 +710,8 @@ def get_particle_comp_index(species_number, pid_name):
 
     '''
     return libwarpx.warpx_getParticleCompIndex(
-        species_number, ctypes.c_char_p(pid_name.encode('utf-8'))
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        ctypes.c_char_p(pid_name.encode('utf-8'))
     )
 
 

@@ -8,6 +8,7 @@
 #ifndef WARPX_WRAPPERS_H_
 #define WARPX_WRAPPERS_H_
 
+#include "Particles/WarpXParticleContainer.H"
 #include "Evolve/WarpXDtType.H"
 #include <AMReX_Config.H>
 #include <AMReX_REAL.H>
@@ -93,11 +94,15 @@ extern "C" {
                                                   int* num_tiles, int** particles_per_tile);
 
     amrex::ParticleReal** warpx_getParticleArraysFromCompName(
-        int speciesnumber, const char* char_comp_name, int lev,
+        const char* char_species_name, const char* char_comp_name, int lev,
         int* num_tiles, int** particles_per_tile);
 
+    amrex::ParticleReal** warpx_getParticleArraysUsingPC(
+        WarpXParticleContainer& myspc, int comp,
+        int lev, int* num_tiles, int** particles_per_tile);
+
     int warpx_getParticleCompIndex(
-        int speciesnumber, const char* char_comp_name);
+        const char* char_species_name, const char* char_comp_name);
 
     void warpx_addRealComp(const char* char_comp_name, bool comm);
 
