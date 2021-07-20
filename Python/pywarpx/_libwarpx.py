@@ -715,20 +715,23 @@ def get_particle_comp_index(species_name, pid_name):
     )
 
 
-def add_real_comp(pid_name, comm=True):
+def add_real_comp(species_name, pid_name, comm=True):
     '''
 
-    Add a real component to the particle data array. The new component is
-    added to all Particle Containers in the simulation.
+    Add a real component to the particle data array.
 
     Parameters
     ----------
 
+        species_name   : the species name for which the new component will be added
         pid_name       : string that is used to identify the new component
         comm           : should the component be communicated
 
     '''
-    libwarpx.warpx_addRealComp(ctypes.c_char_p(pid_name.encode('utf-8')), comm)
+    libwarpx.warpx_addRealComp(
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        ctypes.c_char_p(pid_name.encode('utf-8')), comm
+    )
 
 
 def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):

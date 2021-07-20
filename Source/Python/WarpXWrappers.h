@@ -104,7 +104,8 @@ extern "C" {
     int warpx_getParticleCompIndex(
         const char* char_species_name, const char* char_comp_name);
 
-    void warpx_addRealComp(const char* char_comp_name, bool comm);
+    void warpx_addRealComp(
+        const char* char_species_name, const char* char_comp_name, bool comm);
 
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);
