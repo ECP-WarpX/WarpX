@@ -145,24 +145,19 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             fields(i,j,k,Ep_m) = C*Ep_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old - inv_ep0*Jp)
                         + 0.5_rt*kr*rho_diff;
-
             fields(i,j,k,Em_m) = C*Em_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old - inv_ep0*Jm)
                         - 0.5_rt*kr*rho_diff;
-
             fields(i,j,k,Ez_m) = C*Ez_old
                         + S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old - inv_ep0*Jz)
                         - I*kz*rho_diff;
-
             // Update B (see WarpX online documentation: theory section)
             fields(i,j,k,Bp_m) = C*Bp_old
                         - S_ck*(-I*kr/2._rt*Ez_old + kz*Ep_old)
                         + X1*(-I*kr/2._rt*Jz + kz*Jp);
-
             fields(i,j,k,Bm_m) = C*Bm_old
                         - S_ck*(-I*kr/2._rt*Ez_old - kz*Em_old)
                         + X1*(-I*kr/2._rt*Jz - kz*Jm);
-
             fields(i,j,k,Bz_m) = C*Bz_old
                         - S_ck*I*(kr*Ep_old + kr*Em_old)
                         + X1*I*(kr*Jp + kr*Jm);
