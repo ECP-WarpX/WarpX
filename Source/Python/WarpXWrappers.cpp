@@ -425,16 +425,22 @@ extern "C"
             int speciesnumber, const char* char_comp_name,
             int lev, int* num_tiles, int** particles_per_tile ) {
 
+        return warpx_getParticleArrays(
+            speciesnumber,
+            warpx_getParticleCompIndex(speciesnumber, char_comp_name), lev,
+            num_tiles, particles_per_tile
+        );
+    }
+
+    int warpx_getParticleCompIndex (
+        int speciesnumber, const char* char_comp_name ) {
+
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
         auto & myspc = mypc.GetParticleContainer(speciesnumber);
 
         const std::string comp_name(char_comp_name);
         auto particle_comps = myspc.getParticleComps();
-        auto comp = particle_comps.at(comp_name);
-
-        return warpx_getParticleArrays(
-            speciesnumber, comp, lev, num_tiles, particles_per_tile
-        );
+        return particle_comps.at(comp_name);
     }
 
     void warpx_addRealComp(const char* char_comp_name, bool comm=true)

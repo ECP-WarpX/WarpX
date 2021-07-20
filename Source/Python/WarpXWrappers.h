@@ -96,6 +96,9 @@ extern "C" {
         int speciesnumber, const char* char_comp_name, int lev,
         int* num_tiles, int** particles_per_tile);
 
+    int warpx_getParticleCompIndex(
+        int speciesnumber, const char* char_comp_name);
+
     void warpx_addRealComp(const char* char_comp_name, bool comm);
 
   void warpx_ComputeDt ();

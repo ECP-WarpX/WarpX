@@ -146,6 +146,7 @@ libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MP
 libwarpx.warpx_getParticleStructs.restype = _LP_particle_p
 libwarpx.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleArraysFromCompName.restype = _LP_LP_c_particlereal
+libwarpx.warpx_getParticleCompIndex.restype = ctypes.c_int
 libwarpx.warpx_getEfield.restype = _LP_LP_c_real
 libwarpx.warpx_getEfieldLoVects.restype = _LP_c_int
 libwarpx.warpx_getEfieldCP.restype = _LP_LP_c_real
@@ -686,6 +687,30 @@ def get_particle_theta(species_number, level=0):
         return [np.arctan2(struct['y'], struct['x']) for struct in structs]
     elif geometry_dim == '2d':
         raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
+
+
+def get_particle_comp_index(species_number, pid_name):
+    '''
+
+    Get the component index for a given particle attribute. This is useful
+    to get the corrent ordering of attributes when adding new particles using
+    `add_particles()`.
+
+    Parameters
+    ----------
+
+        species_number : id for the species of interest
+        pid_name       : string that is used to identify the new component
+
+    Returns
+    -------
+
+        Integer corresponding to the index of the requested attribute
+
+    '''
+    return libwarpx.warpx_getParticleCompIndex(
+        species_number, ctypes.c_char_p(pid_name.encode('utf-8'))
+    )
 
 
 def add_real_comp(pid_name, comm=True):
