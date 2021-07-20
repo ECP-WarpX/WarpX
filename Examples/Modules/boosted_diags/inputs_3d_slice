@@ -17,7 +17,7 @@ geometry.prob_lo     = xmin ymin zmin
 geometry.prob_hi     = xmax ymax zmax
 
 boundary.field_lo = periodic periodic pec
-boundaty.field_hi = periodic periodic pec
+boundary.field_hi = periodic periodic pec
 
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
