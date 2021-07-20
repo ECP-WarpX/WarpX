@@ -9,7 +9,7 @@ geometry.prob_hi     =  50.e-6     0.e-6
 
 # Boundary condition
 boundary.field_lo = periodic pml
-boundaty.field_hi = periodic pml
+boundary.field_hi = periodic pml
 
 warpx.cfl = .999
 warpx.do_moving_window = 1

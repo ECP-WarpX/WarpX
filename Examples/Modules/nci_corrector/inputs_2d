@@ -19,7 +19,7 @@ geometry.prob_hi     =  20.e-6    20.e-6
 
 # Boundary condition
 boundary.field_lo = periodic periodic
-boundaty.field_hi = periodic periodic
+boundary.field_hi = periodic periodic
 
 # Verbosity
 warpx.use_filter = 1
