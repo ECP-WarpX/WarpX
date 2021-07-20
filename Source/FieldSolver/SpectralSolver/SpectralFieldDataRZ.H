@@ -64,6 +64,43 @@ class SpectralFieldDataRZ
                                     amrex::MultiFab & tempHTransformedSplit,
                                     const bool is_nodal_z);
 
+        /**
+         * \brief Copy spectral data from component \c src_comp to component \c dest_comp
+         *        of \c fields
+         *
+         * \param[in] src_comp  component of the source FabArray from which the data are copied
+         * \param[in] dest_comp component of the destination FabArray where the data are copied
+         */
+        void CopySpectralDataComp (const int src_comp, const int dest_comp)
+        {
+            // The last two arguments represent the number of components and
+            // the number of ghost cells to perform this operation
+            Copy(fields, fields, src_comp, dest_comp, n_rz_azimuthal_modes, 0);
+        }
+
+        /**
+         * \brief Set to zero the data on component \c icomp of \c fields
+         *
+         * \param[in] icomp component of the FabArray where the data are set to zero
+         */
+        void ZeroOutDataComp(const int icomp)
+        {
+            // The last argument represents the number of components to perform this operation
+            fields.setVal(0., icomp, n_rz_azimuthal_modes);
+        }
+
+        /**
+         * \brief Scale the data on component \c icomp of \c fields by a given scale factor
+         *
+         * \param[in] icomp component of the FabArray where the data are scaled
+         * \param[in] scale_factor scale factor to use for scaling
+         */
+        void ScaleDataComp(const int icomp, const amrex::Real scale_factor)
+        {
+            // The last argument represents the number of components to perform this operation
+            fields.mult(scale_factor, icomp, n_rz_azimuthal_modes);
+        }
+
         void InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
                          SpectralKSpaceRZ const & k_space);
 
