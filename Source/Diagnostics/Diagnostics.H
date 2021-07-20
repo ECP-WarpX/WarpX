@@ -1,14 +1,20 @@
 #ifndef WARPX_DIAGNOSTICS_H_
 #define WARPX_DIAGNOSTICS_H_
 
-#include "FlushFormats/FlushFormat.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
-#include "Utils/IntervalsParser.H"
+
+#include "ComputeDiagFunctors/ComputeDiagFunctor_fwd.H"
+#include "FlushFormats/FlushFormat_fwd.H"
+
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
+#include <string>
+#include <vector>
 
 /**
  * \brief base class for diagnostics.
@@ -73,6 +79,8 @@ public:
      * \param[in] force_flush used to force-fully write data stored in buffers.
      */
     void FilterComputePackFlush (int step, bool force_flush=false);
+    /** Whether the last timestep is always dumped */
+    bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
 
 protected:
     /** Read Parameters of the base Diagnostics class */
@@ -94,18 +102,26 @@ protected:
         back-transform diagnostics) to be processed for diagnostics.
      */
     virtual void PrepareFieldDataForOutput () {}
-    /** Shift the diag-domain boundary for moving window and galilean simulations */
-    virtual void MovingWindowAndGalileanDomainShift () {}
+    /** Update the physical extent of the diagnostic domain for moving window and
+     *  galilean shift simulations
+     *
+     * \param[in] step current time step
+     */
+    virtual void MovingWindowAndGalileanDomainShift (int /*step*/) {}
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
     std::string m_file_prefix;
+    /** Minimum number of digits to iteration number in file name */
+    int m_file_min_digits = 5;
     /** Index of diagnostics in MultiDiagnostics::alldiags */
     int m_diag_index;
     /** Names of  each component requested by the user.
      * in cylindrical geometry, this list is appended with
      * automatically-constructed names for all modes of all fields */
     amrex::Vector< std::string > m_varnames;
+    /** If true, a dump is performed at the last timestep regardless of the required dump timesteps */
+    bool m_dump_last_timestep = true;
     /** format for output files, "plotfile" or "openpmd" or "sensei" or "ascent"
      * The checkpoint format is applicable for FullDiagnostics only.
      */

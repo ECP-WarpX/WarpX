@@ -4,19 +4,27 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+
 #include "GuardCellManager.H"
-#include "Filter/NCIGodfreyFilter.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#ifdef WARPX_DIM_RZ
-#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
+
+#ifndef WARPX_DIM_RZ
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#else
+#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Filter/NCIGodfreyFilter.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_Config.H>
+#include <AMReX_INT.H>
+#include <AMReX_Math.H>
 #include <AMReX_ParmParse.H>
-#include <AMReX.H>
+#include <AMReX_SPACE.H>
+
+#include <algorithm>
 
 using namespace amrex;
 
@@ -181,8 +189,10 @@ guardCellManager::Init (
             ng_alloc_F[i_dim] = ng_required;
             ng_alloc_Rho[i_dim] = ng_required;
             ng_alloc_F_int = ng_required;
+            ng_alloc_G_int = ng_required;
         }
         ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
+        ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
     }
 
     // Compute number of cells required for Field Solver

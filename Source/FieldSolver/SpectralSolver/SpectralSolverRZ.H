@@ -7,6 +7,8 @@
 #ifndef WARPX_SPECTRAL_SOLVER_RZ_H_
 #define WARPX_SPECTRAL_SOLVER_RZ_H_
 
+#include "SpectralSolverRZ_fwd.H"
+
 #include "SpectralAlgorithms/SpectralBaseAlgorithmRZ.H"
 #include "SpectralFieldDataRZ.H"
 
@@ -67,15 +69,16 @@ class SpectralSolverRZ
         }
 
         /* \brief Apply K space filtering for a scalar */
-        void ApplyFilter (int const field_index)
+        void ApplyFilter (const int lev, int const field_index)
         {
-            field_data.ApplyFilter(field_index);
+            field_data.ApplyFilter(lev, field_index);
         }
 
         /* \brief Apply K space filtering for a vector */
-        void ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+        void ApplyFilter (const int lev, int const field_index1,
+                          int const field_index2, int const field_index3)
         {
-            field_data.ApplyFilter(field_index1, field_index2, field_index3);
+            field_data.ApplyFilter(lev, field_index1, field_index2, field_index3);
         }
 
         /**
@@ -108,6 +111,8 @@ class SpectralSolverRZ
          * the three components of the current density
          */
         void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current);
+
+        SpectralFieldIndex m_spectral_index;
 
     private:
 

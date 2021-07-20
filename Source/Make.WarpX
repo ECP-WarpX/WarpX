@@ -5,6 +5,7 @@ OPENBC_HOME ?= ../../../openbc_poisson
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
+USE_GPU_RDC   = FALSE
 BL_NO_FORT    = TRUE
 ifeq ($(USE_DPCPP),TRUE)
   CXXSTD        = c++17
@@ -35,6 +36,7 @@ ifeq ($(USE_ASCENT_INSITU),TRUE)
   endif
   USE_CONDUIT = TRUE
   USE_ASCENT = TRUE
+  USE_GPU_RDC = TRUE
 endif
 
 ifndef USE_PYTHON_MAIN
@@ -74,7 +76,6 @@ include $(WARPX_HOME)/Source/Filter/Make.package
 include $(WARPX_HOME)/Source/Initialization/Make.package
 include $(WARPX_HOME)/Source/Laser/Make.package
 include $(WARPX_HOME)/Source/Parallelization/Make.package
-include $(WARPX_HOME)/Source/Parser/Make.package
 include $(WARPX_HOME)/Source/Particles/Make.package
 include $(WARPX_HOME)/Source/Python/Make.package
 include $(WARPX_HOME)/Source/Utils/Make.package
@@ -89,6 +90,7 @@ include $(AMREX_HOME)/Src/LinearSolvers/MLMG/Make.package
 ifeq ($(USE_SENSEI_INSITU),TRUE)
   include $(AMREX_HOME)/Src/Amr/Make.package
   include $(AMREX_HOME)/Src/Extern/SENSEI/Make.package
+  USE_GPU_RDC = TRUE
 endif
 
 ifeq ($(USE_EB),TRUE)
@@ -134,12 +136,6 @@ DEFINES += -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
 
 DEFINES += -DPICSAR_NO_ASSUMED_ALIGNMENT
 DEFINES += -DWARPX
-
-ifdef PARSER_DEPTH
-  DEFINES += -DWARPX_PARSER_DEPTH=$(PARSER_DEPTH)
-else
-  DEFINES += -DWARPX_PARSER_DEPTH=24
-endif
 
 ifeq ($(USE_OPENBC_POISSON),TRUE)
   include $(OPENBC_HOME)/Make.package

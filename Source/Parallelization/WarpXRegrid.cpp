@@ -7,12 +7,40 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
-#include <AMReX_BLProfiler.H>
+#include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_IArrayBox.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelContext.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+#include <AMReX_iMultiFab.H>
 
-#include <memory>
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstddef>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace amrex;
 
@@ -117,6 +145,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
                                                        {1,1,1}, // Not clear how many ghost cells we need yet
                                                        amrex::EBSupport::full);
+        ComputeEdgeLengths();
+        ComputeFaceAreas();
+        ScaleEdges();
+        ScaleAreas();
+        ComputeDistanceToEB();
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif

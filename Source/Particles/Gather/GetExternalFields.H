@@ -1,12 +1,16 @@
 #ifndef WARPX_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
 #define WARPX_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
 
-#include "Particles/WarpXParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
-#include <AMReX_REAL.H>
+#include "Particles/WarpXParticleContainer_fwd.H"
 
-#include <limits>
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
 
 enum ExternalFieldInitType { Constant, Parser };
 
@@ -19,9 +23,9 @@ struct GetExternalField
 
     amrex::GpuArray<amrex::ParticleReal, 3> m_field_value;
 
-    HostDeviceParser<4> m_xfield_partparser;
-    HostDeviceParser<4> m_yfield_partparser;
-    HostDeviceParser<4> m_zfield_partparser;
+    amrex::ParserExecutor<4> m_xfield_partparser;
+    amrex::ParserExecutor<4> m_yfield_partparser;
+    amrex::ParserExecutor<4> m_zfield_partparser;
     GetParticlePosition m_get_position;
     amrex::Real m_time;
 

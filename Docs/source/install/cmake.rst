@@ -72,9 +72,9 @@ Build Options
 ============================= ============================================ =========================================================
 CMake Option                  Default & Values                             Description
 ============================= ============================================ =========================================================
-``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
+``CMAKE_BUILD_TYPE``          RelWithDebInfo/**Release**/Debug             Type of build, symbols & optimizations
 ``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
-``CMAKE_VERBOSE_MAKEFILES``   ON/**OFF**                                   Print all compiler commands to the terminal during build
+``CMAKE_VERBOSE_MAKEFILE``    ON/**OFF**                                   Print all compiler commands to the terminal during build
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
@@ -86,7 +86,6 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
-``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)

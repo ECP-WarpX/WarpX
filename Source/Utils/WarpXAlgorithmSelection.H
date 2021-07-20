@@ -8,7 +8,8 @@
 #ifndef UTILS_WARPXALGORITHMSELECTION_H_
 #define UTILS_WARPXALGORITHMSELECTION_H_
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_BaseFwd.H>
+
 #include <string>
 
 /**
@@ -102,20 +103,19 @@ struct FieldBoundaryType {
         PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
         Damped = 4,   // Fields in the guard cells are damped for PSATD
                      //in the moving window direction
-        None = 5     // The fields values at the boundary are not updated. This is
+        Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
+        None = 6     // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
     };
 };
 
 /** Particle boundary conditions at the domain boundary
  */
-struct ParticleBoundaryType {
-    enum {
+enum struct ParticleBoundaryType {
         Absorbing = 0,     //!< particles crossing domain boundary are removed
         Open = 1,          //!< particles cross domain boundary leave with damped j
         Reflecting = 2,     //!< particles are reflected
         Periodic = 3
-    };
 };
 
 /** MPI reductions
@@ -135,6 +135,11 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
  *  else select BCType for particles.
  */
 int
-GetBCTypeInteger( std::string BCType, bool field );
+GetFieldBCTypeInteger( std::string BCType );
+
+/** Select BC Type for particles.
+ */
+ParticleBoundaryType
+GetParticleBCTypeInteger( std::string BCType );
 
 #endif // UTILS_WARPXALGORITHMSELECTION_H_

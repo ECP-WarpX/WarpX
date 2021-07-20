@@ -17,7 +17,7 @@ arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
 
 ci_regular_cartesian_2d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_2D') == 'TRUE'
 ci_regular_cartesian_3d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_3D') == 'TRUE'
-ci_psatd = os.environ.get('WARPX_CI_PSATD') == 'TRUE'
+ci_psatd = os.environ.get('WARPX_CI_PSATD', 'TRUE') == 'TRUE'
 ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
 ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
 ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'

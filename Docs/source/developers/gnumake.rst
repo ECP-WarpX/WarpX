@@ -28,7 +28,11 @@ single directory (e.g. ``warpx_directory``):
     cd warpx_directory
     git clone https://github.com/ECP-WarpX/WarpX.git
     git clone https://github.com/ECP-WarpX/picsar.git
+    git clone https://github.com/ECP-WarpX/warpx-data.git
     git clone https://github.com/AMReX-Codes/amrex.git
+
+.. note::
+   The warpx-data repository is currently only needed for MCC cross-sections.
 
 Basic compilation
 -----------------

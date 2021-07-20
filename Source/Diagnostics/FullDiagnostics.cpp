@@ -1,22 +1,40 @@
 #include "FullDiagnostics.H"
-#include "WarpX.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
+
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/PartPerCellFunctor.H"
-#include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "ComputeDiagFunctors/PartPerCellFunctor.H"
+#include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
+#include "Diagnostics/Diagnostics.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
-#include "FlushFormats/FlushFormatPlotfile.H"
-#include "FlushFormats/FlushFormatCheckpoint.H"
-#include "FlushFormats/FlushFormatAscent.H"
-#ifdef WARPX_USE_OPENPMD
-#    include "FlushFormats/FlushFormatOpenPMD.H"
-#endif
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
+
 #include <AMReX.H>
-#include <AMReX_Vector.H>
+#include <AMReX_Array.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_CoordSys.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MakeType.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <vector>
+
 using namespace amrex::literals;
 
 FullDiagnostics::FullDiagnostics (int i, std::string name)
@@ -36,7 +54,7 @@ FullDiagnostics::InitializeParticleBuffer ()
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
-    if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
+    if (m_output_species_names.empty()) m_output_species_names = mpc.GetSpeciesNames();
     // Initialize one ParticleDiag per species requested
     for (auto const& species : m_output_species_names){
         const int idx = mpc.getSpeciesID(species);
@@ -100,7 +118,7 @@ FullDiagnostics::Flush ( int i_buffer )
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species, nlev_output, m_file_prefix,
+        warpx.gett_new(0), m_output_species, nlev_output, m_file_prefix, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
     FlushRaw();
@@ -464,7 +482,7 @@ FullDiagnostics::PrepareFieldDataForOutput ()
 }
 
 void
-FullDiagnostics::MovingWindowAndGalileanDomainShift ()
+FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
 {
     auto & warpx = WarpX::GetInstance();
 
@@ -493,7 +511,7 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift ()
     }
 
     // For Moving Window Shift
-    if (warpx.do_moving_window) {
+    if (warpx.moving_window_active(step+1)) {
         int moving_dir = warpx.moving_window_dir;
         amrex::Real moving_window_x = warpx.getmoving_window_x();
         // Get the updated lo and hi of the geom domain

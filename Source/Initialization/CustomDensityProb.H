@@ -7,12 +7,12 @@
 #ifndef CUSTOM_DENSITY_PROB_H_
 #define CUSTOM_DENSITY_PROB_H_
 
-#include <AMReX_ParmParse.H>
-#include <AMReX_Arena.H>
-#include <AMReX_Gpu.H>
-#include <AMReX_Dim3.H>
-
 #include "Utils/WarpXUtil.H"
+
+#include <AMReX_Arena.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Gpu.H>
+#include <AMReX_ParmParse.H>
 
 // An example of Custom Density Profile
 

@@ -1,12 +1,19 @@
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
+#include "MacroscopicProperties_fwd.H"
 
-#include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXConst.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
 
-
+#include <memory>
+#include <string>
 
 /**
  * \brief This class contains the macroscopic properties of the medium needed to
@@ -33,7 +40,8 @@ public:
       *  with user-defined functions(x,y,z).
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                  HostDeviceParser<3> const& macro_parser, int lev);
+                                              amrex::ParserExecutor<3> const& macro_parser,
+                                              int lev);
      /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;
      /** Gpu Vector with index type of the permittivity multifab */
@@ -74,9 +82,9 @@ private:
      std::string m_str_epsilon_function;
      std::string m_str_mu_function;
      /** Parser Wrappers */
-     std::unique_ptr<ParserWrapper<3> > m_sigma_parser;
-     std::unique_ptr<ParserWrapper<3> > m_epsilon_parser;
-     std::unique_ptr<ParserWrapper<3> > m_mu_parser;
+     std::unique_ptr<amrex::Parser> m_sigma_parser;
+     std::unique_ptr<amrex::Parser> m_epsilon_parser;
+     std::unique_ptr<amrex::Parser> m_mu_parser;
 };
 
 /**

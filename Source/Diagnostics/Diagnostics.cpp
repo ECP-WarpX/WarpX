@@ -1,20 +1,34 @@
 #include "Diagnostics.H"
-#include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/PartPerCellFunctor.H"
-#include "ComputeDiagFunctors/PartPerGridFunctor.H"
-#include "ComputeDiagFunctors/DivBFunctor.H"
-#include "ComputeDiagFunctors/DivEFunctor.H"
-#include "FlushFormats/FlushFormatPlotfile.H"
-#include "FlushFormats/FlushFormatCheckpoint.H"
+
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormatAscent.H"
-#include "FlushFormats/FlushFormatSensei.H"
+#include "FlushFormats/FlushFormatCheckpoint.H"
 #ifdef WARPX_USE_OPENPMD
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
-#include "WarpX.H"
+#include "FlushFormats/FlushFormatPlotfile.H"
+#include "FlushFormats/FlushFormatSensei.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
 #include <AMReX_Vector.H>
+
+#include <algorithm>
 #include <string>
+
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
@@ -34,7 +48,9 @@ Diagnostics::BaseReadParameters ()
     amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
+    pp_diag_name.query("file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
+    pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
@@ -319,7 +335,7 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
 
-    MovingWindowAndGalileanDomainShift ();
+    MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
