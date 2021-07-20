@@ -37,8 +37,7 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
                                     const bool J_linear_in_time,
                                     const bool dive_cleaning,
                                     const bool divb_cleaning)
-    : m_n_rz_azimuthal_modes(n_rz_azimuthal_modes),
-      k_space(realspace_ba, dm, dx)
+    : k_space(realspace_ba, dm, dx)
 {
     // Initialize all structures using the same distribution mapping dm
 
