@@ -47,6 +47,9 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
     T_rho_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
 
     coefficients_initialized = false;
+
+    // TODO Implement time averaging and J linear in time, and remove this
+    amrex::ignore_unused(m_time_averaging, m_J_linear_in_time);
 }
 
 /* Advance the E and B field in spectral space (stored in `f`)

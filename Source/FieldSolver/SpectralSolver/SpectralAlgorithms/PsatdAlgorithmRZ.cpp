@@ -41,6 +41,9 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
     X3_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
 
     coefficients_initialized = false;
+
+    // TODO Implement time averaging and remove this
+    amrex::ignore_unused(m_time_averaging);
 }
 
 /* Advance the E and B field in spectral space (stored in `f`)
