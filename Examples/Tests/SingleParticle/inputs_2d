@@ -15,7 +15,6 @@ algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 warpx.cfl = 1.0
 
-
 # Order of particle shape factors
 algo.particle_shape = 1
 
