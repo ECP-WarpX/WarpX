@@ -139,8 +139,6 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
                                        int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
 {
-    BL_ASSERT(nattr == 1);
-
     int ibegin, iend;
     if (uniqueparticles) {
         ibegin = 0;
