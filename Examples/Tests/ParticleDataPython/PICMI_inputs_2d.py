@@ -108,7 +108,7 @@ def add_particles():
     attr[:,1] = 5.0
 
     _libwarpx.add_particles(
-        species_number=0, x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
+        species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
         attr=attr
     )
 
@@ -124,10 +124,11 @@ sim.step(max_steps - 1)
 # check that the new PIDs are properly set
 ##########################
 
+assert (_libwarpx.get_particle_count('electrons') == 90)
 assert (_libwarpx.get_particle_comp_index('electrons', 'w') == 0)
 assert (_libwarpx.get_particle_comp_index('electrons', 'new_pid') == 4)
 
-new_pid_vals = _libwarpx.get_particle_arrays_from_comp_name(
+new_pid_vals = _libwarpx.get_particle_arrays(
     'electrons', 'new_pid', 0
 )
 for vals in new_pid_vals:
