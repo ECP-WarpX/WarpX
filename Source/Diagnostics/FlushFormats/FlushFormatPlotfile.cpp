@@ -8,7 +8,6 @@
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_AmrParticles.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
@@ -304,14 +303,14 @@ FlushFormatPlotfile::WriteHeaderParticle(
 }
 
 void
-FlushFormatPlotfile::WriteParticles(const std::string& dir,
-                                    const amrex::Vector<ParticleDiag>& particle_diags) const
+FlushFormatPlotfile::WriteParticles (const std::string& dir,
+                                     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
-            tmp(&WarpX::GetInstance());
+        auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -333,17 +332,14 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             // integer attribs, and it is automatically dumped to plotfiles
             // when ionization is on.
             int_flags.resize(1, 1);
-            tmp.AddIntComp(false);
         }
 
 #ifdef WARPX_QED
         if( pc->has_breit_wheeler() ) {
             real_names.push_back("optical_depth_BW");
-            tmp.AddRealComp(false);
         }
         if( pc->has_quantum_sync() ) {
             real_names.push_back("optical_depth_QSR");
-            tmp.AddRealComp(false);
         }
 #endif
 

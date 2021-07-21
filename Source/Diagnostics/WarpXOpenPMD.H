@@ -58,7 +58,7 @@ private:
 class WarpXParticleCounter
 {
 public:
-  using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   WarpXParticleCounter(ParticleContainer* pc);

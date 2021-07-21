@@ -415,7 +415,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-    ParticleContainer tmp(&WarpX::GetInstance());
+    auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
@@ -440,17 +440,14 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
        // integer attribs, and it is automatically dumped as particle record
        // when ionization is on.
        int_flags.resize(1, 1);
-       tmp.AddIntComp(false);
     }
 
 #ifdef WARPX_QED
     if( pc->has_breit_wheeler() ) {
         real_names.push_back("opticalDepthBW");
-        tmp.AddRealComp(false);
     }
     if( pc->has_quantum_sync() ) {
         real_names.push_back("opticalDepthQSR");
-        tmp.AddRealComp(false);
     }
 #endif
 
