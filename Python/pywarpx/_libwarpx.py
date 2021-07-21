@@ -145,6 +145,8 @@ libwarpx.amrex_init.argtypes = (ctypes.c_int, _LP_LP_c_char)
 libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MPI_Comm_type)
 libwarpx.warpx_getParticleStructs.restype = _LP_particle_p
 libwarpx.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
+libwarpx.warpx_getParticleArraysFromCompName.restype = _LP_LP_c_particlereal
+libwarpx.warpx_getParticleCompIndex.restype = ctypes.c_int
 libwarpx.warpx_getEfield.restype = _LP_LP_c_real
 libwarpx.warpx_getEfieldLoVects.restype = _LP_c_int
 libwarpx.warpx_getEfieldCP.restype = _LP_LP_c_real
@@ -503,6 +505,51 @@ def get_particle_arrays(species_number, comp, level):
     return particle_data
 
 
+def get_particle_arrays_from_comp_name(species_name, comp_name, level):
+    '''
+
+    This returns a list of numpy arrays containing the particle array data
+    on each tile for this process.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        species_name   : the species name that the data will be returned for
+        comp_name      : the component of the array data that will be returned.
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    particles_per_tile = _LP_c_int()
+    num_tiles = ctypes.c_int(0)
+    data = libwarpx.warpx_getParticleArraysFromCompName(
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        ctypes.c_char_p(comp_name.encode('utf-8')),
+        level, ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
+    )
+
+    particle_data = []
+    for i in range(num_tiles.value):
+        arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
+        try:
+            # This fails on some versions of numpy
+            arr.setflags(write=1)
+        except ValueError:
+            pass
+        particle_data.append(arr)
+
+    _libc.free(particles_per_tile)
+    _libc.free(data)
+    return particle_data
+
+
 def get_particle_x(species_number, level=0):
     '''
 
@@ -641,6 +688,50 @@ def get_particle_theta(species_number, level=0):
         return [np.arctan2(struct['y'], struct['x']) for struct in structs]
     elif geometry_dim == '2d':
         raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
+
+
+def get_particle_comp_index(species_name, pid_name):
+    '''
+
+    Get the component index for a given particle attribute. This is useful
+    to get the corrent ordering of attributes when adding new particles using
+    `add_particles()`.
+
+    Parameters
+    ----------
+
+        species_name   : the species name that the data will be returned for
+        pid_name       : string that is used to identify the new component
+
+    Returns
+    -------
+
+        Integer corresponding to the index of the requested attribute
+
+    '''
+    return libwarpx.warpx_getParticleCompIndex(
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        ctypes.c_char_p(pid_name.encode('utf-8'))
+    )
+
+
+def add_real_comp(species_name, pid_name, comm=True):
+    '''
+
+    Add a real component to the particle data array.
+
+    Parameters
+    ----------
+
+        species_name   : the species name for which the new component will be added
+        pid_name       : string that is used to identify the new component
+        comm           : should the component be communicated
+
+    '''
+    libwarpx.warpx_addRealComp(
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        ctypes.c_char_p(pid_name.encode('utf-8')), comm
+    )
 
 
 def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
