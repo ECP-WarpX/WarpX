@@ -63,7 +63,7 @@ extern "C" {
 
     void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
-    void warpx_addNParticles(int speciesnumber,
+    void warpx_addNParticles(const char* char_species_name,
                              int lenx,
                              amrex::ParticleReal const * x,
                              amrex::ParticleReal const * y,
@@ -85,21 +85,15 @@ extern "C" {
 
     amrex::Real warpx_getProbHi(int dir);
 
-    long warpx_getNumParticles(int speciesnumber);
+    long warpx_getNumParticles(const char* char_species_name);
 
-    amrex::ParticleReal** warpx_getParticleStructs(int speciesnumber, int lev,
-                                                   int* num_tiles, int** particles_per_tile);
+    amrex::ParticleReal** warpx_getParticleStructs(
+        const char* char_species_name, int lev, int* num_tiles,
+        int** particles_per_tile);
 
-    amrex::ParticleReal** warpx_getParticleArrays(int speciesnumber, int comp, int lev,
-                                                  int* num_tiles, int** particles_per_tile);
-
-    amrex::ParticleReal** warpx_getParticleArraysFromCompName(
+    amrex::ParticleReal** warpx_getParticleArrays(
         const char* char_species_name, const char* char_comp_name, int lev,
         int* num_tiles, int** particles_per_tile);
-
-    amrex::ParticleReal** warpx_getParticleArraysUsingPC(
-        WarpXParticleContainer& myspc, int comp,
-        int lev, int* num_tiles, int** particles_per_tile);
 
     int warpx_getParticleCompIndex(
         const char* char_species_name, const char* char_comp_name);
