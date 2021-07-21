@@ -1,7 +1,6 @@
 """Test pseudo 1D diode run with the superLU solver."""
-import pytest
+import os
 import numpy as np
-import pandas
 
 from mewarpx import util as mwxutil
 
@@ -59,7 +58,6 @@ def test_direct_solver():
         DIAG_STEPS=DIAG_STEPS,
         DIAG_INTERVAL=DIAG_INTERVAL,
         NUMBER_PARTICLES_PER_CELL=[16, 32],
-        FIELD_DIAG_DATA_LIST=['rho_electrons', 'rho_he_ions', 'phi'],
     )
     # Only the functions we change from defaults are listed here
     run.setup_run(
@@ -67,7 +65,7 @@ def test_direct_solver():
         init_scraper=False,
         init_injectors=False,
         init_inert_gas_ionization=True,
-        init_field_diag=True,
+        init_field_diag=False,
         init_simcontrol=True,
         init_warpx=True
     )
@@ -80,7 +78,12 @@ def test_direct_solver():
     # Check rho and phi results against reference data from MGML solver   #
     #######################################################################
 
-    df = pandas.DataFrame(columns=['rho', 'phi'])
-    df['rho'] = np.mean(mwxrun.get_gathered_rho_grid()[0], axis=0)[1:-1,0]
-    df['phi'] = np.mean(mwxrun.get_gathered_phi_grid()[0], axis=0)
-    assert testing_util.test_df_vs_ref(name, df)
+    data = np.mean(mwxrun.get_gathered_phi_grid()[0], axis=0)
+    # uncomment to generate reference data
+    # np.save('reference_data.npy', data)
+
+    ref_data = np.load(os.path.join(
+        testing_util.test_dir, 'direct_solver', 'reference_data.npy'
+    ))
+
+    assert np.allclose(data, ref_data, rtol=0.002)
