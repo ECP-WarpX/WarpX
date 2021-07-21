@@ -289,15 +289,11 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
 
                 fields(i,j,k,Idx.Ex) += -X1 * (Jx_new - Jx) / dt;
-
                 fields(i,j,k,Idx.Ey) += -X1 * (Jy_new - Jy) / dt;
-
                 fields(i,j,k,Idx.Ez) += -X1 * (Jz_new - Jz) / dt;
 
                 fields(i,j,k,Idx.Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
-
                 fields(i,j,k,Idx.By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
-
                 fields(i,j,k,Idx.Bz) += I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx));
 
                 if (dive_cleaning)
@@ -307,9 +303,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                     const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
 
                     fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
-
                     fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
-
                     fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
 
                     fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
@@ -321,9 +315,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                     const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
 
                     fields(i,j,k,Idx.Bx) += I * c2 * S_ck * G_old * kx;
-
                     fields(i,j,k,Idx.By) += I * c2 * S_ck * G_old * ky;
-
                     fields(i,j,k,Idx.Bz) += I * c2 * S_ck * G_old * kz;
 
                     fields(i,j,k,Idx.G) = C * G_old + I * S_ck * k_dot_B;
@@ -365,18 +357,14 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                     if (dive_cleaning)
                     {
                         fields(i,j,k,Idx.Ex_avg) += I * c2 * ep0 * X1 * F_old * kx;
-
                         fields(i,j,k,Idx.Ey_avg) += I * c2 * ep0 * X1 * F_old * ky;
-
                         fields(i,j,k,Idx.Ez_avg) += I * c2 * ep0 * X1 * F_old * kz;
                     }
 
                     if (divb_cleaning)
                     {
                         fields(i,j,k,Idx.Bx_avg) += I * c2 * ep0 * X1 * G_old * kx;
-
                         fields(i,j,k,Idx.By_avg) += I * c2 * ep0 * X1 * G_old * ky;
-
                         fields(i,j,k,Idx.Bz_avg) += I * c2 * ep0 * X1 * G_old * kz;
                     }
                 }
