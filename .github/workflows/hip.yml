@@ -19,7 +19,7 @@ jobs:
         hipcc --version
         which clang
         which clang++
-        export CXX=$(which clang++)
+        export CXX=$(which hipcc)
         export CC=$(which clang)
 
         cmake -S . -B build_sp \
