@@ -58,7 +58,9 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Real dt,
             const bool update_with_rho,
             const bool time_averaging,
-            const bool J_linear_in_time);
+            const bool J_linear_in_time,
+            const bool dive_cleaning,
+            const bool divb_cleaning);
 
         /**
          * \brief Updates the E and B fields in spectral space, according to the relevant PSATD equations
@@ -165,6 +167,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         bool m_update_with_rho;
         bool m_time_averaging;
         bool m_J_linear_in_time;
+        bool m_dive_cleaning;
+        bool m_divb_cleaning;
         bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD
