@@ -6,7 +6,7 @@ jobs:
   build_hip:
     name: HIP SP
     runs-on: ubuntu-20.04
-    env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations"}
+    env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"}
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -17,7 +17,9 @@ jobs:
       run: |
         source /etc/profile.d/rocm.sh
         hipcc --version
-        export CXX=$(which hipcc)
+        which clang
+        which clang++
+        export CXX=$(which clang++)
         export CC=$(which clang)
 
         cmake -S . -B build_sp \
