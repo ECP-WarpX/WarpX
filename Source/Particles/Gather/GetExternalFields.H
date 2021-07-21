@@ -12,8 +12,6 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
-using namespace amrex::literals;
-
 enum ExternalFieldInitType { Constant, Parser, RepeatedPlasmaLens };
 
 /** \brief Base class for functors that assign external
@@ -47,6 +45,7 @@ struct GetExternalField
                       amrex::ParticleReal& field_y,
                       amrex::ParticleReal& field_z) const noexcept
     {
+        using namespace amrex::literals;
         if (m_type == Constant)
         {
             field_x += m_field_value[0];
