@@ -145,7 +145,6 @@ libwarpx.amrex_init.argtypes = (ctypes.c_int, _LP_LP_c_char)
 libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MPI_Comm_type)
 libwarpx.warpx_getParticleStructs.restype = _LP_particle_p
 libwarpx.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
-libwarpx.warpx_getParticleArraysFromCompName.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleCompIndex.restype = ctypes.c_int
 libwarpx.warpx_getEfield.restype = _LP_LP_c_real
 libwarpx.warpx_getEfieldLoVects.restype = _LP_c_int
@@ -196,8 +195,7 @@ libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
 #libwarpx.warpx_ComputePMLFactors.argtypes = (ctypes.c_int, c_real)
-
-libwarpx.warpx_addNParticles.argtypes = (ctypes.c_int, ctypes.c_int,
+libwarpx.warpx_addNParticles.argtypes = (ctypes.c_char_p, ctypes.c_int,
                                          _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
                                          _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
                                          _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
@@ -363,7 +361,7 @@ def getCellSize(direction, level=0):
 #
 #    libwarpx.warpx_ComputePMLFactors(lev, dt)
 
-def add_particles(species_number=0,
+def add_particles(species_name,
                   x=0., y=0., z=0., ux=0., uy=0., uz=0., attr=0.,
                   unique_particles=True):
     '''
@@ -373,7 +371,7 @@ def add_particles(species_number=0,
     Parameters
     ----------
 
-    species_number   : the species to add the particle to (default = 0)
+    species_name     : the species to add the particle to
     x, y, z          : arrays or scalars of the particle positions (default = 0.)
     ux, uy, uz       : arrays or scalars of the particle momenta (default = 0.)
     attr             : a 2D numpy array or scalar with the particle attributes (default = 0.)
@@ -420,11 +418,33 @@ def add_particles(species_number=0,
         nattr = get_nattr()
         attr = np.array(attr)*np.ones([maxlen,nattr])
 
-    libwarpx.warpx_addNParticles(species_number, x.size,
-                                 x, y, z, ux, uy, uz,
-                                 attr.shape[-1], attr, unique_particles)
+    libwarpx.warpx_addNParticles(
+        ctypes.c_char_p(species_name.encode('utf-8')), x.size,
+        x, y, z, ux, uy, uz, attr.shape[-1], attr, unique_particles
+    )
 
-def get_particle_structs(species_number, level):
+def get_particle_count(species_name):
+    '''
+
+    This returns the number of particles of the specified species in the
+    simulation.
+
+    Parameters
+    ----------
+
+        species_name : the species name that the number will be returned for
+
+    Returns
+    -------
+
+        An integer count of the number of particles
+
+    '''
+    return libwarpx.warpx_getNumParticles(
+        ctypes.c_char_p(species_name.encode('utf-8'))
+    )
+
+def get_particle_structs(species_name, level):
     '''
 
     This returns a list of numpy arrays containing the particle struct data
@@ -437,7 +457,7 @@ def get_particle_structs(species_number, level):
     Parameters
     ----------
 
-        species_number : the species id that the data will be returned for
+        species_name : the species name that the data will be returned for
 
     Returns
     -------
@@ -448,9 +468,10 @@ def get_particle_structs(species_number, level):
 
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
-    data = libwarpx.warpx_getParticleStructs(species_number, level,
-                                             ctypes.byref(num_tiles),
-                                             ctypes.byref(particles_per_tile))
+    data = libwarpx.warpx_getParticleStructs(
+        ctypes.c_char_p(species_name.encode('utf-8')), level,
+        ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
+    )
 
     particle_data = []
     for i in range(num_tiles.value):
@@ -462,50 +483,7 @@ def get_particle_structs(species_number, level):
     return particle_data
 
 
-def get_particle_arrays(species_number, comp, level):
-    '''
-
-    This returns a list of numpy arrays containing the particle array data
-    on each tile for this process.
-
-    The data for the numpy arrays are not copied, but share the underlying
-    memory buffer with WarpX. The numpy arrays are fully writeable.
-
-    Parameters
-    ----------
-
-        species_number : the species id that the data will be returned for
-        comp           : the component of the array data that will be returned.
-
-    Returns
-    -------
-
-        A List of numpy arrays.
-
-    '''
-
-    particles_per_tile = _LP_c_int()
-    num_tiles = ctypes.c_int(0)
-    data = libwarpx.warpx_getParticleArrays(species_number, comp, level,
-                                            ctypes.byref(num_tiles),
-                                            ctypes.byref(particles_per_tile))
-
-    particle_data = []
-    for i in range(num_tiles.value):
-        arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
-        try:
-            # This fails on some versions of numpy
-            arr.setflags(write=1)
-        except ValueError:
-            pass
-        particle_data.append(arr)
-
-    _libc.free(particles_per_tile)
-    _libc.free(data)
-    return particle_data
-
-
-def get_particle_arrays_from_comp_name(species_name, comp_name, level):
+def get_particle_arrays(species_name, comp_name, level):
     '''
 
     This returns a list of numpy arrays containing the particle array data
@@ -529,7 +507,7 @@ def get_particle_arrays_from_comp_name(species_name, comp_name, level):
 
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
-    data = libwarpx.warpx_getParticleArraysFromCompName(
+    data = libwarpx.warpx_getParticleArrays(
         ctypes.c_char_p(species_name.encode('utf-8')),
         ctypes.c_char_p(comp_name.encode('utf-8')),
         level, ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
@@ -550,42 +528,42 @@ def get_particle_arrays_from_comp_name(species_name, comp_name, level):
     return particle_data
 
 
-def get_particle_x(species_number, level=0):
+def get_particle_x(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle 'x'
     positions on each tile.
 
     '''
-    structs = get_particle_structs(species_number, level)
+    structs = get_particle_structs(species_name, level)
     if geometry_dim == '3d' or geometry_dim == '2d':
         return [struct['x'] for struct in structs]
     elif geometry_dim == 'rz':
-        return [struct['x']*np.cos(theta) for struct, theta in zip(structs, get_particle_theta(species_number))]
+        return [struct['x']*np.cos(theta) for struct, theta in zip(structs, get_particle_theta(species_name))]
 
 
-def get_particle_y(species_number, level=0):
+def get_particle_y(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle 'y'
     positions on each tile.
 
     '''
-    structs = get_particle_structs(species_number, level)
+    structs = get_particle_structs(species_name, level)
     if geometry_dim == '3d' or geometry_dim == '2d':
         return [struct['y'] for struct in structs]
     elif geometry_dim == 'rz':
-        return [struct['x']*np.sin(theta) for struct, theta in zip(structs, get_particle_theta(species_number))]
+        return [struct['x']*np.sin(theta) for struct, theta in zip(structs, get_particle_theta(species_name))]
 
 
-def get_particle_r(species_number, level=0):
+def get_particle_r(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle 'r'
     positions on each tile.
 
     '''
-    structs = get_particle_structs(species_number, level)
+    structs = get_particle_structs(species_name, level)
     if geometry_dim == 'rz':
         return [struct['x'] for struct in structs]
     elif geometry_dim == '3d':
@@ -594,43 +572,43 @@ def get_particle_r(species_number, level=0):
         raise Exception('get_particle_r: There is no r coordinate with 2D Cartesian')
 
 
-def get_particle_z(species_number, level=0):
+def get_particle_z(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle 'z'
     positions on each tile.
 
     '''
-    structs = get_particle_structs(species_number, level)
+    structs = get_particle_structs(species_name, level)
     if geometry_dim == '3d':
         return [struct['z'] for struct in structs]
     elif geometry_dim == 'rz' or geometry_dim == '2d':
         return [struct['y'] for struct in structs]
 
 
-def get_particle_id(species_number, level=0):
+def get_particle_id(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle 'id'
     positions on each tile.
 
     '''
-    structs = get_particle_structs(species_number, level)
+    structs = get_particle_structs(species_name, level)
     return [struct['id'] for struct in structs]
 
 
-def get_particle_cpu(species_number, level=0):
+def get_particle_cpu(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle 'cpu'
     positions on each tile.
 
     '''
-    structs = get_particle_structs(species_number, level)
+    structs = get_particle_structs(species_name, level)
     return [struct['cpu'] for struct in structs]
 
 
-def get_particle_weight(species_number, level=0):
+def get_particle_weight(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle
@@ -638,10 +616,10 @@ def get_particle_weight(species_number, level=0):
 
     '''
 
-    return get_particle_arrays(species_number, 0, level)
+    return get_particle_arrays(species_name, 'w', level)
 
 
-def get_particle_ux(species_number, level=0):
+def get_particle_ux(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle
@@ -649,10 +627,10 @@ def get_particle_ux(species_number, level=0):
 
     '''
 
-    return get_particle_arrays(species_number, 1, level)
+    return get_particle_arrays(species_name, 'ux', level)
 
 
-def get_particle_uy(species_number, level=0):
+def get_particle_uy(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle
@@ -660,10 +638,10 @@ def get_particle_uy(species_number, level=0):
 
     '''
 
-    return get_particle_arrays(species_number, 2, level)
+    return get_particle_arrays(species_name, 'uy', level)
 
 
-def get_particle_uz(species_number, level=0):
+def get_particle_uz(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle
@@ -671,10 +649,10 @@ def get_particle_uz(species_number, level=0):
 
     '''
 
-    return get_particle_arrays(species_number, 3, level)
+    return get_particle_arrays(species_name, 'uz', level)
 
 
-def get_particle_theta(species_number, level=0):
+def get_particle_theta(species_name, level=0):
     '''
 
     Return a list of numpy arrays containing the particle
@@ -683,7 +661,7 @@ def get_particle_theta(species_number, level=0):
     '''
 
     if geometry_dim == 'rz':
-        return get_particle_arrays(species_number, 4, level)
+        return get_particle_arrays(species_name, 'theta', level)
     elif geometry_dim == '3d':
         return [np.arctan2(struct['y'], struct['x']) for struct in structs]
     elif geometry_dim == '2d':

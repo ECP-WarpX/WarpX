@@ -220,13 +220,16 @@ extern "C"
         warpx.Evolve(numsteps);
     }
 
-    void warpx_addNParticles(int speciesnumber, int lenx,
-                             amrex::ParticleReal const * x, amrex::ParticleReal const * y, amrex::ParticleReal const * z,
-                             amrex::ParticleReal const * vx, amrex::ParticleReal const * vy, amrex::ParticleReal const * vz,
-                             int nattr, amrex::ParticleReal const * attr, int uniqueparticles)
+    void warpx_addNParticles(
+        const char* char_species_name, int lenx, amrex::ParticleReal const * x,
+        amrex::ParticleReal const * y, amrex::ParticleReal const * z,
+        amrex::ParticleReal const * vx, amrex::ParticleReal const * vy,
+        amrex::ParticleReal const * vz, int nattr,
+        amrex::ParticleReal const * attr, int uniqueparticles)
     {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
         const int lev = 0;
         myspc.AddNParticles(lev, lenx, x, y, z, vx, vy, vz, nattr, attr, uniqueparticles);
     }
@@ -265,9 +268,10 @@ extern "C"
         return dx[dir];
     }
 
-    long warpx_getNumParticles(int speciesnumber) {
+    long warpx_getNumParticles(const char* char_species_name) {
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        const auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
         return myspc.TotalNumberOfParticles();
     }
 
@@ -377,10 +381,12 @@ extern "C"
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityCPLoVects_PML, Getj_cp)
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityFPLoVects_PML, Getj_fp)
 
-    amrex::ParticleReal** warpx_getParticleStructs(int speciesnumber, int lev,
-                                      int* num_tiles, int** particles_per_tile) {
+    amrex::ParticleReal** warpx_getParticleStructs(
+            const char* char_species_name, int lev,
+            int* num_tiles, int** particles_per_tile) {
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
         int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
@@ -399,17 +405,7 @@ extern "C"
         return data;
     }
 
-    amrex::ParticleReal** warpx_getParticleArrays(int speciesnumber, int comp, int lev,
-                                     int* num_tiles, int** particles_per_tile) {
-        const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto & myspc = mypc.GetParticleContainer(speciesnumber);
-
-        return warpx_getParticleArraysUsingPC(
-            myspc, comp, lev, num_tiles, particles_per_tile
-        );
-    }
-
-    amrex::ParticleReal** warpx_getParticleArraysFromCompName (
+    amrex::ParticleReal** warpx_getParticleArrays (
             const char* char_species_name, const char* char_comp_name,
             int lev, int* num_tiles, int** particles_per_tile ) {
 
@@ -417,16 +413,8 @@ extern "C"
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
-        return warpx_getParticleArraysUsingPC(
-            myspc,
-            warpx_getParticleCompIndex(char_species_name, char_comp_name), lev,
-            num_tiles, particles_per_tile
-        );
-    }
+        int comp = warpx_getParticleCompIndex(char_species_name, char_comp_name);
 
-    amrex::ParticleReal** warpx_getParticleArraysUsingPC (
-            WarpXParticleContainer& myspc, int comp,
-            int lev, int* num_tiles, int** particles_per_tile ) {
         int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
 
