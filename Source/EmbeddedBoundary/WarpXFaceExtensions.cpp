@@ -28,7 +28,8 @@ WarpX::CountExtFaces() {
 
 
 /**
-* \brief Compute the face extensions.
+* \brief This is the main function computing the cell extension. Where possible it computes one-way
+ *       extensions and, when this is not possible, it does eight-ways extensions.
 */
 void
 WarpX::ComputeFaceExtensions(){
@@ -83,6 +84,9 @@ WarpX::ComputeFaceExtensions(){
 #endif
 }
 
+/**
+* \brief this function initializes the memory for the cell FaceInfoBoxes
+*/
 void
 WarpX::InitBorrowing() {
     int idim = 0;
