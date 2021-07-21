@@ -13,9 +13,11 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                     # 0: Cartesian
-geometry.is_periodic = 0           1         # Is periodic?
 geometry.prob_lo     = -20.e-6    -15.e-6    # physical domain
 geometry.prob_hi     =  20.e-6     15.e-6
+
+boundary.field_lo = pec periodic
+boundary.field_hi = pec periodic
 
 warpx.serialize_ics = 1
 
@@ -51,8 +53,6 @@ laser1.profile_focal_distance = 13.109e-6  # Focal distance from the antenna (in
 diagnostics.diags_names = diag1
 diag1.intervals = 240
 diag1.diag_type = Full
-
-warpx.do_pml = 0
 
 # Moving window
 warpx.do_moving_window = 1
