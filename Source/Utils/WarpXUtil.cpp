@@ -582,6 +582,10 @@ void ReadBCParams ()
         "Error : Field boundary at r=0 must be ``none``. \n");
 #endif
 
+    // Appending periodicity information to input so that it can be used by amrex
+    // to set parameters necessary to define geometry and perform communication
+    // such as FillBoundary. The periodicity is 1 if user-define boundary condition is
+    // periodic else it is set to 0.
     pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 
