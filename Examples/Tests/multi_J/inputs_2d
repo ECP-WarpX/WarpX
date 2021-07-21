@@ -8,9 +8,12 @@ warpx.numprocs = 1 2
 # Mesh refinement and geometry
 amr.max_level = 0
 geometry.coord_sys = 0
-geometry.is_periodic = 1 0
 geometry.prob_lo = -200e-6 -220e-6
 geometry.prob_hi =  200e-6   10e-6
+
+# Boundary condition
+boundary.field_lo = periodic damped
+boundary.field_hi = periodic damped
 
 # Algorithms
 algo.current_deposition = direct
@@ -22,7 +25,6 @@ algo.particle_shape = 3
 # Numerics
 warpx.cfl = 3.19
 warpx.do_nodal = 1
-warpx.do_pml = 0
 warpx.use_filter = 1
 warpx.verbose = 1
 
