@@ -100,7 +100,7 @@ class Species(picmistandard.PICMI_Species):
         self.species = pywarpx.Bucket.Bucket(self.name,
                                              mass = self.mass,
                                              charge = self.charge,
-                                             injection_style = 'python',
+                                             injection_style = None,
                                              initialize_self_fields = int(initialize_self_fields),
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
