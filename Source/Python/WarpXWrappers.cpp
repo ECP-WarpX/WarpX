@@ -132,6 +132,14 @@ extern "C"
         return PIdx::nattribs;
     }
 
+    int warpx_nCompsSpecies(const char* char_species_name)
+    {
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+        return myspc.NumRealComps();
+    }
+
     int warpx_SpaceDim()
     {
         return AMREX_SPACEDIM;
