@@ -1134,8 +1134,16 @@ Laser initialization
     using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
     it is assumed that the first and second dimensions are `x` and `z`, respectively,
     and the value of the `Ey` component is set to zero.
-    The current implementation of the parser for B-field on particles
+    The current implementation of the parser for E-field on particles
     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
+    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
+    option requires the following parameters,
+    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
+    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
+    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
+    ``repeated_plasma_lens_strengths``, the focusing strength of each lens, an array of floats.
+    The applied field is uniform longitudinally (along z) with a hard edge,
+    where residence corrections are used for more accurate field calculation.
 
 * ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
     Two separate parameters which add an externally applied uniform E-field or
