@@ -31,17 +31,22 @@ r0 = 2.e-6
 # Open data file
 filename = sys.argv[1]
 ds = yt.load( filename )
+# yt 4.0+ has rounding issues with our domain data:
+# RuntimeError: yt attempted to read outside the boundaries
+#               of a non-periodic domain along dimension 0.
+if 'force_periodicity' in dir(ds): ds.force_periodicity()
+
 # Extract data
 ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
-Ex_array = ad0['Ex'].to_ndarray().squeeze()
+Ex_array = ad0[("mesh", "Ex")].to_ndarray().squeeze()
 if ds.dimensionality == 2:
     # Rename the z dimension as y, so as to make this script work for 2d and 3d
-    Ey_array = ad0['Ez'].to_ndarray().squeeze()
+    Ey_array = ad0[("mesh", "Ez")].to_ndarray().squeeze()
     E_array = ( Ex_array**2 + Ey_array**2 )**.5
     relative_tolerance = 0.1
 elif ds.dimensionality == 3:
-    Ey_array = ad0['Ey'].to_ndarray()
-    Ez_array = ad0['Ez'].to_ndarray()
+    Ey_array = ad0[("mesh", "Ey")].to_ndarray()
+    Ez_array = ad0[("mesh", "Ez")].to_ndarray()
     E_array = ( Ex_array**2 + Ey_array**2 + Ez_array**2 )**.5
     relative_tolerance = 0.15
 
