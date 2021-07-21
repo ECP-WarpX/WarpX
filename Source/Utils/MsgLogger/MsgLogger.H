@@ -36,13 +36,27 @@ namespace MsgLogger{
     {
         Msg msg;
         int counter;
+        bool all_affected = true;
+        std::vector<int> affected_ranks{};
     };
+
+    /*std::vector<char> serialize_msg(
+        const Msg& msg);
+
+    Msg deserialize_msg(
+        const std::vector<char>& msg);
+
+    std::vector<char> serialize_msg_with_counter(
+        const MsgWithCounter& msg_with_counter);
+
+    MsgWithCounter deserialize_msg_with_counter(
+        std::vector<char>& serialized_msg_with_counter);*/
 
     constexpr bool operator<(const Msg& l, const Msg& r)
     {
-        return  (l.priority < r.priority) ||
-        (l.topic < r.topic) ||
-        (l.text < r.text);
+        return (l.priority < r.priority) ||
+        ((l.priority == r.priority) && (l.topic < r.topic)) ||
+        ((l.priority == r.priority) && (l.topic == r.topic) && (l.text < r.text));
     }
 
     class Logger
@@ -54,7 +68,9 @@ namespace MsgLogger{
 
         void record_msg(Msg msg);
 
-        std::vector<MsgWithCounter> get_msg_list();
+        std::vector<MsgWithCounter> get_msg_list() const;
+
+        void parallel_merge_msg_lists();
 
         private:
 

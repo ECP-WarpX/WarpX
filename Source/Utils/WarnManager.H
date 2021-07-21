@@ -24,7 +24,7 @@ namespace Utils
             MsgLogger::Priority priority);
 
         std::string print_local_warnings(
-            const std::string& when);
+            const std::string& when) const;
 
         static const int warn_line_size = 80;
         static const int warn_tab_size = 5;
@@ -33,18 +33,20 @@ namespace Utils
 
         std::vector<MsgLogger::MsgWithCounter>
         aux_sort_messages(
-            std::vector<MsgLogger::MsgWithCounter>&& all_msg_with_counter);
+            std::vector<MsgLogger::MsgWithCounter>&& all_msg_with_counter) const;
 
         std::string aux_get_header(
             const std::string& when,
             int line_size,
-            bool is_global);
+            bool is_global) const;
 
         std::string aux_print_warn_msg(
-            const MsgLogger::MsgWithCounter& msg_with_counter);
+            const MsgLogger::MsgWithCounter& msg_with_counter) const;
 
-        std::string aux_print_line(
-            const std::string& str, int line_size, int tab_size);
+        std::string aux_msg_formatter(
+            const std::string& msg,
+            const int line_size,
+            const int tab_size) const;
 
         MsgLogger::Logger m_logger;
     };

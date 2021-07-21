@@ -19,7 +19,7 @@ void WarnManager::record_warning(
     m_logger.record_msg(Msg{topic, text, priority});
 }
 
-std::string WarnManager::print_local_warnings(const std::string& when)
+std::string WarnManager::print_local_warnings(const std::string& when) const
 {
     auto all_warnings = aux_sort_messages(m_logger.get_msg_list());
 
@@ -43,7 +43,7 @@ std::string WarnManager::print_local_warnings(const std::string& when)
 
 std::vector<MsgLogger::MsgWithCounter>
 WarnManager::aux_sort_messages(
-        std::vector<MsgLogger::MsgWithCounter>&& all_msg_with_counter)
+        std::vector<MsgLogger::MsgWithCounter>&& all_msg_with_counter) const
 {
     std::sort(all_msg_with_counter.begin(), all_msg_with_counter.end(),
         [](const MsgWithCounter& a, const MsgWithCounter& b){
@@ -54,7 +54,7 @@ WarnManager::aux_sort_messages(
 std::string WarnManager::aux_get_header(
     const std::string& when,
     int line_size,
-    bool is_global)
+    bool is_global) const
 {
     const std::string warn_header{"**** WARNINGS "};
 
@@ -77,7 +77,7 @@ std::string WarnManager::aux_get_header(
 
 std::string
 WarnManager::aux_print_warn_msg(
-    const MsgLogger::MsgWithCounter& msg_with_counter)
+    const MsgLogger::MsgWithCounter& msg_with_counter) const
 {
     std::stringstream ss;
     ss << "* --> ";
@@ -102,7 +102,7 @@ WarnManager::aux_print_warn_msg(
         ss << "[raised " << msg_with_counter.counter << " times]\n";
     }
 
-    ss << aux_print_line(msg_with_counter.msg.text, warn_line_size, warn_tab_size);
+    ss << aux_msg_formatter(msg_with_counter.msg.text, warn_line_size, warn_tab_size);
 
     ss << "*\n";
 
@@ -110,9 +110,48 @@ WarnManager::aux_print_warn_msg(
 }
 
 std::string
-WarnManager::aux_print_line(
-    const std::string& str, int line_size, int tab_size)
+WarnManager::aux_msg_formatter(
+        const std::string& msg,
+        const int line_size,
+        const int tab_size) const
 {
-    /* TODO */
-    return "*" + std::string(tab_size, ' ') + str + "\n";
+    const auto prefix = "*" + std::string(tab_size, ' ');
+    const auto prefix_length = static_cast<int>(prefix.length());
+
+    std::stringstream ss_out;
+    std::stringstream ss_msg{msg};
+
+    std::string line;
+    std::string word;
+
+    while(std::getline(ss_msg, line,'\n')){
+        ss_out << prefix;
+
+        std::stringstream ss_line{line};
+        int counter = prefix_length;
+
+        while (ss_line >> word){
+            const auto wlen = static_cast<int>(word.length());
+
+            if(counter == prefix_length){
+                ss_out << word;
+                counter += wlen;
+            }
+            else{
+                if (counter + wlen < line_size){
+                    ss_out << " " << word;
+                    counter += (wlen+1);
+                }
+                else{
+                    ss_out << "\n" << prefix << word;
+                    counter = prefix_length + wlen;
+                }
+            }
+        }
+
+        ss_out << '\n';
+    }
+
+
+    return ss_out.str();
 }

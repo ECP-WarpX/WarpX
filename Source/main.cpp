@@ -68,6 +68,13 @@ int main(int argc, char* argv[])
         warpx.RecordWarning("Topic3", "test_msg_3", WarnPriority::low);
         warpx.RecordWarning("Topic3", "test_msg_3", WarnPriority::low);
         warpx.RecordWarning("Topic3", "test_msg_3", WarnPriority::low);
+        warpx.RecordWarning("MultiLine", "A\nmultiline\n\nmessage\ntest test test\n test test", WarnPriority::medium);
+        warpx.RecordWarning("MultiLine2", "A\nmultiline\n\nmessage\ntest test test\n test test\n"
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        "a a a a a a a a a a a a a a a b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b b"
+        "c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c \n c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c c ", WarnPriority::medium);
+
+        warpx.RecordWarning("Multiline", "first\nsecond\nthird\n\ndouble_space!!", WarnPriority::low);
 
         warpx.InitData();
 
