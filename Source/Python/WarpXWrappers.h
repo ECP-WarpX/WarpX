@@ -95,10 +95,6 @@ extern "C" {
         const char* char_species_name, const char* char_comp_name, int lev,
         int* num_tiles, int** particles_per_tile);
 
-    amrex::ParticleReal** warpx_getParticleArraysUsingPC(
-        WarpXParticleContainer& myspc, int comp,
-        int lev, int* num_tiles, int** particles_per_tile);
-
     int warpx_getParticleCompIndex(
         const char* char_species_name, const char* char_comp_name);
 
