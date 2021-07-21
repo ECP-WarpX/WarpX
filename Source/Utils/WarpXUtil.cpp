@@ -492,53 +492,7 @@ void ReadBCParams ()
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
-        // set default field and particle boundary appropriately
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (geom_periodicity[idim] == 1) {
-                // set boundary to periodic based on user-defined periodicity
-                WarpX::field_boundary_lo[idim] = FieldBoundaryType::Periodic;
-                WarpX::field_boundary_hi[idim] = FieldBoundaryType::Periodic;
-                WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
-                WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
-            } else {
-                // if non-periodic and do_pml=0, then set default boundary to PEC
-                int pml_input = 1;
-                int silverMueller_input = 0;
-                pp_warpx.query("do_pml", pml_input);
-                pp_warpx.query("do_silver_mueller", silverMueller_input);
-                if (pml_input == 0 and silverMueller_input == 0) {
-                    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-                        WarpX::field_boundary_lo[idim] = FieldBoundaryType::None;
-                        WarpX::field_boundary_hi[idim] = FieldBoundaryType::None;
-                    } else {
-                        WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
-                        WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
-                    }
-#ifdef WARPX_DIM_RZ
-                    if (idim == 0) WarpX::field_boundary_lo[idim] = FieldBoundaryType::None;
-#endif
-                }
-            }
-        }
-        // Temporarily setting default boundary to Damped until new boundary interface is introduced
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            ParmParse pp_psatd("psatd");
-            int do_moving_window = 0;
-            pp_warpx.query("do_moving_window", do_moving_window);
-            if (do_moving_window == 1) {
-                std::string s;
-                pp_warpx.get("moving_window_dir", s);
-                int zdir;
-                if (s == "z" || s == "Z") {
-                    zdir = AMREX_SPACEDIM-1;
-                    WarpX::field_boundary_lo[zdir] = FieldBoundaryType::Damped;
-                    WarpX::field_boundary_hi[zdir] = FieldBoundaryType::Damped;
-                }
-            }
-        }
-        return;
-        // When all boundary conditions are supported, the abort statement below will be introduced
-        //amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
+        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
     }
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
@@ -628,6 +582,10 @@ void ReadBCParams ()
         "Error : Field boundary at r=0 must be ``none``. \n");
 #endif
 
+    // Appending periodicity information to input so that it can be used by amrex
+    // to set parameters necessary to define geometry and perform communication
+    // such as FillBoundary. The periodicity is 1 if user-define boundary condition is
+    // periodic else it is set to 0.
     pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 

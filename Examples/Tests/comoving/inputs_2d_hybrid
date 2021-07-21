@@ -5,9 +5,14 @@ amr.n_cell = 96 704
 warpx.numprocs = 1 2
 
 geometry.coord_sys = 0
-geometry.is_periodic = 1 0
 geometry.prob_lo = -90.e-6 -70.e-6
 geometry.prob_hi =  90.e-6   0.e-6
+
+#################################
+###### Boundary Condition #######
+#################################
+boundary.field_lo = periodic damped
+boundary.field_hi = periodic damped
 
 algo.maxwell_solver = psatd
 algo.current_deposition = direct
@@ -23,7 +28,6 @@ psatd.v_comoving = 0. 0. -0.9970370305242862
 warpx.cfl = 1.
 
 warpx.do_nodal = 0
-warpx.do_pml = 0
 
 warpx.gamma_boost = 13.
 warpx.boost_direction = z

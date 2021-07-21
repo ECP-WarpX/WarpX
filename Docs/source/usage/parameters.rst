@@ -132,11 +132,6 @@ Setting up the field mesh
 
     Note: in development; currently allowed value: ``2 2 2``.
 
-* ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
-    Whether the boundary conditions are periodic, in each direction.
-
-    For each direction, use 1 for periodic conditions, 0 otherwise.
-
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
 
@@ -215,13 +210,13 @@ Setting up the field mesh
 Domain Boundary Conditions
 --------------------------
 
-* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D, `pml` by default)
     Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
 
-    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
+    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
     * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
@@ -233,13 +228,16 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 
     * ``none``: No boundary condition is applied to the fields. This option must be used for the RZ-solver at `r=0`.
 
-* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
+    * ``Absorbing``: Particles leaving the boundary will be deleted.
+
     * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+
     * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain. When
     ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
 
-* ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
+    * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
 .. _running-cpp-parameters-eb:
@@ -1582,11 +1580,6 @@ Numerics and algorithms
 
 Boundary conditions
 -------------------
-
-* ``warpx.do_pml`` (`0` or `1`; default: 1)
-    Whether to add Perfectly Matched Layers (PML) around the simulation box,
-    and around the refinement patches.
-    See the :ref:`PML theory section <theory-bc>` for more details.
 
 * ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
