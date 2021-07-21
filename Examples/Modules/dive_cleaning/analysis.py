@@ -34,7 +34,7 @@ ds = yt.load( filename )
 # yt 4.0+ has rounding issues with our domain data:
 # RuntimeError: yt attempted to read outside the boundaries
 #               of a non-periodic domain along dimension 0.
-ds.force_periodicity()
+if 'force_periodicity' in dir(ds): ds.force_periodicity()
 
 # Extract data
 ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
