@@ -462,7 +462,7 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
                                        m_face_areas[lev], m_area_mod[lev], Rhofield[lev], Venl[lev],
                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
-        m_fdtd_solver_cp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], G_cp[lev],
+        m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], G_cp[lev],
                                        m_face_areas[lev], m_area_mod[lev], Rhofield[lev], Venl[lev],
                                        m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
