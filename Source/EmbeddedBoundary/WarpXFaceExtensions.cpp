@@ -34,28 +34,43 @@ void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
     amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
-    std::cout<< "Faces to be extended before x:\t" << N_ext_faces(0) <<std::endl;
-    std::cout<< "Faces to be extended before y:\t" << N_ext_faces(1) <<std::endl;
-    std::cout<< "Faces to be extended before z:\t" << N_ext_faces(2) <<std::endl;
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces(0));
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces(1));
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces(2));
+    amrex::Print()<< "Faces to be extended in x:\t" << N_ext_faces(0) <<std::endl;
+    amrex::Print()<< "Faces to be extended in y:\t" << N_ext_faces(1) <<std::endl;
+    amrex::Print()<< "Faces to be extended in z:\t" << N_ext_faces(2) <<std::endl;
 
     InitBorrowing();
-    amrex::Array1D<int, 0, 2> temp_inds{0, 0, 0};
-    temp_inds = ComputeOneWayExtensions();
+    amrex::Array1D<int, 0, 2> temp_inds = ComputeOneWayExtensions();
     amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
-    std::cout<< "Faces to be extended after one way extension x:\t" <<
-                N_ext_faces_after_one_way(0) <<std::endl;
-    std::cout<< "Faces to be extended after one way extension y:\t" <<
-                N_ext_faces_after_one_way(1) <<std::endl;
-    std::cout<< "Faces to be extended after one way extension z:\t" <<
-                N_ext_faces_after_one_way(2) <<std::endl;
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_one_way(0),
+                                            amrex::ParallelDescriptor::IOProcessorNumber());
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_one_way(1),
+                                            amrex::ParallelDescriptor::IOProcessorNumber());
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_one_way(2),
+                                            amrex::ParallelDescriptor::IOProcessorNumber());
+    amrex::Print()<< "Faces to be extended after one way extension in x:\t" <<
+                     N_ext_faces_after_one_way(0) <<std::endl;
+    amrex::Print()<< "Faces to be extended after one way extension in y:\t" <<
+                     N_ext_faces_after_one_way(1) <<std::endl;
+    amrex::Print()<< "Faces to be extended after one way extension in z:\t" <<
+                     N_ext_faces_after_one_way(2) <<std::endl;
     ComputeEightWaysExtensions(temp_inds);
     amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
-    std::cout<< "Faces to be extended after eight ways extension x:\t" <<
-                N_ext_faces_after_eight_ways(0) <<std::endl;
-    std::cout<< "Faces to be extended after eight ways extension y:\t" <<
-             N_ext_faces_after_eight_ways(1) <<std::endl;
-    std::cout<< "Faces to be extended after eight ways extension z:\t" <<
-             N_ext_faces_after_eight_ways(2) <<std::endl;
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_eight_ways(0),
+                                            amrex::ParallelDescriptor::IOProcessorNumber());
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_eight_ways(1),
+                                            amrex::ParallelDescriptor::IOProcessorNumber());
+    amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_eight_ways(2),
+                                            amrex::ParallelDescriptor::IOProcessorNumber());
+    amrex::Print()<< "Faces to be extended after eight ways extension in x:\t" <<
+                     N_ext_faces_after_eight_ways(0) <<std::endl;
+    amrex::Print()<< "Faces to be extended after eight ways extension in y:\t" <<
+                     N_ext_faces_after_eight_ways(1) <<std::endl;
+    amrex::Print()<< "Faces to be extended after eight ways extension ins z:\t" <<
+                     N_ext_faces_after_eight_ways(2) <<std::endl;
+
     if (N_ext_faces_after_eight_ways(0) > 0) {
         amrex::Abort("Some x faces could not be extended");
     }
@@ -442,8 +457,6 @@ WarpX::ComputeOneWayExtensions() {
 
                                 flag_info_face_x(i, j + j_n, k + k_n) = 2;
                                 // Add the area to the intruding face.
-                                // TODO: this is not needed here, but it's needed in the multi-face
-                                //  extensions. Should I remove it?
                                 Sx_mod(i, j, k) += Sx_ext;
                                 flag_ext_face_x(i, j, k) = false;
                             }
@@ -539,8 +552,6 @@ WarpX::ComputeOneWayExtensions() {
 
                                     flag_info_face_y(i + i_n, j, k + k_n) = 2;
                                     // Add the area to the intruding face.
-                                    // TODO: this is not needed here, but it's needed in the multi-face
-                                    //  extensions. Should I remove it?
                                     Sy_mod(i, j, k) = Sy(i, j, k) + Sy_ext;
                                     flag_ext_face_y(i, j, k) = false;
                                 }
@@ -639,8 +650,6 @@ WarpX::ComputeOneWayExtensions() {
 
                                     flag_info_face_z(i + i_n, j + j_n, k) = 2;
                                     // Add the area to the intruding face.
-                                    // TODO: this is not needed here, but it's needed in the multi-face
-                                    //  extensions. Should I remove it?
                                     Sz_mod(i, j, k) = Sz(i, j, k) + Sz_ext;
                                     flag_ext_face_z(i, j, k) = false;
                                 }
@@ -715,8 +724,6 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 return n_borrow;
                 },
             [=] AMREX_GPU_DEVICE (int icell, int ps){
-                //TODO:Here we add n_borrow_offset_x to ps to skip in the vectors the elements where
-                //     we saved the one cell extensions. This has to be tested!
                 ps += n_borrow_offset_x;
 
                 amrex::Dim3 cell = box.atOffset(icell).dim3();
@@ -806,10 +813,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 }
             },
             amrex::Scan::Type::exclusive);
-
-        std::cout<<nelems_x<<std::endl;
     }
-
 
     idim = 1;
     for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
@@ -945,8 +949,6 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             amrex::Scan::Type::exclusive
         );
-        std::cout<<nelems_y<<std::endl;
-
     }
 
     // Do the extensions in the z-plane
@@ -1082,11 +1084,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     }
                 }
             },
-            amrex::Scan::Type::exclusive
-        );
-
-        std::cout<<nelems_z<<std::endl;
-
+            amrex::Scan::Type::exclusive);
     }
 #else
     amrex::ignore_unused(temp_inds);
