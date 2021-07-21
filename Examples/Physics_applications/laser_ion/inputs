@@ -25,7 +25,10 @@ amr.n_cell = 2688 3712
 amr.max_level = 0
 geometry.prob_lo = -7.5e-6 -5.e-6
 geometry.prob_hi =  7.5e-6 25.e-6
-geometry.is_periodic = 0 0  # non-periodic (default)
+
+# Boundary condition
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
 
 # Order of particle shape factors
 algo.particle_shape = 3

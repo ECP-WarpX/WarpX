@@ -8,9 +8,12 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys = 0
-geometry.is_periodic = 0 0 0
 geometry.prob_lo = -50.e-6 -50.e-6 -50.e-6
 geometry.prob_hi =  50.e-6  50.e-6  50.e-6
+
+# Boundary condition
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
 
 # Order of particle shape factors
 algo.particle_shape = 3

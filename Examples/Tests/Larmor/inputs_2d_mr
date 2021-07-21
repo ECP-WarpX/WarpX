@@ -19,12 +19,14 @@ warpx.fine_tag_hi =  0.8   0.8
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0     0     0      # Is periodic?
 geometry.prob_lo     = -2.0  -2.0         # physical domain
 geometry.prob_hi     =  2.0   2.0
 
+# Boundary condition
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
 # PML
-warpx.do_pml = 1
 warpx.pml_ncell = 10
 
 particles.B_ext_particle_init_style = "constant"

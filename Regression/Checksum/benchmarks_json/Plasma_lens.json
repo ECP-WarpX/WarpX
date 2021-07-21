@@ -1,0 +1,23 @@
+{
+  "electrons": {
+    "particle_cpu": 1.0,
+    "particle_id": 2.0,
+    "particle_momentum_x": 2.2518779586696112e-26,
+    "particle_momentum_y": 1.8015029214643703e-26,
+    "particle_momentum_z": 3.6437524496743613e-26,
+    "particle_position_x": 0.33581536370442583,
+    "particle_position_y": 0.2686524426674559,
+    "particle_position_z": 3.979988490885961
+  },
+  "lev=0": {
+    "Bx": 0.0,
+    "By": 0.0,
+    "Bz": 0.0,
+    "Ex": 8.557217761445071e-07,
+    "Ey": 9.086796476605627e-07,
+    "Ez": 1.2874219492176113e-06,
+    "jx": 0.0,
+    "jy": 0.0,
+    "jz": 0.0
+  }
+}

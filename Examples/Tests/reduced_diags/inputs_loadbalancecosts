@@ -13,9 +13,12 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   =  0            # 0: Cartesian
-geometry.is_periodic =  1    1    1  # Is periodic?
 geometry.prob_lo     =  0.   0.   0. # physical domain
 geometry.prob_hi     =  4.   4.   4.
+
+# Boundary condition
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 # Algorithms
 algo.current_deposition = esirkepov
