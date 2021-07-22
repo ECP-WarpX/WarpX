@@ -1825,6 +1825,9 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
     RealVect dx_vect(dx[0], dx[2]);
 #endif
 
+    amrex::Real solver_dt = dt[lev];
+    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
+
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
                                                   dm,
@@ -1833,7 +1836,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   do_nodal,
                                                   m_v_galilean,
                                                   dx_vect,
-                                                  dt[lev],
+                                                  solver_dt,
                                                   update_with_rho,
                                                   fft_do_time_averaging,
                                                   J_linear_in_time,
