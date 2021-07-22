@@ -18,7 +18,6 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
-
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_AmrParGDB.H>
@@ -233,13 +232,18 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 
         for (int j = PIdx::nattribs; j < NumRealComps(); ++j)
         {
-            // get the next attribute from attr array
-            Vector<ParticleReal> attr_vals(np);
-            for (int i = ibegin; i < iend; ++i)
-            {
-                attr_vals[i-ibegin] = attr[j - PIdx::nattribs + 1 + i*nattr];
+            if (j - PIdx::nattribs < nattr - 1) {
+                // get the next attribute from attr array
+                Vector<ParticleReal> attr_vals(np);
+                for (int i = ibegin; i < iend; ++i)
+                {
+                    attr_vals[i-ibegin] = attr[j - PIdx::nattribs + 1 + i*nattr];
+                }
+                pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
             }
-            pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
+            else {
+                pinned_tile.push_back_real(j, np, 0.0);
+            }
         }
 
         auto old_np = particle_tile.numParticles();
