@@ -715,6 +715,22 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
+class EmbeddedBoundary(picmistandard.base._ClassWithInit):
+    """Custom class to handle set up of embedded boundaries in WarpX.  If
+    embedded boundary initialization is added to picmistandard this can be
+    changed to inherit that functionality."""
+
+    def __init__(self, implicit_function, potential=None, **kw):
+        self.implicit_function = implicit_function
+        self.potential = potential
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+        pywarpx.warpx.eb_implicit_function = self.implicit_function
+        pywarpx.warpx.__setattr__('eb_potential(t)', self.potential)
+
+
 class Simulation(picmistandard.PICMI_Simulation):
     def init(self, kw):
 
@@ -734,6 +750,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
+
+        self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -794,6 +812,9 @@ class Simulation(picmistandard.PICMI_Simulation):
                                               self.initialize_self_fields[i],
                                               self.injection_plane_positions[i],
                                               self.injection_plane_normal_vectors[i])
+
+        if self.embedded_boundary is not None:
+            self.embedded_boundary.initialize_inputs()
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
