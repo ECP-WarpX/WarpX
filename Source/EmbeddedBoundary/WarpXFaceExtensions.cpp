@@ -95,7 +95,7 @@ WarpX::ComputeFaceExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> con
         amrex::Abort("Some z faces could not be extended");
     }
 #else
-    amrex::ignore_unused(Bfield, area_mod, edge_lengths, face_areas, lag_ext_face, flag_inf_face,
+    amrex::ignore_unused(Bfield, area_mod, edge_lengths, face_areas, flag_ext_face, flag_info_face,
                          borrowing, lev, flag_cp);
 #endif
 }
@@ -230,7 +230,7 @@ WarpX::ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
 
     return n_borrow;
 #else
-    amrex::ignore_unused(S_ext, S_red, S, flag_info_face, flag_ext_face, idim);
+    amrex::ignore_unused(cell, S_ext, S_red, flag_info_face, flag_ext_face, idim);
     return 0;
 #endif
 }
@@ -712,7 +712,7 @@ WarpX::ComputeOneWayExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> c
     return {nelems_x, nelems_y, nelems_z};
 #else
     amrex::ignore_unused(Bfield, area_mod, edge_lengths, face_areas, flag_ext_face, flag_info_face,
-                         borrowing, lev, flag_cp)
+                         borrowing, lev, flag_cp);
     return {0, 0, 0};
 #endif
 }
@@ -1152,7 +1152,7 @@ WarpX::ComputeEightWaysExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3
     }
 #else
     amrex::ignore_unused(Bfield, area_mod, edge_lengths, face_areas, flag_ext_face, flag_info_face,
-                         borrowing, temp_inds, lev, flag_cp)
+                         borrowing, temp_inds, lev, flag_cp);
 #endif
 }
 
