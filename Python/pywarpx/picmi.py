@@ -748,7 +748,7 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
                     val = val.name
                 collision.add_new_attr(process+'_'+key, val)
 
-                
+
 class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """Custom class to handle set up of embedded boundaries in WarpX.  If
     embedded boundary initialization is added to picmistandard this can be
@@ -757,9 +757,9 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     def __init__(self, implicit_function, potential=None, **kw):
         self.implicit_function = implicit_function
         self.potential = potential
-        
+
         self.handle_init(kw)
-        
+
     def initialize_inputs(self):
         pywarpx.warpx.eb_implicit_function = self.implicit_function
         pywarpx.warpx.__setattr__('eb_potential(t)', self.potential)
