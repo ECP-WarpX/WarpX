@@ -56,12 +56,11 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
          // v_galilean is 0: use standard PSATD algorithm
         algorithm = std::make_unique<PsatdAlgorithmRZ>(
             k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, dt,
-            update_with_rho, fft_do_time_averaging, J_linear_in_time);
+            update_with_rho, fft_do_time_averaging, J_linear_in_time, dive_cleaning, divb_cleaning);
     } else {
         // Otherwise: use the Galilean algorithm
         algorithm = std::make_unique<GalileanPsatdAlgorithmRZ>(
-            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt,
-            update_with_rho, fft_do_time_averaging, J_linear_in_time);
+            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt, update_with_rho);
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans

@@ -23,7 +23,9 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                          bool const nodal, amrex::Real const dt_step,
                          bool const update_with_rho,
                          const bool time_averaging,
-                         const bool J_linear_in_time);
+                         const bool J_linear_in_time,
+                         const bool dive_cleaning,
+                         const bool divb_cleaning);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
 
@@ -71,6 +73,8 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         bool m_update_with_rho;
         bool m_time_averaging;
         bool m_J_linear_in_time;
+        bool m_dive_cleaning;
+        bool m_divb_cleaning;
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
 };
 

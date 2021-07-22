@@ -1454,8 +1454,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheCellVector();
         jz_nodal_flag  = IntVect::TheCellVector();
         rho_nodal_flag = IntVect::TheCellVector();
-        F_flag = IntVect::TheCellVector();
-        G_flag = IntVect::TheCellVector();
+        F_nodal_flag = IntVect::TheCellVector();
+        G_nodal_flag = IntVect::TheCellVector();
     }
 
     // With RZ multimode, there is a real and imaginary component

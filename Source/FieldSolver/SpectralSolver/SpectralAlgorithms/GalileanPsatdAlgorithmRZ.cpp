@@ -22,17 +22,13 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
                                                     bool const nodal,
                                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                                     amrex::Real const dt,
-                                                    bool const update_with_rho,
-                                                    const bool time_averaging,
-                                                    const bool J_linear_in_time)
+                                                    bool const update_with_rho)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
        m_spectral_index(spectral_index),
        m_dt(dt),
        m_v_galilean(v_galilean),
-       m_update_with_rho(update_with_rho),
-       m_time_averaging(time_averaging),
-       m_J_linear_in_time(J_linear_in_time)
+       m_update_with_rho(update_with_rho)
 {
 
     // Allocate the arrays of coefficients
@@ -47,9 +43,6 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
     T_rho_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
 
     coefficients_initialized = false;
-
-    // TODO Implement time averaging and J linear in time, and remove this
-    amrex::ignore_unused(m_time_averaging, m_J_linear_in_time);
 }
 
 /* Advance the E and B field in spectral space (stored in `f`)
