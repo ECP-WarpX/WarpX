@@ -293,8 +293,7 @@ WarpX::MarkCells(){
                 // Does this face need to be extended? This is the same as
                 // flag_info_face(i, j, k) = 0 here but it is modified later to keep track o which
                 // faces need multi-cell extension
-                flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab and !amrex::isnan(S(i, j, k))
-                                              and S(i, j, k) > 0);
+                flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab and S(i, j, k) > 0);
                 if(flag_ext_face(i, j, k)){
                     flag_info_face(i, j, k) = 0;
                 }
