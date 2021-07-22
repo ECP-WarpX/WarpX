@@ -124,12 +124,12 @@ WarpX::ComputeEdgeLengths () {
                 });
             } else if (fab_type == amrex::FabType::covered) {
                 // every cell in box is all covered
-                amrex::ParallelFor(box, [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 0.;
                 });
             } else {
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
-                amrex::ParallelFor(box, [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     if (edge_cent(i, j, k) == amrex::Real(-1.0)) {
                         // This edge is all covered
                         edge_lengths_dim(i, j, k) = 0.;
@@ -168,17 +168,17 @@ WarpX::ComputeFaceAreas () {
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
-                amrex::ParallelFor(box, [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(1.);
                 });
             } else if (fab_type == amrex::FabType::covered) {
                 // every cell in box is all covered
-                amrex::ParallelFor(box, [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(0.);
                 });
             } else {
                 auto const &face = area_frac[idim]->const_array(mfi);
-                amrex::ParallelFor(box, [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = face(i, j, k);
                 });
             }
@@ -203,7 +203,7 @@ WarpX::ScaleEdges () {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
-            amrex::ParallelFor(box, [=](int i, int j, int k) {
+            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
             });
         }
@@ -238,7 +238,7 @@ WarpX::ScaleAreas() {
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
 
-            amrex::ParallelFor(box, [=](int i, int j, int k) {
+            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                                 face_areas_dim(i, j, k) *= full_area;
                                 mod_areas_dim(i, j, k) = face_areas_dim(i, j, k);
             });
@@ -276,7 +276,7 @@ WarpX::MarkCells(){
             amrex::Real dy = cell_size[1];
             amrex::Real dz = cell_size[2];
 
-            amrex::ParallelFor(box, [=](int i, int j, int k) {
+            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Minimal area for this cell to be stable
                 double S_stab;
                 if(idim == 0){

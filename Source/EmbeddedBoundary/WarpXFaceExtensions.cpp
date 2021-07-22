@@ -15,7 +15,7 @@ WarpX::CountExtFaces() {
         for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             amrex::Box const &box = mfi.validbox();
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            amrex::ParallelFor(box, [=, &sum](int i, int j, int k) {
+            amrex::ParallelFor(box, [=, &sum] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Do I need to flag the reduction somehow?
                 sum = sum + flag_ext_face(i, j, k);
             });
