@@ -389,7 +389,7 @@ WarpX::ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
 
     return n_borrow;
 #else
-    amrex::ignore_unused(S_ext, S_red, S, flag_info_face, idim);
+    amrex::ignore_unused(cell, S_ext, S_red, S, flag_info_face, idim);
     return 0;
 #endif
 }
