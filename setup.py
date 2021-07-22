@@ -216,6 +216,8 @@ else:
 # Include embedded boundary functionality
 if WarpX_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
     WarpX_EB = "ON"
+else:
+    WarpX_EB = "OFF"
 
 # Modern Electron variables read environment variables
 if ME_Solver.upper() in ['1', 'ON', 'TRUE', 'YES']:
