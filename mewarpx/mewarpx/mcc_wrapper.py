@@ -54,9 +54,8 @@ class MCC():
             raise ValueError("Must specify one of N_INERT or P_INERT")
         # set N using ideal gas law if only P is specified
         else:
-            # convert from cm^-3 to m^-3
             self.N_INERT = (
-                mwxutil.ideal_gas_density(self.P_INERT, self.T_INERT) * 1e6
+                mwxutil.ideal_gas_density(self.P_INERT, self.T_INERT)
             )
 
         self.scraper = scraper

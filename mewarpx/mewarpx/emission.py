@@ -1,12 +1,14 @@
 """
 Module for various types of particle emission in WarpX.
 """
-
+# import collections
 import logging
 import warnings
 
+import numba
 import numpy as np
 
+import skimage.measure
 from pywarpx import callbacks, _libwarpx, picmi
 
 import mewarpx.util as mwxutil
@@ -57,12 +59,14 @@ class Injector(object):
         the remainder. If unique_particles is False, WarpX essentially does the
         particle discarding, so each processor should inject the whole number
         of particles to start.
+
         Arguments:
             npart_total (int): Integer number of total particles to insert this
                 timestep.
             unique_particles (bool): If True, WarpX keeps all particles sent to
                 it. If False, it only keeps a processor's fraction of total
                 particles.
+
         Returns:
             npart (int): Integer number of total particles for this processor
                 to insert this timestep.
@@ -94,6 +98,7 @@ class Injector(object):
     def init_injectedparticles(self, fieldlist):
         """Set up the injected particles array. Call before
         append_injectedparticles.
+
         Arguments:
             fieldlist (list): List of string titles for the fields. Order is
                 important; it must match the order for future particle appends
@@ -109,11 +114,13 @@ class Injector(object):
         """Handles transforming raw particle information to the information
         used to record particles as a function of time. Also handles parallel
         sum and appending to the data array the current amount of injection.
+
         Note:
             Assumes the fixed form of fields given in Injector().  Doesn't
             check since this is called many times.
             Since a parallelsum is performed, call this with only the species
             argument if no particles are being added by this processor.
+
         Arguments:
             species: [TODO - adapt to WarpX]
             E_total (np.ndarray): Array of length npart with E_total values.
@@ -148,6 +155,7 @@ class Injector(object):
 
     def append_injectedparticles(self, data):
         """Append one or more lines of injected particles data.
+
         Arguments:
             data (np.ndarray): Array of shape (m) or (n, m) where m is the
                 number of fields and n is the number of rows of data to append.
@@ -156,9 +164,11 @@ class Injector(object):
 
     def get_injectedparticles(self, clear=False):
         """Retrieve a copy of injectedparticles data.
+
         Arguments:
             clear (bool): If True, clear the particle data rows entered (field
                 names are still initialized as before). Default False.
+
         Returns:
             injectedparticles_dict (collections.OrderedDict): Keys are the
                 originally passed field strings for lost particles. Values are
@@ -176,6 +186,7 @@ class FixedNumberInjector(Injector):
                  weight=0., rseed=None,
                  name=None, unique_particles=True):
         """Sets up user-specified injection with fixed timestep and weights.
+
         Arguments:
             emitter (:class:`mewarpx.emission.Emitter`): Emitter object that
                 will specify positions and velocities of particles to inject.
@@ -407,7 +418,6 @@ class ThermionicInjector(Injector):
             )
 
 
-
 class BaseEmitter(object):
 
     """Parent class of both Emitter (which handles injection from a surface or
@@ -425,7 +435,6 @@ class BaseEmitter(object):
         - ``geoms`` is a property containing a list of simulation geometries
           supported by the Emitter, as strings
     """
-
     # Stores a list of functions that are used to adjust variable particle
     # weights.
     _wfnlist = None
@@ -471,7 +480,6 @@ class BaseEmitter(object):
         """Change standard arrays into format expected by an injector.
         The transfer to an injector uses a dict so that optional
         arguments can be passed, or additional arguments added.
-
         Arguments:
             x (np.ndarray): n-shape position array
             y (np.ndarray): n-shape position array
@@ -495,6 +503,10 @@ class BaseEmitter(object):
     def _get_E_total(self, vx, vy, vz, q, m, w):
         """Calculate initial particle energies.
 
+        Note:
+            The conductor voltage V of the conductor the particle is ejected from
+            must also be set for this object.
+
         Arguments:
             vx (np.ndarray): n-length array of velocity x-components
             vy (np.ndarray): n-length array of velocity y-components
@@ -502,9 +514,6 @@ class BaseEmitter(object):
             q (float): Charge of the particles, usually species.sq.
             m (float): Mass of the particles, usually species.sm.
             w (np.ndarray): Variable particle weight, n-shape
-
-        The conductor voltage V of the conductor the particle is ejected from
-        must also be set for this object.
         """
         V = self.getvoltage()
 
@@ -638,8 +647,8 @@ class BaseEmitter(object):
 class Emitter(BaseEmitter):
 
     """Parent class for emission from a surface.
-    All Emitter objects are expected to contain:
 
+    All Emitter objects are expected to contain:
         - ``area`` is a property containing the area in m^2
         - ``cell_count`` is a property containing the number of mesh cells
           spanned by the Emitter
@@ -650,7 +659,6 @@ class Emitter(BaseEmitter):
         - ``get_normals()`` returns the normals for a set of particle
           coordinates.
     """
-
     area = None
     cell_count = None
     geoms = []
@@ -707,6 +715,11 @@ class Emitter(BaseEmitter):
     def apply_Schottky_weights(self, particle_dict):
         """Variable weight function for field-enhanced Schottky emission.
 
+        Notes:
+            This function requires the "T" attribute of the Emitter to be set
+            for specifying the emitter temperature in Kelvin, and also requires
+            the Emitter subclass to implement a get_normals() function.
+
         Arguments:
             particle_dict (dict): Particle dictionary returned by
                 get_newparticles() during standard thermionic injection. Any
@@ -716,11 +729,6 @@ class Emitter(BaseEmitter):
 
         Returns:
             new_weights (np.ndarray): 1D array of updated particle weights.
-
-        Notes:
-            This function requires the "T" attribute of the Emitter to be set
-            for specifying the emitter temperature in Kelvin, and also requires
-            the Emitter subclass to implement a get_normals() function.
         """
         raise NotImplementedError
 
@@ -741,7 +749,6 @@ class Emitter(BaseEmitter):
 
 
 class ZPlaneEmitter(Emitter):
-
     """This is the standard injection for a planar cathode."""
 
     geoms = ['Z', 'XZ', 'XYZ']
@@ -856,4 +863,199 @@ class ZPlaneEmitter(Emitter):
         """
         normals = np.zeros((len(x), 3))
         normals[:, 2] = -self.zsign
+        return normals
+
+
+class ArbitraryEmitter2D(Emitter):
+
+    """ ArbitraryEmitter2D class takes in a conductor, calculates an approximate
+    surface that encloses the conductor and then sets up the appropriate
+    emitting surfaces, given a number of particles to emit.
+    """
+    geoms = ['XZ']
+
+    def __init__(self, conductor, T, res_fac=5., transverse_fac=1.0, **kwargs):
+        """Construct the emitter based on conductor object and temperature.
+
+        Arguments:
+            conductor (mewarpx.assemblies object): Conductor to emit from.
+            T (float): Temperature in Kelvin.
+            res_fac (float): Level of resolution beyond the grid resolution to
+                use for calculating shape contours.
+            transverse_fac (float): Scale the transverse energy distribution by
+                this factor. Default 1. See
+                :func:`mewarpx.util.get_velocities` for details.
+            kwargs (dict): Any other keyword arguments supported by the parent
+                Emitter constructor (such as "use_Schottky" or
+                "emission_type").
+        """
+        # Default Emitter initialization.
+        super(ArbitraryEmitter2D, self).__init__(T=T, conductor=conductor, **kwargs)
+        # Save input parameters
+        self.res_fac = res_fac
+        self.transverse_fac = transverse_fac
+
+        # Generate grid enclosed in bounding box
+        self.dx = mwxrun.dx/res_fac
+        self.dy = 1.
+        self.dz = mwxrun.dz/res_fac
+
+        self.dA = np.sqrt(self.dx*self.dz)
+
+        # A small delta is added to the maxima here; this ensures the last point
+        # is included. Without it, floating point errors determine whether or
+        # not the last point is included.
+        self.xvec = np.arange(
+            mwxrun.xmin, mwxrun.xmax + self.dx/1000., self.dx)
+        self.yvec = [0.]
+        self.zvec = np.arange(
+            mwxrun.zmin, mwxrun.zmax + self.dz/1000., self.dz)
+
+        [X, Y, Z] = np.squeeze(np.meshgrid(self.xvec, self.yvec, self.zvec,
+                                           indexing='xy'))
+        oshape = X.shape
+        X = X.flatten()
+        Y = Y.flatten()
+        Z = Z.flatten()
+
+        inside = np.reshape(
+            self.conductor.isinside(X, Y, Z, aura=self.dA/5.),
+            oshape)
+
+        self.contours = np.squeeze(skimage.measure.find_contours(
+            inside, 0.5))
+        self.contours[:, 0] = np.interp(self.contours[:, 0],
+                                        np.arange(self.xvec.size),
+                                        self.xvec)
+        self.contours[:, 1] = np.interp(self.contours[:, 1],
+                                        np.arange(self.zvec.size),
+                                        self.zvec)
+
+        self.centers = np.array(
+            [(self.contours[1:, 0] + self.contours[:-1, 0])/2.,
+             (self.contours[1:, 1] + self.contours[:-1, 1])/2.]).T
+        self.dvec = np.array(
+            [self.contours[1:, 0] - self.contours[:-1, 0],
+             self.contours[1:, 1] - self.contours[:-1, 1]]).T
+
+        # Calculate the distance of each segment & sum to calculate the area
+        self.distances = np.sqrt(self.dvec[:, 0]**2 + self.dvec[:, 1]**2)
+        self.area = sum(self.distances)
+        self.cell_count = self.area / min(mwxrun.dx, mwxrun.dz)
+        self.CDF = np.cumsum(self.distances)/self.area
+
+        # Calculate Normal Vector by taking cross product with y-hat
+        ndvec = self.dvec/np.tile(self.distances, (2, 1)).T
+        marching_normal = np.zeros(self.dvec.shape)
+        marching_normal[:, 0] = -ndvec[:, 1]
+        marching_normal[:, 1] = ndvec[:, 0]
+
+        # Check to make sure normal plus center is outside of conductor
+        partdist = self.dA*float(self.res_fac)/2.
+
+        pos = self.centers + marching_normal*partdist
+        px = pos[:, 0]
+        py = np.zeros_like(px)
+        pz = pos[:, 1]
+
+        nhat = self.conductor.calculatenormal(px, py, pz)
+        self.normal = nhat[[0, 2], :].T
+
+    def _get_xv_coords(self, npart, m, rseed):
+        """Get particle coordinates given particle number.
+        See :func:`mewarpx.emitter.get_newparticles` for details.
+        """
+        if rseed is not None:
+            nprstate = np.random.get_state()
+            np.random.seed(rseed)
+            # rseedv is passed to get velocities. The basic rseed here is used
+            # for positions, below.
+            rseedv = np.random.randint(1000000000)
+        else:
+            rseedv = None
+
+        # Draw Random Numbers to determine which face to emit from
+        self.contour_idx = np.searchsorted(self.CDF, np.random.rand(npart))
+
+        vels = np.column_stack(mwxutil.get_velocities(num_samples=npart, T=self.T, m=m,
+                                                        rseed=rseedv,
+                                                        transverse_fac=self.transverse_fac,
+                                                        emission_type=self.emission_type))
+
+        # Rotate velocities based on angle of normal
+        newvels = self.convert_vel_zhat_nhat(vels, self.normal[self.contour_idx])
+        vx = np.asarray(newvels[:, 0], order="C")
+        vy = np.asarray(newvels[:, 1], order="C")
+        vz = np.asarray(newvels[:, 2], order="C")
+
+        # Now get positions
+        pos1 = self.contours[self.contour_idx, :]
+        positions = (pos1 +
+                     (np.tile(np.random.rand(npart), (2, 1)).T
+                      * self.dvec[self.contour_idx, :]))
+
+        x = np.asarray(positions[:, 0], order="C")
+        y = np.asarray(0., order="C")
+        z = np.asarray(positions[:, 1], order="C")
+
+        if rseed is not None:
+            np.random.set_state(nprstate)
+
+        return x, y, z, vx, vy, vz
+
+    @staticmethod
+    # Synthetic tests showed 18 ms to 660us change from using np.dot +
+    # numba compilation. Without these changes, this function was taking 2-4% of
+    # some run times so the improvement is warranted.
+    @numba.jit(nopython=True)
+    def convert_vel_zhat_nhat(vels, nhat):
+        """Create a rotation matrix for Zhat to Nhat"""
+        Zhat = np.array([0., 1.])
+
+        newvels = np.zeros(vels.shape)
+
+        for ii in range(vels.shape[0]):
+            Cvec = Zhat - nhat[ii, :]
+            Cvec2 = np.dot(Cvec, Cvec)
+
+            theta = np.arccos(1. - Cvec2/2.)
+
+            # Check to see if normal is pointing toward -xhat
+            # Resolves angle ambiguity in law of cosines
+            if nhat[ii, 0] < 0.:
+                theta = -theta
+
+            # Rotate in XZ plane, keeping Y the same
+            R = np.array([[np.cos(theta), 0., np.sin(theta)],
+                          [0., 1., 0.],
+                          [-np.sin(theta), 0., np.cos(theta)]])
+
+            newvels[ii, :] = np.dot(R, vels[ii, :])
+
+        return newvels
+
+    def get_normals(self, x, y, z):
+        """Calculate local surface normal at specified coordinates.
+        Arguments:
+            x (np.ndarray): x-coordinates of emitted particles (in meters).
+            y (np.ndarray): y-coordinates of emitted particles (in meters).
+            z (np.ndarray): z-coordinates of emitted particles (in meters).
+
+        Returns:
+            normals (np.ndarray): nx3 array containing the outward surface
+                normal vector at each particle location.
+        """
+        # Since we've already pre-computed all the normals and already picked
+        # the right ones during the call to _get_xv_coords(), we can ignore the
+        # coordinate arguments here entirely and use the recently saved
+        # "contour_idx" values for indexing the pre-tabulated normals. To
+        # prevent this from being abused, we'll first check that the length of
+        # the coordinate lists matches that of the contour_idx list.
+        if len(x) != len(self.contour_idx):
+            raise ValueError('Length of particle coordinate list does not match'
+                             + ' the most recent number of emitted particles!')
+
+        normals = np.zeros((len(x), 3))
+        normals[:, 0] = self.normal[self.contour_idx, 0]
+        normals[:, 2] = self.normal[self.contour_idx, 1]
         return normals

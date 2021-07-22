@@ -1281,7 +1281,6 @@ def get_mesh_phi_fp(level, include_ghosts=True):
 
 def get_gathered_phi_fp(level):
     '''
-
     This returns a single numpy array containing the mesh electrostatic
     potential data on the grid gathered from all processes. This version returns
     the density on the fine patch for the given level.
@@ -1300,13 +1299,16 @@ def get_gathered_phi_fp(level):
 
     return _get_mesh_field_list(libwarpx.warpx_getGatheredPhiFP, level, None, True)
 
+
 def set_phi_grid_fp(level):
     """This writes new phi data to warpx"""
     libwarpx.warpx_setPhiGridFP(level)
 
+
 def get_pointer_full_phi_fp(level):
     """This returns the full phi grid multifab from warpx"""
     return _get_mesh_field_list(libwarpx.warpx_getPointerFullPhiFP, level, None, True)
+
 
 def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
     assert(0 <= level and level <= libwarpx.warpx_finestLevel())

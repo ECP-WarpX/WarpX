@@ -4,6 +4,7 @@ Assembly implementations.
 
 from mewarpx.mwxrun import mwxrun
 from pywarpx import picmi
+import numpy as np
 
 class Assembly(object):
 
@@ -54,8 +55,7 @@ class ZPlane(Assembly):
 
         self.zsign = int(round(zsign))
         if self.zsign not in [-1, 1]:
-            raise ValueError("self.zsign = {} is not either -1 or 1.".format(
-                self.zsign))
+            raise ValueError(f"self.zsign = {self.zsign} is not either -1 or 1.")
 
 
 class Cathode(ZPlane):
@@ -80,7 +80,7 @@ class Cylinder(Assembly):
     """An infinitely long Cylinder pointing in the y-direction."""
 
     def __init__(self, center_x, center_z, radius, V, T, WF, name,
-                 install_in_fieldsolver=True):
+                 install_in_simulation=True):
         """Basic initialization.
 
         Arguments:
@@ -93,23 +93,64 @@ class Cylinder(Assembly):
             T (float): Temperature (K)
             WF (float): Work function (eV)
             name (str): Assembly name
-            install_in_fieldsolver (float): If True and the Assembly is an
-                embedded boundary it will be included in the WarpX fieldsolver
+            install_in_simulation (bool): If True and the Assembly is an
+                embedded boundary it will be included in the WarpX simulation
         """
         super(Cylinder, self).__init__(V=V, T=T, WF=WF, name=name)
-
         self.center_x = center_x
         self.center_z = center_z
         self.radius = radius
-
         self.implicit_function = (
             f"-((x-{self.center_x})**2+(z-{self.center_z})**2-{self.radius}**2)"
         )
 
-        if install_in_fieldsolver:
-            self._install_in_fieldsolver()
+        if install_in_simulation:
+            self._install_in_simulation()
 
-    def _install_in_fieldsolver(self):
+    def isinside(self, X, Y, Z, aura):
+        """
+        Calculates which grid tiles are within the cylinder.
+
+        Arguments:
+            X (np.ndarray): array of x coordinates of flattened grid.
+            Y (np.ndarray): array of y coordinates of flattened grid.
+            Z (np.ndarray): array of z coordinates of flattened grid.
+            aura (float): extra space around the conductor that is considered inside. Useful
+                for small, thin conductors that don't overlap any grid points. In
+                units of meters.
+
+        Returns:
+            result (np.ndarray): array of flattened grid where all tiles
+                inside the cylinder are 1, and other tiles are 0.
+        """
+        dist_to_center = (X - self.center_x)**2 + (Z - self.center_z)**2
+        boundary = (self.radius + aura)**2
+        result = np.where(dist_to_center <= boundary, 1, 0)
+
+        return result
+
+    def calculatenormal(self, px, py, pz):
+        """
+        Calculates Normal of particle inside/outside of conductor to nearest
+        surface of conductor
+
+        Arguments:
+            px (np.ndarray): x-coordinate of particle in meters.
+            py (np.ndarray): y-coordinate of particle in meters.
+            pz (np.ndarray): z-coordinate of particle in meters.
+
+        Returns:
+            nhat (np.ndarray): Normal of particles of conductor to nearest
+                surface of conductor.
+        """
+        # distance from center of cylinder
+        dist = np.sqrt((px - self.center_x)**2 + (pz - self.center_z)**2)
+        nhat = np.zeros([3, len(px)])
+        nhat[0, :] = (px - self.center_x) / dist
+        nhat[2, :] = (pz - self.center_z) / dist
+        return nhat
+
+    def _install_in_simulation(self):
         """Function to pass this EB object to the WarpX simulation."""
 
         if mwxrun.simulation.embedded_boundary is not None:
