@@ -119,7 +119,7 @@ WarpX::ComputeEdgeLengths () {
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
-                amrex::ParallelFor(box, [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 1.;
                 });
             } else if (fab_type == amrex::FabType::covered) {
