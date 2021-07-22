@@ -289,15 +289,16 @@ WarpX::MarkCells(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths
                  std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_ext_face,
                  int lev, bool flag_cp){
 #ifdef AMREX_USE_EB
-    auto const &cell_size = CellSize(maxLevel());
 
     int lev_loc = lev;
     if(flag_cp and lev > 0){
         lev_loc = lev -1;
     }
 
+    auto const &cell_size = CellSize(lev_loc);
+
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*Bfield_fp[lev][idim]); mfi.isValid(); ++mfi) {
             amrex::Box const &box = mfi.tilebox(face_areas[idim]->ixType().toIntVect());
 
             auto const &S = face_areas[idim]->array(mfi);
