@@ -1,5 +1,5 @@
 #include "WarpX.H"
-#include <math.h>
+#include <cmath>
 
 #ifdef AMREX_USE_EB
 #  include "Utils/WarpXUtil.H"
