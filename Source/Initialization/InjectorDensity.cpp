@@ -6,8 +6,16 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "InjectorDensity.H"
-#include "PlasmaInjector.H"
 
+#include "Initialization/CustomDensityProb.H"
+#include "Utils/WarpXUtil.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_ParmParse.H>
+
+#include <algorithm>
+#include <cctype>
+#include <vector>
 
 using namespace amrex;
 
@@ -17,7 +25,6 @@ void InjectorDensity::clear ()
     {
     case Type::parser:
     {
-        object.parser.m_parser.clear();
         break;
     }
     case Type::custom:

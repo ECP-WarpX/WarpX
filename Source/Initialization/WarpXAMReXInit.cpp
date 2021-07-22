@@ -7,8 +7,8 @@
 
 #include "Initialization/WarpXAMReXInit.H"
 
+#include <AMReX.H>
 #include <AMReX_ParmParse.H>
-
 
 namespace {
     /** Overwrite defaults in AMReX Inputs

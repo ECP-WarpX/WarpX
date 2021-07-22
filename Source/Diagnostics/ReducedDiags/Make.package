@@ -1,7 +1,9 @@
 CEXE_sources += MultiReducedDiags.cpp
 CEXE_sources += ReducedDiags.cpp
 CEXE_sources += ParticleEnergy.cpp
+CEXE_sources += ParticleMomentum.cpp
 CEXE_sources += FieldEnergy.cpp
+CEXE_sources += FieldMomentum.cpp
 CEXE_sources += BeamRelevant.cpp
 CEXE_sources += LoadBalanceCosts.cpp
 CEXE_sources += LoadBalanceEfficiency.cpp

@@ -8,38 +8,95 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
-#include "Utils/WarpX_Complex.H"
-#include "SpectralKSpace.H"
+#include "SpectralFieldData_fwd.H"
+
 #include "AnyFFT.H"
+#include "SpectralKSpace.H"
+#include "Utils/WarpX_Complex.H"
 
+#include <AMReX_BaseFab.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_IndexType.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Vector.H>
 
-#include <string>
+#include <AMReX_BaseFwd.H>
+
+#include <vector>
 
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
 
-/** Index for the regular fields, when stored in spectral space:
- *  - n_fields is automatically the total number of fields
- *  - divE reuses the memory slot for Bx, since Bx is not used when computing divE
- */
-struct SpectralFieldIndex {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
-};
+class SpectralFieldIndex
+{
+    public:
 
-/* Index for the regular fields + averaged fields, when stored in spectral space */
-struct SpectralAvgFieldIndex {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };
-  // n_fields is automatically the total number of fields
-};
+        /**
+         * \brief Constructor of the class SpectralFieldIndex
+         *
+         * Set integer indices to access data in spectral space
+         * and total number of fields to be stored.
+         *
+         * \param[in] update_with_rho   whether rho is used in the field update equations
+         * \param[in] time_averaging    whether the time averaging algorithm is used
+         * \param[in] J_linear_in_time  whether to use two currents computed at the beginning and
+         *                              the end of the time interval (instead of using one current
+         *                              computed at half time)
+         * \param[in] dive_cleaning     whether to use div(E) cleaning to account for errors in
+         *                              Gauss law (new field F in the update equations)
+         * \param[in] divb_cleaning     whether to use div(B) cleaning to account for errors in
+         *                              div(B) = 0 law (new field G in the update equations)
+         * \param[in] pml               whether the indices are used to access spectral data
+         *                              for the PML spectral solver
+         */
+        SpectralFieldIndex (const bool update_with_rho,
+                            const bool time_averaging,
+                            const bool J_linear_in_time,
+                            const bool dive_cleaning,
+                            const bool divb_cleaning,
+                            const bool pml);
 
-/** Index for the PML fields, when stored in spectral space,
- *  (n_fields is automatically set to the total number of fields)
- *  TODO How to include the diagonal components only when needed?
- */
-struct SpectralPMLIndex {
-  enum {Exx=0, Exy, Exz, Eyx, Eyy, Eyz, Ezx, Ezy, Ezz,
-        Bxx  , Bxy, Bxz, Byx, Byy, Byz, Bzx, Bzy, Bzz, Fx, Fy, Fz, Gx, Gy, Gz, n_fields};
+        /**
+         * \brief Default constructor
+         */
+        SpectralFieldIndex () = default;
+
+        /**
+         * \brief Default destructor
+         */
+        ~SpectralFieldIndex () = default;
+
+    // Total number of fields that are actually allocated
+    int n_fields;
+
+    // Indices overwritten in the constructor, for the fields that are actually allocated
+    // (index -1 will never be used, unless there is some bug in the code implementation,
+    // which would result in a runtime crash due to out-of-bound accesses that can be detected
+    // by running the code in DEBUG mode)
+
+    // Always
+    int Ex = -1, Ey = -1, Ez = -1;
+    int Bx = -1, By = -1, Bz = -1;
+    int Jx = -1, Jy = -1, Jz = -1;
+    int rho_old = -1, rho_new = -1, divE = -1;
+
+    // Time averaging
+    int Ex_avg = -1, Ey_avg = -1, Ez_avg = -1;
+    int Bx_avg = -1, By_avg = -1, Bz_avg = -1;
+
+    // J linear in time
+    int Jx_new = -1, Jy_new = -1, Jz_new = -1;
+    int F = -1, G = -1;
+
+    // PML
+    int Exy = -1, Exz = -1, Eyx = -1, Eyz = -1, Ezx = -1, Ezy = -1;
+    int Bxy = -1, Bxz = -1, Byx = -1, Byz = -1, Bzx = -1, Bzy = -1;
+
+    // PML with div(E) and/or div(B) cleaning
+    int Exx = -1, Eyy = -1, Ezz = -1, Bxx = -1, Byy = -1, Bzz = -1;
+    int Fx  = -1, Fy  = -1, Fz  = -1, Gx  = -1, Gy  = -1, Gz  = -1;
 };
 
 /** \brief Class that stores the fields in spectral space, and performs the
@@ -69,7 +126,8 @@ class SpectralFieldData
             ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
         }
 
-        void BackwardTransform (const int lev, amrex::MultiFab& mf, const int field_index, const int i_comp);
+        void BackwardTransform (const int lev, amrex::MultiFab& mf, const int field_index,
+                                const int i_comp, const amrex::IntVect& fill_guards);
 
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;

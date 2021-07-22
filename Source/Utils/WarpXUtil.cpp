@@ -6,17 +6,34 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "WarpXAlgorithmSelection.H"
 #include "WarpXConst.H"
+#include "WarpXProfilerWrapper.H"
 #include "WarpXUtil.H"
 
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <set>
 #include <string>
-
 
 using namespace amrex;
 
@@ -31,6 +48,21 @@ void ParseGeometryInput()
     AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
     getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+
+#ifdef WARPX_DIM_RZ
+    ParmParse pp_algo("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
+    }
+    else
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
+    }
+#endif
 
     pp_geometry.addarr("prob_lo", prob_lo);
     pp_geometry.addarr("prob_hi", prob_hi);
@@ -207,13 +239,13 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
+Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
     // Since queryWithParser recursively calls this routine, keep track of symbols
     // in case an infinite recursion is found (a symbol's value depending on itself).
     static std::set<std::string> recursive_symbols;
 
-    WarpXParser parser(parse_function);
+    Parser parser(parse_function);
     parser.registerVariables(varnames);
     ParmParse pp_my_constants("my_constants");
     std::set<std::string> symbols = parser.symbols();
@@ -237,6 +269,9 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
             it = symbols.erase(it);
         } else if (std::strcmp(it->c_str(), "m_p") == 0) {
             parser.setConstant(*it, PhysConst::m_p);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "m_u") == 0) {
+            parser.setConstant(*it, PhysConst::m_u);
             it = symbols.erase(it);
         } else if (std::strcmp(it->c_str(), "epsilon0") == 0) {
             parser.setConstant(*it, PhysConst::ep0);
@@ -273,7 +308,9 @@ queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Re
         Store_parserString(a_pp, str, str_val);
 
         auto parser = makeParser(str_val, {});
-        val = parser.eval();
+        auto exe = parser.compileHost<0>();
+
+        val = exe();
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
@@ -287,7 +324,8 @@ getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real
     Store_parserString(a_pp, str, str_val);
 
     auto parser = makeParser(str_val, {});
-    val = parser.eval();
+    auto exe = parser.compileHost<0>();
+    val = exe();
 }
 
 int
@@ -304,7 +342,8 @@ queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::v
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
             auto parser = makeParser(tmp_str_arr[i], {});
-            val[i] = parser.eval();
+            auto exe = parser.compileHost<0>();
+            val[i] = exe();
         }
     }
     // return the same output as amrex::ParmParse::query
@@ -322,7 +361,8 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
         auto parser = makeParser(tmp_str_arr[i], {});
-        val[i] = parser.eval();
+        auto exe = parser.compileHost<0>();
+        val[i] = exe();
     }
 }
 
@@ -338,7 +378,8 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
         auto parser = makeParser(tmp_str_arr[i], {});
-        val[i] = parser.eval();
+        auto exe = parser.compileHost<0>();
+        val[i] = exe();
     }
 }
 
@@ -451,53 +492,7 @@ void ReadBCParams ()
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
-        // set default field and particle boundary appropriately
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (geom_periodicity[idim] == 1) {
-                // set boundary to periodic based on user-defined periodicity
-                WarpX::field_boundary_lo[idim] = FieldBoundaryType::Periodic;
-                WarpX::field_boundary_hi[idim] = FieldBoundaryType::Periodic;
-                WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
-                WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
-            } else {
-                // if non-periodic and do_pml=0, then set default boundary to PEC
-                int pml_input = 1;
-                int silverMueller_input = 0;
-                pp_warpx.query("do_pml", pml_input);
-                pp_warpx.query("do_silver_mueller", silverMueller_input);
-                if (pml_input == 0 and silverMueller_input == 0) {
-                    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-                        WarpX::field_boundary_lo[idim] = FieldBoundaryType::None;
-                        WarpX::field_boundary_hi[idim] = FieldBoundaryType::None;
-                    } else {
-                        WarpX::field_boundary_lo[idim] = FieldBoundaryType::PEC;
-                        WarpX::field_boundary_hi[idim] = FieldBoundaryType::PEC;
-                    }
-#ifdef WARPX_DIM_RZ
-                    if (idim == 0) WarpX::field_boundary_lo[idim] = FieldBoundaryType::None;
-#endif
-                }
-            }
-        }
-        // Temporarily setting default boundary to Damped until new boundary interface is introduced
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            ParmParse pp_psatd("psatd");
-            int do_moving_window = 0;
-            pp_warpx.query("do_moving_window", do_moving_window);
-            if (do_moving_window == 1) {
-                std::string s;
-                pp_warpx.get("moving_window_dir", s);
-                int zdir;
-                if (s == "z" || s == "Z") {
-                    zdir = AMREX_SPACEDIM-1;
-                    WarpX::field_boundary_lo[zdir] = FieldBoundaryType::Damped;
-                    WarpX::field_boundary_hi[zdir] = FieldBoundaryType::Damped;
-                }
-            }
-        }
-        return;
-        // When all boundary conditions are supported, the abort statement below will be introduced
-        //amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
+        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
     }
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
@@ -515,11 +510,11 @@ void ReadBCParams ()
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         // Get field boundary type
-        WarpX::field_boundary_lo[idim] = GetBCTypeInteger(field_BC_lo[idim], true);
-        WarpX::field_boundary_hi[idim] = GetBCTypeInteger(field_BC_hi[idim], true);
+        WarpX::field_boundary_lo[idim] = GetFieldBCTypeInteger(field_BC_lo[idim]);
+        WarpX::field_boundary_hi[idim] = GetFieldBCTypeInteger(field_BC_hi[idim]);
         // Get particle boundary type
-        WarpX::particle_boundary_lo[idim] = GetBCTypeInteger(particle_BC_lo[idim], false);
-        WarpX::particle_boundary_hi[idim] = GetBCTypeInteger(particle_BC_hi[idim], false);
+        WarpX::particle_boundary_lo[idim] = GetParticleBCTypeInteger(particle_BC_lo[idim]);
+        WarpX::particle_boundary_hi[idim] = GetParticleBCTypeInteger(particle_BC_hi[idim]);
 
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic ||
             WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ||
@@ -549,12 +544,48 @@ void ReadBCParams ()
             }
         }
     }
+    // temporarily check : If silver mueller is selected for one boundary, it should be
+    // selected at all valid boundaries.
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
+            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller){
+#if (AMREX_SPACEDIM == 3)
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[2] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[2] == FieldBoundaryType::Absorbing_SilverMueller)
+                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
+#else
+#ifndef WARPX_DIM_RZ
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
+                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
+#else
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
+                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
+                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
+#endif
+#endif
+        }
+    }
 #ifdef WARPX_DIM_RZ
     // Ensure code aborts if PEC is specified at r=0 for RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
         "Error : Field boundary at r=0 must be ``none``. \n");
 #endif
 
+    // Appending periodicity information to input so that it can be used by amrex
+    // to set parameters necessary to define geometry and perform communication
+    // such as FillBoundary. The periodicity is 1 if user-define boundary condition is
+    // periodic else it is set to 0.
     pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 

@@ -6,11 +6,31 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SliceDiagnostic.H"
+
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
-#include <AMReX_PlotFileUtil.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
 
-#include <WarpX.H>
-
+#include <cmath>
 #include <memory>
 
 using namespace amrex;

@@ -8,6 +8,8 @@
 #ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
+#include "WarpX.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_TypeTraits.H>
 

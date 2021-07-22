@@ -7,8 +7,8 @@
 #ifndef WARPX_COMM_K_H_
 #define WARPX_COMM_K_H_
 
-#include <AMReX_FArrayBox.H>
 #include <AMReX.H>
+#include <AMReX_FArrayBox.H>
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp (int j, int k, int l,

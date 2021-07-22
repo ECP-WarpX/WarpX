@@ -1,4 +1,0 @@
-CEXE_sources += wp_parser_y.cpp wp_parser.tab.cpp wp_parser.lex.cpp wp_parser_c.cpp WarpXParser.cpp
-
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Parser
-

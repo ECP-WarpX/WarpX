@@ -6,8 +6,35 @@
  */
 
 #include "FieldMaximum.H"
-#include "WarpX.H"
+
 #include "Utils/CoarsenIO.H"
+#include "Utils/IntervalsParser.H"
+#include "WarpX.H"
+
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Reduce.H>
+#include <AMReX_Tuple.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 
@@ -15,7 +42,6 @@ using namespace amrex;
 FieldMaximum::FieldMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
@@ -39,51 +65,35 @@ FieldMaximum::FieldMaximum (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
-            constexpr int shift_Ex = 3;
-            constexpr int shift_Ey = 4;
-            constexpr int shift_Ez = 5;
-            constexpr int shift_absE = 6;
-            constexpr int shift_Bx = 7;
-            constexpr int shift_By = 8;
-            constexpr int shift_Bz = 9;
-            constexpr int shift_absB = 10;
+            ofs << "[" << c++ << "]time(s)";
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Ex+noutputs*lev) + "]";
-                ofs << "max_Ex_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_Ex_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Ey+noutputs*lev) + "]";
-                ofs << "max_Ey_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_Ey_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Ez+noutputs*lev) + "]";
-                ofs << "max_Ez_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_Ez_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_absE+noutputs*lev) + "]";
-                ofs << "max_|E|_lev"+std::to_string(lev)+" (V/m)";
+                ofs << "[" << c++ << "]max_|E|_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Bx+noutputs*lev) + "]";
-                ofs << "max_Bx_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_Bx_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_By+noutputs*lev) + "]";
-                ofs << "max_By_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_By_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_Bz+noutputs*lev) + "]";
-                ofs << "max_Bz_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_Bz_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_absB+noutputs*lev) + "]";
-                ofs << "max_|B|_lev"+std::to_string(lev)+" (T)";
+                ofs << "[" << c++ << "]max_|B|_lev" + std::to_string(lev) + " (T)";
             }
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 
@@ -102,7 +112,6 @@ void FieldMaximum::ComputeDiags (int step)
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
-
         // get MultiFab data at lev
         const MultiFab & Ex = warpx.getEfield(lev,0);
         const MultiFab & Ey = warpx.getEfield(lev,1);
@@ -280,6 +289,5 @@ void FieldMaximum::ComputeDiags (int step)
     /* m_data now contains up-to-date values for:
      *  [max(Ex),max(Ey),max(Ez),max(|E|),
      *   max(Bx),max(By),max(Bz),max(|B|)] */
-
 }
 // end void FieldMaximum::ComputeDiags

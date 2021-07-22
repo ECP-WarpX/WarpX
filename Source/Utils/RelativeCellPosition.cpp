@@ -6,8 +6,9 @@
  */
 #include "RelativeCellPosition.H"
 
+#include <AMReX_Config.H>
 #include <AMReX_IndexType.H>
-
+#include <AMReX_MultiFab.H>
 
 std::vector< double >
 utils::getRelativeCellPosition(amrex::MultiFab const& mf)

@@ -4,20 +4,40 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "WarpX.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
-#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
-#endif
-#include "Utils/WarpXConst.H"
-#include <AMReX_Gpu.H>
 
+#ifndef WARPX_DIM_RZ
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#else
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -29,25 +49,38 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+#ifdef AMREX_USE_EB
+    if (m_fdtd_algo != MaxwellSolverAlgo::ECT) {
+        ignore_unused(face_areas, Rhofield);
+    }
+#else
+    ignore_unused(face_areas, Rhofield);
+#endif
+
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-
+        ignore_unused(edge_lengths);
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
-
 #else
     if (m_do_nodal) {
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee or m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
-
+#ifdef AMREX_USE_EB
+        if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+            EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, Rhofield, lev);
+        }
+#endif
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
@@ -125,7 +158,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (lx(i, j, k) <= 0) return;
+                if (lx(i, j, k) <= 0 or isnan(lx(i,j,k))) return;
 #endif
                 Ex(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
@@ -136,18 +169,21 @@ void FiniteDifferenceSolver::EvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (ly(i,j,k) <= 0) return;
+                if (ly(i,j,k) <= 0 or isnan(ly(i,j,k))) return;
 #endif
+
                 Ey(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
                     - PhysConst::mu0 * jy(i, j, k) );
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (lz(i,j,k) <= 0) return;
+                if (lz(i,j,k) <= 0 or isnan(lz(i,j,k))) return;
 #endif
                 Ez(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)

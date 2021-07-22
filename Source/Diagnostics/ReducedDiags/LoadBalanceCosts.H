@@ -8,9 +8,12 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_LOADBALANCECOSTS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_LOADBALANCECOSTS_H_
 
-#include "WarpX.H"
 #include "ReducedDiags.H"
 
+#include <AMReX_Vector.H>
+
+#include <string>
+#include <vector>
 
 /**
  *  This class mainly contains a function that update the

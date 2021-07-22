@@ -49,9 +49,14 @@ class Checksum:
         '''
 
         ds = yt.load(self.plotfile)
+        # yt 4.0+ has rounding issues with our domain data:
+        # RuntimeError: yt attempted to read outside the boundaries
+        # of a non-periodic domain along dimension 0.
+        if 'force_periodicity' in dir(ds): ds.force_periodicity()
         grid_fields = [item for item in ds.field_list if item[0] == 'boxlib']
         species_list = set([item[0] for item in ds.field_list if
-                            item[1][:9] == 'particle_' and item[0] != 'all'])
+                            item[1][:9] == 'particle_' and item[0] != 'all' and
+                            item[0] != 'nbody'])
 
         data = {}
 

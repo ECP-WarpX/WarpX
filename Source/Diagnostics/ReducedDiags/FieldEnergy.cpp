@@ -6,15 +6,22 @@
  */
 
 #include "FieldEnergy.H"
-#include "WarpX.H"
+
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Utils/IntervalsParser.H"
 #include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
-#include <AMReX_ParticleReduce.H>
 
-#include <iostream>
-#include <cmath>
-
+#include <algorithm>
+#include <fstream>
+#include <vector>
 
 using namespace amrex;
 
@@ -22,7 +29,6 @@ using namespace amrex;
 FieldEnergy::FieldEnergy (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
@@ -46,38 +52,31 @@ FieldEnergy::FieldEnergy (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
-            constexpr int shift_total = 3;
-            constexpr int shift_E = 4;
-            constexpr int shift_B = 5;
+            ofs << "[" << c++ << "]time(s)";
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_total+noutputs*lev) + "]";
-                ofs << "total_lev"+std::to_string(lev)+"(J)";
+                ofs << "[" << c++ << "]total_lev" + std::to_string(lev) + "(J)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_E+noutputs*lev) + "]";
-                ofs << "E_lev"+std::to_string(lev)+"(J)";
+                ofs << "[" << c++ << "]E_lev" + std::to_string(lev) + "(J)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_B+noutputs*lev) + "]";
-                ofs << "B_lev"+std::to_string(lev)+"(J)";
+                ofs << "[" << c++ << "]B_lev" + std::to_string(lev) + "(J)";
             }
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes field energy
 void FieldEnergy::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -90,7 +89,6 @@ void FieldEnergy::ComputeDiags (int step)
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
-
         // get MultiFab data at lev
         const MultiFab & Ex = warpx.getEfield(lev,0);
         const MultiFab & Ey = warpx.getEfield(lev,1);
@@ -129,7 +127,6 @@ void FieldEnergy::ComputeDiags (int step)
         m_data[lev*noutputs+index_B] = 0.5_rt * Bs / PhysConst::mu0 * dV;
         m_data[lev*noutputs+index_total] = m_data[lev*noutputs+index_E] +
                                            m_data[lev*noutputs+index_B];
-
     }
     // end loop over refinement levels
 
@@ -141,6 +138,5 @@ void FieldEnergy::ComputeDiags (int step)
      *   electric field energy at level 1,
      *   magnetic field energy at level 1,
      *   ......] */
-
 }
 // end void FieldEnergy::ComputeDiags

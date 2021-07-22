@@ -5,16 +5,28 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BeamRelevant.H"
-#include "WarpX.H"
+
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
 #include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
-#include <AMReX_REAL.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_ParticleReduce.H>
+#include <AMReX_Particles.H>
+#include <AMReX_REAL.H>
 
-#include <iostream>
+#include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <limits>
-
+#include <map>
+#include <vector>
 
 using namespace amrex;
 
@@ -22,7 +34,6 @@ using namespace amrex;
 BeamRelevant::BeamRelevant (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // read beam name
     ParmParse pp_rd_name(rd_name);
     pp_rd_name.get("species",m_beam_name);
@@ -58,59 +69,59 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";           ofs << m_sep;
-            ofs << "[2]time(s)";          ofs << m_sep;
-            ofs << "[3]x_mean(m)";        ofs << m_sep;
-            ofs << "[4]y_mean(m)";        ofs << m_sep;
-            ofs << "[5]z_mean(m)";        ofs << m_sep;
-            ofs << "[6]px_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[7]py_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[8]pz_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[9]gamma_mean()";     ofs << m_sep;
-            ofs << "[10]x_rms(m)";        ofs << m_sep;
-            ofs << "[11]y_rms(m)";        ofs << m_sep;
-            ofs << "[12]z_rms(m)";        ofs << m_sep;
-            ofs << "[13]px_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[14]py_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[15]pz_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[16]gamma_rms()";     ofs << m_sep;
-            ofs << "[17]emittance_x(m)";  ofs << m_sep;
-            ofs << "[18]emittance_y(m)";  ofs << m_sep;
-            ofs << "[19]emittance_z(m)";  ofs << m_sep;
-            ofs << "[20]charge(C)";       ofs << std::endl;
+            ofs << "[" << c++ << "]step()";           ofs << m_sep;
+            ofs << "[" << c++ << "]time(s)";          ofs << m_sep;
+            ofs << "[" << c++ << "]x_mean(m)";        ofs << m_sep;
+            ofs << "[" << c++ << "]y_mean(m)";        ofs << m_sep;
+            ofs << "[" << c++ << "]z_mean(m)";        ofs << m_sep;
+            ofs << "[" << c++ << "]px_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]py_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]pz_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_mean()";     ofs << m_sep;
+            ofs << "[" << c++ << "]x_rms(m)";         ofs << m_sep;
+            ofs << "[" << c++ << "]y_rms(m)";         ofs << m_sep;
+            ofs << "[" << c++ << "]z_rms(m)";         ofs << m_sep;
+            ofs << "[" << c++ << "]px_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]py_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]pz_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_rms()";      ofs << m_sep;
+            ofs << "[" << c++ << "]emittance_x(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]emittance_y(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
 #elif (defined WARPX_DIM_XZ)
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";           ofs << m_sep;
-            ofs << "[2]time(s)";          ofs << m_sep;
-            ofs << "[3]x_mean(m)";        ofs << m_sep;
-            ofs << "[4]z_mean(m)";        ofs << m_sep;
-            ofs << "[5]px_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[6]py_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[7]pz_mean(kg*m/s)";  ofs << m_sep;
-            ofs << "[8]gamma_mean()";     ofs << m_sep;
-            ofs << "[9]x_rms(m)";         ofs << m_sep;
-            ofs << "[10]z_rms(m)";        ofs << m_sep;
-            ofs << "[11]px_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[12]py_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[13]pz_rms(kg*m/s)";  ofs << m_sep;
-            ofs << "[14]gamma_rms()";     ofs << m_sep;
-            ofs << "[15]emittance_x(m)";  ofs << m_sep;
-            ofs << "[16]emittance_z(m)";  ofs << m_sep;
-            ofs << "[17]charge(C)";       ofs << std::endl;
+            ofs << "[" << c++ << "]step()";           ofs << m_sep;
+            ofs << "[" << c++ << "]time(s)";          ofs << m_sep;
+            ofs << "[" << c++ << "]x_mean(m)";        ofs << m_sep;
+            ofs << "[" << c++ << "]z_mean(m)";        ofs << m_sep;
+            ofs << "[" << c++ << "]px_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]py_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]pz_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_mean()";     ofs << m_sep;
+            ofs << "[" << c++ << "]x_rms(m)";         ofs << m_sep;
+            ofs << "[" << c++ << "]z_rms(m)";         ofs << m_sep;
+            ofs << "[" << c++ << "]px_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]py_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]pz_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_rms()";      ofs << m_sep;
+            ofs << "[" << c++ << "]emittance_x(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
 #endif
             // close file
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that compute beam relevant quantities
 void BeamRelevant::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -136,7 +147,6 @@ void BeamRelevant::ComputeDiags (int step)
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
-
         // only beam species does
         if (species_names[i_s] != m_beam_name) { continue; }
 
@@ -446,9 +456,7 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[13] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
         m_data[14] = charge;
 #endif
-
     }
     // end loop over species
-
 }
 // end void BeamRelevant::ComputeDiags

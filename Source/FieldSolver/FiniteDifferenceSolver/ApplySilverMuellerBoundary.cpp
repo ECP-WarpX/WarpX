@@ -4,14 +4,29 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#include "Utils/WarpXConst.H"
-#include <AMReX_Gpu.H>
+
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -35,17 +50,17 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 #ifdef WARPX_DIM_RZ
     // Calculate relevant coefficients
     amrex::Real const cdt = PhysConst::c*dt;
-    amrex::Real const cdt_over_dr = cdt*m_stencil_coefs_r[0];
+    amrex::Real const cdt_over_dr = cdt*m_h_stencil_coefs_r[0];
     amrex::Real const coef1_r = (1._rt - cdt_over_dr)/(1._rt + cdt_over_dr);
     amrex::Real const coef2_r = 2._rt*cdt_over_dr/(1._rt + cdt_over_dr) / PhysConst::c;
     amrex::Real const coef3_r = cdt/(1._rt + cdt_over_dr) / PhysConst::c;
-    amrex::Real const cdt_over_dz = cdt*m_stencil_coefs_z[0];
+    amrex::Real const cdt_over_dz = cdt*m_h_stencil_coefs_z[0];
     amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
     amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
 
     // Extract stencil coefficients
     Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-    int const n_coefs_z = m_stencil_coefs_z.size();
+    int const n_coefs_z = m_h_stencil_coefs_z.size();
 
     // Extract cylindrical specific parameters
     Real const dr = m_dr;
@@ -143,15 +158,15 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 #else
 
     // Calculate relevant coefficients
-    amrex::Real const cdt_over_dx = PhysConst::c*dt*m_stencil_coefs_x[0];
+    amrex::Real const cdt_over_dx = PhysConst::c*dt*m_h_stencil_coefs_x[0];
     amrex::Real const coef1_x = (1._rt - cdt_over_dx)/(1._rt + cdt_over_dx);
     amrex::Real const coef2_x = 2._rt*cdt_over_dx/(1._rt + cdt_over_dx) / PhysConst::c;
 #ifdef WARPX_DIM_3D
-    amrex::Real const cdt_over_dy = PhysConst::c*dt*m_stencil_coefs_y[0];
+    amrex::Real const cdt_over_dy = PhysConst::c*dt*m_h_stencil_coefs_y[0];
     amrex::Real const coef1_y = (1._rt - cdt_over_dy)/(1._rt + cdt_over_dy);
     amrex::Real const coef2_y = 2._rt*cdt_over_dy/(1._rt + cdt_over_dy) / PhysConst::c;
 #endif
-    amrex::Real const cdt_over_dz = PhysConst::c*dt*m_stencil_coefs_z[0];
+    amrex::Real const cdt_over_dz = PhysConst::c*dt*m_h_stencil_coefs_z[0];
     amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
     amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
 

@@ -3,6 +3,15 @@
 
 #include "FlushFormatPlotfile.H"
 
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
+
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <string>
+
 class FlushFormatCheckpoint final : public FlushFormatPlotfile
 {
     /** Flush fields and particles to plotfile */
@@ -11,7 +20,8 @@ class FlushFormatCheckpoint final : public FlushFormatPlotfile
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
-        const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
+        const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
+        const std::string prefix, int file_min_digits,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
         bool plot_raw_rho, bool plot_raw_F,

@@ -1,10 +1,46 @@
 #include "FlushFormatPlotfile.H"
-#include "WarpX.H"
-#include "Utils/Interpolate.H"
-#include "Particles/Filter/FilterFunctors.H"
 
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Particles/Filter/FilterFunctors.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/Interpolate.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
 #include <AMReX_AmrParticles.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParticleIO.H>
+#include <AMReX_Particles.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_VisMF.H>
 #include <AMReX_buildInfo.H>
+
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
+
+#include <algorithm>
+#include <array>
+#include <cstring>
+#include <fstream>
+#include <map>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace amrex;
 
@@ -20,14 +56,14 @@ FlushFormatPlotfile::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, bool plot_raw_fields,
+    const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
     bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
     bool /*isLastBTDFlush*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
 
     Vector<std::string> rfs;
@@ -252,6 +288,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         WriteHeaderParticle(HeaderFile, particle_diags);
 
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
+
+        HeaderFile << warpx.getdo_moving_window() << "\n";
     }
 }
 
@@ -316,7 +354,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
         ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                   getParser(particle_diags[i].m_particle_filter_parser),
+                                   compileParser<ParticleDiag::m_nvars>
+                                       (particle_diags[i].m_particle_filter_parser.get()),
                                    pc->getMass());
         parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,

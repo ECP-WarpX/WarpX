@@ -60,3 +60,5 @@ cmake-build-*/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+*.png

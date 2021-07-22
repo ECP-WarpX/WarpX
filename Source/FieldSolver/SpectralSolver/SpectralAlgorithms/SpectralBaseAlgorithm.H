@@ -8,9 +8,20 @@
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "Utils/WarpX_Complex.H"
+
+#include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 
-#include <AMReX.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_Config.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 #if WARPX_USE_PSATD
 
@@ -26,7 +37,7 @@ class SpectralBaseAlgorithm
     public:
         // Virtual member function ; meant to be overridden in subclasses
         virtual void pushSpectralFields(SpectralFieldData& f) const = 0;
-        virtual int getRequiredNumberOfFields() const = 0;
+
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
@@ -70,29 +81,24 @@ class SpectralBaseAlgorithm
 
     protected: // Meant to be used in the subclasses
 
+        amrex::IntVect m_fill_guards;
+
         using SpectralRealCoefficients = \
             amrex::FabArray< amrex::BaseFab <amrex::Real> >;
         using SpectralComplexCoefficients = \
             amrex::FabArray< amrex::BaseFab <Complex> >;
 
-        // Constructor
+        /**
+        * \brief Constructor
+        */
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
+                              const SpectralFieldIndex& spectral_index,
                               const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal)
-          // Compute and assign the modified k vectors
-          : modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
-#if (AMREX_SPACEDIM==3)
-            modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,nodal))
-#else
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
-#endif
-          {
-#if (AMREX_SPACEDIM!=3)
-            amrex::ignore_unused(norder_y);
-#endif
-          }
+                              const int norder_z, const bool nodal,
+                              const amrex::IntVect& fill_guards);
+
+        SpectralFieldIndex m_spectral_index;
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

@@ -7,10 +7,11 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_RZ_H_
 #define WARPX_SPECTRAL_FIELD_DATA_RZ_H_
 
-#include "SpectralKSpaceRZ.H"
+#include "SpectralBinomialFilter.H"
 #include "SpectralFieldData.H"
 #include "SpectralHankelTransform/SpectralHankelTransformer.H"
-#include "SpectralBinomialFilter.H"
+#include "SpectralKSpaceRZ.H"
+
 #include <AMReX_MultiFab.H>
 
 /* \brief Class that stores the fields in spectral space, and performs the
@@ -66,8 +67,9 @@ class SpectralFieldDataRZ
         void InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
                          SpectralKSpaceRZ const & k_space);
 
-        void ApplyFilter (int const field_index);
-        void ApplyFilter (int const field_index1, int const field_index2, int const field_index3);
+        void ApplyFilter (const int lev, int const field_index);
+        void ApplyFilter (const int lev, int const field_index1,
+                          int const field_index2, int const field_index3);
 
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray (amrex::MFIter const & mfi) const {
@@ -80,6 +82,9 @@ class SpectralFieldDataRZ
         int n_rz_azimuthal_modes;
 
     private:
+
+        SpectralFieldIndex m_spectral_index;
+        int m_n_fields;
 
         // tempHTransformed and tmpSpectralField store fields
         // right before/after the z Fourier transform
