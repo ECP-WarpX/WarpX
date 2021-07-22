@@ -95,7 +95,8 @@ WarpX::InitEB (int lev)
         }
         amrex::EB2::Build(Geom(lev), maxLevel(), lev);
     }
-
+#else
+    amrex::ignore_unused(lev);
 #endif
 }
 
@@ -150,6 +151,8 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
             }
         }
     }
+#else
+    amrex::ignore_unused(edge_lengths, lev, flag_cp);
 #endif
 }
 
@@ -197,6 +200,8 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
             }
         }
     }
+#else
+    amrex::ignore_unused(face_areas, lev, flag_cp);
 #endif
 }
 
@@ -228,6 +233,8 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
             });
         }
     }
+#else
+    amrex::ignore_unused(edge_lengths, lev, flag_cp);
 #endif
 }
 
@@ -268,6 +275,8 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
             });
         }
     }
+#else
+    amrex::ignore_unused(face_areas, lev, flag_cp);
 #endif
 }
 
@@ -341,6 +350,8 @@ WarpX::MarkCells(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths
             });
         }
     }
+#else
+    amrex::ignore_unused(edge_lengths, face_areas, flag_info_face, flag_ext_face, lev, flag_cp);
 #endif
 }
 
