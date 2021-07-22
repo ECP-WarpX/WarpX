@@ -543,6 +543,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                   m_flag_info_face_cp[lev], m_borrowing_cp[lev], lev, true);
         }
     }
+    ComputeDistanceToEB();
 #endif
 
     // if the input string for the B-field is "parse_b_ext_grid_function",

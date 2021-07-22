@@ -202,6 +202,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                       m_flag_info_face_cp[lev], m_borrowing_cp[lev], lev, true);
             }
         }
+        ComputeDistanceToEB();
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif
