@@ -224,30 +224,14 @@ void
 WarpX::InitPML ()
 {
 
-    // if periodicity defined in input, use existing pml interface
-    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
-    ParmParse pp_geometry("geometry");
-    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (geom_periodicity[idim] == 1) {
-                do_pml_Lo[idim] = 0;
-                do_pml_Hi[idim] = 0;
-            }
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Lo[idim] = 1;
         }
-    } else {
-        // setting do_pml = 0 as default and turning it on only when user-input is set to PML.
-        do_pml = 0;
-        do_pml_Lo = amrex::IntVect::TheZeroVector();
-        do_pml_Hi = amrex::IntVect::TheZeroVector();
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
-                do_pml = 1;
-                do_pml_Lo[idim] = 1;
-            }
-            if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
-                do_pml = 1;
-                do_pml_Hi[idim] = 1;
-            }
+        if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Hi[idim] = 1;
         }
     }
     if (finest_level > 0) do_pml = 1;

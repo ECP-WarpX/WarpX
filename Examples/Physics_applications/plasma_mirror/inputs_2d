@@ -7,11 +7,16 @@ amr.max_grid_size = 128
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0 0     # Is periodic?
 geometry.prob_lo     = -100.e-6   0.     # physical domain
 geometry.prob_hi     =  100.e-6   100.e-6
 warpx.verbose = 1
 warpx.serialize_ics = 1
+
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
 
 #################################
 ############ NUMERICS ###########

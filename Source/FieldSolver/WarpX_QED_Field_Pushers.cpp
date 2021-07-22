@@ -10,6 +10,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX_QED_K.H"
 
+#include <AMReX.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
@@ -45,14 +46,8 @@ void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
     if (WarpX::do_nodal == 0) {
-        Print()<<"The do_nodal flag is tripped.\n";
-        try{
-            throw "Error: The Hybrid QED method is currently only compatible with the nodal scheme.\n";
-        }
-        catch (const char* msg) {
-            std::cerr << msg << std::endl;
-            exit(0);
-        }
+        amrex::Abort("Error: The Hybrid QED method is "
+            "currently only compatible with the nodal scheme.");
     }
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);
