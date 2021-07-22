@@ -288,14 +288,14 @@ WarpX::WarpX ()
     m_flag_ext_face_cp.resize(nlevs_max);
     m_borrowing_cp.resize(nlevs_max);
     m_area_mod_cp.resize(nlevs_max);
-    
+
     m_distance_to_eb.resize(nlevs_max);
 
     Rhofield_fp.resize(nlevs_max);
     Venl_fp.resize(nlevs_max);
     Rhofield_cp.resize(nlevs_max);
     Venl_cp.resize(nlevs_max);
-    
+
     current_store.resize(nlevs_max);
 
     if (do_current_centering)
