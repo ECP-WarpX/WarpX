@@ -1166,12 +1166,39 @@ private:
                      int lev, bool flag_cp);
     void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
                      int lev, bool flag_cp);
-    void MarkCells();
-    amrex::Array1D<int, 0, 2> CountExtFaces();
-    void ComputeFaceExtensions();
-    void InitBorrowing();
-    amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
-    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds);
+    void MarkCells (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_face,
+                    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_ext_face,
+                    int lev, bool flag_cp);
+
+    amrex::Array1D<int, 0, 2> CountExtFaces(std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face);
+    void ComputeFaceExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                               std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                               std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                               std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                               int lev, bool flag_cp);
+    void InitBorrowing(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                       std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing);
+    amrex::Array1D<int, 0, 2> ComputeOneWayExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                                                      std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                                                      std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                                                      std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                                                      std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                                                      std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                                                      std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                                                      int lev, bool flag_cp);
+    void ComputeEightWaysExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                                    std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                                    std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                                    std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                                    std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                                    std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                                    std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                                    amrex::Array1D<int, 0, 2> temp_inds, int lev, bool flag_cp);
     void ComputeDistanceToEB ();
 
     void ScrapeParticles ();

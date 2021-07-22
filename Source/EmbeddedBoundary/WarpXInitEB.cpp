@@ -283,20 +283,29 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
  */
 // TODO: add the inputs here
 void
-WarpX::MarkCells(){
+WarpX::MarkCells(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                 std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                 std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_face,
+                 std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_ext_face,
+                 int lev, bool flag_cp){
 #ifdef AMREX_USE_EB
     auto const &cell_size = CellSize(maxLevel());
 
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
+
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
-            amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            amrex::Box const &box = mfi.tilebox(face_areas[idim]->ixType().toIntVect());
 
-            auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
-            auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
-            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
-            const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-            const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+            auto const &S = face_areas[idim]->array(mfi);
+            auto const &flag_info_face_dim = flag_info_face[idim]->array(mfi);
+            auto const &flag_ext_face_dim = flag_ext_face[idim]->array(mfi);
+            const auto &lx = edge_lengths[0]->array(mfi);
+            const auto &ly = edge_lengths[1]->array(mfi);
+            const auto &lz = edge_lengths[2]->array(mfi);
             amrex::Real dx = cell_size[0];
             amrex::Real dy = cell_size[1];
             amrex::Real dz = cell_size[2];
@@ -318,15 +327,15 @@ WarpX::MarkCells(){
                 // Does this face need to be extended? This is the same as
                 // flag_info_face(i, j, k) = 0 here but it is modified later to keep track o which
                 // faces need multi-cell extension
-                flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab and !amrex::isnan(S(i, j, k))
+                flag_ext_face_dim(i, j, k) = int(S(i, j, k) < S_stab and !amrex::isnan(S(i, j, k))
                                               and S(i, j, k) > 0);
-                if(flag_ext_face(i, j, k)){
-                    flag_info_face(i, j, k) = 0;
+                if(flag_ext_face_dim(i, j, k)){
+                    flag_info_face_dim(i, j, k) = 0;
                 }
                 // Is this face available to lend area to other faces?
                 // The criterion is that the face has to be interior and not already unstable itself
-                if(int(S(i, j, k) > 0 and !flag_ext_face(i, j, k))) {
-                    flag_info_face(i, j, k) = 1;
+                if(int(S(i, j, k) > 0 and !flag_ext_face_dim(i, j, k))) {
+                    flag_info_face_dim(i, j, k) = 1;
                 }
             });
         }

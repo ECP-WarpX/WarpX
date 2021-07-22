@@ -7,17 +7,17 @@
 * \brief auxiliary function to count the amount of faces which still need to be extended
 */
 amrex::Array1D<int, 0, 2>
-WarpX::CountExtFaces() {
+WarpX::CountExtFaces(std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face) {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         int sum = 0;
-        for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*flag_ext_face[idim]); mfi.isValid(); ++mfi) {
             amrex::Box const &box = mfi.validbox();
-            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+            auto const &flag_ext_face_dim = flag_ext_face[idim]->array(mfi);
             amrex::ParallelFor(box, [=, &sum](int i, int j, int k) {
                 // Do I need to flag the reduction somehow?
-                sum = sum + flag_ext_face(i, j, k);
+                sum = sum + flag_ext_face_dim(i, j, k);
             });
         }
         sums(idim) = sum;
@@ -32,9 +32,16 @@ WarpX::CountExtFaces() {
  *       extensions and, when this is not possible, it does eight-ways extensions.
 */
 void
-WarpX::ComputeFaceExtensions(){
+WarpX::ComputeFaceExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                             std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                             std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                             std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                             std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                             std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                             std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                             int lev, bool flag_cp){
 #ifdef AMREX_USE_EB
-    amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
+    amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces(flag_ext_face);
     amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces(0));
     amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces(1));
     amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces(2));
@@ -42,9 +49,12 @@ WarpX::ComputeFaceExtensions(){
     amrex::Print()<< "Faces to be extended in y:\t" << N_ext_faces(1) <<std::endl;
     amrex::Print()<< "Faces to be extended in z:\t" << N_ext_faces(2) <<std::endl;
 
-    InitBorrowing();
-    amrex::Array1D<int, 0, 2> temp_inds = ComputeOneWayExtensions();
-    amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
+    InitBorrowing(Bfield, borrowing);
+    amrex::Array1D<int, 0, 2> temp_inds = ComputeOneWayExtensions(Bfield, area_mod, edge_lengths,
+                                                                  face_areas, flag_ext_face,
+                                                                  flag_info_face, borrowing,
+                                                                  lev, flag_cp);
+    amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces(flag_ext_face);
     amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_one_way(0),
                                             amrex::ParallelDescriptor::IOProcessorNumber());
     amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_one_way(1),
@@ -57,8 +67,9 @@ WarpX::ComputeFaceExtensions(){
                      N_ext_faces_after_one_way(1) <<std::endl;
     amrex::Print()<< "Faces to be extended after one way extension in z:\t" <<
                      N_ext_faces_after_one_way(2) <<std::endl;
-    ComputeEightWaysExtensions(temp_inds);
-    amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
+    ComputeEightWaysExtensions(Bfield, area_mod, edge_lengths, face_areas, flag_ext_face,
+                               flag_info_face, borrowing, temp_inds, lev, flag_cp);
+    amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces(flag_ext_face);
     amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_eight_ways(0),
                                             amrex::ParallelDescriptor::IOProcessorNumber());
     amrex::ParallelDescriptor::ReduceIntSum(N_ext_faces_after_eight_ways(1),
@@ -88,11 +99,13 @@ WarpX::ComputeFaceExtensions(){
 * \brief this function initializes the memory for the cell FaceInfoBoxes
 */
 void
-WarpX::InitBorrowing() {
+WarpX::InitBorrowing(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                     std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing) {
+
     int idim = 0;
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][0]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[0]); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
-        auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto &borrowing_x = (*borrowing[idim])[mfi];
         borrowing_x.inds_pointer.resize(box);
         borrowing_x.size.resize(box);
         borrowing_x.size.setVal<amrex::RunOn::Host>(0);
@@ -103,9 +116,9 @@ WarpX::InitBorrowing() {
     }
 
     idim = 1;
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
-        auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto &borrowing_y = (*borrowing[idim])[mfi];
         borrowing_y.inds_pointer.resize(box);
         borrowing_y.size.resize(box);
         borrowing_y.size.setVal<amrex::RunOn::Host>(0);
@@ -116,9 +129,9 @@ WarpX::InitBorrowing() {
     }
 
     idim = 2;
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
-        auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto &borrowing_z = (*borrowing[idim])[mfi];
         borrowing_z.inds_pointer.resize(box);
         borrowing_z.size.resize(box);
         borrowing_z.size.setVal<amrex::RunOn::Host>(0);
@@ -367,10 +380,23 @@ WarpX::ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
 * \brief Do the one-way extension
 */
 amrex::Array1D<int, 0, 2>
-WarpX::ComputeOneWayExtensions() {
+WarpX::ComputeOneWayExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                               std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                               std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                               std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                               int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
-    auto const eb_fact = fieldEBFactory(maxLevel());
-    auto const &cell_size = CellSize(maxLevel());
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
+
+    auto const &cell_size = CellSize(lev_loc);
 
     int nelems_x;
     int nelems_y;
@@ -379,14 +405,14 @@ WarpX::ComputeOneWayExtensions() {
     // Do the extensions in the x-plane
     int idim = 0;
 
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
 
         amrex::Box const &box = mfi.validbox();
 
-        auto const &Sx = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_ext_face_x = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_info_face_x = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto const &Sx = face_areas[idim]->array(mfi);
+        auto const &flag_ext_face_x = flag_ext_face[idim]->array(mfi);
+        auto const &flag_info_face_x = flag_info_face[idim]->array(mfi);
+        auto &borrowing_x = (*borrowing[idim])[mfi];
         auto const &borrowing_x_inds_pointer = borrowing_x.inds_pointer.array();
         auto const &borrowing_x_size = borrowing_x.size.array();
         amrex::Long ncells = box.numPts();
@@ -394,9 +420,9 @@ WarpX::ComputeOneWayExtensions() {
         uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         double* borrowing_x_area = borrowing_x.area.data();
 
-        auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
-        const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-        const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+        auto const &Sx_mod = area_mod[idim]->array(mfi);
+        const auto &ly = edge_lengths[1]->array(mfi);
+        const auto &lz = edge_lengths[2]->array(mfi);
         amrex::Real dy = cell_size[1];
         amrex::Real dz = cell_size[2];
 
@@ -475,14 +501,14 @@ WarpX::ComputeOneWayExtensions() {
     // Do the extensions in the y-plane
     idim = 1;
 
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
 
         amrex::Box const &box = mfi.validbox();
 
-        auto const &Sy = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_ext_face_y = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_info_face_y = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto const &Sy = face_areas[idim]->array(mfi);
+        auto const &flag_ext_face_y = flag_ext_face[idim]->array(mfi);
+        auto const &flag_info_face_y = flag_info_face[idim]->array(mfi);
+        auto &borrowing_y = (*borrowing[idim])[mfi];
         auto const &borrowing_y_inds_pointer = borrowing_y.inds_pointer.array();
         auto const &borrowing_y_size = borrowing_y.size.array();
         amrex::Long ncells = box.numPts();
@@ -490,9 +516,9 @@ WarpX::ComputeOneWayExtensions() {
         uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         double* borrowing_y_area = borrowing_y.area.data();
 
-        auto const &Sy_mod = m_area_mod[maxLevel()][idim]->array(mfi);
-        const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
-        const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+        auto const &Sy_mod = area_mod[idim]->array(mfi);
+        const auto &lx = edge_lengths[0]->array(mfi);
+        const auto &lz = edge_lengths[2]->array(mfi);
         amrex::Real dx = cell_size[0];
         amrex::Real dz = cell_size[2];
 
@@ -571,14 +597,14 @@ WarpX::ComputeOneWayExtensions() {
     // Do the extensions in the z-plane
     idim = 2;
 
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
 
         amrex::Box const &box = mfi.validbox();
 
-        auto const &Sz = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_ext_face_z = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_info_face_z = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto const &Sz = face_areas[idim]->array(mfi);
+        auto const &flag_ext_face_z = flag_ext_face[idim]->array(mfi);
+        auto const &flag_info_face_z = flag_info_face[idim]->array(mfi);
+        auto &borrowing_z = (*borrowing[idim])[mfi];
         auto const &borrowing_z_inds_pointer = borrowing_z.inds_pointer.array();
         auto const &borrowing_z_size = borrowing_z.size.array();
         amrex::Long ncells = box.numPts();
@@ -586,9 +612,9 @@ WarpX::ComputeOneWayExtensions() {
         uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         double* borrowing_z_area = borrowing_z.area.data();
 
-        auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
-        const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
-        const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
+        auto const &Sz_mod = area_mod[idim]->array(mfi);
+        const auto &lx = edge_lengths[0]->array(mfi);
+        const auto &ly = edge_lengths[1]->array(mfi);
         amrex::Real dx = cell_size[0];
         amrex::Real dy = cell_size[1];
 
@@ -678,22 +704,38 @@ WarpX::ComputeOneWayExtensions() {
 */
 
 void
-WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
+WarpX::ComputeEightWaysExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                                  std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                                  std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                                  std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                                  std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                                  std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                                  std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                                  amrex::Array1D<int, 0, 2> temp_inds, int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
+
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
+
+    auto const &cell_size = CellSize(lev_loc);
+
     int n_borrow_offset_x = temp_inds(0);
     int n_borrow_offset_y = temp_inds(1);
     int n_borrow_offset_z = temp_inds(2);
 
-    auto const &cell_size = CellSize(maxLevel());
     int idim = 0;
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
 
         amrex::Box const &box = mfi.validbox();
 
-        auto const &Sx = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_ext_face_x = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_info_face_x = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto const &Sx = face_areas[idim]->array(mfi);
+        auto const &flag_ext_face_x = flag_ext_face[idim]->array(mfi);
+        auto const &flag_info_face_x = flag_info_face[idim]->array(mfi);
+        auto &borrowing_x = (*borrowing[idim])[mfi];
         auto const &borrowing_x_inds_pointer = borrowing_x.inds_pointer.array();
         auto const &borrowing_x_size = borrowing_x.size.array();
         amrex::Long ncells = box.numPts();
@@ -701,9 +743,9 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         double* borrowing_x_area = borrowing_x.area.data();
 
-        auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
-        const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-        const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+        auto const &Sx_mod = area_mod[idim]->array(mfi);
+        const auto &ly = edge_lengths[1]->array(mfi);
+        const auto &lz = edge_lengths[2]->array(mfi);
         amrex::Real dy = cell_size[1];
         amrex::Real dz = cell_size[2];
         int nelems_x;
@@ -820,15 +862,15 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
     }
 
     idim = 1;
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
 
         // Do the extensions in the y-plane
         amrex::Box const &box = mfi.validbox();
 
-        auto const &Sy = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_ext_face_y = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_info_face_y = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto const &Sy = face_areas[idim]->array(mfi);
+        auto const &flag_ext_face_y = flag_ext_face[idim]->array(mfi);
+        auto const &flag_info_face_y = flag_info_face[idim]->array(mfi);
+        auto &borrowing_y = (*borrowing[idim])[mfi];
         auto const &borrowing_y_inds_pointer = borrowing_y.inds_pointer.array();
         auto const &borrowing_y_size = borrowing_y.size.array();
         amrex::Long ncells = box.numPts();
@@ -836,9 +878,9 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         double* borrowing_y_area = borrowing_y.area.data();
 
-        auto const &Sy_mod = m_area_mod[maxLevel()][idim]->array(mfi);
-        const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
-        const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+        auto const &Sy_mod = area_mod[idim]->array(mfi);
+        const auto &lx = edge_lengths[0]->array(mfi);
+        const auto &lz = edge_lengths[2]->array(mfi);
         amrex::Real dx = cell_size[0];
         amrex::Real dz = cell_size[2];
         int nelems_y;
@@ -957,14 +999,14 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 
     // Do the extensions in the z-plane
     idim = 2;
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield[idim]); mfi.isValid(); ++mfi) {
 
         amrex::Box const &box = mfi.validbox();
 
-        auto const &Sz = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &flag_ext_face_z = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_info_face_z = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
+        auto const &Sz = face_areas[idim]->array(mfi);
+        auto const &flag_ext_face_z = flag_ext_face[idim]->array(mfi);
+        auto const &flag_info_face_z = flag_info_face[idim]->array(mfi);
+        auto &borrowing_z = (*borrowing[idim])[mfi];
         auto const &borrowing_z_inds_pointer = borrowing_z.inds_pointer.array();
         auto const &borrowing_z_size = borrowing_z.size.array();
         amrex::Long ncells = box.numPts();
@@ -972,9 +1014,9 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         double* borrowing_z_area = borrowing_z.area.data();
 
-        auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
-        const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
-        const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
+        auto const &Sz_mod = area_mod[idim]->array(mfi);
+        const auto &lx = edge_lengths[0]->array(mfi);
+        const auto &ly = edge_lengths[1]->array(mfi);
         amrex::Real dx = cell_size[0];
         amrex::Real dy = cell_size[1];
         int nelems_z;
