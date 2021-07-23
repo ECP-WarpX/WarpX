@@ -1544,15 +1544,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Venl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
         Venl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
         Venl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
-        Venl[lev][0]->setVal(amrex::Real(0));
-        Venl[lev][1]->setVal(amrex::Real(0));
-        Venl[lev][2]->setVal(amrex::Real(0));
+        Venl[lev][0]->setVal(0.);
+        Venl[lev][1]->setVal(0.);
+        Venl[lev][2]->setVal(0.);
         Rhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
         Rhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
         Rhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
-        Rhofield[lev][0]->setVal(amrex::Real(0));
-        Rhofield[lev][1]->setVal(amrex::Real(0));
-        Rhofield[lev][2]->setVal(amrex::Real(0));
+        Rhofield[lev][0]->setVal(0.);
+        Rhofield[lev][1]->setVal(0.);
+        Rhofield[lev][2]->setVal(0.);
     }
 #endif
 
