@@ -56,10 +56,10 @@ void FiniteDifferenceSolver::EvolveE (
 
 #ifdef AMREX_USE_EB
     if (m_fdtd_algo != MaxwellSolverAlgo::ECT) {
-        ignore_unused(face_areas, Rhofield);
+        amrex::ignore_unused(face_areas, Rhofield);
     }
 #else
-    ignore_unused(face_areas, Rhofield);
+    amrex::ignore_unused(face_areas, Rhofield);
 #endif
 
     // Select algorithm (The choice of algorithm is a runtime option,
