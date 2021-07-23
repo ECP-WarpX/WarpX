@@ -173,6 +173,9 @@ WarpX::InitFromCheckpoint ()
         if (do_moving_window_before_restart) {
             moving_window_x = moving_window_x_checkpoint;
         }
+
+        is >> time_of_last_gal_shift;
+        GotoNextLine(is);
     }
 
     const int nlevs = finestLevel()+1;
@@ -255,7 +258,7 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
-    // Initilize particles
+    // Initialize particles
     mypc->AllocData();
     mypc->Restart(restart_chkfile);
 
