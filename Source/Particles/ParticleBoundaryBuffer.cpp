@@ -13,32 +13,32 @@
 
 ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 {
-	int num_boundaries = AMREX_SPACEDIM*2;  // two for each dim, hi and lo
+    int num_boundaries = AMREX_SPACEDIM*2;  // two for each dim, hi and lo
 #ifdef AMREX_USE_EB
-	num_boundaries += 1;  // only one of these for now
+    num_boundaries += 1;  // only one of these for now
 #endif
-	m_particle_containers.resize(num_boundaries);
+    m_particle_containers.resize(num_boundaries);
 
-	amrex::ParmParse pp_particles("particles");
-	pp_particles.queryarr("species_names", m_species_names);
-	const int nspecies = m_species_names.size();
+    amrex::ParmParse pp_particles("particles");
+    pp_particles.queryarr("species_names", m_species_names);
+    const int nspecies = m_species_names.size();
 
-	for (int i = 0; i < num_boundaries; ++i)
-	{
-		m_particle_containers[i].resize(nspecies);
-		for (int j = 0; j < nspecies; ++j)
-		{
-			m_particle_containers[i][j].isDefined();
-		}
-	}
-
-    m_do_boundary_buffer.resize(AMREX_SPACEDIM*2);
-	for (int i = 0; i < num_boundaries; ++i)
-	{
-		m_do_boundary_buffer[i].resize(nspecies, 0);
+    for (int i = 0; i < num_boundaries; ++i)
+    {
+        m_particle_containers[i].resize(nspecies);
+        for (int j = 0; j < nspecies; ++j)
+        {
+            m_particle_containers[i][j].isDefined();
+        }
     }
 
-	for (int i = 0; i < num_boundaries; ++i)
+    m_do_boundary_buffer.resize(AMREX_SPACEDIM*2);
+    for (int i = 0; i < num_boundaries; ++i)
+    {
+        m_do_boundary_buffer[i].resize(nspecies, 0);
+    }
+
+    for (int i = 0; i < num_boundaries; ++i)
     {
         for (int ispecies = 0; ispecies < nspecies; ++ispecies)
         {

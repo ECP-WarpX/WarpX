@@ -18,7 +18,7 @@
 class ParticleBoundaryBuffer
 {
 public:
-	ParticleBoundaryBuffer ();
+    ParticleBoundaryBuffer ();
 
     int nSpecies() const {return m_species_names.size();}
     std::vector<std::string> GetSpeciesNames() const { return m_species_names; }
@@ -28,13 +28,13 @@ public:
     void printNumParticles () const;
 
 private:
-	// over boundary, then number of species
+    // over boundary, then number of species
     std::vector<std::vector<ParticleBuffer::BufferType<amrex::PinnedArenaAllocator> > > m_particle_containers;
 
     // over boundary, then number of species
     std::vector<std::vector<int> > m_do_boundary_buffer;
 
-	std::vector<std::string> m_species_names;
+    std::vector<std::string> m_species_names;
 };
 
 #endif /*PARTICLEBOUNDARYBUFFER_H_*/
