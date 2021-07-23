@@ -215,7 +215,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, int lev ) {
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, const int lev ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -293,7 +293,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    int lev, amrex::Real const dt ) {
+    const int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
 

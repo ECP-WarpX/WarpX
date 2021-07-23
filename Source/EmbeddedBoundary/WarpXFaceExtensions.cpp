@@ -138,7 +138,7 @@ int
 WarpX::ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                       const amrex::Array4<amrex::Real>& S_red,
                                       const amrex::Array4<int>& flag_info_face,
-                                      const amrex::Array4<int>& flag_ext_face, int idim) {
+                                      const amrex::Array4<int>& flag_ext_face, const int idim) {
     int i = cell.x;
     int j = cell.y;
     int k = cell.z;
@@ -218,7 +218,7 @@ int
 WarpX::ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
                                          const amrex::Array4<amrex::Real>& S,
-                                         const amrex::Array4<int>& flag_info_face, int idim) {
+                                         const amrex::Array4<int>& flag_info_face, const int idim) {
     int i = cell.x;
     int j = cell.y;
     int k = cell.z;
@@ -1094,4 +1094,3 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
     amrex::ignore_unused(temp_inds);
 #endif
 }
-
