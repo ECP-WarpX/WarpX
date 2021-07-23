@@ -377,7 +377,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
         tmp.WritePlotFile(
             dir, particle_diags[i].getSpeciesName(),
-            particle_diags[i].plot_flags, int_flags,
+            real_flags, int_flags,
             real_names, int_names);
 
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
