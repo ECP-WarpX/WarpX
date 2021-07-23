@@ -1,5 +1,7 @@
 #include "FlushFormatAscent.H"
 
+#include "WarpX.H"
+
 #include <AMReX.H>
 #include <AMReX_REAL.H>
 
