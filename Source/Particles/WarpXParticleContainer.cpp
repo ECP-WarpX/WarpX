@@ -18,6 +18,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_AmrParGDB.H>
