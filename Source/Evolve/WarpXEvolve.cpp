@@ -23,6 +23,7 @@
 #endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -253,6 +254,9 @@ WarpX::Evolve (int numsteps)
         mypc->ContinuousFluxInjection(dt[0]);
 
         mypc->ApplyBoundaryConditions();
+
+        m_particle_buffers->gatherParticles(*mypc);
+        m_particle_buffers->printNumParticles();
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic != ElectrostaticSolverAlgo::None )

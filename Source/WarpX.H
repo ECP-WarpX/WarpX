@@ -19,6 +19,7 @@
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Particles/ParticleBoundaryBuffer_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -1121,8 +1122,10 @@ private:
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
+    std::unique_ptr<ParticleBoundaryBuffer> m_particle_buffers;
+
     //
-    // Embeded Boundary
+    // Embedded Boundary
     //
 
     // Factory for field data
