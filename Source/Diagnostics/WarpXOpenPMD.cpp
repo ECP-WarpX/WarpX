@@ -441,7 +441,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // get the names of the real comps
     real_names.resize(pc->NumRealComps());
     auto runtime_rnames = pc->getParticleRuntimeComps();
-    for (auto const& x : runtime_rnames) { real_names[x.second] = x.first; }
+    for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
     // plot any "extra" fields by default
     real_flags = particle_diags[i].plot_flags;
@@ -453,7 +453,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // and the names
     int_names.resize(pc->NumIntComps());
     auto runtime_inames = pc->getParticleRuntimeiComps();
-    for (auto const& x : runtime_inames) { int_names[x.second] = x.first; }
+    for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
 
     // plot by default
     int_flags.resize(pc->NumIntComps(), 1);
@@ -482,7 +482,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       }, true);
 
     // real_names contains a list of all real particle attributes.
-    // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
+    // real_flags is 1 or 0, whether quantity is dumped or not.
 
     {
       DumpToFile(&tmp,
