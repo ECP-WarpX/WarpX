@@ -397,7 +397,7 @@ def add_particles(species_name,
     lenux = np.size(ux)
     lenuy = np.size(uy)
     lenuz = np.size(uz)
-    if type(attr) is np.ndarray:
+    if isinstance(attr, np.ndarray):
         lenattr = attr.shape[0]
     else:
         lenattr = 1
