@@ -433,26 +433,29 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 #ifdef WARPX_DIM_RZ
     real_names.push_back("theta");
 #endif
-    if(pc->DoFieldIonization()){
-       int_names.push_back("ionizationLevel");
-       // int_flags specifies, for each integer attribs, whether it is
-       // dumped as particle record in a plotfile. So far, ionization_level is the only
-       // integer attribs, and it is automatically dumped as particle record
-       // when ionization is on.
-       int_flags.resize(1, 1);
-       tmp.AddIntComp(false);
-    }
 
-#ifdef WARPX_QED
-    if( pc->has_breit_wheeler() ) {
-        real_names.push_back("opticalDepthBW");
-        tmp.AddRealComp(false);
-    }
-    if( pc->has_quantum_sync() ) {
-        real_names.push_back("opticalDepthQSR");
-        tmp.AddRealComp(false);
-    }
-#endif
+    // add runtime real comps to tmp
+    for (int ic = 0; ic < pc->NumRuntimeRealComps(); ++ic) { tmp.AddRealComp(false); }
+
+    // get the names of the real comps
+    real_names.resize(pc->NumRealComps());
+    auto runtime_rnames = pc->getParticleRuntimeComps();
+    for (auto const& x : runtime_rnames) { real_names[x.second] = x.first; }
+
+    // plot any "extra" fields by default
+    real_flags = particle_diags[i].plot_flags;
+    real_flags.resize(pc->NumRealComps(), 1);
+
+    // add runtime int comps to tmp
+    for (int ic = 0; ic < pc->NumRuntimeIntComps(); ++ic) { tmp.AddIntComp(false); }
+
+    // and the names
+    int_names.resize(pc->NumIntComps());
+    auto runtime_inames = pc->getParticleRuntimeiComps();
+    for (auto const& x : runtime_inames) { int_names[x.second] = x.first; }
+
+    // plot by default
+    int_flags.resize(pc->NumIntComps(), 1);
 
       pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
