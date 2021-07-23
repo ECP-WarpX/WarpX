@@ -12,6 +12,9 @@
 
 #include <cmath>
 
+#include <map>
+#include <string>
+
 // Math constants
 namespace MathConst
 {
@@ -20,6 +23,10 @@ namespace MathConst
 
 // Physical constants. Values are the 2018 CODATA recommended values
 // https://physics.nist.gov/cuu/Constants/index.html
+//
+// New additions here should also be considered for addition to
+// `warpx_constants` in WarpXUtil.cpp, so that they're available in parsing and
+// evaluation of PICMI expressions, as well as the corresponding Python definitions
 namespace PhysConst
 {
     static constexpr auto c     = static_cast<amrex::Real>( 299'792'458. );
@@ -38,5 +45,7 @@ namespace PhysConst
 
     static constexpr auto kb   = static_cast<amrex::Real>( 1.380649e-23 );  // Boltzmann's constant, J/K (exact)
 }
+
+extern std::map<std::string, amrex::Real> warpx_constants;
 
 #endif
