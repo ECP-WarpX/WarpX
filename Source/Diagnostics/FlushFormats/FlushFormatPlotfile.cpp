@@ -333,7 +333,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         // get the names of the real comps
         real_names.resize(pc->NumRealComps());
         auto runtime_rnames = pc->getParticleRuntimeComps();
-        for (auto const& x : runtime_rnames) { real_names[x.second] = x.first; }
+        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
         real_flags = particle_diags[i].plot_flags;
@@ -345,7 +345,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         // and the names
         int_names.resize(pc->NumIntComps());
         auto runtime_inames = pc->getParticleRuntimeiComps();
-        for (auto const& x : runtime_inames) { int_names[x.second] = x.first; }
+        for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
 
         // plot by default
         int_flags.resize(pc->NumIntComps(), 1);
