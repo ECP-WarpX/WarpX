@@ -74,6 +74,7 @@ driver.projected = true
 driver.focused = false
 driver.initialize_self_fields = 0
 driver.do_symmetrize = 1
+driver.random_theta = 0
 
 driver_back.species_type = positron
 driver_back.injection_style = "gaussian_beam"
@@ -94,6 +95,7 @@ driver_back.uy_th = 0.
 driver_back.uz_th = 0.
 driver_back.initialize_self_fields = 0
 driver_back.do_symmetrize = 1
+driver_back.random_theta = 0
 
 plasma_e.species_type = electron
 plasma_e.injection_style = "NUniformPerCell"
@@ -108,6 +110,7 @@ plasma_e.momentum_distribution_type = "constant"
 plasma_e.ux = 0.
 plasma_e.uz = 0.
 plasma_e.do_continuous_injection = 1
+plasma_e.random_theta = 0
 
 plasma_p.species_type = hydrogen
 plasma_p.injection_style = "NUniformPerCell"
@@ -122,6 +125,7 @@ plasma_p.momentum_distribution_type = "constant"
 plasma_p.ux = 0.
 plasma_p.uz = 0.
 plasma_p.do_continuous_injection = 1
+plasma_p.random_theta = 0
 
 # Diagnostics
 diagnostics.diags_names = diag1
