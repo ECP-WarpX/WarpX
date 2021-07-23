@@ -420,6 +420,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
     amrex::Vector<int> int_flags;
+    amrex::Vector<int> real_flags;
 
     // see openPMD ED-PIC extension for namings
     // note: an underscore separates the record name from its component
