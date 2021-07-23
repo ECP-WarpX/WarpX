@@ -475,8 +475,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // 1) Prepare E,B,F,G fields in spectral space
         PSATDForwardTransformEB();
-        PSATDForwardTransformF();
-        PSATDForwardTransformG();
+        if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
+        if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
 
         // 2) Set the averaged fields to zero
         if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
@@ -553,8 +553,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             if (i_depose == n_depose-1)
             {
                 PSATDBackwardTransformEB();
-                PSATDBackwardTransformF();
-                PSATDBackwardTransformG();
+                if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
+                if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
             }
         }
 
@@ -567,8 +567,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         }
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
-        FillBoundaryF(guard_cells.ng_alloc_F);
-        FillBoundaryG(guard_cells.ng_alloc_G);
+        if (WarpX::do_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
+        if (WarpX::do_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
     }
     else
     {
