@@ -488,7 +488,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       DumpToFile(&tmp,
          particle_diags[i].getSpeciesName(),
          m_CurrentStep,
-         particle_diags[i].plot_flags,
+         real_flags,
          int_flags,
          real_names, int_names,
          pc->getCharge(), pc->getMass()
