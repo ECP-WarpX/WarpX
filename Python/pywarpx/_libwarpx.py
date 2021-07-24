@@ -248,6 +248,16 @@ def get_nattr():
     # --- The -3 is because the comps include the velocites
     return libwarpx.warpx_nComps() - 3
 
+def get_nattr_species(species_name):
+    '''
+
+    Get the number of extra real attributes for the given species.
+
+    '''
+    # --- The -3 is because the comps include the velocites
+    return libwarpx.warpx_nCompsSpecies(
+        ctypes.c_char_p(species_name.encode('utf-8'))) - 3
+
 def amrex_init(argv, mpi_comm=None):
     # --- Construct the ctype list of strings to pass in
     argc = len(argv)
@@ -392,7 +402,10 @@ def add_particles(species_name,
     lenux = np.size(ux)
     lenuy = np.size(uy)
     lenuz = np.size(uz)
-    lenattr = np.size(attr)
+    if isinstance(attr, np.ndarray):
+        lenattr = attr.shape[0]
+    else:
+        lenattr = 1
 
     if (lenx == 0 or leny == 0 or lenz == 0 or lenux == 0 or
         lenuy == 0 or lenuz == 0 or lenattr == 0):
@@ -420,13 +433,27 @@ def add_particles(species_name,
     if lenuz == 1:
         uz = np.array(uz)*np.ones(maxlen,'d')
     if lenattr == 1:
-        nattr = get_nattr()
-        attr = np.array(attr)*np.ones([maxlen,nattr])
+        attr = np.array(attr)*np.ones(maxlen)
+
+    if attr.ndim == 2:
+        nattr = attr.shape[-1]
+    elif attr.ndim == 1:
+        nattr = 1
+    else:
+        raise RuntimeError("'attr' array has to be either 1 or 2 dimensional.")
+
+    # check that not too many attribute values were given
+    if nattr > get_nattr_species(species_name):
+        raise RuntimeError(
+            f'{species_name} only has {get_nattr_species(species_name)} '
+            f'attributes but {nattr} were given.'
+        )
 
     libwarpx.warpx_addNParticles(
         ctypes.c_char_p(species_name.encode('utf-8')), x.size,
-        x, y, z, ux, uy, uz, attr.shape[-1], attr, unique_particles
+        x, y, z, ux, uy, uz, nattr, attr, unique_particles
     )
+
 
 def get_particle_count(species_name):
     '''
@@ -448,6 +475,7 @@ def get_particle_count(species_name):
     return libwarpx.warpx_getNumParticles(
         ctypes.c_char_p(species_name.encode('utf-8'))
     )
+
 
 def get_particle_structs(species_name, level):
     '''

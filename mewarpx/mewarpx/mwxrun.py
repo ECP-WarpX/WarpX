@@ -52,6 +52,10 @@ class MEWarpXRun(object):
         self._set_geom_str()
         self._set_grid_params()
 
+        # loop over all species to build their pid_dict's
+        for species in self.simulation.species:
+            species.init_pid_dict()
+
     def _set_geom_str(self):
         """Set the geom_str variable corresponding to the geometry used.
 
@@ -165,8 +169,7 @@ class MEWarpXRun(object):
         """
         npart = 0
         for spec in self.simulation.species:
-            npart += _libwarpx.libwarpx.warpx_getNumParticles(
-                spec.species_number)
+            npart += _libwarpx.get_particle_count(spec.name)
 
         return npart
 
@@ -178,8 +181,7 @@ class MEWarpXRun(object):
         for spec in self.simulation.species:
             if spec.name is None:
                 raise ValueError("Unnamed species are not supported.")
-            npart_dict[spec.name] = _libwarpx.libwarpx.warpx_getNumParticles(
-                spec.species_number)
+            npart_dict[spec.name] = _libwarpx.get_particle_count(spec.name)
 
         return npart_dict
 

@@ -226,6 +226,9 @@ class FixedNumberInjector(Injector):
               f"timesteps.")
         callbacks.installparticleinjection(self.inject_particles)
 
+        # add E_total PID to this species
+        self.species.add_pid("E_total")
+
     def inject_particles(self):
         """Perform the actual injection!"""
         effective_it = mwxrun.get_it() - self.injectoffset
@@ -247,26 +250,21 @@ class FixedNumberInjector(Injector):
             )
 
             print(f"Inject {len(particles_dict['x'])} particles")
-            # We can basically call _libwarpx.libwarpx.warpx_addNParticles()
-            # directly as we shouldn't need the wrapper, unless number to
-            # inject is 0, but for now we'll be conservative and use the
-            # wrapper.
 
             # Note some parts of WarpX call the variables ux and some parts vx,
             # and they're referred to as momenta. But I don't see anywhere
             # they're actually used as momenta including the particle mass -
             # the actual update is in Source/Particles/Pusher/UpdatePosition.H
-            _libwarpx.add_particles(
-                species_number=self.species.species_number,
+            self.species.add_particles(
                 x=particles_dict['x'],
                 y=particles_dict['y'],
                 z=particles_dict['z'],
                 ux=particles_dict['vx'],
                 uy=particles_dict['vy'],
                 uz=particles_dict['vz'],
-                # E_total=particles_dict['E_total'],
-                attr=particles_dict['w'],
-                unique_particles=self.unique_particles
+                w=particles_dict['w'],
+                unique_particles=self.unique_particles,
+                E_total=particles_dict['E_total']
             )
 
             if self.injector_diag is not None:
@@ -368,6 +366,9 @@ class ThermionicInjector(Injector):
                   f"particles per step, each with weight {self.weight}")
         callbacks.installparticleinjection(self.inject_particles)
 
+        # add E_total PID to this species
+        self.species.add_pid("E_total")
+
     def inject_particles(self):
         """Perform the actual injection!"""
         if self.poisson:
@@ -388,26 +389,20 @@ class ThermionicInjector(Injector):
             randomdt=False, velhalfstep=False
         )
 
-        # We can basically call _libwarpx.libwarpx.warpx_addNParticles()
-        # directly as we shouldn't need the wrapper, unless number to
-        # inject is 0, but for now we'll be conservative and use the
-        # wrapper.
-
         # Note some parts of WarpX call the variables ux and some parts vx,
         # and they're referred to as momenta. But I don't see anywhere
         # they're actually used as momenta including the particle mass -
         # the actual update is in Source/Particles/Pusher/UpdatePosition.H
-        _libwarpx.add_particles(
-            species_number=self.species.species_number,
+        self.species.add_particles(
             x=particles_dict['x'],
             y=particles_dict['y'],
             z=particles_dict['z'],
             ux=particles_dict['vx'],
             uy=particles_dict['vy'],
             uz=particles_dict['vz'],
-            # E_total=particles_dict['E_total'],
-            attr=particles_dict['w'],
-            unique_particles=self.unique_particles
+            w=particles_dict['w'],
+            unique_particles=self.unique_particles,
+            E_total=particles_dict['E_total']
         )
 
         if self.injector_diag is not None:

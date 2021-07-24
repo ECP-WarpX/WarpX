@@ -303,7 +303,6 @@ class DiodeRun_V1(object):
                 warpx_potential_hi_z=self.V_ANODE_EXPRESSION,
                 lower_boundary_conditions_particles=['periodic', 'absorbing'],
                 upper_boundary_conditions_particles=['periodic', 'absorbing'],
-                moving_window_velocity=None,
                 warpx_max_grid_size=self.NZ//self.MAX_GRID_SIZE_FACTOR
             )
         elif self.dim == 3:
@@ -389,7 +388,7 @@ class DiodeRun_V1(object):
                     required_precision=1e-6,
                     maximum_iterations=10000
                 )
-                # self.solver.self_fields_verbosity = 2 if self.NONINTERAC else 0
+        self.solver.self_fields_verbosity = 2 if self.NONINTERAC else 0
 
     def init_conductors(self):
         print('### Init Diode Conductors Setup ###')

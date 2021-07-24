@@ -38,7 +38,7 @@ xmax = D_CA / ny * nx
 ymax = D_CA
 number_per_cell_each_dim = [16, 16]
 
-TOTAL_TIME = 1e-7 # s
+TOTAL_TIME = 1e-11 # s
 DIAG_INTERVAL = 1.0e-9
 DT = 0.5e-12 # s
 
@@ -150,3 +150,6 @@ diag_base.TextDiag(diag_steps=diag_steps, preset_string='perfdebug')
 # Simulation run
 #################################
 mwxrun.simulation.step(max_steps)
+
+print(electrons.get_array_from_pid("w"))
+print(electrons.get_array_from_pid("E_total"))
