@@ -92,7 +92,7 @@ sim.initialize_warpx()
 
 from pywarpx import _libwarpx, callbacks
 
-_libwarpx.add_real_comp('electrons', 'new_pid')
+_libwarpx.add_real_comp('electrons', 'newPid')
 
 def add_particles():
 
@@ -126,10 +126,10 @@ sim.step(max_steps - 1)
 
 assert (_libwarpx.get_particle_count('electrons') == 90)
 assert (_libwarpx.get_particle_comp_index('electrons', 'w') == 0)
-assert (_libwarpx.get_particle_comp_index('electrons', 'new_pid') == 4)
+assert (_libwarpx.get_particle_comp_index('electrons', 'newPid') == 4)
 
 new_pid_vals = _libwarpx.get_particle_arrays(
-    'electrons', 'new_pid', 0
+    'electrons', 'newPid', 0
 )
 for vals in new_pid_vals:
     assert np.allclose(vals, 5)
