@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
 
 .. _running-cpp-parameters-overall:
 
@@ -370,8 +370,9 @@ Math parser and user-defined constants
 --------------------------------------
 
 WarpX uses AMReX's math parser that reads expressions in the input file.
-It can be used in all input parameters that consist of one or more floats.
-Note that when multiple floats are expected, the expressions are space delimited.
+It can be used in all input parameters that consist of one or more integers or floats.
+Integer input expecting boolean, 0 or 1, are not parsed.
+Note that when multiple values are expected, the expressions are space delimited.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
@@ -395,7 +396,7 @@ User-defined constants
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Users can define their own constants in the input file.
-These constants can be used for any parameter that consists of one or more floats.
+These constants can be used for any parameter that consists of one or more integers or floats.
 User-defined constant names can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
@@ -414,7 +415,7 @@ Besides, for profiles that depend on spatial coordinates (the plasma momentum di
 
 The parser reads python-style expressions between double quotes, for instance
 ``"a0*x**2 * (1-y*1.e2) * (x>0)"`` is a valid expression where ``a0`` is a
-user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
+user-defined constant (see above) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
 Alternatively the expression above can be written as ``if(x>0, a0*x**2 * (1-y*1.e2), 0)``.
