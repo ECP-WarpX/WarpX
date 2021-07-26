@@ -1547,6 +1547,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Venl[lev][0]->setVal(0.);
         Venl[lev][1]->setVal(0.);
         Venl[lev][2]->setVal(0.);
+        // DISCLAIMER: Rhofield is NOT the charge density. This multifab is needed only by the ect
+        // solver and it represents the electromotive force density. The name Rhofield has been used
+        // to comply with the notation of the paper
+        // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
+        // and below).
         Rhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
         Rhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[y]"));
         Rhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[z]"));
