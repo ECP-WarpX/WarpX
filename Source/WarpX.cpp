@@ -567,7 +567,6 @@ WarpX::ReadParameters ()
             // input for each species.
         }
 
-        pp_warpx.query("n_buffer", n_buffer);
         queryWithParser(pp_warpx, "const_dt", const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
