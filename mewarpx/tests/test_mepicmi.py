@@ -24,33 +24,27 @@ def test_extra_pid(capsys):
     np.random.seed(9216001)
 
     # Specific numbers match older run for consistency
-    DT = 1.0e-10
     DIAG_STEPS = 2
-    DIAG_INTERVAL = DIAG_STEPS*DT
-    VOLTAGE = 450.0
     D_CA = 0.05  # m
     NX = 16
     NZ = 128
     run = diode_setup.DiodeRun_V1(
         dim=dim,
-        V_ANODE_CATHODE=VOLTAGE,
+        rz=False,
+        V_ANODE_CATHODE=450.0,
         D_CA=D_CA,
-        PLASMA_DENSITY=2.56e14,  # m^-3
-        T_ELEC=30000.0,  # K
         NX=NX,
         NZ=NZ,
         # This gives equal spacing in x & z
         PERIOD=D_CA * NX / NZ,
-        DT=DT,
+        DT=1.0e-10,
         TOTAL_TIMESTEPS=25,
         DIAG_STEPS=DIAG_STEPS,
-        DIAG_INTERVAL=DIAG_INTERVAL,
-        NUMBER_PARTICLES_PER_CELL=[0, 0],
         DIRECT_SOLVER=True
     )
     # Only the functions we change from defaults are listed here
     run.setup_run(
-        init_conductors=False,
+        init_conductors=True,
         init_scraper=False,
         init_injectors=False,
         init_simcontrol=True,
@@ -86,7 +80,6 @@ def test_extra_pid(capsys):
 
     out, _ = capsys.readouterr()
 
-    print(out)
     # make sure out isn't empty
     outstr = "SimControl: Termination from criteria: check_particle_nums"
     assert outstr in out

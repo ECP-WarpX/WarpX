@@ -37,6 +37,22 @@ class MEWarpXRun(object):
         self.initialized = False
         self.simulation = picmi.Simulation(verbose=0)
 
+    def init_grid(self, xmin, xmax, zmin, zmax, nx, nz, max_grid_size=4):
+        """Function to set up the simulation grid."""
+        self.grid = picmi.Cartesian2DGrid(
+            number_of_cells=[nx, nz],
+            lower_bound=[xmin, zmin],
+            upper_bound=[xmax, zmax],
+            lower_boundary_conditions=['periodic', 'dirichlet'],
+            upper_boundary_conditions=['periodic', 'dirichlet'],
+            lower_boundary_conditions_particles=['periodic', 'absorbing'],
+            upper_boundary_conditions_particles=['periodic', 'absorbing'],
+            warpx_max_grid_size=nz//max_grid_size
+        )
+
+        self._set_geom_str()
+        self._set_grid_params()
+
     def init_run(self):
         if self.initialized:
             raise RuntimeError(
@@ -49,12 +65,14 @@ class MEWarpXRun(object):
         self.me = _libwarpx.libwarpx.warpx_getMyProc()
         self.n_procs = _libwarpx.libwarpx.warpx_getNProcs()
 
-        self._set_geom_str()
-        self._set_grid_params()
-
         # loop over all species to build their pid_dict's
         for species in self.simulation.species:
             species.init_pid_dict()
+
+        # A level is needed for many things like level number. For now I'm
+        # statically setting the default level here. I'm not sure of pitfalls
+        # or how to handle it more generally yet.
+        self.lev = _libwarpx.libwarpx.warpx_finestLevel()
 
     def _set_geom_str(self):
         """Set the geom_str variable corresponding to the geometry used.
@@ -64,13 +82,12 @@ class MEWarpXRun(object):
         # Note these can also be obtained from pywarpx.geometry.coord_sys (0
         # for Cartesian, 1 for RZ) and len(pywarpx.geometry.prob_lo) for num
         # dimensions. Those are set by this solver grid in any case.
-        grid = self.simulation.solver.grid
 
-        if isinstance(grid, picmi.Cartesian2DGrid):
+        if isinstance(self.grid, picmi.Cartesian2DGrid):
             self.geom_str = 'XZ'
-        elif isinstance(grid, picmi.Cartesian3DGrid):
+        elif isinstance(self.grid, picmi.Cartesian3DGrid):
             self.geom_str = 'XYZ'
-        elif isinstance(grid, picmi.CylindricalGrid):
+        elif isinstance(self.grid, picmi.CylindricalGrid):
             self.geom_str = 'RZ'
         else:
             raise ValueError("Unrecognized type of pywarpx.picmi Grid.")
@@ -90,21 +107,20 @@ class MEWarpXRun(object):
         # .prob_hi, and .coord_sys, and by pywarpx.amr.n_cell. Those are
         # set by this solver grid in any case, and the present format matches
         # our existing Python framework better.
-        grid = self.simulation.solver.grid
 
-        if isinstance(grid, picmi.Cartesian2DGrid):
-            self.xmin = grid.xmin
-            self.xmax = grid.xmax
+        if isinstance(self.grid, picmi.Cartesian2DGrid):
+            self.xmin = self.grid.xmin
+            self.xmax = self.grid.xmax
             self.ymin = 0.0
             self.ymax = 1.0
-            self.zmin = grid.ymin
-            self.zmax = grid.ymax
+            self.zmin = self.grid.ymin
+            self.zmax = self.grid.ymax
             self.rmin = None
             self.rmax = None
 
-            self.nx = grid.nx
+            self.nx = self.grid.nx
             self.ny = 0
-            self.nz = grid.ny
+            self.nz = self.grid.ny
             self.nr = None
 
             self.dx = (self.xmax - self.xmin) / self.nx
@@ -112,19 +128,19 @@ class MEWarpXRun(object):
             self.dz = (self.zmax - self.zmin) / self.nz
             self.dr = None
 
-        elif isinstance(grid, picmi.Cartesian3DGrid):
-            self.xmin = grid.xmin
-            self.xmax = grid.xmax
-            self.ymin = grid.ymin
-            self.ymax = grid.ymax
-            self.zmin = grid.zmin
-            self.zmax = grid.zmax
+        elif isinstance(self.grid, picmi.Cartesian3DGrid):
+            self.xmin = self.grid.xmin
+            self.xmax = self.grid.xmax
+            self.ymin = self.grid.ymin
+            self.ymax = self.grid.ymax
+            self.zmin = self.grid.zmin
+            self.zmax = self.grid.zmax
             self.rmin = None
             self.rmax = None
 
-            self.nx = grid.nx
-            self.ny = grid.ny
-            self.nz = grid.ny
+            self.nx = self.grid.nx
+            self.ny = self.grid.ny
+            self.nz = self.grid.ny
             self.nr = None
 
             self.dx = (self.xmax - self.xmin) / self.nx
@@ -132,25 +148,20 @@ class MEWarpXRun(object):
             self.dz = (self.zmax - self.zmin) / self.nz
             self.dr = None
 
-        elif isinstance(grid, picmi.CylindricalGrid):
-            self.xmin = self.ymin = self.rmin = grid.rmin
-            self.xmax = self.ymax = self.rmax = grid.rmax
-            self.zmin = grid.zmin
-            self.zmax = grid.zmax
+        elif isinstance(self.grid, picmi.CylindricalGrid):
+            self.xmin = self.ymin = self.rmin = self.grid.rmin
+            self.xmax = self.ymax = self.rmax = self.grid.rmax
+            self.zmin = self.grid.zmin
+            self.zmax = self.grid.zmax
 
-            self.nx = self.ny = self.nr = grid.nr
-            self.nz = grid.nz
+            self.nx = self.ny = self.nr = self.grid.nr
+            self.nz = self.grid.nz
 
             self.dx = self.dy = self.dr = (self.rmax - self.rmin) / self.nr
             self.dz = (self.zmax - self.zmin) / self.nz
 
         else:
             raise ValueError("Unrecognized type of pywarpx.picmi Grid.")
-
-        # A level is needed for many things like level number. For now I'm
-        # statically setting the default level here. I'm not sure of pitfalls
-        # or how to handle it more generally yet.
-        self.lev = _libwarpx.libwarpx.warpx_finestLevel()
 
     def get_it(self):
         """Return the current integer iteration number."""

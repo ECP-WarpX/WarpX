@@ -7,9 +7,8 @@ from mewarpx import util as mwxutil
 mwxutil.init_libwarpx(ndim=2, rz=False)
 
 from mewarpx.mwxrun import mwxrun
-from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
-from mewarpx.mcc_wrapper import MCC
 from mewarpx.diags_store import diag_base
+from mewarpx import mepicmi, emission, mcc_wrapper, poisson_pseudo_1d
 
 from pywarpx import picmi
 import pywarpx
@@ -36,6 +35,8 @@ M_ION = 6.67e-27 # kg
 PLASMA_DENSITY = 2.56e14 # m^-3
 T_ELEC = 30000.0 # K
 
+SEED_NPPC = 16 * 32
+
 ##########################
 # numerics parameters
 ##########################
@@ -48,8 +49,6 @@ xmin = 0.0
 zmin = 0.0
 xmax = D_CA / nz * nx
 zmax = D_CA
-
-number_per_cell_each_dim = [16, 32]
 
 DT = 1.0 / (400 * FREQ)
 
@@ -72,55 +71,42 @@ print('  Total time = %.3e s (%i timesteps)' % (TOTAL_TIME, max_steps))
 ##########################
 
 anode_voltage = lambda t: VOLTAGE * np.sin(2.0 * np.pi * FREQ * t)
+# anode_voltage = f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)"
 
-v_rms_elec = np.sqrt(constants.kb * T_ELEC / constants.m_e)
-v_rms_ion = np.sqrt(constants.kb * T_INERT / M_ION)
+##########################
+# declare the simulation grid
+##########################
 
-uniform_plasma_elec = picmi.UniformDistribution(
-    density = PLASMA_DENSITY,
-    upper_bound = [None] * 3,
-    rms_velocity = [v_rms_elec] * 3,
-    directed_velocity = [0.] * 3
+mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz)
+mwxrun.grid.potential_zmax = anode_voltage
+
+##########################
+# declare species
+##########################
+
+electrons = mepicmi.Species(particle_type='electron', name='electrons')
+ions = mepicmi.Species(particle_type='He', name='he_ions', charge='q_e')
+
+##########################
+# neutral plasma injection
+##########################
+
+vol_emitter = emission.UniformDistributionVolumeEmitter(T=T_ELEC)
+
+plasma_injector = emission.PlasmaInjector(
+    emitter=vol_emitter, species1=electrons, species2=ions,
+    npart=2 * SEED_NPPC * nx * nz,
+    T_2=T_INERT, plasma_density=PLASMA_DENSITY
 )
 
-uniform_plasma_ion = picmi.UniformDistribution(
-    density = PLASMA_DENSITY,
-    upper_bound = [None] * 3,
-    rms_velocity = [v_rms_ion] * 3,
-    directed_velocity = [0.] * 3
-)
-
-electrons = picmi.Species(
-    particle_type='electron', name='electrons',
-    initial_distribution=uniform_plasma_elec
-)
-ions = picmi.Species(
-    particle_type='He', name='he_ions',
-    charge='q_e',
-    initial_distribution=uniform_plasma_ion
-)
+##########################
+# collision physics
+##########################
 
 # MCC collisions
-mcc_wrapper = MCC(
+mcc = mcc_wrapper.MCC(
     electrons, ions, T_INERT=T_INERT, N_INERT=N_INERT,
     exclude_collisions=['charge_exchange']
-)
-
-##########################
-# numerics components
-##########################
-
-grid = picmi.Cartesian2DGrid(
-    number_of_cells = [nx, nz],
-    lower_bound = [xmin, zmin],
-    upper_bound = [xmax, zmax],
-    lower_boundary_conditions=['periodic', 'dirichlet'],
-    upper_boundary_conditions=['periodic', 'dirichlet'],
-    lower_boundary_conditions_particles=['periodic', 'absorbing'],
-    upper_boundary_conditions_particles=['periodic', 'absorbing'],
-    warpx_potential_hi_z = anode_voltage, #"%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
-    moving_window_velocity = None,
-    warpx_max_grid_size = nz//4
 )
 
 ##########################
@@ -128,9 +114,9 @@ grid = picmi.Cartesian2DGrid(
 ##########################
 
 # solver = picmi.ElectrostaticSolver(
-#    grid=grid, method='Multigrid', required_precision=1e-12
+#    grid=mwxrun.grid, method='Multigrid', required_precision=1e-12
 # )
-solver = PoissonSolverPseudo1D(grid=grid)
+solver = poisson_pseudo_1d.PoissonSolverPseudo1D(grid=mwxrun.grid)
 
 ##########################
 # diagnostics
@@ -138,7 +124,7 @@ solver = PoissonSolverPseudo1D(grid=grid)
 
 field_diag = picmi.FieldDiagnostic(
     name = 'diags',
-    grid = grid,
+    grid = mwxrun.grid,
     period = diagnostic_intervals,
     data_list = ['rho_electrons', 'rho_he_ions', 'phi'],
     write_dir = 'diags/',
@@ -152,21 +138,7 @@ mwxrun.simulation.solver = solver
 mwxrun.simulation.time_step_size = DT
 mwxrun.simulation.max_steps = max_steps
 
-mwxrun.simulation.add_species(
-    electrons,
-    layout = picmi.GriddedLayout(
-        n_macroparticle_per_cell=number_per_cell_each_dim, grid=grid
-    )
-)
-mwxrun.simulation.add_species(
-    ions,
-    layout = picmi.GriddedLayout(
-        n_macroparticle_per_cell=number_per_cell_each_dim, grid=grid
-    )
-)
-
 mwxrun.simulation.add_diagnostic(field_diag)
-# sim.add_diagnostic(restart_dumps)
 
 ##########################
 # WarpX and mewarpx initialization

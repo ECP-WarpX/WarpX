@@ -413,6 +413,224 @@ class ThermionicInjector(Injector):
             )
 
 
+class PlasmaInjector(Injector):
+
+    """Inject particles at simulation start, or at regular timesteps, to
+    seed a plasma. Can use any emitter object. The defining feature is that the
+    2nd species positions and weights are copied from the first species, so the
+    spatial distribution is always identical to start. Velocities are
+    independent, however.
+    """
+
+    def __init__(self, emitter, species1, species2, npart, T_2=None,
+                 plasma_density=None, ionization_frac=None,
+                 P_neutral=None, T_neutral=None,
+                 injectfreq=None, injectoffset=1,
+                 rseed=None, name=None, unique_particles=True
+                 ):
+        """Initialize injection of a plasma with two species and given emitter.
+
+        Arguments:
+            emitter (:class:`mewarpx.emission.BaseEmitter`): BaseEmitter object
+                that will specify positions and velocities of particles to
+                inject.
+            species1 (:class:`mewarpx.mepicmi.Species`): First species, eg
+                electron
+            species2 (:class:`mewarpx.mepicmi.Species`): Second species, eg ion
+            npart (int): Number of macroparticles to inject total among all
+                processors and species.
+            T_2 (float): If specified, species2 will be injected at this
+                temperature.
+            plasma_density (float): Ion number density to inject. If using
+                volumetric emitter, in m^(-3), if using surface emitter, in
+                m^(-2)
+            ionization_frac (float): Instead of plasma_density, use a specific
+                ionization fraction of the neutral gas. Volumetric emitter
+                only.
+            P_neutral (float): If using ionization_frac only, the neutral gas
+                density (*Torr*).
+            T_neutral (float): If using ionization_frac only, the neutral gas
+                temperature (K).
+            injectfreq (int): Number of steps to wait for next injection.
+                Default infinity.
+            injectoffset (int): First timestep to inject. Default 1 (the first
+                possible timestep in WarpX).
+            rseed (int): If specified, all injection should be repeatable using
+                this rseed. At present each set of injected particles will have
+                the same initial position and velocities as the previous set.
+            name (str or None): Injector name for diagnostics. Constructed from
+                species names if not given.
+            unique_particles (bool): Whether WarpX will keep all particles
+                given it from every processor (True) or keep only a fraction of
+                particles based on processor count (False). Default True.
+        """
+        # Save class parameters
+        self.emitter = emitter
+        self.npart_per_species = npart // 2
+        self.species1 = species1
+        self.species2 = species2
+        self.T_2 = T_2
+        if injectfreq is None:
+            injectfreq = np.inf
+        self.injectfreq = injectfreq
+        self.injectoffset = injectoffset
+        self.rseed = rseed
+
+        self._calc_plasma_density(
+            plasma_density=plasma_density,
+            ionization_frac=ionization_frac,
+            P_neutral=P_neutral,
+            T_neutral=T_neutral,
+        )
+
+        self.name = name
+        if self.name is None:
+            self.name = (
+                f"plasma_injector_{self.species1.name}_{self.species2.name}"
+            )
+        self.unique_particles = unique_particles
+
+        print(
+            f"Plasma injection {self.name}:\n  "
+            f"{self.npart_per_species} particles each of {self.species1.name} "
+            f"and {self.species2.name}, every {self.injectfreq} timesteps,"
+        )
+
+        # Surface emission
+        if isinstance(self.emitter, Emitter):
+            self.weight = (
+                self.emitter.area * self.plasma_density / self.npart_per_species
+            )
+            warnings.warn(
+                "Using a surface emitter with the PlasmaInjector has not been "
+                "tested for accuracy."
+            )
+            print(
+                f"  full weight {self.weight:.4g}, surface density "
+                f"{self.plasma_density:.4g} m^-2, area "
+                f"{self.emitter.area:.4g} m^2."
+            )
+        # Volume emission
+        else:
+            self.weight = (
+                self.emitter.volume * self.plasma_density
+                / self.npart_per_species
+            )
+            print(
+                f"  full weight {self.weight:.4g}, volume density "
+                f"{self.plasma_density:.4g} m^-3, volume "
+                f"{self.emitter.volume:.4g} m^3."
+            )
+            debye_length = mwxutil.plasma_Debye_length(
+                self.emitter.T, self.plasma_density)
+            print(
+                f"  Corresponding plasma Debye length is {debye_length:.3e} m."
+            )
+
+        callbacks.installparticleinjection(self.inject_particles)
+
+        # add E_total PID to the species involved
+        self.species1.add_pid("E_total")
+        self.species2.add_pid("E_total")
+
+    def _calc_plasma_density(self, plasma_density, ionization_frac, P_neutral,
+                             T_neutral):
+        """Helper function to separate out part of initialization."""
+        self.plasma_density = plasma_density
+        if ionization_frac is not None:
+            if self.plasma_density is not None:
+                raise ValueError(
+                    "Specify ionization_frac or plasma_density, not both.")
+            if (
+                (P_neutral is None) or (P_neutral <= 0) or
+                (T_neutral is None) or (T_neutral <= 0)
+            ):
+                raise ValueError("Must specify positive neutral pressure and "
+                                 "temperature to use ionization_frac.")
+            if isinstance(self.emitter, Emitter):
+                raise RuntimeError("Cannot use ionization_frac with a surface"
+                                   " (area-based) Emitter.")
+            n_neutral = mwxutil.ideal_gas_density(P_neutral, T_neutral)
+            self.plasma_density = n_neutral * ionization_frac
+
+        if (self.plasma_density is None) or (self.plasma_density <= 0):
+            raise ValueError("Invalid plasma_density {}".format(
+                self.plasma_density))
+
+    def inject_particles(self):
+        """Inject particles, same position & weight for each."""
+        effective_it = mwxrun.get_it() - self.injectoffset
+        if effective_it >= 0 and effective_it % self.injectfreq == 0:
+            # Adjust npart for processor number if needed
+            npart = self.compute_npart(
+                npart_total=self.npart_per_species,
+                unique_particles=self.unique_particles
+            )
+
+            # TODO randomdt and velhalfstep are False simply because they're
+            # not supported at present
+            particles1_dict = self.emitter.get_newparticles(
+                npart=npart, w=self.weight, q=self.species1.sq,
+                m=self.species1.sm, rseed=self.rseed,
+                randomdt=False, velhalfstep=False
+            )
+
+            # if requested get particles for species2 at the specified
+            # temperature
+            if self.T_2 is not None:
+                T_temp, self.emitter.T = self.emitter.T, self.T_2
+
+            # TODO randomdt and velhalfstep are False simply because they're
+            # not supported at present
+            particles2_dict = self.emitter.get_newparticles(
+                npart=npart, w=self.weight, q=self.species2.sq,
+                m=self.species2.sm, rseed=self.rseed,
+                randomdt=False, velhalfstep=False
+            )
+            if self.T_2 is not None:
+                self.emitter.T = T_temp
+
+            for key in ['x', 'y', 'z', 'w']:
+                particles2_dict[key] = particles1_dict[key]
+
+            print(
+                f"Inject {len(particles1_dict['x'])} particles each of "
+                f"{self.species1.name} and {self.species2.name}."
+            )
+            self.species1.add_particles(
+                x=particles1_dict['x'],
+                y=particles1_dict['y'],
+                z=particles1_dict['z'],
+                ux=particles1_dict['vx'],
+                uy=particles1_dict['vy'],
+                uz=particles1_dict['vz'],
+                w=particles1_dict['w'],
+                unique_particles=self.unique_particles,
+                E_total=particles1_dict['E_total'])
+            self.species2.add_particles(
+                x=particles2_dict['x'],
+                y=particles2_dict['y'],
+                z=particles2_dict['z'],
+                ux=particles2_dict['vx'],
+                uy=particles2_dict['vy'],
+                uz=particles2_dict['vz'],
+                w=particles2_dict['w'],
+                unique_particles=self.unique_particles,
+                E_total=particles2_dict['E_total'])
+
+            if self.injector_diag is not None:
+                self.record_injectedparticles(
+                    self.species1,
+                    particles1_dict['E_total'],
+                    particles1_dict['w']
+                )
+                self.record_injectedparticles(
+                    self.species2,
+                    particles2_dict['E_total'],
+                    particles2_dict['w']
+                )
+
+
 class BaseEmitter(object):
 
     """Parent class of both Emitter (which handles injection from a surface or
@@ -499,8 +717,8 @@ class BaseEmitter(object):
         """Calculate initial particle energies.
 
         Note:
-            The conductor voltage V of the conductor the particle is ejected from
-            must also be set for this object.
+            The conductor voltage V of the conductor the particle is ejected
+            from must also be set for this object.
 
         Arguments:
             vx (np.ndarray): n-length array of velocity x-components
@@ -574,7 +792,8 @@ class BaseEmitter(object):
                 particle_dict['w'] = wfn(particle_dict)
 
         if self.use_Schottky:
-            raise RuntimeError("Error: Schottky enhancement not currently implemented!")
+            raise RuntimeError(
+                "Error: Schottky enhancement not currently implemented!")
 
         # if (self.use_Schottky and abs(q + e)/e < 1e-6
         #         and abs(m - m_e)/m_e < 1e-6):
@@ -753,8 +972,9 @@ class ZPlaneEmitter(Emitter):
         """Initialize an emitter for a planar cathode.
 
         Arguments:
-            conductor (:class:`mewarpx.assemblies.Assembly`): Conductor object, used to obtain work
-                function. Can later grab other variables from this conductor.
+            conductor (:class:`mewarpx.assemblies.Assembly`): Conductor object,
+                used to obtain work function. Can later grab other variables
+                from this conductor.
             T (float): Temperature in Kelvin for the emitter; determines
                 velocities.
             z (float): Position of the emitter along the z axis. If None, grab
@@ -885,7 +1105,9 @@ class ArbitraryEmitter2D(Emitter):
                 "emission_type").
         """
         # Default Emitter initialization.
-        super(ArbitraryEmitter2D, self).__init__(T=T, conductor=conductor, **kwargs)
+        super(ArbitraryEmitter2D, self).__init__(
+            T=T, conductor=conductor, **kwargs
+        )
         # Save input parameters
         self.res_fac = res_fac
         self.transverse_fac = transverse_fac
@@ -972,13 +1194,16 @@ class ArbitraryEmitter2D(Emitter):
         # Draw Random Numbers to determine which face to emit from
         self.contour_idx = np.searchsorted(self.CDF, np.random.rand(npart))
 
-        vels = np.column_stack(mwxutil.get_velocities(num_samples=npart, T=self.T, m=m,
-                                                        rseed=rseedv,
-                                                        transverse_fac=self.transverse_fac,
-                                                        emission_type=self.emission_type))
+        vels = np.column_stack(mwxutil.get_velocities(
+            num_samples=npart, T=self.T, m=m,
+            rseed=rseedv,
+            transverse_fac=self.transverse_fac,
+            emission_type=self.emission_type
+        ))
 
         # Rotate velocities based on angle of normal
-        newvels = self.convert_vel_zhat_nhat(vels, self.normal[self.contour_idx])
+        newvels = self.convert_vel_zhat_nhat(
+            vels, self.normal[self.contour_idx])
         vx = np.asarray(newvels[:, 0], order="C")
         vy = np.asarray(newvels[:, 1], order="C")
         vz = np.asarray(newvels[:, 2], order="C")
@@ -1054,3 +1279,129 @@ class ArbitraryEmitter2D(Emitter):
         normals[:, 0] = self.normal[self.contour_idx, 0]
         normals[:, 2] = self.normal[self.contour_idx, 1]
         return normals
+
+
+class VolumeEmitter(BaseEmitter):
+
+    """Parent class for volumetric particle injection coordinates.
+
+        - ``volume`` gives the spatial volume in m^3
+        - ``_get_xv_coords()`` implements the subclass-specific particle
+          injection logic
+    """
+
+    volume = 0
+
+    def __init__(self, T):
+        """Default initialization for all Emitter objects.
+
+        Arguments:
+            T (float): Emitter temperature in Kelvin. Determines particle
+                velocity distribution.
+        """
+        super(VolumeEmitter, self).__init__()
+        self.T = T
+
+    def getvoltage(self):
+        """Ideally this is probably the local potential, but default to 0."""
+        return 0.
+
+    def getvoltage_e(self):
+        """Ideally this is probably the local potential, but default to 0."""
+        return self.getvoltage()
+
+
+class CartesianVolumeEmitter(VolumeEmitter):
+
+    """VolumeEmitter with bounds specified by x/y/z rectangular prism.
+
+    A template ``_get_xv_coords()`` is also provided but can be overridden if
+    needed. It calls ``_get_x_coords()``.
+    """
+
+    # RZ support should probably take into account the R wall, so we don't list
+    # it as supported.
+    geoms = ['Z', 'XZ', 'XYZ']
+
+    def __init__(self, T, xmin=None, xmax=None, ymin=None, ymax=None,
+                 zmin=None, zmax=None):
+        """Initialize emitter boundaries."""
+        super(CartesianVolumeEmitter, self).__init__(T=T)
+
+        self.bounds = np.zeros((3, 2))
+        for ii, (lim, defaultlim) in enumerate(
+            zip([xmin, xmax, ymin, ymax, zmin, zmax],
+                [mwxrun.xmin, mwxrun.xmax, mwxrun.ymin,
+                 mwxrun.ymax, mwxrun.zmin, mwxrun.zmax])
+        ):
+            if lim is None:
+                lim = defaultlim
+            self.bounds[ii // 2, ii % 2] = lim
+
+        self.volume = np.prod(self.bounds[:, 1] - self.bounds[:, 0])
+
+        # Note the negation here will catch nans, checking <= 0 won't.
+        if not (self.volume > 0):
+            raise RuntimeError("Invalid warpX geometry limits.")
+
+    def _get_xv_coords(self, npart, m, rseed):
+        """Get velocities and call specialized function for position."""
+        if rseed is not None:
+            nprstate = np.random.get_state()
+            np.random.seed(rseed)
+            # rseedv is passed to get velocities. The basic rseed here is used
+            # for positions, below.
+            rseedv = np.random.randint(1000000000)
+        else:
+            rseedv = None
+
+        x_coords = self._get_x_coords(npart)
+        v_coords = mwxutil.get_velocities(
+            npart, self.T, m=m, emission_type='random', rseed=rseedv)
+
+        if rseed is not None:
+            np.random.set_state(nprstate)
+
+        return (
+            x_coords[:, 0], x_coords[:, 1], x_coords[:, 2],
+            v_coords[0], v_coords[1], v_coords[2]
+        )
+
+
+class UniformDistributionVolumeEmitter(CartesianVolumeEmitter):
+
+    """Inject particles uniformly throughout the simulation at a specified
+    temperature.
+    """
+
+    def _get_x_coords(self, npart):
+        """Get coordinates uniformly distributed in space.
+
+        rseed, if used, is handled by the parent function.
+        """
+        xyz_pos = [
+            np.random.uniform(self.bounds[ii, 0], self.bounds[ii, 1],
+                              npart)
+            for ii in range(3)
+        ]
+        return np.array(xyz_pos).T
+
+
+class ZSinDistributionVolumeEmitter(CartesianVolumeEmitter):
+
+    """Vary density in z as a half-period sin wave."""
+
+    def _get_x_coords(self, npart):
+        """Get coordinates with sin distribution.
+
+        rseed, if used, is handled by the parent function.
+        """
+        xpos = np.random.uniform(self.bounds[0, 0], self.bounds[0, 1], npart)
+        ypos = np.random.uniform(self.bounds[1, 0], self.bounds[1, 1], npart)
+        z_random_draw = np.random.random(npart)
+        zpos = (
+            np.arccos(1 - 2.0*z_random_draw) / np.pi
+            * (self.bounds[2, 1] - self.bounds[2, 0])
+            + self.bounds[2, 0]
+        )
+        return np.array([xpos, ypos, zpos]).T

@@ -8,6 +8,7 @@ h = constants.hbar * 2*np.pi # J s
 e = constants.q_e # C
 m_e = constants.m_e # kg
 kb_J = constants.kb # J/K
+epsilon_0 = constants.ep0 # F/m
 
 # The theoretical value for the Richardson constant, ~120 A/cm^2/K^2
 A0 = 4 * np.pi * m_e * kb_J**2 * e / h**3 * 1e-4

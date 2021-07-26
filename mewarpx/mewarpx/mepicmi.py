@@ -21,9 +21,6 @@ class Species(picmi.Species):
 
         Automatically adds the species to the simulation
         """
-        self.grid = kw.pop("warpx_grid", None)
-        self.n_macroparticle_per_cell = kw.pop(
-            "warpx_n_macroparticle_per_cell", [0, 0])
 
         super(Species, self).init(kw)
 
@@ -50,17 +47,21 @@ class Species(picmi.Species):
         mwxrun.simulation.add_species(
             self,
             layout=picmi.GriddedLayout(
-                n_macroparticle_per_cell=self.n_macroparticle_per_cell,
-                grid=self.grid
+                n_macroparticle_per_cell=[0, 0],
+                grid=mwxrun.grid
             )
         )
+        self.pids_initialized = False
+        self.waiting_extra_pids = set()
 
     def init_pid_dict(self):
         """Function to build a dictionary of all the extra particle attributes
         (and weight). This has to happen after warpx has been initialized
         so that the particle container already exists.
         """
-        self.pid_dict = {'w':0}
+        self.pids_initialized = True
+
+        self.pid_dict = {'w': 0}
         self.nattribs = _libwarpx.get_nattr()
         # npids are used to inform the dimension of the attr array (used in
         # add_particles), so we need to subtract the non-extra pid arrays
@@ -68,12 +69,20 @@ class Species(picmi.Species):
         # as an extra pid by AddNParticles()
         self.npids = _libwarpx.get_nattr_species(self.name) - self.nattribs + 1
 
+        for pid in self.waiting_extra_pids:
+            self.add_pid(pid)
+        del self.waiting_extra_pids
+
     def add_pid(self, pid_name):
         """Wrapper to add a new PID to the particle data arrays at runtime.
 
         Arguments:
             pid_name (str): Name of the new PID.
         """
+        if not self.pids_initialized:
+            self.waiting_extra_pids.add(pid_name)
+            return
+
         # check if PID already exists
         if pid_name in self.pid_dict:
             return
@@ -109,9 +118,9 @@ class Species(picmi.Species):
         """
 
         pid_array = np.zeros((np.size(x), self.npids))
-        pid_array[:,self.pid_dict['w']] = w
+        pid_array[:, self.pid_dict['w']] = w
         for key, val in kwargs.items():
-            pid_array[:,self.pid_dict[key]] = val
+            pid_array[:, self.pid_dict[key]] = val
 
         _libwarpx.add_particles(
             self.name, x=x, y=y, z=z, ux=ux, uy=uy, uz=uz, attr=pid_array,

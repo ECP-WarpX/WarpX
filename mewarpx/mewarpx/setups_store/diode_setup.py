@@ -1,13 +1,13 @@
 """Framework that sets up a 1D or 2D run based on input parameters, with
 defaults available.
 """
-import numpy as np
 from pywarpx import picmi
-from pywarpx.picmi import constants
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
-from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicmi
+from mewarpx import assemblies, emission
+from mewarpx import mcc_wrapper, mepicmi, poisson_pseudo_1d
+
 
 class DiodeRun_V1(object):
 
@@ -42,7 +42,7 @@ class DiodeRun_V1(object):
 
     # Gas properties
     # String, eg 'He'
-    INERT_GAS_TYPE = None
+    INERT_GAS_TYPE = 'Ar'
     # Specify N_INERT or P_INERT
     N_INERT = None  # m^-3
     P_INERT = None  # in Torr
@@ -58,16 +58,13 @@ class DiodeRun_V1(object):
     # [[[TODO once in WarpX]]]
 
     # Plasma seed density and electron temperature
-    # [[[TODO]]] Put in checks that these are not None when used in
-    # init_electron_plasma and init_he_ionization
     PLASMA_DENSITY = None  # m^-3
     T_ELEC = None  # K
+    SEED_NPPC = None # number of particles per cell in the seed plasma
 
     # Particle Species
     # A list of particle species created
     SPECIES = None
-    # The number of particles per cell in each dimension as a list
-    NUMBER_PARTICLES_PER_CELL = None
 
     # ### INJECTION SETTINGS ###
     # Number of particles to inject TOTAL per timestep
@@ -171,7 +168,7 @@ class DiodeRun_V1(object):
             self.V_ANODE_EXPRESSION = self.V_ANODE
         else:
             self.V_CATHODE = 0.0
-            self.V_ANODE = self.V_ANODE_CATHODE
+            self.V_ANODE = self.V_ANODE_EXPRESSION
 
         print('Setting up simulation with')
         print(f'  dt = {self.DT:.3e} s')
@@ -183,13 +180,15 @@ class DiodeRun_V1(object):
     def setup_run(
         self,
         init_base=True,
-        init_electron_plasma=True,
+        init_electrons=True,
         init_solver=True,
         init_conductors=True,
         init_scraper=True,
         init_injectors=True,
+        init_neutral_plasma=False,
+        init_mcc=False,
         init_reflection=False,
-        init_inert_gas_ionization=False,
+        init_inert_gas=False,
         init_merging=False,
         init_traceparticles=False,
         init_runinfo=False,
@@ -207,16 +206,20 @@ class DiodeRun_V1(object):
         """
         if init_base:
             self.init_base()
-        if init_electron_plasma:
-            self.init_electron_plasma()
+        if init_electrons:
+            self.init_electrons()
+        if init_inert_gas:
+            self.init_inert_gas()
         if init_solver:
             self.init_solver()
         if init_conductors:
             self.init_conductors()
+        if init_neutral_plasma:
+            self.init_neutral_plasma()
+        if init_mcc:
+            self.init_MCC()
         if init_scraper:
             self.init_scraper()
-        if init_inert_gas_ionization:
-            self.init_inert_gas_ionization()
         if init_reflection:
             self.init_reflection()
         if init_merging:
@@ -293,19 +296,13 @@ class DiodeRun_V1(object):
             raise NotImplementedError(
                 "1D grid is not yet implemented in mewarpx")
         elif self.dim == 2:
-            self.grid = picmi.Cartesian2DGrid(
-                number_of_cells=[self.NX, self.NZ],
-                lower_bound=[xmin, zmin],
-                upper_bound=[xmax, zmax],
-                lower_boundary_conditions=['periodic', 'dirichlet'],
-                upper_boundary_conditions=['periodic', 'dirichlet'],
-                warpx_potential_lo_z=self.V_CATHODE,
-                warpx_potential_hi_z=self.V_ANODE_EXPRESSION,
-                lower_boundary_conditions_particles=['periodic', 'absorbing'],
-                upper_boundary_conditions_particles=['periodic', 'absorbing'],
-                warpx_max_grid_size=self.NZ//self.MAX_GRID_SIZE_FACTOR
+            mwxrun.init_grid(
+                xmin, xmax, zmin, zmax, self.NX, self.NZ,
+                max_grid_size=self.MAX_GRID_SIZE_FACTOR
             )
         elif self.dim == 3:
+            raise NotImplementedError("3d grid not yet implemented.")
+            '''
             self.grid = picmi.Cartesian3DGrid(
                 number_of_cells=[self.NX, self.NY, self.NZ],
                 lower_bound=[xmin, ymin, zmin],
@@ -321,6 +318,7 @@ class DiodeRun_V1(object):
                 moving_window_velocity=None,
                 warpx_max_grid_size=self.NZ//self.MAX_GRID_SIZE_FACTOR
             )
+            '''
 
         #######################################################################
         # Run setup calculations and print diagnostic info                    #
@@ -353,21 +351,24 @@ class DiodeRun_V1(object):
         #     use_B=False,
         # )
 
-    def init_electron_plasma(self):
-        print('### Init Electron Plasma ###')
-        v_rms_elec = np.sqrt(constants.kb * self.T_ELEC / constants.m_e)
-        uniform_plasma_elec = picmi.UniformDistribution(
-            density=self.PLASMA_DENSITY,
-            upper_bound=[None] * 3,
-            rms_velocity=[v_rms_elec] * 3,
-            directed_velocity=[0.] * 3
+    def init_electrons(self):
+        print('### Init Electrons ###')
+        self.electrons = mepicmi.Species(
+            particle_type='electron', name='electrons'
         )
 
-        self.electrons = mepicmi.Species(
-            particle_type='electron', name='electrons',
-            initial_distribution=uniform_plasma_elec,
-            warpx_grid=self.grid,
-            warpx_n_macroparticle_per_cell=self.NUMBER_PARTICLES_PER_CELL
+    def init_inert_gas(self):
+        print('### Init Inert Gas Ions ###')
+        if self.INERT_GAS_TYPE not in ['He', 'Ar', 'Xe']:
+            raise NotImplementedError(
+                f"Inert gas is not yet implemented in mewarpx with "
+                f"INERT_GAS_TYPE = {self.INERT_GAS_TYPE}"
+            )
+
+        self.ions = mepicmi.Species(
+            particle_type=self.INERT_GAS_TYPE,
+            name=f'{self.INERT_GAS_TYPE.lower()}_ions',
+            charge='q_e'
         )
 
     def init_solver(self):
@@ -379,11 +380,11 @@ class DiodeRun_V1(object):
         elif self.dim in [2, 3]:
             if self.DIRECT_SOLVER:
                 self.solver = poisson_pseudo_1d.PoissonSolverPseudo1D(
-                    grid=self.grid
+                    grid=mwxrun.grid
                 )
             else:
                 self.solver = picmi.ElectrostaticSolver(
-                    grid=self.grid,
+                    grid=mwxrun.grid,
                     method='Multigrid',
                     required_precision=1e-6,
                     maximum_iterations=10000
@@ -392,24 +393,19 @@ class DiodeRun_V1(object):
 
     def init_conductors(self):
         print('### Init Diode Conductors Setup ###')
-        # # Create source conductors a.k.a the cathode
-        self.cathode = assemblies.ZPlane(
-            z=0., zsign=-1., V=self.V_CATHODE, WF=self.CATHODE_PHI,
-            T=self.CATHODE_TEMP, name='cathode'
+        self.cathode = assemblies.Cathode(
+            V=self.V_CATHODE, T=self.CATHODE_TEMP, WF=self.CATHODE_PHI
         )
 
-        # # Create ground plate a.k.a the anode
-        # # Subtract small z value for the anode plate not to land exactly on the
-        # # grid
-        self.anode_plane = assemblies.ZPlane(
-            V=self.V_ANODE, z=self.D_CA,
-            zsign=1, WF=self.ANODE_PHI, T=self.ANODE_TEMP,
-            name='anode_plane'
+        self.anode = assemblies.Anode(
+            z=self.D_CA, V=self.V_ANODE, T=self.ANODE_TEMP, WF=self.ANODE_PHI
         )
-        self.anode_plane.WF = self.ANODE_PHI
-        self.anode_plane.temperature = self.ANODE_TEMP
 
-        self.surface_list = [self.cathode, self.anode_plane]
+        self.surface_list = [self.cathode, self.anode]
+
+        # Set solver boundary potentials
+        mwxrun.grid.potential_zmin = self.cathode.V
+        mwxrun.grid.potential_zmax = self.anode.V
 
     def init_scraper(self):
         raise NotImplementedError(
@@ -466,17 +462,17 @@ class DiodeRun_V1(object):
             )
 
         if self.NONINTERAC:
-        #    runtools.set_noninteracting(solvefreq=self.DIAG_STEPS)
-        #    weight = (gentools.J_RD(
-        #        self.CATHODE_TEMP, self.CATHODE_PHI, self.CATHODE_A)
-        #            * self.emitter.area
-        #            * warp.top.dt * self.DIAG_STEPS
-        #            / e / self.NONINTERAC_WAVENUM)
-        #    self.injector = emission.FixedNumberInjector(
-        #        self.emitter, 'beam', npart=self.NONINTERAC_WAVENUM,
-        #        injectfreq=self.DIAG_STEPS,
-        #        weight=weight
-        #    )
+            # runtools.set_noninteracting(solvefreq=self.DIAG_STEPS)
+            # weight = (gentools.J_RD(
+            #     self.CATHODE_TEMP, self.CATHODE_PHI, self.CATHODE_A)
+            #     * self.emitter.area
+            #     * warp.top.dt * self.DIAG_STEPS
+            #     / e / self.NONINTERAC_WAVENUM)
+            # self.injector = emission.FixedNumberInjector(
+            #     self.emitter, 'beam', npart=self.NONINTERAC_WAVENUM,
+            #     injectfreq=self.DIAG_STEPS,
+            #     weight=weight
+            # )
             raise NotImplementedError
         else:
             if self.dim == 1:
@@ -489,40 +485,20 @@ class DiodeRun_V1(object):
                 self.CATHODE_PHI, self.CATHODE_A
             )
 
-    def init_inert_gas_ionization(self):
-        if self.INERT_GAS_TYPE is None:
-            print("No inert gas ionization used")
-        elif self.INERT_GAS_TYPE == 'He':
-            self.init_He_gas()
-        elif self.INERT_GAS_TYPE == 'Ar':
-            self.init_Ar_gas()
-        else:
-            raise NotImplementedError(
-                f"Inert gas is not yet implemented in mewarpx with "
-                f"INERT_GAS_TYPE = {self.INERT_GAS_TYPE}"
-            )
+    def init_neutral_plasma(self):
+        print('### Init Neutral Seed Plasma Setup ###')
 
-    def init_He_gas(self):
-        print('### Init Diode He Ionization Setup ###')
-        if self.P_INERT is not None:
-            raise ValueError("No P_INERT support yet")
-        # Set up ion species
-        self.M_ION = 6.67e-27  # kg
-        v_rms_ion = np.sqrt(constants.kb * self.T_INERT / self.M_ION)
-        uniform_plasma_ion = picmi.UniformDistribution(
-            density=self.PLASMA_DENSITY,
-            upper_bound=[None] * 3,
-            rms_velocity=[v_rms_ion] * 3,
-            directed_velocity=[0.] * 3
+        self.vol_emitter = emission.UniformDistributionVolumeEmitter(
+            T=self.T_ELEC
         )
-        self.ions = mepicmi.Species(
-            particle_type='He', name='he_ions',
-            charge='q_e',
-            initial_distribution=uniform_plasma_ion,
-            warpx_grid=self.grid,
-            warpx_n_macroparticle_per_cell=self.NUMBER_PARTICLES_PER_CELL
+        self.plasma_injector = emission.PlasmaInjector(
+            emitter=self.vol_emitter, species1=self.electrons,
+            species2=self.ions, npart=2 * self.SEED_NPPC * self.NX * self.NZ,
+            T_2=self.T_INERT, plasma_density=self.PLASMA_DENSITY
         )
 
+    def init_MCC(self):
+        print('### Init MCC Setup ###')
         if not hasattr(self, "exclude_collisions"):
             self.exclude_collisions = None
 
@@ -533,38 +509,6 @@ class DiodeRun_V1(object):
             P_INERT=self.P_INERT,
             N_INERT=self.N_INERT,
             exclude_collisions=self.exclude_collisions)
-
-    def init_Ar_gas(self):
-        print('### Init Diode Ar Ionization Setup ###')
-        if self.P_INERT is not None:
-            raise ValueError("No P_INERT support yet")
-        self.M_ION = 6.63e-26
-        v_rms_ion = np.sqrt(constants.kb * self.T_INERT / self.M_ION)
-        uniform_plasma_ion = picmi.UniformDistribution(
-            density=self.PLASMA_DENSITY,
-            upper_bound=[None] * 3,
-            rms_velocity=[v_rms_ion] * 3,
-            directed_velocity=[0.] * 3
-        )
-        self.ions = mepicmi.Species(
-            particle_type='Ar', name='ar_ions',
-            charge='q_e',
-            initial_distribution=uniform_plasma_ion,
-            warpx_grid=self.grid,
-            warpx_n_macroparticle_per_cell=self.NUMBER_PARTICLES_PER_CELL
-        )
-
-        if not hasattr(self, "exclude_collisions"):
-            self.exclude_collisions = None
-
-        mcc_wrapper.MCC(
-            electron_species=self.electrons,
-            ion_species=self.ions,
-            T_INERT=self.T_INERT,
-            P_INERT=self.P_INERT,
-            N_INERT=self.N_INERT,
-            exclude_collisions=self.exclude_collisions
-        )
 
     def init_reflection(self):
         raise NotImplementedError(
@@ -596,7 +540,7 @@ class DiodeRun_V1(object):
         diagnostic_intervals = f"::{self.DIAG_STEPS}"
         self.field_diag = picmi.FieldDiagnostic(
             name='diags',
-            grid=self.grid,
+            grid=mwxrun.grid,
             period=diagnostic_intervals,
             data_list=self.FIELD_DIAG_DATA_LIST,
             write_dir='diags/',

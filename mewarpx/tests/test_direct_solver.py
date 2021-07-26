@@ -4,6 +4,7 @@ import numpy as np
 
 from mewarpx import util as mwxutil
 
+
 def test_direct_solver():
     name = "Direct_solver"
     dim = 2
@@ -38,10 +39,9 @@ def test_direct_solver():
     run = diode_setup.DiodeRun_V1(
         dim=dim,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION=(
-            lambda t: VOLTAGE * np.sin(2.0 * np.pi * FREQ * t) if DIRECT_SOLVER
-            else "%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ)
+            (lambda t: VOLTAGE * np.sin(2.0 * np.pi * FREQ * t))
+            if DIRECT_SOLVER else f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)"
         ),
         D_CA=D_CA,
         INERT_GAS_TYPE='He',
@@ -49,6 +49,7 @@ def test_direct_solver():
         T_INERT=300.0,  # K
         PLASMA_DENSITY=2.56e14,  # m^-3
         T_ELEC=30000.0,  # K
+        SEED_NPPC=16*32,
         NX=NX,
         NZ=NZ,
         # This gives equal spacing in x & z
@@ -56,15 +57,16 @@ def test_direct_solver():
         DT=DT,
         TOTAL_TIMESTEPS=50,
         DIAG_STEPS=DIAG_STEPS,
-        DIAG_INTERVAL=DIAG_INTERVAL,
-        NUMBER_PARTICLES_PER_CELL=[16, 32],
+        DIAG_INTERVAL=DIAG_INTERVAL
     )
     # Only the functions we change from defaults are listed here
     run.setup_run(
-        init_conductors=False,
+        init_conductors=True,
         init_scraper=False,
         init_injectors=False,
-        init_inert_gas_ionization=True,
+        init_inert_gas=True,
+        init_mcc=True,
+        init_neutral_plasma=True,
         init_field_diag=False,
         init_simcontrol=True,
         init_warpx=True
@@ -75,12 +77,15 @@ def test_direct_solver():
         mwxrun.simulation.step()
 
     #######################################################################
-    # Check rho and phi results against reference data from MGML solver   #
+    # Check rho and phi results against reference data from MLMG solver   #
     #######################################################################
 
     data = np.mean(mwxrun.get_gathered_phi_grid()[0], axis=0)
     # uncomment to generate reference data
     # np.save('reference_data.npy', data)
+
+    # the MLMG solver has the last data point set to 0
+    data[-1] = 0
 
     ref_data = np.load(os.path.join(
         testing_util.test_dir, 'direct_solver', 'reference_data.npy'

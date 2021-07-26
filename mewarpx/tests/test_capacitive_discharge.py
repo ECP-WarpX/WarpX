@@ -55,6 +55,7 @@ def test_capacitive_discharge_multigrid(capsys, name):
         T_INERT=300.0,  # K
         PLASMA_DENSITY=2.56e14,  # m^-3
         T_ELEC=30000.0,  # K
+        SEED_NPPC=16*32,
         NX=NX,
         NZ=NZ,
         # This gives equal spacing in x & z
@@ -63,7 +64,6 @@ def test_capacitive_discharge_multigrid(capsys, name):
         TOTAL_TIMESTEPS=10,
         DIAG_STEPS=DIAG_STEPS,
         DIAG_INTERVAL=DIAG_INTERVAL,
-        NUMBER_PARTICLES_PER_CELL=[16, 32],
         FIELD_DIAG_DATA_LIST=['rho_electrons', 'rho_he_ions', 'phi'],
     )
     # Only the functions we change from defaults are listed here
@@ -71,7 +71,8 @@ def test_capacitive_discharge_multigrid(capsys, name):
         init_conductors=False,
         init_scraper=False,
         init_injectors=False,
-        init_inert_gas_ionization=True,
+        init_inert_gas=True,
+        init_mcc=True,
         init_field_diag=True,
         init_simcontrol=True,
         init_warpx=True

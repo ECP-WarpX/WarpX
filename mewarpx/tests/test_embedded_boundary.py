@@ -27,8 +27,6 @@ def test_embedded_cylinder():
     np.random.seed(92160881)
 
     # Specific numbers match older run for consistency
-    DT = 1e-6
-    DIAG_STEPS = 1
     D_CA = 1  # m
     NX = 64
     NZ = 64
@@ -40,22 +38,21 @@ def test_embedded_cylinder():
         NZ=NZ,
         # This gives equal spacing in x & z
         PERIOD=D_CA * NX / NZ,
-        DT=DT,
+        DT=1e-6,
         TOTAL_TIMESTEPS=1,
-        DIAG_STEPS=DIAG_STEPS,
+        DIAG_STEPS=1,
         FIELD_DIAG_DATA_LIST=['phi'],
     )
     # Only the functions we change from defaults are listed here
     run.setup_run(
         init_conductors=False,
-        init_electron_plasma=False,
+        init_electrons=False,
         init_solver=False,
         init_scraper=False,
         init_injectors=False,
         init_field_diag=True,
         init_simcontrol=True,
-        init_simulation=False,
-        init_warpx=False
+        init_simulation=False
     )
 
     # Install the embedded boundary
@@ -66,6 +63,7 @@ def test_embedded_cylinder():
 
     # Initialize solver
     run.init_solver()
+    run.init_conductors()
 
     # Initialize the simulation
     run.init_simulation()

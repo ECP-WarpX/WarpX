@@ -291,3 +291,18 @@ def J_RD(T, WF, A):
         J (float): current density in Amp/m^2
     """
     return A*T**2*np.exp(-1.*WF/(constants.kb_eV*T))
+
+
+def plasma_Debye_length(T, n):
+    """Returns the thermal Debye length of a plasma.
+
+    Arguments:
+        T (float): plasma temperature in K
+        n (float): plasma density in m^-3
+
+    Returns:
+        lambda (float): Debye length in m
+    """
+    return np.sqrt(
+        constants.epsilon_0 * constants.kb_J * T / (n * constants.e**2)
+    )
