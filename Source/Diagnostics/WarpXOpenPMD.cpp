@@ -46,6 +46,39 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
+    /** \brief Convert a snake_case string to a camelCase one.
+     *
+     *  WarpX uses snake_case internally for some component
+     *  names, but OpenPMD assumes "_" indicates vector or
+     *  tensor fields.
+     *
+     * @return camelCase version of input
+     */
+    inline std::string
+    snakeToCamel (const std::string& snake_string)
+    {
+        std::string camelString = snake_string;
+        int n = camelString.length();
+        for (int x = 0; x < n; x++)
+        {
+            if (x == 0)
+            {
+                std::transform(camelString.begin(), camelString.begin()+1, camelString.begin(),
+                               [](unsigned char c){ return std::tolower(c); });
+            }
+            if (camelString[x] == '_')
+            {
+                std::string tempString = camelString.substr(x + 1, 1);
+                std::transform(tempString.begin(), tempString.end(), tempString.begin(),
+                               [](unsigned char c){ return std::toupper(c); });
+                camelString.erase(x, 2);
+                camelString.insert(x, tempString);
+            }
+        }
+
+        return camelString;
+    }
+
     /** Create the option string
      *
      * @return JSON option string for openPMD::Series
@@ -441,7 +474,10 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // get the names of the real comps
     real_names.resize(pc->NumRealComps());
     auto runtime_rnames = pc->getParticleRuntimeComps();
-    for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+    for (auto const& x : runtime_rnames)
+    {
+        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
+    }
 
     // plot any "extra" fields by default
     real_flags = particle_diags[i].plot_flags;
@@ -453,7 +489,10 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // and the names
     int_names.resize(pc->NumIntComps());
     auto runtime_inames = pc->getParticleRuntimeiComps();
-    for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
+    for (auto const& x : runtime_inames)
+    {
+        int_names[x.second+0] = detail::snakeToCamel(x.first);
+    }
 
     // plot by default
     int_flags.resize(pc->NumIntComps(), 1);
