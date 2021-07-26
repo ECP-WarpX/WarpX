@@ -32,6 +32,7 @@ class constants:
     m_e = 9.1093837015e-31
     m_p = 1.67262192369e-27
     hbar = 1.054571817e-34
+    kb = 1.380649e-23
 
 picmistandard.register_constants(constants)
 
@@ -715,6 +716,39 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
+class MCCCollisions(picmistandard.base._ClassWithInit):
+    """Custom class to handle setup of MCC collisions in WarpX. If collision
+    initialization is added to picmistandard this can be changed to inherit
+    that functionality."""
+
+    def __init__(self, name, species, background_density,
+                 background_temperature, scattering_processes,
+                 background_mass=None, **kw):
+        self.name = name
+        self.species = species
+        self.background_density = background_density
+        self.background_temperature = background_temperature
+        self.background_mass = background_mass
+        self.scattering_processes = scattering_processes
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+        collision = pywarpx.Collisions.newcollision(self.name)
+        collision.type = 'background_mcc'
+        collision.species = self.species.name
+        collision.background_density = self.background_density
+        collision.background_temperature = self.background_temperature
+        collision.background_mass = self.background_mass
+
+        collision.scattering_processes = self.scattering_processes.keys()
+        for process, kw in self.scattering_processes.items():
+            for key, val in kw.items():
+                if key == 'species':
+                    val = val.name
+                collision.add_new_attr(process+'_'+key, val)
+
+
 class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """Custom class to handle set up of embedded boundaries in WarpX.  If
     embedded boundary initialization is added to picmistandard this can be
@@ -751,6 +785,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
 
+        self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
 
         self.inputs_initialized = False
@@ -812,6 +847,12 @@ class Simulation(picmistandard.PICMI_Simulation):
                                               self.initialize_self_fields[i],
                                               self.injection_plane_positions[i],
                                               self.injection_plane_normal_vectors[i])
+
+        if self.collisions is not None:
+            pywarpx.collisions.collision_names = []
+            for collision in self.collisions:
+                pywarpx.collisions.collision_names.append(collision.name)
+                collision.initialize_inputs()
 
         if self.embedded_boundary is not None:
             self.embedded_boundary.initialize_inputs()
