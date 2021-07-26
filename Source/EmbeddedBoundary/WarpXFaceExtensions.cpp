@@ -10,17 +10,26 @@ amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
+
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        int sum = 0;
+        amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
+        amrex::ReduceData<amrex::Real> reduce_data(reduce_ops);
         for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             amrex::Box const &box = mfi.validbox();
-            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            amrex::ParallelFor(box, [=, &sum] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // Do I need to flag the reduction somehow?
-                sum = sum + flag_ext_face(i, j, k);
-            });
+            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][0]->array(mfi);
+            reduce_ops.eval(box, reduce_data,
+                [=] AMREX_GPU_DEVICE(int i, int j, int k) -> amrex::GpuTuple<amrex::Real> {
+                    return flag_ext_face(i, j, k);
+                });
         }
-        sums(idim) = sum;
+
+        // MPI reduce
+        auto r = reduce_data.value();
+
+        amrex::Real sums_dim = amrex::get<0>(r);
+        amrex::ParallelDescriptor::ReduceRealSum(sums_dim);
+
+        sums(idim) = sums_dim;
     }
 #endif
     return sums;
