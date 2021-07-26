@@ -273,7 +273,7 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
 
 // Parser for real numbers or integers
 template <typename T_Parser, typename T>
-T_Parser makeParserTemplate (std::string const& parse_function, amrex::Vector<std::string> const& varnames) {}
+T_Parser makeParserTemplate (std::string const& /* parse_function */, amrex::Vector<std::string> const& /* varnames */) {}
 
 // Specialized version for real numbers. This includes the list of predefined constants.
 template <>
