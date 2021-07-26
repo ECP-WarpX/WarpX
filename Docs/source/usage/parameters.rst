@@ -240,6 +240,40 @@ If an electrostatic field solve is used the boundary potentials can also be set 
     * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
+
+Additional PML parameters
+-------------------------
+
+* ``warpx.pml_ncell`` (`int`; default: 10)
+    The depth of the PML, in number of cells.
+
+* ``warpx.pml_delta`` (`int`; default: 10)
+    The characteristic depth, in number of cells, over which
+    the absorption coefficients of the PML increases.
+
+* ``warpx.do_pml_in_domain`` (`int`; default: 0)
+    Whether to create the PML inside the simulation area or outside. If inside,
+    it allows the user to propagate particles in PML and to use extended PML
+
+* ``warpx.pml_has_particles`` (`int`; default: 0)
+    Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
+    i.e. if `warpx.do_pml_in_domain = 1`.
+
+* ``warpx.do_pml_j_damping`` (`int`; default: 0)
+    Whether to damp current in PML. Can only be used if particles are propagated in PML,
+    i.e. if `warpx.pml_has_particles = 1`.
+
+* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for E in the PML region.
+    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the PSATD solver.
+
+* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for B in the PML region.
+    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+
 .. _running-cpp-parameters-eb:
 
 Embedded Boundary Conditions
@@ -1583,54 +1617,6 @@ Numerics and algorithms
 * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
-
-.. _running-cpp-parameters-boundary:
-
-Boundary conditions
--------------------
-
-* ``warpx.pml_ncell`` (`int`; default: 10)
-    The depth of the PML, in number of cells.
-
-* ``warpx.pml_delta`` (`int`; default: 10)
-    The characteristic depth, in number of cells, over which
-    the absorption coefficients of the PML increases.
-
-* ``warpx.do_pml_in_domain`` (`int`; default: 0)
-    Whether to create the PML inside the simulation area or outside. If inside,
-    it allows the user to propagate particles in PML and to use extended PML
-
-* ``warpx.pml_has_particles`` (`int`; default: 0)
-    Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
-    i.e. if `warpx.do_pml_in_domain = 1`.
-
-* ``warpx.do_pml_j_damping`` (`int`; default: 0)
-    Whether to damp current in PML. Can only be used if particles are propagated in PML,
-    i.e. if `warpx.pml_has_particles = 1`.
-
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
-    Whether to use divergence cleaning for E in the PML region.
-    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
-    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
-
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
-    Whether to use divergence cleaning for B in the PML region.
-    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
-    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
-
-* ``warpx.do_pml_Lo`` (`2 ints in 2D`, `3 ints in 3D`; default: `1 1 1`)
-    The directions along which one wants a pml boundary condition for lower boundaries on mother grid.
-
-* ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
-    The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
-
-* ``warpx.do_silver_mueller`` (`0` or `1`; default: 1)
-    Whether to use the Silver-Mueller absorbing boundary conditions. These
-    boundary conditions are simpler and less computationally expensive than
-    the PML, but are also less effective at absorbing the field. They only
-    work with the Yee Maxwell solver.
 
 .. _running-cpp-parameters-diagnostics:
 

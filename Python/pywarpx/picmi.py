@@ -717,20 +717,22 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
-class MCCCollisions(object):
+class MCCCollisions(picmistandard.base._ClassWithInit):
     """Custom class to handle setup of MCC collisions in WarpX. If collision
     initialization is added to picmistandard this can be changed to inherit
     that functionality."""
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
-                 background_mass=None):
+                 background_mass=None, **kw):
         self.name = name
         self.species = species
         self.background_density = background_density
         self.background_temperature = background_temperature
         self.background_mass = background_mass
         self.scattering_processes = scattering_processes
+
+        self.handle_init(kw)
 
     def initialize_inputs(self):
         collision = pywarpx.Collisions.newcollision(self.name)
