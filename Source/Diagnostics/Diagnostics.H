@@ -109,6 +109,7 @@ protected:
         back-transform diagnostics) to be processed for diagnostics.
      */
     virtual void PrepareFieldDataForOutput () {}
+    virtual void PrepareParticleDataForOutput() {}
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
      *
