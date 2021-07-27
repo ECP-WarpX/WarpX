@@ -459,10 +459,6 @@ WarpX::OneStep_nosub (Real cur_time)
 void
 WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
-#ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(cur_time);
-    amrex::Abort("multi-J algorithm not implemented for RZ geometry");
-#else
 #ifdef WARPX_USE_PSATD
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
@@ -578,7 +574,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     amrex::ignore_unused(cur_time);
     amrex::Abort("multi-J algorithm not implemented for FDTD");
 #endif // WARPX_USE_PSATD
-#endif // not WARPX_DIM_RZ
 }
 
 /* /brief Perform one PIC iteration, with subcycling
