@@ -420,6 +420,15 @@ user-defined constant (see above) and ``x`` and ``y`` are spatial coordinates. T
 define functions by intervals.
 Alternatively the expression above can be written as ``if(x>0, a0*x**2 * (1-y*1.e2), 0)``.
 
+Integer Expressions
+^^^^^^^^^^^^^^^^^^^
+
+Expressions with integers allow the all of the usual mathematical and logical operations.
+There are two types of division available - the difference is in how negative numbers are handled.
+The operation ``/`` does division with truncation, so ``3/2`` is ``1`` and ``-3/2`` is -1.
+The operation `//` does division with floor, so ``3//2`` is ``1`` and ``-3//2`` is -2.
+Each individual operation gives an integer result, so that for example ``3/2*2`` is 2.
+
 .. _running-cpp-parameters-particle:
 
 Particle initialization
