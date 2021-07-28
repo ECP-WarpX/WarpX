@@ -267,7 +267,124 @@ Diagnostics::InitBaseData ()
         m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
     } else if (m_format == "ascent"){
         m_flush_format = std::make_unique<FlushFormatAscent>();
-    } else if (m_format == "sensei"){
+        std::cout<< " m_diag_name " <<m_diag_name<<"\n";
+        amrex::ParmParse pp_diag_viz(m_diag_name);
+        int write_yaml_file = 0;
+        pp_diag_viz.query("viz", write_yaml_file);
+        if (write_yaml_file) {// && amrex::ParallelDescriptor::IOProcessor()){
+          std::ofstream yaml_file("ascent_actions.yaml");
+          // This block is data pipelines
+          // Pipelines allow users to compose filters that transform the published input data into new meshes.
+          // Each entry in pipelines: executes a series of functions from top to bottom,
+          // Results of prior functions can be used in later calls of the same pipeline
+          yaml_file<<"#   This block is data pipelines"<<"\n";
+          yaml_file<<"#   Each entry in pipelines: executes a series of functions from top to bottom,"<<"\n";
+          yaml_file<<"#   Results of prior functions can be used in later calls of the same pipeline"<<"\n";
+
+          yaml_file<<"-"<<"\n";
+          yaml_file<<"  action: \"add_pipelines\"" <<"\n";
+          yaml_file<<"  pipelines:" << "\n";
+
+          // slice_field:
+          yaml_file<<"    slice_field:"<<"\n";
+          yaml_file<<"      f0:"<<"\n";
+          yaml_file<<"        type: \"slice\""<<"\n";
+          yaml_file<<"        params:"<<"\n";
+          yaml_file<<"          topology: topo "<<"\n";
+          yaml_file<<"          point:  {x: 0.0, y:  0.0, z: 0.0}"<<"\n";
+          yaml_file<<"          normal1: {x: 1.0, y: 1.0, z: 0.0}"<<"\n";
+          yaml_file<<""<<"\n";
+
+          // clipped volume
+          yaml_file<<"    clipped_volume:"<<"\n";
+          yaml_file<<"      f0:"<<"\n";
+          yaml_file<<"        type: \"contour\""<<"\n";
+          yaml_file<<"        params:"<<"\n";
+          yaml_file<<"          field: \"Ez\""<<"\n";
+          yaml_file<<"          levels: 2"<<"\n";
+          yaml_file<<"      f1:"<<"\n";
+          yaml_file<<"        type: \"clip\""<<"\n";
+          yaml_file<<"        params:"<<"\n";
+          yaml_file<<"          topology: topo # name of the amr mesh"<<"\n";
+          yaml_file<<"          multi_plane:"<<"\n";
+          yaml_file<<"            point1:  {x: 0.0, y:  0.0, z: 0.0}"<<"\n";
+          yaml_file<<"            normal1: {x: 1.0, y:  -1.0, z: 0.0}"<<"\n";
+          yaml_file<<"            point2:  {x: 0.0, y:  0.0, z: 0.0}"<<"\n";
+          yaml_file<<"            normal2: {x: -0.7, y: -0.7, z: 0.0}"<<"\n";
+          yaml_file<<""<<"\n";
+
+          // sampled_particles
+          yaml_file<<"    sampled_particles:"<<"\n";
+          yaml_file<<"      f1:"<<"\n";
+          yaml_file<<"        type: histsampling"<<"\n";
+          yaml_file<<"        params:"<<"\n";
+          yaml_file<<"          field: particle_electrons_uz"<<"\n";
+          yaml_file<<"          bins: 64"<<"\n";
+          yaml_file<<"          sample_rate: 0.90"<<"\n";
+          yaml_file<<"      f2:"<<"\n";
+          yaml_file<<"        type: \"clip\""<<"\n";
+          yaml_file<<"        params:"<<"\n";
+          yaml_file<<"          topology: particle_electrons # particle data"<<"\n";
+          yaml_file<<"          multi_plane:"<<"\n";
+          yaml_file<<"            point1:  {x: 0.0, y:  0.0, z: 0.0}"<<"\n";
+          yaml_file<<"            normal1: {x: 0.0, y:  -1.0, z: 0.0}"<<"\n";
+          yaml_file<<"            point2:  {x: 0.0, y:  0.0, z: 0.0}"<<"\n";
+          yaml_file<<"            normal2: {x: -0.7, y: -0.7, z: 0.0}"<<"\n";
+          yaml_file<<""<<"\n";
+
+          // This block is define Scenes
+          // A scene encapsulates the information required to generate one or more images.
+          // contour plot
+          int contour = 0;
+          pp_diag_viz.query("viz_contour", contour);
+          if (contour){
+            std::string contour_field = "Ez";
+            std::string image_name = "image";
+            int contour_levels = 2;
+            // add field range array here
+            pp_diag_viz.query("viz_contour_field", contour_field);
+            pp_diag_viz.query("viz_contour_levels", contour_levels);
+            pp_diag_viz.query("viz_image_name", image_name);
+            // will add field range later .....
+            yaml_file<<"-"<<"\n";
+            yaml_file<<"  action: \"add_scenes\""<<"\n";
+            yaml_file<<"  scenes:"<<"\n";
+            yaml_file<<"    s1:"<<"\n";
+            yaml_file<<"      plots:"<<"\n";
+            yaml_file<<"        p0:"<<"\n";
+            yaml_file<<"          type: \"pseudocolor\""<<"\n";
+            yaml_file<<"          field: \"particle_electrons_uz\""<<"\n";
+            yaml_file<<"          pipeline: \"sampled_particles\""<<"\n";
+
+            yaml_file<<"        p1:"<<"\n";
+            yaml_file<<"          type: \"pseudocolor\""<<"\n";
+            yaml_file<<"          pipeline: \"clipped_volume\""<<"\n";
+            yaml_file<<"          field: \""<<contour_field<<"\""<<"\n";
+            yaml_file<<"      renders:"<<"\n";
+            yaml_file<<"        image1:"<<"\n";
+            yaml_file<<"          bg_color: [1.0, 1.0, 1.0]"<<"\n";
+            yaml_file<<"          fg_color: [0.0, 0.0, 0.0]"<<"\n";
+            yaml_file<<"          image_prefix: \""<<image_name<<"%04d\""<<"\n";
+            yaml_file<<"          camera:"<<"\n";
+            yaml_file<<"            azimuth: 20"<<"\n";
+            yaml_file<<"            elevation: 30"<<"\n";
+            yaml_file<<"            zoom: 1.5"<<std::endl;
+          }
+
+          /*
+          yaml_file<<""<<"\n";
+          yaml_file<<""<<"\n";
+          yaml_file<<""<<"\n";
+          yaml_file<<""<<"\n";
+*/
+
+          yaml_file.close();
+       }
+
+
+
+
+} else if (m_format == "sensei"){
 #ifdef BL_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
