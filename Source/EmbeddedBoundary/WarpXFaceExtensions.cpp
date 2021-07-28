@@ -828,6 +828,9 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 }
             },
             amrex::Scan::Type::exclusive);
+
+        amrex::ignore_unused(nelems_x);
+
     }
 
     idim = 1;
@@ -962,8 +965,10 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     }
                 }
             },
-            amrex::Scan::Type::exclusive
-        );
+            amrex::Scan::Type::exclusive);
+
+        amrex::ignore_unused(nelems_y);
+
     }
 
     // Do the extensions in the z-plane
@@ -1100,6 +1105,8 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 }
             },
             amrex::Scan::Type::exclusive);
+
+        amrex::ignore_unused(nelems_z);
     }
 #else
     amrex::ignore_unused(temp_inds);
