@@ -183,17 +183,18 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Compute the potential phi, by solving the Poisson equation
     if (warpx_py_poissonsolver) warpx_py_poissonsolver();
-    else {
-        computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
-                    self_fields_max_iters, self_fields_verbosity );
-    }
+    else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
+                     self_fields_max_iters, self_fields_verbosity );
 
-    // Compute the corresponding electric and magnetic field, from the potential phi
-    // If EBs are used the electric field will already have been calculated in
-    // the computePhi call
+    // Compute the electric field. Note that if an EB is used the electric
+    // field will be calculated in the computePhi call.
 #ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
+#else
+    if (warpx_py_poissonsolver) computeE( Efield_fp, phi_fp, beta );
 #endif
+
+    // Compute the magnetic field
     computeB( Bfield_fp, phi_fp, beta );
 }
 
