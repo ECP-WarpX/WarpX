@@ -143,6 +143,7 @@ WarpX::InitBorrowing() {
 * we need to intrude. For the one-way extension this function returns only one or zero: one if the
 * face can be extended withe the one-way extension, zeros if it can't.
 */
+AMREX_GPU_DEVICE
 int
 WarpX::ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                       const amrex::Array4<amrex::Real>& S_red,
@@ -223,6 +224,7 @@ WarpX::ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
 * we need to intrude. For the one-way extension this function returns only one or zero: one if the
 * face can be extended withe the one-way extension, zeros if it can't.
 */
+AMREX_GPU_DEVICE
 int
 WarpX::ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
