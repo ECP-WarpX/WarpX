@@ -9,6 +9,7 @@
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Python/WarpX_py.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -182,12 +183,19 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho_fp, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
+    if (warpx_py_poissonsolver) warpx_py_poissonsolver();
+    else {
+        computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
+                    self_fields_max_iters, self_fields_verbosity );
+    }
 
     // Compute the corresponding electric and magnetic field, from the potential phi
+    // If EBs are used the electric field will already have been calculated in
+    // the computePhi call
+#ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
+#endif
     computeB( Bfield_fp, phi_fp, beta );
-
 }
 
 /* Compute the potential `phi` by solving the Poisson equation with `rho` as
@@ -463,6 +471,33 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+
+#ifdef AMREX_USE_EB
+    // use amrex to directly calculate the electric field since with EB's the
+    // simple finite difference scheme in WarpX::computeE sometimes fails
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    {
+        for (int lev = 0; lev <= max_level; ++lev) {
+#if (AMREX_SPACEDIM==2)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,2>{
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+#elif (AMREX_SPACEDIM==3)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,3>{
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 3),
+                    get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+#endif
+            get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
+            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
+            get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
+        }
+    }
+#endif
 }
 #endif
 
