@@ -46,6 +46,39 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
+    /** \brief Convert a snake_case string to a camelCase one.
+     *
+     *  WarpX uses snake_case internally for some component
+     *  names, but OpenPMD assumes "_" indicates vector or
+     *  tensor fields.
+     *
+     * @return camelCase version of input
+     */
+    inline std::string
+    snakeToCamel (const std::string& snake_string)
+    {
+        std::string camelString = snake_string;
+        int n = camelString.length();
+        for (int x = 0; x < n; x++)
+        {
+            if (x == 0)
+            {
+                std::transform(camelString.begin(), camelString.begin()+1, camelString.begin(),
+                               [](unsigned char c){ return std::tolower(c); });
+            }
+            if (camelString[x] == '_')
+            {
+                std::string tempString = camelString.substr(x + 1, 1);
+                std::transform(tempString.begin(), tempString.end(), tempString.begin(),
+                               [](unsigned char c){ return std::toupper(c); });
+                camelString.erase(x, 2);
+                camelString.insert(x, tempString);
+            }
+        }
+
+        return camelString;
+    }
+
     /** Create the option string
      *
      * @return JSON option string for openPMD::Series
@@ -420,6 +453,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
     amrex::Vector<int> int_flags;
+    amrex::Vector<int> real_flags;
 
     // see openPMD ED-PIC extension for namings
     // note: an underscore separates the record name from its component
@@ -433,26 +467,35 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 #ifdef WARPX_DIM_RZ
     real_names.push_back("theta");
 #endif
-    if(pc->DoFieldIonization()){
-       int_names.push_back("ionizationLevel");
-       // int_flags specifies, for each integer attribs, whether it is
-       // dumped as particle record in a plotfile. So far, ionization_level is the only
-       // integer attribs, and it is automatically dumped as particle record
-       // when ionization is on.
-       int_flags.resize(1, 1);
-       tmp.AddIntComp(false);
+
+    // add runtime real comps to tmp
+    for (int ic = 0; ic < pc->NumRuntimeRealComps(); ++ic) { tmp.AddRealComp(false); }
+
+    // get the names of the real comps
+    real_names.resize(pc->NumRealComps());
+    auto runtime_rnames = pc->getParticleRuntimeComps();
+    for (auto const& x : runtime_rnames)
+    {
+        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
 
-#ifdef WARPX_QED
-    if( pc->has_breit_wheeler() ) {
-        real_names.push_back("opticalDepthBW");
-        tmp.AddRealComp(false);
+    // plot any "extra" fields by default
+    real_flags = particle_diags[i].plot_flags;
+    real_flags.resize(pc->NumRealComps(), 1);
+
+    // add runtime int comps to tmp
+    for (int ic = 0; ic < pc->NumRuntimeIntComps(); ++ic) { tmp.AddIntComp(false); }
+
+    // and the names
+    int_names.resize(pc->NumIntComps());
+    auto runtime_inames = pc->getParticleRuntimeiComps();
+    for (auto const& x : runtime_inames)
+    {
+        int_names[x.second+0] = detail::snakeToCamel(x.first);
     }
-    if( pc->has_quantum_sync() ) {
-        real_names.push_back("opticalDepthQSR");
-        tmp.AddRealComp(false);
-    }
-#endif
+
+    // plot by default
+    int_flags.resize(pc->NumIntComps(), 1);
 
       pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
@@ -478,13 +521,13 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       }, true);
 
     // real_names contains a list of all real particle attributes.
-    // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
+    // real_flags is 1 or 0, whether quantity is dumped or not.
 
     {
       DumpToFile(&tmp,
          particle_diags[i].getSpeciesName(),
          m_CurrentStep,
-         particle_diags[i].plot_flags,
+         real_flags,
          int_flags,
          real_names, int_names,
          pc->getCharge(), pc->getMass()

@@ -569,7 +569,6 @@ WarpX::ReadParameters ()
             // input for each species.
         }
 
-        pp_warpx.query("n_buffer", n_buffer);
         queryWithParser(pp_warpx, "const_dt", const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
@@ -1458,6 +1457,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheCellVector();
         jz_nodal_flag  = IntVect::TheCellVector();
         rho_nodal_flag = IntVect::TheCellVector();
+        F_nodal_flag = IntVect::TheCellVector();
+        G_nodal_flag = IntVect::TheCellVector();
     }
 
     // With RZ multimode, there is a real and imaginary component
@@ -1858,6 +1859,9 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
     RealVect dx_vect(dx[0], dx[2]);
 #endif
 
+    amrex::Real solver_dt = dt[lev];
+    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
+
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
                                                   dm,
@@ -1866,8 +1870,12 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   do_nodal,
                                                   m_v_galilean,
                                                   dx_vect,
-                                                  dt[lev],
-                                                  update_with_rho);
+                                                  solver_dt,
+                                                  update_with_rho,
+                                                  fft_do_time_averaging,
+                                                  J_linear_in_time,
+                                                  do_dive_cleaning,
+                                                  do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
 
     if (use_kspace_filter) {
