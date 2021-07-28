@@ -52,22 +52,67 @@
 
 using namespace amrex;
 
+void WarpX::ResetRho_fp ()
+{
+    // Reset the charge density
+    for (int lev = 0; lev <= max_level; lev++) {
+        rho_fp[lev]->setVal(0.);
+    }
+}
+
+void WarpX::ResetFields ()
+{
+    // Reset the Efield and Bfield
+    for (int lev = 0; lev <= max_level; lev++) {
+        for (int comp=0; comp<3; comp++) {
+            Efield_fp[lev][comp]->setVal(0);
+            Bfield_fp[lev][comp]->setVal(0);
+        }
+    }
+}
+
+void
+WarpX::ChargeDensityGridProcessing ()
+{
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyFilterandSumBoundaryRho (lev, lev, *rho_fp[lev], 0, 1);
+    }
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+    }
+#endif
+}
+
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
+#ifdef WARPX_DIM_RZ
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+        "Error: RZ electrostatic only implemented for a single mode");
+#endif
+
+    // Reset all E and B fields to 0, before calculating space-charge fields
     if (reset_fields) {
-        // Reset all E and B fields to 0, before calculating space-charge fields
-        for (int lev = 0; lev <= max_level; lev++) {
-            for (int comp=0; comp<3; comp++) {
-                Efield_fp[lev][comp]->setVal(0);
-                Bfield_fp[lev][comp]->setVal(0);
-            }
-        }
+        ResetRho_fp();
+        ResetFields();
     }
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+
+        // Loop over particles to gather to total charge density
+        bool const local = true;
+        bool const reset = false;
+        bool const do_rz_volume_scaling = false;
+        for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
+            WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+            species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
+        }
+        ChargeDensityGridProcessing();
         AddSpaceChargeFieldLabFrame();
+
     } else {
+
         // Loop over the species and add their space-charge contribution to E and B
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
@@ -88,11 +133,6 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 void
 WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
-
-#ifdef WARPX_DIM_RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
-                                     "Error: RZ electrostatic only implemented for a single mode");
-#endif
 
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
@@ -137,41 +177,12 @@ WarpX::AddSpaceChargeFieldLabFrame ()
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // Allocate fields for charge
-    const int num_levels = max_level + 1;
-    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-    // Use number of guard cells used for local deposition of rho
-    const amrex::IntVect ng = guard_cells.ng_depos_rho;
-    for (int lev = 0; lev <= max_level; lev++) {
-        BoxArray nba = boxArray(lev);
-        nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
-        rho[lev]->setVal(0.);
-    }
-
-    // Deposit particle charge density (source of Poisson solver)
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        bool const local = true;
-        bool const reset = false;
-        bool const do_rz_volume_scaling = false;
-        species.DepositCharge(rho, local, reset, do_rz_volume_scaling);
-    }
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyFilterandSumBoundaryRho (lev, lev, *rho[lev], 0, 1);
-    }
-#ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
-    }
-#endif
-
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
+    computePhi( rho_fp, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi_fp, beta );

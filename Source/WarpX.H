@@ -608,6 +608,9 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
+    void ResetRho_fp ();
+    void ResetFields ();
+    void ChargeDensityGridProcessing ();
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
