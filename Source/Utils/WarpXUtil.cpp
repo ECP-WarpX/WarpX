@@ -432,7 +432,7 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
     std::vector<amrex::Real> rval(val.size());
     int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
     val.resize(rval.size());
-    for (int i = 0 ; i < val.size() ; i++) {
+    for (unsigned long i = 0 ; i < val.size() ; i++) {
         val[i] = static_cast<int>(std::round(rval[i]));
     }
     return result;
@@ -442,7 +442,7 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
     std::vector<amrex::Real> rval(val.size());
     getArrWithParser(a_pp, str, rval);
     val.resize(rval.size());
-    for (int i = 0 ; i < val.size() ; i++) {
+    for (unsigned long i = 0 ; i < val.size() ; i++) {
         val[i] = static_cast<int>(std::round(rval[i]));
     }
 }
@@ -452,7 +452,7 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
     std::vector<amrex::Real> rval(val.size());
     getArrWithParser(a_pp, str, rval, start_ix, num_val);
     val.resize(rval.size());
-    for (int i = 0 ; i < val.size() ; i++) {
+    for (unsigned long i = 0 ; i < val.size() ; i++) {
         val[i] = static_cast<int>(std::round(rval[i]));
     }
 }
