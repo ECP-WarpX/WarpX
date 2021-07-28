@@ -58,7 +58,6 @@ class MEWarpXRun(object):
         if self.initialized:
             raise RuntimeError(
                 "Attempted to initialize the mwxrun class multiple times.")
-        self.initialized = True
 
         self.simulation.initialize_inputs()
         self.simulation.initialize_warpx()
@@ -74,6 +73,8 @@ class MEWarpXRun(object):
         # statically setting the default level here. I'm not sure of pitfalls
         # or how to handle it more generally yet.
         self.lev = _libwarpx.libwarpx.warpx_finestLevel()
+
+        self.initialized = True
 
     def _set_geom_str(self):
         """Set the geom_str variable corresponding to the geometry used.

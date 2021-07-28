@@ -23,13 +23,12 @@ The install can be done using a decorator, which has the prefix "callfrom". See 
 Functions can be called at the following times:
  - afterinit <installafterinit>: immediately after the init is complete
  - beforeEsolve <installbeforeEsolve>: before the solve for E fields
+ - poissonsolver <installpoissonsolver>: In place of the computePhi call but only in an electrostatic simulation
  - afterEsolve <installafterEsolve>: after the solve for E fields
  - beforedeposition <installbeforedeposition>: before the particle deposition (for charge and/or current)
  - afterdeposition <installafterdeposition>: after particle deposition (for charge and/or current)
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
- - fieldsolver <installfieldsolver>: In place of the AddSpaceChargeFieldLabFrame() call but only in
-                                     an electrostatic simulation with ME_Solver = ON
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
@@ -230,10 +229,10 @@ class CallbackFunctions(object):
 # --- Now create the actual instances.
 _afterinit = CallbackFunctions('afterinit')
 _beforeEsolve = CallbackFunctions('beforeEsolve')
+_poissonsolver = CallbackFunctions('poissonsolver')
 _afterEsolve = CallbackFunctions('afterEsolve')
 _beforedeposition = CallbackFunctions('beforedeposition')
 _afterdeposition = CallbackFunctions('afterdeposition')
-_fieldsolver = CallbackFunctions('fieldsolver')
 _particlescraper = CallbackFunctions('particlescraper')
 _particleloader = CallbackFunctions('particleloader')
 _beforestep = CallbackFunctions('beforestep')
@@ -249,13 +248,13 @@ _c_afterinit = _CALLBACK_FUNC_0(_afterinit)
 libwarpx.warpx_set_callback_py_afterinit(_c_afterinit)
 _c_beforeEsolve = _CALLBACK_FUNC_0(_beforeEsolve)
 libwarpx.warpx_set_callback_py_beforeEsolve(_c_beforeEsolve)
+_c_poissonsolver = _CALLBACK_FUNC_0(_poissonsolver)
 _c_afterEsolve = _CALLBACK_FUNC_0(_afterEsolve)
 libwarpx.warpx_set_callback_py_afterEsolve(_c_afterEsolve)
 _c_beforedeposition = _CALLBACK_FUNC_0(_beforedeposition)
 libwarpx.warpx_set_callback_py_beforedeposition(_c_beforedeposition)
 _c_afterdeposition = _CALLBACK_FUNC_0(_afterdeposition)
 libwarpx.warpx_set_callback_py_afterdeposition(_c_afterdeposition)
-_c_fieldsolver = _CALLBACK_FUNC_0(_fieldsolver)
 _c_particlescraper = _CALLBACK_FUNC_0(_particlescraper)
 libwarpx.warpx_set_callback_py_particlescraper(_c_particlescraper)
 _c_particleloader = _CALLBACK_FUNC_0(_particleloader)
@@ -279,9 +278,8 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
     - ff=None: If given, timings will be written to the file object instead of stdout
     """
     if ff is None: ff = sys.stdout
-    for c in [_afterinit,_beforeEsolve,_afterEsolve,
+    for c in [_afterinit,_beforeEsolve,_poissonsolver,_afterEsolve,
               _beforedeposition,_afterdeposition,
-              _fieldsolver,
               _particlescraper,
               _particleloader,
               _beforestep,_afterstep,
@@ -336,6 +334,24 @@ def isinstalledbeforeEsolve(f):
     return _beforeEsolve.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
+def callfrompoissonsolver(f):
+    installpoissonsolver(f)
+    return f
+def installpoissonsolver(f):
+    """Adds a function to solve Poisson's equation. Note that the C++ object
+    warpx_py_poissonsolver is declared as a nullptr but once the call to set it
+    to _c_poissonsolver below is executed it is no longer a nullptr, and therefore
+    if (warpx_py_poissonsolver) evaluates to True. For this reason a poissonsolver
+    cannot be uninstalled with the uninstallfuncinlist functionality at present."""
+    if _poissonsolver.hasfuncsinstalled():
+        raise RuntimeError('Only one field solver can be installed.')
+    libwarpx.warpx_set_callback_py_poissonsolver(_c_poissonsolver)
+    _poissonsolver.installfuncinlist(f)
+def isinstalledpoissonsolver(f):
+    """Checks if the function is called for a field solve"""
+    return _poissonsolver.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
 def callfromafterEsolve(f):
     installafterEsolve(f)
     return f
@@ -376,24 +392,6 @@ def uninstallafterdeposition(f):
 def isinstalledafterdeposition(f):
     "Checks if the function is called after a particle deposition"
     return _afterdeposition.isinstalledfuncinlist(f)
-
-# ----------------------------------------------------------------------------
-def callfromfieldsolver(f):
-    installfieldsolver(f)
-    return f
-def installfieldsolver(f):
-    """Adds a function to perform the field solve. Note that the C++ object
-    warpx_py_fieldsolver is declared as a nullptr but once the call to set it
-    to _c_fieldsolver below is executed it is no longer a nullptr, and therefore
-    if (warpx_py_fieldsolver) evaluates to True. For this reason a fieldsolver
-    cannot be uninstalled with the uninstallfuncinlist functionality at present."""
-    if _fieldsolver.hasfuncsinstalled():
-        raise RuntimeError('Only one field solver can be installed.')
-    libwarpx.warpx_set_callback_py_fieldsolver(_c_fieldsolver)
-    _fieldsolver.installfuncinlist(f)
-def isinstalledfieldsolver(f):
-    """Checks if the function is called for a field solve"""
-    return _fieldsolver.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticlescraper(f):

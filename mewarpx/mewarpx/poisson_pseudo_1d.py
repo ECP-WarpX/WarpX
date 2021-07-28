@@ -75,7 +75,7 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
         self.decompose_matrix()
 
         print('Using direct solver.')
-        callbacks.installfieldsolver(self._run_solve)
+        callbacks.installpoissonsolver(self._run_solve)
 
     def decompose_matrix(self):
         """Function to build the superLU object used to solve the linear
@@ -124,6 +124,9 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
     def _run_solve(self):
         """Function run on every step to perform the required steps to solve
         Poisson's equation."""
+        if not mwxrun.initialized:
+            return
+
         # get rho from WarpX
         self.rho_data = mwxrun.get_gathered_rho_grid()
         # run superLU solver only on the root processor

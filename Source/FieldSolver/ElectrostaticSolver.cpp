@@ -9,6 +9,7 @@
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Python/WarpX_py.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -52,22 +53,62 @@
 
 using namespace amrex;
 
+void WarpX::ResetRho_fp ()
+{
+    // Reset the charge density
+    for (int lev = 0; lev <= max_level; lev++) {
+        rho_fp[lev]->setVal(0.);
+    }
+}
+
+void WarpX::ResetFields ()
+{
+    // Reset the Efield and Bfield
+    for (int lev = 0; lev <= max_level; lev++) {
+        for (int comp=0; comp<3; comp++) {
+            Efield_fp[lev][comp]->setVal(0);
+            Bfield_fp[lev][comp]->setVal(0);
+        }
+    }
+}
+
+void
+WarpX::ChargeDensityGridProcessing ()
+{
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyFilterandSumBoundaryRho (lev, lev, *rho_fp[lev], 0, 1);
+    }
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+    }
+#endif
+}
+
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
+    // Reset rho, and all E and B fields to 0, before calculating space-charge fields
     if (reset_fields) {
-        // Reset all E and B fields to 0, before calculating space-charge fields
-        for (int lev = 0; lev <= max_level; lev++) {
-            for (int comp=0; comp<3; comp++) {
-                Efield_fp[lev][comp]->setVal(0);
-                Bfield_fp[lev][comp]->setVal(0);
-            }
-        }
+        ResetRho_fp();
+        ResetFields();
     }
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+
+        // Loop over particles to gather to total charge density
+        bool const local = true;
+        bool const reset = false;
+        bool const do_rz_volume_scaling = false;
+        for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
+            WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+            species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
+        }
+        ChargeDensityGridProcessing();
         AddSpaceChargeFieldLabFrame();
+
     } else {
+
         // Loop over the species and add their space-charge contribution to E and B
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
@@ -91,7 +132,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
-                                     "Error: RZ electrostatic only implemented for a single mode");
+        "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
     // Allocate fields for charge and potential
@@ -137,46 +178,25 @@ WarpX::AddSpaceChargeFieldLabFrame ()
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // Allocate fields for charge
-    const int num_levels = max_level + 1;
-    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-    // Use number of guard cells used for local deposition of rho
-    const amrex::IntVect ng = guard_cells.ng_depos_rho;
-    for (int lev = 0; lev <= max_level; lev++) {
-        BoxArray nba = boxArray(lev);
-        nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
-        rho[lev]->setVal(0.);
-    }
-
-    // Deposit particle charge density (source of Poisson solver)
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        bool const local = true;
-        bool const reset = false;
-        bool const do_rz_volume_scaling = false;
-        species.DepositCharge(rho, local, reset, do_rz_volume_scaling);
-    }
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyFilterandSumBoundaryRho (lev, lev, *rho[lev], 0, 1);
-    }
-#ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
-    }
-#endif
-
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
+    if (warpx_py_poissonsolver) warpx_py_poissonsolver();
+    else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
+                     self_fields_max_iters, self_fields_verbosity );
 
-    // Compute the corresponding electric and magnetic field, from the potential phi
+    // Compute the electric field. Note that if the an EB is used the electric
+    // field will be calculated in the computePhi call.
+#ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
-    computeB( Bfield_fp, phi_fp, beta );
+#else
+    if (warpx_py_poissonsolver) computeE( Efield_fp, phi_fp, beta );
+#endif
 
+    // Compute the magnetic field
+    computeB( Bfield_fp, phi_fp, beta );
 }
 
 /* Compute the potential `phi` by solving the Poisson equation with `rho` as
@@ -452,6 +472,33 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+
+#ifdef AMREX_USE_EB
+    // use amrex to directly calculate the electric field since with EB's the
+    // simple finite difference scheme in WarpX::computeE sometimes fails
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    {
+        for (int lev = 0; lev <= max_level; ++lev) {
+#if (AMREX_SPACEDIM==2)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,2>{
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+#elif (AMREX_SPACEDIM==3)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,3>{
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 1),
+                    get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+#endif
+            get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
+            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
+            get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
+        }
+    }
+#endif
 }
 #endif
 

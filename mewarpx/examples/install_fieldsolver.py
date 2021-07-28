@@ -191,7 +191,7 @@ def install_afterE():
 def install_after_step():
     print("InstallAfterStep() install", flush=True)
 
-callbacks.installfieldsolver(install_solve)
+callbacks.installpoissonsolver(install_solve)
 callbacks.installbeforeEsolve(install_beforeE)
 callbacks.installafterEsolve(install_afterE)
 callbacks.installafterstep(install_after_step)

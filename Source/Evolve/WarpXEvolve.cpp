@@ -297,21 +297,7 @@ WarpX::Evolve (int numsteps)
             // positions are next pushed) so that the particles do not deposit out of bounds
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
-
-#ifdef ME_SOLVER
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                do_electrostatic == ElectrostaticSolverAlgo::LabFrame,
-                "ME solver can only be used in the labframe."
-            );
-            if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
-            DepositChargeDensity();
-            if (warpx_py_fieldsolver) warpx_py_fieldsolver();
-            else AddSpaceChargeFieldLabFrame();
             ComputeSpaceChargeField( reset_fields );
-            if (warpx_py_afterEsolve) warpx_py_afterEsolve();
-#else
-            ComputeSpaceChargeField( reset_fields );
-#endif
         }
 
         Real evolve_time_end_step = amrex::second();

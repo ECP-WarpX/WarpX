@@ -78,7 +78,8 @@ def test_embedded_cylinder():
     #######################################################################
 
     phi = mwxrun.get_gathered_phi_grid()[0]
+    # np.save('embedded_cylinder_phi.npy', phi)
     ref_phi = np.load(os.path.join(
         testing_util.test_dir, 'embedded_boundary', 'embedded_cylinder_phi.npy'
     ))
-    assert np.allclose(phi, ref_phi)
+    assert np.allclose(phi, ref_phi, 0.001)
