@@ -114,9 +114,9 @@ WarpX::ComputeEdgeLengths () {
     auto const &edge_centroid = eb_fact.getEdgeCent();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
         for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-        amrex::Box const &box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect());
+        amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
         amrex::FabType fab_type = flags[mfi].getType(box);
-            auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
+            auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
