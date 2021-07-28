@@ -1164,11 +1164,13 @@ public:
 
     void ScrapeParticles ();
 
+    AMREX_GPU_DEVICE
     static int ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                               const amrex::Array4<amrex::Real> &S_red,
                                               const amrex::Array4<int> &flag_info_face,
                                               const amrex::Array4<int> &flag_ext_face, int idim);
 
+    AMREX_GPU_DEVICE
     static int ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
                                                  const amrex::Array4<amrex::Real> &S_red,
                                                  const amrex::Array4<amrex::Real> &S,
