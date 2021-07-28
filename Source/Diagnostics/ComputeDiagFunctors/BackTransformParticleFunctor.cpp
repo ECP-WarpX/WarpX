@@ -4,6 +4,7 @@
 #include "WarpX.H"
 #include <AMReX.H>
 #include <AMReX_Print.H>
+#include <AMReX_BaseFwd.H>
 
 /**
  * \brief Functor to compute Lorentz Transform and store the selected particles in existing
@@ -34,12 +35,7 @@ struct SelectParticles
         const auto lev = a_pti.GetLevel();
         const auto index = a_pti.GetPairIndex();
 
-        xpold = tmp_particle_data[lev][index][TmpIdx::xold].dataPtr();
-        ypold = tmp_particle_data[lev][index][TmpIdx::yold].dataPtr();
         zpold = tmp_particle_data[lev][index][TmpIdx::zold].dataPtr();
-        uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
-        uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
-        uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
     }
 
     template <typename SrcData>
@@ -60,14 +56,7 @@ struct SelectParticles
     GetParticlePosition m_get_position;
     amrex::Real m_current_z_boost;
     amrex::Real m_old_z_boost;
-    
-    amrex::ParticleReal* AMREX_RESTRICT xpold = nullptr;
-    amrex::ParticleReal* AMREX_RESTRICT ypold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT zpold = nullptr;
-
-    amrex::ParticleReal* AMREX_RESTRICT uxpold = nullptr;
-    amrex::ParticleReal* AMREX_RESTRICT uypold = nullptr;
-    amrex::ParticleReal* AMREX_RESTRICT uzpold = nullptr;
 };
 
 
@@ -111,7 +100,7 @@ struct LorentzTransformParticles
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
-    void operator () (DstData& dst, const SrcData src, int i_src, int i_dst) const noexcept
+    void operator () (const DstData& dst, const SrcData& src, int i_src, int i_dst) const noexcept
     {
         using namespace amrex::literals;
         // get current src position
@@ -149,6 +138,18 @@ struct LorentzTransformParticles
                                       + m_uypnew[i_src] * weight_new;
         const amrex::ParticleReal uzp = m_uzpold[i_src] * weight_old
                                       + m_uzpnew[i_src] * weight_new;
+        dst.m_aos[i_dst].pos(0) = xp;
+#if (AMREX_SPACEDIM == 3)
+        dst.m_aos[i_dst].pos(1) = yp;
+        dst.m_aos[i_dst].pos(2) = zp;
+#elif (AMREX_SPACEDIM == 2)
+        dst.m_aos[i_dst].pos(1) = zp;
+        amrex::ignore_unused(yp);
+#endif
+        dst.m_rdata[PIdx::w][i_dst] = m_wpnew[i_src];
+        dst.m_rdata[PIdx::ux][i_dst] = uxp;
+        dst.m_rdata[PIdx::uy][i_dst] = uyp;
+        dst.m_rdata[PIdx::uz][i_dst] = uzp;
     }
 
     GetParticlePosition m_get_position;
@@ -181,16 +182,22 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
 {
     amrex::Print() << " in BTD functor operator \n";
     ParticleContainer pc_tmp(&WarpX::GetInstance());
+    auto &warpx = WarpX::GetInstance();
     // get particle slice
     amrex::Print() << " finest level : " << m_pc_src->finestLevel() << "\n"; 
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     amrex::Print() << " nlevs : " << nlevs << "\n";
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
+
     for (int lev = 0; lev < nlevs; ++lev) {
+        amrex::Real t_boost = warpx.gett_new(0);
+        amrex::Real dt = warpx.getdt(0);
+
         for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
             auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
             auto ptile_tmp = pc_tmp.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
         }
+
         auto& particles = m_pc_src->GetParticles(lev);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
@@ -209,6 +216,10 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
                 const auto GetParticleFilter = SelectParticles(pti, tmp_particle_data,
                                                m_current_z_boost[i_buffer],
                                                m_old_z_boost[i_buffer]);
+                const auto GetParticleLorentzTransform = LorentzTransformParticles(
+                                                         pti, tmp_particle_data,
+                                                         t_boost, dt,
+                                                         m_t_lab[i_buffer]);
 
                 long const np = pti.numParticles();
 
@@ -228,7 +239,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
                 });
 
                 const int total_partdiag_size = amrex::Scan::ExclusiveSum(np,Flag,IndexLocation);
-                auto ptile_tmp = pc_tmp.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
+                auto& ptile_tmp = pc_tmp.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
                 auto old_size = ptile_tmp.numParticles();
                 ptile_tmp.resize(old_size + total_partdiag_size); 
                 amrex::Print() << " total partdiag_size : " << total_partdiag_size << "\n";
@@ -237,6 +248,16 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
 
                 auto count = amrex::filterParticles(ptile_tmp, ptile_src, GetParticleFilter, 0, old_size, np);
                 amrex::Print() << " count : " << count << "\n";
+                auto dst_data = ptile_tmp.getParticleTileData();
+                amrex::ParallelFor(np,
+                [=] AMREX_GPU_DEVICE(int i)
+                {
+                   if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, ptile_src, i,
+                                                                 old_size + IndexLocation[i]);
+                });
+                //auto transformedParticles = amrex::filterAndTransformParticles(ptile_tmp,
+                //                            ptile_src, FlagForPartCopy.dataPtr(),
+                //                            GetParticleLorentzTransform, 0, old_size, np);
 
             }
         }        
