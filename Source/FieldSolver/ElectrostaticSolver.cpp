@@ -88,11 +88,6 @@ WarpX::ChargeDensityGridProcessing ()
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
-#ifdef WARPX_DIM_RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
-        "Error: RZ electrostatic only implemented for a single mode");
-#endif
-
     // Reset all E and B fields to 0, before calculating space-charge fields
     if (reset_fields) {
         ResetRho_fp();
@@ -128,12 +123,16 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     // since they are different arrays in that case.
     UpdateAuxilaryData();
     FillBoundaryAux(guard_cells.ng_UpdateAux);
-
 }
 
 void
 WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
+
+#ifdef WARPX_DIM_RZ
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                     "Error: RZ electrostatic only implemented for a single mode");
+#endif
 
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
@@ -487,7 +486,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 #elif (AMREX_SPACEDIM==3)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,3>{
-                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 3),
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 1),
                     get_pointer_Efield_fp(lev, 2)
                     }}
             );
