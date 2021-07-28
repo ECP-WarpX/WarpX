@@ -9,7 +9,10 @@
 
 import yt
 
-plotfile = 'Python_particle_attr_access_plt00010'
+plotfile = 'Python_particle_attr_access_plt_000010'
+ds = yt.load( plotfile )
+
+plotfile = 'Python_particle_attr_access_plt_100010'
 ds = yt.load( plotfile )
 
 assert True

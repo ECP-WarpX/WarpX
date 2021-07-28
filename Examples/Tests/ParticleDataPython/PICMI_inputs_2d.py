@@ -1,5 +1,19 @@
+from mpi4py import MPI
 from pywarpx import picmi
 import numpy as np
+
+##########################
+# MPI communicator setup
+##########################
+
+# split processor 0 into separate communicator from others
+comm_world = MPI.COMM_WORLD
+rank = comm_world.Get_rank()
+if rank == 0:
+    color = 0
+else:
+    color = 1
+new_comm = comm_world.Split(color)
 
 ##########################
 # numerics parameters
@@ -61,7 +75,7 @@ field_diag = picmi.FieldDiagnostic(
     period = 10,
     data_list = ['phi'],
     write_dir = '.',
-    warpx_file_prefix = 'Python_particle_attr_access_plt'
+    warpx_file_prefix = f'Python_particle_attr_access_plt_{color}'
 )
 
 ##########################
@@ -84,7 +98,7 @@ sim.add_species(
 sim.add_diagnostic(field_diag)
 
 sim.initialize_inputs()
-sim.initialize_warpx()
+sim.initialize_warpx(mpi_comm=new_comm)
 
 ##########################
 # python particle data access
@@ -100,15 +114,15 @@ def add_particles():
     x = np.random.rand(nps) * 0.03
     y = np.zeros(nps)
     z = np.random.random(nps) * 0.03
-    ux = np.random.normal(loc=0, scale=1e4, size=nps)
-    uy = np.random.normal(loc=0, scale=1e4, size=nps)
-    uz = np.random.normal(loc=0, scale=1e4, size=nps)
+    ux = np.random.normal(loc=0, scale=1e3, size=nps)
+    uy = np.random.normal(loc=0, scale=1e3, size=nps)
+    uz = np.random.normal(loc=0, scale=1e3, size=nps)
     w = np.ones(nps) * 2.0
     newPid = 5.0
 
     _libwarpx.add_particles(
         species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
-        w=w, newPid=newPid
+        w=w, newPid=newPid, unique_particles=(not color)
     )
 
 callbacks.installbeforestep(add_particles)
@@ -117,13 +131,16 @@ callbacks.installbeforestep(add_particles)
 # simulation run
 ##########################
 
-sim.step(max_steps - 1)
+sim.step(max_steps - 1, mpi_comm=new_comm)
 
 ##########################
 # check that the new PIDs are properly set
 ##########################
 
-assert (_libwarpx.get_particle_count('electrons') == 90)
+if color == 0:
+    assert (_libwarpx.get_particle_count('electrons') == 90)
+else:
+    assert (_libwarpx.get_particle_count('electrons') == 90)
 assert (_libwarpx.get_particle_comp_index('electrons', 'w') == 0)
 assert (_libwarpx.get_particle_comp_index('electrons', 'newPid') == 4)
 
