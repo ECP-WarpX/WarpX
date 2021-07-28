@@ -222,6 +222,7 @@ libwarpx.warpx_stopTime.restype = c_real
 libwarpx.warpx_finestLevel.restype = ctypes.c_int
 libwarpx.warpx_getMyProc.restype = ctypes.c_int
 libwarpx.warpx_getNProcs.restype = ctypes.c_int
+libwarpx.eval_expression_t.restype = c_real
 
 libwarpx.warpx_EvolveE.argtypes = [c_real]
 libwarpx.warpx_EvolveB.argtypes = [c_real]

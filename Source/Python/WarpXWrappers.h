@@ -131,8 +131,9 @@ extern "C" {
   int warpx_getMyProc ();
   int warpx_getNProcs ();
 
-
   void mypc_Redistribute ();
+
+  amrex::Real eval_expression_t (const char* char_expr, int lev);
 
 #ifdef __cplusplus
 }

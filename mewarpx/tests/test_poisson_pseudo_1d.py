@@ -5,8 +5,8 @@ import numpy as np
 from mewarpx import util as mwxutil
 
 
-def test_direct_solver():
-    name = "Direct_solver"
+def test_superLU_solver():
+    name = "superLU_solver"
     dim = 2
 
     # Initialize and import only when we know dimension
@@ -39,10 +39,7 @@ def test_direct_solver():
     run = diode_setup.DiodeRun_V1(
         dim=dim,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        V_ANODE_EXPRESSION=(
-            (lambda t: VOLTAGE * np.sin(2.0 * np.pi * FREQ * t))
-            if DIRECT_SOLVER else f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)"
-        ),
+        V_ANODE_EXPRESSION=f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)",
         D_CA=D_CA,
         INERT_GAS_TYPE='He',
         N_INERT=9.64e20,  # m^-3
@@ -77,7 +74,7 @@ def test_direct_solver():
         mwxrun.simulation.step()
 
     #######################################################################
-    # Check rho and phi results against reference data from MLMG solver   #
+    # Check phi results against reference data from MLMG solver           #
     #######################################################################
 
     data = np.mean(mwxrun.get_gathered_phi_grid()[0], axis=0)

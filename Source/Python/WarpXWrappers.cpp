@@ -567,4 +567,13 @@ extern "C"
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         mypc.Redistribute();
     }
+
+    amrex::Real eval_expression_t ( const char* char_expr, int lev ) {
+        WarpX& warpx = WarpX::GetInstance();
+        const std::string expr(char_expr);
+
+        auto parser = makeParser(expr, {"t"});
+        auto parser_exe = parser.compileHost<1>();
+        return parser_exe(warpx.gett_new(lev));
+    }
 }

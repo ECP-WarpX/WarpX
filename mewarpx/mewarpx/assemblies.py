@@ -30,7 +30,7 @@ class Assembly(object):
 
     def getvoltage(self):
         """Allows for time-dependent implementations to override this."""
-        return self.V
+        return mwxrun.eval_expression_t(self.V)
 
 
 class ZPlane(Assembly):

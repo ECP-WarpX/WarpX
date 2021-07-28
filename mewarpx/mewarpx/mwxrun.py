@@ -22,6 +22,7 @@ SETUP order:
     - Perform run with ``sim.step()``
 """
 from pywarpx import _libwarpx, picmi
+import ctypes
 
 
 class MEWarpXRun(object):
@@ -250,5 +251,21 @@ class MEWarpXRun(object):
                 raise
         _libwarpx.set_phi_grid_fp(self.lev)
 
+    def eval_expression_t(self, expr):
+        """Function to evaluate an expression that depends on time, at the
+        current simulation time using the WarpX parser.
+
+        Arguments:
+            expr (str or float): Expression to evaluate.
+
+        Returns:
+            (float) Value of the expression at the current simulation time.
+        """
+        if isinstance(expr, str):
+            return _libwarpx.libwarpx.eval_expression_t(
+                ctypes.c_char_p(expr.encode('utf-8')), self.lev
+            )
+        else:
+            return expr
 
 mwxrun = MEWarpXRun()

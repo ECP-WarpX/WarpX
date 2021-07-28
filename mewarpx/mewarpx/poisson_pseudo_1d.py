@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import csc_matrix, linalg as sla
+from functools import partial
 
 from mewarpx.mwxrun import mwxrun
 from pywarpx import callbacks
@@ -25,38 +26,22 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
         )
 
     def initialize_inputs(self):
-        """Grab geometrical quantities from the grid. The boudary potentials
+        """Grab geometrical quantities from the grid. The boundary potentials
         are also obtained from the grid using 'warpx_potential_zmin' for the
         left_voltage and 'warpx_potential_zmax' for the right_voltage.
-        These can be given as floats or callable functions that return the
-        potential. If callable that function should accept simulation time
-        as an argument."""
+        These can be given as floats or strings that can be parsed by the
+        WarpX parser.
+        """
         # grab the boundary potentials from the grid object
         left_voltage = self.grid.potential_zmin
         if left_voltage is None:
             left_voltage = 0.0
-        if isinstance(left_voltage, str):
-            raise AttributeError(
-                "The direct solver requires a float or a callable as argument "
-                "for 'warpx_potential_zmin'."
-            )
-        if callable(left_voltage):
-            self.left_voltage = left_voltage
-        else:
-            self.left_voltage = lambda x: left_voltage
+        self.left_voltage = partial(mwxrun.eval_expression_t, left_voltage)
 
         right_voltage = self.grid.potential_zmax
         if right_voltage is None:
             right_voltage = 0.0
-        if isinstance(right_voltage, str):
-            raise AttributeError(
-                "The direct solver requires a float or a callable as argument "
-                "for 'warpx_potential_zmax'."
-            )
-        if callable(right_voltage):
-            self.right_voltage = right_voltage
-        else:
-            self.right_voltage = lambda x: right_voltage
+        self.right_voltage = partial(mwxrun.eval_expression_t, right_voltage)
 
         # set WarpX boundary potentials to None since we will handle it
         # ourselves in this solver
@@ -152,8 +137,8 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
         """The solution step. Includes getting the boundary potentials and
         calculating phi from rho."""
 
-        left_voltage = self.left_voltage(mwxrun.get_t())
-        right_voltage = self.right_voltage(mwxrun.get_t())
+        left_voltage = self.left_voltage()
+        right_voltage = self.right_voltage()
 
         rho = -self.rho_data[
             self.nxguardrho:-self.nxguardrho, self.nzguardrho:-self.nzguardrho
