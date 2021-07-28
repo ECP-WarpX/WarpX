@@ -26,6 +26,7 @@ const std::map<std::string, int> maxwell_solver_algo_to_int = {
     {"yee",     MaxwellSolverAlgo::Yee },
     {"ckc",     MaxwellSolverAlgo::CKC },
     {"psatd",   MaxwellSolverAlgo::PSATD },
+    {"ect",     MaxwellSolverAlgo::ECT },
     {"default", MaxwellSolverAlgo::Yee }
 };
 

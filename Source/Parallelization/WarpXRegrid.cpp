@@ -145,10 +145,63 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
                                                        {1,1,1}, // Not clear how many ghost cells we need yet
                                                        amrex::EBSupport::full);
-        ComputeEdgeLengths();
-        ComputeFaceAreas();
-        ScaleEdges();
-        ScaleAreas();
+        // Do the EB initialization on the fine patches
+        ComputeEdgeLengths(m_edge_lengths_fp[lev], lev, false);
+        ComputeFaceAreas(m_face_areas_fp[lev], lev, false);
+        ScaleEdges(m_edge_lengths_fp[lev], lev, false);
+        ScaleAreas(m_face_areas_fp[lev], lev, false);
+        const auto &period = Geom(lev).periodicity();
+        m_edge_lengths_fp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_edge_lengths_fp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_edge_lengths_fp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_face_areas_fp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_face_areas_fp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_face_areas_fp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_area_mod_fp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_area_mod_fp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        m_area_mod_fp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        if (lev > 0) {
+            // Do the EB initialization on the coarse patches
+            ComputeEdgeLengths(m_edge_lengths_cp[lev], lev, true);
+            ComputeFaceAreas(m_face_areas_cp[lev], lev, true);
+            ScaleEdges(m_edge_lengths_cp[lev], lev, true);
+            ScaleAreas(m_face_areas_cp[lev], lev, true);
+            m_edge_lengths_cp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_edge_lengths_cp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_edge_lengths_cp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_face_areas_cp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_face_areas_cp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_face_areas_cp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_area_mod_cp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_area_mod_cp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_area_mod_cp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+        }
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            MarkCells(m_edge_lengths_fp[lev], m_face_areas_fp[lev], m_flag_info_face_fp[lev],
+                      m_flag_ext_face_fp[lev], lev, false);
+            m_flag_info_face_fp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_flag_info_face_fp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_flag_info_face_fp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_flag_ext_face_fp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_flag_ext_face_fp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_flag_ext_face_fp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            ComputeFaceExtensions(Bfield_fp[lev], m_area_mod_fp[lev], m_edge_lengths_fp[lev],
+                                  m_face_areas_fp[lev], m_flag_ext_face_fp[lev],
+                                  m_flag_info_face_fp[lev], m_borrowing_fp[lev], lev, false);
+            if (lev > 0) {
+                MarkCells(m_edge_lengths_cp[lev], m_face_areas_cp[lev], m_flag_info_face_cp[lev],
+                          m_flag_ext_face_cp[lev], lev, true);
+                m_flag_info_face_cp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_info_face_cp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_info_face_cp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_ext_face_cp[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_ext_face_cp[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_ext_face_cp[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                ComputeFaceExtensions(Bfield_cp[lev], m_area_mod_cp[lev], m_edge_lengths_cp[lev],
+                                      m_face_areas_cp[lev], m_flag_ext_face_cp[lev],
+                                      m_flag_info_face_cp[lev], m_borrowing_cp[lev], lev, true);
+            }
+        }
         ComputeDistanceToEB();
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();

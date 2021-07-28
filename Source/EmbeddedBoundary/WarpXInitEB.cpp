@@ -1,4 +1,5 @@
 #include "WarpX.H"
+#include <math.h>
 
 #ifdef AMREX_USE_EB
 #  include "Utils/WarpXUtil.H"
@@ -22,6 +23,7 @@
 #  include <AMReX_Loop.H>
 #  include <AMReX_MFIter.H>
 #  include <AMReX_MultiFab.H>
+#  include <AMReX_iMultiFab.H>
 #  include <AMReX_ParmParse.H>
 #  include <AMReX_Parser.H>
 #  include <AMReX_REAL.H>
@@ -72,7 +74,7 @@ namespace {
 #endif
 
 void
-WarpX::InitEB ()
+WarpX::InitEB (int lev)
 {
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
@@ -88,16 +90,17 @@ WarpX::InitEB ()
         auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
         ParserIF pif(eb_if_parser.compile<3>());
         auto gshop = amrex::EB2::makeShop(pif, eb_if_parser);
-        amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel());
+        amrex::EB2::Build(gshop, Geom(lev), maxLevel(), lev);
     } else {
         amrex::ParmParse pp_eb2("eb2");
         if (!pp_eb2.contains("geom_type")) {
             std::string geom_type = "all_regular";
             pp_eb2.add("geom_type", geom_type); // use all_regular by default
         }
-        amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
+        amrex::EB2::Build(Geom(lev), maxLevel(), lev);
     }
-
+#else
+    amrex::ignore_unused(lev);
 #endif
 }
 
@@ -106,35 +109,37 @@ WarpX::InitEB ()
  *        An edge of length 0 is fully covered.
  */
 void
-WarpX::ComputeEdgeLengths () {
+WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                           int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
 
-    auto const eb_fact = fieldEBFactory(maxLevel());
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
+    auto const eb_fact = fieldEBFactory(lev_loc);
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-        amrex::Box const &box = mfi.validbox();
-        amrex::FabType fab_type = flags[mfi].getType(box);
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
-            auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
+        for (amrex::MFIter mfi(*edge_lengths[idim]); mfi.isValid(); ++mfi){
+            amrex::Box const &box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect());
+            amrex::FabType fab_type = flags[mfi].getType(box);
+            auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
-                // every cell in box is all regular
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 1.;
                 });
             } else if (fab_type == amrex::FabType::covered) {
-                // every cell in box is all covered
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 0.;
                 });
             } else {
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_cent).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     if (edge_cent(i, j, k) == amrex::Real(-1.0)) {
                         // This edge is all covered
                         edge_lengths_dim(i, j, k) = 0.;
@@ -150,6 +155,8 @@ WarpX::ComputeEdgeLengths () {
             }
         }
     }
+#else
+    amrex::ignore_unused(edge_lengths, lev, flag_cp);
 #endif
 }
 
@@ -158,40 +165,47 @@ WarpX::ComputeEdgeLengths () {
  *        An edge of area 0 is fully covered.
  */
 void
-WarpX::ComputeFaceAreas () {
+WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                         int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeFaceAreas");
 
-    auto const eb_fact = fieldEBFactory(maxLevel());
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
+
+    auto const eb_fact = fieldEBFactory(lev_loc);
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &area_frac = eb_fact.getAreaFrac();
 
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
-        amrex::FabType fab_type = flags[mfi].getType(box);
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (amrex::MFIter mfi(*face_areas[idim]); mfi.isValid(); ++mfi) {
+            amrex::Box const &box = mfi.tilebox(face_areas[idim]->ixType().toIntVect());
+            amrex::FabType fab_type = flags[mfi].getType(box);
+            auto const &face_areas_dim = face_areas[idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(1.);
                 });
             } else if (fab_type == amrex::FabType::covered) {
                 // every cell in box is all covered
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(0.);
                 });
             } else {
                 auto const &face = area_frac[idim]->const_array(mfi);
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=](int i, int j, int k) {
                     face_areas_dim(i, j, k) = face(i, j, k);
                 });
             }
         }
     }
+#else
+    amrex::ignore_unused(face_areas, lev, flag_cp);
 #endif
 }
 
@@ -199,24 +213,32 @@ WarpX::ComputeFaceAreas () {
  * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
  */
 void
-WarpX::ScaleEdges () {
+WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                   int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleEdges");
 
-    auto const &cell_size = CellSize(maxLevel());
-    auto const eb_fact = fieldEBFactory(maxLevel());
-    auto const &flags = eb_fact.getMultiEBCellFlagFab();
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
 
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
-            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                             [=](int i, int j, int k) {
+    auto const &cell_size = CellSize(lev_loc);
+    auto const eb_fact = fieldEBFactory(lev_loc);
+
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (amrex::MFIter mfi(*edge_lengths[idim]); mfi.isValid(); ++mfi) {
+            amrex::Box const &box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect());
+            auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
+            amrex::ParallelFor(box, [=](int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
             });
         }
     }
+#else
+    amrex::ignore_unused(edge_lengths, lev, flag_cp);
 #endif
 }
 
@@ -224,19 +246,26 @@ WarpX::ScaleEdges () {
  * \brief Scale the edges areas by the mesh width to obtain the real areas.
  */
 void
-WarpX::ScaleAreas() {
+WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                  int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleAreas");
 
-    auto const& cell_size = CellSize(maxLevel());
+    //This variable is equal to lev if this is a fine patch or
+    // equal to lev -1 if this is a coarse patch
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
+
+    auto const& cell_size = CellSize(lev_loc);
     amrex::Real full_area;
 
-    auto const eb_fact = fieldEBFactory(maxLevel());
-    auto const &flags = eb_fact.getMultiEBCellFlagFab();
+    auto const eb_fact = fieldEBFactory(lev_loc);
 
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (amrex::MFIter mfi(*face_areas[idim]); mfi.isValid(); ++mfi) {
+            amrex::Box const &box = mfi.tilebox(face_areas[idim]->ixType().toIntVect());
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
             } else if (idim == 1) {
@@ -244,13 +273,89 @@ WarpX::ScaleAreas() {
             } else {
                 full_area = cell_size[0]*cell_size[1];
             }
-            auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
-            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                             [=](int i, int j, int k) {
-                                face_areas_dim(i, j, k) *= full_area;
+            auto const &face_areas_dim = face_areas[idim]->array(mfi);
+            amrex::ParallelFor(box, [=](int i, int j, int k) {
+                face_areas_dim(i, j, k) *= full_area;
             });
         }
     }
+#else
+    amrex::ignore_unused(face_areas, lev, flag_cp);
+#endif
+}
+
+//0 for unst, 1 for stable and available, 2 for stable, available and intruded
+
+/**
+ * \brief Initialize information for cell extensions.
+ *        The flags convention for m_flag_info_face is as follows
+ *          - 0 for unstable cells
+ *          - 1 for stable cells which have not been intruded
+ *          - 2 for stable cells which have been intruded
+ *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
+ */
+// TODO: add the inputs here
+void
+WarpX::MarkCells(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                 std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                 std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_face,
+                 std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_ext_face,
+                 int lev, bool flag_cp){
+#ifdef AMREX_USE_EB
+
+    int lev_loc = lev;
+    if(flag_cp and lev > 0){
+        lev_loc = lev -1;
+    }
+
+    auto const &cell_size = CellSize(lev_loc);
+
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (amrex::MFIter mfi(*Bfield_fp[lev][idim]); mfi.isValid(); ++mfi) {
+            amrex::Box const &box = mfi.tilebox(face_areas[idim]->ixType().toIntVect());
+
+            auto const &S = face_areas[idim]->array(mfi);
+            auto const &flag_info_face_dim = flag_info_face[idim]->array(mfi);
+            auto const &flag_ext_face_dim = flag_ext_face[idim]->array(mfi);
+            const auto &lx = edge_lengths[0]->array(mfi);
+            const auto &ly = edge_lengths[1]->array(mfi);
+            const auto &lz = edge_lengths[2]->array(mfi);
+            amrex::Real dx = cell_size[0];
+            amrex::Real dy = cell_size[1];
+            amrex::Real dz = cell_size[2];
+
+            amrex::ParallelFor(box, [=](int i, int j, int k) {
+                // Minimal area for this cell to be stable
+                double S_stab;
+                if(idim == 0){
+                    S_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
+                                                    lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
+                }else if(idim == 1){
+                    S_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
+                                             lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+                }else {
+                    S_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
+                                             ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
+                }
+
+                // Does this face need to be extended? This is the same as
+                // flag_info_face(i, j, k) = 0 here but it is modified later to keep track o which
+                // faces need multi-cell extension
+                flag_ext_face_dim(i, j, k) = int(S(i, j, k) < S_stab and !amrex::isnan(S(i, j, k))
+                                              and S(i, j, k) > 0);
+                if(flag_ext_face_dim(i, j, k)){
+                    flag_info_face_dim(i, j, k) = 0;
+                }
+                // Is this face available to lend area to other faces?
+                // The criterion is that the face has to be interior and not already unstable itself
+                if(int(S(i, j, k) > 0 and !flag_ext_face_dim(i, j, k))) {
+                    flag_info_face_dim(i, j, k) = 1;
+                }
+            });
+        }
+    }
+#else
+    amrex::ignore_unused(edge_lengths, face_areas, flag_info_face, flag_ext_face, lev, flag_cp);
 #endif
 }
 

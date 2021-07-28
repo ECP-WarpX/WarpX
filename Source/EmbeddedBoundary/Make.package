@@ -1,7 +1,9 @@
 CEXE_headers += ParticleScraper.H
 CEXE_headers += ParticleBoundaryProcess.H
 CEXE_headers += DistanceToEB.H
+CEXE_headers += WarpXFaceInfoBox.H
 
 CEXE_sources += WarpXInitEB.cpp
+CEXE_sources += WarpXFaceExtensions.cpp
 
 VPATH_LOCATIONS += $(WARPX_HOME)/Source/EmbeddedBoundary

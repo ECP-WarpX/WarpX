@@ -17,6 +17,7 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #ifdef WARPX_USE_PSATD
@@ -660,13 +661,15 @@ public:
      * \param[in] xfield_parser, parser function to initialize x-field
      * \param[in] yfield_parser, parser function to initialize y-field
      * \param[in] zfield_parser, parser function to initialize z-field
+     * \param[in] geom_data, geometric data, can be m_edge_lengths or m_face_areass
      * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          amrex::ParserExecutor<3> const& xfield_parser,
          amrex::ParserExecutor<3> const& yfield_parser,
-         amrex::ParserExecutor<3> const& zfield_parser, const int lev);
+         amrex::ParserExecutor<3> const& zfield_parser,
+         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -969,8 +972,24 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
     //EB grid info
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas_cp;
+
+    //These are needed only for the ECT solver
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Rhofield_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Rhofield_cp;
 
     //EB level set
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
@@ -1135,16 +1154,62 @@ private:
     }
 #endif
 
-    void InitEB ();
+    void InitEB (int lev);
 
-    void ComputeEdgeLengths ();
-    void ComputeFaceAreas ();
-    void ScaleEdges ();
-    void ScaleAreas ();
+    void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                             int lev, bool flag_cp);
+    void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                           int lev, bool flag_cp);
+    void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                     int lev, bool flag_cp);
+    void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                     int lev, bool flag_cp);
+    void MarkCells (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_face,
+                    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_ext_face,
+                    int lev, bool flag_cp);
+
+    amrex::Array1D<int, 0, 2> CountExtFaces(std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face);
+    void ComputeFaceExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                               std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                               std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                               std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                               std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                               int lev, bool flag_cp);
+    void InitBorrowing(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                       std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing);
+    amrex::Array1D<int, 0, 2> ComputeOneWayExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                                                      std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                                                      std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                                                      std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                                                      std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                                                      std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                                                      std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                                                      int lev, bool flag_cp);
+    void ComputeEightWaysExtensions(std::array<std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                                    std::array<std::unique_ptr<amrex::MultiFab>, 3>& area_mod,
+                                    std::array<std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+                                    std::array<std::unique_ptr<amrex::MultiFab>, 3> const& face_areas,
+                                    std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_ext_face,
+                                    std::array<std::unique_ptr<amrex::iMultiFab>, 3>& flag_info_face,
+                                    std::array<std::unique_ptr<amrex::LayoutData<FaceInfoBox>>, 3>& borrowing,
+                                    amrex::Array1D<int, 0, 2> temp_inds, int lev, bool flag_cp);
     void ComputeDistanceToEB ();
 
     void ScrapeParticles ();
 
+    static int ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
+                                              const amrex::Array4<amrex::Real> &S_red,
+                                              const amrex::Array4<int> &flag_info_face,
+                                              const amrex::Array4<int> &flag_ext_face, int idim);
+
+    static int ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
+                                                 const amrex::Array4<amrex::Real> &S_red,
+                                                 const amrex::Array4<amrex::Real> &S,
+                                                 const amrex::Array4<int> &flag_info_face, int idim);
 private:
 
     void PushPSATD ();

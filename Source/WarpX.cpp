@@ -219,7 +219,9 @@ WarpX::WarpX ()
 
     BackwardCompatibility();
 
-    InitEB();
+    for(int lev = 0; lev <= maxLevel(); lev++) {
+        InitEB(lev);
+    }
 
     // Geometry on all levels has been defined already.
     // No valid BoxArray and DistributionMapping have been defined.
@@ -273,9 +275,26 @@ WarpX::WarpX ()
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
 
-    m_edge_lengths.resize(nlevs_max);
-    m_face_areas.resize(nlevs_max);
+    m_edge_lengths_fp.resize(nlevs_max);
+    m_face_areas_fp.resize(nlevs_max);
+    m_flag_info_face_fp.resize(nlevs_max);
+    m_flag_ext_face_fp.resize(nlevs_max);
+    m_borrowing_fp.resize(nlevs_max);
+    m_area_mod_fp.resize(nlevs_max);
+
+    m_edge_lengths_cp.resize(nlevs_max);
+    m_face_areas_cp.resize(nlevs_max);
+    m_flag_info_face_cp.resize(nlevs_max);
+    m_flag_ext_face_cp.resize(nlevs_max);
+    m_borrowing_cp.resize(nlevs_max);
+    m_area_mod_cp.resize(nlevs_max);
+
     m_distance_to_eb.resize(nlevs_max);
+
+    Rhofield_fp.resize(nlevs_max);
+    Venl_fp.resize(nlevs_max);
+    Rhofield_cp.resize(nlevs_max);
+    Venl_cp.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
 
@@ -1506,18 +1525,45 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
 #ifdef AMREX_USE_EB
     // EB info are needed only at the finest level
-    if (lev == maxLevel())
-    {
-      m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
-      m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
-      m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
-      m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
-      m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
-      m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
-      constexpr int nc_ls = 1;
-      constexpr int ng_ls = 2;
-      m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
-    }
+    m_edge_lengths_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
+    m_edge_lengths_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
+    m_edge_lengths_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
+    m_face_areas_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
+    m_face_areas_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
+    m_face_areas_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
+    constexpr int nc_ls = 1;
+    constexpr int ng_ls = 2;
+    m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
+    m_edge_lengths_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
+    m_edge_lengths_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
+    m_edge_lengths_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
+    m_face_areas_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
+    m_face_areas_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
+    m_face_areas_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
+    m_flag_info_face_fp[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[x]"));
+    m_flag_info_face_fp[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[y]"));
+    m_flag_info_face_fp[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[z]"));
+    m_flag_ext_face_fp[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[x]"));
+    m_flag_ext_face_fp[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[y]"));
+    m_flag_ext_face_fp[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[z]"));
+    m_area_mod_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[x]"));
+    m_area_mod_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[y]"));
+    m_area_mod_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[z]"));
+    m_borrowing_fp[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bx_nodal_flag), dm);
+    m_borrowing_fp[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, By_nodal_flag), dm);
+    m_borrowing_fp[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bz_nodal_flag), dm);
+    Venl_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+    Venl_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+    Venl_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+    Venl_fp[lev][0]->setVal(amrex::Real(0));
+    Venl_fp[lev][1]->setVal(amrex::Real(0));
+    Venl_fp[lev][2]->setVal(amrex::Real(0));
+    Rhofield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+    Rhofield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+    Rhofield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+    Rhofield_fp[lev][0]->setVal(amrex::Real(0));
+    Rhofield_fp[lev][1]->setVal(amrex::Real(0));
+    Rhofield_fp[lev][2]->setVal(amrex::Real(0));
 #endif
 
     bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
@@ -1684,6 +1730,39 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_cp[x]"));
         current_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_cp[y]"));
         current_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_cp[z]"));
+
+#ifdef AMREX_USE_EB
+        m_edge_lengths_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
+        m_edge_lengths_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
+        m_edge_lengths_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
+        m_face_areas_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
+        m_face_areas_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
+        m_face_areas_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
+        m_flag_info_face_cp[lev][0] = std::make_unique<iMultiFab>(amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[x]"));
+        m_flag_info_face_cp[lev][1] = std::make_unique<iMultiFab>(amrex::convert(cba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[y]"));
+        m_flag_info_face_cp[lev][2] = std::make_unique<iMultiFab>(amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[z]"));
+        m_flag_ext_face_cp[lev][0] = std::make_unique<iMultiFab>(amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[x]"));
+        m_flag_ext_face_cp[lev][1] = std::make_unique<iMultiFab>(amrex::convert(cba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[y]"));
+        m_flag_ext_face_cp[lev][2] = std::make_unique<iMultiFab>(amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[z]"));
+        m_area_mod_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[x]"));
+        m_area_mod_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba, By_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[y]"));
+        m_area_mod_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[z]"));
+        m_borrowing_cp[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(cba, Bx_nodal_flag), dm);
+        m_borrowing_cp[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(cba, By_nodal_flag), dm);
+        m_borrowing_cp[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(cba, Bz_nodal_flag), dm);
+        Venl_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Venl_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Venl_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Venl_cp[lev][0]->setVal(amrex::Real(0));
+        Venl_cp[lev][1]->setVal(amrex::Real(0));
+        Venl_cp[lev][2]->setVal(amrex::Real(0));
+        Rhofield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Rhofield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Rhofield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
+        Rhofield_cp[lev][0]->setVal(amrex::Real(0));
+        Rhofield_cp[lev][1]->setVal(amrex::Real(0));
+        Rhofield_cp[lev][2]->setVal(amrex::Real(0));
+#endif
 
         if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)) {
             rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_cp"));
