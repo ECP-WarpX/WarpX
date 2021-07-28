@@ -424,7 +424,7 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
         uy = np.array(uy)*np.ones(maxlen)
     if lenuz == 1:
         uz = np.array(uz)*np.ones(maxlen,'d')
-    for key, vals in kwargs.items():
+    for key, val in kwargs.items():
         if np.size(val) == 1:
             kwargs[key] = np.array(val)*np.ones(maxlen)
 
