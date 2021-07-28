@@ -485,7 +485,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         }
     }
 
-#ifdef AMREX_USE_EB \
+#ifdef AMREX_USE_EB
     // Do the EB initialization on the fine patches
     ComputeEdgeLengths(m_edge_lengths_fp[lev], lev, false);
     ComputeFaceAreas(m_face_areas_fp[lev], lev, false);
