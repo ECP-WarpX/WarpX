@@ -5,8 +5,8 @@ from pywarpx import picmi
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
-from mewarpx import assemblies, emission
-from mewarpx import mcc_wrapper, mepicmi, poisson_pseudo_1d
+from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicmi
+from mewarpx.diags_store import field_diagnostic
 
 
 class DiodeRun_V1(object):
@@ -127,10 +127,18 @@ class DiodeRun_V1(object):
     # CHECK_CHARGE_CONSERVATION = True
     # Get diagnostic information every DIAG_STEPS setps.
     DIAG_STEPS = None
-    # Time (in seconds) between diagnostic evaluations
-    DIAG_INTERVAL = None
     # The data list for field diagnostics
     FIELD_DIAG_DATA_LIST = None
+    # Whether or not to plot parameters on each diagnostic step.
+    FIELD_DIAG_PLOT_ON_DIAG_STEPS = False
+    # If FIELD_DIAG_PLOT_ON_DIAG_STEPS is True, what parameters to plot. Current
+    # accepted values are 'rho' and 'phi'
+    FIELD_DIAG_PLOT_DATA_LIST = None
+    # Whether or not to plot the parameters in FIELD_DIAG_DATA_LIST after
+    # the simulation is complete using yt files generated during the run at
+    # diagnostic steps.
+    FIELD_DIAG_PLOT_AFTER_RUN = False
+
     # The total timesteps of the simulation
     TOTAL_TIMESTEPS = None
     # number of cells in the x direction
@@ -537,15 +545,17 @@ class DiodeRun_V1(object):
 
     def init_field_diag(self):
         print('### Init Diode FieldDiag ###')
-        diagnostic_intervals = f"::{self.DIAG_STEPS}"
-        self.field_diag = picmi.FieldDiagnostic(
+
+        self.field_diag = field_diagnostic.FieldDiagnostic(
             name='diags',
             grid=mwxrun.grid,
-            period=diagnostic_intervals,
-            data_list=self.FIELD_DIAG_DATA_LIST,
+            diag_steps=self.DIAG_STEPS,
+            diag_data_list=self.FIELD_DIAG_DATA_LIST,
             write_dir='diags/',
+            plot_on_diag_step=self.FIELD_DIAG_PLOT_ON_DIAG_STEPS,
+            plot_data_list=self.FIELD_DIAG_PLOT_DATA_LIST,
+            post_processing=self.FIELD_DIAG_PLOT_AFTER_RUN
         )
-        mwxrun.simulation.add_diagnostic(self.field_diag)
 
     def init_simcontrol(self):
         print('### Init Diode SimControl ###')

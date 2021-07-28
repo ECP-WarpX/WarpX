@@ -1208,6 +1208,8 @@ def get_mesh_current_density_fp_pml(level, direction, include_ghosts=True):
         return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
+
+
 def get_mesh_charge_density_cp(level, include_ghosts=True):
     '''
 
@@ -1243,8 +1245,8 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
 
     The data for the numpy arrays are not copied, but share the underlying
     memory buffer with WarpX. The numpy arrays are fully writeable.
-
     Parameters
+
     ----------
 
         level          : the AMR level to get the data for
@@ -1258,54 +1260,6 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
     '''
 
     return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
-
-
-def get_gathered_charge_density_fp(level):
-    '''
-
-    This returns a single numpy array containing the mesh charge density
-    data on the grid gathered from all processes. This version returns
-    the density on the fine patch for the given level.
-
-    Parameters
-    ----------
-
-        level          : the AMR level to get the data for
-
-    Returns
-    -------
-
-        A numpy array.
-
-    '''
-
-    return _get_mesh_field_list(libwarpx.warpx_getGatheredChargeDensityFP, level, None, True)
-
-
-def get_mesh_phi_fp(level, include_ghosts=True):
-    '''
-
-    This returns a list of numpy arrays containing the mesh electrostatic
-    potential data on each grid for this process. This version returns the
-    density on the fine patch for the given level.
-
-    The data for the numpy arrays are not copied, but share the underlying
-    memory buffer with WarpX. The numpy arrays are fully writeable.
-
-    Parameters
-    ----------
-
-        level          : the AMR level to get the data for
-        include_ghosts : whether to include ghost zones or not
-
-    Returns
-    -------
-
-        A List of numpy arrays.
-
-    '''
-
-    return _get_mesh_field_list(libwarpx.warpx_getPhiFP, level, None, include_ghosts)
 
 
 def get_gathered_phi_fp(level):

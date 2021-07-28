@@ -5,6 +5,7 @@ import errno
 import inspect
 import os
 import warnings
+import collections
 
 import numpy as np
 
@@ -13,10 +14,10 @@ import numpy as np
 from pywarpx import geometry
 from mewarpx import mwxconstants as constants
 
+
 # http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-t
 mewarpx_dir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
-
 
 def init_libwarpx(ndim, rz):
     """_libwarpx requires the geometry be set before importing.
@@ -292,6 +293,52 @@ def J_RD(T, WF, A):
     """
     return A*T**2*np.exp(-1.*WF/(constants.kb_eV*T))
 
+def return_iterable(x, depth=1):
+    """Return x if x is iterable, None if x is None, [x] otherwise.
+    Useful for arguments taking either a list of single value. Strings are a
+    special case counted as 'not iterable'.
+
+    Arguments:
+        depth (int): This many levels must be iterable. So if you need an
+            iterable of an iterable, this is 2.
+    """
+    if x is None:
+        return None
+    elif depth > 1:
+        # First make sure it's iterable to one less than the required depth.
+        x = return_iterable(x, depth=depth-1)
+        # Now check that it's iterable to the required depth. If not, we just
+        # need to nest it in one more list.
+        x_flattened = x
+        while depth > 1:
+            if all([(isinstance(y, collections.abc.Iterable) and not isinstance(y, str))
+                    for y in x_flattened]):
+                x_flattened = [z for y in x_flattened for z in y]
+                depth -= 1
+            else:
+                return [x]
+        return x
+
+    elif isinstance(x, str):
+        return [x]
+    elif isinstance(x, collections.abc.Iterable):
+        return x
+    else:
+        return [x]
+
+def recursive_update(d, u):
+    """Recursively update dictionary d with keys from u.
+    If u[key] is not a dictionary, this works the same as dict.update(). If
+    u[key] is a dictionary, then update the keys of that dictionary within
+    d[key], rather than replacing the whole dictionary.
+    """
+    # https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            d[k] = recursive_update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
 def plasma_Debye_length(T, n):
     """Returns the thermal Debye length of a plasma.
