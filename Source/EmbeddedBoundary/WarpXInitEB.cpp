@@ -104,12 +104,11 @@ WarpX::InitEB ()
  *        An edge of length 0 is fully covered.
  */
 void
-WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
-                           amrex::EBFArrayBoxFactory eb_fact) {
+WarpX::ComputeEdgeLengths () {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
 
-    //auto const eb_fact = fieldEBFactory(maxLevel());
+    auto const eb_fact = fieldEBFactory(maxLevel());
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
