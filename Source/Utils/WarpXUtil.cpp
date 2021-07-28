@@ -26,7 +26,6 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
-#include <AMReX_IParser.H>
 
 #include <algorithm>
 #include <array>
@@ -271,13 +270,7 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-// Parser for real numbers or integers
-template <typename T_Parser, typename T>
-T_Parser makeParserTemplate (std::string const& /* parse_function */, amrex::Vector<std::string> const& /* varnames */) {}
-
-// Specialized version for real numbers. This includes the list of predefined constants.
-template <>
-Parser makeParserTemplate<Parser, amrex::Real> (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
+Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
     // Since queryWithParser recursively calls this routine, keep track of symbols
     // in case an infinite recursion is found (a symbol's value depending on itself).
@@ -289,11 +282,11 @@ Parser makeParserTemplate<Parser, amrex::Real> (std::string const& parse_functio
     std::set<std::string> symbols = parser.symbols();
     for (auto const& v : varnames) symbols.erase(v.c_str());
     for (auto it = symbols.begin(); it != symbols.end(); ) {
-        amrex::Real v;
+        Real v;
 
         WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
         recursive_symbols.insert(*it);
-        const bool is_input = queryWithParserTemplate<Parser,ParserExecutor<0>,amrex::Real>(pp_my_constants, it->c_str(), v);
+        const bool is_input = queryWithParser(pp_my_constants, it->c_str(), v);
         recursive_symbols.erase(*it);
 
         if (is_input) {
@@ -333,42 +326,8 @@ Parser makeParserTemplate<Parser, amrex::Real> (std::string const& parse_functio
     return parser;
 }
 
-// Specialized version for integers. There are no predefined constants.
-template <>
-IParser makeParserTemplate<IParser, int> (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
-{
-    // Since queryWithParser recursively calls this routine, keep track of symbols
-    // in case an infinite recursion is found (a symbol's value depending on itself).
-    static std::set<std::string> recursive_symbols;
-
-    IParser parser(parse_function);
-    parser.registerVariables(varnames);
-    ParmParse pp_my_constants("my_constants");
-    std::set<std::string> symbols = parser.symbols();
-    for (auto const& v : varnames) symbols.erase(v.c_str());
-    for (auto it = symbols.begin(); it != symbols.end(); ) {
-        int v;
-
-        WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
-        recursive_symbols.insert(*it);
-        const bool is_input = queryWithParserTemplate<IParser,IParserExecutor<0>,int>(pp_my_constants, it->c_str(), v);
-        recursive_symbols.erase(*it);
-
-        if (is_input) {
-            parser.setConstant(*it, v);
-            it = symbols.erase(it);
-        } else {
-            ++it;
-        }
-    }
-    for (auto const& s : symbols) {
-        amrex::Abort("makeParser::Unknown symbol "+s);
-    }
-    return parser;
-}
-
-template <typename T_Parser, class T_Executor, typename T>
-int queryWithParserTemplate (const amrex::ParmParse& a_pp, char const * const str, T& val)
+int
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
 {
     // call amrex::ParmParse::query, check if the user specified str.
     std::string tmp_str;
@@ -379,8 +338,8 @@ int queryWithParserTemplate (const amrex::ParmParse& a_pp, char const * const st
         std::string str_val;
         Store_parserString(a_pp, str, str_val);
 
-        T_Parser parser = makeParserTemplate<T_Parser, T>(str_val, {});
-        T_Executor exe = parser.template compileHost<0>();
+        auto parser = makeParser(str_val, {});
+        auto exe = parser.compileHost<0>();
 
         val = exe();
     }
@@ -388,21 +347,21 @@ int queryWithParserTemplate (const amrex::ParmParse& a_pp, char const * const st
     return is_specified;
 }
 
-template <typename T_Parser, class T_Executor, typename T>
-void getWithParserTemplate (const amrex::ParmParse& a_pp, char const * const str, T& val)
+void
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
 {
     // If so, create a parser object and apply it to the value provided by the user.
     std::string str_val;
     Store_parserString(a_pp, str, str_val);
 
-    T_Parser parser = makeParserTemplate<T_Parser, T>(str_val, {});
-    T_Executor exe = parser.template compileHost<0>();
+    auto parser = makeParser(str_val, {});
+    auto exe = parser.compileHost<0>();
     val = exe();
 }
 
-template <typename T_Parser, class T_Executor, typename T>
-int queryArrWithParserTemplate (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val,
-                                const int start_ix, const int num_val)
+int
+queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                    const int start_ix, const int num_val)
 {
     // call amrex::ParmParse::query, check if the user specified str.
     std::vector<std::string> tmp_str_arr;
@@ -413,8 +372,8 @@ int queryArrWithParserTemplate (const amrex::ParmParse& a_pp, char const * const
         int const n = static_cast<int>(tmp_str_arr.size());
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
-            T_Parser parser = makeParserTemplate<T_Parser, T>(tmp_str_arr[i], {});
-            T_Executor exe = parser.template compileHost<0>();
+            auto parser = makeParser(tmp_str_arr[i], {});
+            auto exe = parser.compileHost<0>();
             val[i] = exe();
         }
     }
@@ -422,8 +381,8 @@ int queryArrWithParserTemplate (const amrex::ParmParse& a_pp, char const * const
     return is_specified;
 }
 
-template <typename T_Parser, class T_Executor, typename T>
-void getArrWithParserTemplate (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val)
+void
+getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val)
 {
     // Create parser objects and apply them to the values provided by the user.
     std::vector<std::string> tmp_str_arr;
@@ -432,15 +391,15 @@ void getArrWithParserTemplate (const amrex::ParmParse& a_pp, char const * const 
     int const n = static_cast<int>(tmp_str_arr.size());
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
-        T_Parser parser = makeParserTemplate<T_Parser, T>(tmp_str_arr[i], {});
-        T_Executor exe = parser.template compileHost<0>();
+        auto parser = makeParser(tmp_str_arr[i], {});
+        auto exe = parser.compileHost<0>();
         val[i] = exe();
     }
 }
 
-template <typename T_Parser, class T_Executor, typename T>
-void getArrWithParserTemplate (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val,
-                               const int start_ix, const int num_val)
+void
+getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                    const int start_ix, const int num_val)
 {
     // Create parser objects and apply them to the values provided by the user.
     std::vector<std::string> tmp_str_arr;
@@ -449,53 +408,53 @@ void getArrWithParserTemplate (const amrex::ParmParse& a_pp, char const * const 
     int const n = static_cast<int>(tmp_str_arr.size());
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
-        T_Parser parser = makeParserTemplate<T_Parser, T>(tmp_str_arr[i], {});
-        T_Executor exe = parser.template compileHost<0>();
+        auto parser = makeParser(tmp_str_arr[i], {});
+        auto exe = parser.compileHost<0>();
         val[i] = exe();
     }
 }
 
-Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames) {
-    return makeParserTemplate<Parser, amrex::Real>(parse_function, varnames);
-}
-
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val) {
-    return queryWithParserTemplate<Parser, ParserExecutor<0>, amrex::Real>(a_pp, str, val);
-}
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
-    return queryWithParserTemplate<IParser, IParserExecutor<0>, int>(a_pp, str, val);
+    amrex::Real rval;
+    int result = queryWithParser(a_pp, str, rval);
+    val = static_cast<int>(std::round(rval));
+    return result;
 }
 
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val) {
-    getWithParserTemplate<Parser, ParserExecutor<0>, amrex::Real>(a_pp, str, val);
-}
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
-    getWithParserTemplate<IParser, IParserExecutor<0>, int>(a_pp, str, val);
+    amrex::Real rval;
+    getWithParser(a_pp, str, rval);
+    val = static_cast<int>(std::round(rval));
 }
 
-int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                        const int start_ix, const int num_val) {
-    return queryArrWithParserTemplate<Parser, ParserExecutor<0>, amrex::Real>(a_pp, str, val, start_ix, num_val);
-}
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
                         const int start_ix, const int num_val) {
-    return queryArrWithParserTemplate<IParser, IParserExecutor<0>, int>(a_pp, str, val, start_ix, num_val);
+    std::vector<amrex::Real> rval(val.size());
+    int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
+    val.resize(rval.size());
+    for (int i = 0 ; i < val.size() ; i++) {
+        val[i] = static_cast<int>(std::round(rval[i]));
+    }
+    return result;
 }
 
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val) {
-    getArrWithParserTemplate<Parser, ParserExecutor<0>, amrex::Real>(a_pp, str, val);
-}
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val) {
-    getArrWithParserTemplate<IParser, IParserExecutor<0>, int>(a_pp, str, val);
+    std::vector<amrex::Real> rval(val.size());
+    getArrWithParser(a_pp, str, rval);
+    val.resize(rval.size());
+    for (int i = 0 ; i < val.size() ; i++) {
+        val[i] = static_cast<int>(std::round(rval[i]));
+    }
 }
 
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                               const int start_ix, const int num_val) {
-    getArrWithParserTemplate<Parser, ParserExecutor<0>, amrex::Real>(a_pp, str, val, start_ix, num_val);
-}
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                               const int start_ix, const int num_val) {
-    getArrWithParserTemplate<IParser, IParserExecutor<0>, int>(a_pp, str, val, start_ix, num_val);
+                       const int start_ix, const int num_val) {
+    std::vector<amrex::Real> rval(val.size());
+    getArrWithParser(a_pp, str, rval, start_ix, num_val);
+    val.resize(rval.size());
+    for (int i = 0 ; i < val.size() ; i++) {
+        val[i] = static_cast<int>(std::round(rval[i]));
+    }
 }
 
 /**

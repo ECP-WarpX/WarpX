@@ -38,7 +38,8 @@ warpx.cfl = 1.0
 
 # Parameters for the plasma wave
 my_constants.lx = 40.e-6 # length of sides
-my_constants.nx = 64 # number of cells in each dimension
+my_constants.dx = 6.25e-07 # grid cell size
+my_constants.nx = lx/dx # number of cells in each dimension
 my_constants.epsilon = 0.01
 my_constants.n0 = 2.e24  # electron and positron densities, #/m^3
 my_constants.wp = sqrt(2.*n0*q_e**2/(epsilon0*m_e))  # plasma frequency

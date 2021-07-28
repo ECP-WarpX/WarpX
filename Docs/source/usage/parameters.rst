@@ -373,6 +373,7 @@ WarpX uses AMReX's math parser that reads expressions in the input file.
 It can be used in all input parameters that consist of one or more integers or floats.
 Integer input expecting boolean, 0 or 1, are not parsed.
 Note that when multiple values are expected, the expressions are space delimited.
+For integer input values, the expressions are evaluated as real numbers and the final result rounded to the nearest integer.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
@@ -419,15 +420,6 @@ user-defined constant (see above) and ``x`` and ``y`` are spatial coordinates. T
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
 Alternatively the expression above can be written as ``if(x>0, a0*x**2 * (1-y*1.e2), 0)``.
-
-Integer Expressions
-^^^^^^^^^^^^^^^^^^^
-
-Expressions with integers allow the all of the usual mathematical and logical operations.
-There are two types of division available - the difference is in how negative numbers are handled.
-The operation ``/`` does division with truncation, so ``3/2`` is ``1`` and ``-3/2`` is -1.
-The operation `//` does division with floor, so ``3//2`` is ``1`` and ``-3//2`` is -2.
-Each individual operation gives an integer result, so that for example ``3/2*2`` is 2.
 
 .. _running-cpp-parameters-particle:
 
