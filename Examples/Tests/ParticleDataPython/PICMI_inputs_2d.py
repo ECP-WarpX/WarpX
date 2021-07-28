@@ -103,13 +103,12 @@ def add_particles():
     ux = np.random.normal(loc=0, scale=1e4, size=nps)
     uy = np.random.normal(loc=0, scale=1e4, size=nps)
     uz = np.random.normal(loc=0, scale=1e4, size=nps)
-    attr = np.zeros((nps, 2))
-    attr[:,0] = 2.0
-    attr[:,1] = 5.0
+    w = np.ones(nps) * 2.0
+    newPid = 5.0
 
     _libwarpx.add_particles(
         species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
-        attr=attr
+        w=w, newPid=newPid
     )
 
 callbacks.installbeforestep(add_particles)
