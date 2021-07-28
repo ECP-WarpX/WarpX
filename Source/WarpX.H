@@ -1149,7 +1149,8 @@ private:
 #endif
 
     void InitEB ();
-    void ComputeEdgeLengths ();
+    void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                             amrex::EBFArrayBoxFactory eb_fact);
     void ComputeFaceAreas ();
     void ScaleEdges ();
     void ScaleAreas ();

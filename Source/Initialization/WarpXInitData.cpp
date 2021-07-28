@@ -487,7 +487,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
 #ifdef AMREX_USE_EB
     if(lev==maxLevel()) {
-        ComputeEdgeLengths();
+        ComputeEdgeLengths(m_edge_lengths[lev], fieldEBFactory(lev));
         ComputeFaceAreas();
         ScaleEdges();
         ScaleAreas();
