@@ -403,7 +403,7 @@ WarpX::ComputeOneWayExtensions() {
         amrex::Long ncells = box.numPts();
         int* borrowing_x_inds = borrowing_x.inds.data();
         uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
-        double* borrowing_x_area = borrowing_x.area.data();
+        amrex::Real* borrowing_x_area = borrowing_x.area.data();
 
         auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
@@ -497,7 +497,7 @@ WarpX::ComputeOneWayExtensions() {
         amrex::Long ncells = box.numPts();
         int* borrowing_y_inds = borrowing_y.inds.data();
         uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
-        double* borrowing_y_area = borrowing_y.area.data();
+        amrex::Real* borrowing_y_area = borrowing_y.area.data();
 
         auto const &Sy_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
@@ -593,7 +593,7 @@ WarpX::ComputeOneWayExtensions() {
         amrex::Long ncells = box.numPts();
         int* borrowing_z_inds = borrowing_z.inds.data();
         uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
-        double* borrowing_z_area = borrowing_z.area.data();
+        amrex::Real* borrowing_z_area = borrowing_z.area.data();
 
         auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
@@ -708,7 +708,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         amrex::Long ncells = box.numPts();
         int* borrowing_x_inds = borrowing_x.inds.data();
         uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
-        double* borrowing_x_area = borrowing_x.area.data();
+        amrex::Real* borrowing_x_area = borrowing_x.area.data();
 
         auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
@@ -846,7 +846,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         amrex::Long ncells = box.numPts();
         int* borrowing_y_inds = borrowing_y.inds.data();
         uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
-        double* borrowing_y_area = borrowing_y.area.data();
+        amrex::Real* borrowing_y_area = borrowing_y.area.data();
 
         auto const &Sy_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
@@ -984,7 +984,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         amrex::Long ncells = box.numPts();
         int* borrowing_z_inds = borrowing_z.inds.data();
         uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
-        double* borrowing_z_area = borrowing_z.area.data();
+        amrex::Real* borrowing_z_area = borrowing_z.area.data();
 
         auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
