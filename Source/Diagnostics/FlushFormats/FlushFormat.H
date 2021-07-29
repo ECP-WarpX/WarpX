@@ -22,6 +22,8 @@ namespace ParticleBuffer {
 
         // add runtime int comps to tmp
         for (int ic = 0; ic < pc->NumRuntimeIntComps(); ++ic) { tmp.AddIntComp(false); }
+
+        return tmp;
     }
 
 }
