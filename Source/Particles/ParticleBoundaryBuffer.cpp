@@ -78,6 +78,27 @@ void ParticleBoundaryBuffer::printNumParticles () const {
     }
 }
 
+struct IsOutsideBoundary {
+    amrex::GpuArray<amrex::Real, 3> m_plo;
+    amrex::GpuArray<amrex::Real, 3> m_phi;
+    int m_idim;
+    int m_iside;
+
+    template <typename SrcData>
+    AMREX_GPU_DEVICE
+    int operator() (const SrcData& src,
+                    int ip, const amrex::RandomEngine& /*engine*/) const noexcept
+    {
+        const auto& p = src.getSuperParticle(ip);
+        if (m_iside == 0) {
+            if (p.pos(m_idim) < m_plo[m_idim]) { return 1; }
+        } else {
+            if (p.pos(m_idim) >= m_phi[m_idim]) { return 1; }
+        }
+        return 0;
+    }
+};
+
 void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc) {
     const auto& warpx_instance = WarpX::GetInstance();
     const amrex::Geometry& geom = warpx_instance.Geom(0);
@@ -99,18 +120,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc) {
                     buffer[i] = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(&pc);
                 }
                 auto& species_buffer = buffer[i];
-                using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-                species_buffer.addParticles(pc,
-                                            [=] AMREX_GPU_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& /*engine*/)
-                {
-                    const auto& p = src.getSuperParticle(ip);
-                    if (iside == 0) {
-                        if (p.pos(idim) < plo[idim]) { return 1; }
-                    } else {
-                        if (p.pos(idim) >= phi[idim]) { return 1; }
-                    }
-                    return 0;
-                }, true);
+                species_buffer.addParticles(pc, IsOutsideBoundary{plo, phi, idim, iside}, true);
             }
         }
     }
