@@ -9,6 +9,8 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 

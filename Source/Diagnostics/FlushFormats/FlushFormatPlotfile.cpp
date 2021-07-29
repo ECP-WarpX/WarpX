@@ -3,6 +3,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
 #include "Utils/Interpolate.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
