@@ -465,9 +465,7 @@ WarpX::ComputeOneWayExtensions() {
                                 // faces which are borrowing area
                                 FaceInfoBox::addConnectedNeighbor(j_n, k_n, ps,
                                                                  borrowing_x_neigh_faces);
-                                //*(borrowing_x_i_face + ps) = i;
-                                //*(borrowing_x_j_face + ps) = j + j_n;
-                                //*(borrowing_x_k_face + ps) = k + k_n;
+
                                 *(borrowing_x_area + ps) = Sx_ext;
 
                                 flag_info_face_x(i, j + j_n, k + k_n) = 2;
