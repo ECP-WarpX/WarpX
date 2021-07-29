@@ -182,7 +182,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Btmp[i]->nGrowVect();
                 // Guard cells may not be up to date beyond ng_FieldGather
-                const auto ng_src = guard_cells.ng_FieldGather;
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
                 Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
