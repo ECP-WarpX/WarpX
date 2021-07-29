@@ -222,7 +222,7 @@ WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real 
 /**
 * \brief For the face of cell pointing in direction idim, compute the number of faces
 * we need to intrude. For the one-way extension this function returns only one or zero: one if the
-* face can be extended withe the one-way extension, zeros if it can't.
+* face can be extended with the the one-way extension, zeros if it can't.
 */
 AMREX_GPU_DEVICE
 int
