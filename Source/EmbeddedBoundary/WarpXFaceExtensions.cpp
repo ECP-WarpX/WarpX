@@ -610,7 +610,6 @@ WarpX::ComputeOneWayExtensions() {
                 const int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_z(i, j, k)) {
-                    //borrowing_z_size(i, j, k) = 0;
                     return 0;
                 }
 
