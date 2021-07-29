@@ -183,6 +183,8 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 IntVect ng = Btmp[i]->nGrowVect();
                 // Guard cells may not be up to date beyond ng_FieldGather
                 const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Bfield_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
+                // Bfield_aux and filling up to ng (=nGrow) guard cells in Btmp
                 Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
@@ -234,7 +236,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Etmp[i]->nGrowVect();
                 // Guard cells may not be up to date beyond ng_FieldGather
-                const auto ng_src = guard_cells.ng_FieldGather;
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Efield_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
+                // Efield_aux and filling up to ng (=nGrow) guard cells in Etmp
                 Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
@@ -287,7 +291,9 @@ WarpX::UpdateAuxilaryDataSameType ()
             dBy.setVal(0.0);
             dBz.setVal(0.0);
             // Guard cells may not be up to date beyond ng_FieldGather
-            const auto ng_src = guard_cells.ng_FieldGather;
+            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+            // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
+            // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
             dBx.ParallelCopy(*Bfield_aux[lev-1][0], 0, 0, Bfield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
             dBy.ParallelCopy(*Bfield_aux[lev-1][1], 0, 0, Bfield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
             dBz.ParallelCopy(*Bfield_aux[lev-1][2], 0, 0, Bfield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
@@ -347,7 +353,9 @@ WarpX::UpdateAuxilaryDataSameType ()
             dEy.setVal(0.0);
             dEz.setVal(0.0);
             // Guard cells may not be up to date beyond ng_FieldGather
-            const auto ng_src = guard_cells.ng_FieldGather;
+            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+            // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
+            // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
             dEx.ParallelCopy(*Efield_aux[lev-1][0], 0, 0, Efield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
             dEy.ParallelCopy(*Efield_aux[lev-1][1], 0, 0, Efield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
             dEz.ParallelCopy(*Efield_aux[lev-1][2], 0, 0, Efield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
