@@ -1171,7 +1171,7 @@ public:
                                               const amrex::Array4<int> &flag_ext_face, int idim);
 
     AMREX_GPU_DEVICE
-    static int ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
+    static int ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                                  const amrex::Array4<amrex::Real> &S_red,
                                                  const amrex::Array4<amrex::Real> &S,
                                                  const amrex::Array4<int> &flag_info_face, int idim);
