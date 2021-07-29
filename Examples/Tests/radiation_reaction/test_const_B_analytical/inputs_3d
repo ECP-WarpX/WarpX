@@ -8,7 +8,6 @@ amr.max_level = 0
 amr.blocking_factor = 32
 amr.max_grid_size = 64
 geometry.coord_sys   = 0
-geometry.is_periodic = 1 1 1
 geometry.prob_lo = -8e-07 -8e-07 -8e-07
 geometry.prob_hi = 8e-07 8e-07 8e-07
 warpx.do_pml = 0
@@ -16,6 +15,10 @@ algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 warpx.cfl = 1.0
 warpx.serialize_ics = 1
+
+# Boundary condition
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 # Order of particle shape factors
 algo.particle_shape = 1

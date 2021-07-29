@@ -132,11 +132,6 @@ Setting up the field mesh
 
     Note: in development; currently allowed value: ``2 2 2``.
 
-* ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
-    Whether the boundary conditions are periodic, in each direction.
-
-    For each direction, use 1 for periodic conditions, 0 otherwise.
-
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
 
@@ -215,13 +210,13 @@ Setting up the field mesh
 Domain Boundary Conditions
 --------------------------
 
-* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D, `pml` by default)
     Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
 
-    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
+    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
 
     * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
@@ -233,14 +228,67 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 
     * ``none``: No boundary condition is applied to the fields. This option must be used for the RZ-solver at `r=0`.
 
-* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
+    * ``Absorbing``: Particles leaving the boundary will be deleted.
+
     * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+
     * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain. When
     ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
 
-* ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
+    * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
+
+
+Additional PML parameters
+-------------------------
+
+* ``warpx.pml_ncell`` (`int`; default: 10)
+    The depth of the PML, in number of cells.
+
+* ``warpx.pml_delta`` (`int`; default: 10)
+    The characteristic depth, in number of cells, over which
+    the absorption coefficients of the PML increases.
+
+* ``warpx.do_pml_in_domain`` (`int`; default: 0)
+    Whether to create the PML inside the simulation area or outside. If inside,
+    it allows the user to propagate particles in PML and to use extended PML
+
+* ``warpx.pml_has_particles`` (`int`; default: 0)
+    Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
+    i.e. if `warpx.do_pml_in_domain = 1`.
+
+* ``warpx.do_pml_j_damping`` (`int`; default: 0)
+    Whether to damp current in PML. Can only be used if particles are propagated in PML,
+    i.e. if `warpx.pml_has_particles = 1`.
+
+* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for E in the PML region.
+    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the PSATD solver.
+
+* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for B in the PML region.
+    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+
+.. _running-cpp-parameters-eb:
+
+Embedded Boundary Conditions
+----------------------------
+
+* ``warpx.eb_implicit_function`` (`string`)
+    A function of `x`, `y`, `z` that defines the surface of the embedded
+    boundary. That surface lies where the function value is 0 ;
+    the physics simulation area is where the function value is negative ;
+    the interior of the embeddded boundary is where the function value is positive.
+
+* ``warpx.eb_potential(t)`` (`string`)
+    Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
+    the electric potential at the surface of the embedded boundary,
+    as a function of time.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -1120,8 +1168,16 @@ Laser initialization
     using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
     it is assumed that the first and second dimensions are `x` and `z`, respectively,
     and the value of the `Ey` component is set to zero.
-    The current implementation of the parser for B-field on particles
+    The current implementation of the parser for E-field on particles
     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
+    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
+    option requires the following parameters,
+    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
+    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
+    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
+    ``repeated_plasma_lens_strengths``, the focusing strength of each lens, an array of floats.
+    The applied field is uniform longitudinally (along z) with a hard edge,
+    where residence corrections are used for more accurate field calculation.
 
 * ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
     Two separate parameters which add an externally applied uniform E-field or
@@ -1561,59 +1617,6 @@ Numerics and algorithms
 * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
-
-.. _running-cpp-parameters-boundary:
-
-Boundary conditions
--------------------
-
-* ``warpx.do_pml`` (`0` or `1`; default: 1)
-    Whether to add Perfectly Matched Layers (PML) around the simulation box,
-    and around the refinement patches.
-    See the :ref:`PML theory section <theory-bc>` for more details.
-
-* ``warpx.pml_ncell`` (`int`; default: 10)
-    The depth of the PML, in number of cells.
-
-* ``warpx.pml_delta`` (`int`; default: 10)
-    The characteristic depth, in number of cells, over which
-    the absorption coefficients of the PML increases.
-
-* ``warpx.do_pml_in_domain`` (`int`; default: 0)
-    Whether to create the PML inside the simulation area or outside. If inside,
-    it allows the user to propagate particles in PML and to use extended PML
-
-* ``warpx.pml_has_particles`` (`int`; default: 0)
-    Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
-    i.e. if `warpx.do_pml_in_domain = 1`.
-
-* ``warpx.do_pml_j_damping`` (`int`; default: 0)
-    Whether to damp current in PML. Can only be used if particles are propagated in PML,
-    i.e. if `warpx.pml_has_particles = 1`.
-
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
-    Whether to use divergence cleaning for E in the PML region.
-    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
-    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
-
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
-    Whether to use divergence cleaning for B in the PML region.
-    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
-    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
-
-* ``warpx.do_pml_Lo`` (`2 ints in 2D`, `3 ints in 3D`; default: `1 1 1`)
-    The directions along which one wants a pml boundary condition for lower boundaries on mother grid.
-
-* ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
-    The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
-
-* ``warpx.do_silver_mueller`` (`0` or `1`; default: 1)
-    Whether to use the Silver-Mueller absorbing boundary conditions. These
-    boundary conditions are simpler and less computationally expensive than
-    the PML, but are also less effective at absorbing the field. They only
-    work with the Yee Maxwell solver.
 
 .. _running-cpp-parameters-diagnostics:
 

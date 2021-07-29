@@ -365,7 +365,6 @@ public:
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
-    void ApplySilverMuellerBoundary (amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -1003,7 +1002,7 @@ private:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
     // PML
-    int do_pml = 1;
+    int do_pml = 0;
     int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
@@ -1012,8 +1011,8 @@ private:
     int do_pml_in_domain = 0;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
+    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
+    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
@@ -1024,7 +1023,6 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    int n_buffer = 4;
     amrex::Real const_dt = amrex::Real(0.5e-11);
 
     // Macroscopic properties

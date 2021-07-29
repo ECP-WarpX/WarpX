@@ -17,18 +17,11 @@ namespace ParticleBuffer {
     BufferType<Allocator> getTmpPC (const WarpXParticleContainer* pc)
     {
         BufferType<Allocator> tmp(&WarpX::GetInstance());
-        if ( pc->DoFieldIonization()) {
-            tmp.AddIntComp(false);
-        }
-#ifdef WARPX_QED
-        if ( pc->has_breit_wheeler() ) {
-            tmp.AddRealComp(false);
-        }
-        if ( pc->has_quantum_sync() ) {
-            tmp.AddRealComp(false);
-        }
-        return tmp;
-#endif
+        // add runtime real comps to tmp
+        for (int ic = 0; ic < pc->NumRuntimeRealComps(); ++ic) { tmp.AddRealComp(false); }
+
+        // add runtime int comps to tmp
+        for (int ic = 0; ic < pc->NumRuntimeIntComps(); ++ic) { tmp.AddIntComp(false); }
     }
 
 }

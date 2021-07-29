@@ -46,8 +46,8 @@ static std::map<std::string, InitializationPolicy> initialization_policies = {
 #endif
 
 #ifdef WARPX_QED
-    {"optical_depth_BW",   InitializationPolicy::RandomExp},
-    {"optical_depth_QSR",   InitializationPolicy::RandomExp}
+    {"opticalDepthBW",   InitializationPolicy::RandomExp},
+    {"opticalDepthQSR",   InitializationPolicy::RandomExp}
 #endif
 
 };
