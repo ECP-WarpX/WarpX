@@ -28,7 +28,6 @@ Lx = 1.06
 Ly = 1.06
 Lz = 1.06
 h_2 = (m * pi / Lx) ** 2 + (n * pi / Ly) ** 2 + (p * pi / Lz) ** 2
-t = 5.303669113650618e-09
 theta = np.pi/8
 
 # Open the right plot file
@@ -36,7 +35,9 @@ filename = sys.argv[1]
 ds = yt.load(filename)
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 
-rel_tol_err = 1e-1
+t = ds.current_time.to_value()
+
+rel_tol_err = 1e-2
 my_grid = ds.index.grids[0]
 
 By_sim = my_grid['raw', 'By_fp'].squeeze().v
