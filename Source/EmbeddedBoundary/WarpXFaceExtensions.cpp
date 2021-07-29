@@ -383,9 +383,9 @@ WarpX::ComputeOneWayExtensions() {
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &cell_size = CellSize(maxLevel());
 
-    int nelems_x;
-    int nelems_y;
-    int nelems_z;
+    int nelems_x = 0;
+    int nelems_y = 0;
+    int nelems_z = 0;
 
     // Do the extensions in the x-plane
     int idim = 0;
