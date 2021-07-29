@@ -145,13 +145,13 @@ WarpX::InitBorrowing() {
 */
 AMREX_GPU_DEVICE
 int
-WarpX::ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
+WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                       const amrex::Array4<amrex::Real>& S_red,
                                       const amrex::Array4<int>& flag_info_face,
                                       const amrex::Array4<int>& flag_ext_face, const int idim) {
-    int i = cell.x;
-    int j = cell.y;
-    int k = cell.z;
+    const int i = cell.x;
+    const int j = cell.y;
+    const int k = cell.z;
     int n_borrow = 0;
     bool stop = false;
     if(idim == 0){
@@ -222,17 +222,17 @@ WarpX::ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
 /**
 * \brief For the face of cell pointing in direction idim, compute the number of faces
 * we need to intrude. For the one-way extension this function returns only one or zero: one if the
-* face can be extended withe the one-way extension, zeros if it can't.
+* face can be extended with the the one-way extension, zeros if it can't.
 */
 AMREX_GPU_DEVICE
 int
-WarpX::ComputeNBorrowEightFacesExtension(amrex::Dim3 cell, amrex::Real S_ext,
+WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
                                          const amrex::Array4<amrex::Real>& S,
                                          const amrex::Array4<int>& flag_info_face, const int idim) {
-    int i = cell.x;
-    int j = cell.y;
-    int k = cell.z;
+    const int i = cell.x;
+    const int j = cell.y;
+    const int k = cell.z;
     int n_borrow = 0;
     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
 
@@ -408,15 +408,15 @@ WarpX::ComputeOneWayExtensions() {
         auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
         const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
-        amrex::Real dy = cell_size[1];
-        amrex::Real dz = cell_size[2];
+        const amrex::Real dy = cell_size[1];
+        const amrex::Real dz = cell_size[2];
 
         nelems_x = amrex::Scan::PrefixSum<int>(ncells,
         [=] AMREX_GPU_DEVICE (int icell) {
-            amrex::Dim3 cell = box.atOffset(icell).dim3();
-            int i = cell.x;
-            int j = cell.y;
-            int k = cell.z;
+            const amrex::Dim3 cell = box.atOffset(icell).dim3();
+            const int i = cell.x;
+            const int j = cell.y;
+            const int k = cell.z;
             // If the face doesn't need to be extended break the loop
             if (!flag_ext_face_x(i, j, k)) {
                 return 0;
@@ -433,9 +433,9 @@ WarpX::ComputeOneWayExtensions() {
         },
         [=] AMREX_GPU_DEVICE (int icell, int ps){
             amrex::Dim3 cell = box.atOffset(icell).dim3();
-            int i = cell.x;
-            int j = cell.y;
-            int k = cell.z;
+            const int i = cell.x;
+            const int j = cell.y;
+            const int k = cell.z;
             int nborrow = borrowing_x_size(i, j, k);
             if (nborrow == 0) {
                 borrowing_x_inds_pointer(i, j, k) = nullptr;
@@ -504,15 +504,15 @@ WarpX::ComputeOneWayExtensions() {
         auto const &Sy_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
         const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
-        amrex::Real dx = cell_size[0];
-        amrex::Real dz = cell_size[2];
+        const amrex::Real dx = cell_size[0];
+        const amrex::Real dz = cell_size[2];
 
         nelems_y = amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell) {
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_y(i, j, k)) {
                     return 0;
@@ -529,11 +529,11 @@ WarpX::ComputeOneWayExtensions() {
                 return n_borrow;
                 },
             [=] AMREX_GPU_DEVICE (int icell, int ps){
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
-                int nborrow = borrowing_y_size(i, j, k);
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
+                const int nborrow = borrowing_y_size(i, j, k);
 
                 if (nborrow == 0) {
                     borrowing_y_inds_pointer(i, j, k) = nullptr;
@@ -600,16 +600,16 @@ WarpX::ComputeOneWayExtensions() {
         auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-        amrex::Real dx = cell_size[0];
-        amrex::Real dy = cell_size[1];
+        const amrex::Real dx = cell_size[0];
+        const amrex::Real dy = cell_size[1];
 
 
         nelems_z = amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell) {
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_z(i, j, k)) {
                     //borrowing_z_size(i, j, k) = 0;
@@ -619,7 +619,7 @@ WarpX::ComputeOneWayExtensions() {
                 amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                                       ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                int n_borrow =
+                const int n_borrow =
                     ComputeNBorrowOneFaceExtension(cell, Sz_ext, Sz_mod, flag_info_face_z,
                                                    flag_ext_face_z, idim);
 
@@ -628,11 +628,11 @@ WarpX::ComputeOneWayExtensions() {
                 return n_borrow;
             },
             [=] AMREX_GPU_DEVICE (int icell, int ps){
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
-                int nborrow = borrowing_z_size(i, j, k);
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
+                const int nborrow = borrowing_z_size(i, j, k);
                 if (nborrow == 0) {
                     borrowing_z_inds_pointer(i, j, k) = nullptr;
                 } else{
@@ -691,9 +691,9 @@ WarpX::ComputeOneWayExtensions() {
 void
 WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 #ifdef AMREX_USE_EB
-    int n_borrow_offset_x = temp_inds(0);
-    int n_borrow_offset_y = temp_inds(1);
-    int n_borrow_offset_z = temp_inds(2);
+    const int n_borrow_offset_x = temp_inds(0);
+    const int n_borrow_offset_y = temp_inds(1);
+    const int n_borrow_offset_z = temp_inds(2);
 
     auto const &cell_size = CellSize(maxLevel());
     int idim = 0;
@@ -715,16 +715,16 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
         const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
-        amrex::Real dy = cell_size[1];
-        amrex::Real dz = cell_size[2];
+        const amrex::Real dy = cell_size[1];
+        const amrex::Real dz = cell_size[2];
         int nelems_x;
 
         nelems_x = amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell){
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_x(i, j, k)) {
                     return 0;
@@ -732,7 +732,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 amrex::Real Sx_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                 amrex::Real Sx_ext = Sx_stab - Sx(i, j, k);
-                int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sx_ext, Sx_mod, Sx,
+                const int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sx_ext, Sx_mod, Sx,
                                                                  flag_info_face_x, idim);
 
                 borrowing_x_size(i, j, k) = n_borrow;
@@ -741,16 +741,16 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             [=] AMREX_GPU_DEVICE (int icell, int ps){
                 ps += n_borrow_offset_x;
 
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
 
                 if (!flag_ext_face_x(i, j, k)) {
                     return;
                 }
 
-                int nborrow = borrowing_x_size(i, j, k);
+                const int nborrow = borrowing_x_size(i, j, k);
                 if (nborrow == 0) {
                     borrowing_x_inds_pointer(i, j, k) = nullptr;
                 } else{
@@ -859,10 +859,10 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 
         nelems_y = amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell){
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_y(i, j, k)){
                     return 0;
@@ -870,7 +870,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
-                int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sy_ext, Sy_mod, Sy,
+                const int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sy_ext, Sy_mod, Sy,
                                                                  flag_info_face_y, idim);
 
                 borrowing_y_size(i, j, k) = n_borrow;
@@ -880,10 +880,10 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 
                 ps += n_borrow_offset_y;
 
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
 
                 if (!flag_ext_face_y(i, j, k)) {
                     return;
@@ -991,16 +991,16 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-        amrex::Real dx = cell_size[0];
-        amrex::Real dy = cell_size[1];
+        const amrex::Real dx = cell_size[0];
+        const amrex::Real dy = cell_size[1];
         int nelems_z;
 
         nelems_z = amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell){
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
                 // If the face doesn't need to be extended break the loop
                 if (!flag_ext_face_z(i, j, k)) {
                     return 0;
@@ -1008,7 +1008,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                                     ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sz_ext, Sz_mod, Sz,
+                const int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sz_ext, Sz_mod, Sz,
                                                                  flag_info_face_z, idim);
 
                 borrowing_z_size(i, j, k) = n_borrow;
@@ -1018,16 +1018,16 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 
                 ps += n_borrow_offset_z;
 
-                amrex::Dim3 cell = box.atOffset(icell).dim3();
-                int i = cell.x;
-                int j = cell.y;
-                int k = cell.z;
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
 
                 if (!flag_ext_face_z(i, j, k)) {
                     return;
                 }
 
-                int nborrow = borrowing_z_size(i, j, k);
+                const int nborrow = borrowing_z_size(i, j, k);
                 if (nborrow == 0) {
                     borrowing_z_inds_pointer(i, j, k) = nullptr;
                 } else {

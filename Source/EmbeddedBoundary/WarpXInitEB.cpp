@@ -272,9 +272,9 @@ WarpX::MarkCells(){
             const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
             const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
             const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
-            amrex::Real dx = cell_size[0];
-            amrex::Real dy = cell_size[1];
-            amrex::Real dz = cell_size[2];
+            const amrex::Real dx = cell_size[0];
+            const amrex::Real dy = cell_size[1];
+            const amrex::Real dz = cell_size[2];
 
             amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Minimal area for this cell to be stable
