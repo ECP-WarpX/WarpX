@@ -531,6 +531,8 @@ public:
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
+
+    int getBoundaryParticleBufferNSpecies();
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,

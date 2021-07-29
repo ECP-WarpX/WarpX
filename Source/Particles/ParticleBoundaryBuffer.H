@@ -39,6 +39,7 @@ public:
     void clearParticles ();
 
     void printNumParticles () const;
+    // ParticleBuffer::BufferType<amrex::PinnedArenaAllocator> getparticleContainers(boundarynum, speciesnum)
 
     constexpr int numBoundaries () const {
         return AMREX_SPACEDIM*2

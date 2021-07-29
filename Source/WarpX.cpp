@@ -213,6 +213,11 @@ WarpX::ResetInstance ()
     m_instance = nullptr;
 }
 
+int
+WarpX::getBoundaryParticleBufferNSpecies() {
+    return m_particle_buffers->nSpecies();
+}
+
 WarpX::WarpX ()
 {
     m_instance = this;

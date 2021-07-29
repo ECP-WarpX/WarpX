@@ -140,6 +140,11 @@ extern "C"
         return myspc.NumRealComps();
     }
 
+    int warpx_getParticleBoundaryBufferNSpecies()
+    {
+        return WarpX::GetInstance().getBoundaryParticleBufferNSpecies();
+    }
+
     int warpx_SpaceDim()
     {
         return AMREX_SPACEDIM;
