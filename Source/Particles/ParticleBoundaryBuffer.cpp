@@ -79,8 +79,8 @@ void ParticleBoundaryBuffer::printNumParticles () const {
 }
 
 struct IsOutsideBoundary {
-    amrex::GpuArray<amrex::Real, 3> m_plo;
-    amrex::GpuArray<amrex::Real, 3> m_phi;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_phi;
     int m_idim;
     int m_iside;
 
