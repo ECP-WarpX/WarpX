@@ -28,8 +28,6 @@ namespace ParticleBuffer {
 
 }
 
-=======
->>>>>>> 1e198d47f7d9c6a8a991a2ddc89159677653eb1f
 class FlushFormat
 {
 public:
