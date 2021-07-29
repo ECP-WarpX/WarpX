@@ -298,9 +298,9 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                         - X6/c2 * (kz * Jp_new - I * kr * 0.5_rt * Jz_new);
 
                     fields(i,j,k,Bm_avg_m) += S_ck * Bm_old
-                        + ep0 * X1 * (kz * Em_old - I * kr * 0.5_rt * Ez_old)
-                        + X5/c2 * (kz * Jm - I * kr * 0.5_rt * Jz)
-                        + X6/c2 * (kz * Jm_new - I * kr * 0.5_rt * Jz_new);
+                        + ep0 * X1 * (kz * Em_old + I * kr * 0.5_rt * Ez_old)
+                        + X5/c2 * (kz * Jm + I * kr * 0.5_rt * Jz)
+                        + X6/c2 * (kz * Jm_new + I * kr * 0.5_rt * Jz_new);
 
                     fields(i,j,k,Bz_avg_m) += S_ck * Bz_old
                         - I * kr * ep0 * X1 * (Ep_old + Em_old)
