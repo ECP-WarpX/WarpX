@@ -164,6 +164,17 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
 }
 
 /**
+* \brief Do a safe cast of a real to an int
+* This ensures that the float value is within the range of ints and if not,
+* raises an exception.
+*
+* \param x Real value to cast
+* \param real_name String, the name of the variable being casted to use in the error message
+*/
+int
+safeCastToInt(amrex::Real x, const std::string& real_name);
+
+/**
 * \brief Initialize an amrex::Parser object from a string containing a math expression
 *
 * \param parse_function String to read to initialize the parser.
