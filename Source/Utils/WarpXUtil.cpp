@@ -270,6 +270,33 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
+int safeCastToInt(amrex::Real x, const std::string& real_name) {
+    int result = 0;
+    bool error_detected = false;
+    std::string assert_msg;
+    // (2.0*(INT_MAX/2+1)) converts INT_MAX+1 to a real ensuring accuracy to all digits
+    if (x < (2.0*(INT_MAX/2+1))) {
+        #if -INT_MAX == INT_MIN
+        if (x > (2.0*(INT_MIN/2-1))) {
+        #else
+        if (std::ceil(x) >= INT_MIN) {
+        #endif
+            result = static_cast<int>(x);
+        } else {
+            error_detected = true;
+            assert_msg = "Error: Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+        }
+    } else if (x > 0) {
+        error_detected = true;
+        assert_msg =  "Error: Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+    } else {
+        error_detected = true;
+        assert_msg =  "Error: NaN detected when casting " + real_name + " to int";
+    }
+    WarpXUtilMsg::AlwaysAssert(!error_detected, assert_msg);
+    return result;
+}
+
 Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
     // Since queryWithParser recursively calls this routine, keep track of symbols
@@ -417,14 +444,14 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
     amrex::Real rval = static_cast<amrex::Real>(val);
     const int result = queryWithParser(a_pp, str, rval);
-    val = static_cast<int>(std::round(rval));
+    val = safeCastToInt(std::round(rval), str);
     return result;
 }
 
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
     amrex::Real rval = static_cast<amrex::Real>(val);
     getWithParser(a_pp, str, rval);
-    val = static_cast<int>(std::round(rval));
+    val = safeCastToInt(std::round(rval), str);
 }
 
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
@@ -436,7 +463,7 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
     const int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
     val.resize(rval.size());
     for (unsigned long i = 0 ; i < val.size() ; i++) {
-        val[i] = static_cast<int>(std::round(rval[i]));
+        val[i] = safeCastToInt(std::round(rval[i]), str);
     }
     return result;
 }
@@ -449,7 +476,7 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
     getArrWithParser(a_pp, str, rval);
     val.resize(rval.size());
     for (unsigned long i = 0 ; i < val.size() ; i++) {
-        val[i] = static_cast<int>(std::round(rval[i]));
+        val[i] = safeCastToInt(std::round(rval[i]), str);
     }
 }
 
@@ -462,7 +489,7 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
     getArrWithParser(a_pp, str, rval, start_ix, num_val);
     val.resize(rval.size());
     for (unsigned long i = 0 ; i < val.size() ; i++) {
-        val[i] = static_cast<int>(std::round(rval[i]));
+        val[i] = safeCastToInt(std::round(rval[i]), str);
     }
 }
 
