@@ -416,7 +416,7 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
 
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
     amrex::Real rval = static_cast<amrex::Real>(val);
-    int result = queryWithParser(a_pp, str, rval);
+    const int result = queryWithParser(a_pp, str, rval);
     val = static_cast<int>(std::round(rval));
     return result;
 }
