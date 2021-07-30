@@ -433,7 +433,7 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
     for (unsigned long i = 0 ; i < val.size() ; i++) {
         rval[i] = static_cast<amrex::Real>(val[i]);
     }
-    int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
+    const int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
     val.resize(rval.size());
     for (unsigned long i = 0 ; i < val.size() ; i++) {
         val[i] = static_cast<int>(std::round(rval[i]));
