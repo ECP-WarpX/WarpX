@@ -160,6 +160,7 @@ WarpX::Evolve (int numsteps)
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
 
+        if (warpx_py_particleinjection) warpx_py_particleinjection();
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
         if (do_electrostatic != ElectrostaticSolverAlgo::None)
@@ -357,7 +358,6 @@ WarpX::OneStep_nosub (Real cur_time)
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
-    if (warpx_py_particleinjection) warpx_py_particleinjection();
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
@@ -459,10 +459,6 @@ WarpX::OneStep_nosub (Real cur_time)
 void
 WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
-#ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(cur_time);
-    amrex::Abort("multi-J algorithm not implemented for RZ geometry");
-#else
 #ifdef WARPX_USE_PSATD
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
@@ -475,8 +471,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // 1) Prepare E,B,F,G fields in spectral space
         PSATDForwardTransformEB();
-        PSATDForwardTransformF();
-        PSATDForwardTransformG();
+        if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
+        if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
 
         // 2) Set the averaged fields to zero
         if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
@@ -553,8 +549,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             if (i_depose == n_depose-1)
             {
                 PSATDBackwardTransformEB();
-                PSATDBackwardTransformF();
-                PSATDBackwardTransformG();
+                if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
+                if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
             }
         }
 
@@ -567,8 +563,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         }
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
-        FillBoundaryF(guard_cells.ng_alloc_F);
-        FillBoundaryG(guard_cells.ng_alloc_G);
+        if (WarpX::do_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
+        if (WarpX::do_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
     }
     else
     {
@@ -578,7 +574,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     amrex::ignore_unused(cur_time);
     amrex::Abort("multi-J algorithm not implemented for FDTD");
 #endif // WARPX_USE_PSATD
-#endif // not WARPX_DIM_RZ
 }
 
 /* /brief Perform one PIC iteration, with subcycling

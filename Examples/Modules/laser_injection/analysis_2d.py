@@ -150,6 +150,11 @@ def check_component(data, component, t_env_theory, coeff, X,Z,dx,dz):
 def check_laser(filename):
     ds = yt.load(filename)
 
+    # yt 4.0+ has rounding issues with our domain data:
+    # RuntimeError: yt attempted to read outside the boundaries
+    # of a non-periodic domain along dimension 0.
+    if 'force_periodicity' in dir(ds): ds.force_periodicity()
+
     x = np.linspace(
         ds.domain_left_edge[0].v,
         ds.domain_right_edge[0].v,

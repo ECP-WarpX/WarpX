@@ -312,7 +312,6 @@ WarpX::PSATDPushSpectralFields ()
     }
 }
 
-#ifndef WARPX_DIM_RZ
 void
 WarpX::PSATDMoveRhoNewToRhoOld ()
 {
@@ -400,7 +399,6 @@ WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
         }
     }
 }
-#endif // not WARPX_DIM_RZ
 #endif // WARPX_USE_PSATD
 
 void

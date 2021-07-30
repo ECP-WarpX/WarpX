@@ -66,8 +66,15 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
         {
             Jx_new = c++; Jy_new = c++; Jz_new = c++;
 
-            // TODO Allocate F and G only when needed
-            F = c++; G = c++;
+            if (dive_cleaning)
+            {
+                F = c++;
+            }
+
+            if (divb_cleaning)
+            {
+                G = c++;
+            }
         }
     }
     else // PML

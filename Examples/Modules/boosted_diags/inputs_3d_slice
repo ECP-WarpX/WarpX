@@ -13,9 +13,11 @@ my_constants.ymax = +128.e-6
 my_constants.zmax = 0.96e-6
 
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1  1   0            # Is periodic?
 geometry.prob_lo     = xmin ymin zmin
 geometry.prob_hi     = xmax ymax zmax
+
+boundary.field_lo = periodic periodic pec
+boundary.field_hi = periodic periodic pec
 
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
@@ -24,7 +26,6 @@ algo.particle_pusher = vay
 algo.maxwell_solver = ckc
 warpx.use_filter = 1
 warpx.cfl = 1.
-warpx.do_pml = 0
 
 # Order of particle shape factors
 algo.particle_shape = 3

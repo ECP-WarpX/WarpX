@@ -32,7 +32,11 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
                                     int const norder_z, bool const nodal,
                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                     amrex::RealVect const dx, amrex::Real const dt,
-                                    bool const update_with_rho)
+                                    bool const update_with_rho,
+                                    const bool fft_do_time_averaging,
+                                    const bool J_linear_in_time,
+                                    const bool dive_cleaning,
+                                    const bool divb_cleaning)
     : k_space(realspace_ba, dm, dx)
 {
     // Initialize all structures using the same distribution mapping dm
@@ -41,13 +45,9 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     //   the spectral space corresponding to each box in `realspace_ba`,
     //   as well as the value of the corresponding k coordinates.
 
-    const bool time_averaging = false;
-    const bool J_linear_in_time = false;
-    const bool dive_cleaning = false;
-    const bool divb_cleaning = false;
     const bool pml = false;
-    m_spectral_index = SpectralFieldIndex(update_with_rho, time_averaging, J_linear_in_time,
-                                          dive_cleaning, divb_cleaning, pml);
+    m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
+                                          J_linear_in_time, dive_cleaning, divb_cleaning, pml);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
@@ -55,7 +55,8 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     if (v_galilean[2] == 0) {
          // v_galilean is 0: use standard PSATD algorithm
         algorithm = std::make_unique<PsatdAlgorithmRZ>(
-            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, dt, update_with_rho);
+            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, dt,
+            update_with_rho, fft_do_time_averaging, J_linear_in_time, dive_cleaning, divb_cleaning);
     } else {
         // Otherwise: use the Galilean algorithm
         algorithm = std::make_unique<GalileanPsatdAlgorithmRZ>(
