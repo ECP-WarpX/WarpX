@@ -260,6 +260,19 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     // constants.
     ParmParse pp_my_constants("my_constants");
 
+    // Physical / Numerical Constants available to parsed expressions
+    static std::map<std::string, amrex::Real> warpx_constants =
+      {
+       {"clight", PhysConst::c},
+       {"epsilon0", PhysConst::ep0},
+       {"mu0", PhysConst::mu0},
+       {"q_e", PhysConst::q_e},
+       {"m_e", PhysConst::m_e},
+       {"m_p", PhysConst::m_p},
+       {"m_u", PhysConst::m_u},
+       {"pi", MathConst::pi},
+      };
+
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
 
@@ -288,18 +301,6 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     }
     return parser;
 }
-
-std::map<std::string, amrex::Real> warpx_constants =
-  {
-   {"clight", PhysConst::c},
-   {"epsilon0", PhysConst::ep0},
-   {"mu0", PhysConst::mu0},
-   {"q_e", PhysConst::q_e},
-   {"m_e", PhysConst::m_e},
-   {"m_p", PhysConst::m_p},
-   {"m_u", PhysConst::m_u},
-   {"pi", MathConst::pi},
-  };
 
 int
 queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
