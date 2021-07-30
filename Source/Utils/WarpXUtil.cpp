@@ -251,7 +251,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     std::set<std::string> symbols = parser.symbols();
     for (auto const& v : varnames) symbols.erase(v.c_str());
 
-    // PICMI specifies inputs under this name, through which expressions
+    // User can provide inputs under this name, through which expressions
     // can be provided for arbitrary variables. This potentially
     // includes variable names that match physical or mathematical
     // constants, in case the user wishes to enforce a different
