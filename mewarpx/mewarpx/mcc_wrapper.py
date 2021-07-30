@@ -33,6 +33,10 @@ class MCC():
                 instructed to save pid's for number of MCC events.
             **kwargs that can be included:
             exclude_collisions (list): A list of collision types to exclude.
+            sec_elec_species (picmi.Species): The electron species that is
+                produced from ionization events. If not specified
+                `electron_species` will be used as the secondary species as
+                well.
         """
         self.electron_species = electron_species
         self.ion_species = ion_species
@@ -58,6 +62,7 @@ class MCC():
                 mwxutil.ideal_gas_density(self.P_INERT, self.T_INERT)
             )
 
+        sec_elec_species = kwargs.get("sec_elec_species", None)
         self.scraper = scraper
 
         # Use environment variable if possible, otherwise look one
@@ -106,12 +111,13 @@ class MCC():
             file_name = os.path.basename(path)
             coll_key = file_name.split('.dat')[0]
 
+            # exclude collision type if specified
+            if coll_key in self.exclude_collisions:
+                continue
+
             # if electron process
             if coll_key in elec_collision_types:
                 coll_type = elec_collision_types[coll_key]
-                # exclude collision type if specified
-                if coll_type in self.exclude_collisions:
-                    continue
                 scatter_dict = {"cross_section": path}
                 # add energy if needed
                 ion = self.ion_species.particle_type
@@ -120,14 +126,13 @@ class MCC():
                 # specify species for ionization
                 if coll_key == "ionization":
                     scatter_dict["species"] = self.ion_species
+                    if sec_elec_species is not None:
+                        scatter_dict["sec_elec_species"] = sec_elec_species
                 elec_scattering_processes[coll_type] = scatter_dict
 
             # if ion process
             elif coll_key in ion_collision_types:
                 coll_type = ion_collision_types[coll_key]
-                # exclude collision type if specified
-                if coll_type in self.exclude_collisions:
-                    continue
                 scatter_dict = {"cross_section": path}
                 ion_scattering_processes[coll_type] = scatter_dict
 
@@ -145,11 +150,12 @@ class MCC():
                 "No scattering processes for electron or ion species."
             )
 
-        mwxrun.simulation.collisions = []
+        if mwxrun.simulation.collisions is None:
+            mwxrun.simulation.collisions = []
 
         if elec_scattering_processes:
             self.electron_mcc = picmi.MCCCollisions(
-                name='coll_elec',
+                name=f'coll_{self.electron_species.name}',
                 species=self.electron_species,
                 background_density=self.N_INERT,
                 background_temperature=self.T_INERT,
@@ -160,7 +166,7 @@ class MCC():
 
         if ion_scattering_processes:
             self.ion_mcc = picmi.MCCCollisions(
-                name='coll_ion',
+                name=f'coll_{self.ion_species.name}',
                 species=self.ion_species,
                 background_density=self.N_INERT,
                 background_temperature=self.T_INERT,
