@@ -86,7 +86,7 @@ void ParseGeometryInput()
     ParmParse pp_amr("amr");
 
     // Note that n_cell is replaced so that only the parsed version is written out to the
-    // warpx_job_info file. This is must be done since yt expects to be able to parse
+    // warpx_job_info file. This must be done since yt expects to be able to parse
     // the value of n_cell from that file. For the rest, this doesn't matter.
     PreparseAMReXInputIntArray(pp_amr, "n_cell", true);
     PreparseAMReXInputIntArray(pp_amr, "max_grid_size", false);
