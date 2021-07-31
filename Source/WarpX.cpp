@@ -218,6 +218,15 @@ WarpX::getBoundaryParticleBufferNSpecies() {
     return m_particle_buffers->nSpecies();
 }
 
+// todo: add input parameters here
+int
+WarpX::getNumParticlesImpactedBoundary() {
+    // the idea here to get this info is to pass in the boundary number and species name,
+    // and then use that to get a particle buffer from the ParticleBoundaryBuffer
+    // and then return the size of that.
+    return 0;
+}
+
 WarpX::WarpX ()
 {
     m_instance = this;

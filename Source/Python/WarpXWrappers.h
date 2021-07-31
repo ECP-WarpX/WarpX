@@ -36,6 +36,8 @@ extern "C" {
 
     int warpx_getParticleBoundaryBufferNSpecies();
 
+    int warpx_getNumParticlesImpactedBoundary();
+
     int warpx_SpaceDim();
 
     void amrex_init (int argc, char* argv[]);

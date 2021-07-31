@@ -186,6 +186,7 @@ libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
 libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getParticleBoundaryBufferNSpecies.restype = ctypes.c_int
+libwarpx.warpx_getNumParticlesImpactedBoundary.restype = ctypes.c_int
 
 libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
@@ -1701,6 +1702,8 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
 def get_particle_boundary_buffer_n_species():
     return libwarpx.warpx_getParticleBoundaryBufferNSpecies()
 
+def get_num_particles_impacted_boundary():
+    return libwarpx.warpx_getNumParticlesImpactedBoundary()
 
 def _get_nodal_flag(getdatafunc):
     data = getdatafunc()

@@ -533,6 +533,7 @@ public:
     int maxStep () const {return max_step;}
 
     int getBoundaryParticleBufferNSpecies();
+    int getNumParticlesImpactedBoundary();
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
