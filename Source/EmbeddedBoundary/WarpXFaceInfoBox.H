@@ -20,14 +20,14 @@ struct FaceInfoBox {
     // the next #size entries indicate the indices to access the vectors
     amrex::BaseFab<int*> inds_pointer;
 
-    static const uint8_t ul = 1;
-    static const uint8_t l = 2;
-    static const uint8_t bl = 4;
-    static const uint8_t u = 8;
-    static const uint8_t d = 16;
-    static const uint8_t ur = 32;
-    static const uint8_t r = 64;
-    static const uint8_t br = 128;
+    static constexpr uint8_t ul = 1;
+    static constexpr uint8_t l = 2;
+    static constexpr uint8_t bl = 4;
+    static constexpr uint8_t u = 8;
+    static constexpr uint8_t d = 16;
+    static constexpr uint8_t ur = 32;
+    static constexpr uint8_t r = 64;
+    static constexpr uint8_t br = 128;
 
     /**
     * \brief add the neighbor i, j to the list of intruded neighbors.
