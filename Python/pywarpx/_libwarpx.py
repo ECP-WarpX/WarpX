@@ -249,7 +249,6 @@ def get_nattr_species(species_name):
     Get the number of real attributes for the given species.
 
     '''
-    # --- The -3 is because the comps include the velocites
     return libwarpx.warpx_nCompsSpecies(
         ctypes.c_char_p(species_name.encode('utf-8')))
 
@@ -428,6 +427,7 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
         if np.size(val) == 1:
             kwargs[key] = np.array(val)*np.ones(maxlen)
 
+    # --- The -3 is because the comps include the velocites
     nattr = get_nattr_species(species_name) - 3
     attr = np.zeros((maxlen, nattr))
 

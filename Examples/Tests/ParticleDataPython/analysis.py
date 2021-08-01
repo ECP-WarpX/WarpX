@@ -10,9 +10,9 @@
 import yt
 
 plotfile = 'Python_particle_attr_access_plt_000010'
-ds = yt.load( plotfile )
+ds = yt.load( plotfile )  # noqa
 
 plotfile = 'Python_particle_attr_access_plt_100010'
-ds = yt.load( plotfile )
+ds = yt.load( plotfile )  # noqa
 
 assert True
