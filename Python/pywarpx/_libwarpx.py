@@ -384,7 +384,8 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     ux, uy, uz       : arrays or scalars of the particle momenta (default = 0.)
     unique_particles : whether the particles are unique or duplicated on
                        several processes. (default = True)
-    kwargs           : dictionary containing all the extra particle attribute
+    kwargs           : dictionary containing an entry for the particle weights
+                       (with keyword 'w') and all the extra particle attribute
                        arrays. If an attribute is not given it will be set to 0.
 
     '''
@@ -435,6 +436,7 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
         if key == 'w':
             attr[:,0] = vals
         else:
+            # --- The -3 is because components 1 to 3 are velocities
             attr[:,get_particle_comp_index(species_name, key)-3] = vals
 
     libwarpx.warpx_addNParticles(
