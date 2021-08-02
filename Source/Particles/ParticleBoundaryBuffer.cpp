@@ -233,3 +233,26 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     amrex::ignore_unused(distance_to_eb, dxi);
 #endif
 }
+
+int ParticleBoundaryBuffer::getNumParticlesInContainer(std::string species_name, int boundary) {
+    if (m_do_boundary_buffer[boundary].size() == 0) {
+        return 0;
+    }
+
+    auto& buffer = m_particle_containers[boundary];
+
+    std::vector<std::string> all_species = m_species_names;
+
+    auto it = std::find(all_species.begin(), all_species.end(), species_name);
+    if (it == all_species.end()) {
+        amrex::Print() << "Tried to get invalid species name \"" << species_name << "\" from the scraped particle buffer!\n";
+        return 0;
+    }
+    int index = it - all_species.begin();
+
+    if (buffer[index].isDefined()) {
+        return buffer[index].TotalNumberOfParticles(false);
+    } else {
+        return 0;
+    }
+}

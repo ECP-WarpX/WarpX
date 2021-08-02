@@ -147,7 +147,8 @@ extern "C"
 
     int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary)
     {
-        return WarpX::GetInstance().getNumParticlesImpactedBoundary(species_name, boundary);
+        std::string name = std::string(species_name);
+        return WarpX::GetInstance().getNumParticlesImpactedBoundary(name, boundary);
     }
 
     int warpx_SpaceDim()

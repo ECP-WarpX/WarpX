@@ -218,13 +218,12 @@ WarpX::getBoundaryParticleBufferNSpecies() {
     return m_particle_buffers->nSpecies();
 }
 
-// todo: add input parameters here
 int
-WarpX::getNumParticlesImpactedBoundary(const char* species_name, int boundary) {
+WarpX::getNumParticlesImpactedBoundary(std::string species_name, int boundary) {
     // the idea here to get this info is to pass in the boundary number and species name,
     // and then use that to get a particle buffer from the ParticleBoundaryBuffer
     // and then return the size of that.
-    return 0;
+    return m_particle_buffers->getNumParticlesInContainer(species_name, boundary);
 }
 
 WarpX::WarpX ()
