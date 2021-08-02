@@ -102,7 +102,7 @@ def get_max_wmargin(array, margin=0.1):
     return amax*(1.0 + np.sign(amax)*margin)
 
 
-def test_df_vs_ref(testname, df, suffix=None, margin=0.1):
+def test_df_vs_ref(testname, df, suffix=None, margin=0.1, tests_root_dir=None):
     """Handle loading and test a reference DataFrame against test results.
 
     This creates or appends to a ``<testname>.csv`` or
@@ -120,7 +120,9 @@ def test_df_vs_ref(testname, df, suffix=None, margin=0.1):
         suffix (str): An append to test names, allowing multiple DataFrames to
             be referenced in a single test.
         margin (float): A multiplicative safety margin: The tested df values
-        should be within `(1 +- margin) * [min or max](ref_val)`. Default 0.1.
+            should be within `(1 +- margin) * [min or max](ref_val)`. Default 0.1.
+        test_root_dir (str): Location of tests directory that contains test_files
+            and temp_files. If None, will default to mwxutil.mewarpx_dir/../tests.
 
     Returns:
         equal_within_margin (bool): True if equal within the margin. False if
@@ -128,21 +130,29 @@ def test_df_vs_ref(testname, df, suffix=None, margin=0.1):
         the test value does not fall within min and max of reference values
         within some error margin.
     """
+
+    if tests_root_dir is not None:
+        new_temp_dir = os.path.join(tests_root_dir, "temp_files")
+        new_test_dir = os.path.join(tests_root_dir, "test_files")
+    else:
+        new_temp_dir = temp_dir
+        new_test_dir = test_dir
+
     csvname = (
         '{}.csv'.format(testname) if suffix is None
         else '{}_{}.csv'.format(testname, suffix)
     )
 
     # Record for future use if needed
-    mwxutil.mkdir_p(os.path.join(temp_dir, 'Result_Stats'))
-    record_file = os.path.join(temp_dir, 'Result_Stats', csvname)
+    mwxutil.mkdir_p(os.path.join(new_temp_dir, 'Result_Stats'))
+    record_file = os.path.join(new_temp_dir, 'Result_Stats', csvname)
     if os.path.exists(record_file):
         df.to_csv(record_file, mode='a', header=False, index=False)
     else:
         df.to_csv(record_file, mode='w', header=True, index=False)
 
     # Load authoritative records
-    record_file = os.path.join(test_dir, 'Result_Stats', csvname)
+    record_file = os.path.join(new_test_dir, 'Result_Stats', csvname)
 
     if os.path.isfile(record_file):
         refdf = pandas.read_csv(record_file)
