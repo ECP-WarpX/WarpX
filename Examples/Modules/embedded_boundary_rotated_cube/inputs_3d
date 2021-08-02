@@ -1,5 +1,5 @@
 stop_time = 5.303669113650618e-09
-amr.n_cell = 24 24 24
+amr.n_cell = 32 32 32
 amr.max_grid_size = 128
 amr.max_level = 0
 
