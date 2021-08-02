@@ -633,13 +633,14 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
-    void ResetRho_fp ();
-    void ResetFields ();
+    void DepositChargeDensity (WarpXParticleContainer& species, const bool local,
+                               const bool reset, const bool do_rz_volume_scaling);
     void ChargeDensityGridProcessing ();
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
     void DepositChargeDensity ();
+    void DepositChargeDensitySpecies (std::string species_name);
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},

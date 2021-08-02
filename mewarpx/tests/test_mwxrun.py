@@ -1,6 +1,7 @@
-"""Test full 1D diode run with diagnostics."""
+"""Tests for functionality in mwxrun.py"""
 import pytest
 import numpy as np
+import yt
 
 from mewarpx import util as mwxutil
 
@@ -15,6 +16,7 @@ from mewarpx import util as mwxutil
         # 'Run3D'
     ]
 )
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_capacitive_discharge_multigrid(capsys, name):
     basename = "Run"
     use_rz = 'RZ' in name
@@ -72,6 +74,7 @@ def test_capacitive_discharge_multigrid(capsys, name):
         init_scraper=False,
         init_injectors=False,
         init_inert_gas=True,
+        init_neutral_plasma=True,
         init_mcc=True,
         init_field_diag=True,
         init_simcontrol=True,
@@ -83,19 +86,32 @@ def test_capacitive_discharge_multigrid(capsys, name):
         mwxrun.simulation.step()
 
     #######################################################################
+    # Compare mwxrun data gathering to diagnostic output                  #
+    #######################################################################
+
+    # the edges are treated differently in our gather rho versus the yt
+    # dump so we only look at the interior here
+    rho_data = np.mean(mwxrun.get_gathered_rho_grid(
+        species_name='he_ions', include_ghosts=False
+    )[0][:,1:,0], axis=0)[2:-2]
+
+    ds = yt.load( "diags/diags00010" )
+    grid_data = ds.covering_grid(
+        level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
+    )
+    rho_data_yt = np.mean(
+        grid_data['rho_he_ions'].to_ndarray()[:,:,0], axis=0
+    )[2:-2]
+
+    assert np.allclose(rho_data, rho_data_yt, rtol=0.01)
+
+    #######################################################################
     # Cleanup and final output                                            #
     #######################################################################
 
-    if capsys is not None:
-        out, _ = capsys.readouterr()
+    out, _ = capsys.readouterr()
 
-        print(out)
-        # make sure out isn't empty
-        outstr = "SimControl: Termination from criteria: eval_max_steps"
-        assert outstr in out
-    else:
-        assert False, "This wasn't run in pytest, but it passed otherwise."
-
-
-if __name__ == '__main__':
-    test_capacitive_discharge_multigrid(None, "Run2D")
+    print(out)
+    # make sure out isn't empty
+    outstr = "SimControl: Termination from criteria: eval_max_steps"
+    assert outstr in out

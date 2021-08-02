@@ -53,23 +53,14 @@
 
 using namespace amrex;
 
-void WarpX::ResetRho_fp ()
+void
+WarpX::DepositChargeDensity (WarpXParticleContainer& species, const bool local,
+                             const bool reset, const bool do_rz_volume_scaling)
 {
-    // Reset the charge density
-    for (int lev = 0; lev <= max_level; lev++) {
-        rho_fp[lev]->setVal(0.);
-    }
-}
-
-void WarpX::ResetFields ()
-{
-    // Reset the Efield and Bfield
-    for (int lev = 0; lev <= max_level; lev++) {
-        for (int comp=0; comp<3; comp++) {
-            Efield_fp[lev][comp]->setVal(0);
-            Bfield_fp[lev][comp]->setVal(0);
-        }
-    }
+    // deposit charge density on the grid and write to rho_fp. If reset is true
+    // the values in rho_fp will be overwritten, if false the charge density
+    // from the current species will be added to rho_fp.
+    species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
 }
 
 void
@@ -90,8 +81,13 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     // Reset rho, and all E and B fields to 0, before calculating space-charge fields
     if (reset_fields) {
-        ResetRho_fp();
-        ResetFields();
+        for (int lev = 0; lev <= max_level; lev++) {
+            rho_fp[lev]->setVal(0.);
+            for (int comp=0; comp<3; comp++) {
+                Efield_fp[lev][comp]->setVal(0);
+                Bfield_fp[lev][comp]->setVal(0);
+            }
+        }
     }
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {

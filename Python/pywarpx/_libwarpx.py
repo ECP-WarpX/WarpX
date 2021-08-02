@@ -1245,8 +1245,8 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
 
     The data for the numpy arrays are not copied, but share the underlying
     memory buffer with WarpX. The numpy arrays are fully writeable.
-    Parameters
 
+    Parameters
     ----------
 
         level          : the AMR level to get the data for
@@ -1262,30 +1262,30 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
     return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
 
 
-def get_gathered_phi_fp(level):
+def get_mesh_phi_fp(level, include_ghosts=True):
     '''
-    This returns a single numpy array containing the mesh electrostatic
-    potential data on the grid gathered from all processes. This version returns
-    the density on the fine patch for the given level.
+
+    This returns a list of numpy arrays containing the mesh electrostatic
+    potential data on each grid for this process. This version returns the
+    density on the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
 
     Parameters
     ----------
 
         level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
 
     Returns
     -------
 
-        A numpy array.
+        A List of numpy arrays.
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getGatheredPhiFP, level, None, True)
-
-
-def set_phi_grid_fp(level):
-    """This writes new phi data to warpx"""
-    libwarpx.warpx_setPhiGridFP(level)
+    return _get_mesh_field_list(libwarpx.warpx_getPhiFP, level, None, include_ghosts)
 
 
 def get_pointer_full_phi_fp(level):

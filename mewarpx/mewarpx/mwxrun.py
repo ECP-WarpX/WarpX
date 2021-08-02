@@ -21,6 +21,8 @@ SETUP order:
     - Initialize any other mewarpx objects
     - Perform run with ``sim.step()``
 """
+import ctypes
+
 from pywarpx import _libwarpx, picmi
 import ctypes
 
@@ -198,8 +200,14 @@ class MEWarpXRun(object):
 
         return npart_dict
 
-    def get_gathered_rho_grid(self, include_ghosts=True):
+    def get_gathered_rho_grid(self, species_name=None, include_ghosts=True):
         """Get the full rho on the grid on the root processor.
+
+        Arguments:
+            species_name (str or None): If specified the charge density for the
+                specific species will be returned (deposited on the grid). If
+                None, the current state of rho_fp will be returned.
+            include_ghosts (bool): Whether or not to include ghost cells.
 
         Returns:
             A list with only 1 element - a numpy array with rho on the full
@@ -207,6 +215,11 @@ class MEWarpXRun(object):
             multifab object is returned on processors other than root.
 
         """
+
+        if species_name is not None:
+            _libwarpx.libwarpx.warpx_depositRhoSpecies(
+                ctypes.c_char_p(species_name.encode('utf-8'))
+            )
         return _libwarpx._get_mesh_field_list(
             _libwarpx.libwarpx.warpx_getGatheredChargeDensityFP,
             self.lev, None, include_ghosts

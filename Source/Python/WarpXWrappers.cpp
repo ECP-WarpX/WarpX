@@ -367,6 +367,20 @@ extern "C"
         return;
     }
 
+    void warpx_depositRhoSpecies ( const char* char_species_name ) {
+        // Call the same function used in ElectrostaticSolver.cpp to
+        // deposit charge density from a specific species on the grid
+        // and write it to rho_fp. The values in rho_fp will be overwritten.
+        const std::string species_name(char_species_name);
+
+        WarpX& warpx = WarpX::GetInstance();
+        const auto & mypc = warpx.GetPartContainer();
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+        warpx.DepositChargeDensity(myspc, true, true, false);
+        warpx.ChargeDensityGridProcessing();
+        return;
+    }
+
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
                         int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \

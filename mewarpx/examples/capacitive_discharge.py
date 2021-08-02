@@ -10,8 +10,7 @@ from mewarpx.mwxrun import mwxrun
 from mewarpx.diags_store import diag_base
 from mewarpx import mepicmi, emission, mcc_wrapper, poisson_pseudo_1d
 
-from pywarpx import picmi
-import pywarpx
+from pywarpx import picmi, _libwarpx, callbacks
 
 import numpy as np
 
@@ -53,14 +52,14 @@ zmax = D_CA
 DT = 1.0 / (400 * FREQ)
 
 # Total simulation time in seconds
-TOTAL_TIME = 500.0 * DT # 1280 / FREQ
+TOTAL_TIME = 50 * DT # 1280 / FREQ
 # Time (in seconds) between diagnostic evaluations
-# DIAG_INTERVAL = 100.0 * DT # 32 / FREQ
+DIAG_INTERVAL = 10 * DT # 32 / FREQ
 
 # --- Number of time steps
 max_steps = int(TOTAL_TIME / DT)
-diag_steps = 100
-diagnostic_intervals = "400::10"
+diag_steps = int(DIAG_INTERVAL / DT)
+# diagnostic_intervals = "400::10"
 
 print('Setting up simulation with')
 print('  dt = %.3e s' % DT)
@@ -152,39 +151,28 @@ mwxrun.init_run()
 
 diag_base.TextDiag(diag_steps=diag_steps, preset_string='perfdebug')
 
+rho_array = np.zeros(129)
+def _get_rho_ions():
+    global rho_array
+    rho_data = mwxrun.get_gathered_rho_grid('he_ions', False)
+    if mwxrun.me == 0:
+        rho_array += (
+            np.mean(rho_data[0][:,:,0], axis=0) / constants.q_e / diag_steps
+        )
+
 ##########################
 # simulation run
 ##########################
 
-mwxrun.simulation.step()
+mwxrun.simulation.step(max_steps - diag_steps)
+
+callbacks.installafterstep(_get_rho_ions)
+
+mwxrun.simulation.step(diag_steps)
 
 ##########################
 # collect diagnostics
 ##########################
 
 if mwxrun.me == 0:
-    import glob
-    import yt
-
-    data_dirs = glob.glob('diags/diags*')
-    if len(data_dirs) == 0:
-        raise RuntimeError("No data files found.")
-
-    for ii, data in enumerate(data_dirs):
-
-        datafolder = data
-        print('Reading ', datafolder, '\n')
-        ds = yt.load( datafolder )
-        grid_data = ds.covering_grid(
-            level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
-        )
-        if ii == 0:
-            rho_data = np.mean(
-                grid_data['rho_he_ions'].to_ndarray()[:,:,0], axis=0
-            ) / constants.q_e
-        else:
-            rho_data += np.mean(
-                grid_data['rho_he_ions'].to_ndarray()[:,:,0], axis=0
-            ) / constants.q_e
-    rho_data /= (ii + 1)
-    np.save('direct_solver_avg_rho_data.npy', rho_data)
+    np.save('direct_solver_avg_rho_data.npy', rho_array)
