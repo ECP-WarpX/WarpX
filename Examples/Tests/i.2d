@@ -1,0 +1,118 @@
+#################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 10
+amr.n_cell =  128 128
+amr.max_grid_size = 64
+amr.blocking_factor = 32
+amr.max_level = 0
+geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.prob_lo     = -20.e-6   -20.e-6    # physical domain
+geometry.prob_hi     =  20.e-6    20.e-6
+
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.serialize_ics = 1
+warpx.verbose = 1
+warpx.cfl = 1.0
+warpx.use_filter = 0
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+#################################
+######## DEBUG WARNINGS #########
+#################################
+
+warpx.test_warnings = w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15
+
+w1.topic    = "Priority Sort Test"
+w1.msg      = "Test that priority is correctly sorted"
+w1.priority = "low"
+w1.all_involved = 1
+
+w2.topic    = "Priority Sort Test"
+w2.msg	    = "Test that priority is correctly sorted"
+w2.priority = "medium"
+w2.all_involved = 1
+
+w3.topic    = "Priority Sort Test"
+w3.msg      = "Test that priority is correctly sorted"
+w3.priority = "high"
+w3.all_involved = 1
+
+w4.topic    = "ZZA Topic sort Test"
+w4.msg      = "Test that topic is correctly sorted"
+w4.priority = "medium"
+w4.all_involved = 1
+
+w5.topic    = "ZZB Topic sort Test"
+w5.msg      = "Test that topic is correctly sorted"
+w5.priority = "medium"
+w5.all_involved = 1
+
+w6.topic    = "ZZC Topic sort Test"
+w6.msg      = "Test that topic is correctly sorted"
+w6.priority = "medium"
+w6.all_involved = 1
+
+w7.topic    = "Msg sort Test"
+w7.msg      = "AAA Test that msg is correctly sorted"
+w7.priority = "medium"
+w7.all_involved = 1
+
+w8.topic    = "Msg sort Test"
+w8.msg      = "BBB Test that msg is correctly sorted"
+w8.priority = "medium"
+w8.all_involved = 1
+
+w9.topic    = "Msg sort Test"
+w9.msg      = "BBB Test that msg is correctly sorted"
+w9.priority = "medium"
+w9.all_involved = 1
+
+w10.topic    = "Long line"
+w10.msg      = "Test very long line: a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a"
+w10.priority = "medium"
+w10.all_involved = 1
+
+w11.topic    = "Repeated warnings"
+w11.msg      = "Test repeated warnings"
+w11.priority = "high"
+w11.all_involved = 1
+
+w12.topic    = "Repeated warnings"
+w12.msg      = "Test repeated warnings"
+w12.priority = "high"
+w12.all_involved = 1
+
+w13.topic    = "Repeated warnings"
+w13.msg      = "Test repeated warnings"
+w13.priority = "high"
+w13.all_involved = 1
+
+w14.topic    = "Not all involved"
+w14.msg      = "Test warnings raised by a fraction of ranks"
+w14.priority = "high"
+w14.all_involved = 0
+w14.who_involved = 0
+
+w15.topic    = "Not all involved"
+w15.msg      = "Test warnings raised by a fraction of ranks"
+w15.priority = "high"
+w15.all_involved = 0
+w15.who_involved = 0
+
+
+
+
+
+
+
