@@ -1,6 +1,7 @@
 """Test functionality in mewarpx.emission.py"""
 import collections
 import os
+from matplotlib.pyplot import plot
 import numpy as np
 import pandas
 import pytest
@@ -149,8 +150,13 @@ def test_circle_emitter():
         df[label + '_std'] = np.std(res_dict[label])
 
     assert testing_util.test_df_vs_ref(
-        testname="circle_emitter", df=df, margin=0.4
+        testname="circle_emitter", df=df, margin=0.3
     )
+
+    emitter.plot_contours()
+    plotfile =  f"{cylinder.name}_contour_plot.png"
+
+    assert os.path.exists(plotfile)
 
 
 def test_plasma_injector():

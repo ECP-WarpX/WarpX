@@ -107,7 +107,7 @@ class Cylinder(Assembly):
         if install_in_simulation:
             self._install_in_simulation()
 
-    def isinside(self, X, Y, Z, aura):
+    def isinside(self, X, Y, Z, aura=0):
         """
         Calculates which grid tiles are within the cylinder.
 

@@ -9,6 +9,9 @@ import numba
 import numpy as np
 
 import skimage.measure
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+
 from pywarpx import callbacks, _libwarpx, picmi
 
 import mewarpx.util as mwxutil
@@ -1139,8 +1142,12 @@ class ArbitraryEmitter2D(Emitter):
             self.conductor.isinside(X, Y, Z, aura=self.dA/5.),
             oshape)
 
+        # level of 0.17 was chosen to keep the original ratio of 0.5:3 from warp
+        # compared to 0.17:1 now in warpx
+        # increasing the level causes particles to be injected inside cylinder
         self.contours = np.squeeze(skimage.measure.find_contours(
-            inside, 0.5))
+            inside, 0.17))
+
         self.contours[:, 0] = np.interp(self.contours[:, 0],
                                         np.arange(self.xvec.size),
                                         self.xvec)
@@ -1168,9 +1175,9 @@ class ArbitraryEmitter2D(Emitter):
         marching_normal[:, 1] = ndvec[:, 0]
 
         # Check to make sure normal plus center is outside of conductor
-        partdist = self.dA*float(self.res_fac)/2.
+        partdist = self.dA * float(self.res_fac) / 2.
 
-        pos = self.centers + marching_normal*partdist
+        pos = self.centers + marching_normal * partdist
         px = pos[:, 0]
         py = np.zeros_like(px)
         pz = pos[:, 1]
@@ -1280,6 +1287,62 @@ class ArbitraryEmitter2D(Emitter):
         normals[:, 2] = self.normal[self.contour_idx, 1]
         return normals
 
+    def plot_contours(self):
+        """Plots the contours generated for the assembly object and the
+        assembly object. The object is plotted in yellow, and the contours
+        are plotted in blue. The plot is saved in contours.png"""
+
+        # calculate which tiles are inside of assembly object
+        self.xvec = np.arange(
+            mwxrun.xmin, mwxrun.xmax + self.dx/1000., self.dx)
+        self.yvec = [0.]
+        self.zvec = np.arange(
+            mwxrun.zmin, mwxrun.zmax + self.dz/1000., self.dz)
+
+        [X, Y, Z] = np.squeeze(np.meshgrid(self.xvec, self.yvec, self.zvec,
+                                           indexing='xy'))
+        oshape = X.shape
+        X = X.flatten()
+        Y = Y.flatten()
+        Z = Z.flatten()
+
+        inside = np.reshape(
+            self.conductor.isinside(X, Y, Z, aura=self.dA/5.),
+            oshape)
+
+        contours = np.array(skimage.measure.find_contours(inside, 0.17))
+
+        inside = inside.T
+
+        # plot assembly object first
+        assembly_cmap = colors.LinearSegmentedColormap.from_list('my_cmap',['white','#66c2a5'],256)
+        fig, ax = plt.subplots()
+
+        ax.imshow(inside, cmap=assembly_cmap, origin="lower")
+
+        # plot contours
+        for contour in contours:
+            ax.plot(contour[:, 0], contour[:, 1], linewidth=2, color="#fc8d62")
+
+        # set title and labels
+        ax.set_title(f"{self.conductor.name} contour plot")
+
+        x_range = [mwxrun.xmin, mwxrun.xmax]
+        y_range = [mwxrun.zmin, mwxrun.zmax]
+        x_step = (x_range[1] - x_range[0]) / (mwxrun.nx * self.res_fac)
+        y_step = (y_range[1] - y_range[0]) / (mwxrun.nz * self.res_fac)
+        xticks = np.linspace(0, mwxrun.nx * self.res_fac, 5)
+        yticks = np.linspace(0, mwxrun.nz * self.res_fac, 5)
+
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Z (m)")
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(np.round(xticks * x_step, 8), rotation=45)
+        ax.set_yticks(yticks)
+        ax.set_yticklabels(np.round(yticks * y_step, 8))
+
+        fig.tight_layout()
+        fig.savefig(f"{self.conductor.name}_contour_plot.png")
 
 class VolumeEmitter(BaseEmitter):
 
