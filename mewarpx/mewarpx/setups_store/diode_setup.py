@@ -6,7 +6,7 @@ from pywarpx import picmi
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
 from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicmi
-from mewarpx.diags_store import field_diagnostic
+from mewarpx.diags_store import field_diagnostic, particle_diagnostic
 
 
 class DiodeRun_V1(object):
@@ -138,6 +138,15 @@ class DiodeRun_V1(object):
     # the simulation is complete using yt files generated during the run at
     # diagnostic steps.
     FIELD_DIAG_PLOT_AFTER_RUN = False
+    # The data list for particle diagnostics
+    PARTICLE_DIAG_DATA_LIST = None
+    # Species to be plotted from the particle diagnostics
+    PARTICLE_PLOT_SPECIES = None
+    # Data to be plotted for each selected species from the particle diagnostics
+    PARTICLE_DIAG_PLOT_DATA_LIST = None
+    # Whether or not to load yt particle diagnostic data and save plots in
+    # post-processing
+    PARTICLE_DIAG_PLOT_AFTER_RUN = False
 
     # The total timesteps of the simulation
     TOTAL_TIMESTEPS = None
@@ -202,6 +211,7 @@ class DiodeRun_V1(object):
         init_runinfo=False,
         init_fluxdiag=False,
         init_field_diag=False,
+        init_particle_diag=False,
         init_simcontrol=False,
         init_simulation=True,
         init_warpx=False
@@ -244,6 +254,8 @@ class DiodeRun_V1(object):
             self.init_simulation()
         if init_field_diag:
             self.init_field_diag()
+        if init_particle_diag:
+            self.init_particle_diag()
         if init_warpx:
             self.init_warpx()
         if init_injectors:
@@ -555,6 +567,19 @@ class DiodeRun_V1(object):
             plot_on_diag_step=self.FIELD_DIAG_PLOT_ON_DIAG_STEPS,
             plot_data_list=self.FIELD_DIAG_PLOT_DATA_LIST,
             post_processing=self.FIELD_DIAG_PLOT_AFTER_RUN
+        )
+
+    def init_particle_diag(self):
+        print('### Init Diode ParticleDiag')
+
+        self.particle_diag = particle_diagnostic.ParticleDiagnostic(
+            name='particle_diag',
+            diag_steps=self.DIAG_STEPS,
+            write_dir='diags/',
+            data_list=self.PARTICLE_DIAG_DATA_LIST,
+            plot_species=self.PARTICLE_PLOT_SPECIES,
+            plot_data_list=self.PARTICLE_DIAG_PLOT_DATA_LIST,
+            post_processing=self.PARTICLE_DIAG_PLOT_AFTER_RUN
         )
 
     def init_simcontrol(self):
