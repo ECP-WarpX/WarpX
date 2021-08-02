@@ -77,6 +77,10 @@ WarpX::InitEB ()
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
+#ifdef WARPX_DIM_RZ
+    amrex::Abort("Embedded Boundaries not implemented in RZ geometry");
+#endif
+
     amrex::ParmParse pp_warpx("warpx");
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);

@@ -33,7 +33,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake/3.18.0
+   module load cmake/3.20.2
    module load intel/19.1.2
    module load mvapich2/2.3
 

@@ -608,7 +608,6 @@ WarpX::ReadParameters ()
             // input for each species.
         }
 
-        pp_warpx.query("n_buffer", n_buffer);
         queryWithParser(pp_warpx, "const_dt", const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
@@ -1139,10 +1138,6 @@ WarpX::ReadParameters ()
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
-                "warpx.do_dive_cleaning must be set to 1 when psatd.J_linear_in_time = 1");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_divb_cleaning,
-                "warpx.do_divb_cleaning must be set to 1 when psatd.J_linear_in_time = 1");
         }
 
         constexpr int zdir = AMREX_SPACEDIM - 1;
@@ -1448,6 +1443,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
     IntVect rho_nodal_flag;
     IntVect phi_nodal_flag;
+    amrex::IntVect F_nodal_flag, G_nodal_flag;
 
     // Set nodal flags
 #if   (AMREX_SPACEDIM == 2)
@@ -1474,6 +1470,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
     phi_nodal_flag = IntVect::TheNodeVector();
+    F_nodal_flag = amrex::IntVect::TheNodeVector();
+    G_nodal_flag = amrex::IntVect::TheCellVector();
 
     // Overwrite nodal flags if necessary
     if (do_nodal) {
@@ -1487,6 +1485,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheNodeVector();
         jz_nodal_flag  = IntVect::TheNodeVector();
         rho_nodal_flag = IntVect::TheNodeVector();
+        G_nodal_flag = amrex::IntVect::TheNodeVector();
     }
 #ifdef WARPX_DIM_RZ
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -1501,6 +1500,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheCellVector();
         jz_nodal_flag  = IntVect::TheCellVector();
         rho_nodal_flag = IntVect::TheCellVector();
+        F_nodal_flag = IntVect::TheCellVector();
+        G_nodal_flag = IntVect::TheCellVector();
     }
 
     // With RZ multimode, there is a real and imaginary component
@@ -1592,21 +1593,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_fp"));
+        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, ncomps, ngF.max(), tag("F_fp"));
     }
 
     if (do_divb_cleaning)
     {
-        if (do_nodal)
-        {
-            G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheUnitVector()),
-                                                   dm, ncomps, ngG.max(), tag("G_fp"));
-        }
-        else // do_nodal = 0
-        {
-            G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()),
-                                                   dm, ncomps, ngG.max(), tag("G_fp"));
-        }
+        G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, ncomps, ngG.max(), tag("G_fp"));
     }
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -1879,6 +1871,9 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
     RealVect dx_vect(dx[0], dx[2]);
 #endif
 
+    amrex::Real solver_dt = dt[lev];
+    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
+
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
                                                   dm,
@@ -1887,8 +1882,12 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   do_nodal,
                                                   m_v_galilean,
                                                   dx_vect,
-                                                  dt[lev],
-                                                  update_with_rho);
+                                                  solver_dt,
+                                                  update_with_rho,
+                                                  fft_do_time_averaging,
+                                                  J_linear_in_time,
+                                                  do_dive_cleaning,
+                                                  do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
 
     if (use_kspace_filter) {
