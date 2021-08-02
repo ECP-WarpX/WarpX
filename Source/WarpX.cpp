@@ -465,6 +465,8 @@ WarpX::ReadParameters ()
     {
         ParmParse pp_warpx("warpx");
 
+        m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
+
         std::vector<int> numprocs_in;
         pp_warpx.queryarr("numprocs", numprocs_in);
         if (not numprocs_in.empty()) {

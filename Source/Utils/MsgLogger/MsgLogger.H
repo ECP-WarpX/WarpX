@@ -1,6 +1,8 @@
 #ifndef WARPX_MSG_LOGGER_H_
 #define WARPX_MSG_LOGGER_H_
 
+#include <AMReX.H>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -15,7 +17,7 @@ namespace MsgLogger{
         low
     };
 
-    constexpr const char* PriorityToString(const Priority& priority)
+    inline constexpr const char* PriorityToString(const Priority& priority)
     {
         if(priority == Priority::high)
             return "high";
@@ -23,6 +25,19 @@ namespace MsgLogger{
             return "medium";
         else
             return "low";
+    }
+
+    inline Priority StringToPriority(const std::string& priority)
+    {
+        if(priority == "high")
+            return Priority::high;
+        else if (priority == "medium")
+            return Priority::medium;
+        else if (priority == "low")
+            return Priority::low;
+        else
+            amrex::Abort("Priority string not recognized");
+        return Priority::low;
     }
 
     struct Msg
@@ -72,7 +87,7 @@ namespace MsgLogger{
         std::vector<char> serialize_msg_list(
             const std::vector<MsgWithCounter>& msg_list) const;
 
-        aux_broadcast_io_rank_list();
+        int aux_find_gather_rank() const;
 
         std::map<Msg, int> m_messages;
     };

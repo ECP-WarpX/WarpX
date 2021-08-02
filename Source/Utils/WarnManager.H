@@ -5,6 +5,8 @@
 
 #include "MsgLogger/MsgLogger.H"
 
+#include <AMReX_ParmParse.H>
+
 #include <string>
 #include <vector>
 
@@ -25,6 +27,8 @@ namespace Utils
 
         std::string print_local_warnings(
             const std::string& when) const;
+
+        void debug_read_warnings_from_input(amrex::ParmParse& params);
 
         static const int warn_line_size = 80;
         static const int warn_tab_size = 5;
@@ -48,6 +52,7 @@ namespace Utils
             const int line_size,
             const int tab_size) const;
 
+        int m_rank = 0;
         MsgLogger::Logger m_logger;
     };
 }

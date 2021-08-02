@@ -61,11 +61,12 @@ std::vector<MsgWithCounterAndRanks> Logger::collective_gather_msg_lists() const
 
     const auto my_serialized_list =
         serialize_msg_list(this->get_msg_list());
+    const auto how_many_items = my_serialized_list.size();
+
+    const auto gather_rank = aux_find_gather_rank();
 
     return std::vector<MsgWithCounterAndRanks>{};
 }
-
-        aux_broadcast_io_rank_list();
 
 
 std::vector<char> Logger::serialize_msg_list(
@@ -84,3 +85,9 @@ std::vector<char> Logger::serialize_msg_list(
     }
     return serialized;
 }
+
+int Logger::aux_find_gather_rank() const
+{
+    return 0;
+}
+
