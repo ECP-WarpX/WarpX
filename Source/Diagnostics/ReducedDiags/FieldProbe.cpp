@@ -47,7 +47,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_rd_name.query("y_probe", y_probe);
     pp_rd_name.query("z_probe", z_probe);
 
-    bool raw_specified = pp_rd_name.query("raw_fields", raw_fields);
+    const bool raw_specified = pp_rd_name.query("raw_fields", raw_fields);
     if(!raw_specified) raw_fields = false;
 
     constexpr int noutputs = 8;  // probe Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
@@ -113,9 +113,9 @@ void FieldProbe::ComputeDiags (int step)
         const auto prob_lo = gm.ProbLo();
         const auto cell_size = gm.CellSizeArray();
 
-        int i_probe = amrex::Math::floor((x_probe - prob_lo[0])/cell_size[0]);
-        int j_probe = amrex::Math::floor((y_probe - prob_lo[1])/cell_size[1]);
-        int k_probe = amrex::Math::floor((z_probe - prob_lo[2])/cell_size[2]);
+        const int i_probe = amrex::Math::floor((x_probe - prob_lo[0])/cell_size[0]);
+        const int j_probe = amrex::Math::floor((y_probe - prob_lo[1])/cell_size[1]);
+        const int k_probe = amrex::Math::floor((z_probe - prob_lo[2])/cell_size[2]);
 
         // get MultiFab data at lev
         const MultiFab & Ex = warpx.getEfield(lev,0);
@@ -192,14 +192,14 @@ void FieldProbe::ComputeDiags (int step)
                                                      i_probe, j_probe, k_probe, reduction_comp);
 
 
-            amrex::Real hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
-            amrex::Real hv_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
-            amrex::Real hv_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
-            amrex::Real hv_E = Ex_interp*Ex_interp + Ey_interp*Ey_interp + Ez_interp*Ez_interp;
-            amrex::Real hv_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
-            amrex::Real hv_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
-            amrex::Real hv_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
-            amrex::Real hv_B = Bx_interp*Bx_interp + By_interp*By_interp + Bz_interp*Bz_interp;
+            const amrex::Real hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
+            const amrex::Real hv_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
+            const amrex::Real hv_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
+            const amrex::Real hv_E = Ex_interp*Ex_interp + Ey_interp*Ey_interp + Ez_interp*Ez_interp;
+            const amrex::Real hv_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
+            const amrex::Real hv_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
+            const amrex::Real hv_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
+            const amrex::Real hv_B = Bx_interp*Bx_interp + By_interp*By_interp + Bz_interp*Bz_interp;
 
             // Fill output array
             m_data[lev * noutputs + index_Ex] = hv_Ex;
