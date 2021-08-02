@@ -57,6 +57,9 @@ void
 WarpX::DepositChargeDensity (WarpXParticleContainer& species, const bool local,
                              const bool reset, const bool do_rz_volume_scaling)
 {
+    // deposit charge density on the grid and write to rho_fp. If reset is true
+    // the values in rho_fp will be overwritten, if false the charge density
+    // from the current species will be added to rho_fp.
     species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
 }
 
@@ -494,7 +497,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 }
 #endif
 
-/* \bried Set Dirichlet boundary conditions for the electrostatic solver.
+/* \brief Set Dirichlet boundary conditions for the electrostatic solver.
 
     The given potential's values are fixed on the boundaries of the given
     dimension according to the desired values from the simulation input file,
@@ -562,7 +565,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
     }} // lev & MFIter
 }
 
-/* \bried Utility function to parse input file for boundary potentials.
+/* \brief Utility function to parse input file for boundary potentials.
 
     The input values are parsed to allow math expressions for the potentials
     that specify time dependence.
@@ -623,7 +626,7 @@ WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) cons
     pot_hi = parser_hi_exe(gett_new(0));
 }
 
-/* \bried Compute the electric field that corresponds to `phi`, and
+/* \brief Compute the electric field that corresponds to `phi`, and
           add it to the set of MultiFab `E`.
 
    The electric field is calculated by assuming that the source that
@@ -726,7 +729,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 }
 
 
-/* \bried Compute the magnetic field that corresponds to `phi`, and
+/* \brief Compute the magnetic field that corresponds to `phi`, and
           add it to the set of MultiFab `B`.
 
    The magnetic field is calculated by assuming that the source that
