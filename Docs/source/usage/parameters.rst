@@ -1980,6 +1980,28 @@ Reduced Diagnostics
         Note that the fields are averaged on the cell centers before their maximum values are
         computed.
 
+    * ``FieldProbe``
+        This type computes the value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors at a point in the domain.
+        The point where the fields are measured is specified through the inputs parameters
+        ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
+        ``<reduced_diags_name>.z_probe``.
+
+        The output columns are
+        the value of the :math:`E_x` field,
+        the value of the :math:`E_y` field,
+        the value of the :math:`E_z` field,
+        the value of the norm :math:`|E|` of the electric field,
+        the value of the :math:`B_x` field,
+        the value of the :math:`B_y` field,
+        the value of the :math:`B_z` field and
+        the value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
+
+        Note: the norms are always averaged on the cell centers before they are written to file.
+        The electromagnetic field components are averaged on the cell centers by default, but can
+        they be saved as non-averaged by setting ``<reduced_diags_name>.raw_fields = true``.
+
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as
         the maximum absolute value of the charge density of each charged species.
