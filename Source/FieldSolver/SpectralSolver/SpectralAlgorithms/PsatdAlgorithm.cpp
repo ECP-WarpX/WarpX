@@ -102,6 +102,16 @@ PsatdAlgorithm::PsatdAlgorithm(
         X6_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsAvgLin(spectral_kspace, dm, dt);
     }
+
+    if (dive_cleaning && !J_linear_in_time)
+    {
+        amrex::Abort("PSATD: warpx.do_dive_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+    }
+
+    if (divb_cleaning && !J_linear_in_time)
+    {
+        amrex::Abort("PSATD: warpx.do_divb_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+    }
 }
 
 void

@@ -55,13 +55,13 @@ class Species(picmi.Species):
         self.waiting_extra_pids = set()
 
     def init_pid_dict(self):
-        """Function to build a dictionary of all the extra particle attributes
+        """Function to build a list of all the extra particle attributes
         (and weight). This has to happen after warpx has been initialized
         so that the particle container already exists.
         """
         self.pids_initialized = True
 
-        self.pid_dict = {'w': 0}
+        self.pid_list = ['w']
         self.nattribs = _libwarpx.get_nattr()
         # npids are used to inform the dimension of the attr array (used in
         # add_particles), so we need to subtract the non-extra pid arrays
@@ -74,7 +74,10 @@ class Species(picmi.Species):
         del self.waiting_extra_pids
 
     def add_pid(self, pid_name):
-        """Wrapper to add a new PID to the particle data arrays at runtime.
+        """Wrapper to add a new PID to the particle data arrays at runtime. The
+        benefit of this wrapper is that we first check if the PID already
+        exists so there is no risk in calling it multiple times for the same
+        PID.
 
         Arguments:
             pid_name (str): Name of the new PID.
@@ -84,16 +87,11 @@ class Species(picmi.Species):
             return
 
         # check if PID already exists
-        if pid_name in self.pid_dict:
+        if pid_name in self.pid_list:
             return
 
         _libwarpx.add_real_comp(self.name, pid_name)
-        # the attr array index (used by add_particles) is the component
-        # index - the PIdx::nattribs (the non-extra pid arrays) + 1 (since
-        # in AddNParticles the weight is treated as an extra array)
-        self.pid_dict[pid_name] = _libwarpx.get_particle_comp_index(
-            self.name, pid_name
-        ) - (self.nattribs + 3) + 1
+        self.pid_list.append(pid_name)
         self.npids += 1
 
     def get_array_from_pid(self, pid_name, level=0):
@@ -109,20 +107,3 @@ class Species(picmi.Species):
             PID.
         """
         return _libwarpx.get_particle_arrays(self.name, pid_name, level)
-
-    def add_particles(self, x, y, z, ux, uy, uz, w, unique_particles=True,
-                      **kwargs):
-        """Wrapper for libwarpx function `add_particles`. It is specifically
-        a function of the species class so that it can process and properly
-        order the data for each pid.
-        """
-
-        pid_array = np.zeros((np.size(x), self.npids))
-        pid_array[:, self.pid_dict['w']] = w
-        for key, val in kwargs.items():
-            pid_array[:, self.pid_dict[key]] = val
-
-        _libwarpx.add_particles(
-            self.name, x=x, y=y, z=z, ux=ux, uy=uy, uz=uz, attr=pid_array,
-            unique_particles=unique_particles
-        )

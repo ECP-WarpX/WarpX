@@ -258,7 +258,8 @@ class FixedNumberInjector(Injector):
             # and they're referred to as momenta. But I don't see anywhere
             # they're actually used as momenta including the particle mass -
             # the actual update is in Source/Particles/Pusher/UpdatePosition.H
-            self.species.add_particles(
+            _libwarpx.add_particles(
+                self.species.name,
                 x=particles_dict['x'],
                 y=particles_dict['y'],
                 z=particles_dict['z'],
@@ -266,8 +267,8 @@ class FixedNumberInjector(Injector):
                 uy=particles_dict['vy'],
                 uz=particles_dict['vz'],
                 w=particles_dict['w'],
-                unique_particles=self.unique_particles,
-                E_total=particles_dict['E_total']
+                E_total=particles_dict['E_total'],
+                unique_particles=self.unique_particles
             )
 
             if self.injector_diag is not None:
@@ -396,7 +397,8 @@ class ThermionicInjector(Injector):
         # and they're referred to as momenta. But I don't see anywhere
         # they're actually used as momenta including the particle mass -
         # the actual update is in Source/Particles/Pusher/UpdatePosition.H
-        self.species.add_particles(
+        _libwarpx.add_particles(
+            self.species.name,
             x=particles_dict['x'],
             y=particles_dict['y'],
             z=particles_dict['z'],
@@ -404,8 +406,8 @@ class ThermionicInjector(Injector):
             uy=particles_dict['vy'],
             uz=particles_dict['vz'],
             w=particles_dict['w'],
-            unique_particles=self.unique_particles,
-            E_total=particles_dict['E_total']
+            E_total=particles_dict['E_total'],
+            unique_particles=self.unique_particles
         )
 
         if self.injector_diag is not None:
@@ -600,7 +602,8 @@ class PlasmaInjector(Injector):
                 f"Inject {len(particles1_dict['x'])} particles each of "
                 f"{self.species1.name} and {self.species2.name}."
             )
-            self.species1.add_particles(
+            _libwarpx.add_particles(
+                self.species1.name,
                 x=particles1_dict['x'],
                 y=particles1_dict['y'],
                 z=particles1_dict['z'],
@@ -608,9 +611,11 @@ class PlasmaInjector(Injector):
                 uy=particles1_dict['vy'],
                 uz=particles1_dict['vz'],
                 w=particles1_dict['w'],
-                unique_particles=self.unique_particles,
-                E_total=particles1_dict['E_total'])
-            self.species2.add_particles(
+                E_total=particles1_dict['E_total'],
+                unique_particles=self.unique_particles
+            )
+            _libwarpx.add_particles(
+                self.species2.name,
                 x=particles2_dict['x'],
                 y=particles2_dict['y'],
                 z=particles2_dict['z'],
@@ -618,8 +623,9 @@ class PlasmaInjector(Injector):
                 uy=particles2_dict['vy'],
                 uz=particles2_dict['vz'],
                 w=particles2_dict['w'],
-                unique_particles=self.unique_particles,
-                E_total=particles2_dict['E_total'])
+                E_total=particles2_dict['E_total'],
+                unique_particles=self.unique_particles
+            )
 
             if self.injector_diag is not None:
                 self.record_injectedparticles(

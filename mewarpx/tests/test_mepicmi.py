@@ -13,6 +13,7 @@ def test_extra_pid(capsys):
     from mewarpx import testing_util
     from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
+    from pywarpx import _libwarpx
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
@@ -59,7 +60,8 @@ def test_extra_pid(capsys):
 
     nps = 1000
     w = np.random.randint(low=1, high=100, size=nps)
-    run.electrons.add_particles(
+    _libwarpx.add_particles(
+        run.electrons.name,
         x=np.random.random(nps) * D_CA / NZ * NX, y=np.zeros(nps),
         z=np.random.random(nps) * D_CA,
         ux=np.random.normal(scale=1e4, size=nps),
