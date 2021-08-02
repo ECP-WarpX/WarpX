@@ -34,6 +34,8 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 #else
       encoding = openPMD::IterationEncoding::groupBased;
 #endif
+    else if ( 0 == openpmd_encoding.compare("g") )
+      encoding = openPMD::IterationEncoding::groupBased;
     else if ( 0 == openpmd_encoding.compare("f") )
       encoding = openPMD::IterationEncoding::fileBased;
 
