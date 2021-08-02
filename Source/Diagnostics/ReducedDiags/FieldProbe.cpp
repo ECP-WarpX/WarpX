@@ -172,6 +172,7 @@ void FieldProbe::ComputeDiags (int step)
             const auto &arrBy = By[mfi].array();
             const auto &arrBz = Bz[mfi].array();
 
+            //Retrieveing cell-centered fields
             const Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
                                                      reduction_coarsening_ratio,
                                                      i_probe, j_probe, k_probe, reduction_comp);
@@ -191,7 +192,7 @@ void FieldProbe::ComputeDiags (int step)
                                                      reduction_coarsening_ratio,
                                                      i_probe, j_probe, k_probe, reduction_comp);
 
-
+            // Either save the interpolated fields or the raw fields depending on the raw_fields flag
             const amrex::Real hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
             const amrex::Real hv_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
             const amrex::Real hv_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
