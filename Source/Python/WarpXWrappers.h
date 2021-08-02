@@ -36,7 +36,7 @@ extern "C" {
 
     int warpx_getParticleBoundaryBufferNSpecies();
 
-    int warpx_getNumParticlesImpactedBoundary();
+    int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary);
 
     int warpx_SpaceDim();
 

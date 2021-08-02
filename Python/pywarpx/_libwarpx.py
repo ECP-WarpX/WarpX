@@ -199,6 +199,7 @@ libwarpx.warpx_getJy_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getJz_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
 
+libwarpx.warpx_getNumParticlesImpactedBoundary.argtypes = (ctypes.c_char_p, ctypes.c_int)
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
 #libwarpx.warpx_ComputePMLFactors.argtypes = (ctypes.c_int, c_real)
@@ -1702,8 +1703,8 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
 def get_particle_boundary_buffer_n_species():
     return libwarpx.warpx_getParticleBoundaryBufferNSpecies()
 
-def get_num_particles_impacted_boundary():
-    return libwarpx.warpx_getNumParticlesImpactedBoundary()
+def get_num_particles_impacted_boundary(species_name, boundary):
+    return libwarpx.warpx_getNumParticlesImpactedBoundary(ctypes.c_char_p(species_name.encode('utf-8')), boundary)
 
 def _get_nodal_flag(getdatafunc):
     data = getdatafunc()
