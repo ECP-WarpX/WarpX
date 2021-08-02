@@ -15,4 +15,5 @@ target_sources(WarpX
     RhoMaximum.cpp
     ParticleNumber.cpp
     FieldReduction.cpp
+    FieldProbe.cpp
 )

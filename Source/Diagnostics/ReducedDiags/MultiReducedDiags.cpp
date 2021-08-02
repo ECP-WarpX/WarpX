@@ -9,6 +9,7 @@
 #include "BeamRelevant.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
+#include "FieldProbe.H"
 #include "FieldMomentum.H"
 #include "FieldReduction.H"
 #include "LoadBalanceCosts.H"
@@ -51,6 +52,7 @@ MultiReducedDiags::MultiReducedDiags ()
             {"FieldEnergy",           [](CS s){return std::make_unique<FieldEnergy>(s);}},
             {"FieldMomentum",         [](CS s){return std::make_unique<FieldMomentum>(s);}},
             {"FieldMaximum",          [](CS s){return std::make_unique<FieldMaximum>(s);}},
+            {"FieldProbe",            [](CS s){return std::make_unique<FieldProbe>(s);}},
             {"FieldReduction",        [](CS s){return std::make_unique<FieldReduction>(s);}},
             {"RhoMaximum",            [](CS s){return std::make_unique<RhoMaximum>(s);}},
             {"BeamRelevant",          [](CS s){return std::make_unique<BeamRelevant>(s);}},
