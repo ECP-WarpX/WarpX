@@ -243,6 +243,15 @@ def get_nattr():
     # --- The -3 is because the comps include the velocites
     return libwarpx.warpx_nComps() - 3
 
+def get_nattr_species(species_name):
+    '''
+
+    Get the number of real attributes for the given species.
+
+    '''
+    return libwarpx.warpx_nCompsSpecies(
+        ctypes.c_char_p(species_name.encode('utf-8')))
+
 def amrex_init(argv, mpi_comm=None):
     # --- Construct the ctype list of strings to pass in
     argc = len(argv)
@@ -361,9 +370,8 @@ def getCellSize(direction, level=0):
 #
 #    libwarpx.warpx_ComputePMLFactors(lev, dt)
 
-def add_particles(species_name,
-                  x=0., y=0., z=0., ux=0., uy=0., uz=0., attr=0.,
-                  unique_particles=True):
+def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
+                  unique_particles=True, **kwargs):
     '''
 
     A function for adding particles to the WarpX simulation.
@@ -374,9 +382,11 @@ def add_particles(species_name,
     species_name     : the species to add the particle to
     x, y, z          : arrays or scalars of the particle positions (default = 0.)
     ux, uy, uz       : arrays or scalars of the particle momenta (default = 0.)
-    attr             : a 2D numpy array or scalar with the particle attributes (default = 0.)
     unique_particles : whether the particles are unique or duplicated on
                        several processes. (default = True)
+    kwargs           : dictionary containing an entry for the particle weights
+                       (with keyword 'w') and all the extra particle attribute
+                       arrays. If an attribute is not given it will be set to 0.
 
     '''
 
@@ -387,20 +397,20 @@ def add_particles(species_name,
     lenux = np.size(ux)
     lenuy = np.size(uy)
     lenuz = np.size(uz)
-    lenattr = np.size(attr)
 
     if (lenx == 0 or leny == 0 or lenz == 0 or lenux == 0 or
-        lenuy == 0 or lenuz == 0 or lenattr == 0):
+        lenuy == 0 or lenuz == 0):
         return
 
-    maxlen = max(lenx, leny, lenz, lenux, lenuy, lenuz, lenattr)
+    maxlen = max(lenx, leny, lenz, lenux, lenuy, lenuz)
     assert lenx==maxlen or lenx==1, "Length of x doesn't match len of others"
     assert leny==maxlen or leny==1, "Length of y doesn't match len of others"
     assert lenz==maxlen or lenz==1, "Length of z doesn't match len of others"
     assert lenux==maxlen or lenux==1, "Length of ux doesn't match len of others"
     assert lenuy==maxlen or lenuy==1, "Length of uy doesn't match len of others"
     assert lenuz==maxlen or lenuz==1, "Length of uz doesn't match len of others"
-    assert lenattr==maxlen or lenattr==1, "Length of attr doesn't match len of others"
+    for key, val in kwargs.items():
+        assert np.size(val)==1 or len(val)==maxlen, f"Length of {key} doesn't match len of others"
 
     if lenx == 1:
         x = np.array(x)*np.ones(maxlen)
@@ -414,14 +424,26 @@ def add_particles(species_name,
         uy = np.array(uy)*np.ones(maxlen)
     if lenuz == 1:
         uz = np.array(uz)*np.ones(maxlen,'d')
-    if lenattr == 1:
-        nattr = get_nattr()
-        attr = np.array(attr)*np.ones([maxlen,nattr])
+    for key, val in kwargs.items():
+        if np.size(val) == 1:
+            kwargs[key] = np.array(val)*np.ones(maxlen)
+
+    # --- The -3 is because the comps include the velocites
+    nattr = get_nattr_species(species_name) - 3
+    attr = np.zeros((maxlen, nattr))
+
+    for key, vals in kwargs.items():
+        if key == 'w':
+            attr[:,0] = vals
+        else:
+            # --- The -3 is because components 1 to 3 are velocities
+            attr[:,get_particle_comp_index(species_name, key)-3] = vals
 
     libwarpx.warpx_addNParticles(
         ctypes.c_char_p(species_name.encode('utf-8')), x.size,
-        x, y, z, ux, uy, uz, attr.shape[-1], attr, unique_particles
+        x, y, z, ux, uy, uz, nattr, attr, unique_particles
     )
+
 
 def get_particle_count(species_name):
     '''
@@ -443,6 +465,7 @@ def get_particle_count(species_name):
     return libwarpx.warpx_getNumParticles(
         ctypes.c_char_p(species_name.encode('utf-8'))
     )
+
 
 def get_particle_structs(species_name, level):
     '''
