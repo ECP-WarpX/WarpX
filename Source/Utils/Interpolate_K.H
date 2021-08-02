@@ -5,7 +5,7 @@
 
 namespace Interpolate {
 
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void interp (int j, int k, int l,
              amrex::Array4<amrex::Real      > const& fine,
              amrex::Array4<amrex::Real const> const& crse,
