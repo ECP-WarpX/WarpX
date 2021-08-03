@@ -181,19 +181,19 @@ void FieldProbe::ComputeDiags (int step)
                 const amrex::Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
                                                                 reduction_coarsening_ratio,
                                                                 i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Ey_interp = CoarsenIO::Interp(arrEy, Extype, cellCenteredtype,
+                const amrex::Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
                                                                 reduction_coarsening_ratio,
                                                                 i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Ez_interp = CoarsenIO::Interp(arrEz, Extype, cellCenteredtype,
+                const amrex::Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
                                                                 reduction_coarsening_ratio,
                                                                 i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Bx_interp = CoarsenIO::Interp(arrBx, Extype, cellCenteredtype,
+                const amrex::Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
                                                                 reduction_coarsening_ratio,
                                                                 i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real By_interp = CoarsenIO::Interp(arrBx, Extype, cellCenteredtype,
+                const amrex::Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
                                                                 reduction_coarsening_ratio,
                                                                 i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Bz_interp = CoarsenIO::Interp(arrBz, Extype, cellCenteredtype,
+                const amrex::Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
                                                                 reduction_coarsening_ratio,
                                                                 i_probe, j_probe, k_probe, reduction_comp);
 
@@ -215,7 +215,6 @@ void FieldProbe::ComputeDiags (int step)
         //the rank of the processor which contains the point
 
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
-        Print()<<probe_proc<<std::endl;
 
         if(amrex::ParallelDescriptor::MyProc()==probe_proc){
             amrex::ParallelDescriptor::Send(&hv_Ex, 1,
