@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Axel Huebl, Junmin Gu, Maxence Thevenet
+/* Copyright 2019-2021 Axel Huebl, Junmin Gu, Maxence Thevenet
  *
  *
  * This file is part of WarpX.
@@ -40,8 +40,8 @@
 class Timer
 {
 public:
-  Timer(const char* tag) {m_Tag = tag; m_Start = amrex::second();}
-  ~Timer() {
+  Timer (const char* tag) {m_Tag = tag; m_Start = amrex::second();}
+  ~Timer () {
       m_End = amrex::second();
       amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
       amrex::Print()<<m_Tag<<" took:"<<m_End - m_Start<<" seconds\n";
@@ -61,8 +61,8 @@ public:
   using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
-  WarpXParticleCounter(ParticleContainer* pc);
-  unsigned long GetTotalNumParticles() {return m_Total;}
+  WarpXParticleCounter (ParticleContainer* pc);
+  unsigned long GetTotalNumParticles () {return m_Total;}
 
   std::vector<unsigned long long> m_ParticleOffsetAtRank;
   std::vector<unsigned long long> m_ParticleSizeAtRank;
@@ -73,7 +73,7 @@ private:
   * @param[out] offset particle offset over all, mpi-global amrex fabs
   * @param[out] sum number of all particles from all amrex fabs
   */
-  void GetParticleOffsetOfProcessor(const long& numParticles,
+  void GetParticleOffsetOfProcessor (const long& numParticles,
                     unsigned long long& offset,
                     unsigned long long& sum)  const ;
 
@@ -162,17 +162,23 @@ private:
    *  @param[in] meshes   The meshes in a series
    *  @param[in] full_geom The geometry
    */
-  void SetupFields(  openPMD::Container< openPMD::Mesh >& meshes, amrex::Geometry& full_geom  ) const;
+  void SetupFields (
+      openPMD::Container< openPMD::Mesh >& meshes,
+      amrex::Geometry& full_geom
+  ) const;
 
-  void SetupMeshComp( openPMD::Mesh& mesh,
-                      amrex::Geometry& full_geom,
-                      openPMD::MeshRecordComponent& mesh_comp
-                     ) const;
+  void SetupMeshComp (
+      openPMD::Mesh& mesh,
+      amrex::Geometry& full_geom,
+      openPMD::MeshRecordComponent& mesh_comp
+  ) const;
 
-  void GetMeshCompNames( int meshLevel,
-                         const std::string& varname,
-                         std::string& field_name,
-                         std::string& comp_name ) const;
+  void GetMeshCompNames (
+      int meshLevel,
+      const std::string& varname,
+      std::string& field_name,
+      std::string& comp_name
+  ) const;
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
