@@ -13,7 +13,7 @@ WarpX::CountExtFaces() {
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
-        amrex::ReduceData<amrex::Real> reduce_data(reduce_ops);
+        amrex::ReduceData<int> reduce_data(reduce_ops);
         for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             amrex::Box const &box = mfi.validbox();
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
@@ -27,7 +27,7 @@ WarpX::CountExtFaces() {
         sums(idim) = amrex::get<0>(r);
     }
 
-    amrex::ParallelDescriptor::ReduceRealSum(&(sums(0)), AMREX_SPACEDIM);
+    amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
 #endif
     return sums;
 }
@@ -221,7 +221,7 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
     const int j = cell.y;
     const int k = cell.z;
     int n_borrow = 0;
-    amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
+    amrex::Array2D<int, 0, 2, 0, 2> local_avail{};
 
     if(idim == 0) {
         for (int j_loc = 0; j_loc <= 2; j_loc++) {
