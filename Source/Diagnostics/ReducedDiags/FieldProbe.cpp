@@ -158,60 +158,106 @@ void FieldProbe::ComputeDiags (int step)
             Bztype[i] = Bz.ixType()[i];
         }
 
+        amrex::Real hv_Ex, hv_Ey, hv_Ez, hv_E, hv_Bx, hv_By, hv_Bz, hv_B;
+        int probe_proc = -1; //amrex::ParallelDescriptor::IOProcessorNumber();
         // MFIter loop to interpolate fields to cell center and get maximum values
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        for ( MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-            // Make the box cell centered in preparation for the interpolation (and to avoid
-            // including ghost cells in the calculation)
-            const auto &arrEx = Ex[mfi].array();
-            const auto &arrEy = Ey[mfi].array();
-            const auto &arrEz = Ez[mfi].array();
-            const auto &arrBx = Bx[mfi].array();
-            const auto &arrBy = By[mfi].array();
-            const auto &arrBz = Bz[mfi].array();
+        for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            const Box& box = mfi.validbox();
 
-            //Retrieveing cell-centered fields
-            const Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
-                                                     reduction_coarsening_ratio,
-                                                     i_probe, j_probe, k_probe, reduction_comp);
-            const Real Ey_interp = CoarsenIO::Interp(arrEy, Extype, cellCenteredtype,
-                                                     reduction_coarsening_ratio,
-                                                     i_probe, j_probe, k_probe, reduction_comp);
-            const Real Ez_interp = CoarsenIO::Interp(arrEz, Extype, cellCenteredtype,
-                                                     reduction_coarsening_ratio,
-                                                     i_probe, j_probe, k_probe, reduction_comp);
-            const Real Bx_interp = CoarsenIO::Interp(arrBx, Extype, cellCenteredtype,
-                                                     reduction_coarsening_ratio,
-                                                     i_probe, j_probe, k_probe, reduction_comp);
-            const Real By_interp = CoarsenIO::Interp(arrBx, Extype, cellCenteredtype,
-                                                     reduction_coarsening_ratio,
-                                                     i_probe, j_probe, k_probe, reduction_comp);
-            const Real Bz_interp = CoarsenIO::Interp(arrBz, Extype, cellCenteredtype,
-                                                     reduction_coarsening_ratio,
-                                                     i_probe, j_probe, k_probe, reduction_comp);
+            if(box.contains(i_probe, j_probe, k_probe)) {
+                // Make the box cell centered in preparation for the interpolation (and to avoid
+                // including ghost cells in the calculation)
+                const auto &arrEx = Ex[mfi].array();
+                const auto &arrEy = Ey[mfi].array();
+                const auto &arrEz = Ez[mfi].array();
+                const auto &arrBx = Bx[mfi].array();
+                const auto &arrBy = By[mfi].array();
+                const auto &arrBz = Bz[mfi].array();
 
-            // Either save the interpolated fields or the raw fields depending on the raw_fields flag
-            const amrex::Real hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
-            const amrex::Real hv_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
-            const amrex::Real hv_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
-            const amrex::Real hv_E = Ex_interp*Ex_interp + Ey_interp*Ey_interp + Ez_interp*Ez_interp;
-            const amrex::Real hv_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
-            const amrex::Real hv_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
-            const amrex::Real hv_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
-            const amrex::Real hv_B = Bx_interp*Bx_interp + By_interp*By_interp + Bz_interp*Bz_interp;
+                //Retrieveing cell-centered fields
+                const amrex::Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
+                                                                reduction_coarsening_ratio,
+                                                                i_probe, j_probe, k_probe, reduction_comp);
+                const amrex::Real Ey_interp = CoarsenIO::Interp(arrEy, Extype, cellCenteredtype,
+                                                                reduction_coarsening_ratio,
+                                                                i_probe, j_probe, k_probe, reduction_comp);
+                const amrex::Real Ez_interp = CoarsenIO::Interp(arrEz, Extype, cellCenteredtype,
+                                                                reduction_coarsening_ratio,
+                                                                i_probe, j_probe, k_probe, reduction_comp);
+                const amrex::Real Bx_interp = CoarsenIO::Interp(arrBx, Extype, cellCenteredtype,
+                                                                reduction_coarsening_ratio,
+                                                                i_probe, j_probe, k_probe, reduction_comp);
+                const amrex::Real By_interp = CoarsenIO::Interp(arrBx, Extype, cellCenteredtype,
+                                                                reduction_coarsening_ratio,
+                                                                i_probe, j_probe, k_probe, reduction_comp);
+                const amrex::Real Bz_interp = CoarsenIO::Interp(arrBz, Extype, cellCenteredtype,
+                                                                reduction_coarsening_ratio,
+                                                                i_probe, j_probe, k_probe, reduction_comp);
 
-            // Fill output array
-            m_data[lev * noutputs + index_Ex] = hv_Ex;
-            m_data[lev * noutputs + index_Ey] = hv_Ey;
-            m_data[lev * noutputs + index_Ez] = hv_Ez;
-            m_data[lev * noutputs + index_absE] = std::sqrt(hv_E);
-            m_data[lev * noutputs + index_Bx] = hv_Bx;
-            m_data[lev * noutputs + index_By] = hv_By;
-            m_data[lev * noutputs + index_Bz] = hv_Bz;
-            m_data[lev * noutputs + index_absB] = std::sqrt(hv_B);
+                // Either save the interpolated fields or the raw fields depending on the raw_fields flag
+                hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
+                hv_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
+                hv_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
+                hv_E = Ex_interp * Ex_interp + Ey_interp * Ey_interp + Ez_interp * Ez_interp;
+                hv_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
+                hv_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
+                hv_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
+                hv_B = Bx_interp * Bx_interp + By_interp * By_interp + Bz_interp * Bz_interp;
+
+                probe_proc = ParallelDescriptor::MyProc();
+            }
         }
+        //All the processors have probe_proc = -1 except the one that contains the point, which
+        //has probe_proc equal to a number >=0. In this way we communicate to all the processors
+        //the rank of the processor which contains the point
+
+        amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
+        Print()<<probe_proc<<std::endl;
+
+        if(amrex::ParallelDescriptor::MyProc()==probe_proc){
+            amrex::ParallelDescriptor::Send(&hv_Ex, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 0);
+            amrex::ParallelDescriptor::Send(&hv_Ey, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 1);
+            amrex::ParallelDescriptor::Send(&hv_Ez, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 2);
+            amrex::ParallelDescriptor::Send(&hv_E, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 3);
+            amrex::ParallelDescriptor::Send(&hv_Bx, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 4);
+            amrex::ParallelDescriptor::Send(&hv_By, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 5);
+            amrex::ParallelDescriptor::Send(&hv_Bz, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 6);
+            amrex::ParallelDescriptor::Send(&hv_B, 1,
+                                            amrex::ParallelDescriptor::IOProcessorNumber(), 7);
+        }
+        if(amrex::ParallelDescriptor::MyProc()==amrex::ParallelDescriptor::IOProcessorNumber()){
+            amrex::ParallelDescriptor::Recv(&hv_Ex, 1, probe_proc, 0);
+            amrex::ParallelDescriptor::Recv(&hv_Ey, 1, probe_proc, 1);
+            amrex::ParallelDescriptor::Recv(&hv_Ez, 1, probe_proc, 2);
+            amrex::ParallelDescriptor::Recv(&hv_E, 1, probe_proc, 3);
+            amrex::ParallelDescriptor::Recv(&hv_Bx, 1, probe_proc, 4);
+            amrex::ParallelDescriptor::Recv(&hv_By, 1, probe_proc, 5);
+            amrex::ParallelDescriptor::Recv(&hv_Bz, 1, probe_proc, 6);
+            amrex::ParallelDescriptor::Recv(&hv_B, 1, probe_proc, 7);
+
+        }
+
+
+
+        // Fill output array
+        m_data[lev * noutputs + index_Ex] = hv_Ex;
+        m_data[lev * noutputs + index_Ey] = hv_Ey;
+        m_data[lev * noutputs + index_Ez] = hv_Ez;
+        m_data[lev * noutputs + index_absE] = std::sqrt(hv_E);
+        m_data[lev * noutputs + index_Bx] = hv_Bx;
+        m_data[lev * noutputs + index_By] = hv_By;
+        m_data[lev * noutputs + index_Bz] = hv_Bz;
+        m_data[lev * noutputs + index_absB] = std::sqrt(hv_B);
     }
     // end loop over refinement levels
 
