@@ -18,7 +18,7 @@ WarpX::CountExtFaces() {
             amrex::Box const &box = mfi.validbox();
             auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
             reduce_ops.eval(box, reduce_data,
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) -> amrex::GpuTuple<amrex::Real> {
+                [=] AMREX_GPU_DEVICE(int i, int j, int k) -> amrex::GpuTuple<int> {
                     return flag_ext_face(i, j, k);
                 });
         }
