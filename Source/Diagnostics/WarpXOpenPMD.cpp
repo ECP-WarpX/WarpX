@@ -1066,6 +1066,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   // meta data
   openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep, isBTD);
 
+  // collective open
+  series_iteration.open();
+
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {
     // lets see whether full_geom varies from geom[0]   xgeom[1]
