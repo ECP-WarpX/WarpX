@@ -84,6 +84,14 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
 
+        # For the scraper
+        self.scrape_xmin = kw.pop('warpx_scrape_lo_x', None)
+        self.scrape_xmax = kw.pop('warpx_scrape_hi_x', None)
+        self.scrape_ymin = kw.pop('warpx_scrape_lo_y', None)
+        self.scrape_ymax = kw.pop('warpx_scrape_hi_y', None)
+        self.scrape_zmin = kw.pop('warpx_scrape_lo_z', None)
+        self.scrape_zmax = kw.pop('warpx_scrape_hi_z', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -106,7 +114,14 @@ class Species(picmistandard.PICMI_Species):
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
                                              self_fields_max_iters = self.self_fields_max_iters,
-                                             self_fields_verbosity = self.self_fields_verbosity)
+                                             self_fields_verbosity = self.self_fields_verbosity,
+                                             scrape_xlo = self.scrape_xmin,
+                                             scrape_xhi = self.scrape_xmax,
+                                             scrape_ylo = self.scrape_ymin,
+                                             scrape_yhi = self.scrape_ymax,
+                                             scrape_zlo = self.scrape_zmin,
+                                             scrape_zhi = self.scrape_zmax
+                                            )
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
