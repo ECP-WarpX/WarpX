@@ -604,6 +604,10 @@ Particle initialization
       and ``<species_name>.xmax`` (and same in all directions). This requires additional
       parameter ``<species_name>.density``. i.e., the plasma density in :math:`m^{-3}`.
 
+    * ``predefined``: Predefined density profile.
+      This requires additional parameters ``<species_name>.predefined_profile_name`` and ``<species_name>.predefined_profile_params``.
+      Currently, only a parabolic channel density profile is implemented.
+
     * ``parse_density_function``: the density is given by a function in the input file.
       It requires additional argument ``<species_name>.density_function(x,y,z)``, which is a
       mathematical expression for the density of the species, e.g.
@@ -701,7 +705,7 @@ Particle initialization
       ``vzbar`` until it reaches ``zinject_plane``.
 
 * ``species_name.predefined_profile_name`` (`string`)
-    Only read of ``<species_name>.electrons.profile`` is `predefined`.
+    Only read if ``<species_name>.profile`` is ``predefined``.
 
     * If ``parabolic_channel``, the plasma profile is a parabolic profile with
       cosine-like ramps at the beginning and the end of the profile.
