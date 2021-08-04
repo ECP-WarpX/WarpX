@@ -5,6 +5,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Utils{
@@ -87,8 +88,13 @@ namespace MsgLogger{
         std::vector<char> serialize_msg_list(
             const std::vector<MsgWithCounter>& msg_list) const;
 
-        int aux_find_gather_rank() const;
+        std::pair<int,int> aux_find_gather_rank_and_items(
+            int how_many_items) const;
 
+        int m_rank = 0;
+        int m_num_procs = 0;
+        int m_io_rank = 0;
+        bool m_am_i_io = false;
         std::map<Msg, int> m_messages;
     };
 }

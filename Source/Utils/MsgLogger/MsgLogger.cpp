@@ -3,7 +3,10 @@
 
 #include "MsgLoggerSerialization.H"
 
-#include <iostream> //DEBUG
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Print.H>
+
+#include <iostream>
 #include <sstream>
 
 using namespace Utils::MsgLogger;
@@ -38,7 +41,12 @@ MsgWithCounter MsgWithCounter::deserialize (const std::vector<char>& serialized)
     return msg_with_counter;
 }
 
-Logger::Logger(){}
+Logger::Logger(){
+    m_rank = amrex::ParallelDescriptor::MyProc();
+    m_num_procs = amrex::ParallelDescriptor::NProcs();
+    m_io_rank = amrex::ParallelDescriptor::IOProcessorNumber();
+    m_am_i_io = (m_rank == m_io_rank);
+}
 
 void Logger::record_msg(Msg msg)
 {
@@ -59,13 +67,28 @@ std::vector<MsgWithCounter> Logger::get_msg_list() const
 std::vector<MsgWithCounterAndRanks> Logger::collective_gather_msg_lists() const
 {
 
-    const auto my_serialized_list =
-        serialize_msg_list(this->get_msg_list());
-    const auto how_many_items = my_serialized_list.size();
+    const auto my_list =
+        get_msg_list();
+    const auto how_many_items = my_list.size();
 
-    const auto gather_rank = aux_find_gather_rank();
+    int gather_rank = 0;
+    int gather_rank_how_many = 0;
+    std::tie(gather_rank, gather_rank_how_many) =
+        aux_find_gather_rank_and_items(how_many_items);
 
-    return std::vector<MsgWithCounterAndRanks>{};
+    if(gather_rank_how_many == 0)
+        return std::vector<MsgWithCounterAndRanks>{};
+
+    auto list_with_ranks = std::vector<MsgWithCounterAndRanks>{};
+
+    for (const auto& el : my_list){
+        list_with_ranks.emplace_back(MsgWithCounterAndRanks{
+            el,
+            std::vector<int>{m_io_rank},
+        });
+    }
+
+    return list_with_ranks;
 }
 
 
@@ -86,8 +109,24 @@ std::vector<char> Logger::serialize_msg_list(
     return serialized;
 }
 
-int Logger::aux_find_gather_rank() const
+std::pair<int,int> Logger::aux_find_gather_rank_and_items(int how_many_items) const
 {
-    return 0;
+    int max_items = 0;
+    int max_rank = 0;
+
+    auto num_msg =
+        amrex::ParallelDescriptor::Gather(how_many_items, m_io_rank);
+
+    if (m_am_i_io){
+        const auto it_max = std::max_element(num_msg.begin(), num_msg.end());
+        max_items = *it_max;
+        max_rank = (max_items == how_many_items) ?
+            m_io_rank : it_max - num_msg.begin();
+    }
+
+    auto pack = std::array<int,2>{max_rank, max_items};
+    amrex::ParallelDescriptor::Bcast(pack.data(), 2, m_io_rank);
+
+    return std::make_pair(max_rank, max_items);
 }
 

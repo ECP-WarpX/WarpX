@@ -28,6 +28,9 @@ namespace Utils
         std::string print_local_warnings(
             const std::string& when) const;
 
+        std::string print_global_warnings(
+            const std::string& when) const;
+
         void debug_read_warnings_from_input(amrex::ParmParse& params);
 
         static const int warn_line_size = 80;
@@ -39,6 +42,10 @@ namespace Utils
         aux_sort_messages(
             std::vector<MsgLogger::MsgWithCounter>&& all_msg_with_counter) const;
 
+        std::vector<MsgLogger::MsgWithCounterAndRanks>
+        aux_sort_messages(
+            std::vector<MsgLogger::MsgWithCounterAndRanks>&& all_msg_with_counter_and_ranks) const;
+
         std::string aux_get_header(
             const std::string& when,
             int line_size,
@@ -46,6 +53,9 @@ namespace Utils
 
         std::string aux_print_warn_msg(
             const MsgLogger::MsgWithCounter& msg_with_counter) const;
+
+        std::string aux_print_warn_msg(
+            const MsgLogger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const;
 
         std::string aux_msg_formatter(
             const std::string& msg,

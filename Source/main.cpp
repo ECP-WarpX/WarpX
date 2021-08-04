@@ -64,6 +64,7 @@ int main(int argc, char* argv[])
         warpx.Evolve();
 
         warpx.PrintLocalWarnings("THE END");
+        warpx.PrintGlobalWarnings("THE END");
 
         if (warpx.Verbose()) {
             auto end_total = static_cast<Real>(amrex::second()) - strt_total;

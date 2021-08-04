@@ -442,6 +442,12 @@ WarpX::PrintLocalWarnings(const std::string& when)
 }
 
 void
+WarpX::PrintGlobalWarnings(const std::string& when)
+{
+    amrex::Print() << m_p_warn_manager->print_global_warnings(when);
+}
+
+void
 WarpX::ReadParameters ()
 {
     {
