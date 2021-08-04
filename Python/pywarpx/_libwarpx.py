@@ -604,7 +604,13 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
         A List of numpy arrays.
 
     '''
-    dimensions = {'x' : 1, 'y' : 2, 'z' : 3}
+    if geometry_dim == '3d':
+        dimensions = {'x' : 1, 'y' : 2, 'z' : 3}
+    elif geometry_dim == '2d':
+        dimensions = {'x' : 1, 'z' : 2}
+    else:
+        raise NotImplementedError("RZ is not supported for particle scraping.")
+
     boundary_parts = boundary.split("_")
     dim_num = dimensions[boundary_parts[0]]
     side = 0 if boundary_parts == 'lo' else 1
@@ -1771,7 +1777,13 @@ def get_num_particles_impacted_boundary(species_name, boundary):
         The number of particles scraped so far from a boundary and of a species.
 
     '''
-    dimensions = {'x' : 1, 'y' : 2, 'z' : 3}
+    if geometry_dim == '3d':
+        dimensions = {'x' : 1, 'y' : 2, 'z' : 3}
+    elif geometry_dim == '2d':
+        dimensions = {'x' : 1, 'z' : 2}
+    else:
+        raise NotImplementedError("RZ is not supported for particle scraping.")
+
     boundary_parts = boundary.split("_")
     dim_num = dimensions[boundary_parts[0]]
     side = 0 if boundary_parts == 'lo' else 1
