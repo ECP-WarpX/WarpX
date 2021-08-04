@@ -595,9 +595,7 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
 
         species_name   : the species name that the data will be returned for.
         boundary       : the boundary from which to get the scraped particle data.
-                         The formula for the boundary is dimension * 2 + side.
-                         Where dimension is 1, 2, or 3, and side is 0 or 1, representing
-                         the low, or high boundary.
+                         In the form x/y/z_hi/lo
         comp_name      : the component of the array data that will be returned.
         level          : Which AMR level to retrieve scraped particle data from.
     Returns
@@ -606,11 +604,18 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
         A List of numpy arrays.
 
     '''
+    dimensions = {'x' : 1, 'y' : 2, 'z' : 3}
+    boundary_parts = boundary.split("_")
+    dim_num = dimensions[boundary_parts[0]]
+    side = 0 if boundary_parts == 'lo' else 1
+
+    boundary_num = 2 * dim_num + side
+
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
     data = libwarpx.warpx_getParticleBoundaryBuffer(
         ctypes.c_char_p(species_name.encode('utf-8')),
-        boundary, level,
+        boundary_num, level,
         ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
         ctypes.c_char_p(comp_name.encode('utf-8'))
     )
@@ -1758,9 +1763,7 @@ def get_num_particles_impacted_boundary(species_name, boundary):
 
         species_name   : return the number of scraped particles of this species
         boundary       : the boundary from which to get the scraped particle data.
-                    The formula for the boundary is dimension * 2 + side.
-                    Where dimension is 1, 2, or 3, and side is 0 or 1, representing
-                    the low, or high boundary.
+                         In the form x/y/z_hi/lo
 
     Returns
     -------
@@ -1768,8 +1771,15 @@ def get_num_particles_impacted_boundary(species_name, boundary):
         The number of particles scraped so far from a boundary and of a species.
 
     '''
+    dimensions = {'x' : 1, 'y' : 2, 'z' : 3}
+    boundary_parts = boundary.split("_")
+    dim_num = dimensions[boundary_parts[0]]
+    side = 0 if boundary_parts == 'lo' else 1
+
+    boundary_num = 2 * dim_num + side
+
     return libwarpx.warpx_getNumParticlesImpactedBoundary(
-        ctypes.c_char_p(species_name.encode('utf-8')), boundary
+        ctypes.c_char_p(species_name.encode('utf-8')), boundary_num
     )
 
 def _get_nodal_flag(getdatafunc):
