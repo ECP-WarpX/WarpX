@@ -1998,9 +1998,11 @@ Reduced Diagnostics
         the value of the norm :math:`|B|` of the magnetic field,
         at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
 
-        Note: the norms are always averaged on the cell centers before they are written to file.
-        The electromagnetic field components are averaged on the cell centers by default, but can
-        they be saved as non-averaged by setting ``<reduced_diags_name>.raw_fields = true``.
+        Note: the norms are always interpolated tos the measurement point before they are written
+        to file. The electromagnetic field components are interpolated to the measurement point
+        by default, but can they be saved as non-averaged by setting
+        ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
+        containing the measurement point are saved.
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as
