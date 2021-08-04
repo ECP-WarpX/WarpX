@@ -35,6 +35,7 @@
 #include <AMReX_StructOfArrays.H>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <iostream>
 #include <map>
