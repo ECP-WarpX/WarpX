@@ -175,7 +175,7 @@ void FieldProbe::ComputeDiags (int step)
                 amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
-                //If not saving the raw fields interpolate the fields to the measurement point
+                //Interpolating to the probe point
                 doGatherShapeN (x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
                                 Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
                                 arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
