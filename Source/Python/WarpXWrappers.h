@@ -38,6 +38,9 @@ extern "C" {
 
     int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary);
 
+    amrex::ParticleReal** warpx_getParticleBoundaryBuffer(const char* species_name, int boundary, int lev,
+                     int* num_tiles, int** particles_per_tile, const char* comp_name);
+
     int warpx_SpaceDim();
 
     void amrex_init (int argc, char* argv[]);

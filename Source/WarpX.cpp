@@ -226,6 +226,30 @@ WarpX::getNumParticlesImpactedBoundary(std::string species_name, int boundary) {
     return m_particle_buffers->getNumParticlesInContainer(species_name, boundary);
 }
 
+amrex::ParticleReal**
+WarpX::getParticleBoundaryBuffer(std::string species_name, int boundary, int lev,
+                     int* num_tiles, int** particles_per_tile, const int comp)
+{
+    auto& particle_buffer = m_particle_buffers->getParticleBuffer(species_name, boundary);
+
+    int i = 0;
+    for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
+
+    // *num_tiles = myspc.numLocalTilesAtLevel(lev);
+    *num_tiles = i;
+    *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+
+    amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(amrex::ParticleReal*));
+    i = 0;
+    for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
+        auto& soa = pti.GetStructOfArrays();
+        data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
+        (*particles_per_tile)[i] = pti.numParticles();
+    }
+
+    return data;
+}
+
 WarpX::WarpX ()
 {
     m_instance = this;

@@ -187,6 +187,7 @@ libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getParticleBoundaryBufferNSpecies.restype = ctypes.c_int
 libwarpx.warpx_getNumParticlesImpactedBoundary.restype = ctypes.c_int
+libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 
 libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
@@ -581,6 +582,29 @@ def get_particle_arrays(species_name, comp_name, level):
     _libc.free(data)
     return particle_data
 
+def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
+    particles_per_tile = _LP_c_int()
+    num_tiles = ctypes.c_int(0)
+    data = libwarpx.warpx_getParticleBoundaryBuffer(
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        boundary, level,
+        ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
+        ctypes.c_char_p(comp_name.encode('utf-8'))
+    )
+
+    particle_data = []
+    for i in range(num_tiles.value):
+        arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
+        try:
+            # This fails on some versions of numpy
+            arr.setflags(write=1)
+        except ValueError:
+            pass
+        particle_data.append(arr)
+
+    _libc.free(particles_per_tile)
+    _libc.free(data)
+    return particle_data
 
 def get_particle_x(species_name, level=0):
     '''

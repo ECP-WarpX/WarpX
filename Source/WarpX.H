@@ -534,6 +534,9 @@ public:
 
     int getBoundaryParticleBufferNSpecies();
     int getNumParticlesImpactedBoundary(std::string species_name, int boundary);
+    amrex::ParticleReal** getParticleBoundaryBuffer(std::string species_name, int boundary, int lev,
+                     int* num_tiles, int** particles_per_tile, const int comp);
+
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
