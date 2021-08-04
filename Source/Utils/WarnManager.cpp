@@ -142,7 +142,7 @@ std::string WarnManager::aux_get_header(
         std::string(line_size - static_cast<int>(warn_header.length()), '*') << "\n" ;
 
     if(is_global){
-        ss << "* GLOBAL warning list  after " << " [ " <<  when << " ]\n";
+        ss << "* GLOBAL warning list  after " << " [ " <<  when << " ]\n*\n";
     }
     else{
         auto const mpi_rank = amrex::ParallelDescriptor::MyProc();
