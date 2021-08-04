@@ -1521,7 +1521,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
 
     bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
-                          || (do_electrostatic != ElectrostaticSolverAlgo::LabFrame);
+                          || (do_electrostatic == ElectrostaticSolverAlgo::LabFrame);
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
                          || update_with_rho || current_correction;
