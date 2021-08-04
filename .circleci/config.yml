@@ -94,6 +94,15 @@ jobs:
             export OMP_NUM_THREADS=1
             pytest --junitxml=test-reports/junit.xml --cov=mewarpx --cov-report=xml
 
+      # run examples!
+      - run:
+          name: run examples
+          command: |
+            . venv/bin/activate
+            cd mewarpx/examples
+            export OMP_NUM_THREADS=1
+            for f in *.py; do python $f --steps 5; done
+
       # Install mwxp and run its tests (minimal output)
       - run:
           name: install and run mwxp

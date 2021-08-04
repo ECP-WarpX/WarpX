@@ -8,11 +8,15 @@ mwxutil.init_libwarpx(ndim=2, rz=False)
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.diags_store import diag_base
+from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
 from mewarpx import mepicmi, emission, mcc_wrapper, poisson_pseudo_1d
 
 from pywarpx import picmi, _libwarpx, callbacks
 
 import numpy as np
+
+import sys
+import argparse
 
 constants = picmi.constants
 
@@ -52,25 +56,31 @@ zmax = D_CA
 DT = 1.0 / (400 * FREQ)
 
 # Total simulation time in seconds
-TOTAL_TIME = 50 * DT # 1280 / FREQ
+TOTAL_TIME = 1280 / FREQ
 # Time (in seconds) between diagnostic evaluations
-DIAG_INTERVAL = 10 * DT # 32 / FREQ
+DIAG_INTERVAL = 32 / FREQ
 
 # --- Number of time steps
 max_steps = int(TOTAL_TIME / DT)
 diag_steps = int(DIAG_INTERVAL / DT)
-# diagnostic_intervals = "400::10"
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--steps', help='set the number of simulation steps manually', type=int)
+args, left = parser.parse_known_args()
+sys.argv = sys.argv[:1]+left
 
 print('Setting up simulation with')
-print('  dt = %.3e s' % DT)
-print('  Total time = %.3e s (%i timesteps)' % (TOTAL_TIME, max_steps))
+print(f'  dt = {DT:3e} s')
+if args.steps:
+    print(f' Total time = {DT*args.steps:3e} ({args.steps} timesteps)')
+else:
+    print(f' Total time = {TOTAL_TIME:3e} s ({max_steps} timesteps)')
 
 ##########################
 # physics components
 ##########################
 
-anode_voltage = lambda t: VOLTAGE * np.sin(2.0 * np.pi * FREQ * t)
-# anode_voltage = f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)"
+anode_voltage = f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)"
 
 ##########################
 # declare the simulation grid
@@ -121,14 +131,13 @@ solver = poisson_pseudo_1d.PoissonSolverPseudo1D(grid=mwxrun.grid)
 # diagnostics
 ##########################
 
-field_diag = picmi.FieldDiagnostic(
-    name = 'diags',
-    grid = mwxrun.grid,
-    period = diagnostic_intervals,
-    data_list = ['rho_electrons', 'rho_he_ions', 'phi'],
-    write_dir = 'diags/',
+field_diag = FieldDiagnostic(
+    diag_steps=diag_steps,
+    diag_data_list=['rho_electrons', 'rho_he_ions', 'phi'],
+    grid=mwxrun.grid,
+    name='diags',
+    write_dir='diags/'
 )
-
 ##########################
 # simulation setup
 ##########################
@@ -136,8 +145,6 @@ field_diag = picmi.FieldDiagnostic(
 mwxrun.simulation.solver = solver
 mwxrun.simulation.time_step_size = DT
 mwxrun.simulation.max_steps = max_steps
-
-mwxrun.simulation.add_diagnostic(field_diag)
 
 ##########################
 # WarpX and mewarpx initialization
@@ -163,16 +170,16 @@ def _get_rho_ions():
 ##########################
 # simulation run
 ##########################
+if args.steps:
+    mwxrun.simulation.step(args.steps)
+else:
+    mwxrun.simulation.step(max_steps - diag_steps)
+    callbacks.installafterstep(_get_rho_ions)
+    mwxrun.simulation.step(diag_steps)
 
-mwxrun.simulation.step(max_steps - diag_steps)
+    ##########################
+    # collect diagnostics
+    ##########################
 
-callbacks.installafterstep(_get_rho_ions)
-
-mwxrun.simulation.step(diag_steps)
-
-##########################
-# collect diagnostics
-##########################
-
-if mwxrun.me == 0:
-    np.save('direct_solver_avg_rho_data.npy', rho_array)
+    if mwxrun.me == 0:
+        np.save('avg_rho_data.npy', rho_array)

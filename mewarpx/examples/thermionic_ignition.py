@@ -1,16 +1,18 @@
 from mewarpx import util as mwxutil
 mwxutil.init_libwarpx(ndim=2, rz=False)
 
-from pywarpx import picmi
-
 from mewarpx import assemblies, emission, mepicmi
 from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.diags_store import diag_base
 from mewarpx.mcc_wrapper import MCC
+from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
 
 import mewarpx.mwxconstants as constants
+
+import sys
+import argparse
 
 ####################################
 # physics parameters
@@ -29,14 +31,13 @@ V_bias = 30 # V
 
 # --- Grid
 nx = 8
-ny = 128
+nz = 128
 
 xmin = 0.0
-ymin = 0.0
+zmin = 0.0
 
-xmax = D_CA / ny * nx
-ymax = D_CA
-number_per_cell_each_dim = [16, 16]
+xmax = D_CA / nz * nx
+zmax = D_CA
 
 TOTAL_TIME = 1e-11 # s
 DIAG_INTERVAL = 1.0e-9
@@ -44,36 +45,28 @@ DT = 0.5e-12 # s
 
 max_steps = int(TOTAL_TIME / DT)
 diag_steps = int(DIAG_INTERVAL / DT)
-diagnostic_intervals = '::%i' % diag_steps
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--steps', help='set the number of simulation steps manually', type=int)
+args, left = parser.parse_known_args()
+sys.argv = sys.argv[:1]+left
 
 print('Setting up simulation with')
-print(' dt = %.3e s' % DT)
-print(' Total time = %.3e s (%i timesteps)' % (TOTAL_TIME, max_steps))
-print(' Diag time = %.3e (%i timesteps)' % (DIAG_INTERVAL, diag_steps))
+print(f'  dt = {DT:3e} s')
+if args.steps:
+    print(f' Total time = {DT*max_steps:3e} ({args.steps} timesteps)')
+else:
+    print(f' Total time = {TOTAL_TIME:3e} s ({max_steps} timesteps)')
 
 #####################################
 # grid and solver
 #####################################
 
-grid = picmi.Cartesian2DGrid(
-    number_of_cells=[nx, ny],
-    lower_bound=[xmin, ymin],
-    upper_bound=[xmax, ymax],
-    bc_xmin='periodic',
-    bc_xmax='periodic',
-    bc_ymin='dirichlet',
-    bc_ymax='dirichlet',
-    bc_xmin_particles='periodic',
-    bc_xmax_particles='periodic',
-    bc_ymin_particles='absorbing',
-    bc_ymax_particles='absorbing',
-    moving_window_velocity=None,
-    warpx_max_grid_size=128,
-    warpx_potential_lo_z=0.0,
-    warpx_potential_hi_z=V_bias,
-)
+mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz)
+mwxrun.grid.potential_zmin = 0.0
+mwxrun.grid.potential_zmax = V_bias
 
-solver = PoissonSolverPseudo1D(grid=grid)
+solver = PoissonSolverPseudo1D(grid=mwxrun.grid)
 
 #################################
 # physics components
@@ -82,16 +75,12 @@ solver = PoissonSolverPseudo1D(grid=grid)
 electrons = mepicmi.Species(
     particle_type='electron',
     name='electrons',
-    warpx_grid=grid,
-    warpx_n_macroparticle_per_cell=number_per_cell_each_dim
 )
 
 ions = mepicmi.Species(
     particle_type='Ar',
     name='ar_ions',
     charge='q_e',
-    warpx_grid=grid,
-    warpx_n_macroparticle_per_cell=number_per_cell_each_dim
 )
 
 # MCC Collisions
@@ -104,13 +93,12 @@ mcc_wrapper = MCC(
 # diagnostics
 ##################################
 
-field_diag = picmi.FieldDiagnostic(
+field_diag = FieldDiagnostic(
+    diag_steps=diag_steps,
+    diag_data_list=['rho_electrons', 'rho_ar_ions', 'phi', 'J'],
+    grid=mwxrun.grid,
     name='diags',
-    grid=grid,
-    period=diagnostic_intervals,
-    data_list=['rho_electrons', 'rho_ar_ions', 'phi', 'J'],
-    write_dir='.',
-    warpx_file_prefix='diags'
+    write_dir='diags/'
 )
 
 #################################
@@ -121,7 +109,6 @@ mwxrun.simulation.solver = solver
 mwxrun.simulation.time_step_size = DT
 mwxrun.simulation.max_steps = max_steps
 
-mwxrun.simulation.add_diagnostic(field_diag)
 mwxrun.init_run()
 
 ######################################
@@ -149,7 +136,11 @@ diag_base.TextDiag(diag_steps=diag_steps, preset_string='perfdebug')
 ##################################
 # Simulation run
 #################################
-mwxrun.simulation.step(max_steps)
+
+if args.steps:
+    mwxrun.simulation.step(args.steps)
+else:
+    mwxrun.simulation.step(max_steps)
 
 print(electrons.get_array_from_pid("w"))
 print(electrons.get_array_from_pid("E_total"))
