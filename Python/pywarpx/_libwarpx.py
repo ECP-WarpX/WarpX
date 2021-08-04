@@ -607,7 +607,7 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
     if geometry_dim == '3d':
         dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
     elif geometry_dim == '2d':
-        dimensions = {'x' : 0, 'z' : 2}
+        dimensions = {'x' : 0, 'z' : 1}
     else:
         raise NotImplementedError("RZ is not supported for particle scraping.")
 
