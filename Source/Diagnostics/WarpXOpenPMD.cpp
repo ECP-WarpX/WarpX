@@ -374,7 +374,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
         if (m_Series) {
-            GetIteration(m_CurrentStep).close();
+            GetIteration(m_CurrentStep, isBTD).close();
         }
 
         // create a little helper file for ParaView 5.9+
@@ -442,7 +442,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 }
 
 void
-WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags)
+WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
+                                         const bool isBTD)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
@@ -530,7 +531,8 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
          real_flags,
          int_flags,
          real_names, int_names,
-         pc->getCharge(), pc->getMass()
+         pc->getCharge(), pc->getMass(),
+         isBTD
       );
     }
 
@@ -548,12 +550,13 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const amrex::Vector<std::string>& real_comp_names,
                     const amrex::Vector<std::string>&  int_comp_names,
                     amrex::ParticleReal const charge,
-                    amrex::ParticleReal const mass) const
+                    amrex::ParticleReal const mass,
+                    const bool isBTD) const
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-  openPMD::Iteration& currIteration = GetIteration(iteration);
+  openPMD::Iteration& currIteration = GetIteration(iteration, isBTD);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -1061,7 +1064,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep);
+  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep, isBTD);
+
+  // collective open
+  series_iteration.open();
 
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {
