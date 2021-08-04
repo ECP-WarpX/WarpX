@@ -1765,7 +1765,7 @@ def get_num_particles_impacted_boundary(species_name, boundary):
     Returns
     -------
 
-        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+        The number of particles scraped so far from a boundary and of a species.
 
     '''
     return libwarpx.warpx_getNumParticlesImpactedBoundary(
