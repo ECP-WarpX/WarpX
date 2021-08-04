@@ -34,7 +34,7 @@ public:
     virtual void ComputeDiags(int step) override final;
 
 private:
-    amrex::Real x_probe, y_probe, z_probe;
+    amrex::ParticleReal x_probe, y_probe, z_probe;
     bool raw_fields;
 };
 

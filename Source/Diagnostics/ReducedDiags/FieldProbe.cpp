@@ -6,6 +6,7 @@
  */
 
 #include "FieldProbe.H"
+#include "Particles/Gather/FieldGather.H"
 
 #include "Utils/CoarsenIO.H"
 #include "Utils/IntervalsParser.H"
@@ -38,11 +39,11 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    ParmParse pp_amr("amr");
+    amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
-    ParmParse pp_rd_name(rd_name);
+    amrex::ParmParse pp_rd_name(rd_name);
     pp_rd_name.query("x_probe", x_probe);
     pp_rd_name.query("y_probe", y_probe);
     pp_rd_name.query("z_probe", z_probe);
@@ -118,12 +119,12 @@ void FieldProbe::ComputeDiags (int step)
         const int k_probe = amrex::Math::floor((z_probe - prob_lo[2])/cell_size[2]);
 
         // get MultiFab data at lev
-        const MultiFab & Ex = warpx.getEfield(lev,0);
-        const MultiFab & Ey = warpx.getEfield(lev,1);
-        const MultiFab & Ez = warpx.getEfield(lev,2);
-        const MultiFab & Bx = warpx.getBfield(lev,0);
-        const MultiFab & By = warpx.getBfield(lev,1);
-        const MultiFab & Bz = warpx.getBfield(lev,2);
+        const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
+        const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
+        const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
+        const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
+        const amrex::MultiFab & By = warpx.getBfield(lev,1);
+        const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
 
         constexpr int noutputs = 8; // probing Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
         constexpr int index_Ex = 0;
@@ -135,37 +136,24 @@ void FieldProbe::ComputeDiags (int step)
         constexpr int index_Bz = 6;
         constexpr int index_absB = 7;
 
-        // General preparation of interpolation and reduction operations
-        const GpuArray<int,3> cellCenteredtype{0,0,0};
-        const GpuArray<int,3> reduction_coarsening_ratio{1,1,1};
-        constexpr int reduction_comp = 0;
-
         // Prepare interpolation of field components to cell center
         // The arrays below store the index type (staggering) of each MultiFab, with the third
         // component set to zero in the two-dimensional case.
-        auto Extype = amrex::GpuArray<int,3>{0,0,0};
-        auto Eytype = amrex::GpuArray<int,3>{0,0,0};
-        auto Eztype = amrex::GpuArray<int,3>{0,0,0};
-        auto Bxtype = amrex::GpuArray<int,3>{0,0,0};
-        auto Bytype = amrex::GpuArray<int,3>{0,0,0};
-        auto Bztype = amrex::GpuArray<int,3>{0,0,0};
-        for (int i = 0; i < AMREX_SPACEDIM; ++i){
-            Extype[i] = Ex.ixType()[i];
-            Eytype[i] = Ey.ixType()[i];
-            Eztype[i] = Ez.ixType()[i];
-            Bxtype[i] = Bx.ixType()[i];
-            Bytype[i] = By.ixType()[i];
-            Bztype[i] = Bz.ixType()[i];
-        }
+        amrex::IndexType const Extype = Ex.ixType();
+        amrex::IndexType const Eytype = Ey.ixType();
+        amrex::IndexType const Eztype = Ez.ixType();
+        amrex::IndexType const Bxtype = Bx.ixType();
+        amrex::IndexType const Bytype = By.ixType();
+        amrex::IndexType const Bztype = Bz.ixType();
 
         amrex::Real hv_Ex, hv_Ey, hv_Ez, hv_E, hv_Bx, hv_By, hv_Bz, hv_B;
-        int probe_proc = -1; //amrex::ParallelDescriptor::IOProcessorNumber();
+        int probe_proc = -1;
         // MFIter loop to interpolate fields to cell center and get maximum values
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-            const Box& box = mfi.validbox();
+        for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            const amrex::Box& box = mfi.validbox();
 
             if(box.contains(i_probe, j_probe, k_probe)) {
                 // Make the box cell centered in preparation for the interpolation (and to avoid
@@ -177,25 +165,24 @@ void FieldProbe::ComputeDiags (int step)
                 const auto &arrBy = By[mfi].array();
                 const auto &arrBz = Bz[mfi].array();
 
-                //Retrieveing cell-centered fields
-                const amrex::Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
-                                                                reduction_coarsening_ratio,
-                                                                i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
-                                                                reduction_coarsening_ratio,
-                                                                i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
-                                                                reduction_coarsening_ratio,
-                                                                i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
-                                                                reduction_coarsening_ratio,
-                                                                i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
-                                                                reduction_coarsening_ratio,
-                                                                i_probe, j_probe, k_probe, reduction_comp);
-                const amrex::Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
-                                                                reduction_coarsening_ratio,
-                                                                i_probe, j_probe, k_probe, reduction_comp);
+                amrex::ParticleReal Ex_interp = 0._rt, Ey_interp = 0._rt, Ez_interp = 0._rt;
+                amrex::ParticleReal Bx_interp = 0._rt, By_interp = 0._rt, Bz_interp = 0._rt;
+
+                amrex::Array<amrex::Real,3> v_galilean = {{0}};
+                const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,v_galilean,
+                                                                                  lev);
+                const std::array<Real,3>& dx = WarpX::CellSize(lev);
+                amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+                amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+
+                //If not saving the raw fields interpolate the fields to the measurement point
+                if(!raw_fields){
+                    doGatherShapeN (x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
+                                    Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
+                                    arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
+                                    dx_arr, xyzmin_arr, amrex::lbound(box),
+                                    WarpX::n_rz_azimuthal_modes, WarpX::nox, false);
+                }
 
                 // Either save the interpolated fields or the raw fields depending on the raw_fields flag
                 hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
@@ -207,13 +194,13 @@ void FieldProbe::ComputeDiags (int step)
                 hv_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
                 hv_B = Bx_interp * Bx_interp + By_interp * By_interp + Bz_interp * Bz_interp;
 
-                probe_proc = ParallelDescriptor::MyProc();
+                probe_proc = amrex::ParallelDescriptor::MyProc();
             }
         }
-        //All the processors have probe_proc = -1 except the one that contains the point, which
-        //has probe_proc equal to a number >=0. In this way we communicate to all the processors
-        //the rank of the processor which contains the point
 
+        //All the processors have probe_proc = -1 except the one that contains the point, which
+        //has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
+        //processors the rank of the processor which contains the point
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
         if(amrex::ParallelDescriptor::MyProc()==probe_proc){
@@ -245,8 +232,6 @@ void FieldProbe::ComputeDiags (int step)
             amrex::ParallelDescriptor::Recv(&hv_B, 1, probe_proc, 7);
 
         }
-
-
 
         // Fill output array
         m_data[lev * noutputs + index_Ex] = hv_Ex;
