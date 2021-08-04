@@ -176,13 +176,11 @@ void FieldProbe::ComputeDiags (int step)
                 amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
                 //If not saving the raw fields interpolate the fields to the measurement point
-                if(!raw_fields){
-                    doGatherShapeN (x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
-                                    Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
-                                    arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
-                                    dx_arr, xyzmin_arr, amrex::lbound(box),
-                                    WarpX::n_rz_azimuthal_modes, WarpX::nox, false);
-                }
+                doGatherShapeN (x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
+                                Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
+                                arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
+                                dx_arr, xyzmin_arr, amrex::lbound(box),
+                                WarpX::n_rz_azimuthal_modes, WarpX::nox, false);
 
                 // Either save the interpolated fields or the raw fields depending on the raw_fields flag
                 hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
