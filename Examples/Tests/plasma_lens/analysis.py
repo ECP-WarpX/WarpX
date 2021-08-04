@@ -56,7 +56,7 @@ def applylens(x0, vx0, vz0, lens_length, lens_strength):
 plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
 plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]
 plasma_lens_lengths = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_lengths').split()]
-plasma_lens_strengths = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths').split()]
+plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_E').split()]
 
 clight = c
 
@@ -81,8 +81,8 @@ for i in range(len(plasma_lens_starts)):
     tt = tt + dt
     xx = xx + dt*ux
     yy = yy + dt*uy
-    xx, ux = applylens(xx, ux, uz, plasma_lens_lengths[i], plasma_lens_strengths[i])
-    yy, uy = applylens(yy, uy, uz, plasma_lens_lengths[i], plasma_lens_strengths[i])
+    xx, ux = applylens(xx, ux, uz, plasma_lens_lengths[i], plasma_lens_strengths_E[i])
+    yy, uy = applylens(yy, uy, uz, plasma_lens_lengths[i], plasma_lens_strengths_E[i])
     dt = plasma_lens_lengths[i]/uz
     tt = tt + dt
     zz = z_lens + plasma_lens_lengths[i]

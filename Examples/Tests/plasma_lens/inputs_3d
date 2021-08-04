@@ -41,7 +41,7 @@ particles.E_ext_particle_init_style = repeated_plasma_lens
 particles.repeated_plasma_lens_period = 0.5
 particles.repeated_plasma_lens_starts = 0.1 0.11 0.12 0.13
 particles.repeated_plasma_lens_lengths = 0.1 0.11 0.12 0.13
-particles.repeated_plasma_lens_strengths = 0.07 0.06 0.06 0.03
+particles.repeated_plasma_lens_strengths_E = 0.07 0.06 0.06 0.03
 
 # Diagnostics
 diagnostics.diags_names = diag1
