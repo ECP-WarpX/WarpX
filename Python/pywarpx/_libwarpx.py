@@ -200,7 +200,6 @@ libwarpx.warpx_getJy_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getJz_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
 
-libwarpx.warpx_getNumParticlesImpactedBoundary.argtypes = (ctypes.c_char_p, ctypes.c_int)
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
 #libwarpx.warpx_ComputePMLFactors.argtypes = (ctypes.c_int, c_real)
@@ -583,6 +582,30 @@ def get_particle_arrays(species_name, comp_name, level):
     return particle_data
 
 def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
+    '''
+
+    This returns a list of numpy arrays containing the particle array data
+    for a species that has been scraped by a specific simulation boundary.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        species_name   : the species name that the data will be returned for.
+        boundary       : the boundary from which to get the scraped particle data.
+                         The formula for the boundary is dimension * 2 + side.
+                         Where dimension is 1, 2, or 3, and side is 0 or 1, representing
+                         the low, or high boundary.
+        comp_name      : the component of the array data that will be returned.
+        level          : Which AMR level to retrieve scraped particle data from.
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
     data = libwarpx.warpx_getParticleBoundaryBuffer(
