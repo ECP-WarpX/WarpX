@@ -234,47 +234,30 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 #endif
 }
 
-int ParticleBoundaryBuffer::getNumParticlesInContainer(const std::string &species_name, int boundary) {
+int ParticleBoundaryBuffer::getNumParticlesInContainer(
+        const std::string species_name, int boundary) {
     if (m_do_boundary_buffer[boundary].size() == 0) {
         return 0;
     }
 
     auto& buffer = m_particle_containers[boundary];
+    auto index = getSpeciesIndexFromName(species_name);
 
-    auto it = std::find(m_species_names.begin(), m_species_names.end(), species_name);
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != m_species_names.end(),
-                                        "Attempted to get invalid species name \""
-                                        + species_name <+ "\" from the scraped particle buffer!\n");
-
-    int index = it - m_species_names.begin();
-
-    if (buffer[index].isDefined()) {
-        return buffer[index].TotalNumberOfParticles(false);
-    } else {
-        amrex::Print() << "Warning: tried to get the count for a buffer which is not defined!\n";
-        return 0;
-    }
+    if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false);
+    else return 0;
 }
 
 ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>&
-ParticleBoundaryBuffer::getParticleBuffer(std::string species_name, int boundary) {
+ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary].size() != 0,
-                                         "Attempted to get particle buffer for boundary "
-                                         + boundary + ", which is not used!");
+                                     "Attempted to get particle buffer for boundary "
+                                     + boundary + ", which is not used!");
 
     auto& buffer = m_particle_containers[boundary];
+    auto index = getSpeciesIndexFromName(species_name);
 
-    std::vector<std::string> all_species = m_species_names;
-
-    auto it = std::find(all_species.begin(), all_species.end(), species_name);
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != all_species.end(), "Tried to get invalid species name \""
-                                    + species_name + "\" from the scraped particle buffer!");
-
-    int index = it - all_species.begin();
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(), "Tried to get a buffer that is not defined!");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(),
+                                     "Tried to get a buffer that is not defined!");
 
     return buffer[index];
 }

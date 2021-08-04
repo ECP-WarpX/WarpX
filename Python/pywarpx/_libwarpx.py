@@ -1724,11 +1724,10 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
     '''
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityFPLoVects)
 
-def get_particle_boundary_buffer_n_species():
-    return libwarpx.warpx_getParticleBoundaryBufferNSpecies()
-
 def get_num_particles_impacted_boundary(species_name, boundary):
-    return libwarpx.warpx_getNumParticlesImpactedBoundary(ctypes.c_char_p(species_name.encode('utf-8')), boundary)
+    return libwarpx.warpx_getNumParticlesImpactedBoundary(
+        ctypes.c_char_p(species_name.encode('utf-8')), boundary
+    )
 
 def _get_nodal_flag(getdatafunc):
     data = getdatafunc()

@@ -34,13 +34,6 @@ extern "C" {
 
     int warpx_nCompsSpecies(const char* char_species_name);
 
-    int warpx_getParticleBoundaryBufferNSpecies();
-
-    int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary);
-
-    amrex::ParticleReal** warpx_getParticleBoundaryBuffer(const char* species_name, int boundary, int lev,
-                     int* num_tiles, int** particles_per_tile, const char* comp_name);
-
     int warpx_SpaceDim();
 
     void amrex_init (int argc, char* argv[]);
@@ -109,6 +102,12 @@ extern "C" {
 
     void warpx_addRealComp(
         const char* char_species_name, const char* char_comp_name, bool comm);
+
+    int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary);
+
+    amrex::ParticleReal** warpx_getParticleBoundaryBuffer(
+        const char* species_name, int boundary, int lev,
+        int* num_tiles, int** particles_per_tile, const char* comp_name);
 
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);

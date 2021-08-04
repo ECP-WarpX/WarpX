@@ -33,6 +33,13 @@ public:
         return m_species_names;
     }
 
+    int getSpeciesIndexFromName ( const std::string name ) const {
+        auto it = std::find(m_species_names.begin(), m_species_names.end(), name);
+        WarpXUtilMsg::AlwaysAssert(it != m_species_names.end(),
+                                   "ERROR: Unknown species name: " + name);
+        return std::distance(m_species_names.begin(), it);
+    }
+
     void gatherParticles (MultiParticleContainer& mypc,
                           const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
@@ -40,9 +47,9 @@ public:
 
     void printNumParticles () const;
 
-    int getNumParticlesInContainer(const std::string &species_name, int boundary);
+    int getNumParticlesInContainer(const std::string species_name, int boundary);
 
-    ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>& getParticleBuffer(std::string species_name, int boundary);
+    ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>& getParticleBuffer(const std::string species_name, int boundary);
 
     constexpr int numBoundaries () const {
         return AMREX_SPACEDIM*2
