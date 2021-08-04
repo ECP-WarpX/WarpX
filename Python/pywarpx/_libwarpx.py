@@ -370,7 +370,7 @@ def getCellSize(direction, level=0):
 #
 #    libwarpx.warpx_ComputePMLFactors(lev, dt)
 
-def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
+def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0., w=0,
                   unique_particles=True, **kwargs):
     '''
 
@@ -382,11 +382,12 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     species_name     : the species to add the particle to
     x, y, z          : arrays or scalars of the particle positions (default = 0.)
     ux, uy, uz       : arrays or scalars of the particle momenta (default = 0.)
+    w                : array or scalar of particle weights (default = 0.)
     unique_particles : whether the particles are unique or duplicated on
                        several processes. (default = True)
-    kwargs           : dictionary containing an entry for the particle weights
-                       (with keyword 'w') and all the extra particle attribute
-                       arrays. If an attribute is not given it will be set to 0.
+    kwargs           : dictionary containing an entry for all the extra particle
+                       attribute arrays. If an attribute is not given it will be
+                       set to 0.
 
     '''
 
@@ -397,9 +398,10 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     lenux = np.size(ux)
     lenuy = np.size(uy)
     lenuz = np.size(uz)
+    lenw = np.size(w)
 
     if (lenx == 0 or leny == 0 or lenz == 0 or lenux == 0 or
-        lenuy == 0 or lenuz == 0):
+        lenuy == 0 or lenuz == 0 or lenw == 0):
         return
 
     maxlen = max(lenx, leny, lenz, lenux, lenuy, lenuz)
@@ -409,6 +411,7 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     assert lenux==maxlen or lenux==1, "Length of ux doesn't match len of others"
     assert lenuy==maxlen or lenuy==1, "Length of uy doesn't match len of others"
     assert lenuz==maxlen or lenuz==1, "Length of uz doesn't match len of others"
+    assert lenw==maxlen or lenw==1, "Length of w doesn't match len of others"
     for key, val in kwargs.items():
         assert np.size(val)==1 or len(val)==maxlen, f"Length of {key} doesn't match len of others"
 
@@ -423,7 +426,9 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     if lenuy == 1:
         uy = np.array(uy)*np.ones(maxlen)
     if lenuz == 1:
-        uz = np.array(uz)*np.ones(maxlen,'d')
+        uz = np.array(uz)*np.ones(maxlen)
+    if lenw == 1:
+        w = np.array(w)*np.ones(maxlen)
     for key, val in kwargs.items():
         if np.size(val) == 1:
             kwargs[key] = np.array(val)*np.ones(maxlen)
@@ -431,13 +436,11 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     # --- The -3 is because the comps include the velocites
     nattr = get_nattr_species(species_name) - 3
     attr = np.zeros((maxlen, nattr))
+    attr[:,0] = w
 
     for key, vals in kwargs.items():
-        if key == 'w':
-            attr[:,0] = vals
-        else:
-            # --- The -3 is because components 1 to 3 are velocities
-            attr[:,get_particle_comp_index(species_name, key)-3] = vals
+        # --- The -3 is because components 1 to 3 are velocities
+        attr[:,get_particle_comp_index(species_name, key)-3] = vals
 
     libwarpx.warpx_addNParticles(
         ctypes.c_char_p(species_name.encode('utf-8')), x.size,
