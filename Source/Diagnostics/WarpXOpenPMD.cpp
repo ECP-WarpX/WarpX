@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Axel Huebl, Junmin Gu
+/* Copyright 2019-2021 Axel Huebl, Junmin Gu
  *
  * This file is part of WarpX.
  *
@@ -317,7 +317,7 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters);
 }
 
-WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
+WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
 {
   if( m_Series )
   {
@@ -850,7 +850,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
 
 void
-WarpXOpenPMDPlot::SetupPos(
+WarpXOpenPMDPlot::SetupPos (
     openPMD::ParticleSpecies& currSpecies,
     const unsigned long long& np,
     amrex::ParticleReal const charge,
@@ -894,15 +894,15 @@ WarpXOpenPMDPlot::SetupPos(
 
 
 /*
- * Set up paramter for mesh container using the geometry (from level 0)
+ * Set up parameter for mesh container using the geometry (from level 0)
  *
  * @param [IN] meshes: openPMD-api mesh container
  * @param [IN] full_geom: field geometry
  *
  */
 void
-WarpXOpenPMDPlot::SetupFields(  openPMD::Container< openPMD::Mesh >& meshes,
-                                amrex::Geometry& full_geom  ) const
+WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
+                                amrex::Geometry& full_geom ) const
 {
       // meta data for ED-PIC extension
       auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
@@ -973,9 +973,9 @@ WarpXOpenPMDPlot::SetupFields(  openPMD::Container< openPMD::Mesh >& meshes,
  * @param [IN]: mesh_comp     a component for the mesh
  */
 void
-WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
+WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  amrex::Geometry& full_geom,
-                                 openPMD::MeshRecordComponent& mesh_comp ) const
+                                 openPMD::MeshRecordComponent& mesh_comp) const
 {
        amrex::Box const & global_box = full_geom.Domain();
        auto const global_size = getReversedVec(global_box.size());
@@ -1009,10 +1009,10 @@ WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
  * @param comp_name [OUT]:   comp name for openPMD-api output
  */
 void
-WarpXOpenPMDPlot::GetMeshCompNames( int meshLevel,
+WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
                                     const std::string& varname,
                                     std::string& field_name,
-                                    std::string& comp_name ) const
+                                    std::string& comp_name) const
 {
     if (varname.size() >= 2u ) {
         std::string const varname_1st = varname.substr(0u, 1u); // 1st character
@@ -1131,7 +1131,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter(ParticleContainer* pc)
+WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc)
 {
   m_MPISize = amrex::ParallelDescriptor::NProcs();
   m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -1178,11 +1178,11 @@ WarpXParticleCounter::WarpXParticleCounter(ParticleContainer* pc)
 //     sum of all particles in the comm
 //
 void
-WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
-                           unsigned long long& offset,
-                           unsigned long long& sum)  const
-
-
+WarpXParticleCounter::GetParticleOffsetOfProcessor (
+    const long& numParticles,
+    unsigned long long& offset,
+    unsigned long long& sum
+) const
 {
     offset = 0;
 #if defined(AMREX_USE_MPI)
