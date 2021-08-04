@@ -1748,6 +1748,26 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityFPLoVects)
 
 def get_num_particles_impacted_boundary(species_name, boundary):
+    '''
+
+    This returns the number of particles that have been scraped so far in the simulation
+    from the specified boundary and of the specified species.
+
+    Parameters
+    ----------
+
+        species_name   : return the number of scraped particles of this species
+        boundary       : the boundary from which to get the scraped particle data.
+                    The formula for the boundary is dimension * 2 + side.
+                    Where dimension is 1, 2, or 3, and side is 0 or 1, representing
+                    the low, or high boundary.
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
     return libwarpx.warpx_getNumParticlesImpactedBoundary(
         ctypes.c_char_p(species_name.encode('utf-8')), boundary
     )
