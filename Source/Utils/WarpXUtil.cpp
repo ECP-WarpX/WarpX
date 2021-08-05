@@ -34,6 +34,7 @@
 #include <fstream>
 #include <set>
 #include <string>
+#include <limits>
 
 using namespace amrex;
 
@@ -274,13 +275,10 @@ int safeCastToInt(amrex::Real x, const std::string& real_name) {
     int result = 0;
     bool error_detected = false;
     std::string assert_msg;
-    // (2.0*(INT_MAX/2+1)) converts INT_MAX+1 to a real ensuring accuracy to all digits
-    if (x < (2.0*(INT_MAX/2+1))) {
-        #if -INT_MAX == INT_MIN
-        if (x > (2.0*(INT_MIN/2-1))) {
-        #else
-        if (std::ceil(x) >= INT_MIN) {
-        #endif
+    // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
+    // This accepts x = 2**31-1 but rejects 2**31.
+    if (x < (2.0*(std::numeric_limits<int>::max()/2+1))) {
+        if (std::ceil(x) >= std::numeric_limits<int>::min()) {
             result = static_cast<int>(x);
         } else {
             error_detected = true;
