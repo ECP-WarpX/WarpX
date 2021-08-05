@@ -28,10 +28,6 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
     for (int i = 0; i < num_boundaries; ++i)
     {
         m_particle_containers[i].resize(nspecies);
-        for (int j = 0; j < nspecies; ++j)
-        {
-            m_particle_containers[i][j].isDefined();
-        }
     }
 
     m_do_boundary_buffer.resize(num_boundaries);
