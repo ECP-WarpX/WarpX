@@ -130,7 +130,7 @@ btd_pltfile.do_back_transformed_fields = 1
 btd_pltfile.num_snapshots_lab = 4
 btd_pltfile.dz_snapshots_lab = 0.001
 btd_pltfile.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-btd_pltfile.format = openpmd
+btd_pltfile.format = plotfile
 btd_pltfile.buffer_size = 32
 
 # old BTD diagnostics
