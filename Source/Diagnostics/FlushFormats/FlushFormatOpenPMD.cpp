@@ -34,6 +34,8 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 #else
       encoding = openPMD::IterationEncoding::groupBased;
 #endif
+    else if ( 0 == openpmd_encoding.compare("g") )
+      encoding = openPMD::IterationEncoding::groupBased;
     else if ( 0 == openpmd_encoding.compare("f") )
       encoding = openPMD::IterationEncoding::fileBased;
 
@@ -119,7 +121,7 @@ FlushFormatOpenPMD::WriteToFile (
         varnames, mf, geom, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, isBTD);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);

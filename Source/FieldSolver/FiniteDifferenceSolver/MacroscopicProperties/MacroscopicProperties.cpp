@@ -122,7 +122,7 @@ MacroscopicProperties::InitData ()
     int lev = 0;
     BoxArray ba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
-    int ng = 3;
+    const amrex::IntVect ng = warpx.getngE();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
@@ -203,7 +203,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 
-        const Box& tb = mfi.growntilebox(grown_iv);
+        const Box& tb = mfi.tilebox(grown_iv, macro_mf->nGrowVect());
         auto const& macro_fab =  macro_mf->array(mfi);
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
