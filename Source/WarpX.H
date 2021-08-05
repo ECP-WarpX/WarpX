@@ -61,6 +61,10 @@
 #include <string>
 #include <vector>
 
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+static_assert(false, "Embedded boundaries are not supported in RZ mode.");
+#endif
+
 enum struct PatchType : int
 {
     fine,

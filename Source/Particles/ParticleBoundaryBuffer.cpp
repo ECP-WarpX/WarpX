@@ -118,6 +118,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         }
     }
 
+#ifdef AMREX_USE_EB
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < nspecies; ++i)
     {
@@ -165,4 +166,5 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             }
         }
     }
+#endif
 }
