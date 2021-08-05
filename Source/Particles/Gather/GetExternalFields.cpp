@@ -32,6 +32,7 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
     else if (mypc.m_E_ext_particle_s=="repeated_plasma_lens")
     {
         m_type = RepeatedPlasmaLens;
+        m_lens_is_electric = 1;
         m_dt = warpx.getdt(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
         auto& attribs = a_pti.GetAttribs();
@@ -69,6 +70,7 @@ GetExternalBField::GetExternalBField (const WarpXParIter& a_pti, int a_offset) n
     else if (mypc.m_B_ext_particle_s=="repeated_plasma_lens")
     {
         m_type = RepeatedPlasmaLens;
+        m_lens_is_electric = 0;
         m_dt = warpx.getdt(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
         auto& attribs = a_pti.GetAttribs();
