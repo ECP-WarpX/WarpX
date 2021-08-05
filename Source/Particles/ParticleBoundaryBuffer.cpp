@@ -166,5 +166,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             }
         }
     }
+#else
+    amrex::ignore_unused(distance_to_eb, dxi);
 #endif
 }
