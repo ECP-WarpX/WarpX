@@ -34,7 +34,7 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
         }
     }
 
-    m_do_boundary_buffer.resize(AMREX_SPACEDIM*2);
+    m_do_boundary_buffer.resize(num_boundaries);
     for (int i = 0; i < num_boundaries; ++i)
     {
         m_do_boundary_buffer[i].resize(nspecies, 0);
@@ -130,7 +130,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
         {
-            auto& plevel = species_buffer.GetParticles(lev);
+            const auto& plevel = pc.GetParticles(lev);
             for(amrex::ParConstIter<0,0,PIdx::nattribs> pti(pc, lev); pti.isValid(); ++pti)
             {
                 auto phiarr = (*distance_to_eb[lev])[pti].array();  // signed distance function
@@ -140,12 +140,12 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 const auto getPosition = GetParticlePosition(pti);
                 auto& ptile_buffer = species_buffer.DefineAndReturnParticleTile(lev, pti.index(),
                                                                                 pti.LocalTileIndex());
-                auto& ptile = plevel.at(index);
+                const auto& ptile = plevel.at(index);
                 auto np = ptile.numParticles();
                 if (np == 0) continue;
 
                 auto dst_index = ptile_buffer.numParticles();
-                ptile.resize(dst_index + np);
+                ptile_buffer.resize(dst_index + np);
 
                 using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto count = amrex::filterParticles(ptile_buffer, ptile,
