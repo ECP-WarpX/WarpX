@@ -2,11 +2,12 @@
 
 # Copyright 2021 Modern Electron
 
-# This script simply checks that the PICMI_inputs_2d.py run output
-# diagnostics, which confirms that the PICMI MCC interface works otherwise
-# the run would've crashed.
+# Currently this script just checks that the simulation successfully
+# finished. In the future it should be modified to check that the particle
+# scraper buffer matches what was directly retrieved during the simulation
+# using the Python wrappers.
 
-import glob
+from pathlib import Path
 
-files = sorted(glob.glob('Python_background_mcc_plt*'))[1:]
-assert len(files) > 0
+assert Path('Python_particle_scraper_plt00005').is_dir()
+

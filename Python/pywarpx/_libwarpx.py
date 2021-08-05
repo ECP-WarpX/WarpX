@@ -185,7 +185,6 @@ libwarpx.warpx_getChargeDensityCP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
 libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getParticleBoundaryBufferNSpecies.restype = ctypes.c_int
 libwarpx.warpx_getNumParticlesImpactedBoundary.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 

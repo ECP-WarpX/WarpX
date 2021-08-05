@@ -1,9 +1,8 @@
-# --- Input file for MCC testing. There is already a test of the MCC
-# --- functionality so this just tests the PICMI interface
+# --- Input file to test the particle scraper and the Python wrappers
+# --- to access the buffer of scraped particles.
 
 import numpy as np
 from pywarpx import picmi
-import pywarpx
 
 constants = picmi.constants
 
@@ -16,23 +15,19 @@ D_CA = 0.067 # m
 N_INERT = 9.64e20 # m^-3
 T_INERT = 300.0 # K
 
-FREQ = 13.56e6 # MHz
-
-VOLTAGE = 450.0
-
 M_ION = 6.67e-27 # kg
 
 PLASMA_DENSITY = 2.56e14 # m^-3
 T_ELEC = 30000.0 # K
 
-DT = 1.0 / (400 * FREQ)
+DT = 1e-10
 
 ##########################
 # numerics parameters
 ##########################
 
 # --- Number of time steps
-max_steps = 10
+max_steps = 5
 diagnostic_intervals = "::5"
 
 # --- Grid
@@ -69,67 +64,14 @@ uniform_plasma_ion = picmi.UniformDistribution(
 
 electrons = picmi.Species(
     particle_type='electron', name='electrons',
-    initial_distribution=uniform_plasma_elec
+    initial_distribution=uniform_plasma_elec,
+    warpx_scrape_lo_x=1, warpx_scrape_hi_x=1
 )
 ions = picmi.Species(
     particle_type='He', name='he_ions',
     charge='q_e',
-    initial_distribution=uniform_plasma_ion
-)
-electrons.scrape_zmin = 1
-electrons.scrape_zmax = 1
-electrons.scrape_xmax = 1
-electrons.scrape_xmin = 1
-
-ions.scrape_zmin = 1
-ions.scrape_zmax = 1
-ions.scrape_xmax = 1
-ions.scrape_xmin = 1
-
-# MCC collisions
-cross_sec_direc = '../../../../warpx-data/MCC_cross_sections/He/'
-mcc_electrons = picmi.MCCCollisions(
-    name='coll_elec',
-    species=electrons,
-    background_density=N_INERT,
-    background_temperature=T_INERT,
-    background_mass=ions.mass,
-    scattering_processes={
-        'elastic' : {
-            'cross_section' : cross_sec_direc+'electron_scattering.dat'
-        },
-        'excitation1' : {
-            'cross_section': cross_sec_direc+'excitation_1.dat',
-            'energy' : 19.82
-        },
-        'excitation2' : {
-            'cross_section': cross_sec_direc+'excitation_2.dat',
-            'energy' : 20.61
-        },
-        'ionization' : {
-            'cross_section' : cross_sec_direc+'ionization.dat',
-            'energy' : 24.55,
-            'species' : ions
-        },
-    }
-)
-
-mcc_ions = picmi.MCCCollisions(
-    name='coll_ion',
-    species=ions,
-    background_density=N_INERT,
-    background_temperature=T_INERT,
-    scattering_processes={
-        'elastic' : {
-            'cross_section' : cross_sec_direc+'ion_scattering.dat'
-        },
-        'back' : {
-            'cross_section' : cross_sec_direc+'ion_back_scatter.dat'
-        },
-        # 'charge_exchange' : {
-        #    'cross_section' : cross_sec_direc+'charge_exchange.dat'
-        # }
-    }
+    initial_distribution=uniform_plasma_ion,
+    warpx_scrape_lo_x=1, warpx_scrape_hi_x=1
 )
 
 ##########################
@@ -144,10 +86,9 @@ grid = picmi.Cartesian2DGrid(
     bc_xmax = 'dirichlet',
     bc_ymin = 'periodic',
     bc_ymax = 'periodic',
-    warpx_potential_hi_x = "%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
+    warpx_potential_hi_x=5,
     lower_boundary_conditions_particles=['absorbing', 'periodic'],
     upper_boundary_conditions_particles=['absorbing', 'periodic'],
-    moving_window_velocity = None,
     warpx_max_grid_size = nx//4
 )
 
@@ -165,7 +106,7 @@ field_diag = picmi.FieldDiagnostic(
     period = diagnostic_intervals,
     data_list = ['rho_electrons', 'rho_he_ions', 'phi'],
     write_dir = '.',
-    warpx_file_prefix = 'Python_background_mcc_plt'
+    warpx_file_prefix = 'Python_particle_scraper_plt'
 )
 
 ##########################
@@ -176,7 +117,6 @@ sim = picmi.Simulation(
     solver = solver,
     time_step_size = DT,
     max_steps = max_steps,
-    warpx_collisions=[mcc_electrons, mcc_ions],
     verbose=True
 )
 
@@ -195,15 +135,18 @@ sim.add_species(
 
 sim.add_diagnostic(field_diag)
 
+sim.step(max_steps - 1)
+
+# check scraped particle buffer part way through the simulation
+from pywarpx import _libwarpx
+
+n = _libwarpx.get_num_particles_impacted_boundary("electrons", 'x_hi')
+print("Number of electrons scraped:", n)
+weights = _libwarpx.get_particle_boundary_buffer("electrons", 'x_hi', 'w', 0)
+assert n == len(weights[0])+len(weights[1])
+
 ##########################
 # simulation run
 ##########################
 
-sim.step(max_steps)
-
-##########################
-# print scraped particles
-##########################
-
-n = pywarpx._libwarpx.get_num_particles_impacted_boundary("electrons", 'x_hi')
-print("Number of electrons scraped:", n)
+sim.step(1)
