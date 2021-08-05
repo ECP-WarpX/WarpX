@@ -968,6 +968,11 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.intervals = self.period
 
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
