@@ -370,7 +370,7 @@ def getCellSize(direction, level=0):
 #
 #    libwarpx.warpx_ComputePMLFactors(lev, dt)
 
-def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0., w=0,
+def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0., w=0.,
                   unique_particles=True, **kwargs):
     '''
 
@@ -404,7 +404,7 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0., w=0,
         lenuy == 0 or lenuz == 0 or lenw == 0):
         return
 
-    maxlen = max(lenx, leny, lenz, lenux, lenuy, lenuz)
+    maxlen = max(lenx, leny, lenz, lenux, lenuy, lenuz, lenw)
     assert lenx==maxlen or lenx==1, "Length of x doesn't match len of others"
     assert leny==maxlen or leny==1, "Length of y doesn't match len of others"
     assert lenz==maxlen or lenz==1, "Length of z doesn't match len of others"
