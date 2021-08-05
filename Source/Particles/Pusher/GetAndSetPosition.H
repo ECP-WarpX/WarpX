@@ -62,7 +62,8 @@ struct GetParticlePosition
 
     GetParticlePosition () = default;
 
-    GetParticlePosition (const WarpXParIter& a_pti, int a_offset = 0) noexcept
+    template <typename Iter>
+    GetParticlePosition (const Iter& a_pti, int a_offset = 0) noexcept
     {
         const auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;

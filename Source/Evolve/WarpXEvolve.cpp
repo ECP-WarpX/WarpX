@@ -256,7 +256,7 @@ WarpX::Evolve (int numsteps)
 
         mypc->ApplyBoundaryConditions();
 
-        m_particle_buffers->gatherParticles(*mypc);
+        m_particle_buffers->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
         m_particle_buffers->printNumParticles();
 
         // Electrostatic solver: particles can move by an arbitrary number of cells

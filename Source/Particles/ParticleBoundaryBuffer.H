@@ -23,7 +23,8 @@ public:
     int nSpecies() const {return m_species_names.size();}
     std::vector<std::string> GetSpeciesNames() const { return m_species_names; }
 
-    void gatherParticles (MultiParticleContainer& mypc);
+    void gatherParticles (MultiParticleContainer& mypc,
+                          const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
     void printNumParticles () const;
 
@@ -35,6 +36,27 @@ private:
     std::vector<std::vector<int> > m_do_boundary_buffer;
 
     std::vector<std::string> m_species_names;
+};
+
+struct IsOutsideDomainBoundary {
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_phi;
+    int m_idim;
+    int m_iside;
+
+    template <typename SrcData>
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    int operator() (const SrcData& src,
+                    int ip, const amrex::RandomEngine& /*engine*/) const noexcept
+    {
+        const auto& p = src.getSuperParticle(ip);
+        if (m_iside == 0) {
+            if (p.pos(m_idim) < m_plo[m_idim]) { return 1; }
+        } else {
+            if (p.pos(m_idim) >= m_phi[m_idim]) { return 1; }
+        }
+        return 0;
+    }
 };
 
 #endif /*PARTICLEBOUNDARYBUFFER_H_*/
