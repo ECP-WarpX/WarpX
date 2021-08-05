@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Axel Huebl, Junmin Gu
+/* Copyright 2019-2021 Axel Huebl, Junmin Gu
  *
  * This file is part of WarpX.
  *
@@ -35,6 +35,7 @@
 #include <AMReX_StructOfArrays.H>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -317,7 +318,7 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters);
 }
 
-WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
+WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
 {
   if( m_Series )
   {
@@ -374,7 +375,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
         if (m_Series) {
-            GetIteration(m_CurrentStep).close();
+            GetIteration(m_CurrentStep, isBTD).close();
         }
 
         // create a little helper file for ParaView 5.9+
@@ -442,7 +443,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 }
 
 void
-WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags)
+WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
+                                         const bool isBTD)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
@@ -524,7 +526,8 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
          real_flags,
          int_flags,
          real_names, int_names,
-         pc->getCharge(), pc->getMass()
+         pc->getCharge(), pc->getMass(),
+         isBTD
       );
     }
 
@@ -542,12 +545,13 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const amrex::Vector<std::string>& real_comp_names,
                     const amrex::Vector<std::string>&  int_comp_names,
                     amrex::ParticleReal const charge,
-                    amrex::ParticleReal const mass) const
+                    amrex::ParticleReal const mass,
+                    const bool isBTD) const
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-  openPMD::Iteration& currIteration = GetIteration(iteration);
+  openPMD::Iteration& currIteration = GetIteration(iteration, isBTD);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -844,7 +848,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
 
 void
-WarpXOpenPMDPlot::SetupPos(
+WarpXOpenPMDPlot::SetupPos (
     openPMD::ParticleSpecies& currSpecies,
     const unsigned long long& np,
     amrex::ParticleReal const charge,
@@ -888,15 +892,15 @@ WarpXOpenPMDPlot::SetupPos(
 
 
 /*
- * Set up paramter for mesh container using the geometry (from level 0)
+ * Set up parameter for mesh container using the geometry (from level 0)
  *
  * @param [IN] meshes: openPMD-api mesh container
  * @param [IN] full_geom: field geometry
  *
  */
 void
-WarpXOpenPMDPlot::SetupFields(  openPMD::Container< openPMD::Mesh >& meshes,
-                                amrex::Geometry& full_geom  ) const
+WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
+                                amrex::Geometry& full_geom ) const
 {
       // meta data for ED-PIC extension
       auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
@@ -967,9 +971,9 @@ WarpXOpenPMDPlot::SetupFields(  openPMD::Container< openPMD::Mesh >& meshes,
  * @param [IN]: mesh_comp     a component for the mesh
  */
 void
-WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
+WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  amrex::Geometry& full_geom,
-                                 openPMD::MeshRecordComponent& mesh_comp ) const
+                                 openPMD::MeshRecordComponent& mesh_comp) const
 {
        amrex::Box const & global_box = full_geom.Domain();
        auto const global_size = getReversedVec(global_box.size());
@@ -1003,10 +1007,10 @@ WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
  * @param comp_name [OUT]:   comp name for openPMD-api output
  */
 void
-WarpXOpenPMDPlot::GetMeshCompNames( int meshLevel,
+WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
                                     const std::string& varname,
                                     std::string& field_name,
-                                    std::string& comp_name ) const
+                                    std::string& comp_name) const
 {
     if (varname.size() >= 2u ) {
         std::string const varname_1st = varname.substr(0u, 1u); // 1st character
@@ -1055,7 +1059,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep);
+  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep, isBTD);
+
+  // collective open
+  series_iteration.open();
 
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {
@@ -1125,7 +1132,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter(ParticleContainer* pc)
+WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc)
 {
   m_MPISize = amrex::ParallelDescriptor::NProcs();
   m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -1172,11 +1179,11 @@ WarpXParticleCounter::WarpXParticleCounter(ParticleContainer* pc)
 //     sum of all particles in the comm
 //
 void
-WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
-                           unsigned long long& offset,
-                           unsigned long long& sum)  const
-
-
+WarpXParticleCounter::GetParticleOffsetOfProcessor (
+    const long& numParticles,
+    unsigned long long& offset,
+    unsigned long long& sum
+) const
 {
     offset = 0;
 #if defined(AMREX_USE_MPI)
