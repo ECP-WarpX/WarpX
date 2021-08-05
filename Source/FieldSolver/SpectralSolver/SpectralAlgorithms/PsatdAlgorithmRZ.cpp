@@ -396,7 +396,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
                 const amrex::Real om2 = om * om;
                 const amrex::Real om4 = om2 * om2;
 
-                if (om != 0)
+                if (om != 0.0_rt)
                 {
                     X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2 - (1._rt - C(i,j,k)) / (om4 * dt)
                                             - 0.5_rt * dt / om2);
