@@ -20,13 +20,33 @@ class ParticleBoundaryBuffer
 public:
     ParticleBoundaryBuffer ();
 
-    int nSpecies() const {return m_species_names.size();}
-    std::vector<std::string> GetSpeciesNames() const { return m_species_names; }
+    int numSpecies() const { return getSpeciesNames().size(); }
+
+    const std::vector<std::string>& getSpeciesNames() const {
+        static bool initialized = false;
+        if (!initialized)
+        {
+            amrex::ParmParse pp_particles("particles");
+            pp_particles.queryarr("species_names", m_species_names);
+            initialized = true;
+        }
+        return m_species_names;
+    }
 
     void gatherParticles (MultiParticleContainer& mypc,
                           const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
+    void clearParticles ();
+
     void printNumParticles () const;
+
+    constexpr int numBoundaries () const {
+        return AMREX_SPACEDIM*2
+#ifdef AMREX_USE_EB
+            + 1
+#endif
+            ;
+    };
 
 private:
     // over boundary, then number of species
@@ -35,7 +55,7 @@ private:
     // over boundary, then number of species
     std::vector<std::vector<int> > m_do_boundary_buffer;
 
-    std::vector<std::string> m_species_names;
+    mutable std::vector<std::string> m_species_names;
 };
 
 struct IsOutsideDomainBoundary {

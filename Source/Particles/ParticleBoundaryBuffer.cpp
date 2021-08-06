@@ -15,32 +15,24 @@
 
 ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 {
-    int num_boundaries = AMREX_SPACEDIM*2;  // two for each dim, hi and lo
-#ifdef AMREX_USE_EB
-    num_boundaries += 1;  // only one of these for now
-#endif
-    m_particle_containers.resize(num_boundaries);
+    m_particle_containers.resize(numBoundaries());
 
-    amrex::ParmParse pp_particles("particles");
-    pp_particles.queryarr("species_names", m_species_names);
-    const int nspecies = m_species_names.size();
-
-    for (int i = 0; i < num_boundaries; ++i)
+    for (int i = 0; i < numBoundaries(); ++i)
     {
-        m_particle_containers[i].resize(nspecies);
+        m_particle_containers[i].resize(numSpecies());
     }
 
-    m_do_boundary_buffer.resize(num_boundaries);
-    for (int i = 0; i < num_boundaries; ++i)
+    m_do_boundary_buffer.resize(numBoundaries());
+    for (int i = 0; i < numBoundaries(); ++i)
     {
-        m_do_boundary_buffer[i].resize(nspecies, 0);
+        m_do_boundary_buffer[i].resize(numSpecies(), 0);
     }
 
-    for (int i = 0; i < num_boundaries; ++i)
+    for (int i = 0; i < numBoundaries(); ++i)
     {
-        for (int ispecies = 0; ispecies < nspecies; ++ispecies)
+        for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
         {
-            amrex::ParmParse pp_species(m_species_names[ispecies]);
+            amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
             pp_species.query("scrape_xlo", m_do_boundary_buffer[0][ispecies]);
             pp_species.query("scrape_xhi", m_do_boundary_buffer[1][ispecies]);
 #if AMREX_SPACEDIM == 2
@@ -60,16 +52,15 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 }
 
 void ParticleBoundaryBuffer::printNumParticles () const {
-    const int nspecies = nSpecies();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         for (int iside = 0; iside < 2; ++iside)
         {
             auto& buffer = m_particle_containers[2*idim+iside];
-            for (int i = 0; i < nspecies; ++i)
+            for (int i = 0; i < numSpecies(); ++i)
             {
                 int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
-                amrex::Print() << "Species " << m_species_names[i] << " has "
+                amrex::Print() << "Species " << getSpeciesNames()[i] << " has "
                                << np << " particles in the boundary buffer "
                                << " for side " << iside << " of dim " << idim << "\n";
             }
@@ -77,20 +68,30 @@ void ParticleBoundaryBuffer::printNumParticles () const {
     }
 #ifdef AMREX_USE_EB
     auto& buffer = m_particle_containers[2*AMREX_SPACEDIM];
-    for (int i = 0; i < nspecies; ++i)
+    for (int i = 0; i < numSpecies(); ++i)
     {
         int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
-        amrex::Print() << "Species " << m_species_names[i] << " has "
+        amrex::Print() << "Species " << getSpeciesNames()[i] << " has "
                        << np << " particles in the EB boundary buffer \n";
     }
 #endif
+}
+
+void ParticleBoundaryBuffer::clearParticles () {
+    for (int i = 0; i < numBoundaries(); ++i)
+    {
+        auto& buffer = m_particle_containers[i];
+        if (buffer[i].isDefined())
+        {
+            buffer[i].clearParticles();
+        }
+    }
 }
 
 void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                                               const amrex::Vector<const amrex::MultiFab*>& distance_to_eb) {
     const auto& warpx_instance = WarpX::GetInstance();
     const amrex::Geometry& geom = warpx_instance.Geom(0);
-    const int nspecies = mypc.nSpecies();
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
     auto dxi = geom.InvCellSizeArray();
@@ -100,7 +101,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         for (int iside = 0; iside < 2; ++iside)
         {
             auto& buffer = m_particle_containers[2*idim+iside];
-            for (int i = 0; i < nspecies; ++i)
+            for (int i = 0; i < numSpecies(); ++i)
             {
                 if (!m_do_boundary_buffer[2*idim+iside][i]) continue;
                 const auto& pc = mypc.GetParticleContainer(i);
@@ -116,7 +117,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
 #ifdef AMREX_USE_EB
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
-    for (int i = 0; i < nspecies; ++i)
+    for (int i = 0; i < numSpecies(); ++i)
     {
         const auto& pc = mypc.GetParticleContainer(i);
         if (!buffer[i].isDefined())
