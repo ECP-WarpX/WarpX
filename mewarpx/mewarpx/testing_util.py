@@ -65,7 +65,7 @@ def change_to_warpxdir(wd):
     comm.Barrier()
 
     os.chdir(wd)
-    print(f"Change to working directory {os.getcwd()}")
+    print(f"Change to working directory {os.getcwd()}", flush=True)
 
     comm.Barrier()
 

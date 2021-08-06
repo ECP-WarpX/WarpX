@@ -5,8 +5,8 @@ from pywarpx import picmi
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
-from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicmi
-from mewarpx.diags_store import field_diagnostic, particle_diagnostic
+from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicmi, runinfo
+from mewarpx.diags_store import field_diagnostic, particle_diagnostic, flux_diagnostic
 
 
 class DiodeRun_V1(object):
@@ -120,11 +120,11 @@ class DiodeRun_V1(object):
     # DT allows the auto-calculated DT to be overridden. CFL_FACTOR is ignored
     # in this case.
     DT = None
-    # # CHECK_CHARGE_CONSERVATION is a heuristic only for detecting (usually)
-    # # violations of CFL. However, it can also be triggered during short
-    # # diagnostic periods that cover transient behavior, and should thus often be
-    # # disabled in short unit tests.
-    # CHECK_CHARGE_CONSERVATION = True
+    # CHECK_CHARGE_CONSERVATION is a heuristic only for detecting (usually)
+    # violations of CFL. However, it can also be triggered during short
+    # diagnostic periods that cover transient behavior, and should thus often be
+    # disabled in short unit tests.
+    CHECK_CHARGE_CONSERVATION = True
     # Get diagnostic information every DIAG_STEPS setps.
     DIAG_STEPS = None
     # The data list for field diagnostics
@@ -244,10 +244,6 @@ class DiodeRun_V1(object):
             self.init_merging()
         if init_traceparticles:
             self.init_traceparticles()
-        if init_runinfo:
-            self.init_runinfo()
-        if init_fluxdiag:
-            self.init_fluxdiag()
         if init_simcontrol:
             self.init_simcontrol()
         if init_simulation:
@@ -260,6 +256,10 @@ class DiodeRun_V1(object):
             self.init_warpx()
         if init_injectors:
             self.init_injectors()
+        if init_runinfo:
+            self.init_runinfo()
+        if init_fluxdiag:
+            self.init_fluxdiag()
 
     def init_base(self):
         print('### Init Diode Base Setup ###', flush=True)
@@ -546,14 +546,42 @@ class DiodeRun_V1(object):
         print('### Init Diode TraceParticles ###', flush=True)
 
     def init_runinfo(self):
-        raise NotImplementedError(
-            "Diode Runinfo is not yet implemented in mewarpx")
-        print('### Init Diode Runinfo Setup ###', flush=True)
+        print('### Init Diode Runinfo Setup ###')
+
+        runvars = DiodeRun_V1.__dict__.copy()
+        runvars.update(self.__dict__)
+
+        injector_dict = {'cathode': self.injector}
+        surface_dict = {
+            'cathode': self.cathode,
+            'anode': self.anode
+        }
+        # Output runinfo
+        self.runinfo = runinfo.RunInfo(
+            injector_dict=injector_dict,
+            surface_dict=surface_dict,
+            local_vars=runvars,
+            run_file=__file__,
+            # TODO: implement collecting run parameters
+            # run_param_dict=self.setupinfo.run_param_dict,
+            electrode_params={
+                "CATHODE_A": self.CATHODE_A,
+                "CATHODE_TEMP": self.CATHODE_TEMP,
+                "CATHODE_PHI": self.CATHODE_PHI,
+                "ANODE_PHI": self.ANODE_PHI
+            },
+        )
+        self.runinfo.save()
 
     def init_fluxdiag(self):
-        raise NotImplementedError(
-            "Diode FluxDiag is not yet implemented in mewarpx")
-        print('### Init Diode FluxDiag ###', flush=True)
+        print('### Init Diode FluxDiag ###')
+        self.fluxdiag = flux_diagnostic.FluxDiagnostic(
+            diag_steps=self.DIAG_STEPS,
+            write_dir="diags/fluxes",
+            runinfo=self.runinfo,
+            check_charge_conservation=self.CHECK_CHARGE_CONSERVATION,
+            overwrite=False
+        )
 
     def init_field_diag(self):
         print('### Init Diode FieldDiag ###', flush=True)

@@ -22,9 +22,9 @@ SETUP order:
     - Perform run with ``sim.step()``
 """
 import ctypes
+import warnings
 
 from pywarpx import _libwarpx, picmi
-import ctypes
 
 
 class MEWarpXRun(object):
@@ -166,6 +166,21 @@ class MEWarpXRun(object):
 
         else:
             raise ValueError("Unrecognized type of pywarpx.picmi Grid.")
+
+    def get_domain_area(self):
+        """Return float of simulation domain area in X & Y directions or R depending
+        on geometry. Used to get the surface area over which current is emitted or
+        absorbed."""
+        pos_lims = [mwxrun.xmin, mwxrun.xmax,
+                    mwxrun.zmin, mwxrun.zmax]
+
+        if mwxrun.geom_str == "XZ":
+            return (pos_lims[1] - pos_lims[0])
+        elif mwxrun.geom_str == "XYZ":
+            return ((pos_lims[1] - pos_lims[0]) * (pos_lims[3] - pos_lims[2]))
+        else:
+            # TODO: implement RZ when needed
+            raise NotImplementedError("get_domain_area not implemented for RZ geometry")
 
     def get_it(self):
         """Return the current integer iteration number."""

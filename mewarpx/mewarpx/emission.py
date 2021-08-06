@@ -7,6 +7,7 @@ import warnings
 
 import numba
 import numpy as np
+import collections
 
 import skimage.measure
 import matplotlib.colors as colors
@@ -17,6 +18,7 @@ from pywarpx import callbacks, _libwarpx, picmi
 import mewarpx.util as mwxutil
 from mewarpx.mwxrun import mwxrun
 import mewarpx.mwxconstants as constants
+from mewarpx import appendablearray, parallel_util
 
 # Get module-level logger
 logger = logging.getLogger(__name__)
@@ -40,7 +42,7 @@ class Injector(object):
     # adjustable by the user.
 
     # IF CHANGING THIS, CHANGE IN self.record_injectedparticles() AS WELL.
-    fields = ['t', 'step', 'jsid', 'V_e', 'n', 'q', 'E_total']
+    fields = ['t', 'step', 'species_id', 'V_e', 'n', 'q', 'E_total']
 
     # @staticmethod
     # def setup_warp():
@@ -107,12 +109,11 @@ class Injector(object):
                 important; it must match the order for future particle appends
                 that are made.
         """
-        raise NotImplementedError
-        # self._injectedparticles_fields = fieldlist
-        # self._injectedparticles_data = warp.AppendableArray(
-        #     typecode='d', unitshape=[len(fieldlist)])
+        self._injectedparticles_fields = fieldlist
+        self._injectedparticles_data = appendablearray.AppendableArray(
+            typecode='d', unitshape=[len(fieldlist)])
 
-    def record_injectedparticles(self, species, E_total=None, w=None,
+    def record_injectedparticles(self, species, w, E_total=None,
                                  n=None):
         """Handles transforming raw particle information to the information
         used to record particles as a function of time. Also handles parallel
@@ -125,36 +126,40 @@ class Injector(object):
             argument if no particles are being added by this processor.
 
         Arguments:
-            species: [TODO - adapt to WarpX]
-            E_total (np.ndarray): Array of length npart with E_total values.
-            w (np.ndarray): Array of length ``npart`` with variable weights.
+            species (mepicmi.Species): Species of particle
+            w (np.ndarray or float): Array of length npart with particle weights.
+            E_total (np.ndarray or float): Array of length npart with E_total values.
             n (int): Number of macroparticles, _only_ needed if overriding the
                 length of E_total. This is useful mostly in the case that
                 E_total is already summed over particles, in which case a
                 single number can be passed for it rather than an array.
         """
-        raise NotImplementedError
-        # data = np.zeros(7)
 
-        # data[0] = warp.top.it*warp.top.dt
-        # data[1] = warp.top.it
-        # data[2] = species.jslist[0]
-        # data[3] = self.getvoltage_e()
+        if n is not None and np.size(w) != 1:
+            raise RuntimeError("Cannot pass array for w and specify n")
 
-        # if E_total is not None:
-        #     if n is not None:
-        #         data[4] = n
-        #     else:
-        #         data[4] = len(E_total)
+        if n is None and np.size(w) == 1:
+            raise RuntimeError("Cannot pass single value for w and not specify n")
 
-        #     if w is not None:
-        #         data[5] = species.sq * species.sw * np.sum(w)
-        #     else:
-        #         data[5] = species.sq * species.sw * data[4]
+        data = np.zeros(7)
 
-        #     data[6] = np.sum(E_total)
+        # time for current step
+        data[0] = mwxrun.get_it() * mwxrun.get_dt()
+        # current step
+        data[1] = mwxrun.get_it()
+        # species ID
+        data[2] = species.species_number
+        # voltage of emitter
+        data[3] = self.getvoltage_e()
+        # number of macroparticles
+        data[4] = n if np.size(w) == 1 else np.size(w)
+        # total charge emitted
+        data[5] = species.sq * np.sum(w)
 
-        # self.append_injectedparticles(data)
+        if E_total is not None:
+            data[6] = np.sum(E_total)
+
+        self.append_injectedparticles(data)
 
     def append_injectedparticles(self, data):
         """Append one or more lines of injected particles data.
@@ -177,7 +182,19 @@ class Injector(object):
                 originally passed field strings for lost particles. Values are
                 an (n)-shape numpy array for each field.
         """
-        raise NotImplementedError
+        lpdata = self._injectedparticles_data.data()
+
+        # Sum all except t/step/species_id/V_e from all processors
+        lpdata[:,4:] = parallel_util.parallelsum(np.array(lpdata[:,4:]))
+
+        lpdict = collections.OrderedDict(
+            [(fieldname, np.array(lpdata[:, ii], copy=True))
+             for ii, fieldname in enumerate(self._injectedparticles_fields)])
+
+        if clear:
+            self._injectedparticles_data.cleardata()
+
+        return lpdict
 
 
 class FixedNumberInjector(Injector):
@@ -273,9 +290,9 @@ class FixedNumberInjector(Injector):
 
             if self.injector_diag is not None:
                 self.record_injectedparticles(
-                    self.species,
-                    particles_dict['E_total'],
-                    particles_dict.get('w', None)
+                    species=self.species,
+                    w=particles_dict['w'],
+                    E_total=particles_dict['E_total'],
                 )
 
 
@@ -412,9 +429,9 @@ class ThermionicInjector(Injector):
 
         if self.injector_diag is not None:
             self.record_injectedparticles(
-                self.species,
-                particles_dict['E_total'],
-                particles_dict.get('w', None)
+                species=self.species,
+                w=particles_dict['w'],
+                E_total=particles_dict['E_total']
             )
 
 
@@ -629,14 +646,15 @@ class PlasmaInjector(Injector):
 
             if self.injector_diag is not None:
                 self.record_injectedparticles(
-                    self.species1,
-                    particles1_dict['E_total'],
-                    particles1_dict['w']
+                    species=self.species1,
+                    w=particles1_dict['w'],
+                    E_total=particles1_dict['E_total'],
+
                 )
                 self.record_injectedparticles(
-                    self.species2,
-                    particles2_dict['E_total'],
-                    particles2_dict['w']
+                    species=self.species2,
+                    w=particles2_dict['w'],
+                    E_total=particles2_dict['E_total'],
                 )
 
 

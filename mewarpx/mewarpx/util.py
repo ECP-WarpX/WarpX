@@ -143,6 +143,40 @@ def get_positions(num_samples, xmin, xmax, ymin=0, ymax=0, z=0,
     return x, y, z
 
 
+def return_iterable(x, depth=1):
+    """Return x if x is iterable, None if x is None, [x] otherwise.
+
+    Useful for arguments taking either a list of single value. Strings are a
+    special case counted as 'not iterable'.
+
+    Arguments:
+        depth (int): This many levels must be iterable. So if you need an
+            iterable of an iterable, this is 2.
+    """
+    if x is None:
+        return None
+    elif depth > 1:
+        # First make sure it's iterable to one less than the required depth.
+        x = return_iterable(x, depth=depth-1)
+        # Now check that it's iterable to the required depth. If not, we just
+        # need to nest it in one more list.
+        x_flattened = x
+        while depth > 1:
+            if all([(isinstance(y, collections.abc.Iterable) and not isinstance(y, str))
+                    for y in x_flattened]):
+                x_flattened = [z for y in x_flattened for z in y]
+                depth -= 1
+            else:
+                return [x]
+        return x
+
+    elif isinstance(x, str):
+        return [x]
+    elif isinstance(x, collections.abc.Iterable):
+        return x
+    else:
+        return [x]
+
 # https://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
 def mkdir_p(path):
     """Make directory and parent directories if they don't exist.
