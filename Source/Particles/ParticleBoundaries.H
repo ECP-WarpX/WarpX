@@ -17,43 +17,16 @@
 struct ParticleBoundaries
 {
 
-    ParticleBoundaries () noexcept
-    {
-        SetAll(ParticleBoundaryType::Absorbing);
-        reflect_all_velocities = false;
-    }
+    ParticleBoundaries () noexcept;
 
-    void
-    Set_reflect_all_velocities(bool flag)
-    {
-        reflect_all_velocities = flag;
-    }
+    void Set_reflect_all_velocities (bool flag);
+    void SetAll (ParticleBoundaryType bc);
 
-    void
-    SetAll (ParticleBoundaryType bc) {
-        xmin_bc = bc;
-        xmax_bc = bc;
-        ymin_bc = bc;
-        ymax_bc = bc;
-        zmin_bc = bc;
-        zmax_bc = bc;
-    }
+    void SetBoundsX (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
+    void SetBoundsY (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
+    void SetBoundsZ (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
 
-    void
-    SetBoundsX(ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi) { xmin_bc = bc_lo; xmax_bc = bc_hi; }
-    void
-    SetBoundsY(ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi) { ymin_bc = bc_lo; ymax_bc = bc_hi; }
-    void
-    SetBoundsZ(ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi) { zmin_bc = bc_lo; zmax_bc = bc_hi; }
-
-    bool
-    CheckAll (ParticleBoundaryType bc) {
-        return (xmin_bc == bc && xmax_bc == bc
-#ifdef WARPX_DIM_3D
-             && ymin_bc == bc && ymax_bc == bc
-#endif
-             && zmin_bc == bc && zmax_bc == bc);
-    }
+    bool CheckAll (ParticleBoundaryType bc);
 
     /* \brief Applies absorbing or reflecting boundary condition to the input particles, along all axis.
      *        For reflecting boundaries, the position of the particle is changed appropriately and
@@ -100,6 +73,9 @@ struct ParticleBoundaries
         if (change_sign_uz) uz = -uz;
     }
 
+    /* \brief Applies the boundary condition on a specific axis
+     *        This is called by apply_boundaries.
+     */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static void
     apply_boundary (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
