@@ -76,6 +76,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         bool m_dive_cleaning;
         bool m_divb_cleaning;
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+        SpectralRealCoefficients X5_coef, X6_coef;
 };
 
 #endif // WARPX_PSATD_ALGORITHM_RZ_H_
