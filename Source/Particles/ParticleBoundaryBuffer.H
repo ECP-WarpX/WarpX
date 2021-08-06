@@ -46,7 +46,7 @@ public:
             + 1
 #endif
             ;
-    };
+    }
 
 private:
     // over boundary, then number of species
