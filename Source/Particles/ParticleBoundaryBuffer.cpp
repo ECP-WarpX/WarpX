@@ -89,9 +89,8 @@ void ParticleBoundaryBuffer::clearParticles () {
 }
 
 void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
-                                              const amrex::Vector<const amrex::MultiFab*>& distance_to_eb) {
-    using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-    using DstData = ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>::ParticleTileType::ParticleTileDataType;
+                                              const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
     using PIter = amrex::ParConstIter<0,0,PIdx::nattribs>;
     const auto& warpx_instance = WarpX::GetInstance();
     const amrex::Geometry& geom = warpx_instance.Geom(0);
@@ -111,7 +110,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(&pc);
-                    buffer[i].AddRealComp(false);  // for timestamp
+                    buffer[i].AddIntComp(false);  // for timestamp
                 }
                 auto& species_buffer = buffer[i];
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -132,22 +131,11 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         ptile_buffer.resize(dst_index + np);
 
                         int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
-                        amrex::Real time = warpx_instance.gett_new(0);
+                        int timestep = warpx_instance.getistep(0);
                         auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
-                            IsOutsideDomainBoundary{plo, phi, idim, iside},
-                            [=] AMREX_GPU_HOST_DEVICE (const DstData& dst, const SrcData& src,
-                                                       int src_i, int dst_i) noexcept
-                        {
-                            dst.m_aos[dst_i] = src.m_aos[src_i];
-                            for (int j = 0; j < SrcData::NAR; ++j)
-                                dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
-                            for (int j = 0; j < src.m_num_runtime_real; ++j)
-                                dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
-                            for (int j = 0; j < src.m_num_runtime_int; ++j)
-                                dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
-                            dst.m_runtime_rdata[timestamp_index][dst_i] = time;
-                        },
-                                                                        0, dst_index);
+                                             IsOutsideDomainBoundary{plo, phi, idim, iside},
+                                                CopyAndTimestamp{timestamp_index, timestep},
+                                                                              0, dst_index);
                         ptile_buffer.resize(dst_index + count);
                     }
                 }
@@ -163,7 +151,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         if (!buffer[i].isDefined())
         {
             buffer[i] = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(&pc);
-            buffer[i].AddRealComp(false);  // for timestamp
+            buffer[i].AddIntComp(false);  // for timestamp
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -186,7 +174,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 ptile_buffer.resize(dst_index + np);
 
                 int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
-                amrex::Real time = warpx_instance.gett_new(0);
+                int timestep = warpx_instance.getistep(0);
+                using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
                     [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip) noexcept
                     {
@@ -200,19 +189,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         amrex::Real phi_value  = DistanceToEB::interp_distance(ii, jj, kk, W, phiarr);
                         return phi_value < 0.0 ? 1 : 0;
                     },
-                            [=] AMREX_GPU_HOST_DEVICE (const DstData& dst, const SrcData& src,
-                                                       int src_i, int dst_i) noexcept
-                        {
-                            dst.m_aos[dst_i] = src.m_aos[src_i];
-                            for (int j = 0; j < SrcData::NAR; ++j)
-                                dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
-                            for (int j = 0; j < src.m_num_runtime_real; ++j)
-                                dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
-                            for (int j = 0; j < src.m_num_runtime_int; ++j)
-                                dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
-                            dst.m_runtime_rdata[timestamp_index][dst_i] = time;
-                        },
-                                                    0, dst_index);
+                    CopyAndTimestamp{timestamp_index, timestep}, 0, dst_index);
                 ptile_buffer.resize(dst_index + count);
             }
         }
