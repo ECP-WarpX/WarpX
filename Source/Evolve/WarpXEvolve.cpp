@@ -254,9 +254,9 @@ WarpX::Evolve (int numsteps)
 
         mypc->ContinuousFluxInjection(dt[0]);
 
-        mypc->ApplyBoundaryConditions();
-
         m_particle_buffers->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+
+        mypc->ApplyBoundaryConditions();
 
         // interact with particles with EB walls (if present)
 #ifdef AMREX_USE_EB
