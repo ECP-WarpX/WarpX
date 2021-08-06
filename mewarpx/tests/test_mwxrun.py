@@ -95,7 +95,7 @@ def test_capacitive_discharge_multigrid(capsys, name):
         species_name='he_ions', include_ghosts=False
     )[0][:,1:,0], axis=0)[2:-2]
 
-    ds = yt.load( "diags/diags00010" )
+    ds = yt.load( "diags/fields/fields00010" )
     grid_data = ds.covering_grid(
         level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
     )

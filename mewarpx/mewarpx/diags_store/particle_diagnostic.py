@@ -112,15 +112,19 @@ class ParticleDiagnostic(WarpXDiagnostic):
     def do_post_processing(self):
         if mwxrun.me == 0:
             data_dirs = glob.glob(os.path.join(
-                self.write_dir, self.name + '*'))
+                self.write_dir, self.name + '*'
+            ))
 
             if len(data_dirs) == 0:
                 raise RuntimeError(f'No diagnostic data '
                                    f'found in {self.write_dir}')
 
             for datafolder in data_dirs:
+                if "old" in datafolder:
+                    continue
+
                 print('Reading', datafolder, '\n')
-                step = datafolder.split("_")[-1]
+                step = datafolder.replace(self.write_dir + "/" + self.name, "")
                 yt_data = yt.load(datafolder)
                 grid_data = yt_data.covering_grid(
                     level=0,
@@ -130,9 +134,10 @@ class ParticleDiagnostic(WarpXDiagnostic):
                 for species_name in self.plot_species:
                     for param in self.plot_data_list:
                         field = (species_name, param)
+                        print(f"This is field list: {yt_data.field_list}")
                         if field not in yt_data.field_list:
                             warnings.warn(f'{field} '
-                                           'not found in yt_data field list')
+                                        'not found in yt_data field list')
                         else:
                             raw_data = grid_data[(species_name, param)]
                             np_data = raw_data.to_ndarray()
@@ -144,6 +149,6 @@ class ParticleDiagnostic(WarpXDiagnostic):
                             ax.set_title(species_name)
                             out_path = os.path.join(
                                 self.write_dir,
-                                f'{species_name}_{param}_{step}.jpg',
+                                f'{species_name}_{param}_{step}.png',
                             )
                             plt.savefig(out_path)

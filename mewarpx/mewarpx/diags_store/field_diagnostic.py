@@ -10,6 +10,7 @@ from mewarpx import plotting
 import numpy as np
 import matplotlib.pyplot as plt
 
+import os
 import yt
 import glob
 import warnings
@@ -111,31 +112,34 @@ class FieldDiagnostic(WarpXDiagnostic):
     def do_post_processing(self):
         if mwxrun.me == 0:
             constants = picmi.constants
-            data_dirs = glob.glob('diags/diags*')
+            data_dirs = glob.glob(os.path.join(
+                self.write_dir, self.name + '*'
+            ))
 
             if len(data_dirs) == 0:
                 raise RuntimeError("No data files found.")
 
             for datafolder in data_dirs:
-                if not "old" in datafolder:
+                if "old" in datafolder:
+                    continue
 
-                    print('Reading ', datafolder, '\n')
-                    ds = yt.load( datafolder )
+                print('Reading ', datafolder, '\n')
+                ds = yt.load( datafolder )
 
-                    grid_data = ds.covering_grid(
-                        level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
-                    )
+                grid_data = ds.covering_grid(
+                    level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
+                )
 
-                    for parameter in self.diag_data_list:
-                        plot_name = parameter + "_" + datafolder.replace("diags/diags", "")
-                        data = np.mean(
-                            grid_data[parameter].to_ndarray()[:, :, 0], axis=0
-                        ) / constants.q_e
+                for parameter in self.diag_data_list:
+                    plot_name = os.path.join(self.write_dir, parameter + "_" + datafolder.replace(self.write_dir + "/" + self.name, ""))
+                    data = np.mean(
+                        grid_data[parameter].to_ndarray()[:, :, 0], axis=0
+                    ) / constants.q_e
 
-                        fig, ax = plt.subplots(1, 1, figsize=(14, 14))
-                        template = "rho" if "rho" in parameter else "phi"
-                        plotting.ArrayPlot(
-                                array=data,
-                                template=template, xaxis='z', yaxis='x', ax=ax,
-                                plot_name=plot_name
-                            )
+                    fig, ax = plt.subplots(1, 1, figsize=(14, 14))
+                    template = "rho" if "rho" in parameter else "phi"
+                    plotting.ArrayPlot(
+                            array=data,
+                            template=template, xaxis='z', yaxis='x', ax=ax,
+                            plot_name=plot_name
+                        )

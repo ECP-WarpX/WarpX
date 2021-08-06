@@ -91,25 +91,25 @@ def test_field_diag(plot_on_diag_steps):
         init_warpx=True,
         init_simulation=True
     )
-
     while run.control.check_criteria():
         mwxrun.simulation.step()
 
     # verify that the plot images were created.
     if plot_on_diag_steps:
-        print("Verifying that all plots were created...")
+        print("Verifying that all plots were created...", flush=True)
         for i in range(1,6):
-            assert os.path.isfile("phi_after_diag_step_" + str(i) + ".jpg")
-            assert os.path.isfile("rho_after_diag_step_" + str(i) + ".jpg")
-        print("All plots exist!")
+            assert os.path.isfile("phi_after_diag_step_" + str(i) + ".png")
+            assert os.path.isfile("rho_after_diag_step_" + str(i) + ".png")
+        print("All plots exist!", flush=True)
 
     # verify that the post processing image was created
     if post_processing:
-        print("Verifying that all plots were created...")
+        print("Verifying that all plots were created...", flush=True)
         for i in range(0, STEPS + 1, DIAG_STEPS):
             for param in DIAG_DATA_LIST:
-                assert os.path.isfile(param + "_" + f"{i:05d}.jpg")
-        print("All plots exist!")
+                assert os.path.isfile("diags/fields/" + param + "_" + f"{i:05d}.png"), param + "_" + f"{i:06d}.png doesn't exist"
+        print("All plots exist!", flush=True)
+
 
 if __name__ == '__main__':
-    test_field_diag(True)
+    test_field_diag(False)

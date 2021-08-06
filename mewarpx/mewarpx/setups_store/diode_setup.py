@@ -262,7 +262,7 @@ class DiodeRun_V1(object):
             self.init_injectors()
 
     def init_base(self):
-        print('### Init Diode Base Setup ###')
+        print('### Init Diode Base Setup ###', flush=True)
         # Set grid boundaries
         if self.dim == 1:
             # Translational symmetry in x & y, 1D simulation in z. Note warp
@@ -372,13 +372,13 @@ class DiodeRun_V1(object):
         # )
 
     def init_electrons(self):
-        print('### Init Electrons ###')
+        print('### Init Electrons ###', flush=True)
         self.electrons = mepicmi.Species(
             particle_type='electron', name='electrons'
         )
 
     def init_inert_gas(self):
-        print('### Init Inert Gas Ions ###')
+        print('### Init Inert Gas Ions ###', flush=True)
         if self.INERT_GAS_TYPE not in ['He', 'Ar', 'Xe']:
             raise NotImplementedError(
                 f"Inert gas is not yet implemented in mewarpx with "
@@ -392,7 +392,7 @@ class DiodeRun_V1(object):
         )
 
     def init_solver(self):
-        print('### Init Diode Solver Setup ###')
+        print('### Init Diode Solver Setup ###', flush=True)
         if self.dim == 1:
             raise NotImplementedError(
                 "1D solving is not yet implemented in mewarpx")
@@ -412,7 +412,7 @@ class DiodeRun_V1(object):
         self.solver.self_fields_verbosity = 2 if self.NONINTERAC else 0
 
     def init_conductors(self):
-        print('### Init Diode Conductors Setup ###')
+        print('### Init Diode Conductors Setup ###', flush=True)
         self.cathode = assemblies.Cathode(
             V=self.V_CATHODE, T=self.CATHODE_TEMP, WF=self.CATHODE_PHI
         )
@@ -430,7 +430,7 @@ class DiodeRun_V1(object):
     def init_scraper(self):
         raise NotImplementedError(
             "Diode scraper is not yet implemented in mewarpx")
-        print('### Init Diode Scraper Setup ###')
+        print('### Init Diode Scraper Setup ###', flush=True)
         # profile_decorator = None
         # if self.PROFILE_DIAG:
         #     profile_decorator = util.get_runtime_profile_decorator()
@@ -458,7 +458,7 @@ class DiodeRun_V1(object):
         #     )
 
     def init_injectors(self):
-        print('### Init Diode Injectors Setup ###')
+        print('### Init Diode Injectors Setup ###', flush=True)
         if self.rz:
             self.emitter = emission.ZDiscEmitter(
                 conductor=self.cathode, T=self.CATHODE_TEMP,
@@ -506,7 +506,7 @@ class DiodeRun_V1(object):
             )
 
     def init_neutral_plasma(self):
-        print('### Init Neutral Seed Plasma Setup ###')
+        print('### Init Neutral Seed Plasma Setup ###', flush=True)
 
         self.vol_emitter = emission.UniformDistributionVolumeEmitter(
             T=self.T_ELEC
@@ -518,7 +518,7 @@ class DiodeRun_V1(object):
         )
 
     def init_MCC(self):
-        print('### Init MCC Setup ###')
+        print('### Init MCC Setup ###', flush=True)
         if not hasattr(self, "exclude_collisions"):
             self.exclude_collisions = None
 
@@ -533,49 +533,49 @@ class DiodeRun_V1(object):
     def init_reflection(self):
         raise NotImplementedError(
             "Diode reflection is not yet implemented in mewarpx")
-        print('### Init Diode Reflection Setup ###')
+        print('### Init Diode Reflection Setup ###', flush=True)
 
     def init_merging(self):
         raise NotImplementedError(
             "Diode merging is not yet implemented in mewarpx")
-        print('### Init Diode Merging ###')
+        print('### Init Diode Merging ###', flush=True)
 
     def init_traceparticles(self):
         raise NotImplementedError(
             "Diode TraceParticles is not yet implemented in mewarpx")
-        print('### Init Diode TraceParticles ###')
+        print('### Init Diode TraceParticles ###', flush=True)
 
     def init_runinfo(self):
         raise NotImplementedError(
             "Diode Runinfo is not yet implemented in mewarpx")
-        print('### Init Diode Runinfo Setup ###')
+        print('### Init Diode Runinfo Setup ###', flush=True)
 
     def init_fluxdiag(self):
         raise NotImplementedError(
             "Diode FluxDiag is not yet implemented in mewarpx")
-        print('### Init Diode FluxDiag ###')
+        print('### Init Diode FluxDiag ###', flush=True)
 
     def init_field_diag(self):
-        print('### Init Diode FieldDiag ###')
+        print('### Init Diode FieldDiag ###', flush=True)
 
         self.field_diag = field_diagnostic.FieldDiagnostic(
-            name='diags',
+            name='fields',
             grid=mwxrun.grid,
             diag_steps=self.DIAG_STEPS,
             diag_data_list=self.FIELD_DIAG_DATA_LIST,
-            write_dir='diags/',
+            write_dir='diags/fields',
             plot_on_diag_step=self.FIELD_DIAG_PLOT_ON_DIAG_STEPS,
             plot_data_list=self.FIELD_DIAG_PLOT_DATA_LIST,
             post_processing=self.FIELD_DIAG_PLOT_AFTER_RUN
         )
 
     def init_particle_diag(self):
-        print('### Init Diode ParticleDiag')
+        print('### Init Diode ParticleDiag', flush=True)
 
         self.particle_diag = particle_diagnostic.ParticleDiagnostic(
-            name='particle_diag',
+            name='particles',
             diag_steps=self.DIAG_STEPS,
-            write_dir='diags/',
+            write_dir='diags/particles',
             data_list=self.PARTICLE_DIAG_DATA_LIST,
             plot_species=self.PARTICLE_PLOT_SPECIES,
             plot_data_list=self.PARTICLE_DIAG_PLOT_DATA_LIST,
@@ -583,15 +583,15 @@ class DiodeRun_V1(object):
         )
 
     def init_simcontrol(self):
-        print('### Init Diode SimControl ###')
+        print('### Init Diode SimControl ###', flush=True)
         self.control = SimControl(max_steps=self.TOTAL_TIMESTEPS)
 
     def init_simulation(self):
-        print('### Init Simulation Setup ###')
+        print('### Init Simulation Setup ###', flush=True)
         mwxrun.simulation.solver = self.solver
         mwxrun.simulation.time_step_size = self.DT
         mwxrun.simulation.max_steps = self.TOTAL_TIMESTEPS
 
     def init_warpx(self):
-        print('### Init Simulation Run ###')
+        print('### Init Simulation Run ###', flush=True)
         mwxrun.init_run()

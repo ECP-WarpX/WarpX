@@ -398,8 +398,7 @@ class ArrayPlot(object):
                                linewidth=1, color="blue", arrowstyle='->',
                                arrowsize=1.5)
 
-        print("Saving plot image as", self.params["plot_name"] + ".jpg")
-        plt.savefig(self.params["plot_name"] + ".jpg")
+        plt.savefig(self.params["plot_name"] + ".png")
 
     def _gen_plot_contours(self):
         """Generate the list of contours."""
