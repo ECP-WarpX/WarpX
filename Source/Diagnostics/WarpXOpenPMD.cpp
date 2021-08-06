@@ -557,7 +557,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-  openPMD::Iteration& currIteration = GetIteration(iteration, isBTD);
+  openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -1065,7 +1065,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep, isBTD);
+  openPMD::Iteration series_iteration = GetIteration(m_CurrentStep, isBTD);
 
   // collective open
   series_iteration.open();
