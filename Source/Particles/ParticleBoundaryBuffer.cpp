@@ -33,19 +33,19 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
         for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
         {
             amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
-            pp_species.query("scrape_xlo", m_do_boundary_buffer[0][ispecies]);
-            pp_species.query("scrape_xhi", m_do_boundary_buffer[1][ispecies]);
+            pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
+            pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
 #if AMREX_SPACEDIM == 2
-            pp_species.query("scrape_zlo", m_do_boundary_buffer[2][ispecies]);
-            pp_species.query("scrape_zhi", m_do_boundary_buffer[3][ispecies]);
+            pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[2][ispecies]);
+            pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[3][ispecies]);
 #else
-            pp_species.query("scrape_ylo", m_do_boundary_buffer[2][ispecies]);
-            pp_species.query("scrape_yhi", m_do_boundary_buffer[3][ispecies]);
-            pp_species.query("scrape_zlo", m_do_boundary_buffer[4][ispecies]);
-            pp_species.query("scrape_zhi", m_do_boundary_buffer[5][ispecies]);
+            pp_species.query("save_particles_at_ylo", m_do_boundary_buffer[2][ispecies]);
+            pp_species.query("save_particles_at_yhi", m_do_boundary_buffer[3][ispecies]);
+            pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[4][ispecies]);
+            pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[5][ispecies]);
 #endif
 #ifdef AMREX_USE_EB
-            pp_species.query("scrape_eb", m_do_boundary_buffer[AMREX_SPACEDIM*2][ispecies]);
+            pp_species.query("save_particles_at_eb", m_do_boundary_buffer[AMREX_SPACEDIM*2][ispecies]);
 #endif
         }
     }

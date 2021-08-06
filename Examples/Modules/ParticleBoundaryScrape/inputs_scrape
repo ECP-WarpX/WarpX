@@ -44,5 +44,5 @@ electrons.profile = constant
 electrons.density = 1.e23  # number of electrons per m^3
 electrons.momentum_distribution_type = "constant"
 electrons.uz = 2000. # uth the std of the (unitless) momentum
-electrons.scrape_xhi = 1
-electrons.scrape_eb = 1
+electrons.save_particles_at_xhi = 1
+electrons.save_particles_at_eb = 1
