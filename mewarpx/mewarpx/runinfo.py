@@ -10,9 +10,9 @@ import logging
 import os
 import platform
 import subprocess
-import warnings
 
 import dill
+import mewarpx
 import numpy as np
 
 import mewarpx.util as mwxutil
@@ -21,71 +21,6 @@ from mewarpx.mwxrun import mwxrun
 from functools import reduce
 
 logger = logging.getLogger(__name__)
-
-def get_voltage_wf(shapelist, patchy_cathode=False):
-    """Return voltage (and work fn) assigned to a list of shapes.
-
-    Raise ValueError if the voltages are not equal among the shapes,
-    unless patchy_cathode=True in which case voltage and WF comparisons
-    are not done.
-
-    Arguments:
-        shapelist (list): List of warp.Assembly shape objects
-
-    Returns:
-        voltage, wf (float, float): Voltage and work fn of the shapes. wf is
-        None if no work functions present. If patchy_cathode is True the
-        average wf and voltage is returned.
-
-    Notes:
-        This strategy is not fool-proof, because the voltage set on an
-        Assembly made from added (or subtracted?) Assemblies does not
-        necessarily equal the voltages of its components, which seem to be
-        what are used in the simulation. This just uses the main voltage
-        set for each entire warp.Assembly object.
-        Furthermore, in the patchy cathode case there is no check that the
-        average cathode voltage is equal to the specified cathode voltage in
-        user_var_dict. The patchess are also assumed to have equal weight i.e.
-        that the cathode has the same area of high and low patches.
-    """
-    if patchy_cathode:
-        voltage = 0.
-        wf = 0.
-    else:
-        voltage = None
-        wf = None
-    for shape in shapelist:
-        if patchy_cathode:
-            wf += shape.WF
-            voltage += shape.V
-        else:
-            if wf is None:
-                wf = shape.WF
-            elif shape.WF != wf:
-                raise ValueError(
-                    f'WF {shape.WF:.2f} on shape {shape.name} not equal to '
-                    f'assigned WF {wf:.2f} used for its group'
-                )
-            if voltage is None:
-                voltage = shape.V
-            elif shape.V != voltage:
-                    raise ValueError(
-                        f'Voltage {shape.V:.2f} on shape {shape.name} '
-                        f'not equal to assigned voltage {voltage:.2f} used '
-                        f'for its group'
-                    )
-    # Print a warning if WF is not set.
-    if wf == 0.0:
-        warnings.warn(
-            f'Note that WF is not set for shapes {[x.name for x in shapelist]}. '
-            f'This can cause errors in power calculations'
-        )
-
-    if patchy_cathode:
-        wf = wf/len(shapelist)
-        voltage = voltage/len(shapelist)
-
-    return voltage, wf
 
 class SimInfo(object):
 
@@ -97,6 +32,15 @@ class SimInfo(object):
         SimInfo.geom (str 'XZ', 'RZ' or 'XYZ')
         SimInfo.dt (float)
         SimInfo.periodic (bool)
+
+    Arguments:
+        nxyz (list): tuple of ints, holding the grid dimensions
+        pos_lims (list) : tuple of floats, holding the position limits along each
+            dimension (xmax, ymin, ymax, zmin, zmax)
+        geom (str): geometry string 'XZ', 'RZ', or 'XYZ' for 2D grid,
+            cylindrical, or 3D grid
+        dt (float): simulation timestep interval
+        periodic (bool): use periodic boundary conditions
 
     Note:
         This base class has been created to provide additional plotting
@@ -122,18 +66,12 @@ class SimInfo(object):
         return np.linspace(xmin, xmax, npts + 1)
 
     def get_rvec(self):
-        #TODO: Does this definition also apply to warpx as well
-        """Return the r vector.
-
-        Note:
-            When fields are generated in warp, nx is kept, xmmin=0, and xmmax is
-            kept. This vector matches that convention.
-        """
-        npts = self.nxyz[0]
-        xmin = 0.
-        xmax = self.pos_lims[1]
+        raise NotImplementedError
+        # npts = self.nxyz[0]
+        # xmin = 0.
+        # xmax = self.pos_lims[1]
         # There is one more point on the grid than cell number
-        return np.linspace(xmin, xmax, npts + 1)
+        # return np.linspace(xmin, xmax, npts + 1)
 
 
 
@@ -148,13 +86,12 @@ class WarpXSimInfo(SimInfo):
                          mwxrun.zmin, mwxrun.zmax]
         self.geom = mwxrun.geom_str
         self.dt = mwxrun.get_dt()
-        self.periodic = (
-        #TODO: Should be implemented when needed
-        #    warp.w3d.boundxy is warp.periodic
+        # self.periodic = (
+            #   warp.w3d.boundxy is warp.periodic
             # The rwall in RZ simulations can be set even if boundxy is
             # periodic. It defaults to 1e36 so this should be fine.
         #    and warp.top.prwall > 1e10
-        )
+        # )
 
 
 class RunInfo(SimInfo):
@@ -163,8 +100,8 @@ class RunInfo(SimInfo):
 
     Attributes:
         diagnames_dict (dict): Dictionary of paths to diagnostic outputs.
-        component_labels (dict): Ordered dictionary of (name, pretty_label) for
-            each device component.
+        component_labels (collections.OrderedDict): Ordered dictionary of
+        (name, pretty_label) for each device component.
     """
 
     diagnames_dict = {'part_diag_dir': 'diags/xzsolver/hdf5',
@@ -255,8 +192,9 @@ class RunInfo(SimInfo):
         # All kwargs should have been popped, so raise an error if that isn't
         # the case.
         if len(kwargs) > 0:
-            raise ValueError("Unrecognized kwarg(s) {}.".format(list(kwargs.keys())))
-
+            raise ValueError(
+                f'Unrecognized kwarg(s) {list(kwargs.keys())}'
+            )
         # Shapes/injectors just adds all the lists of shapes together into one
         # list
         self.shapes = reduce(
@@ -368,20 +306,6 @@ class RunInfo(SimInfo):
                           f'(at t = {mwxrun.get_t()*1e9:.2f} ns)'
                     )
 
-        V_cathode, WF_cathode = self._get_cathode_voltage_wf()
-
-    def _get_patchy_cathode(self):
-        # Check if a patchy cathode is used by checking if "CATHODE_DELTA_PHI"
-        # is greater than 0.0
-        return (self.user_var_dict.get("CATHODE_DELTA_PHI", 0.) > 0.)
-
-    def _get_cathode_voltage_wf(self):
-        # All cathode shapes must have same V and WF for accurate power
-        # calculation unless the cathode is patchy in which case the
-        # average voltage is used.
-        return get_voltage_wf(self.surface_dict['cathode'],
-                              patchy_cathode=self._get_patchy_cathode())
-
     def _save_sim_info(self):
         """Sets up the run_param_dict with helpful information.
 
@@ -407,26 +331,22 @@ class RunInfo(SimInfo):
 
     def _save_version_info(self):
         """Save info about file versions."""
-        # self.run_param_dict['metools_version'] = metools.__version__
+        self.run_param_dict['mewarpx_version'] = mewarpx.__version__
         # Version info is a tuple rather than a string
-        # self.run_param_dict['metools_version_info'] = metools.__version_info__
-        # self.run_param_dict['warp_info'] = warp.versionstext()
-        # self.run_param_dict['warp_commit'] = warp.commithash
-        # cwd = os.getcwd()
-        # try:
-        #    os.chdir(util.con_dir)
-        #    self.run_param_dict['metools_gitver'] = subprocess.check_output(
-        #        ['git', 'describe'])
-        #    self.run_param_dict['metools_commit'] = subprocess.check_output(
-        #        ['git', 'log', '-n', '1', '--pretty=%h'])
-        # except subprocess.CalledProcessError as e:
-        #    logger.warning(
-        #        ("Failed to retrieve git information with error "
-        #            "{}").format(e)
-        #    )
-        # finally:
-        #    os.chdir(cwd)
-        raise NotImplementedError
+        self.run_param_dict['mewarpx_version_info'] = mewarpx.__version_info__
+        cwd = os.getcwd()
+        try:
+           os.chdir(mwxutil.mewarpx_dir)
+           self.run_param_dict['mewarpx_gitver'] = subprocess.check_output(
+               ['git', 'describe'])
+           self.run_param_dict['mewarpx_commit'] = subprocess.check_output(
+               ['git', 'log', '-n', '1', '--pretty=%h'])
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                f'Failed to retrieve git information with error {e}'
+            )
+        finally:
+           os.chdir(cwd)
 
     def _save_comp_info(self):
         """Save info about the computer."""

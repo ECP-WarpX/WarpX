@@ -1,6 +1,5 @@
 """Array type which can be appended to in an efficient way.
 """
-
 import numpy
 import types
 # Class which allows an appendable array.

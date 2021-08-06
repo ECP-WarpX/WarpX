@@ -114,18 +114,19 @@ mwxrun.init_run()
 ######################################
 # Add ME emission
 #####################################
-T_cathode = 1100.0 + 273.15 # K
-WF_cathode = 2.0 # eV
+CATHODE_TEMP = 1100.0 + 273.15 # K
+CATHODE_PHI = 2.0 # eV
+CATHODE_A = 6e5
 
-cathode = assemblies.ZPlane(z=1e-10, zsign=-1, V=0, T=T_cathode,
-                            WF=WF_cathode,
+cathode = assemblies.ZPlane(z=1e-10, zsign=-1, V=0, T=CATHODE_TEMP,
+                            WF=CATHODE_PHI,
                             name='cathode')
-emitter = emission.ZPlaneEmitter(conductor=cathode, T=T_cathode,
+emitter = emission.ZPlaneEmitter(conductor=cathode, T=CATHODE_TEMP,
                                  use_Schottky=False)
 injector = emission.ThermionicInjector(emitter=emitter, species=electrons,
                                        npart_per_cellstep=50,
-                                       T=T_cathode, WF=WF_cathode,
-                                       A=6e5)
+                                       T=CATHODE_TEMP, WF=CATHODE_PHI,
+                                       A=CATHODE_A)
 
 ####################################
 # Add ME diagnostic
