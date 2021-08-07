@@ -596,6 +596,9 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
         boundary       : the boundary from which to get the scraped particle data.
                          In the form x/y/z_hi/lo
         comp_name      : the component of the array data that will be returned.
+                         If "step_scraped" the special attribute holding the
+                         timestep at which a particle was scraped will be
+                         returned.
         level          : Which AMR level to retrieve scraped particle data from.
     Returns
     -------

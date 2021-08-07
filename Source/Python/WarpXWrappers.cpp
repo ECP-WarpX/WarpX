@@ -479,10 +479,17 @@ extern "C"
                      int* num_tiles, int** particles_per_tile, const char* comp_name)
     {
         const std::string name(species_name);
-        const int comp = warpx_getParticleCompIndex(species_name, comp_name);
-
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
         auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
+
+        // "step_scraped" is treated as a special component name since that
+        // is used to access the timestep at which a particle was scraped -
+        // an extra attribute added to the particle buffer which will
+        // necessarily be the last attribute
+        int comp = particle_buffer.NumRealComps() + particle_buffer.NumIntComps() - 1;
+        if (std::string(comp_name).compare("step_scraped") != 0){
+            comp = warpx_getParticleCompIndex(species_name, comp_name);
+        }
 
         int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
