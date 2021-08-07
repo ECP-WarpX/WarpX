@@ -30,11 +30,12 @@ namespace MsgLogger{
     }
 
     template <>
-    void put_in<std::string> (const std::string& val, std::vector<char>& vec)
+    inline void put_in<std::string> (const std::string& val, std::vector<char>& vec)
     {
         const char* c_str = val.c_str();
         const int length = static_cast<int>(val.length());
 
+        put_in(length, vec);
         vec.insert(vec.end(), c_str, c_str+length);
     }
 
@@ -64,7 +65,7 @@ namespace MsgLogger{
     }
 
     template<>
-    std::string get_out<std::string> (std::vector<char>::const_iterator& it)
+    inline std::string get_out<std::string> (std::vector<char>::const_iterator& it)
     {
         const int length = get_out<int> (it);
         const auto str = std::string{it, it+length};

@@ -50,7 +50,7 @@ MsgWithCounter MsgWithCounter::deserialize (std::vector<char>::const_iterator& i
 {
     MsgWithCounter msg_with_counter;
 
-    msg_with_counter.counter = get_out<typeof(counter)> (it);
+    msg_with_counter.counter = get_out<int> (it);
     msg_with_counter.msg = Msg::deserialize(it);
 
     return msg_with_counter;
@@ -119,6 +119,7 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
         size_serialized_gather_rank_msg_list =
             serialized_gather_rank_msg_list.size();
     }
+
     amrex::ParallelDescriptor::Bcast(
         &size_serialized_gather_rank_msg_list, 1, gather_rank);
     if (!is_gather_rank)
@@ -128,24 +129,37 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
         serialized_gather_rank_msg_list.data(),
         size_serialized_gather_rank_msg_list, gather_rank);
 
+    std::vector<int> gather_rank_msg_counters(size_serialized_gather_rank_msg_list);
+
+    std::map<Msg, int> to_send = m_messages;
+
     if (!is_gather_rank){
         const auto gather_rank_msg_list =
             Logger::deserialize_msg_list(serialized_gather_rank_msg_list);
 
-        for (auto ee : gather_rank_msg_list){
-            std::cout << "@@@@@@@@@@@@@@@@@ " << ee.text << std::endl;
+        int counter = 0;
+        for (auto msg : gather_rank_msg_list){
+            const auto pp = m_messages.find(msg);
+            if (pp != m_messages.end()){
+                gather_rank_msg_counters[counter] += pp->second;
+                to_send.erase(msg);
+                std::cout << msg.text << std::endl;
+            }
+            counter++;
         }
+
+        std::cout << "STILL HAVE " << to_send.size() << std::endl;
     }
 
     auto list_with_ranks = std::vector<MsgWithCounterAndRanks>{};
-
+/*
     for (const auto& el : my_list){
         list_with_ranks.emplace_back(MsgWithCounterAndRanks{
             el,
             1,
             std::vector<int>{m_io_rank}
         });
-    }
+    }*/
 
     return list_with_ranks;
 }
@@ -172,10 +186,13 @@ std::vector<Msg> Logger::deserialize_msg_list(
     const std::vector<char>& serialized)
 {
 
+    std::cout << "deserializing ... " << std::endl;
     auto it = serialized.begin();
 
     const auto how_many = get_out<int>(it);
     auto msg_list = std::vector<Msg>{};
+    std::cout << "how_many: " << how_many << std::endl;
+
     msg_list.reserve(how_many);
 
     for (int i = 0; i < how_many; ++i){
@@ -203,7 +220,7 @@ std::pair<int,int> Logger::aux_find_gather_rank_and_items(int how_many_items) co
     auto pack = std::array<int,2>{max_rank, max_items};
     amrex::ParallelDescriptor::Bcast(pack.data(), 2, m_io_rank);
 
-    return std::make_pair(max_rank, max_items);
+    return std::make_pair(pack[0], pack[1]);
 }
 
 std::vector<MsgWithCounterAndRanks>
