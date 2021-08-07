@@ -1779,7 +1779,7 @@ def get_num_particles_impacted_boundary(species_name, boundary):
         The number of particles scraped so far from a boundary and of a species.
 
     '''
-    print("DIMENSION ", geometry_dim)
+
     if geometry_dim == '3d':
         dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
     elif geometry_dim == '2d':
