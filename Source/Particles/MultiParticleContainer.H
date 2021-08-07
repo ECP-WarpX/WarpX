@@ -23,6 +23,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
+#include "ParticleBoundaries.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
