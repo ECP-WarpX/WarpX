@@ -53,10 +53,13 @@ def applylens(x0, vx0, vz0, lens_length, lens_strength):
     vx1 = -w*A*np.sin(w*t + phi)
     return x1, vx1
 
+vel_z = eval(ds.parameters.get('my_constants.vel_z'))
+
 plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
 plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]
 plasma_lens_lengths = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_lengths').split()]
-plasma_lens_strengths = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths').split()]
+plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_E').split()]
+plasma_lens_strengths_B = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_B').split()]
 
 clight = c
 
@@ -81,8 +84,9 @@ for i in range(len(plasma_lens_starts)):
     tt = tt + dt
     xx = xx + dt*ux
     yy = yy + dt*uy
-    xx, ux = applylens(xx, ux, uz, plasma_lens_lengths[i], plasma_lens_strengths[i])
-    yy, uy = applylens(yy, uy, uz, plasma_lens_lengths[i], plasma_lens_strengths[i])
+    lens_strength = plasma_lens_strengths_E[i] + plasma_lens_strengths_B[i]*vel_z
+    xx, ux = applylens(xx, ux, uz, plasma_lens_lengths[i], lens_strength)
+    yy, uy = applylens(yy, uy, uz, plasma_lens_lengths[i], lens_strength)
     dt = plasma_lens_lengths[i]/uz
     tt = tt + dt
     zz = z_lens + plasma_lens_lengths[i]
@@ -92,10 +96,10 @@ dt1 = (zz_sim1 - zz)/uz
 xx = xx + dt0*ux
 yy = yy + dt1*uy
 
-assert abs(xx - xx_sim) < 0.011, Exception('error in x particle position')
-assert abs(yy - yy_sim) < 0.011, Exception('error in y particle position')
-assert abs(ux - ux_sim) < 70., Exception('error in x particle velocity')
-assert abs(uy - uy_sim) < 70., Exception('error in y particle velocity')
+assert abs(np.abs((xx - xx_sim)/xx)) < 0.003, Exception('error in x particle position')
+assert abs(np.abs((yy - yy_sim)/yy)) < 0.003, Exception('error in y particle position')
+assert abs(np.abs((ux - ux_sim)/ux)) < 5.e-5, Exception('error in x particle velocity')
+assert abs(np.abs((uy - uy_sim)/uy)) < 5.e-5, Exception('error in y particle velocity')
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
