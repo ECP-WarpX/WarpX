@@ -13,6 +13,7 @@
 #include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
+#include "ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -1134,13 +1135,13 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
                     bool particle_lost = false;
-                    ParticleBoundaries::apply_boundaries(x, xmin, xmax,
+                    ApplyParticleBoundaries::apply_boundaries(x, xmin, xmax,
 #ifdef WARPX_DIM_3D
-                                                         y, ymin, ymax,
+                                                              y, ymin, ymax,
 #endif
-                                                         z, zmin, zmax,
-                                                         ux[i], uy[i], uz[i], particle_lost,
-                                                         boundary_conditions);
+                                                              z, zmin, zmax,
+                                                              ux[i], uy[i], uz[i], particle_lost,
+                                                              boundary_conditions);
 
                     if (particle_lost) {
                         p.id() = -1;
