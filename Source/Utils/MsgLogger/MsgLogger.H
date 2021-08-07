@@ -46,6 +46,9 @@ namespace MsgLogger{
         std::string topic;
         std::string text;
         Priority priority;
+
+        std::vector<char> serialize() const;
+        static Msg deserialize(std::vector<char>::const_iterator& it);
     };
 
     struct MsgWithCounter
@@ -54,7 +57,7 @@ namespace MsgLogger{
         int counter;
 
         std::vector<char> serialize() const;
-        static MsgWithCounter deserialize(const std::vector<char>& serialized);
+        static MsgWithCounter deserialize(std::vector<char>::const_iterator& it);
     };
 
     struct MsgWithCounterAndRanks
@@ -79,17 +82,26 @@ namespace MsgLogger{
 
         void record_msg(Msg msg);
 
-        std::vector<MsgWithCounter> get_msg_list() const;
+        std::vector<Msg> get_msg_list() const;
 
-        std::vector<MsgWithCounterAndRanks> collective_gather_msg_lists() const;
+        std::vector<MsgWithCounter> get_msg_with_counter_list() const;
+
+        std::vector<MsgWithCounterAndRanks>
+        collective_gather_msg_with_counter_and_ranks() const;
 
         private:
 
         std::vector<char> serialize_msg_list(
-            const std::vector<MsgWithCounter>& msg_list) const;
+            const std::vector<Msg>& msg_list) const;
+
+        static std::vector<Msg> deserialize_msg_list(
+            const std::vector<char>& serialized);
 
         std::pair<int,int> aux_find_gather_rank_and_items(
             int how_many_items) const;
+
+        std::vector<MsgWithCounterAndRanks>
+        aux_get_msg_with_counter_and_ranks() const;
 
         int m_rank = 0;
         int m_num_procs = 0;

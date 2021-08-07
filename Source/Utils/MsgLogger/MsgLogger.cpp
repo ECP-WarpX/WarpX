@@ -11,32 +11,47 @@
 
 using namespace Utils::MsgLogger;
 
-std::vector<char> MsgWithCounter::serialize() const
+std::vector<char> Msg::serialize() const
 {
     std::vector<char> serialized_msg;
 
-    put_in(this->msg.topic, serialized_msg);
-
-    put_in(this->msg.text, serialized_msg);
-
-    const int int_priority = static_cast<int>(this->msg.priority);
+    put_in(this->topic, serialized_msg);
+    put_in(this->text, serialized_msg);
+    const int int_priority = static_cast<int>(this->priority);
     put_in(int_priority, serialized_msg);
-
-    put_in(this->counter, serialized_msg);
 
     return serialized_msg;
 }
 
-MsgWithCounter MsgWithCounter::deserialize (const std::vector<char>& serialized)
+Msg Msg::deserialize (std::vector<char>::const_iterator& it)
+{
+    Msg msg;
+
+    msg.topic = get_out<std::string> (it);
+    msg.text = get_out<std::string> (it);
+    msg.priority = static_cast<Priority> (get_out<int> (it));
+
+    return msg;
+}
+
+std::vector<char> MsgWithCounter::serialize() const
+{
+    std::vector<char> serialized_msg_with_counter;
+
+    put_in(this->counter, serialized_msg_with_counter);
+    const auto serialized_msg =  msg.serialize();
+    serialized_msg_with_counter.insert(serialized_msg_with_counter.end(),
+       serialized_msg.begin(), serialized_msg.end());
+
+    return serialized_msg_with_counter;
+}
+
+MsgWithCounter MsgWithCounter::deserialize (std::vector<char>::const_iterator& it)
 {
     MsgWithCounter msg_with_counter;
 
-    auto it = serialized.begin();
-
-    msg_with_counter.msg.topic = get_out<std::string> (it);
-    msg_with_counter.msg.text = get_out<std::string> (it);
-    msg_with_counter.msg.priority = static_cast<Priority> (get_out<int> (it));
     msg_with_counter.counter = get_out<typeof(counter)> (it);
+    msg_with_counter.msg = Msg::deserialize(it);
 
     return msg_with_counter;
 }
@@ -53,7 +68,18 @@ void Logger::record_msg(Msg msg)
     m_messages[msg]++;
 }
 
-std::vector<MsgWithCounter> Logger::get_msg_list() const
+std::vector<Msg> Logger::get_msg_list() const
+{
+    auto res = std::vector<Msg>{};
+
+    for (auto msg_w_counter : m_messages){
+        res.push_back(msg_w_counter.first);
+    }
+
+    return res;
+}
+
+std::vector<MsgWithCounter> Logger::get_msg_with_counter_list() const
 {
     auto res = std::vector<MsgWithCounter>{};
 
@@ -64,8 +90,13 @@ std::vector<MsgWithCounter> Logger::get_msg_list() const
     return res;
 }
 
-std::vector<MsgWithCounterAndRanks> Logger::collective_gather_msg_lists() const
+
+
+std::vector<MsgWithCounterAndRanks>
+Logger::collective_gather_msg_with_counter_and_ranks() const
 {
+    if (m_num_procs == 1)
+        return aux_get_msg_with_counter_and_ranks();
 
     const auto my_list =
         get_msg_list();
@@ -79,12 +110,40 @@ std::vector<MsgWithCounterAndRanks> Logger::collective_gather_msg_lists() const
     if(gather_rank_how_many == 0)
         return std::vector<MsgWithCounterAndRanks>{};
 
+    const bool is_gather_rank = (m_rank == gather_rank);
+
+    auto serialized_gather_rank_msg_list = std::vector<char>{};
+    int size_serialized_gather_rank_msg_list = 0;
+    if (is_gather_rank){
+        serialized_gather_rank_msg_list = serialize_msg_list(my_list);
+        size_serialized_gather_rank_msg_list =
+            serialized_gather_rank_msg_list.size();
+    }
+    amrex::ParallelDescriptor::Bcast(
+        &size_serialized_gather_rank_msg_list, 1, gather_rank);
+    if (!is_gather_rank)
+        serialized_gather_rank_msg_list.resize(
+            size_serialized_gather_rank_msg_list);
+    amrex::ParallelDescriptor::Bcast(
+        serialized_gather_rank_msg_list.data(),
+        size_serialized_gather_rank_msg_list, gather_rank);
+
+    if (!is_gather_rank){
+        const auto gather_rank_msg_list =
+            Logger::deserialize_msg_list(serialized_gather_rank_msg_list);
+
+        for (auto ee : gather_rank_msg_list){
+            std::cout << "@@@@@@@@@@@@@@@@@ " << ee.text << std::endl;
+        }
+    }
+
     auto list_with_ranks = std::vector<MsgWithCounterAndRanks>{};
 
     for (const auto& el : my_list){
         list_with_ranks.emplace_back(MsgWithCounterAndRanks{
             el,
-            std::vector<int>{m_io_rank},
+            1,
+            std::vector<int>{m_io_rank}
         });
     }
 
@@ -93,20 +152,37 @@ std::vector<MsgWithCounterAndRanks> Logger::collective_gather_msg_lists() const
 
 
 std::vector<char> Logger::serialize_msg_list(
-    const std::vector<MsgWithCounter>& msg_list) const
+    const std::vector<Msg>& msg_list) const
 {
     std::vector<char> serialized;
 
     const auto how_many = static_cast<int> (msg_list.size());
     put_in (how_many, serialized);
 
-    for (auto msg_w_counter : msg_list){
-        const auto serialized_msg_w_counter = msg_w_counter.serialize();
+    for (auto msg : msg_list){
+        const auto serialized_msg = msg.serialize();
         serialized.insert(serialized.end(),
-            serialized_msg_w_counter.begin(),
-            serialized_msg_w_counter.end());
+            serialized_msg.begin(),
+            serialized_msg.end());
     }
     return serialized;
+}
+
+std::vector<Msg> Logger::deserialize_msg_list(
+    const std::vector<char>& serialized)
+{
+
+    auto it = serialized.begin();
+
+    const auto how_many = get_out<int>(it);
+    auto msg_list = std::vector<Msg>{};
+    msg_list.reserve(how_many);
+
+    for (int i = 0; i < how_many; ++i){
+        msg_list.emplace_back(Msg::deserialize(it));
+    }
+
+    return msg_list;
 }
 
 std::pair<int,int> Logger::aux_find_gather_rank_and_items(int how_many_items) const
@@ -130,3 +206,16 @@ std::pair<int,int> Logger::aux_find_gather_rank_and_items(int how_many_items) co
     return std::make_pair(max_rank, max_items);
 }
 
+std::vector<MsgWithCounterAndRanks>
+Logger::aux_get_msg_with_counter_and_ranks() const
+{
+    std::vector<MsgWithCounterAndRanks> res;
+    for (const auto& el : m_messages)
+    {
+        res.emplace_back(
+            MsgWithCounterAndRanks{
+                MsgWithCounter{el.first, el.second},
+                    std::vector<int>{m_rank}});
+    }
+    return res;
+}
