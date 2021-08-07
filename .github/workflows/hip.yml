@@ -35,6 +35,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON \
           -DAMReX_AMD_ARCH=gfx900     \
           -DWarpX_COMPUTE=HIP         \
+          -DWarpX_EB=ON               \
           -DWarpX_LIB=ON              \
           -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \

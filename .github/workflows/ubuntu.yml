@@ -20,12 +20,14 @@ jobs:
       run: |
         cmake -S . -B build_3D         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_EB=OFF               \
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build_3D -j 2
         cmake -S . -B build_RZ         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS=RZ              \
+          -DWarpX_EB=OFF               \
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build_RZ -j 2
@@ -41,6 +43,7 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
+        export WarpX_EB=ON
         export WarpX_MPI=ON
         export WarpX_OPENPMD=ON
         export WarpX_PSATD=ON
