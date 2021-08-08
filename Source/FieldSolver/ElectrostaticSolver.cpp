@@ -79,10 +79,11 @@ WarpX::ChargeDensityGridProcessing ()
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
-    // Reset all E and B fields to 0, before calculating space-charge fields
     if (reset_fields) {
         for (int lev = 0; lev <= max_level; lev++) {
-            rho_fp[lev]->setVal(0.);
+            // reset rho_fp before depositing charge density for this step
+            if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) rho_fp[lev]->setVal(0.);
+            // Reset E and B fields before calculating space-charge fields for this step
             for (int comp=0; comp<3; comp++) {
                 Efield_fp[lev][comp]->setVal(0);
                 Bfield_fp[lev][comp]->setVal(0);
@@ -411,7 +412,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
         else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                 "Field boundary conditions have to be either periodic or PEC "
-                "when using the electrostatic solver"
+                + "when using the electrostatic solver"
             );
         }
     }
@@ -487,9 +488,9 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                     get_pointer_Efield_fp(lev, 2)
                     }}
             );
+            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
 #endif
             get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
-            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
             get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
         }
     }
