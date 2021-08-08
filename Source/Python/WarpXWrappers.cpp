@@ -509,6 +509,11 @@ extern "C"
         return data;
     }
 
+    void warpx_clearParticleBoundaryBuffer () {
+        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
+        particle_buffers.clearParticles();
+    }
+
     void warpx_ComputeDt () {
         WarpX& warpx = WarpX::GetInstance();
         warpx.ComputeDt ();

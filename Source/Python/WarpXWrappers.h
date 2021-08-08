@@ -109,6 +109,8 @@ extern "C" {
         const char* species_name, int boundary, int lev,
         int* num_tiles, int** particles_per_tile, const char* comp_name);
 
+    void warpx_clearParticleBoundaryBuffer ();
+
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);
 
