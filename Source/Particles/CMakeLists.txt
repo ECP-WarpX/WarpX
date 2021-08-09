@@ -1,6 +1,7 @@
 target_sources(WarpX
   PRIVATE
     MultiParticleContainer.cpp
+    ParticleBoundaries.cpp
     PhotonParticleContainer.cpp
     PhysicalParticleContainer.cpp
     RigidInjectedParticleContainer.cpp

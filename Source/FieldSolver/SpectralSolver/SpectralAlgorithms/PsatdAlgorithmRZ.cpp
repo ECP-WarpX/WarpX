@@ -46,8 +46,26 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 
     coefficients_initialized = false;
 
-    // TODO Implement time averaging and remove this
-    amrex::ignore_unused(m_time_averaging);
+    if (time_averaging && J_linear_in_time)
+    {
+        X5_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+        X6_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    }
+
+    if (time_averaging && !J_linear_in_time)
+    {
+        amrex::Abort("RZ PSATD: psatd.do_time_averaging = 1 implemented only with psatd.J_linear_in_time = 1");
+    }
+
+    if (dive_cleaning && !J_linear_in_time)
+    {
+        amrex::Abort("RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+    }
+
+    if (divb_cleaning && !J_linear_in_time)
+    {
+        amrex::Abort("RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+    }
 }
 
 /* Advance the E and B field in spectral space (stored in `f`)
@@ -56,7 +74,8 @@ void
 PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 {
 
-    bool const update_with_rho = m_update_with_rho;
+    const bool update_with_rho = m_update_with_rho;
+    const bool time_averaging = m_time_averaging;
     const bool J_linear_in_time = m_J_linear_in_time;
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
@@ -83,6 +102,14 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
         amrex::Array4<const amrex::Real> const& X1_arr = X1_coef[mfi].array();
         amrex::Array4<const amrex::Real> const& X2_arr = X2_coef[mfi].array();
         amrex::Array4<const amrex::Real> const& X3_arr = X3_coef[mfi].array();
+
+        amrex::Array4<const amrex::Real> X5_arr;
+        amrex::Array4<const amrex::Real> X6_arr;
+        if (time_averaging && J_linear_in_time)
+        {
+            X5_arr = X5_coef[mfi].array();
+            X6_arr = X6_coef[mfi].array();
+        }
 
         // Extract pointers for the k vectors
         auto const & kr_modes = f.getKrArray(mfi);
@@ -125,6 +152,22 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             Complex const rho_old = fields(i,j,k,rho_old_m);
             Complex const rho_new = fields(i,j,k,rho_new_m);
 
+            int Ep_avg_m;
+            int Em_avg_m;
+            int Ez_avg_m;
+            int Bp_avg_m;
+            int Bm_avg_m;
+            int Bz_avg_m;
+            if (time_averaging)
+            {
+                Ep_avg_m = Idx.Ex_avg + Idx.n_fields*mode;
+                Em_avg_m = Idx.Ey_avg + Idx.n_fields*mode;
+                Ez_avg_m = Idx.Ez_avg + Idx.n_fields*mode;
+                Bp_avg_m = Idx.Bx_avg + Idx.n_fields*mode;
+                Bm_avg_m = Idx.By_avg + Idx.n_fields*mode;
+                Bz_avg_m = Idx.Bz_avg + Idx.n_fields*mode;
+            }
+
             // k vector values, and coefficients
             // The k values for each mode are grouped together
             int const ir = i + nr*mode;
@@ -132,6 +175,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             amrex::Real const kz = modified_kz_arr[j];
 
             constexpr amrex::Real c2 = PhysConst::c*PhysConst::c;
+            constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr amrex::Real inv_ep0 = 1._rt/PhysConst::ep0;
             Complex const I = Complex{0._rt,1._rt};
             amrex::Real const C = C_arr(i,j,k,mode);
@@ -230,6 +274,52 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
                     fields(i,j,k,G_m) = C * G_old + I * S_ck * k_dot_B;
                 }
+
+                if (time_averaging)
+                {
+                    amrex::Real const X5 = X5_arr(i,j,k,mode);
+                    amrex::Real const X6 = X6_arr(i,j,k,mode);
+
+                    fields(i,j,k,Ep_avg_m) += S_ck * Ep_old
+                        + c2 * ep0 * X1 * (kz * Bp_old - I * kr * 0.5_rt * Bz_old)
+                        - kr * 0.5_rt * (X5 * rho_old + X6 * rho_new) + X3/c2 * Jp - X2/c2 * Jp_new;
+
+                    fields(i,j,k,Em_avg_m) += S_ck * Em_old
+                        - c2 * ep0 * X1 * (kz * Bm_old + I * kr * 0.5_rt * Bz_old)
+                        + kr * 0.5_rt * (X5 * rho_old + X6 * rho_new) + X3/c2 * Jm - X2/c2 * Jm_new;
+
+                    fields(i,j,k,Ez_avg_m) += S_ck * Ez_old
+                        + I * c2 * ep0 * X1 * kr * (Bp_old + Bm_old)
+                        + I * kz * (X5 * rho_old + X6 * rho_new) + X3/c2 * Jz - X2/c2 * Jz_new;
+
+                    fields(i,j,k,Bp_avg_m) += S_ck * Bp_old
+                        - ep0 * X1 * (kz * Ep_old - I * kr * 0.5_rt * Ez_old)
+                        - X5/c2 * (kz * Jp - I * kr * 0.5_rt * Jz)
+                        - X6/c2 * (kz * Jp_new - I * kr * 0.5_rt * Jz_new);
+
+                    fields(i,j,k,Bm_avg_m) += S_ck * Bm_old
+                        + ep0 * X1 * (kz * Em_old + I * kr * 0.5_rt * Ez_old)
+                        + X5/c2 * (kz * Jm + I * kr * 0.5_rt * Jz)
+                        + X6/c2 * (kz * Jm_new + I * kr * 0.5_rt * Jz_new);
+
+                    fields(i,j,k,Bz_avg_m) += S_ck * Bz_old
+                        - I * kr * ep0 * X1 * (Ep_old + Em_old)
+                        - I * kr * X5/c2 * (Jp + Jm) - I * kr * X6/c2 * (Jp_new + Jm_new);
+
+                    if (dive_cleaning)
+                    {
+                        fields(i,j,k,Ep_avg_m) += -c2 * kr * 0.5_rt * ep0 * X1 * F_old;
+                        fields(i,j,k,Em_avg_m) +=  c2 * kr * 0.5_rt * ep0 * X1 * F_old;
+                        fields(i,j,k,Ez_avg_m) += I * c2 * ep0 * X1 * F_old * kz;
+                    }
+
+                    if (divb_cleaning)
+                    {
+                        fields(i,j,k,Bp_avg_m) += -c2 * kr * 0.5_rt * ep0 * X1 * G_old;
+                        fields(i,j,k,Bm_avg_m) +=  c2 * kr * 0.5_rt * ep0 * X1 * G_old;
+                        fields(i,j,k,Bz_avg_m) += I * c2 * ep0 * X1 * G_old * kz;
+                    }
+                }
             }
         });
     }
@@ -237,6 +327,8 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
+    const bool time_averaging = m_time_averaging;
+    const bool J_linear_in_time = m_J_linear_in_time;
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
@@ -254,6 +346,14 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
         amrex::Array4<amrex::Real> const& X1 = X1_coef[mfi].array();
         amrex::Array4<amrex::Real> const& X2 = X2_coef[mfi].array();
         amrex::Array4<amrex::Real> const& X3 = X3_coef[mfi].array();
+
+        amrex::Array4<amrex::Real> X5;
+        amrex::Array4<amrex::Real> X6;
+        if (time_averaging && J_linear_in_time)
+        {
+            X5 = X5_coef[mfi].array();
+            X6 = X6_coef[mfi].array();
+        }
 
         auto const & kr_modes = f.getKrArray(mfi);
         amrex::Real const* kr_arr = kr_modes.dataPtr();
@@ -286,6 +386,27 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
                 X1(i,j,k,mode) = 0.5_rt * dt*dt / ep0;
                 X2(i,j,k,mode) = c*c * dt*dt / (6._rt*ep0);
                 X3(i,j,k,mode) = - c*c * dt*dt / (3._rt*ep0);
+            }
+
+            if (time_averaging && J_linear_in_time)
+            {
+                constexpr amrex::Real c2 = PhysConst::c;
+                const amrex::Real dt3 = dt * dt * dt;
+                const amrex::Real om  = c * k_norm;
+                const amrex::Real om2 = om * om;
+                const amrex::Real om4 = om2 * om2;
+
+                if (om != 0.0_rt)
+                {
+                    X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2 - (1._rt - C(i,j,k)) / (om4 * dt)
+                                            - 0.5_rt * dt / om2);
+                    X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4 * dt) - 0.5_rt * dt / om2);
+                }
+                else
+                {
+                    X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
+                    X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+                }
             }
         });
      }

@@ -34,6 +34,7 @@ struct GetExternalField
     const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_lengths = nullptr;
     const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_strengths = nullptr;
     int m_n_lenses;
+    int m_lens_is_electric;
     amrex::Real m_dt;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
@@ -94,8 +95,13 @@ struct GetExternalField
             if (fl > fr) frac = (lens_end - zl)*dzi;
             if (fr > fl) frac = (zr - lens_start)*dzi;
 
-            field_x += x*frac*m_repeated_plasma_lens_strengths[i_lens];
-            field_y += y*frac*m_repeated_plasma_lens_strengths[i_lens];
+            if (m_lens_is_electric) {
+                field_x += x*frac*m_repeated_plasma_lens_strengths[i_lens];
+                field_y += y*frac*m_repeated_plasma_lens_strengths[i_lens];
+            } else {
+                field_x += y*frac*m_repeated_plasma_lens_strengths[i_lens];
+                field_y -= x*frac*m_repeated_plasma_lens_strengths[i_lens];
+            }
 
         }
         else

@@ -247,9 +247,33 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
 
     Parser parser(parse_function);
     parser.registerVariables(varnames);
-    ParmParse pp_my_constants("my_constants");
+
     std::set<std::string> symbols = parser.symbols();
     for (auto const& v : varnames) symbols.erase(v.c_str());
+
+    // User can provide inputs under this name, through which expressions
+    // can be provided for arbitrary variables. PICMI inputs are aware of
+    // this convention and use the same prefix as well. This potentially
+    // includes variable names that match physical or mathematical
+    // constants, in case the user wishes to enforce a different
+    // system of units or some form of quasi-physical behavior in the
+    // simulation. Thus, this needs to override any built-in
+    // constants.
+    ParmParse pp_my_constants("my_constants");
+
+    // Physical / Numerical Constants available to parsed expressions
+    static std::map<std::string, amrex::Real> warpx_constants =
+      {
+       {"clight", PhysConst::c},
+       {"epsilon0", PhysConst::ep0},
+       {"mu0", PhysConst::mu0},
+       {"q_e", PhysConst::q_e},
+       {"m_e", PhysConst::m_e},
+       {"m_p", PhysConst::m_p},
+       {"m_u", PhysConst::m_u},
+       {"pi", MathConst::pi},
+      };
+
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
 
@@ -261,33 +285,17 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         if (is_input) {
             parser.setConstant(*it, v);
             it = symbols.erase(it);
-        } else if (std::strcmp(it->c_str(), "q_e") == 0) {
-            parser.setConstant(*it, PhysConst::q_e);
-            it = symbols.erase(it);
-        } else if (std::strcmp(it->c_str(), "m_e") == 0) {
-            parser.setConstant(*it, PhysConst::m_e);
-            it = symbols.erase(it);
-        } else if (std::strcmp(it->c_str(), "m_p") == 0) {
-            parser.setConstant(*it, PhysConst::m_p);
-            it = symbols.erase(it);
-        } else if (std::strcmp(it->c_str(), "m_u") == 0) {
-            parser.setConstant(*it, PhysConst::m_u);
-            it = symbols.erase(it);
-        } else if (std::strcmp(it->c_str(), "epsilon0") == 0) {
-            parser.setConstant(*it, PhysConst::ep0);
-            it = symbols.erase(it);
-        }  else if (std::strcmp(it->c_str(), "mu0") == 0) {
-            parser.setConstant(*it, PhysConst::mu0);
-            it = symbols.erase(it);
-        } else if (std::strcmp(it->c_str(), "clight") == 0) {
-            parser.setConstant(*it, PhysConst::c);
-            it = symbols.erase(it);
-        } else if (std::strcmp(it->c_str(), "pi") == 0) {
-            parser.setConstant(*it, MathConst::pi);
-            it = symbols.erase(it);
-        } else {
-            ++it;
+            continue;
         }
+
+        auto constant = warpx_constants.find(*it);
+        if (constant != warpx_constants.end()) {
+          parser.setConstant(*it, constant->second);
+          it = symbols.erase(it);
+          continue;
+        }
+
+        ++it;
     }
     for (auto const& s : symbols) {
         amrex::Abort("makeParser::Unknown symbol "+s);
