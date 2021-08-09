@@ -11,7 +11,7 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_BaseFab.H>
 
-#include<bitset>
+#include <bitset>
 
 struct FaceInfoBox {
     amrex::Gpu::DeviceVector<uint8_t> neigh_faces;
