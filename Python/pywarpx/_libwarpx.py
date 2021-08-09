@@ -120,6 +120,7 @@ class Particle(ctypes.Structure):
 # some useful typenames
 _LP_particle_p = ctypes.POINTER(ctypes.POINTER(Particle))
 _LP_c_int = ctypes.POINTER(ctypes.c_int)
+_LP_LP_c_int = ctypes.POINTER(_LP_c_int)
 _LP_c_void_p = ctypes.POINTER(ctypes.c_void_p)
 _LP_c_real = ctypes.POINTER(c_real)
 _LP_LP_c_real = ctypes.POINTER(_LP_c_real)
@@ -187,6 +188,7 @@ libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getNumParticlesImpactedBoundary.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
+libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
 
 libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
@@ -615,18 +617,25 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
 
     boundary_parts = boundary.split("_")
     dim_num = dimensions[boundary_parts[0]]
-    side = 0 if boundary_parts == 'lo' else 1
+    side = 0 if boundary_parts[1] == 'lo' else 1
 
     boundary_num = 2 * dim_num + side
 
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
-    data = libwarpx.warpx_getParticleBoundaryBuffer(
-        ctypes.c_char_p(species_name.encode('utf-8')),
-        boundary_num, level,
-        ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
-        ctypes.c_char_p(comp_name.encode('utf-8'))
-    )
+    if comp_name == 'step_scraped':
+        data = libwarpx.warpx_getParticleBoundaryBufferScrapedSteps(
+            ctypes.c_char_p(species_name.encode('utf-8')),
+            boundary_num, level,
+            ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
+        )
+    else:
+        data = libwarpx.warpx_getParticleBoundaryBuffer(
+            ctypes.c_char_p(species_name.encode('utf-8')),
+            boundary_num, level,
+            ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
+            ctypes.c_char_p(comp_name.encode('utf-8'))
+        )
 
     particle_data = []
     for i in range(num_tiles.value):
@@ -1789,7 +1798,7 @@ def get_num_particles_impacted_boundary(species_name, boundary):
 
     boundary_parts = boundary.split("_")
     dim_num = dimensions[boundary_parts[0]]
-    side = 0 if boundary_parts == 'lo' else 1
+    side = 0 if boundary_parts[1] == 'lo' else 1
 
     boundary_num = 2 * dim_num + side
 

@@ -105,6 +105,10 @@ extern "C" {
 
     int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary);
 
+    int** warpx_getParticleBoundaryBufferScrapedSteps(
+        const char* species_name, int boundary, int lev,
+        int* num_tiles, int** particles_per_tile);
+
     amrex::ParticleReal** warpx_getParticleBoundaryBuffer(
         const char* species_name, int boundary, int lev,
         int* num_tiles, int** particles_per_tile, const char* comp_name);

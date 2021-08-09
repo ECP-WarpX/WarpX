@@ -475,6 +475,33 @@ extern "C"
         return particle_buffers.getNumParticlesInContainer(species_name, boundary);
     }
 
+    int** warpx_getParticleBoundaryBufferScrapedSteps(const char* species_name, int boundary, int lev,
+                     int* num_tiles, int** particles_per_tile)
+    {
+        const std::string name(species_name);
+        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
+        auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
+
+        const int comp = particle_buffer.NumIntComps() - 1;
+
+        int i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
+
+        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
+        *num_tiles = i;
+        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+
+        int** data = (int**) malloc(*num_tiles*sizeof(int*));
+        i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
+            auto& soa = pti.GetStructOfArrays();
+            data[i] = (int*) soa.GetIntData(comp).dataPtr();
+            (*particles_per_tile)[i] = pti.numParticles();
+        }
+
+        return data;
+    }
+
     amrex::ParticleReal** warpx_getParticleBoundaryBuffer(const char* species_name, int boundary, int lev,
                      int* num_tiles, int** particles_per_tile, const char* comp_name)
     {
@@ -482,14 +509,7 @@ extern "C"
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
         auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
 
-        // "step_scraped" is treated as a special component name since that
-        // is used to access the timestep at which a particle was scraped -
-        // an extra attribute added to the particle buffer which will
-        // necessarily be the last attribute
-        int comp = particle_buffer.NumRealComps() + particle_buffer.NumIntComps() - 1;
-        if (std::string(comp_name).compare("step_scraped") != 0){
-            comp = warpx_getParticleCompIndex(species_name, comp_name);
-        }
+        const int comp = warpx_getParticleCompIndex(species_name, comp_name);
 
         int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
