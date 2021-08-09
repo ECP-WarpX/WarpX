@@ -1,4 +1,4 @@
-from mewarpx import util as mwxutil
+from mewarpx.utils_store import util as mwxutil
 mwxutil.init_libwarpx(ndim=2, rz=False)
 
 from mewarpx import assemblies, emission, mepicmi
@@ -9,7 +9,7 @@ from mewarpx.diags_store import diag_base
 from mewarpx.mcc_wrapper import MCC
 from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
 
-import mewarpx.mwxconstants as constants
+import mewarpx.utils_store.mwxconstants as constants
 
 import sys
 import argparse

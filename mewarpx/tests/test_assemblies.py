@@ -1,11 +1,10 @@
 """Test the mewarpx wrapper for embedded boundaries. This test is the same
 as the test in warpx/Examples/Tests/ElectrostaticSphereEB/inputs_3d but in 2d.
 """
-import pytest
 import numpy as np
 import os
 
-from mewarpx import util as mwxutil
+from mewarpx.utils_store import util as mwxutil
 
 def test_embedded_cylinder():
     name = "Embedded_cylinder_solve"
@@ -13,8 +12,9 @@ def test_embedded_cylinder():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import testing_util, assemblies
+    from mewarpx import assemblies
     from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
     from mewarpx.mwxrun import mwxrun
 
     # Include a random run number to allow parallel runs to not collide. Using

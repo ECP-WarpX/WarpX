@@ -7,7 +7,7 @@ import os
 import numpy as np
 import pytest
 
-from mewarpx import util as mwxutil
+from mewarpx.utils_store import util as mwxutil
 
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.filterwarnings("ignore::UserWarning")
@@ -16,11 +16,9 @@ def test_particle_diag():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import testing_util
+    from mewarpx.utils_store import testing_util
     from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
-
-    import mewarpx.mwxconstants as constants
 
     test_name = "particle_diag_test_with_post_processing"
 

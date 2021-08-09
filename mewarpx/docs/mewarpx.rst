@@ -9,6 +9,7 @@ Subpackages
 
    mewarpx.diags_store
    mewarpx.setups_store
+   mewarpx.utils_store
 
 Submodules
 ----------
@@ -21,6 +22,14 @@ mewarpx.assemblies module
    :undoc-members:
    :show-inheritance:
 
+mewarpx.emission module
+-----------------------
+
+.. automodule:: mewarpx.emission
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 mewarpx.mcc\_wrapper module
 ---------------------------
 
@@ -29,10 +38,10 @@ mewarpx.mcc\_wrapper module
    :undoc-members:
    :show-inheritance:
 
-mewarpx.mwxconstants module
----------------------------
+mewarpx.mepicmi module
+----------------------
 
-.. automodule:: mewarpx.mwxconstants
+.. automodule:: mewarpx.mepicmi
    :members:
    :undoc-members:
    :show-inheritance:
@@ -45,6 +54,14 @@ mewarpx.mwxrun module
    :undoc-members:
    :show-inheritance:
 
+mewarpx.plotting module
+-----------------------
+
+.. automodule:: mewarpx.plotting
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 mewarpx.poisson\_pseudo\_1d module
 ----------------------------------
 
@@ -53,26 +70,18 @@ mewarpx.poisson\_pseudo\_1d module
    :undoc-members:
    :show-inheritance:
 
+mewarpx.runinfo module
+----------------------
+
+.. automodule:: mewarpx.runinfo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 mewarpx.sim\_control module
 ---------------------------
 
 .. automodule:: mewarpx.sim_control
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-mewarpx.testing\_util module
-----------------------------
-
-.. automodule:: mewarpx.testing_util
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-mewarpx.util module
--------------------
-
-.. automodule:: mewarpx.util
    :members:
    :undoc-members:
    :show-inheritance:

@@ -10,7 +10,7 @@ import numpy as np
 import pandas
 
 from mewarpx.mwxrun import mwxrun
-import mewarpx.util as mwxutil
+import mewarpx.utils_store.util as mwxutil
 from mewarpx.diags_store import diag_base, timeseries
 
 from pywarpx import callbacks

@@ -4,7 +4,7 @@ import numpy as np
 import copy
 import collections
 from mewarpx.mwxrun import mwxrun
-from mewarpx import util
+from mewarpx.utils_store import util
 
 class ArrayPlot(object):
 
@@ -117,6 +117,7 @@ class ArrayPlot(object):
     def __init__(self, array, template=None, plot1d=False,
                  ax=None, style=None, **kwargs):
         """Plot given array data.
+
         Arguments:
             array (np.ndarray): Numpy array containing the data to plot.
             template (string): One of 'phi', 'E', 'rho', 'barrier', or None;
@@ -469,10 +470,12 @@ axis_dict_2d = {'r': 0, 'x': 0, 'z': 1}
 
 def get_axis_idxs(axis1, axis2, dim=2):
     """Return the indices appropriate for the given axes and dimension.
+
     Arguments:
         axis1 (string): 'r', 'x', 'y' or 'z'
         axis2 (string): 'r', 'x', 'y' or 'z'
         dim (int): 2 or 3 (2D/3D)
+
     Returns:
         idx_list (list): [axis1_idx, axis2_idx, slice_idx, slice_str]. Here
         slice_idx is the third dimension for 3D and slice_str is its label. Both
@@ -504,6 +507,7 @@ def get_axis_idxs(axis1, axis2, dim=2):
 
 def get_2D_field_slice(data, xaxis, yaxis, slicevec=None, slicepos=None):
     """Return appropriate 2D field slice given the geometry.
+
     Arguments:
         data (np.ndarray): 2D or 3D array, depending on geometry
         xaxis (int): Index of abscissa dimension of data
@@ -513,6 +517,7 @@ def get_2D_field_slice(data, xaxis, yaxis, slicevec=None, slicepos=None):
             or to take middle element in 3D.
         slicepos (float): Position to slice along sliceaxis (m). Default 0 if
             slicevec != None; ignored if slicevec == None.
+
     Returns:
         slice (np.ndarray): 2D array. Ordinate is the first dimension of the
         array, abscissa the 2nd.

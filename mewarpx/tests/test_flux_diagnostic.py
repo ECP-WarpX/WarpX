@@ -5,7 +5,7 @@ import numpy as np
 import pandas
 import pytest
 
-from mewarpx import diags_store, util as mwxutil
+from mewarpx.utils_store import util as mwxutil
 
 
 def test_timeseries():
@@ -14,12 +14,8 @@ def test_timeseries():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import testing_util
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.diags_store import timeseries, flux_diagnostic
-
-    import mewarpx.mwxconstants as constants
+    from mewarpx.utils_store import testing_util
+    from mewarpx.diags_store import timeseries
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -55,11 +51,10 @@ def test_injector_flux_diagnostic():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import testing_util
+    from mewarpx.utils_store import testing_util
     from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
 
-    import mewarpx.mwxconstants as constants
     import dill
 
     # Include a random run number to allow parallel runs to not collide.  Using

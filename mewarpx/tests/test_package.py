@@ -8,7 +8,7 @@ import os
 
 # Local imports
 import mewarpx
-from mewarpx import util
+from mewarpx.utils_store import util
 
 
 def test_version():

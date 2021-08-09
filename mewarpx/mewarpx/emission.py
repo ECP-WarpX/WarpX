@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 
 from pywarpx import callbacks, _libwarpx, picmi
 
-import mewarpx.util as mwxutil
+import mewarpx.utils_store.util as mwxutil
 from mewarpx.mwxrun import mwxrun
-import mewarpx.mwxconstants as constants
-from mewarpx import appendablearray, parallel_util
+import mewarpx.utils_store.mwxconstants as constants
+from mewarpx.utils_store import appendablearray, parallel_util
 
 # Get module-level logger
 logger = logging.getLogger(__name__)
@@ -663,6 +663,7 @@ class BaseEmitter(object):
     """Parent class of both Emitter (which handles injection from a surface or
     other area) and VolumeEmitter (which handles injection throughout a
     volume).
+
     All BaseEmitter objects are expected to contain:
         - ``get_newparticles()`` returns coordinates, velocities, and KE in a
           dict - implemented here
@@ -920,7 +921,7 @@ class Emitter(BaseEmitter):
                 weights.  Defaults to True.
             emission_type (str): Distribution function type used to sample
                 velocities of the emitted particles. Must be defined in
-                :func:`mewarpx.util.get_velocities`. Defaults to 'thermionic'.
+                :func:`mewarpx.utils_store.util.get_velocities`. Defaults to 'thermionic'.
         """
         super(Emitter, self).__init__()
         self.T = T
@@ -1018,7 +1019,7 @@ class ZPlaneEmitter(Emitter):
                 Default mwxrun.ymax.
             transverse_fac (float): Scale the transverse energy distribution by
                 this factor. Default 1. See
-                :func:`mewarpx.util.get_velocities` for details.
+                :func:`mewarpx.utils_store.util.get_velocities` for details.
             kwargs (dict): Any other keyword arguments supported by the parent
                 Emitter constructor (such as "use_Schottky" or
                 "emission_type").
@@ -1126,7 +1127,7 @@ class ArbitraryEmitter2D(Emitter):
                 use for calculating shape contours.
             transverse_fac (float): Scale the transverse energy distribution by
                 this factor. Default 1. See
-                :func:`mewarpx.util.get_velocities` for details.
+                :func:`mewarpx.utils_store.util.get_velocities` for details.
             kwargs (dict): Any other keyword arguments supported by the parent
                 Emitter constructor (such as "use_Schottky" or
                 "emission_type").

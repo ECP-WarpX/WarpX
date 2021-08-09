@@ -14,9 +14,11 @@ def concat_crop_timeseries(timeseries_list,
                            dt=None,
                            debug=False):
     """Combine or crop timeseries object(s).
+
     Note:
         dt must be a multiple of all individual timeseries' dt. Timeseries that
         do not share the final dt will be resampled with default smoothing.
+
     Arguments:
         timeseries_list (list of Timeseries): List of objects to concatenate.
             If empty, return None.
@@ -33,6 +35,7 @@ def concat_crop_timeseries(timeseries_list,
             False. These print statements are commented out by default to
             prevent frequent if statement checks; so uncomment to enable debug
             functionality.
+
     Returns:
         timeseries (Timeseries): The concatenated, cropped, Timeseries object.
     """
@@ -128,6 +131,7 @@ class Timeseries(object):
 
     def __init__(self, step_begin, step_end, dt, array_dict=None):
         """Initialize timeseries object with the arrays for it to hold.
+
         Arguments:
             step_begin (int): First timestep stored in the arrays
             step_end (int): Last timestep stored in the arrays
@@ -175,6 +179,7 @@ class Timeseries(object):
 
     def set_array(self, key, array):
         """Add or set an array in the dictionary.
+
         Arguments:
             key (str): Key to add
             array (np.ndarray): Array to add
@@ -184,6 +189,7 @@ class Timeseries(object):
 
     def get_timeseries_by_key(self, key, include_times=True, default=None):
         """Get timeseries, including an array of times if requested.
+
         Arguments:
             key (str): Key to look up.
             include_times (bool): If True, return an n_elements x 2 array that
@@ -217,11 +223,13 @@ class Timeseries(object):
 
     def get_averagevalue_by_key(self, key, default=None):
         """Get the rate value of a timeseries.
+
         Arguments:
             key (str): Key to look up.
             default (float): Value to return if the given key does not exist in
                 the dictionary or if the dictionary is empty. If None,
                 AttributeError will be raised for an invalid query.
+
         Returns:
             value (float): Average value
         """
@@ -239,6 +247,7 @@ class Timeseries(object):
 
     def resample(self, new_dt, inplace=False, smooth=True):
         """Resample the time series at a longer timescale.
+
         Arguments:
             new_dt (float): Must be a multiple of existing dt!
             inplace (bool): If True, modify this Timeseries. If False, return a
@@ -250,6 +259,7 @@ class Timeseries(object):
                 timeseries. Default True. Note smoothing is never applied if
                 new_dt is equal to current dt. If resampling by 500x or more,
                 smooth using mean values instead.
+
         Returns:
             timeseries (Timeseries): Object with new dt.
         """
@@ -325,9 +335,11 @@ class Timeseries(object):
         This function is based on minerva.util.gaussian_smoothing, but since it
         operates in a given way on 1D arrays only, with no resampling, it's
         re-implemented in simplified form here.
+
         Arguments:
             array (np.ndarray): The 1D array to smooth.
             sigma (float): The sigma, in units of steps, to use for smoothing.
+
         Returns:
             smoothed_array (np.ndarray): 1D array with smoothing applied.
         """
@@ -348,6 +360,7 @@ class Timeseries(object):
         This function is a simplified smoothing scheme appropriate for cases
         where many data points will be combined into a single point. Smoothing
         is done by simply averaging the points to be combined.
+
         Arguments:
             array (np.ndarray): The 1D array to smooth.
             dt_factor (int): The units of steps to use for smoothing. If 1 or
@@ -357,6 +370,7 @@ class Timeseries(object):
             idx_offset (int): Smoothing calculation is performed on the slice
                 array[idx_offset:]. Entries 0:idx_offset are ignored in the
                 input and not returned in the output. Defaults to 0.
+
         Returns:
             smoothed_array (np.ndarray): 1D array with smoothing applied.
         """
@@ -407,6 +421,7 @@ class TimeseriesPlot(object):
 
     def __init__(self, array_list, ax=None, **kwargs):
         r"""Plot fluxes throughout the simulation.
+
         Arguments:
             array_list (list of tuples of (name, timeseries_array)):
                 timeseries_arrays are those returned by

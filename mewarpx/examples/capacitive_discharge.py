@@ -3,7 +3,7 @@ Monte-Carlo Collision script based on case 1 from
 Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 """
 
-from mewarpx import util as mwxutil
+from mewarpx.utils_store import util as mwxutil
 mwxutil.init_libwarpx(ndim=2, rz=False)
 
 from mewarpx.mwxrun import mwxrun

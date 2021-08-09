@@ -7,7 +7,7 @@ import random
 import pandas
 import numpy as np
 
-from mewarpx import util as mwxutil
+from mewarpx.utils_store import util as mwxutil
 from mewarpx.mwxrun import mwxrun
 from mpi4py import MPI
 

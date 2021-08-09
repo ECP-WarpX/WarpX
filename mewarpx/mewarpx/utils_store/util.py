@@ -12,12 +12,12 @@ import numpy as np
 import numpy as np
 
 from pywarpx import geometry
-from mewarpx import mwxconstants as constants
+from mewarpx.utils_store import mwxconstants as constants
 
 
 # http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-t
-mewarpx_dir = os.path.dirname(os.path.abspath(
-    inspect.getfile(inspect.currentframe())))
+mewarpx_dir = os.path.join(os.path.dirname(os.path.abspath(
+    inspect.getfile(inspect.currentframe()))), "..")
 
 def init_libwarpx(ndim, rz):
     """_libwarpx requires the geometry be set before importing.

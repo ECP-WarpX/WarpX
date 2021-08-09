@@ -22,6 +22,7 @@ class FieldDiagnostic(WarpXDiagnostic):
         """
         This class is a wrapper for both creating a picmi FieldDiagnostic,
         and optionally plotting parameters each diagnostic step.
+
         Arguments:
             diag_steps (int): Run the diagnostic with this period.
                 Also plot on this period if enabled.

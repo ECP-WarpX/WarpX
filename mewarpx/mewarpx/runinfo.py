@@ -15,7 +15,7 @@ import dill
 import mewarpx
 import numpy as np
 
-import mewarpx.util as mwxutil
+import mewarpx.utils_store.util as mwxutil
 
 from mewarpx.mwxrun import mwxrun
 from functools import reduce

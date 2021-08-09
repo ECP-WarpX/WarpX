@@ -7,7 +7,7 @@ Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 import pytest
 import os.path
 
-from mewarpx import util as mwxutil
+from mewarpx.utils_store import util as mwxutil
 
 from pywarpx import picmi
 
@@ -32,7 +32,7 @@ def test_field_diag(plot_on_diag_steps):
 
     from mewarpx.mwxrun import mwxrun
     from mewarpx.setups_store import diode_setup
-    from mewarpx import testing_util
+    from mewarpx.utils_store import testing_util
 
     plot_diag_str = "_with_diag_plotting" if plot_on_diag_steps else ""
     post_proc_str = "_with_post_processing" if post_processing else ""
