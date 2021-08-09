@@ -1,5 +1,12 @@
 #! /usr/bin/env python
 
+# Copyright 2021 Lorenzo Giacomel
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
+
 import yt
 import os, sys
 from scipy.constants import mu_0, pi, c

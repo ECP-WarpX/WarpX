@@ -1,3 +1,10 @@
+/* Copyright 2021 Lorenzo Giacomel
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #include "WarpX.H"
 #include <AMReX_Scan.H>
 #include <AMReX_iMultiFab.H>

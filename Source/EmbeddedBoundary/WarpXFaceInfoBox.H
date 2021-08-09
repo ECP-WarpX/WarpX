@@ -1,6 +1,10 @@
-//
-// Created by Lorenzo Giacomel on 14/04/2021.
-//
+/* Copyright 2021 Lorenzo Giacomel
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_H
 #define WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_H
 
