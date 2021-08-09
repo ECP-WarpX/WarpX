@@ -130,7 +130,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         auto dst_index = ptile_buffer.numParticles();
                         ptile_buffer.resize(dst_index + np);
 
-                        int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
+                        int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
                         int timestep = warpx_instance.getistep(0);
                         auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                              IsOutsideDomainBoundary{plo, phi, idim, iside},
@@ -173,7 +173,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto dst_index = ptile_buffer.numParticles();
                 ptile_buffer.resize(dst_index + np);
 
-                int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
+                int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
                 int timestep = warpx_instance.getistep(0);
                 using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
