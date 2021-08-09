@@ -44,6 +44,7 @@
 #endif
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
