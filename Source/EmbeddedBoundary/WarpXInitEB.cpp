@@ -6,7 +6,6 @@
  */
 
 #include "WarpX.H"
-#include <cmath>
 
 #ifdef AMREX_USE_EB
 #  include "Utils/WarpXUtil.H"
@@ -37,11 +36,8 @@
 #  include <AMReX_SPACE.H>
 #  include <AMReX_Vector.H>
 
-#  include <array>
 #  include <cstdlib>
-#  include <memory>
 #  include <string>
-#  include <vector>
 
 #endif
 
