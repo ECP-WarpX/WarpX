@@ -468,7 +468,7 @@ extern "C"
         mypc.defineAllParticleTiles();
     }
 
-    int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary)
+    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary)
     {
         const std::string name(species_name);
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();

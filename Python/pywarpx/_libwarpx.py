@@ -186,7 +186,7 @@ libwarpx.warpx_getChargeDensityCP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
 libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getNumParticlesImpactedBoundary.restype = ctypes.c_int
+libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
 
@@ -582,6 +582,41 @@ def get_particle_arrays(species_name, comp_name, level):
     _libc.free(data)
     return particle_data
 
+
+def _get_boundary_number(boundary):
+    '''
+
+    Utility function to find the boundary number given a boundary name.
+
+    Parameters
+    ----------
+
+        boundary       : the boundary from which to get the scraped particle data.
+                         In the form x/y/z_hi/lo or eb.
+
+    Returns
+    -------
+
+    Integer index in the boundary scraper buffer for the given boundary.
+    '''
+    if geometry_dim == '3d':
+        dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
+    elif geometry_dim == '2d':
+        dimensions = {'x' : 0, 'z' : 1}
+    else:
+        raise NotImplementedError("RZ is not supported for particle scraping.")
+
+    if boundary != 'eb':
+        boundary_parts = boundary.split("_")
+        dim_num = dimensions[boundary_parts[0]]
+        side = 0 if boundary_parts[1] == 'lo' else 1
+        boundary_num = 2 * dim_num + side
+    else:
+        boundary_num = 4 if geometry_dim == '2d' else 6
+
+    return boundary_num
+
+
 def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
     '''
 
@@ -596,7 +631,7 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
 
         species_name   : the species name that the data will be returned for.
         boundary       : the boundary from which to get the scraped particle data.
-                         In the form x/y/z_hi/lo
+                         In the form x/y/z_hi/lo or eb.
         comp_name      : the component of the array data that will be returned.
                          If "step_scraped" the special attribute holding the
                          timestep at which a particle was scraped will be
@@ -608,31 +643,18 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
         A List of numpy arrays.
 
     '''
-    if geometry_dim == '3d':
-        dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
-    elif geometry_dim == '2d':
-        dimensions = {'x' : 0, 'z' : 1}
-    else:
-        raise NotImplementedError("RZ is not supported for particle scraping.")
-
-    boundary_parts = boundary.split("_")
-    dim_num = dimensions[boundary_parts[0]]
-    side = 0 if boundary_parts[1] == 'lo' else 1
-
-    boundary_num = 2 * dim_num + side
-
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
     if comp_name == 'step_scraped':
         data = libwarpx.warpx_getParticleBoundaryBufferScrapedSteps(
             ctypes.c_char_p(species_name.encode('utf-8')),
-            boundary_num, level,
+            _get_boundary_number(boundary), level,
             ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
         )
     else:
         data = libwarpx.warpx_getParticleBoundaryBuffer(
             ctypes.c_char_p(species_name.encode('utf-8')),
-            boundary_num, level,
+            _get_boundary_number(boundary), level,
             ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
             ctypes.c_char_p(comp_name.encode('utf-8'))
         )
@@ -650,6 +672,7 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
     _libc.free(particles_per_tile)
     _libc.free(data)
     return particle_data
+
 
 def get_particle_x(species_name, level=0):
     '''
@@ -1749,6 +1772,7 @@ def get_mesh_charge_density_cp_lovects(level, include_ghosts=True):
     '''
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityCPLoVects)
 
+
 def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
     '''
 
@@ -1769,7 +1793,8 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
     '''
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityFPLoVects)
 
-def get_num_particles_impacted_boundary(species_name, boundary):
+
+def get_particle_boundary_buffer_size(species_name, boundary):
     '''
 
     This returns the number of particles that have been scraped so far in the simulation
@@ -1788,23 +1813,11 @@ def get_num_particles_impacted_boundary(species_name, boundary):
         The number of particles scraped so far from a boundary and of a species.
 
     '''
-
-    if geometry_dim == '3d':
-        dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
-    elif geometry_dim == '2d':
-        dimensions = {'x' : 0, 'z' : 1}
-    else:
-        raise NotImplementedError("RZ is not supported for particle scraping.")
-
-    boundary_parts = boundary.split("_")
-    dim_num = dimensions[boundary_parts[0]]
-    side = 0 if boundary_parts[1] == 'lo' else 1
-
-    boundary_num = 2 * dim_num + side
-
-    return libwarpx.warpx_getNumParticlesImpactedBoundary(
-        ctypes.c_char_p(species_name.encode('utf-8')), boundary_num
+    return libwarpx.warpx_getParticleBoundaryBufferSize(
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        _get_boundary_number(boundary)
     )
+
 
 def _get_nodal_flag(getdatafunc):
     data = getdatafunc()

@@ -103,7 +103,7 @@ extern "C" {
     void warpx_addRealComp(
         const char* char_species_name, const char* char_comp_name, bool comm);
 
-    int warpx_getNumParticlesImpactedBoundary(const char* species_name, int boundary);
+    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary);
 
     int** warpx_getParticleBoundaryBufferScrapedSteps(
         const char* species_name, int boundary, int lev,
