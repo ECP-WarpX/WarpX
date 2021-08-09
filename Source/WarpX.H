@@ -1150,31 +1150,96 @@ private:
 
 public:
     void InitEB ();
+    /**
+    * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
+    *        An edge of length 0 is fully covered.
+    */
     void ComputeEdgeLengths ();
+    /**
+    * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
+    *        An edge of area 0 is fully covered.
+    */
     void ComputeFaceAreas ();
+    /**
+    * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
+    */
     void ScaleEdges ();
+    /**
+    * \brief Scale the edges areas by the mesh width to obtain the real areas.
+    */
     void ScaleAreas ();
+    /**
+    * \brief Initialize information for cell extensions.
+    *        The flags convention for m_flag_info_face is as follows
+    *          - 0 for unstable cells
+    *          - 1 for stable cells which have not been intruded
+    *          - 2 for stable cells which have been intruded
+    *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
+    */
     void MarkCells();
-    amrex::Array1D<int, 0, 2> CountExtFaces();
-    void ComputeFaceExtensions();
-    void InitBorrowing();
-    amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
-    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds);
+    /**
+    * \brief Compute the level set function used for particle-boundary interaction.
+    */
     void ComputeDistanceToEB ();
-
-    void ScrapeParticles ();
-
+    /**
+    * \brief Auxiliary function to count the amount of faces which still need to be extended
+    */
+    amrex::Array1D<int, 0, 2> CountExtFaces();
+    /**
+    * \brief Main function computing the cell extension. Where possible it computes one-way
+    *       extensions and, when this is not possible, it does eight-ways extensions.
+    */
+    void ComputeFaceExtensions();
+    /**
+    * \brief Initialize the memory for the cell FaceInfoBoxes
+    */
+    void InitBorrowing();
+    /**
+    * \brief For the face of cell pointing in direction idim, compute the number of faces
+    * we need to intrude with the one-way extension. Returns only one or zero: one if the
+    * face can be extended with the the one-way extension, zeros if it can't.
+    *
+    * \param[in] cell \c Dim3 storing the indices of the face to extended
+    * \param[in] S_ext amount of area needed for the extension
+    * \param[in] S_red \c Array4 storing the amount of  area each face can still give away
+    * \param[in] flag_info_face \c Array4 storing face information
+    * \param[in] flag_ext_face \c Array4 storing face information
+    * \param[in] idim normal direction to the face in consideration (0 for x, 1 for y, 2 for z)
+    */
     AMREX_GPU_DEVICE
-    static int ComputeNBorrowOneFaceExtension(amrex::Dim3 cell, amrex::Real S_ext,
+    static int ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                               const amrex::Array4<amrex::Real> &S_red,
                                               const amrex::Array4<int> &flag_info_face,
                                               const amrex::Array4<int> &flag_ext_face, int idim);
-
+    /**
+    * \brief For the face of cell pointing in direction idim, compute the number of faces
+    * we need to intrude with the eight-ways extension.
+    *
+    * \param[in] cell \c Dim3 storing the indices of the face to extended
+    * \param[in] S_ext amount of area needed for the extension
+    * \param[in] S_red \c Array4 storing the amount of  area each face can still give away
+    * \param[in] S_red \c Array4 storing the area of face
+    * \param[in] flag_info_face \c Array4 storing face information
+    * \param[in] idim normal direction to the face in consideration (0 for x, 1 for y, 2 for z)
+    */
     AMREX_GPU_DEVICE
     static int ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                                  const amrex::Array4<amrex::Real> &S_red,
                                                  const amrex::Array4<amrex::Real> &S,
-                                                 const amrex::Array4<int> &flag_info_face, int idim);
+                                                 const amrex::Array4<int> &flag_info_face,
+                                                 int idim);
+    /**
+    * \brief Do the one-way extension
+    */
+    amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
+    /**
+    * \brief Do the eight-ways extension
+    */
+    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds);
+
+
+    void ScrapeParticles ();
+
 private:
 
     void PushPSATD ();

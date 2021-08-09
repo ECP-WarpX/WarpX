@@ -102,10 +102,7 @@ WarpX::InitEB ()
 #endif
 }
 
-/**
- * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
- *        An edge of length 0 is fully covered.
- */
+
 void
 WarpX::ComputeEdgeLengths () {
 #ifdef AMREX_USE_EB
@@ -151,10 +148,7 @@ WarpX::ComputeEdgeLengths () {
 #endif
 }
 
-/**
- * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
- *        An edge of area 0 is fully covered.
- */
+
 void
 WarpX::ComputeFaceAreas () {
 #ifdef AMREX_USE_EB
@@ -190,9 +184,7 @@ WarpX::ComputeFaceAreas () {
 #endif
 }
 
-/**
- * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
- */
+
 void
 WarpX::ScaleEdges () {
 #ifdef AMREX_USE_EB
@@ -214,9 +206,7 @@ WarpX::ScaleEdges () {
 #endif
 }
 
-/**
- * \brief Scale the edges areas by the mesh width to obtain the real areas.
- */
+
 void
 WarpX::ScaleAreas() {
 #ifdef AMREX_USE_EB
@@ -250,16 +240,7 @@ WarpX::ScaleAreas() {
 #endif
 }
 
-//0 for unst, 1 for stable && available, 2 for stable, available and intruded
 
-/**
- * \brief Initialize information for cell extensions.
- *        The flags convention for m_flag_info_face is as follows
- *          - 0 for unstable cells
- *          - 1 for stable cells which have not been intruded
- *          - 2 for stable cells which have been intruded
- *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
- */
 void
 WarpX::MarkCells(){
 #ifdef AMREX_USE_EB
@@ -311,9 +292,7 @@ WarpX::MarkCells(){
 #endif
 }
 
-/**
- * \brief Compute the level set function used for particle-boundary interaction.
- */
+
 void
 WarpX::ComputeDistanceToEB () {
 #ifdef AMREX_USE_EB

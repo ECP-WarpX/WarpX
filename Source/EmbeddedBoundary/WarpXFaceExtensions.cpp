@@ -10,9 +10,7 @@
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
 
-/**
-* \brief auxiliary function to count the amount of faces which still need to be extended
-*/
+
 amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
@@ -40,10 +38,6 @@ WarpX::CountExtFaces() {
 }
 
 
-/**
-* \brief This is the main function computing the cell extension. Where possible it computes one-way
- *       extensions and, when this is not possible, it does eight-ways extensions.
-*/
 void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
@@ -87,9 +81,7 @@ WarpX::ComputeFaceExtensions(){
 #endif
 }
 
-/**
-* \brief this function initializes the memory for the cell FaceInfoBoxes
-*/
+
 void
 WarpX::InitBorrowing() {
     int idim = 0;
@@ -132,11 +124,7 @@ WarpX::InitBorrowing() {
     }
 }
 
-/**
-* \brief For the face of cell pointing in direction idim, compute the number of faces
-* we need to intrude. For the one-way extension this function returns only one or zero: one if the
-* face can be extended withe the one-way extension, zeros if it can't.
-*/
+
 AMREX_GPU_DEVICE
 int
 WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
@@ -213,11 +201,7 @@ WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real 
     return n_borrow;
 }
 
-/**
-* \brief For the face of cell pointing in direction idim, compute the number of faces
-* we need to intrude. For the one-way extension this function returns only one or zero: one if the
-* face can be extended with the the one-way extension, zeros if it can't.
-*/
+
 AMREX_GPU_DEVICE
 int
 WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
@@ -369,9 +353,7 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
     return n_borrow;
 }
 
-/**
-* \brief Do the one-way extension
-*/
+
 amrex::Array1D<int, 0, 2>
 WarpX::ComputeOneWayExtensions() {
 #ifdef AMREX_USE_EB
@@ -676,9 +658,6 @@ WarpX::ComputeOneWayExtensions() {
 #endif
 }
 
-/**
-* \brief Do the 8-ways extension
-*/
 
 void
 WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
