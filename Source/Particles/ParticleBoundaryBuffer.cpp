@@ -81,9 +81,10 @@ void ParticleBoundaryBuffer::clearParticles () {
     for (int i = 0; i < numBoundaries(); ++i)
     {
         auto& buffer = m_particle_containers[i];
-        if (buffer[i].isDefined())
+        for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
         {
-            buffer[i].clearParticles();
+            auto& species_buffer = buffer[ispecies];
+            if (species_buffer.isDefined()) species_buffer.clearParticles();
         }
     }
 }
