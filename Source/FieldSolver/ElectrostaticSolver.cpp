@@ -412,7 +412,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
         else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                 "Field boundary conditions have to be either periodic or PEC "
-                + "when using the electrostatic solver"
+                "when using the electrostatic solver"
             );
         }
     }
