@@ -54,7 +54,7 @@ WarpX::ComputeDt ()
         if (do_nodal) {
             deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt(dx);
         } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee
-                    or maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+                    || maxwell_solver_id == MaxwellSolverAlgo::ECT) {
             deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt(dx);
         } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);

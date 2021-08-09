@@ -145,16 +145,16 @@ WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real 
         for (int j_n = -1; j_n < 2; j_n++) {
             for (int k_n = -1; k_n < 2; k_n++) {
                 //This if makes sure that we don't visit the "diagonal neighbours"
-                if (!(j_n == k_n or j_n == -k_n)) {
+                if (!(j_n == k_n || j_n == -k_n)) {
                     // Here a face is available if it doesn't need to be extended itself and if its
                     // area exceeds Sz_ext. Here we need to take into account if the intruded face
                     // has given away already some area, so we use Sz_red rather than Sz.
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i, j + j_n, k + k_n) > S_ext
-                        and (flag_info_face(i, j + j_n, k + k_n) == 1 or
+                        && (flag_info_face(i, j + j_n, k + k_n) == 1 ||
                              flag_info_face(i, j + j_n, k + k_n) == 2)
-                        and flag_ext_face(i, j, k) and not stop) {
+                        && flag_ext_face(i, j, k) && ! stop) {
                         n_borrow += 1;
                         stop = true;
                     }
@@ -165,16 +165,16 @@ WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real 
         for (int i_n = -1; i_n < 2; i_n++) {
             for (int k_n = -1; k_n < 2; k_n++) {
                 //This if makes sure that we don't visit the "diagonal neighbours"
-                if (!(i_n == k_n or i_n == -k_n)) {
+                if (!(i_n == k_n || i_n == -k_n)) {
                     // Here a face is available if it doesn't need to be extended itself and if its
                     // area exceeds Sz_ext. Here we need to take into account if the intruded face
                     // has given away already some area, so we use Sz_red rather than Sz.
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i + i_n, j, k + k_n) > S_ext
-                        and (flag_info_face(i + i_n, j, k + k_n) == 1
-                             or flag_info_face(i + i_n, j, k + k_n) == 2)
-                        and flag_ext_face(i, j, k) and not stop) {
+                        && (flag_info_face(i + i_n, j, k + k_n) == 1
+                             || flag_info_face(i + i_n, j, k + k_n) == 2)
+                        && flag_ext_face(i, j, k) && ! stop) {
                         n_borrow += 1;
                         stop = true;
                     }
@@ -185,16 +185,16 @@ WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real 
         for (int i_n = -1; i_n < 2; i_n++) {
             for (int j_n = -1; j_n < 2; j_n++) {
                 //This if makes sure that we don't visit the "diagonal neighbours"
-                if (!(i_n == j_n or i_n == -j_n)) {
+                if (!(i_n == j_n || i_n == -j_n)) {
                     // Here a face is available if it doesn't need to be extended itself and if its
                     // area exceeds Sz_ext. Here we need to take into account if the intruded face
                     // has given away already some area, so we use Sz_red rather than Sz.
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i + i_n, j + j_n, k) > S_ext
-                        and (flag_info_face(i + i_n, j + j_n, k) == 1
-                             or flag_info_face(i + i_n, j + j_n, k) == 2)
-                        and flag_ext_face(i, j, k) and not stop) {
+                        && (flag_info_face(i + i_n, j + j_n, k) == 1
+                             || flag_info_face(i + i_n, j + j_n, k) == 2)
+                        && flag_ext_face(i, j, k) && ! stop) {
                         n_borrow += 1;
                         stop = true;
                     }
@@ -227,7 +227,7 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
         for (int j_loc = 0; j_loc <= 2; j_loc++) {
             for (int k_loc = 0; k_loc <= 2; k_loc++) {
                 local_avail(j_loc, k_loc) = (flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 1
-                                             or flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 2);
+                                             || flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 2);
             }
         }
 
@@ -242,7 +242,7 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
 
         bool neg_face = true;
 
-        while (denom >= S_ext and neg_face and denom > 0) {
+        while (denom >= S_ext && neg_face && denom > 0) {
             neg_face = false;
             for (int j_n = -1; j_n < 2; j_n++) {
                 for (int k_n = -1; k_n < 2; k_n++) {
@@ -269,7 +269,7 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
         for(int i_loc = 0; i_loc <= 2; i_loc++){
             for(int k_loc = 0; k_loc <= 2; k_loc++){
                 local_avail(i_loc, k_loc) = (flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 1
-                                             or flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 2);
+                                             || flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 2);
             }
         }
 
@@ -284,7 +284,7 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
 
         bool neg_face = true;
 
-        while(denom >= S_ext and neg_face and denom > 0){
+        while(denom >= S_ext && neg_face && denom > 0){
             neg_face = false;
             for (int i_n = -1; i_n < 2; i_n++) {
                 for (int k_n = -1; k_n < 2; k_n++) {
@@ -307,11 +307,12 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
                 local_avail(0, 2) * S(i - 1, j, k + 1) +
                 local_avail(2, 2) * S(i + 1, j, k + 1);
         }
+
     } else if(idim == 2){
         for(int i_loc = 0; i_loc <= 2; i_loc++){
             for(int j_loc = 0; j_loc <= 2; j_loc++){
                 local_avail(i_loc, j_loc) = (flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 1
-                                             or flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 2);
+                                             || flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 2);
             }
         }
 
@@ -326,7 +327,7 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
 
         bool neg_face = true;
 
-        while(denom >= S_ext and neg_face and denom > 0){
+        while(denom >= S_ext && neg_face && denom > 0){
             neg_face = false;
             for (int i_n = -1; i_n < 2; i_n++) {
                 for (int j_n = -1; j_n < 2; j_n++) {
@@ -435,16 +436,16 @@ WarpX::ComputeOneWayExtensions() {
                 for (int j_n = -1; j_n < 2; j_n++) {
                     for (int k_n = -1; k_n < 2; k_n++) {
                         //This if makes sure that we don't visit the "diagonal neighbours"
-                        if( !(j_n == k_n or j_n == -k_n)){
+                        if( !(j_n == k_n || j_n == -k_n)){
                             // Here a face is available if it doesn't need to be extended itself and if its
                             // area exceeds Sz_ext. Here we need to take into account if the intruded face
                             // has given away already some area, so we use Sz_red rather than Sz.
                             // If no face is available we don't do anything and we will need to use the
                             // multi-face extensions.
                             if (Sx_mod(i, j + j_n, k + k_n) > Sx_ext
-                                and ( flag_info_face_x(i, j + j_n, k + k_n) == 1
-                                      or flag_info_face_x(i, j + j_n, k + k_n) == 2)
-                                and flag_ext_face_x(i, j, k)) {
+                                && ( flag_info_face_x(i, j + j_n, k + k_n) == 1
+                                      || flag_info_face_x(i, j + j_n, k + k_n) == 2)
+                                && flag_ext_face_x(i, j, k)) {
                                 Sx_mod(i, j + j_n, k + k_n) -= Sx_ext;
                                 // Insert the index of the face info
                                 *(borrowing_x_inds + ps) = ps;
@@ -531,16 +532,16 @@ WarpX::ComputeOneWayExtensions() {
                     for (int i_n = -1; i_n < 2; i_n++) {
                         for (int k_n = -1; k_n < 2; k_n++) {
                             //This if makes sure that we don't visit the "diagonal neighbours"
-                            if( !(i_n == k_n or i_n == -k_n)){
+                            if( !(i_n == k_n || i_n == -k_n)){
                                 // Here a face is available if it doesn't need to be extended itself and if its
                                 // area exceeds Sz_ext. Here we need to take into account if the intruded face
                                 // has given away already some area, so we use Sz_red rather than Sz.
                                 // If no face is available we don't do anything and we will need to use the
                                 // multi-face extensions.
                                 if (Sy_mod(i + i_n, j, k + k_n) > Sy_ext
-                                    and (flag_info_face_y(i + i_n, j, k + k_n) == 1
-                                         or flag_info_face_y(i + i_n, j, k + k_n) == 2)
-                                    and flag_ext_face_y(i, j, k)) {
+                                    && (flag_info_face_y(i + i_n, j, k + k_n) == 1
+                                         || flag_info_face_y(i + i_n, j, k + k_n) == 2)
+                                    && flag_ext_face_y(i, j, k)) {
                                     Sy_mod(i + i_n, j, k + k_n) -= Sy_ext;
                                     // Insert the index of the face info
                                     *(borrowing_y_inds + ps) = ps;
@@ -628,16 +629,16 @@ WarpX::ComputeOneWayExtensions() {
                     for (int i_n = -1; i_n < 2; i_n++) {
                         for (int j_n = -1; j_n < 2; j_n++) {
                             //This if makes sure that we don't visit the "diagonal neighbours"
-                            if( !(i_n == j_n or i_n == -j_n)){
+                            if( !(i_n == j_n || i_n == -j_n)){
                                 // Here a face is available if it doesn't need to be extended itself and if its
                                 // area exceeds Sz_ext. Here we need to take into account if the intruded face
                                 // has given away already some area, so we use Sz_red rather than Sz.
                                 // If no face is available we don't do anything and we will need to use the
                                 // multi-face extensions.
                                 if (Sz_mod(i + i_n, j + j_n, k) > Sz_ext
-                                    and (flag_info_face_z(i + i_n, j + j_n, k) == 1
-                                         or flag_info_face_z(i + i_n, j + j_n, k) == 2)
-                                    and flag_ext_face_z(i, j, k)) {
+                                    && (flag_info_face_z(i + i_n, j + j_n, k) == 1
+                                         || flag_info_face_z(i + i_n, j + j_n, k) == 2)
+                                    && flag_ext_face_z(i, j, k)) {
                                     Sz_mod(i + i_n, j + j_n, k) -= Sz_ext;
                                     // Insert the index of the face info
                                     *(borrowing_z_inds + ps) = ps;
@@ -747,7 +748,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     for(int j_loc = 0; j_loc <= 2; j_loc++){
                         for(int k_loc = 0; k_loc <= 2; k_loc++){
                             local_avail(j_loc, k_loc) = (flag_info_face_x(i, j  + j_loc - 1, k + k_loc - 1) == 1
-                                                         or flag_info_face_x(i, j  + j_loc - 1, k + k_loc - 1) == 2);
+                                                         || flag_info_face_x(i, j  + j_loc - 1, k + k_loc - 1) == 2);
                         }
                     }
 
@@ -762,7 +763,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 
                     bool neg_face = true;
 
-                    while(denom >= Sx_ext and neg_face and denom > 0){
+                    while(denom >= Sx_ext && neg_face && denom > 0){
                         neg_face = false;
                         for (int j_n = -1; j_n < 2; j_n++) {
                             for (int k_n = -1; k_n < 2; k_n++) {
@@ -887,7 +888,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     for (int i_loc = 0; i_loc <= 2; i_loc++) {
                         for (int k_loc = 0; k_loc <= 2; k_loc++) {
                             local_avail(i_loc, k_loc) = (flag_info_face_y(i + i_loc - 1, j, k + k_loc - 1) == 1
-                                                         or flag_info_face_y(i + i_loc - 1, j, k + k_loc - 1) == 2)   ;
+                                                         || flag_info_face_y(i + i_loc - 1, j, k + k_loc - 1) == 2)   ;
                         }
                     }
 
@@ -902,7 +903,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 
                     bool neg_face = true;
 
-                    while (denom >= Sy_ext and neg_face and denom > 0) {
+                    while (denom >= Sy_ext && neg_face && denom > 0) {
                         neg_face = false;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int k_n = -1; k_n < 2; k_n++) {
@@ -1025,7 +1026,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                     for(int i_loc = 0; i_loc <= 2; i_loc++){
                         for(int j_loc = 0; j_loc <= 2; j_loc++){
                             local_avail(i_loc, j_loc) = (flag_info_face_z(i + i_loc - 1, j + j_loc - 1, k) == 1
-                                                         or flag_info_face_z(i + i_loc - 1, j + j_loc - 1, k) == 2);
+                                                         || flag_info_face_z(i + i_loc - 1, j + j_loc - 1, k) == 2);
                         }
                     }
 
@@ -1040,7 +1041,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
 
                     bool neg_face = true;
 
-                    while(denom >= Sz_ext and neg_face and denom > 0){
+                    while(denom >= Sz_ext && neg_face && denom > 0){
                         neg_face = false;
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int j_n = -1; j_n < 2; j_n++) {

@@ -35,21 +35,21 @@ struct FaceInfoBox {
     AMREX_GPU_HOST_DEVICE
     static void addConnectedNeighbor(int i, int j, int ind, uint8_t* neigh_face_ptr){
 
-        if(i == -1 and j == -1){
+        if(i == -1 && j == -1){
             *(neigh_face_ptr + ind) = ul;
-        }else if(i == -1 and j == 0){
+        }else if(i == -1 && j == 0){
             *(neigh_face_ptr + ind) = l;
-        }else if(i == -1 and j == 1){
+        }else if(i == -1 && j == 1){
             *(neigh_face_ptr + ind) = bl;
-        }else if(i == 0 and j == -1){
+        }else if(i == 0 && j == -1){
             *(neigh_face_ptr + ind) = u;
-        }else if(i == 0 and j == 1){
+        }else if(i == 0 && j == 1){
             *(neigh_face_ptr + ind) = d;
-        }else if(i == 1 and j == -1){
+        }else if(i == 1 && j == -1){
             *(neigh_face_ptr + ind) = ur;
-        }else if(i == 1 and j == 0){
+        }else if(i == 1 && j == 0){
             *(neigh_face_ptr + ind) = r;
-        }else if(i == 1 and j == 1){
+        }else if(i == 1 && j == 1){
             *(neigh_face_ptr + ind) = br;
         }
     }

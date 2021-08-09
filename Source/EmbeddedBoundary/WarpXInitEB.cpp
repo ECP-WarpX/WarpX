@@ -247,7 +247,7 @@ WarpX::ScaleAreas() {
 #endif
 }
 
-//0 for unst, 1 for stable and available, 2 for stable, available and intruded
+//0 for unst, 1 for stable && available, 2 for stable, available and intruded
 
 /**
  * \brief Initialize information for cell extensions.
@@ -293,13 +293,13 @@ WarpX::MarkCells(){
                 // Does this face need to be extended? This is the same as
                 // flag_info_face(i, j, k) = 0 here but it is modified later to keep track o which
                 // faces need multi-cell extension
-                flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab and S(i, j, k) > 0);
+                flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab && S(i, j, k) > 0);
                 if(flag_ext_face(i, j, k)){
                     flag_info_face(i, j, k) = 0;
                 }
                 // Is this face available to lend area to other faces?
                 // The criterion is that the face has to be interior and not already unstable itself
-                if(int(S(i, j, k) > 0 and !flag_ext_face(i, j, k))) {
+                if(int(S(i, j, k) > 0 && !flag_ext_face(i, j, k))) {
                     flag_info_face(i, j, k) = 1;
                 }
             });
