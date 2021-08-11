@@ -738,7 +738,7 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML == false,
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false,
             "PML are not implemented in RZ geometry; please set a different boundary condition using boundary.field_lo and boundary.field_hi.")
 #endif        
 
