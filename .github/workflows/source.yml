@@ -35,3 +35,24 @@ jobs:
       run: |
         sudo apt-get install -y --no-install-recommends doxygen
         .github/workflows/source/doxygen
+  urls:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: urls-checker
+      uses: urlstechie/urlchecker-action@master
+      with:
+        # A comma-separated list of file types to cover in the URL checks
+        file_types: .md,.py,.rst,.H,.cpp
+        # Choose whether to include file with no URLs in the prints.
+        print_all: false
+        # The timeout seconds to provide to requests, defaults to 5 seconds
+        timeout: 5
+        # How many times to retry a failed request (each is logged, defaults to 1)
+        retry_count: 3
+        # A comma separated links to exclude during URL checks
+        #exclude_urls: url1,url2
+        # A comma separated patterns to exclude during URL checks
+        #exclude_patterns: url1,url2
+        # choose if the force pass or not
+        force_pass : true
