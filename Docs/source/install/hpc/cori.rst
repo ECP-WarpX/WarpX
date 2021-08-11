@@ -3,7 +3,7 @@
 Cori (NERSC)
 ============
 
-The `Cori cluster <http://www.nersc.gov/users/computational-systems/cori>`_ is located at NERSC.
+The `Cori cluster <https://docs.nersc.gov/systems/cori/>`_ is located at NERSC.
 
 If you are new to this system, please see the following resources:
 
