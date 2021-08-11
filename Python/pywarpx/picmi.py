@@ -1092,6 +1092,17 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 
 
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
+    """
+    Warp specific arguments:
+      - warpx_new_BTD: Use the new BTD diagnostics
+      - warpx_format: Passed to <diagnostic name>.format
+      - warpx_openpmd_backend: Passed to <diagnostic name>.openpmd_backend
+      - warpx_file_prefix: Passed to <diagnostic name>.file_prefix
+      - warpx_buffer_size: Passed to <diagnostic name>.buffer_size
+      - warpx_lower_bound: Passed to <diagnostic name>.lower_bound
+      - warpx_upper_bound: Passed to <diagnostic name>.upper_bound
+    """
+    __doc__ = picmistandard.PICMI_LabFrameFieldDiagnostic.__doc__ + __doc__
     def init(self, kw):
         self.use_new_BTD = kw.pop('warpx_new_BTD', False)
         if self.use_new_BTD:
@@ -1165,6 +1176,9 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
                 fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
                 fields_to_plot.add(dataname.lower())
+            elif dataname.startswith('rho_'):
+                # Adds rho_species diagnostic
+                fields_to_plot.add(dataname)
 
         # --- Convert the set to a sorted list so that the order
         # --- is the same on all processors.
