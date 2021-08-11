@@ -666,8 +666,6 @@ WarpX::ReadParameters ()
             }
         }
 
-        if ( pp_warpx.query("do_pml", do_pml) )
-            amrex::Abort( "do_pml is not supported. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.") ;
         pp_warpx.query("pml_ncell", pml_ncell);
         pp_warpx.query("pml_delta", pml_delta);
         pp_warpx.query("pml_has_particles", pml_has_particles);
@@ -740,7 +738,7 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false,
             "PML are not implemented in RZ geometry; please set a different boundary condition using boundary.field_lo and boundary.field_hi.")
-#endif        
+#endif
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
             amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
@@ -1205,7 +1203,9 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
                      "Please use the flag use_filter, see documentation.");
     }
-
+    if ( pp_warpx.query("do_pml", backward_int) ) {
+        amrex::Abort( "do_pml is not supported. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.") ;
+    }
     ParmParse pp_interpolation("interpolation");
     if (pp_interpolation.query("nox", backward_int) ||
         pp_interpolation.query("noy", backward_int) ||
