@@ -1154,7 +1154,7 @@ Laser initialization
     Note that the current implementation of the parser for B-field on particles
     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
     To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
-    option requires the following parameters,
+    option requires the following parameters, in the lab frame,
     ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
     ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
     ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
@@ -1184,7 +1184,7 @@ Laser initialization
     Note that the current implementation of the parser for E-field on particles
     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
     To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
-    option requires the following parameters,
+    option requires the following parameters, in the lab frame,
     ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
     ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
     ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
