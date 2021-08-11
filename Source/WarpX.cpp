@@ -1534,7 +1534,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_fp"));
 
-        // Also allocate the MultiFab for the full phi grid
+        // Also allocate the MultiFab for the full rho grid
         // get the full domain
         Box domain_box = Geom(lev).Domain();
         // make a new BoxArray from the domain Box

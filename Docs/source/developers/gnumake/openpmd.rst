@@ -9,7 +9,7 @@ therefore we recommend to use `spack <https://
 spack.io>`__ in order to facilitate the installation.
 
 More specifically, we recommend that you try installing the
-`openPMD-api library 0.12.0a or newer <https://openpmd-api.readthedocs.io/en/0.12.0-alpha/>`_
+`openPMD-api library 0.13.0 or newer <https://openpmd-api.readthedocs.io/en/0.13.0/>`_
 using spack (first section below). If this fails, a back-up solution
 is to install parallel HDF5 with spack, and then install the openPMD-api
 library from source.

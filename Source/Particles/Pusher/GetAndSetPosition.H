@@ -45,6 +45,8 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
 /** \brief Functor that can be used to extract the positions of the macroparticles
  *         inside a ParallelFor kernel
  *
+ * \tparam ptiType the type of the particle iterator used in the constructor
+ *
  * \param a_pti iterator to the tile containing the macroparticles
  * \param a_offset offset to apply to the particle indices
 */
@@ -62,7 +64,8 @@ struct GetParticlePosition
 
     GetParticlePosition () = default;
 
-    GetParticlePosition (const WarpXParIter& a_pti, int a_offset = 0) noexcept
+    template <typename ptiType>
+    GetParticlePosition (const ptiType& a_pti, int a_offset = 0) noexcept
     {
         const auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;

@@ -206,6 +206,7 @@ function(set_warpx_binary_name)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".GENQEDTABLES")
         endif()
 
+
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
         endif()

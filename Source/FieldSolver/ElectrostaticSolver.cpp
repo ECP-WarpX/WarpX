@@ -243,7 +243,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    int const verbosity) const
 {
     // Create a new geometry with the z coordinate scaled by gamma
-    amrex::Real const gamma = std::sqrt(1._rt/(1. - beta[2]*beta[2]));
+    amrex::Real const gamma = std::sqrt(1._rt/(1._rt - beta[2]*beta[2]));
 
     amrex::Vector<amrex::Geometry> geom_scaled(max_level + 1);
     for (int lev = 0; lev <= max_level; ++lev) {
@@ -447,7 +447,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // one of the axes of the grid, i.e. that only *one* of the Cartesian
     // components of `beta` is non-negligible.
     linop.setSigma({AMREX_D_DECL(
-        1.-beta[0]*beta[0], 1.-beta[1]*beta[1], 1.-beta[2]*beta[2])});
+        1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
     // get the EB potential at the current time
     std::string potential_eb_str = "0";

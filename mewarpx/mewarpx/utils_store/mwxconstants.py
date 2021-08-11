@@ -13,7 +13,7 @@ epsilon_0 = constants.ep0 # F/m
 # The theoretical value for the Richardson constant, ~120 A/cm^2/K^2
 A0 = 4 * np.pi * m_e * kb_J**2 * e / h**3 * 1e-4
 
-torr_SI = constants.torr_SI # 1 torr in Pa
+torr_SI = 133.322368421 # 1 torr in Pa
 erg_SI = 1e-7 # 1 erg in J
 
 # CONSTANTS - CGS

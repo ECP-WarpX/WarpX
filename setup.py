@@ -215,6 +215,7 @@ if WarpX_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
 else:
     WarpX_EB = "OFF"
 
+
 # for CMake
 cxx_modules = []     # values: warpx_2d, warpx_3d, warpx_rz
 cmdclass = {}        # build extensions
@@ -241,7 +242,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.07',
+    version = '21.08',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
