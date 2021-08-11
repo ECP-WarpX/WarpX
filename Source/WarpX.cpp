@@ -1204,7 +1204,7 @@ WarpX::BackwardCompatibility ()
                      "Please use the flag use_filter, see documentation.");
     }
     if ( pp_warpx.query("do_pml", backward_int) ) {
-        amrex::Abort( "do_pml is not supported. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.");
+        amrex::Abort( "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.");
     }
     ParmParse pp_interpolation("interpolation");
     if (pp_interpolation.query("nox", backward_int) ||
