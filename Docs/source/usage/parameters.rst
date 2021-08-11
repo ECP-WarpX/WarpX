@@ -1191,7 +1191,7 @@ Laser initialization
     ``repeated_plasma_lens_strengths_E``, the focusing strength of each lens, an array of floats.
     The applied field is uniform longitudinally (along z) with a hard edge,
     where residence corrections are used for more accurate field calculation.
-    The field is of the form Ex = strength*x and Ey = strength*y, Ez = 0.
+    The field is of the form :math:`E_x = \mathrm{strength} \cdot x` and :math:`E_y = \mathrm{strength} \cdot y`, :math:`Ez = 0`.
 
 * ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
     Two separate parameters which add an externally applied uniform E-field or
