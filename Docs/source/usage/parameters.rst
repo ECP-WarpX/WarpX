@@ -1161,7 +1161,7 @@ Laser initialization
     ``repeated_plasma_lens_strengths_B``, the focusing strength of each lens, an array of floats.
     The applied field is uniform longitudinally (along z) with a hard edge,
     where residence corrections are used for more accurate field calculation.
-    The field is of the form Bx = strength*y and By = strength*x, Bz = 0.
+    The field is of the form :math:`B_x = \mathrm{strength} \cdot y` and :math:`B_y = \mathrm{strength} \cdot x`, :math`:B_z = 0`.
 
 * ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
