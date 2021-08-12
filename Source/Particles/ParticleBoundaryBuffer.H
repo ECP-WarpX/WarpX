@@ -79,24 +79,4 @@ struct IsOutsideDomainBoundary {
     }
 };
 
-struct CopyAndTimestamp {
-    int m_index;
-    int m_step;
-
-    template <typename DstData, typename SrcData>
-    AMREX_GPU_HOST_DEVICE
-    void operator() (const DstData& dst, const SrcData& src,
-                     int src_i, int dst_i) const noexcept
-    {
-        dst.m_aos[dst_i] = src.m_aos[src_i];
-        for (int j = 0; j < SrcData::NAR; ++j)
-            dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
-        for (int j = 0; j < src.m_num_runtime_real; ++j)
-            dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
-        for (int j = 0; j < src.m_num_runtime_int; ++j)
-            dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
-        dst.m_runtime_idata[m_index][dst_i] = m_step;
-    }
-};
-
 #endif /*PARTICLEBOUNDARYBUFFER_H_*/
