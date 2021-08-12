@@ -8,6 +8,7 @@
 
 #include <string>
 
+using namespace amrex::literals;
 
 GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) noexcept
 {
@@ -32,6 +33,9 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
     else if (mypc.m_E_ext_particle_s=="repeated_plasma_lens")
     {
         m_type = RepeatedPlasmaLens;
+        m_time = warpx.gett_new(a_pti.GetLevel());
+        m_gamma_boost = WarpX::gamma_boost;
+        m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
         m_lens_is_electric = 1;
         m_dt = warpx.getdt(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
@@ -70,6 +74,9 @@ GetExternalBField::GetExternalBField (const WarpXParIter& a_pti, int a_offset) n
     else if (mypc.m_B_ext_particle_s=="repeated_plasma_lens")
     {
         m_type = RepeatedPlasmaLens;
+        m_time = warpx.gett_new(a_pti.GetLevel());
+        m_gamma_boost = WarpX::gamma_boost;
+        m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
         m_lens_is_electric = 0;
         m_dt = warpx.getdt(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
