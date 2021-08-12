@@ -52,7 +52,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     if(!raw_specified) raw_fields = false;
 
     const bool interp_order_specified = pp_rd_name.query("raw_fields", interp_order);
-    if(!interp_order_specified) raw_fields = 1;
+    if(!interp_order_specified) interp_order = 1;
 
     constexpr int noutputs = 8;  // probe Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
     // resize data array
