@@ -268,7 +268,7 @@ Diagnostics::InitBaseData ()
     } else if (m_format == "ascent"){
         m_flush_format = std::make_unique<FlushFormatAscent>();
     } else if (m_format == "sensei"){
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
