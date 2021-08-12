@@ -153,16 +153,13 @@ private:
    * @param[in] isBTD is this a backtransformed diagnostics write?
    * @return the iteration object
    */
-  inline openPMD::Iteration& GetIteration (int const iteration, bool const isBTD) const
+  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
   {
     if (isBTD)
     {
-        openPMD::Iteration& it = m_Series->iterations[iteration];
-        return it;
+        return m_Series->iterations[iteration];
     } else {
-        auto iterations = m_Series->writeIterations();
-        openPMD::Iteration& it = iterations[iteration];
-        return it;
+        return m_Series->writeIterations()[iteration];
     }
   }
 
