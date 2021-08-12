@@ -153,7 +153,7 @@ void FieldProbe::ComputeDiags (int step)
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-            const amrex::Box& box = mfi.validbox();
+            const amrex::Box& box = amrex::enclosedCells(mfi.nodaltilebox());
 
             if(box.contains(i_probe, j_probe, k_probe)) {
                 // Make the box cell centered in preparation for the interpolation (and to avoid
