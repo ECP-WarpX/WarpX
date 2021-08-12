@@ -9,8 +9,6 @@ import collections
 
 import numpy as np
 
-import numpy as np
-
 from pywarpx import geometry
 from mewarpx.utils_store import mwxconstants as constants
 

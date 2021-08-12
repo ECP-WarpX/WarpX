@@ -7,7 +7,7 @@ from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
 from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicmi, runinfo
 from mewarpx.diags_store import field_diagnostic, particle_diagnostic, flux_diagnostic
-
+from mewarpx.utils_store import util as mwxutil
 
 class DiodeRun_V1(object):
 
@@ -39,6 +39,8 @@ class DiodeRun_V1(object):
     # ### VACUUM ###
     # Cathode anode distance
     D_CA = 1e-3
+    # If calculating DT using a CFL factor, this is the CFL factor
+    CFL_FACTOR = None
 
     # Gas properties
     # String, eg 'He'
@@ -187,13 +189,6 @@ class DiodeRun_V1(object):
             self.V_CATHODE = 0.0
             self.V_ANODE = self.V_ANODE_EXPRESSION
 
-        print('Setting up simulation with')
-        print(f'  dt = {self.DT:.3e} s')
-        print(f'  Total time = {self.TOTAL_TIMESTEPS * self.DT:.3e} '
-              f's ({self.TOTAL_TIMESTEPS} timesteps)')
-        print('  Diag time = {self.DIAG_STEPS * self.DT:.3e} s '
-              f'({self.DIAG_STEPS} timesteps)')
-
     def setup_run(
         self,
         init_base=True,
@@ -340,6 +335,18 @@ class DiodeRun_V1(object):
             )
             '''
 
+        self.DT = mwxrun.init_timestep(
+            DT=self.DT,
+            V_anode=self.V_ANODE_CATHODE,
+            CFL_factor=self.CFL_FACTOR,
+        )
+
+        print('Setting up simulation with')
+        print(f'  dt = {self.DT:.3e} s')
+        print(f'  Total time = {self.TOTAL_TIMESTEPS * self.DT:.3e} '
+            f's ({self.TOTAL_TIMESTEPS} timesteps)')
+        print('  Diag time = {self.DIAG_STEPS * self.DT:.3e} s '
+            f'({self.DIAG_STEPS} timesteps)')
         #######################################################################
         # Run setup calculations and print diagnostic info                    #
         #######################################################################
@@ -617,7 +624,6 @@ class DiodeRun_V1(object):
     def init_simulation(self):
         print('### Init Simulation Setup ###', flush=True)
         mwxrun.simulation.solver = self.solver
-        mwxrun.simulation.time_step_size = self.DT
         mwxrun.simulation.max_steps = self.TOTAL_TIMESTEPS
 
     def init_warpx(self):

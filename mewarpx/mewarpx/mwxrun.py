@@ -22,9 +22,11 @@ SETUP order:
     - Perform run with ``sim.step()``
 """
 import ctypes
-import warnings
+import numpy as np
 
 from pywarpx import _libwarpx, picmi
+from mewarpx.utils_store import mwxconstants as constants
+from mewarpx.utils_store import parallel_util
 
 
 class MEWarpXRun(object):
@@ -55,6 +57,45 @@ class MEWarpXRun(object):
 
         self._set_geom_str()
         self._set_grid_params()
+
+    def init_timestep(self, V_anode, DT=None, CFL_factor=None, V_grid=5):
+        """Calculate timestep size based on grid data and CFL parameter
+
+         Arguments:
+            V_anode (float): Vacuum bias of anode relative to cathode, V.
+            DT (float): The dt of each step of the simulation, if not given it
+                will be calculated.
+            CFL_factor (float): Multiplier to determine the actual timestep
+                given the CFL ratio. eg. ``dt = CFL_factor * CFL_ratio``.
+            V_grid (float): The vaccum bias of highest-voltage grid relative to
+                the cathode V. If not defined a value of 5 is used, which
+                is a safe value for finding vmax in the case that the
+                electron velocities are only set by their temperature
+        """
+        if self.grid is None:
+            raise ValueError("init_grid must be called before init_timestep!")
+
+        if DT is not None:
+            self.simulation.time_step_size = DT
+            return DT
+
+        if CFL_factor is None:
+            raise ValueError("No CFL_factor passed into init_timestep when DT is not defined!")
+
+        vmax = np.sqrt(
+               2*np.e/constants.m_e * max(0.0, abs(V_anode), abs(V_grid))
+        )
+
+        if self.geom_str == 'XZ' or self.geom_str == 'RZ':
+            dt_local = min(self.dx, self.dz) / vmax * CFL_factor
+        if self.geom_str == 'XYZ':
+            dt_local = min(self.dx, self.dy, self.dz) / vmax * CFL_factor
+
+        dt = parallel_util.mpiallreduce(data=dt_local, opstring="MIN")
+        self.simulation.time_step_size = dt
+
+        return dt
+
 
     def init_run(self):
         if self.initialized:
