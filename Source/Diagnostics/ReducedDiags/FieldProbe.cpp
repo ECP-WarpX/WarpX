@@ -146,7 +146,7 @@ void FieldProbe::ComputeDiags (int step)
         amrex::IndexType const Bytype = By.ixType();
         amrex::IndexType const Bztype = Bz.ixType();
 
-        amrex::Real hv_Ex, hv_Ey, hv_Ez, hv_E, hv_Bx, hv_By, hv_Bz, hv_B;
+        amrex::Real fp_Ex, fp_Ey, fp_Ez, fp_E, fp_Bx, fp_By, fp_Bz, fp_B;
         int probe_proc = -1;
         // MFIter loop to interpolate fields to cell center and get maximum values
 #ifdef AMREX_USE_OMP
@@ -183,14 +183,14 @@ void FieldProbe::ComputeDiags (int step)
                                 WarpX::n_rz_azimuthal_modes, WarpX::nox, false);
 
                 // Either save the interpolated fields or the raw fields depending on the raw_fields flag
-                hv_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
-                hv_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
-                hv_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
-                hv_E = Ex_interp * Ex_interp + Ey_interp * Ey_interp + Ez_interp * Ez_interp;
-                hv_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
-                hv_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
-                hv_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
-                hv_B = Bx_interp * Bx_interp + By_interp * By_interp + Bz_interp * Bz_interp;
+                fp_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
+                fp_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
+                fp_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
+                fp_E = Ex_interp * Ex_interp + Ey_interp * Ey_interp + Ez_interp * Ez_interp;
+                fp_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
+                fp_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
+                fp_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
+                fp_B = Bx_interp * Bx_interp + By_interp * By_interp + Bz_interp * Bz_interp;
 
                 probe_proc = amrex::ParallelDescriptor::MyProc();
             }
@@ -202,44 +202,44 @@ void FieldProbe::ComputeDiags (int step)
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
         if(amrex::ParallelDescriptor::MyProc()==probe_proc){
-            amrex::ParallelDescriptor::Send(&hv_Ex, 1,
+            amrex::ParallelDescriptor::Send(&fp_Ex, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 0);
-            amrex::ParallelDescriptor::Send(&hv_Ey, 1,
+            amrex::ParallelDescriptor::Send(&fp_Ey, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 1);
-            amrex::ParallelDescriptor::Send(&hv_Ez, 1,
+            amrex::ParallelDescriptor::Send(&fp_Ez, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 2);
-            amrex::ParallelDescriptor::Send(&hv_E, 1,
+            amrex::ParallelDescriptor::Send(&fp_E, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 3);
-            amrex::ParallelDescriptor::Send(&hv_Bx, 1,
+            amrex::ParallelDescriptor::Send(&fp_Bx, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 4);
-            amrex::ParallelDescriptor::Send(&hv_By, 1,
+            amrex::ParallelDescriptor::Send(&fp_By, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 5);
-            amrex::ParallelDescriptor::Send(&hv_Bz, 1,
+            amrex::ParallelDescriptor::Send(&fp_Bz, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 6);
-            amrex::ParallelDescriptor::Send(&hv_B, 1,
+            amrex::ParallelDescriptor::Send(&fp_B, 1,
                                             amrex::ParallelDescriptor::IOProcessorNumber(), 7);
         }
         if(amrex::ParallelDescriptor::MyProc()==amrex::ParallelDescriptor::IOProcessorNumber()){
-            amrex::ParallelDescriptor::Recv(&hv_Ex, 1, probe_proc, 0);
-            amrex::ParallelDescriptor::Recv(&hv_Ey, 1, probe_proc, 1);
-            amrex::ParallelDescriptor::Recv(&hv_Ez, 1, probe_proc, 2);
-            amrex::ParallelDescriptor::Recv(&hv_E, 1, probe_proc, 3);
-            amrex::ParallelDescriptor::Recv(&hv_Bx, 1, probe_proc, 4);
-            amrex::ParallelDescriptor::Recv(&hv_By, 1, probe_proc, 5);
-            amrex::ParallelDescriptor::Recv(&hv_Bz, 1, probe_proc, 6);
-            amrex::ParallelDescriptor::Recv(&hv_B, 1, probe_proc, 7);
+            amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, 0);
+            amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, 1);
+            amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, 2);
+            amrex::ParallelDescriptor::Recv(&fp_E, 1, probe_proc, 3);
+            amrex::ParallelDescriptor::Recv(&fp_Bx, 1, probe_proc, 4);
+            amrex::ParallelDescriptor::Recv(&fp_By, 1, probe_proc, 5);
+            amrex::ParallelDescriptor::Recv(&fp_Bz, 1, probe_proc, 6);
+            amrex::ParallelDescriptor::Recv(&fp_B, 1, probe_proc, 7);
 
         }
 
         // Fill output array
-        m_data[lev * noutputs + index_Ex] = hv_Ex;
-        m_data[lev * noutputs + index_Ey] = hv_Ey;
-        m_data[lev * noutputs + index_Ez] = hv_Ez;
-        m_data[lev * noutputs + index_absE] = std::sqrt(hv_E);
-        m_data[lev * noutputs + index_Bx] = hv_Bx;
-        m_data[lev * noutputs + index_By] = hv_By;
-        m_data[lev * noutputs + index_Bz] = hv_Bz;
-        m_data[lev * noutputs + index_absB] = std::sqrt(hv_B);
+        m_data[lev * noutputs + index_Ex] = fp_Ex;
+        m_data[lev * noutputs + index_Ey] = fp_Ey;
+        m_data[lev * noutputs + index_Ez] = fp_Ez;
+        m_data[lev * noutputs + index_absE] = std::sqrt(fp_E);
+        m_data[lev * noutputs + index_Bx] = fp_Bx;
+        m_data[lev * noutputs + index_By] = fp_By;
+        m_data[lev * noutputs + index_Bz] = fp_Bz;
+        m_data[lev * noutputs + index_absB] = std::sqrt(fp_B);
     }
     // end loop over refinement levels
 
