@@ -51,6 +51,9 @@ FieldProbe::FieldProbe (std::string rd_name)
     const bool raw_specified = pp_rd_name.query("raw_fields", raw_fields);
     if(!raw_specified) raw_fields = false;
 
+    const bool interp_order_specified = pp_rd_name.query("raw_fields", interp_order);
+    if(!interp_order_specified) raw_fields = 1;
+
     constexpr int noutputs = 8;  // probe Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
     // resize data array
     m_data.resize(noutputs*nLevel, 0.0_rt);
@@ -180,7 +183,7 @@ void FieldProbe::ComputeDiags (int step)
                                 Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
                                 arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
                                 dx_arr, xyzmin_arr, amrex::lbound(box),
-                                WarpX::n_rz_azimuthal_modes, WarpX::nox, false);
+                                WarpX::n_rz_azimuthal_modes, interp_order, false);
 
                 // Either save the interpolated fields or the raw fields depending on the raw_fields flag
                 fp_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
