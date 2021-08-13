@@ -13,6 +13,27 @@
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
 
+struct IsOutsideDomainBoundary {
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_phi;
+    int m_idim;
+    int m_iside;
+
+    template <typename SrcData>
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    int operator() (const SrcData& src,
+                    int ip, const amrex::RandomEngine& /*engine*/) const noexcept
+    {
+        const auto& p = src.getSuperParticle(ip);
+        if (m_iside == 0) {
+            if (p.pos(m_idim) < m_plo[m_idim]) { return 1; }
+        } else {
+            if (p.pos(m_idim) >= m_phi[m_idim]) { return 1; }
+        }
+        return 0;
+    }
+};
+
 struct CopyAndTimestamp {
     int m_index;
     int m_step;
