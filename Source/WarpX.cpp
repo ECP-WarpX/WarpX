@@ -2289,19 +2289,25 @@ WarpX::RestoreCurrent (int lev)
 std::string
 WarpX::Version ()
 {
+    std::string version;
 #ifdef WARPX_GIT_VERSION
-    return std::string(WARPX_GIT_VERSION);
-#else
-    return std::string("Unknown");
+    version = std::string(WARPX_GIT_VERSION);
 #endif
+    if( version.empty() )
+        return std::string("Unknown");
+    else
+        return version;
 }
 
 std::string
 WarpX::PicsarVersion ()
 {
+    std::string version;
 #ifdef PICSAR_GIT_VERSION
-    return std::string(PICSAR_GIT_VERSION);
-#else
-    return std::string("Unknown");
+    version = std::string(PICSAR_GIT_VERSION);
 #endif
+    if( version.empty() )
+        return std::string("Unknown");
+    else
+        return version;
 }
