@@ -496,7 +496,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             // Deposit J at relative time -dt with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], -dt[0]);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
@@ -526,7 +527,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
             // Deposit new J at relative time t_depose with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], t_depose);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], t_depose);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
