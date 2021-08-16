@@ -47,7 +47,8 @@ GetExternalEField::GetExternalEField (const WarpXParIter& a_pti, int a_offset) n
         m_n_lenses = static_cast<int>(mypc.h_repeated_plasma_lens_starts.size());
         m_repeated_plasma_lens_starts = mypc.d_repeated_plasma_lens_starts.data();
         m_repeated_plasma_lens_lengths = mypc.d_repeated_plasma_lens_lengths.data();
-        m_repeated_plasma_lens_strengths = mypc.d_repeated_plasma_lens_strengths_E.data();
+        m_repeated_plasma_lens_strengths_E = mypc.d_repeated_plasma_lens_strengths_E.data();
+        m_repeated_plasma_lens_strengths_B = mypc.d_repeated_plasma_lens_strengths_B.data();
     }
 }
 
@@ -88,6 +89,7 @@ GetExternalBField::GetExternalBField (const WarpXParIter& a_pti, int a_offset) n
         m_n_lenses = static_cast<int>(mypc.h_repeated_plasma_lens_starts.size());
         m_repeated_plasma_lens_starts = mypc.d_repeated_plasma_lens_starts.data();
         m_repeated_plasma_lens_lengths = mypc.d_repeated_plasma_lens_lengths.data();
-        m_repeated_plasma_lens_strengths = mypc.d_repeated_plasma_lens_strengths_B.data();
+        m_repeated_plasma_lens_strengths_E = mypc.d_repeated_plasma_lens_strengths_E.data();
+        m_repeated_plasma_lens_strengths_B = mypc.d_repeated_plasma_lens_strengths_B.data();
     }
 }
