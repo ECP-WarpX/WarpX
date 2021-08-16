@@ -211,7 +211,7 @@ Domain Boundary Conditions
 --------------------------
 
 * ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D, `pml` by default)
-    Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
+    Boundary conditions applied to fields at the lower and upper domain boundaries.
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.

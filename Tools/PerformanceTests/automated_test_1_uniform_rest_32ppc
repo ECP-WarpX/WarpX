@@ -23,7 +23,6 @@ boundary.particle_hi = absorbing absorbing periodic
 warpx.verbose = 1
 
 algo.particle_shape = 3
-warpx.do_pml = 0
 
 # CFL
 warpx.cfl = 1.0

@@ -433,6 +433,7 @@ public:
     void DampJPML (int lev, PatchType patch_type);
 
     void CopyJPML ();
+    bool isAnyBoundaryPML();
 
     /**
      * \brief Synchronize the nodal points of the PML MultiFabs

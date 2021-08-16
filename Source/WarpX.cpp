@@ -666,14 +666,13 @@ WarpX::ReadParameters ()
             }
         }
 
-        pp_warpx.query("do_pml", do_pml);
         pp_warpx.query("pml_ncell", pml_ncell);
         pp_warpx.query("pml_delta", pml_delta);
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
 
-        if (do_multi_J && do_pml)
+        if (do_multi_J && isAnyBoundaryPML())
         {
             amrex::Abort("Multi-J algorithm not implemented with PMLs");
         }
@@ -737,38 +736,8 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
-            "PML are not implemented in RZ geometry ; please set `warpx.do_pml=0`");
-#endif
-        // setting default to 0
-        Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,0);
-        // Switching pml lo to 1 when do_pml = 1 and if domain is non-periodic
-        // Note to remove this code when new BC API is fully functional
-        if (do_pml == 1) {
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Lo[idim] = 1;
-            }
-        }
-        pp_warpx.queryarr("do_pml_Lo", parse_do_pml_Lo);
-        do_pml_Lo[0] = parse_do_pml_Lo[0];
-        do_pml_Lo[1] = parse_do_pml_Lo[1];
-#if (AMREX_SPACEDIM == 3)
-        do_pml_Lo[2] = parse_do_pml_Lo[2];
-#endif
-        // setting default to 0
-        Vector<int> parse_do_pml_Hi(AMREX_SPACEDIM,0);
-        // Switching pml hi to 1 when do_pml = 1 and if domain is non-periodic
-        // Note to remove this code when new BC API is fully functional
-        if (do_pml == 1) {
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Hi[idim] = 1;
-            }
-        }
-        pp_warpx.queryarr("do_pml_Hi", parse_do_pml_Hi);
-        do_pml_Hi[0] = parse_do_pml_Hi[0];
-        do_pml_Hi[1] = parse_do_pml_Hi[1];
-#if (AMREX_SPACEDIM == 3)
-        do_pml_Hi[2] = parse_do_pml_Hi[2];
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false,
+            "PML are not implemented in RZ geometry; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
@@ -1234,7 +1203,9 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
                      "Please use the flag use_filter, see documentation.");
     }
-
+    if ( pp_warpx.query("do_pml", backward_int) ) {
+        amrex::Abort( "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.");
+    }
     ParmParse pp_interpolation("interpolation");
     if (pp_interpolation.query("nox", backward_int) ||
         pp_interpolation.query("noy", backward_int) ||
@@ -2310,4 +2281,14 @@ WarpX::PicsarVersion ()
         return std::string("Unknown");
     else
         return version;
+}
+
+bool
+WarpX::isAnyBoundaryPML()
+{
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) return true;
+        if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) return true;
+    }
+    return false;
 }

@@ -16,7 +16,6 @@ boundary.field_hi = pec pec pec
 boundary.particle_lo = absorbing absorbing absorbing
 boundary.particle_hi = absorbing absorbing absorbing
 
-warpx.do_pml = 0
 warpx.const_dt = 1.e-7
 warpx.do_electrostatic = labframe
 
