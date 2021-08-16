@@ -285,7 +285,9 @@ WarpX::Evolve (int numsteps)
         mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
 #endif
         if (sort_intervals.contains(step+1)) {
-            amrex::Print() << "re-sorting particles \n";
+            if (verbose) {
+                amrex::Print() << "re-sorting particles \n";
+            }
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
