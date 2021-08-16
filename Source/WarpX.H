@@ -19,6 +19,7 @@
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Particles/ParticleBoundaryBuffer_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -60,6 +61,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+static_assert(false, "Embedded boundaries are not supported in RZ mode.");
+#endif
 
 enum struct PatchType : int
 {
@@ -1149,8 +1154,10 @@ private:
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
+    std::unique_ptr<ParticleBoundaryBuffer> m_particle_buffers;
+
     //
-    // Embeded Boundary
+    // Embedded Boundary
     //
 
     // Factory for field data

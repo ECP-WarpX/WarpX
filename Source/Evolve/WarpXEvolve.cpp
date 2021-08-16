@@ -23,6 +23,7 @@
 #endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -253,7 +254,15 @@ WarpX::Evolve (int numsteps)
 
         mypc->ContinuousFluxInjection(dt[0]);
 
+        m_particle_buffers->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+
         mypc->ApplyBoundaryConditions();
+
+        // interact with particles with EB walls (if present)
+#ifdef AMREX_USE_EB
+        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
+        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+#endif
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic != ElectrostaticSolverAlgo::None )
@@ -279,11 +288,6 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-        // interact with particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
-        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-#endif
         if (sort_intervals.contains(step+1)) {
             if (verbose) {
                 amrex::Print() << "re-sorting particles \n";
