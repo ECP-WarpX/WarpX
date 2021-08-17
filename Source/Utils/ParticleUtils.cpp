@@ -53,7 +53,7 @@ namespace ParticleUtils {
         ParticleBins bins;
         bins.build(np, particle_ptr, cbx,
             // Pass lambda function that returns the cell index
-            [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) noexcept -> IntVect
+            [=] AMREX_GPU_DEVICE (const ParticleType& p) noexcept -> IntVect
             {
                 return IntVect(AMREX_D_DECL(
                                    static_cast<int>((p.pos(0)-plo[0])*dxi[0] - lo.x),

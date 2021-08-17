@@ -9,6 +9,7 @@
 #define PAIRWISE_COULOMB_COLLISION_FUNC_H_
 
 #include "ElasticCollisionPerez.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
 
@@ -27,6 +28,7 @@ class PairWiseCoulombCollisionFunc{
     using ParticleType = WarpXParticleContainer::ParticleType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
+    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**
@@ -69,9 +71,8 @@ public:
         index_type const I1s, index_type const I1e,
         index_type const I2s, index_type const I2e,
         index_type* I1,       index_type* I2,
-        amrex::Real* u1x, amrex::Real* u1y, amrex::Real* u1z,
-        amrex::Real* u2x, amrex::Real* u2y, amrex::Real* u2z,
-        amrex::Real const * w1, amrex::Real const * w2,
+        SoaData_type soa_1, SoaData_type soa_2,
+        GetParticlePosition get_position_1, GetParticlePosition get_position_2,
         amrex::Real const  q1, amrex::Real const  q2,
         amrex::Real const  m1, amrex::Real const  m2,
         amrex::Real const  dt, amrex::Real const dV,
@@ -79,7 +80,7 @@ public:
         {
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,
-                    u1x, u1y, u1z, u2x, u2y, u2z, w1, w2,
+                    soa_1, soa_2, get_position_1, get_position_2,
                     q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
                     dt, m_CoulombLog, dV, engine );
         }

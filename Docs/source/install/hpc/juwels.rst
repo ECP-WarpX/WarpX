@@ -40,7 +40,7 @@ We use the following modules and environments on the system.
    module load ccache
    module load CMake
    module load GCC
-   module load CUDA
+   module load CUDA/11.3
    module load OpenMPI
    module load FFTW
    module load HDF5

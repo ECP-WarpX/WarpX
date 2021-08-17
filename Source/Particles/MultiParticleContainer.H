@@ -23,6 +23,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
+#include "ParticleBoundaries.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -299,10 +300,12 @@ public:
     amrex::Real m_repeated_plasma_lens_period;
     amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
     amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_E;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_B;
     amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
     amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_E;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_B;
 
 #ifdef WARPX_QED
     /**
