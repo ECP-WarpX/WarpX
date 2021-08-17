@@ -405,7 +405,7 @@ WarpX::ReadParameters ()
 {
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
-        pp.query("max_step", max_step);
+        queryWithParser(pp, "max_step", max_step);
         queryWithParser(pp, "stop_time", stop_time);
         pp.query("authors", authors);
     }
@@ -460,7 +460,7 @@ WarpX::ReadParameters ()
 
         queryWithParser(pp_warpx, "cfl", cfl);
         pp_warpx.query("verbose", verbose);
-        pp_warpx.query("regrid_int", regrid_int);
+        queryWithParser(pp_warpx, "regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
         pp_warpx.query("do_multi_J", do_multi_J);
         if (do_multi_J)
@@ -667,7 +667,7 @@ WarpX::ReadParameters ()
         }
 
         queryWithParser(pp_warpx, "pml_ncell", pml_ncell);
-        pp_warpx.query("pml_delta", pml_delta);
+        queryWithParser(pp_warpx, "pml_delta", pml_delta);
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
@@ -868,7 +868,7 @@ WarpX::ReadParameters ()
 
         if (!species_names.empty() || !lasers_names.empty()) {
             int particle_shape;
-            if (pp_algo.query("particle_shape", particle_shape) == false)
+            if (queryWithParser(pp_algo, "particle_shape", particle_shape) == false)
             {
                 amrex::Abort("\nalgo.particle_shape must be set in the input file:"
                              "\nplease set algo.particle_shape to 1, 2, or 3");
@@ -964,20 +964,20 @@ WarpX::ReadParameters ()
         pp_psatd.query("noy", noy_str);
         pp_psatd.query("noz", noz_str);
 
-        if(nox_str == "inf"){
+        if(nox_str == "inf") {
             nox_fft = -1;
-        } else{
-            pp_psatd.query("nox", nox_fft);
+        } else {
+            queryWithParser(pp_psatd, "nox", nox_fft);
         }
-        if(noy_str == "inf"){
+        if(noy_str == "inf") {
             noy_fft = -1;
-        } else{
-            pp_psatd.query("noy", noy_fft);
+        } else {
+            queryWithParser(pp_psatd, "noy", noy_fft);
         }
-        if(noz_str == "inf"){
+        if(noz_str == "inf") {
             noz_fft = -1;
-        } else{
-            pp_psatd.query("noz", noz_fft);
+        } else {
+            queryWithParser(pp_psatd, "noz", noz_fft);
         }
 
 
