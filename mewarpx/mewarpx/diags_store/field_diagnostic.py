@@ -17,7 +17,8 @@ import warnings
 
 class FieldDiagnostic(WarpXDiagnostic):
     def __init__(self, diag_steps, diag_data_list, grid, name, write_dir,
-                 plot_on_diag_step=False, plot_data_list=None, post_processing=False,
+                 plot_on_diag_step=False, plot_data_list=None, plot_species_list=None,
+                 post_processing=False,
                  **kwargs):
         """
         This class is a wrapper for both creating a picmi FieldDiagnostic,
@@ -36,6 +37,7 @@ class FieldDiagnostic(WarpXDiagnostic):
                 from the field diagnostic.
             plot_on_diag_step (bool): Whether or not to plot data on diagnostic steps.
             plot_data_list (list (str)): What parameters to plot if plotting on diagnostic steps.
+            plot_species_list (list (str)): Plot rho for these species if plotting on diagnostic steps.
             post_processing (bool): Whether or not to plot data after simulation ends from any
                 yt files generated during the run.
             kwargs: For a list of valid keyword arguments see diag_base.WarpXDiagnostic
@@ -48,6 +50,11 @@ class FieldDiagnostic(WarpXDiagnostic):
         self.plot_on_diag_step = plot_on_diag_step
         self.plot_data_list = plot_data_list
         self.post_processing = post_processing
+
+        if plot_species_list is not None:
+            self.plot_species_list = plot_species_list
+        else:
+            self.plot_species_list = [species.name for species in mwxrun.simulation.species]
 
         super(FieldDiagnostic, self).__init__(diag_steps, **kwargs)
 
@@ -92,6 +99,19 @@ class FieldDiagnostic(WarpXDiagnostic):
                             template='rho', xaxis='z', yaxis='x', ax=ax,
                             plot_name="rho_" + plot_name
                         )
+
+                    for species in self.plot_species_list:
+                        data = mwxrun.get_gathered_rho_grid(include_ghosts=False, species_name=species)
+                        if mwxrun.me == 0:
+                            data = np.array(data[0])
+
+                            fig, ax = plt.subplots(1, 1, figsize=(14, 14))
+                            plotting.ArrayPlot(
+                                array=data[:, :, 0],
+                                template='rho', xaxis='z', yaxis='x', ax=ax,
+                                plot_name="rho_" + species + "_" + plot_name
+                            )
+
                 elif param == 'phi':
                     data = mwxrun.get_gathered_phi_grid(include_ghosts=False)
                     if mwxrun.me == 0:

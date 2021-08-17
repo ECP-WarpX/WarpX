@@ -131,6 +131,8 @@ class DiodeRun_V1(object):
     DIAG_STEPS = None
     # The data list for field diagnostics
     FIELD_DIAG_DATA_LIST = None
+    # Species' rho values to be plotted on each diagnostic step.
+    FIELD_DIAG_PLOT_SPECIES = None
     # Whether or not to plot parameters on each diagnostic step.
     FIELD_DIAG_PLOT_ON_DIAG_STEPS = False
     # If FIELD_DIAG_PLOT_ON_DIAG_STEPS is True, what parameters to plot. Current
@@ -600,6 +602,7 @@ class DiodeRun_V1(object):
             diag_data_list=self.FIELD_DIAG_DATA_LIST,
             write_dir='diags/fields',
             plot_on_diag_step=self.FIELD_DIAG_PLOT_ON_DIAG_STEPS,
+            plot_species_list=self.FIELD_DIAG_PLOT_SPECIES,
             plot_data_list=self.FIELD_DIAG_PLOT_DATA_LIST,
             post_processing=self.FIELD_DIAG_PLOT_AFTER_RUN
         )

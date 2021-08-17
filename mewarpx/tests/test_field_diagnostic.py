@@ -55,6 +55,8 @@ def test_field_diag(plot_on_diag_steps):
     DT = 1.0 / (400 * FREQ)
     DIAG_STEPS = 2
     DIAG_DATA_LIST = ['rho_electrons', 'rho_he_ions', 'phi']
+    #DIAG_SPECIES_LIST = ["electrons", "he_ions"]
+    DIAG_SPECIES_LIST = None
 
     run = diode_setup.DiodeRun_V1(
         dim=dim,
@@ -76,6 +78,7 @@ def test_field_diag(plot_on_diag_steps):
         DIAG_STEPS=DIAG_STEPS,
         NUMBER_PARTICLES_PER_CELL=NUMBER_PER_CELL_EACH_DIM,
         FIELD_DIAG_DATA_LIST=DIAG_DATA_LIST,
+        FIELD_DIAG_PLOT_SPECIES=DIAG_SPECIES_LIST,
         FIELD_DIAG_PLOT_ON_DIAG_STEPS=plot_on_diag_steps,
         FIELD_DIAG_PLOT_DATA_LIST=['rho', 'phi'],
         FIELD_DIAG_PLOT_AFTER_RUN=post_processing
@@ -100,6 +103,11 @@ def test_field_diag(plot_on_diag_steps):
         for i in range(1,6):
             assert os.path.isfile("phi_after_diag_step_" + str(i) + ".png")
             assert os.path.isfile("rho_after_diag_step_" + str(i) + ".png")
+            if DIAG_SPECIES_LIST is None:
+                DIAG_SPECIES_LIST = [species.name for species in mwxrun.simulation.species]
+            for species in DIAG_SPECIES_LIST:
+                assert os.path.isfile("rho_" + species + "_after_diag_step_" + str(i) + ".png")
+
         print("All plots exist!", flush=True)
 
     # verify that the post processing image was created
@@ -112,4 +120,4 @@ def test_field_diag(plot_on_diag_steps):
 
 
 if __name__ == '__main__':
-    test_field_diag(False)
+    test_field_diag(True)
