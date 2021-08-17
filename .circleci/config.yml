@@ -43,6 +43,17 @@ jobs:
             fi
 
       - run:
+          name: Download minerva
+          command: |
+            cd ../
+            git clone git@github.com:ModernElectron/minerva.git
+            cd minerva
+            # Check out a branch with the same name if it exists.
+            if git branch -r | grep -q origin/"$CIRCLE_BRANCH"; then
+              git checkout "$CIRCLE_BRANCH"
+            fi
+
+      - run:
           name: install dependencies
           command: |
             .github/workflows/dependencies/pyfull.sh
@@ -70,7 +81,7 @@ jobs:
 
             # Install development mode of mewarpx
             cd mewarpx
-            pip install -e .[complete]
+            python3 -m pip install -e .[complete]
 
       - run:
           name: download warpx-data
@@ -103,13 +114,15 @@ jobs:
             export OMP_NUM_THREADS=1
             for f in *.py; do python $f --steps 5; done
 
-      # Install mwxp and run its tests (minimal output)
+      # Install minerva & mwxp and run mwxp tests (minimal output)
       - run:
           name: install and run mwxp
           command: |
             . venv/bin/activate
+            cd ../minerva
+            python3 -m pip install -q -e '.'
             cd ../mwxp
-            pip install -e .[complete]
+            python3 -m pip install -e .[complete]
 
             export OMP_NUM_THREADS=1
             pytest -q --tb=no
