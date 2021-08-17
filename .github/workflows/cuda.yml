@@ -2,6 +2,10 @@ name: 🐧 CUDA
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-cuda
+  cancel-in-progress: true
+
 jobs:
 # Ref.:
 #   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile

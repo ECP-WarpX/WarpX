@@ -2,6 +2,10 @@ name: 🐧 HIP
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-hip
+  cancel-in-progress: true
+
 jobs:
   build_hip:
     name: HIP SP
