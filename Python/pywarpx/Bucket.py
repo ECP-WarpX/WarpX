@@ -68,3 +68,9 @@ class Bucket(object):
             result += [attrstring]
         return result
 
+    def __setstate__(self, state):
+        # This is done to allow mewarpx.runtools to be loaded after dumped
+        # as a pickle file. If a pickled version is ever used to restart a
+        # simulation this function needs to be extended to actually reload
+        # whatever aspects of the Bucket is needed for a successful restart
+        pass

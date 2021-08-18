@@ -173,3 +173,7 @@ class MCC():
                 scattering_processes=ion_scattering_processes
             )
             mwxrun.simulation.collisions.append(self.ion_mcc)
+
+        # add E_total PID to both species
+        self.electron_species.add_pid("E_total")
+        self.ion_species.add_pid("E_total")

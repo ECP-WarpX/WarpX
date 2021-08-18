@@ -229,12 +229,12 @@ class DiodeRun_V1(object):
             self.init_solver()
         if init_conductors:
             self.init_conductors()
+        if init_scraper:
+            self.init_scraper()
         if init_neutral_plasma:
             self.init_neutral_plasma()
         if init_mcc:
             self.init_MCC()
-        if init_scraper:
-            self.init_scraper()
         if init_reflection:
             self.init_reflection()
         if init_merging:
@@ -437,34 +437,15 @@ class DiodeRun_V1(object):
         mwxrun.grid.potential_zmax = self.anode.V
 
     def init_scraper(self):
-        raise NotImplementedError(
-            "Diode scraper is not yet implemented in mewarpx")
         print('### Init Diode Scraper Setup ###', flush=True)
-        # profile_decorator = None
-        # if self.PROFILE_DIAG:
-        #     profile_decorator = util.get_runtime_profile_decorator()
-
-        # if self.dim == 1 and not self.FORCE_2D_SCRAPER:
-        #     self.scraper = particlescraper1d.ParticleScraper1D(
-        #         cathode=self.cathode, anode=self.anode_plane,
-        #         profile_decorator=profile_decorator
-        #     )
-
-        # else:
-        #     # Small Aura required to make sure 1 cell (isnear) boundary is
-        #     # computed properly for conductors that terminate on a grid line
-        #     dmin = min(self.setupinfo.dx, self.setupinfo.dz)/100.
-        #     # ltunnel to False because it requires a griddistance method that
-        #     # ZSrfrv doesn't have
-        #     self.scraper = warp.ParticleScraper(
-        #         self.surface_list,
-        #         lcollectlpdata=True,
-        #         ltunnel=False,
-        #         aura=dmin,
-        #         nxscale=self.NSCALE,
-        #         nyscale=self.NSCALE,
-        #         profile_decorator=profile_decorator
-        #     )
+        # we need to enable the particle buffer if a flux diagnostic is used
+        # in order to access scraped particle data
+        if hasattr(self, 'electrons'):
+            self.electrons.scrape_zmin = 1
+            self.electrons.scrape_zmax = 1
+        if hasattr(self, 'ions'):
+            self.ions.scrape_zmin = 1
+            self.ions.scrape_zmax = 1
 
     def init_injectors(self):
         print('### Init Diode Injectors Setup ###', flush=True)

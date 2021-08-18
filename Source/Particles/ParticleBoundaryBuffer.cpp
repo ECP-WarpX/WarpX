@@ -103,7 +103,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
                 int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
                 amrex::Print() << "Species " << getSpeciesNames()[i] << " has "
                                << np << " particles in the boundary buffer "
-                               << " for side " << iside << " of dim " << idim << "\n";
+                               << "for side " << iside << " of dim " << idim << "\n";
             }
         }
     }
@@ -239,4 +239,33 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 #else
     amrex::ignore_unused(distance_to_eb, dxi);
 #endif
+
+}
+
+int ParticleBoundaryBuffer::getNumParticlesInContainer(
+        const std::string species_name, int boundary) {
+    if (m_do_boundary_buffer[boundary].size() == 0) {
+        return 0;
+    }
+
+    auto& buffer = m_particle_containers[boundary];
+    auto index = getSpeciesIndexFromName(species_name);
+
+    if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false);
+    else return 0;
+}
+
+ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>&
+ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary].size() != 0,
+                                     "Attempted to get particle buffer for boundary "
+                                     + boundary + ", which is not used!");
+
+    auto& buffer = m_particle_containers[boundary];
+    auto index = getSpeciesIndexFromName(species_name);
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(),
+                                     "Tried to get a buffer that is not defined!");
+
+    return buffer[index];
 }

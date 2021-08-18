@@ -295,6 +295,8 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
+        if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
+
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
             // Electrostatic solver:
             // For each species: deposit charge and add the associated space-charge

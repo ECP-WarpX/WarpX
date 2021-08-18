@@ -46,7 +46,6 @@ def test_extra_pid(capsys):
     # Only the functions we change from defaults are listed here
     run.setup_run(
         init_conductors=True,
-        init_scraper=False,
         init_injectors=False,
         init_simcontrol=True,
         init_warpx=True

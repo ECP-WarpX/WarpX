@@ -226,7 +226,7 @@ class AppendableArray:
         assert self._unitshape is not None,\
                'Only an array with a specified unitshape can be reshaped'
         assert len(newunitshape) == len(self._unitshape),\
-               ('New unitshape must have the same number of dimensions as original ' +
+               ('New unitshape must have the same number of dimensions as original '
                 'unitshape')
         # --- Save old data
         oldunitshape = self._unitshape

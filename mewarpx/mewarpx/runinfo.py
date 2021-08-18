@@ -74,7 +74,6 @@ class SimInfo(object):
         # return np.linspace(xmin, xmax, npts + 1)
 
 
-
 class WarpXSimInfo(SimInfo):
 
     """Create a SimInfo object when running a warpx simulation."""
@@ -195,6 +194,7 @@ class RunInfo(SimInfo):
             raise ValueError(
                 f'Unrecognized kwarg(s) {list(kwargs.keys())}'
             )
+
         # Shapes/injectors just adds all the lists of shapes together into one
         # list
         self.shapes = reduce(

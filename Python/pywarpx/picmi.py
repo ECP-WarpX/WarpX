@@ -84,6 +84,15 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
 
+        # For the scraper
+        self.scrape_xmin = kw.pop('warpx_save_particles_at_xlo', None)
+        self.scrape_xmax = kw.pop('warpx_save_particles_at_xhi', None)
+        self.scrape_ymin = kw.pop('warpx_save_particles_at_ylo', None)
+        self.scrape_ymax = kw.pop('warpx_save_particles_at_yhi', None)
+        self.scrape_zmin = kw.pop('warpx_save_particles_at_zlo', None)
+        self.scrape_zmax = kw.pop('warpx_save_particles_at_zhi', None)
+        self.scrape_eb = kw.pop('warpx_save_particles_at_eb', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -106,7 +115,15 @@ class Species(picmistandard.PICMI_Species):
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
                                              self_fields_max_iters = self.self_fields_max_iters,
-                                             self_fields_verbosity = self.self_fields_verbosity)
+                                             self_fields_verbosity = self.self_fields_verbosity,
+                                             save_particles_at_xlo = self.scrape_xmin,
+                                             save_particles_at_xhi = self.scrape_xmax,
+                                             save_particles_at_ylo = self.scrape_ymin,
+                                             save_particles_at_yhi = self.scrape_ymax,
+                                             save_particles_at_zlo = self.scrape_zmin,
+                                             save_particles_at_zhi = self.scrape_zmax,
+                                             save_particles_at_eb = self.scrape_eb
+                                            )
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:

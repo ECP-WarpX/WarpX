@@ -73,7 +73,6 @@ def test_particle_diag():
     # Only the functions we change from defaults are listed here
     run.setup_run(
         init_conductors=True,
-        init_scraper=False,
         init_particle_diag=True,
         init_warpx=True
     )

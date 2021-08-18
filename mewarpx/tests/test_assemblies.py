@@ -46,9 +46,9 @@ def test_embedded_cylinder():
     # Only the functions we change from defaults are listed here
     run.setup_run(
         init_conductors=False,
+        init_scraper=False,
         init_electrons=False,
         init_solver=False,
-        init_scraper=False,
         init_injectors=False,
         init_field_diag=True,
         init_simcontrol=True,

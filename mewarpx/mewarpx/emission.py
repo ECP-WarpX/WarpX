@@ -134,7 +134,6 @@ class Injector(object):
                 E_total is already summed over particles, in which case a
                 single number can be passed for it rather than an array.
         """
-
         if n is not None and np.size(w) != 1:
             raise RuntimeError("Cannot pass array for w and specify n")
 

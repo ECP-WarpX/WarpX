@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 import numba
 import numpy as np
 import pandas
+import glob
 
 from mewarpx.mwxrun import mwxrun
 import mewarpx.utils_store.util as mwxutil
 from mewarpx.diags_store import diag_base, timeseries
 
-from pywarpx import callbacks
+from pywarpx import callbacks, _libwarpx
 
 class ParticleCSVDiag(diag_base.WarpXDiagnostic):
 
@@ -133,7 +134,7 @@ class InjectorFluxDiag(ParticleCSVDiag):
             injector (emission.Injector): The particle injector stores
                 intermediate values.
             write_dir (string): Directory to write CSV files to.
-            kwargs: See :class:`metools.diags_store.diag_base.WarpDiagnostic`
+            kwargs: See :class:`mewarpx.diags_store.diag_base.WarpXDiagnostic`
                 for more timing options.
         """
         # Initialize variables
@@ -160,6 +161,60 @@ class InjectorFluxDiag(ParticleCSVDiag):
     def _collect_dataframe(self, clear=True):
         partdict = self.injector.get_injectedparticles(clear=clear)
         # Convert species_name & step to int, because they come out as floats.
+        partdict['species_id'] = partdict['species_id'].astype(int)
+        partdict['step'] = partdict['step'].astype(int)
+        df = pandas.DataFrame(partdict, columns=list(partdict.keys()))
+
+        return df
+
+
+class SurfaceFluxDiag(ParticleCSVDiag):
+
+    """Handles writing out for a single surface.
+
+    This class is used by FluxDiag; rarely used directly.
+    """
+
+    def __init__(self, diag_steps, surface, write_dir, **kwargs):
+        """Initialize surface-specific features.
+
+        Arguments:
+            diag_steps (int): Number of steps between each output
+            surface (mewarpx.Assembly object): The assembly object in which
+                particles are scraped.
+            write_dir (string): Directory to write CSV files to.
+            kwargs: See :class:`mewarpx.diags_store.diag_base.WarpXDiagnostic`
+                for more timing options.
+        """
+        self.surface = surface
+
+        # Register with the surface, make sure we don't have two diagnostics
+        # attached, and initialize with fields.
+        if self.surface.scraper_diag is not None:
+            raise RuntimeError("Cannot attach two SurfaceFluxDiag objects "
+                               "to the same surface.")
+        self.surface.scraper_diag = self
+        self.surface.init_scrapedparticles(self.surface.fields)
+
+        save_name = self.surface.name + '_scraped.csv'
+
+        super(SurfaceFluxDiag, self).__init__(
+            diag_steps=diag_steps,
+            write_dir=write_dir,
+            save_name=save_name,
+            **kwargs
+        )
+
+        # install callback that will have the assembly object check the
+        # particle buffer and record the scraped particles data
+        # TODO change this to only process the particle buffer on a diagnostic
+        # step instead of after every step
+        callbacks.installbeforestep(_libwarpx.libwarpx.warpx_clearParticleBoundaryBuffer)
+        callbacks.installbeforeEsolve(self.surface.record_scrapedparticles)
+
+    def _collect_dataframe(self, clear=True):
+        partdict = self.surface.get_scrapedparticles(clear=clear)
+        # Convert species_id & step to int, because they come out as floats.
         partdict['species_id'] = partdict['species_id'].astype(int)
         partdict['step'] = partdict['step'].astype(int)
         df = pandas.DataFrame(partdict, columns=list(partdict.keys()))
@@ -217,7 +272,7 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
                 to use defaults.
             fullhist_dict (dict): Dictionary of timeseries for the full run
             ts_dict (dict): Dictionary of timeseries for the last 8 steps
-            kwargs: See :class:`metools.diags_store.diag_base.WarpDiagnostic`
+            kwargs: See :class:`mewarpx.diags_store.diag_base.WarpXDiagnostic`
                 for more timing options.
         """
         # Save input variables
@@ -345,9 +400,9 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
                 include a label for the key.
             key (str): Key for the quantity in the timeseries to print.
             suffixstr (str): String after the numerical value, usually units.
-            emit_ts (:class:`metools.diags_store.timeseries.Timeseries`):
+            emit_ts (:class:`mewarpx.diags_store.timeseries.Timeseries`):
                 Emitted flux timeseries.
-            collect_ts (:class:`metools.diags_store.timeseries.Timeseries`):
+            collect_ts (:class:`mewarpx.diags_store.timeseries.Timeseries`):
                 Collected flux timeseries.
             net_only (bool): Only print net value, not emitted and collected.
 
@@ -428,7 +483,7 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
                 '_'.join([
                     x[0].title(),
                     x[1].title(),
-                    self.species_list[int(x[2])].title()
+                    x[2].title()
                 ])
                 for x in list(ts_dict.keys())
             ]
@@ -476,7 +531,8 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
         if save:
             fig.savefig(
                 os.path.join(
-                    self.write_dir, 'flux_plots_{:010d}.png'.format(mwxrun.get_it())
+                    self.write_dir,
+                    'flux_plots_{:010d}.png'.format(mwxrun.get_it())
                 ), dpi=300
             )
             plt.close(fig)
@@ -585,16 +641,15 @@ class FluxDiagnostic(FluxDiagBase):
                 for injector in self.injector_dict[key]
             ]
 
-        # TODO: implement SurfaceFluxDiag
-        # for key, val in six.iteritems(self.surface_dict):
-        #     self.surface_dict[key] = minutil.return_iterable(val)
-        #     self.diags_dict[('scrape', key)] = [
-        #         SurfaceFluxDiag(diag_steps=diag_steps,
-        #                         surface=surface,
-        #                         write_dir=write_dir,
-        #                         **kwargs)
-        #         for surface in self.surface_dict[key]
-        #     ]
+        for key, val in self.surface_dict.items():
+            self.surface_dict[key] = mwxutil.return_iterable(val)
+            self.diags_dict[('scrape', key)] = [
+                SurfaceFluxDiag(diag_steps=diag_steps,
+                                surface=surface,
+                                write_dir=write_dir,
+                                **kwargs)
+                for surface in self.surface_dict[key]
+            ]
 
         # Initialize other variables
         # Note that at present, last_run_step is only updated for processor 0.
@@ -666,14 +721,16 @@ class FluxDiagnostic(FluxDiagBase):
                             step_begin=self.last_run_step + 1,
                             step_end=mwxrun.get_it()+ 1
                         )
-                        if (keytype, key, sp) in self.ts_dict:
+
+                        sp_name = mwxrun.simulation.species[sp].name
+                        if (keytype, key, sp_name) in self.ts_dict:
                             self.ts_dict[(keytype, key, sp)] = (
                                 timeseries.concat_crop_timeseries(
                                     [self.ts_dict[(keytype, key, sp)], ts]
                                 )
                             )
                         else:
-                            self.ts_dict[(keytype, key, sp)] = ts
+                            self.ts_dict[(keytype, key, sp_name)] = ts
 
     def update_fullhist_dict(self):
         """Once current diagnostic period is updated, update full history and
@@ -682,7 +739,7 @@ class FluxDiagnostic(FluxDiagBase):
         maxlen = 0
 
         # Build up strided, full-history timeseries.
-        # Note fullkey refers to tuples of (keytype, key, js)
+        # Note fullkey refers to tuples of (keytype, key, species_name)
         for fullkey in self.ts_dict:
             if fullkey in self.fullhist_dict:
                 self.fullhist_dict[fullkey] = (
@@ -845,6 +902,75 @@ class FluxCalcDataframe(timeseries.Timeseries):
             array_dict=array_dict
         )
 
+class FluxDiagFromFile(FluxDiagBase):
+
+    """Load a flux diag from its minimal saved file.
+    This is meant for postprocessing ONLY; it will not initialize things
+    properly for during-run operations.
+    """
+
+    def __init__(self, basedir='diags', fluxdatafile=None,
+                 fluxdatafileformat='fluxes/fluxdata*', fs=None):
+        """Load from fluxdata_XXXXXXXXXX.dpkl and runinfo.dpkl files.
+
+        Arguments:
+            basedir (str): Base directory of the diagnostic files. Has to
+                contain a runinfo dill-pickled file.
+            fluxdatafile (str): Filename dill-pickled with FluxDiagBase.save().
+            fluxdatafileformat (str): If a specific fluxdatafile is not
+                specified, this naming format will be used to search for the
+                latest fluxdata file in the base directory.
+            fs (s3fs filesystem): Optional S3 filesystem to load data directly
+                from a S3 bucket.
+        """
+        if fs is None:
+            self.open_command = open
+            self.exists_command = os.path.exists
+            self.glob_command = glob.glob
+        else:
+            self.open_command = fs.open
+            self.exists_command = fs.exists
+            self.glob_command = fs.glob
+
+        self.fluxdatafileformat = fluxdatafileformat
+
+        runinfofile = self._get_runinfofile(basedir)
+        if fluxdatafile is None:
+            fluxdatafile = self._get_fluxdatafile(runinfofile, fs)
+
+        with self.open_command(runinfofile, 'rb') as pfile:
+            self.runinfo = dill.load(pfile)
+
+        self.component_list = self.runinfo.component_list
+        self.species_list = [
+            species.name for species in self.runinfo.species_list
+        ]
+
+        with self.open_command(fluxdatafile, 'rb') as pfile:
+            dict_to_load = dill.load(pfile)
+
+        self.__dict__.update(dict_to_load)
+
+    def _get_runinfofile(self, basedir):
+        """Function to check if a runinfo.dpkl file exists in the base
+        directory."""
+        runinfofile = os.path.join(basedir, 'runinfo.dpkl')
+        if self.exists_command(runinfofile):
+            return runinfofile
+        raise IOError(f'No runinfo.dpkl found in base directory {basedir}')
+
+    def _get_fluxdatafile(self, runinfofile, fs):
+        """Function to look for latest fluxdata file from the base directory of
+        the runinfo.dpkl file.
+        """
+        direc_base = runinfofile[:runinfofile.rfind('/')+1]
+        flux_files = sorted(
+            self.glob_command(os.path.join(direc_base, self.fluxdatafileformat))
+        )
+        if len(flux_files) == 0:
+            raise IOError('No fluxdata files found in base directory: %s'
+                          % (direc_base))
+        return flux_files[-1]
 
 # ### Numba functions for FluxCalcDataframe ###
 @numba.jit(nopython=True)

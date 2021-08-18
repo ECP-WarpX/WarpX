@@ -19,6 +19,12 @@ class ParticleBoundaryBuffer
 {
 public:
     ParticleBoundaryBuffer ();
+    int getSpeciesIndexFromName ( const std::string name ) const {
+        auto it = std::find(m_species_names.begin(), m_species_names.end(), name);
+        WarpXUtilMsg::AlwaysAssert(it != m_species_names.end(),
+                                   "ERROR: Unknown species name: " + name);
+        return std::distance(m_species_names.begin(), it);
+    }
 
     int numSpecies() const { return getSpeciesNames().size(); }
 
@@ -40,6 +46,9 @@ public:
 
     void printNumParticles () const;
 
+    int getNumParticlesInContainer(const std::string species_name, int boundary);
+
+    ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>& getParticleBuffer(const std::string species_name, int boundary);
     constexpr int numBoundaries () const {
         return AMREX_SPACEDIM*2
 #ifdef AMREX_USE_EB
