@@ -2323,10 +2323,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
     }
 
+    const bool save_old_particle_pos = WarpX::save_old_particle_pos;
     ParticleReal* x_old = nullptr;
     ParticleReal* y_old = nullptr;
     ParticleReal* z_old = nullptr;
-    if (WarpX::save_old_particle_pos) {
+    if (save_old_particle_pos) {
         x_old = pti.GetAttribs(particle_comps["xold"]).dataPtr();
         y_old = pti.GetAttribs(particle_comps["yold"]).dataPtr();
         z_old = pti.GetAttribs(particle_comps["zold"]).dataPtr();
@@ -2359,7 +2360,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
 
-        if (WarpX::save_old_particle_pos) {
+        if (save_old_particle_pos) {
             x_old[ip] = xp;
             y_old[ip] = yp;
             z_old[ip] = zp;
