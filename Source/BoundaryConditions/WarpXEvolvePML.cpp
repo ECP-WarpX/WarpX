@@ -64,7 +64,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
                               { Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get() },
                               dt[lev]);
 #else
-    DampPML_Cartesian (int lev, PatchType patch_type)
+    DampPML_Cartesian (lev, patch_type);
 #endif
 }
 

@@ -428,6 +428,7 @@ public:
     void DampPML ();
     void DampPML (int lev);
     void DampPML (int lev, PatchType patch_type);
+    void DampPML_Cartesian (int lev, PatchType patch_type);
 
     void DampJPML ();
     void DampJPML (int lev);
