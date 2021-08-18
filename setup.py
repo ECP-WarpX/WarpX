@@ -144,6 +144,11 @@ class CMakeBuild(build_ext):
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
 
+        for compile_arg in os.environ.keys():
+            if "WarpX" in compile_arg:
+                if not any(compile_arg in cmake_arg for cmake_arg in cmake_args):
+                    print(f"\nWARNING: compiled with '{compile_arg}', which is not a recognized argument\n")
+
         build_args += ['--parallel', BUILD_PARALLEL]
 
         env = os.environ.copy()
