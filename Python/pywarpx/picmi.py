@@ -782,6 +782,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
+        self.save_old_particle_pos = kw.pop('warpx_save_old_particle_pos', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -823,6 +824,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         pywarpx.amr.check_input = self.amr_check_input
+
+        pywarpx.warpx.save_old_particle_pos = self.save_old_particle_pos
 
         particle_shape = self.particle_shape
         for s in self.species:

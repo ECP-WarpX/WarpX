@@ -124,6 +124,8 @@ amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,P
 
 bool WarpX::do_current_centering = false;
 
+bool WarpX::save_old_particle_pos = false;
+
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
 
@@ -798,6 +800,9 @@ WarpX::ReadParameters ()
         {
             amrex::Abort("\nFinite-order centering of currents is not implemented with mesh refinement");
         }
+
+        // Check if particle positions at the previous step should be saved
+        pp_warpx.query("save_old_particle_pos", save_old_particle_pos);
     }
 
     {

@@ -242,6 +242,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // Scale the Galilean velocity by the speed of light
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
+    // If old particle positions should be saved add the needed components
+    if (WarpX::save_old_particle_pos) {
+        AddRealComp("xold");
+        AddRealComp("yold");
+        AddRealComp("zold");
+    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -2317,6 +2323,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
     }
 
+    ParticleReal* x_old = nullptr;
+    ParticleReal* y_old = nullptr;
+    ParticleReal* z_old = nullptr;
+    if (WarpX::save_old_particle_pos) {
+        x_old = pti.GetAttribs(particle_comps["xold"]).dataPtr();
+        y_old = pti.GetAttribs(particle_comps["yold"]).dataPtr();
+        z_old = pti.GetAttribs(particle_comps["zold"]).dataPtr();
+    }
+
     // Loop over the particles and update their momentum
     const amrex::Real q = this->charge;
     const amrex::Real m = this-> mass;
@@ -2343,6 +2358,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
+
+        if (WarpX::save_old_particle_pos) {
+            x_old[ip] = xp;
+            y_old[ip] = yp;
+            z_old[ip] = zp;
+        }
 
         amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
         amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
