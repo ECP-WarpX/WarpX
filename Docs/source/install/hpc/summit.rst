@@ -51,7 +51,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    # optional: for openPMD support
    module load ums
    module load ums-aph114
-   module load openpmd-api/0.13.2
+   module load openpmd-api/0.14.2
 
    # optional: for PSATD in RZ geometry support
    #   note: needs the ums modules above
