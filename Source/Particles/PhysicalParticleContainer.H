@@ -364,7 +364,7 @@ protected:
     bool do_classical_radiation_reaction = false;
 
     // A flag to enable saving of the previous timestep positions
-    bool m_save_prev_pos = false;
+    bool m_save_old_position = false;
 
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons

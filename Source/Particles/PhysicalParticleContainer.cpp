@@ -231,8 +231,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
 
     // If old particle positions should be saved add the needed components
-    pp_species_name.query("save_prev_pos", m_save_prev_pos);
-    if (m_save_prev_pos) {
+    pp_species_name.query("save_old_position", m_save_old_position);
+    if (m_save_old_position) {
         AddRealComp("xold");
         AddRealComp("yold");
         AddRealComp("zold");
@@ -2325,11 +2325,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
     }
 
-    const bool save_prev_pos = m_save_prev_pos;
+    const bool save_old_position = m_save_old_position;
     ParticleReal* x_old = nullptr;
     ParticleReal* y_old = nullptr;
     ParticleReal* z_old = nullptr;
-    if (save_prev_pos) {
+    if (save_old_position) {
         x_old = pti.GetAttribs(particle_comps["xold"]).dataPtr();
         y_old = pti.GetAttribs(particle_comps["yold"]).dataPtr();
         z_old = pti.GetAttribs(particle_comps["zold"]).dataPtr();
@@ -2362,7 +2362,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
 
-        if (save_prev_pos) {
+        if (save_old_position) {
             x_old[ip] = xp;
             y_old[ip] = yp;
             z_old[ip] = zp;
