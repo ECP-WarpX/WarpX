@@ -206,7 +206,7 @@ WarpX_picsar_internal = env.pop('WarpX_picsar_internal', 'ON')
 
 for key in env.keys():
     if key.lower().startswith('warpx'):
-        print(f"\nWARNING: compiled with '{key}', which is not a recognized argument\n")
+        print(f"\nWARNING: Found environment variable '{key}', which is not a recognized WarpX option\n")
 
 
 # https://cmake.org/cmake/help/v3.0/command/if.html
