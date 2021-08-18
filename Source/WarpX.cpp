@@ -33,7 +33,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 #include <AMReX_Array4.H>
