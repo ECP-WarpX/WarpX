@@ -90,6 +90,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
+``WarpX_SENSEI``              ON/**OFF**                                   SENSEI in situ visualization
 ============================= ============================================ =========================================================
 
 WarpX can be configured in further detail with options from AMReX, which are `documented in the AMReX manual <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options>`_.
