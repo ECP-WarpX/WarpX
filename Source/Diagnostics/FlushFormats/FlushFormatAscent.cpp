@@ -20,25 +20,17 @@ FlushFormatAscent::WriteToFile (
 {
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
-    WARPX_PROFILE_VAR_NS("FlushFormatAscent::WriteToFile::MultiLevelToBlueprint",
-                         prof_ascent_mesh_blueprint);
-    WARPX_PROFILE_VAR_NS("FlushFormatAscent::WriteToFile::WriteParticles",
-                         prof_ascent_particles);
-    WARPX_PROFILE_VAR_NS("FlushFormatAscent::WriteToFile::publish",
-                         prof_ascent_publish);
-    WARPX_PROFILE_VAR_NS("FlushFormatAscent::WriteToFile::execute",
-                         prof_ascent_execute);
 
     auto & warpx = WarpX::GetInstance();
 
     // wrap mesh data
-    WARPX_PROFILE_VAR_START(prof_ascent_mesh_blueprint);
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::MultiLevelToBlueprint", prof_ascent_mesh_blueprint);
     conduit::Node bp_mesh;
     amrex::MultiLevelToBlueprint(
         nlev, amrex::GetVecOfConstPtrs(mf), varnames, geom, time, iteration, warpx.refRatio(), bp_mesh);
     WARPX_PROFILE_VAR_STOP(prof_ascent_mesh_blueprint);
 
-    WARPX_PROFILE_VAR_START(prof_ascent_particles);
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::WriteParticles", prof_ascent_particles);
     WriteParticles(particle_diags, bp_mesh);
     WARPX_PROFILE_VAR_STOP(prof_ascent_particles);
 
@@ -47,7 +39,7 @@ FlushFormatAscent::WriteToFile (
     // const auto step = istep[0];
     // WriteBlueprintFiles(bp_mesh,"bp_export",step,"hdf5");
 
-    WARPX_PROFILE_VAR_START(prof_ascent_publish);
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::publish", prof_ascent_publish);
     ascent::Ascent ascent;
     conduit::Node opts;
     opts["exceptions"] = "catch";
@@ -56,7 +48,7 @@ FlushFormatAscent::WriteToFile (
     ascent.publish(bp_mesh);
     WARPX_PROFILE_VAR_STOP(prof_ascent_publish);
 
-    WARPX_PROFILE_VAR_START(prof_ascent_execute);
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::execute", prof_ascent_execute);
     conduit::Node actions;
     ascent.execute(actions);
     ascent.close();
