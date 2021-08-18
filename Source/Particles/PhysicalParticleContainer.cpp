@@ -230,6 +230,14 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     }
 #endif
 
+    // If old particle positions should be saved add the needed components
+    pp_species_name.query("save_prev_pos", m_save_prev_pos);
+    if (m_save_prev_pos) {
+        AddRealComp("xold");
+        AddRealComp("yold");
+        AddRealComp("zold");
+    }
+
     // Get Galilean velocity
     ParmParse pp_psatd("psatd");
     bool use_default_v_galilean = false;
@@ -242,12 +250,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // Scale the Galilean velocity by the speed of light
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
-    // If old particle positions should be saved add the needed components
-    if (WarpX::save_old_particle_pos) {
-        AddRealComp("xold");
-        AddRealComp("yold");
-        AddRealComp("zold");
-    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -2323,11 +2325,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
     }
 
-    const bool save_old_particle_pos = WarpX::save_old_particle_pos;
+    const bool save_prev_pos = m_save_prev_pos;
     ParticleReal* x_old = nullptr;
     ParticleReal* y_old = nullptr;
     ParticleReal* z_old = nullptr;
-    if (save_old_particle_pos) {
+    if (save_prev_pos) {
         x_old = pti.GetAttribs(particle_comps["xold"]).dataPtr();
         y_old = pti.GetAttribs(particle_comps["yold"]).dataPtr();
         z_old = pti.GetAttribs(particle_comps["zold"]).dataPtr();
@@ -2360,7 +2362,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
 
-        if (save_old_particle_pos) {
+        if (save_prev_pos) {
             x_old[ip] = xp;
             y_old[ip] = yp;
             z_old[ip] = zp;

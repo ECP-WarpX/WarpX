@@ -83,6 +83,7 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
+        self.save_prev_pos = kw.pop('warpx_save_prev_pos', None)
 
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
@@ -106,7 +107,8 @@ class Species(picmistandard.PICMI_Species):
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
                                              self_fields_max_iters = self.self_fields_max_iters,
-                                             self_fields_verbosity = self.self_fields_verbosity)
+                                             self_fields_verbosity = self.self_fields_verbosity,
+                                             save_prev_pos = self.save_prev_pos)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -782,7 +784,6 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
-        self.save_old_particle_pos = kw.pop('warpx_save_old_particle_pos', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -824,8 +825,6 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         pywarpx.amr.check_input = self.amr_check_input
-
-        pywarpx.warpx.save_old_particle_pos = self.save_old_particle_pos
 
         particle_shape = self.particle_shape
         for s in self.species:

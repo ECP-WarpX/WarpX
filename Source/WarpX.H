@@ -222,9 +222,6 @@ public:
     // do nodal
     static int do_nodal;
 
-    // whether to save the particle positions from the previous step
-    static bool save_old_particle_pos;
-
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
         return {
