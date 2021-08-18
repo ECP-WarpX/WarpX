@@ -482,10 +482,9 @@ MultiParticleContainer::DepositCurrent (
     }
 
     // Call the deposition kernel for each species
-    for (int ispecies = 0; ispecies < nSpecies(); ispecies++)
+    for (auto& pc : allcontainers)
     {
-        WarpXParticleContainer& species = GetParticleContainer(ispecies);
-        species.DepositCurrent(J, dt, relative_t);
+        pc->DepositCurrent(J, dt, relative_t);
     }
 
 #ifdef WARPX_DIM_RZ
