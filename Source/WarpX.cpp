@@ -1491,10 +1491,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
+    bool deposit_charge = do_dive_cleaning;
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
-                         || update_with_rho || current_correction;
+        deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
     if (deposit_charge)
     {
@@ -1656,7 +1655,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_cp[y]"));
         current_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_cp[z]"));
 
-        if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)) {
+        if (deposit_charge) {
             rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_cp"));
         }
 

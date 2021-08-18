@@ -58,12 +58,6 @@ Diagnostics::BaseReadParameters ()
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
 
-    // If user requests rho with back-transformed diagnostics, we set plot_rho=true
-    // and compute rho at each iteration
-    if (WarpXUtilStr::is_in(m_varnames, "rho") && WarpX::do_back_transformed_diagnostics) {
-        warpx.setplot_rho(true);
-    }
-
     // Sanity check if user requests to plot phi
     if (WarpXUtilStr::is_in(m_varnames, "phi")){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
