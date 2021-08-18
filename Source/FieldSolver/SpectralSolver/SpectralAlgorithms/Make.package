@@ -1,6 +1,7 @@
 CEXE_sources += SpectralBaseAlgorithm.cpp
 CEXE_sources += PsatdAlgorithm.cpp
 CEXE_sources += PMLPsatdAlgorithm.cpp
+CEXE_sources += PMLPsatdAlgorithmRZ.cpp
 CEXE_sources += ComovingPsatdAlgorithm.cpp
 
 ifeq ($(USE_RZ),TRUE)

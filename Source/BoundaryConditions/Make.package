@@ -1,4 +1,5 @@
 CEXE_sources += PML.cpp WarpXEvolvePML.cpp
+CEXE_sources += PML_RZ.cpp
 CEXE_sources += WarpXFieldBoundaries.cpp WarpX_PEC.cpp
 
 

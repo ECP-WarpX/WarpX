@@ -12,6 +12,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#include "BoundaryConditions/PML_RZ.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -301,6 +302,9 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
+#ifdef WARPX_DIM_RZ
+    pml_rz.resize(nlevs_max);
+#endif
     costs.resize(nlevs_max);
     load_balance_efficiency.resize(nlevs_max);
 
@@ -736,8 +740,8 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false,
-            "PML are not implemented in RZ geometry; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+            "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
@@ -1807,6 +1811,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   m_v_galilean,
                                                   dx_vect,
                                                   solver_dt,
+                                                  isAnyBoundaryPML(),
                                                   update_with_rho,
                                                   fft_do_time_averaging,
                                                   J_linear_in_time,
@@ -2024,6 +2029,19 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
         m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
     }
 }
+
+#ifdef WARPX_DIM_RZ
+PML_RZ*
+WarpX::GetPML_RZ (int lev)
+{
+    if (pml_rz[lev]) {
+        // This should check if pml was initialized
+        return pml_rz[lev].get();
+    } else {
+        return nullptr;
+    }
+}
+#endif
 
 PML*
 WarpX::GetPML (int lev)

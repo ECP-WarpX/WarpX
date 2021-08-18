@@ -9,6 +9,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#include "BoundaryConditions/PML_RZ.H"
 #include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/IntervalsParser.H"
@@ -536,14 +537,22 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            pml[lev]->ExchangeE(patch_type,
-                                { Efield_fp[lev][0].get(),
-                                  Efield_fp[lev][1].get(),
-                                  Efield_fp[lev][2].get() },
-                                do_pml_in_domain);
-            pml[lev]->FillBoundaryE(patch_type);
+        if (do_pml) {
+            if (pml[lev] && pml[lev]->ok())
+            {
+                pml[lev]->ExchangeE(patch_type,
+                                    { Efield_fp[lev][0].get(),
+                                      Efield_fp[lev][1].get(),
+                                      Efield_fp[lev][2].get() },
+                                    do_pml_in_domain);
+                pml[lev]->FillBoundaryE(patch_type);
+            }
+#ifdef WARPX_DIM_RZ
+            if (pml_rz[lev])
+            {
+                pml_rz[lev]->FillBoundaryE(patch_type);
+            }
+#endif
         }
 
         const auto& period = Geom(lev).periodicity();
@@ -598,15 +607,25 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml)
         {
-            pml[lev]->ExchangeB(patch_type,
-                            { Bfield_fp[lev][0].get(),
-                              Bfield_fp[lev][1].get(),
-                              Bfield_fp[lev][2].get() },
-                              do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
+            if (pml[lev] && pml[lev]->ok())
+            {
+                pml[lev]->ExchangeB(patch_type,
+                                { Bfield_fp[lev][0].get(),
+                                  Bfield_fp[lev][1].get(),
+                                  Bfield_fp[lev][2].get() },
+                                  do_pml_in_domain);
+            pml[lev]->FillBoundaryB(patch_type);
+            }
+#ifdef WARPX_DIM_RZ
+            if (pml_rz[lev])
+            {
+                pml_rz[lev]->FillBoundaryB(patch_type);
+            }
+#endif
         }
+
         const auto& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Bfield_fp[lev][0].get(),Bfield_fp[lev][1].get(),Bfield_fp[lev][2].get()};
@@ -763,7 +782,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine && F_fp[lev])
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             pml[lev]->ExchangeF(patch_type, F_fp[lev].get(),
                                 do_pml_in_domain);
@@ -1235,7 +1254,7 @@ void WarpX::NodalSyncPML (int lev)
 
 void WarpX::NodalSyncPML (int lev, PatchType patch_type)
 {
-    if (pml[lev]->ok())
+    if (pml[lev] && pml[lev]->ok())
     {
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
         const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
@@ -1257,6 +1276,24 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
             pml_G->OverrideSync(period);
         }
     }
+
+#ifdef WARPX_DIM_RZ
+    if (pml_rz[lev])
+    {
+        // This is not actually needed with RZ PSATD since the
+        // arrays are always cell centered. Keep for now since
+        // it may be useful if the PML is used with FDTD
+        const auto& pml_rz_E = pml_rz[lev]->GetE_fp();
+        const auto& pml_rz_B = pml_rz[lev]->GetB_fp();
+
+        // Always synchronize nodal points
+        const auto& period = Geom(lev).periodicity();
+        pml_rz_E[0]->OverrideSync(period);
+        pml_rz_E[1]->OverrideSync(period);
+        pml_rz_B[0]->OverrideSync(period);
+        pml_rz_B[1]->OverrideSync(period);
+    }
+#endif
 }
 
 void WarpX::NodalSyncE ()

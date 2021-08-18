@@ -9,6 +9,7 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#include "BoundaryConditions/PML_RZ.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -172,13 +173,20 @@ WarpX::MoveWindow (const int step, bool move_j)
             if (move_j) {
                 shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir);
             }
-            if (do_pml && pml[lev]->ok()) {
+            if (pml[lev] && pml[lev]->ok()) {
                 const std::array<MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
                 const std::array<MultiFab*, 3>& pml_E = pml[lev]->GetE_fp();
                 shiftMF(*pml_B[dim], geom[lev], num_shift, dir);
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir);
             }
-
+#ifdef WARPX_DIM_RZ
+            if (pml_rz[lev]) {
+                const std::array<MultiFab*, 3>& pml_rz_B = pml_rz[lev]->GetB_fp();
+                const std::array<MultiFab*, 3>& pml_rz_E = pml_rz[lev]->GetE_fp();
+                shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir);
+                shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir);
+            }
+#endif
             if (lev > 0) {
                 // coarse grid
                 shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, B_external_grid[dim], use_Bparser, Bfield_parser);

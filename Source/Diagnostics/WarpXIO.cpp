@@ -8,6 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BoundaryConditions/PML.H"
+#include "BoundaryConditions/PML_RZ.H"
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/CoarsenIO.H"
@@ -251,7 +252,12 @@ WarpX::InitFromCheckpoint ()
     {
         InitPML();
         for (int lev = 0; lev < nlevs; ++lev) {
-            pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
+            if (pml[lev])
+                pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
+#ifdef WARPX_DIM_RZ
+            if (pml_rz[lev])
+                pml_rz[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml_rz"));
+#endif
         }
     }
 

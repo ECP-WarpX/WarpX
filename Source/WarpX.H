@@ -13,6 +13,7 @@
 #define WARPX_H_
 
 #include "BoundaryConditions/PML_fwd.H"
+#include "BoundaryConditions/PML_RZ_fwd.H"
 #include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
@@ -451,6 +452,9 @@ public:
     void NodalSyncPML (int lev, PatchType patch_type);
 
     PML* GetPML (int lev);
+#ifdef WARPX_DIM_RZ
+    PML_RZ* GetPML_RZ (int lev);
+#endif
 
     /** Run the ionization module on all species */
     void doFieldIonization ();
@@ -1015,6 +1019,9 @@ private:
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
     amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
+#ifdef WARPX_DIM_RZ
+    amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
+#endif
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
     amrex::Real current_injection_position = 0;
