@@ -271,7 +271,7 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-int safeCastToInt(amrex::Real x, const std::string& real_name) {
+int safeCastToInt(const amrex::Real x, const std::string& real_name) {
     int result = 0;
     bool error_detected = false;
     std::string assert_msg;
