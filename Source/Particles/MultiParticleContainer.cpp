@@ -511,14 +511,13 @@ MultiParticleContainer::DepositCharge (
     if (relative_t != 0.) PushX(relative_t);
 
     // Call the deposition kernel for each species
-    for (int ispecies = 0; ispecies < nSpecies(); ispecies++)
+    for (auto& pc : allcontainers)
     {
-        WarpXParticleContainer& species = GetParticleContainer(ispecies);
         bool const local = true;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
         bool const interpolate_across_levels = false;
-        species.DepositCharge(rho, local, reset, do_rz_volume_scaling,
+        pc->DepositCharge(rho, local, reset, do_rz_volume_scaling,
                               interpolate_across_levels, icomp);
     }
 
