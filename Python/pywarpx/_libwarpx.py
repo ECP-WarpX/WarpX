@@ -82,7 +82,6 @@ except OSError as e:
         print("Failed to load the libwarpx shared object library")
         print(e)
 
-
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
 libwarpx.warpx_ParticleReal_size.restype = ctypes.c_int
