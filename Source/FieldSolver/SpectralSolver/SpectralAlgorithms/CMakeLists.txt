@@ -2,7 +2,6 @@ target_sources(WarpX
   PRIVATE
     PsatdAlgorithm.cpp
     PMLPsatdAlgorithm.cpp
-    PMLPsatdAlgorithmRZ.cpp
     SpectralBaseAlgorithm.cpp
     ComovingPsatdAlgorithm.cpp
 )
@@ -13,5 +12,6 @@ if(WarpX_DIMS STREQUAL RZ)
         SpectralBaseAlgorithmRZ.cpp
         PsatdAlgorithmRZ.cpp
         GalileanPsatdAlgorithmRZ.cpp
+        PMLPsatdAlgorithmRZ.cpp
     )
 endif()

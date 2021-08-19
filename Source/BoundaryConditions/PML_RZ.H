@@ -48,7 +48,9 @@ public:
     std::array<amrex::MultiFab*,3> GetE_cp ();
     std::array<amrex::MultiFab*,3> GetB_cp ();
 
+#ifdef WARPX_USE_PSATD
     void PushPSATD (const int lev);
+#endif
 
     void FillBoundary ();
     void FillBoundaryE ();
