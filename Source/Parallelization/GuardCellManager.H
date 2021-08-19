@@ -36,6 +36,9 @@ public:
      * \param nci_corr_stencil stencil of NCI corrector
      * \param maxwell_solver_id if of Maxwell solver
      * \param max_level max level of the simulation
+     * \param do_pml whether pml is turned on (only used by RZ PSATD)
+     * \param do_pml_in_domain whether pml is done in the domain (only used by RZ PSATD)
+     * \param pml_ncell number of cells on the pml layer (only used by RZ PSATD)
      */
     void Init(
         const amrex::Real dt,
@@ -53,7 +56,10 @@ public:
         const amrex::Array<amrex::Real,3> v_galilean,
         const amrex::Array<amrex::Real,3> v_comoving,
         const bool safe_guard_cells,
-        const int do_electrostatic);
+        const int do_electrostatic,
+        const bool do_pml,
+        const int do_pml_in_domain,
+        const int pml_ncell);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();

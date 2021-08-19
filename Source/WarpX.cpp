@@ -742,6 +742,8 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || maxwell_solver_id == MaxwellSolverAlgo::PSATD,
             "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
+            "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
@@ -1338,7 +1340,10 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::m_v_galilean,
         WarpX::m_v_comoving,
         safe_guard_cells,
-        WarpX::do_electrostatic);
+        WarpX::do_electrostatic,
+        WarpX::isAnyBoundaryPML(),
+        WarpX::do_pml_in_domain,
+        WarpX::pml_ncell);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
@@ -1558,6 +1563,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   ifdef WARPX_DIM_RZ
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+        }
+        if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
+            // Extend region that is solved for the PML
+            realspace_ba.growHi(0, pml_ncell);
         }
         AllocLevelSpectralSolverRZ(spectral_solver_fp,
                                    lev,

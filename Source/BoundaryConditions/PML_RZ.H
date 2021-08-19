@@ -37,7 +37,7 @@ class PML_RZ
 {
 public:
     PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::DistributionMapping& grid_dm,
-            const amrex::Geometry* geom, const int ncell);
+            const amrex::Geometry* geom, const int ncell, const int do_pml_in_domain);
 
     void ApplyDamping(const std::array<amrex::MultiFab*,3>& E_fp,
                       const std::array<amrex::MultiFab*,3>& B_fp,
@@ -65,6 +65,7 @@ private:
     bool m_ok;
 
     const int m_ncell;
+    const int m_do_pml_in_domain;
     const amrex::Geometry* m_geom;
 
     // Only contains Er and Et, and Br and Bt

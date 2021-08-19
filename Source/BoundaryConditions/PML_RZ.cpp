@@ -49,8 +49,9 @@
 using namespace amrex;
 
 PML_RZ::PML_RZ (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
-                const Geometry* geom, const int ncell)
+                const Geometry* geom, const int ncell, const int do_pml_in_domain)
     : m_ncell(ncell),
+      m_do_pml_in_domain(do_pml_in_domain),
       m_geom(geom)
 {
 
@@ -103,16 +104,18 @@ PML_RZ::ApplyDamping(const std::array<amrex::MultiFab*,3>& E_fp,
         // They are all the same, cell centered
         amrex::Box tilebox = amrex::convert((*E_fp[1])[mfi].box(), E_fp[0]->ixType().toIntVect());
 
-        // Get upper radius of tilebox
-        const int tilebox_bigEnd_r = tilebox.bigEnd(0);
-
         // Box for the whole simulation domain
         amrex::Box const& domain = m_geom->Domain();
         const int nr_domain = domain.bigEnd(0);
 
         // Set tilebox to only include the upper radial cells
         const int nr_damp = m_ncell;
-        const int nr_damp_min = nr_domain - nr_damp;
+        int nr_damp_min;
+        if (m_do_pml_in_domain) {
+            nr_damp_min = nr_domain - nr_damp;
+        } else {
+            nr_damp_min = nr_domain;
+        }
         tilebox.setSmall(0, nr_damp_min + 1);
 
         amrex::ParallelFor( tilebox, E_fp[0]->nComp(),

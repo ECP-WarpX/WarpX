@@ -242,7 +242,7 @@ WarpX::InitPML ()
 
 #ifdef WARPX_DIM_RZ
         do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
-        pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell);
+        pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
 #else
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
