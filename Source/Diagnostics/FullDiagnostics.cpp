@@ -454,6 +454,14 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 void
 FullDiagnostics::PrepareFieldDataForOutput ()
 {
+    // First, make sure all guard cells are properly filled
+    // Probably overkill/unnecessary, but safe and shouldn't happen often !!
+    auto & warpx = WarpX::GetInstance();
+    warpx.FillBoundaryE(warpx.getngE());
+    warpx.FillBoundaryB(warpx.getngE());
+    warpx.UpdateAuxilaryData();
+    warpx.FillBoundaryAux(warpx.getngUpdateAux());
+
     // Update the RealBox used for the geometry filter in particle diags
     for (int i = 0; i < m_output_species.size(); ++i) {
         m_output_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
