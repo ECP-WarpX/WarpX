@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #ifndef WARPX_PMLPSATD_ALGORITHM_RZ_H_
-#define WARPX_PSATD_ALGORITHM_RZ_H_
+#define WARPX_PMLPSATD_ALGORITHM_RZ_H_
 
 #include "SpectralBaseAlgorithmRZ.H"
 
@@ -69,4 +69,4 @@ class PMLPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         SpectralRealCoefficients C_coef, S_ck_coef;
 };
 
-#endif // WARPX_PSATD_ALGORITHM_RZ_H_
+#endif // WARPX_PMLPSATD_ALGORITHM_RZ_H_
