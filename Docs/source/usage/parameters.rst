@@ -1766,7 +1766,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
     * ``<diag_name>.plot_raw_rho`` (`0` or `1`) optional (default `0`)
     By default, the charge density written in the plot files is averaged on the cell centers.
-    When ``<diag_name>.plot_raw_rho = 1``, then the raw (i.e. non-averaged) charge density also saved in the output files.
+    When ``<diag_name>.plot_raw_rho = 1``, then the raw (i.e. non-averaged) charge density is also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
