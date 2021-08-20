@@ -894,6 +894,7 @@ WarpX::ReadParameters ()
             // default sort interval for particles is -1 if species/laser vector is empty
             std::vector<std::string>sort_intervals_string_vec = {"-1"};
         }
+        amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
         sort_intervals = IntervalsParser(sort_intervals_string_vec);
 
