@@ -1,4 +1,4 @@
-/* Copyright 2021 Luca Fedeli
+/* Copyright 2021 Andrew Myers
  *
  * This file is part of WarpX.
  *
