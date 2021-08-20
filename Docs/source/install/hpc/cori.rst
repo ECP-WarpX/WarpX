@@ -9,9 +9,10 @@ If you are new to this system, please see the following resources:
 
 * `GPU nodes <https://docs-dev.nersc.gov/cgpu/access>`__
 
-* `Cori user guide <https://docs.nersc.gov/>`_
-* Batch system: `Slurm <https://docs.nersc.gov/jobs/>`_
-* `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`_:
+* `Cori user guide <https://docs.nersc.gov/>`__
+* Batch system: `Slurm <https://docs.nersc.gov/jobs/>`__
+* `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
+* `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`__:
 
   * ``$SCRATCH``: per-user production directory (20TB)
   * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
