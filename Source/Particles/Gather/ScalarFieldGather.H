@@ -81,7 +81,7 @@ amrex::Real interp_field (int i, int j, int k,
     value += scalar_field(i+1, j+1, k) * W[0][1] * W[1][1];
 #else
     amrex::ignore_unused(i, j, k, W, scalar_field);
-    amrex::Abort("Error: interp_distance not yet implemented in RZ");
+    amrex::Abort("Error: interp_field not yet implemented in RZ");
 #endif
     return value;
 }

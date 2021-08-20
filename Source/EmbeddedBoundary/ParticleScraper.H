@@ -163,12 +163,12 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-                int ii, jj, kk;
+                int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                compute_weights(xp, yp, zp, plo, dxi, ii, jj, kk, W);
+                compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
 
-                amrex::Real phi_value  = interp_field(ii, jj, kk, W, phi);
-                amrex::RealVect normal = DistanceToEB::interp_normal(ii, jj, kk, W, phi, dxi);
+                amrex::Real phi_value  = interp_field(i, j, k, W, phi);
+                amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
                 // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
                 amrex::RealVect pos;
