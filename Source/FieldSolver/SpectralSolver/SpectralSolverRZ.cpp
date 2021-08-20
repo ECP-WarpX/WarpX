@@ -38,8 +38,7 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
                                     const bool J_linear_in_time,
                                     const bool dive_cleaning,
                                     const bool divb_cleaning)
-    : k_space(realspace_ba, dm, dx),
-      m_with_pml(with_pml)
+    : k_space(realspace_ba, dm, dx)
 {
     // Initialize all structures using the same distribution mapping dm
 
