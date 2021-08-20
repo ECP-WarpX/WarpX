@@ -63,7 +63,7 @@ macro(find_amrex)
 
         if(WarpX_SENSEI)
             set(AMReX_SENSEI ON CACHE INTERNAL "")
-            set(AMReX_AMRLEVEL ON CACHE INTERNAL "")
+            set(AMReX_AMRLEVEL ON CACHE INTERNAL "")  # FIXME in AMReX
         else()
             set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         endif()
