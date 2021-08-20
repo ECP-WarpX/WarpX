@@ -7,6 +7,7 @@
 #include "ComputeDiagFunctors/ComputeParticleDiagFunctor.H"
 #include "FlushFormats/FlushFormat_fwd.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
@@ -87,8 +88,6 @@ public:
     /** Whether the last timestep is always dumped */
     bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
 
-    using ParticleContainer = typename amrex::AmrParticleContainer<0,0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
-
 protected:
     /** Read Parameters of the base Diagnostics class */
     bool BaseReadParameters ();
@@ -162,8 +161,10 @@ protected:
     std::vector< std::string > m_output_species_names;
     /** Names of all species in the simulation */
     std::vector< std::string > m_all_species_names;
-    /** Each element of this vector handles output for 1 species */
-    amrex::Vector< ParticleDiag > m_output_species;
+    /** The first vector is for total number of snapshots. (=1 for FullDiagnostics)
+        The second vector handles output for 1 species
+      */
+    amrex::Vector< amrex::Vector< ParticleDiag> > m_output_species;
     /** Vector of (pointers to) functors to compute output fields, per level,
      * per component. This allows for simple operations (averaging to
      * cell-center for standard EB fields) as well as more involved operations
@@ -184,7 +185,7 @@ protected:
     /** Temporarily clear species output for BTD until particle buffer is added */
     virtual void TMP_ClearSpeciesDataForBTD() {}
     /** Vector of particle buffer vectors for each snapshot */
-    amrex::Vector< amrex::Vector<std::unique_ptr<ParticleContainer> > > m_particles_buffer;
+    amrex::Vector< amrex::Vector<std::unique_ptr<PinnedMemoryParticleContainer> > > m_particles_buffer;
     /** Vector of pointers to functors to compute particle output per species*/
     amrex::Vector <std::unique_ptr<ComputeParticleDiagFunctor > > m_all_particle_functors;
 };

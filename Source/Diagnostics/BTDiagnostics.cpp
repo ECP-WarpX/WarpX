@@ -105,6 +105,7 @@ void BTDiagnostics::DerivedInitData ()
     // If not specified, dump all species
     if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
     m_particles_buffer.resize(m_num_buffers);
+    m_output_species.resize(m_num_buffers);
     for (int i = 0; i < m_num_buffers; ++i) {
         m_particles_buffer[i].resize(m_output_species_names.size());
     }
@@ -574,6 +575,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 void
 BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
+    amrex::Print() << " defining snapshot \n";
     if ( m_do_back_transformed_fields ) {
         auto & warpx = WarpX::GetInstance();
         const int k_lab = k_index_zlab (i_buffer, lev);
@@ -654,7 +656,7 @@ BTDiagnostics::Flush (int i_buffer)
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        labtime, m_output_species, nlev_output, file_name, m_file_min_digits,
+        labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 
@@ -670,7 +672,7 @@ BTDiagnostics::Flush (int i_buffer)
 void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 {
     amrex::Print() << " m output species size : " << m_output_species_names.size() << "\n";
-    for (int i = 0; i < m_output_species_names.size(); ++i) {
+    for (int i = 0; i < m_output_species.size(); ++i) {
         amrex::Print() << " m_name : " << m_output_species_names[i] << "\n";
     }
 //    m_output_species.clear();
@@ -844,10 +846,17 @@ BTDiagnostics::InitializeParticleFunctors ()
 void
 BTDiagnostics::InitializeParticleBuffer ()
 {
+    auto& warpx = WarpX::GetInstance();
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
     amrex::Print() << " init part buffer \n";
     for (int i = 0; i < m_num_buffers; ++i) {
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
-            m_particles_buffer[i][isp] = std::make_unique<ParticleContainer>(&WarpX::GetInstance());
+            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(&WarpX::GetInstance());
+            const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
+            m_output_species[i].push_back(ParticleDiag(m_diag_name,
+                                                       m_output_species_names[isp],
+                                                       mpc.GetParticleContainerPtr(idx),
+                                                       m_particles_buffer[i][isp].get()));
         }
     }
     
@@ -856,13 +865,18 @@ BTDiagnostics::InitializeParticleBuffer ()
 void
 BTDiagnostics::PrepareParticleDataForOutput()
 {
-    for (int i = 0; i < m_all_particle_functors.size(); ++i)
-    {
-        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
+
+    for (int lev = 0; lev < nlev_output; ++lev) {
+        for (int i = 0; i < m_all_particle_functors.size(); ++i)
         {
-            m_all_particle_functors[i]->PrepareFunctorData (
-                                         i_buffer, m_old_z_boost[i_buffer],
-                                         m_current_z_boost[i_buffer], m_t_lab[i_buffer]);
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
+            {
+                // Check if the zslice is in domain
+                bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
+                m_all_particle_functors[i]->PrepareFunctorData (
+                                             i_buffer, ZSliceInDomain, m_old_z_boost[i_buffer],
+                                             m_current_z_boost[i_buffer], m_t_lab[i_buffer]);
+            }
         }
     }
 }

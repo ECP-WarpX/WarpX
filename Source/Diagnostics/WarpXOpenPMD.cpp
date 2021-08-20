@@ -538,7 +538,12 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // plot by default
     int_flags.resize(pc->NumIntComps(), 1);
 
-      pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+#endif
+      // Temporarily adding this if condition. For now, BTD will be output
+      // in WarpX units for comparison with existing BTD output.
+      // After validating BTD, we will remove the if conditionality and use a separate
+      // function to perform unit conversion for the appropriate particle container
+      if (!isBTD) pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
       RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                        particle_diags[i].m_random_fraction);
@@ -552,14 +557,20 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
 
-      using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-      tmp.copyParticles(*pc,
-                        [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-      {
-          const SuperParticleType& p = src.getSuperParticle(ip);
-          return random_filter(p, engine) * uniform_filter(p, engine)
-                 * parser_filter(p, engine) * geometry_filter(p, engine);
-      }, true);
+      if (! isBTD) {
+          using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+          tmp.copyParticles(*pc,
+                            [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+          {
+              const SuperParticleType& p = src.getSuperParticle(ip);
+              return random_filter(p, engine) * uniform_filter(p, engine)
+                     * parser_filter(p, engine) * geometry_filter(p, engine);
+          }, true);
+      } else if (isBTD) {
+          PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+          using PinnedData = PinnedMemoryParticleContainer::ParticleTileType::ConstParticleTileDataType;
+          tmp.copyParticles(*pinned_pc);
+      }
 
     // real_names contains a list of all real particle attributes.
     // real_flags is 1 or 0, whether quantity is dumped or not.
@@ -577,7 +588,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     }
 
     // Convert momentum back to WarpX units
-    pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
+    if (!isBTD) pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
   }
 }
 

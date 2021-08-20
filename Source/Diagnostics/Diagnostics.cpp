@@ -216,11 +216,12 @@ Diagnostics::InitData ()
         // set geometry filter for particle-diags to true when the diagnostic domain-extent
         // is specified by the user
         for (int i = 0; i < m_output_species.size(); ++i) {
-            m_output_species[i].m_do_geom_filter = true;
+            m_output_species[0][i].m_do_geom_filter = true;
         }
         // Disabling particle-io for reduced domain diagnostics by reducing
         // the particle-diag vector to zero.
         // This is a temporary fix until particle_buffer is supported in diagnostics.
+        m_output_species[0].clear();
         m_output_species.clear();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
     }
@@ -306,6 +307,9 @@ Diagnostics::ComputeAndPack ()
 {
     // prepare the field-data necessary to compute output data
     PrepareFieldDataForOutput();
+    // Prepare the particle data necessary to compute output data
+    // Prepare field data first for BTD, since the z-slice location is used
+    // to determine if the transform is to be done this step.
     PrepareParticleDataForOutput();
 
     auto & warpx = WarpX::GetInstance();
@@ -334,7 +338,6 @@ Diagnostics::ComputeAndPack ()
         for (int isp = 0; isp < m_all_particle_functors.size(); ++isp) {
             amrex::Print() << " call particle functor for buffer " << i_buffer << " sp : " << m_output_species_names[isp] << "\n";
             m_all_particle_functors[isp]->operator()(*m_particles_buffer[i_buffer][isp], i_buffer);
-//            m_all_particle_functors[isp]->operator()();
         }
         
         

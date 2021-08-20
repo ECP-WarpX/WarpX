@@ -18,7 +18,7 @@ public:
     //void operator ()() const override;
     void operator () (ParticleContainer& pc_dst, int i_buffer) const override;
     void InitData() override;
-    void PrepareFunctorData ( int i_buffer, amrex::Real old_z_boost,
+    void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain, amrex::Real old_z_boost,
                               amrex::Real current_z_boost, amrex::Real t_lab) override;
 private:
     int m_num_buffers;
@@ -27,7 +27,7 @@ private:
     amrex::Vector<amrex::Real> m_current_z_boost;
     amrex::Vector<amrex::Real> m_old_z_boost;
     amrex::Vector<amrex::Real> m_t_lab;
-
+    amrex::Vector<int> m_perform_backtransform;
 };
 
 #endif //

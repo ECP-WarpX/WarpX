@@ -180,8 +180,9 @@ struct LorentzTransformParticles
 void
 BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buffer) const
 {
-    amrex::Print() << " in BTD functor operator \n";
-    ParticleContainer pc_tmp(&WarpX::GetInstance());
+    if (m_perform_backtransform[i_buffer] == 0) return;
+    amrex::Print() << " in BTD functor operator " << i_buffer << "\n";
+//    ParticleContainer pc_tmp(&WarpX::GetInstance());
     auto &warpx = WarpX::GetInstance();
     // get particle slice
     amrex::Print() << " finest level : " << m_pc_src->finestLevel() << "\n"; 
@@ -195,7 +196,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
 
         for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
             auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-            auto ptile_tmp = pc_tmp.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
+            auto ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
         }
 
         auto& particles = m_pc_src->GetParticles(lev);
@@ -239,25 +240,18 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
                 });
 
                 const int total_partdiag_size = amrex::Scan::ExclusiveSum(np,Flag,IndexLocation);
-                auto& ptile_tmp = pc_tmp.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
-                auto old_size = ptile_tmp.numParticles();
-                ptile_tmp.resize(old_size + total_partdiag_size); 
-                amrex::Print() << " total partdiag_size : " << total_partdiag_size << "\n";
-                amrex::Print() << " old size : " << old_size << "\n";
-                amrex::Print() << " total part diag size :  " << total_partdiag_size << "\n";
-
-                auto count = amrex::filterParticles(ptile_tmp, ptile_src, GetParticleFilter, 0, old_size, np);
-                amrex::Print() << " count : " << count << "\n";
-                auto dst_data = ptile_tmp.getParticleTileData();
+                auto& ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
+                auto old_size = ptile_dst.numParticles();
+                ptile_dst.resize(old_size + total_partdiag_size); 
+                amrex::Print() << " old size : " << old_size <<  " new added : " << total_partdiag_size << "\n";
+                auto count = amrex::filterParticles(ptile_dst, ptile_src, GetParticleFilter, 0, old_size, np);
+                auto dst_data = ptile_dst.getParticleTileData();
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE(int i)
                 {
                    if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, ptile_src, i,
                                                                  old_size + IndexLocation[i]);
                 });
-                //auto transformedParticles = amrex::filterAndTransformParticles(ptile_tmp,
-                //                            ptile_src, FlagForPartCopy.dataPtr(),
-                //                            GetParticleLorentzTransform, 0, old_size, np);
 
             }
         }        
@@ -272,13 +266,17 @@ BackTransformParticleFunctor::InitData()
     m_current_z_boost.resize(m_num_buffers);
     m_old_z_boost.resize(m_num_buffers);
     m_t_lab.resize(m_num_buffers);
+    m_perform_backtransform.resize(m_num_buffers);
 }
 
 void
-BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, amrex::Real old_z_boost,
-                              amrex::Real current_z_boost, amrex::Real t_lab)
+BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
+                              amrex::Real old_z_boost, amrex::Real current_z_boost,
+                              amrex::Real t_lab)
 {
     m_old_z_boost[i_buffer] = old_z_boost;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_t_lab[i_buffer] = t_lab;
+    m_perform_backtransform[i_buffer] = 0;
+    if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
 }
