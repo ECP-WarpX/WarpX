@@ -246,17 +246,11 @@ public:
         auto products_np_data = products_np.data();
 #endif
 
-        SoaData_type soa_product;
-        GetParticlePosition get_position_product;
-
-        // String is not empty so a product species has been specified
-        if (!m_product_species.empty())
-        {
-            ParticleTileType& ptile_product = product_species_pointer->ParticlesAt(lev, mfi);
-            soa_product = ptile_product.getParticleTileData();
-            constexpr int getpos_offset = 0;
-            get_position_product  = GetParticlePosition(ptile_product, getpos_offset);
-        }
+        const bool product_species_exists = !m_product_species.empty();
+        ParticleTileType* ptile_product = product_species_exists? &product_species_pointer->ParticlesAt(lev, mfi) : nullptr;
+        SoaData_type soa_product = product_species_exists? ptile_product->getParticleTileData(): SoaData_type();
+        constexpr int getpos_offset = 0;
+        GetParticlePosition get_position_product = product_species_exists? GetParticlePosition(*ptile_product, getpos_offset): GetParticlePosition();
 
         if ( m_isSameSpecies ) // species_1 == species_2
         {
