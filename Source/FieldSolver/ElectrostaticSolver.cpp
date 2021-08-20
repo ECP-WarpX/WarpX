@@ -105,10 +105,15 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     }
 
     // Deposit particle charge density (source of Poisson solver)
-    bool const reset = true;
-    bool const do_rz_volume_scaling = true;
-    pc.DepositCharge(rho_fp, reset, do_rz_volume_scaling);
-    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
+    {
+        bool const local = false;
+        bool const interpolate_across_levels = false;
+        // communications and interpolation across level are done by `SyncRho`
+        bool const reset = true;
+        bool const do_rz_volume_scaling = true;
+        pc.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels);
+        SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
+    }
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
@@ -135,7 +140,6 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Allocate fields for the potential
     // Also, zero out the phi data
-    const int num_levels = max_level + 1;
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
@@ -146,9 +150,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Deposit particle charge density (source of Poisson solver)
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+        bool const local = false;
+        bool const interpolate_across_levels = false;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
-        species.DepositCharge(rho_fp, reset, do_rz_volume_scaling);
+        species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels);
     }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
