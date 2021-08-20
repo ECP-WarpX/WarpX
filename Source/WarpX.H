@@ -1121,10 +1121,11 @@ private:
     int noy_fft = 16;
     int noz_fft = 16;
 
-    // Domain decomposition on Level 0
+    //! Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
-    std::unique_ptr<ParticleBoundaryBuffer> m_particle_buffers;
+    //! particle buffer for scraped particles on the boundaries
+    std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
 
     //
     // Embedded Boundary

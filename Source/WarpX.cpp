@@ -255,8 +255,8 @@ WarpX::WarpX ()
     }
     do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
 
-    // Particle Buffers
-    m_particle_buffers = std::make_unique<ParticleBoundaryBuffer>();
+    // Particle Boundary Buffer (i.e., scraped particles on boundary)
+    m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
 
     // Diagnostics
     multi_diags = std::make_unique<MultiDiagnostics>();

@@ -204,7 +204,8 @@ Diagnostics::InitData ()
             InitializeFieldBufferData(i_buffer, lev);
         }
     }
-    // When particle buffers, m_particle_buffers are included, they will be initialized here
+    // When particle buffers, m_particle_boundary_buffer are included,
+    // they will be initialized here
     InitializeParticleBuffer();
 
     amrex::ParmParse pp_diag_name(m_diag_name);

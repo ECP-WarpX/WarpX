@@ -254,7 +254,7 @@ WarpX::Evolve (int numsteps)
 
         mypc->ContinuousFluxInjection(dt[0]);
 
-        m_particle_buffers->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
         mypc->ApplyBoundaryConditions();
 
