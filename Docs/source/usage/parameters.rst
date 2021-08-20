@@ -1764,6 +1764,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Whether to include the guard cells in the output of the raw fields.
     Only works with ``<diag_name>.format = plotfile``.
 
+    * ``<diag_name>.plot_raw_rho`` (`0` or `1`) optional (default `0`)
+    By default, the charge density written in the plot files is averaged on the cell centers.
+    When ``<diag_name>.plot_raw_rho = 1``, then the raw (i.e. non-averaged) charge density is also saved in the output files.
+    Only works with ``<diag_name>.format = plotfile``.
+
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
     Reduce size of the field output by this ratio in each dimension.
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
