@@ -127,7 +127,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     }
 
     // Setup particle collisions
-    collisionhandler = std::make_unique<CollisionHandler>();
+    collisionhandler = std::make_unique<CollisionHandler>(this);
 
 }
 

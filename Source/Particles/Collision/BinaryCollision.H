@@ -10,6 +10,7 @@
 #include "Particles/Collision/BinaryCollisionUtils.H"
 #include "Particles/Collision/CollisionBase.H"
 #include "Particles/Collision/PairWiseCoulombCollisionFunc.H"
+#include "Particles/Collision/ProtonBoronFusionFunc.H"
 #include "Particles/Collision/ShuffleFisherYates.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/ParticleCreation/SmartUtils.H"
@@ -80,7 +81,7 @@ public:
      * @param collision_name the name of the collision
      *
      */
-    BinaryCollision (std::string collision_name)
+    BinaryCollision (std::string collision_name, MultiParticleContainer* const mypc)
         : CollisionBase(collision_name)
     {
         if(m_species_names.size() != 2)
@@ -244,6 +245,18 @@ public:
         auto get_position_products_data = get_position_products.data();
         auto products_np_data = products_np.data();
 #endif
+
+        SoaData_type soa_product;
+        GetParticlePosition get_position_product;
+
+        // String is not empty so a product species has been specified
+        if (!m_product_species.empty())
+        {
+            ParticleTileType& ptile_product = product_species_pointer->ParticlesAt(lev, mfi);
+            soa_product = ptile_product.getParticleTileData();
+            constexpr int getpos_offset = 0;
+            get_position_product  = GetParticlePosition(ptile_product, getpos_offset);
+        }
 
         if ( m_isSameSpecies ) // species_1 == species_2
         {
