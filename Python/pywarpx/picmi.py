@@ -83,7 +83,7 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
-        self.save_old_position = kw.pop('warpx_save_old_position', None)
+        self.save_previous_position = kw.pop('warpx_save_previous_position', None)
 
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
@@ -108,7 +108,7 @@ class Species(picmistandard.PICMI_Species):
                                              self_fields_required_precision = self.self_fields_required_precision,
                                              self_fields_max_iters = self.self_fields_max_iters,
                                              self_fields_verbosity = self.self_fields_verbosity,
-                                             save_old_position = self.save_old_position)
+                                             save_previous_position = self.save_previous_position)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:

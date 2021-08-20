@@ -231,11 +231,16 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
 
     // If old particle positions should be saved add the needed components
-    pp_species_name.query("save_old_position", m_save_old_position);
-    if (m_save_old_position) {
-        AddRealComp("xold");
-        AddRealComp("yold");
-        AddRealComp("zold");
+    pp_species_name.query("save_previous_position", m_save_previous_position);
+    if (m_save_previous_position) {
+        AddRealComp("prev_x");
+#if (AMREX_SPACEDIM == 3)
+        AddRealComp("prev_y");
+#endif
+        AddRealComp("prev_z");
+#ifdef WARPX_DIM_RZ
+      amrex::Abort("Saving previous particle positions not yet implemented in RZ");
+#endif
     }
 
     // Get Galilean velocity
@@ -2325,14 +2330,18 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
     }
 
-    const bool save_old_position = m_save_old_position;
+    const bool save_previous_position = m_save_previous_position;
     ParticleReal* x_old = nullptr;
     ParticleReal* y_old = nullptr;
     ParticleReal* z_old = nullptr;
-    if (save_old_position) {
-        x_old = pti.GetAttribs(particle_comps["xold"]).dataPtr();
-        y_old = pti.GetAttribs(particle_comps["yold"]).dataPtr();
-        z_old = pti.GetAttribs(particle_comps["zold"]).dataPtr();
+    if (save_previous_position) {
+        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
+#if (AMREX_SPACEDIM == 3)
+        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
+#else
+    amrex::ignore_unused(y_old);
+#endif
+        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr();
     }
 
     // Loop over the particles and update their momentum
@@ -2362,9 +2371,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
 
-        if (save_old_position) {
+        if (save_previous_position) {
             x_old[ip] = xp;
+#if (AMREX_SPACEDIM == 3)
             y_old[ip] = yp;
+#endif
             z_old[ip] = zp;
         }
 
