@@ -77,7 +77,7 @@ try:
 except OSError as e:
     value = e.args[0]
     if f'{libname}: cannot open shared object file: No such file or directory' in value:
-        raise Exception('"%s" was not installed. It can be installed by running "make" in the Python directory of WarpX' % libname) from e
+        raise Exception(f'"{libname}" was not installed. Installation instructions can be found here https://warpx.readthedocs.io/en/latest/install/users.html') from e
     else:
         print("Failed to load the libwarpx shared object library")
         raise
