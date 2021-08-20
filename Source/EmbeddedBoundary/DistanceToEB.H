@@ -12,6 +12,8 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_Array.H>
 
+#ifdef AMREX_USE_EB
+
 namespace DistanceToEB
 {
 
@@ -156,5 +158,5 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
 }
 }
 
-
+#endif
 #endif

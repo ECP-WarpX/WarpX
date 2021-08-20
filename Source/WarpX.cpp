@@ -28,6 +28,7 @@
 #include "FieldSolver/WarpX_FDTD.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpXWrappers.h"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -253,6 +254,9 @@ WarpX::WarpX ()
         }
     }
     do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
+
+    // Particle Boundary Buffer (i.e., scraped particles on boundary)
+    m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
 
     // Diagnostics
     multi_diags = std::make_unique<MultiDiagnostics>();
