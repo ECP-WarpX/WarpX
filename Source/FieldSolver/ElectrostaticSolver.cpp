@@ -106,7 +106,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
     // Deposit particle charge density (source of Poisson solver)
     {
-        bool const local = false;
+        bool const local = true;
         bool const interpolate_across_levels = false;
         // communications and interpolation across level are done by `SyncRho`
         bool const reset = true;
@@ -150,7 +150,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Deposit particle charge density (source of Poisson solver)
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        bool const local = false;
+        bool const local = true;
         bool const interpolate_across_levels = false;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
