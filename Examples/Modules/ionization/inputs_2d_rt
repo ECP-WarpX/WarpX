@@ -3,14 +3,19 @@ amr.n_cell =  16 800
 amr.max_grid_size = 64
 amr.blocking_factor = 16
 geometry.coord_sys   = 0
-geometry.is_periodic = 1     0
 geometry.prob_lo     = -5.e-6   0.e-6
 geometry.prob_hi     =  5.e-6  20.e-6
 amr.max_level = 0
 
+boundary.field_lo = periodic pml
+boundary.field_hi = periodic pml
+
 algo.maxwell_solver = ckc
-warpx.do_pml = 1
 warpx.cfl = .999
+warpx.use_filter = 0
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 particles.species_names = electrons ions
 

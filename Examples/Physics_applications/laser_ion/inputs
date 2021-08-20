@@ -25,12 +25,13 @@ amr.n_cell = 2688 3712
 amr.max_level = 0
 geometry.prob_lo = -7.5e-6 -5.e-6
 geometry.prob_hi =  7.5e-6 25.e-6
-geometry.is_periodic = 0 0  # non-periodic (default)
 
-# macro-particle shape
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+# Boundary condition
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 # numerical tuning
 warpx.cfl = 0.999
@@ -137,11 +138,9 @@ my_constants.r0 = 2.5e-6        # [m] radius or half-thickness
 
 # [target 1] flat foil (thickness = 2*r0)
 electrons.density_function(x,y,z) = "nc*n0*(
-    (abs(z)<=r0) +
-    (abs(z)>r0)*(abs(z)<r0+Lcut)*exp( (-abs(z)+r0)/L ) )"
+    if(abs(z)<=r0, 1.0, if(abs(z)<r0+Lcut, exp((-abs(z)+r0)/L), 0.0)) )"
 hydrogen.density_function(x,y,z) = "nc*n0*(
-    (abs(z)<=r0) +
-    (abs(z)>r0)*(abs(z)<r0+Lcut)*exp( (-abs(z)+r0)/L ) )"
+    if(abs(z)<=r0, 1.0, if(abs(z)<r0+Lcut, exp((-abs(z)+r0)/L), 0.0)) )"
 
 # [target 2] cylinder
 #electrons.density_function(x,y,z) = "nc*n0*(

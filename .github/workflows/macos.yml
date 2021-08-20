@@ -1,11 +1,16 @@
-name: macOS build
+name: 🍏 macOS
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-macos
+  cancel-in-progress: true
+
 jobs:
   build_gcc9:
-    name: AppleClang [macOS]
+    name: AppleClang
     runs-on: macos-latest
+    env: {CXXFLAGS: "-Werror -Wno-error=pass-failed"}
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies

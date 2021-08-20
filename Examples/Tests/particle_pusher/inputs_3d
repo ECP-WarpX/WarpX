@@ -9,12 +9,12 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0 # Cartesian
-geometry.is_periodic = 1 1 1 # yes
 geometry.prob_lo = -2.077023075927835e+07 -2.077023075927835e+07 -2.077023075927835e+07
 geometry.prob_hi =  2.077023075927835e+07  2.077023075927835e+07  2.077023075927835e+07
 
-# PML
-warpx.do_pml = 0
+# Boundary Condition
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 # Algorithms
 algo.charge_deposition = standard
@@ -23,6 +23,9 @@ algo.particle_pusher = "higuera"
 
 # CFL
 warpx.cfl = 1.0
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # particles
 particles.species_names = positron

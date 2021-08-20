@@ -13,22 +13,25 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0
-geometry.is_periodic = 0   0   0
 geometry.prob_lo     = -40.e-6 -20.e-6
 geometry.prob_hi     =  40.e-6  20.e-6
+boundary.field_lo = absorbing_silver_mueller absorbing_silver_mueller
+boundary.field_hi = absorbing_silver_mueller absorbing_silver_mueller
+
 
 # Verbosity
 warpx.verbose = 1
 
 # Algorithms
-
 warpx.cfl = 1.0
-warpx.do_pml = 0
-warpx.do_silver_mueller = 1
+warpx.use_filter = 0
 
 warpx.do_moving_window = 0
 # warpx.moving_window_dir = z
 # warpx.moving_window_v = 1.0 # in units of the speed of light
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # Laser
 lasers.names        = laser1

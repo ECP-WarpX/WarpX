@@ -61,6 +61,26 @@ Uniform plasma
 :download:`2D case <../../../Examples/Physics_applications/uniform_plasma/inputs_2d>`
 :download:`3D case <../../../Examples/Physics_applications/uniform_plasma/inputs_3d>`
 
+Capacitive discharge
+--------------------
+
+The Monte-Carlo collision (MCC) model can be used to simulate capacitive discharges between parallel plates. The implementation has been tested against the benchmark results from Turner et. al. in `Phys. Plasmas 20, 013507, 2013 <https://aip.scitation.org/doi/abs/10.1063/1.4775084>`_. The figure below shows a comparison of the ion density as calculated in WarpX (in June 2021) compared to the literature results (which can be found `here <https://aip.scitation.org/doi/suppl/10.1063/1.4775084>`__). An input file with parameters for the 1st case is given below except the total simulation steps have been reduced.
+
+.. figure:: https://user-images.githubusercontent.com/40245517/123883650-4f614680-d8fe-11eb-9302-92a282191e8f.png
+   :alt: MCC benchmark against Turner et. al. (2013).
+   :width: 80%
+
+* :download:`test case 1 <../../../Examples/Physics_applications/capacitive_discharge/inputs_2d>`
+
+.. note::
+
+   This example needs `additional calibration data for cross sections <https://github.com/ECP-WarpX/warpx-data>`__.
+   Download this data alongside your inputs file and update the paths in the inputs file:
+
+   .. code-block:: bash
+
+      git clone https://github.com/ECP-WarpX/warpx-data.git
+
 Test cases
 ----------
 
@@ -70,4 +90,3 @@ PICMI test cases included that can be used as a reference:
 * :download:`Langmuir plasma wave test in 3d <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rt.py>`
 * :download:`Langmuir plasma wave test in RZ <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
 * :download:`Langmuir plasma wave test in 2D <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir2d.py>`
-

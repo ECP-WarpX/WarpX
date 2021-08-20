@@ -6,20 +6,37 @@
  */
 
 #include "ParticleHistogram.H"
-#include "WarpX.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Utils/WarpXUtil.H"
-#include "Particles/Filter/FilterFunctors.H"
 
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuAtomic.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_Math.H>
-#include <AMReX_ParticleReduce.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <memory>
-
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 
@@ -36,7 +53,6 @@ struct NormalizationType {
 ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     ParmParse pp_rd_name(rd_name);
 
     // read species
@@ -53,7 +69,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     std::string function_string = "";
     Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
-    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
+    m_parser = std::make_unique<amrex::Parser>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
@@ -95,7 +111,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     if (m_do_parser_filter) {
         std::string filter_string = "";
         Store_parserString(pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
-        m_parser_filter = std::make_unique<ParserWrapper<m_nvars>>(
+        m_parser_filter = std::make_unique<amrex::Parser>(
                                      makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
     }
 
@@ -109,14 +125,15 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             for (int i = 0; i < m_bin_num; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(3+i) + "]";
+                ofs << "[" << c++ << "]";
                 Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" + std::to_string(1+i)
                              + "=" + std::to_string(b) + "()";
@@ -126,14 +143,12 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes the histogram
 void ParticleHistogram::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) return;
 
@@ -150,10 +165,10 @@ void ParticleHistogram::ComputeDiags (int step)
     auto & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     // get parser
-    HostDeviceParser<m_nvars> fun_partparser = getParser(m_parser);
+    auto fun_partparser = compileParser<m_nvars>(m_parser.get());
 
     // get filter parser
-    HostDeviceParser<m_nvars> fun_filterparser = getParser(m_parser_filter);
+    auto fun_filterparser = compileParser<m_nvars>(m_parser_filter.get());
 
     // declare local variables
     auto const num_bins = m_bin_num;
@@ -260,6 +275,5 @@ void ParticleHistogram::ComputeDiags (int step)
         }
         return;
     }
-
 }
 // end void ParticleHistogram::ComputeDiags

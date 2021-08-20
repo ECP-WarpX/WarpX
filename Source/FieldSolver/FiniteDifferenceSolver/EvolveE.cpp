@@ -4,20 +4,40 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "WarpX.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
-#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
-#endif
-#include "Utils/WarpXConst.H"
-#include <AMReX_Gpu.H>
 
+#ifndef WARPX_DIM_RZ
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#else
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#endif
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -28,6 +48,7 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
@@ -35,21 +56,20 @@ void FiniteDifferenceSolver::EvolveE (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-
+        ignore_unused(edge_lengths);
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
-
 #else
     if (m_do_nodal) {
 
-        EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
+        EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
+        EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
+        EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
 #endif
     } else {
@@ -66,8 +86,13 @@ void FiniteDifferenceSolver::EvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
+
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     Real constexpr c2 = PhysConst::c * PhysConst::c;
@@ -94,6 +119,12 @@ void FiniteDifferenceSolver::EvolveECartesian (
         Array4<Real> const& jy = Jfield[1]->array(mfi);
         Array4<Real> const& jz = Jfield[2]->array(mfi);
 
+#ifdef AMREX_USE_EB
+        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+#endif
+
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
         int const n_coefs_x = m_stencil_coefs_x.size();
@@ -111,6 +142,10 @@ void FiniteDifferenceSolver::EvolveECartesian (
         amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (lx(i, j, k) <= 0) return;
+#endif
                 Ex(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
                     + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
@@ -118,6 +153,10 @@ void FiniteDifferenceSolver::EvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (ly(i,j,k) <= 0) return;
+#endif
                 Ey(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
@@ -125,6 +164,10 @@ void FiniteDifferenceSolver::EvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (lz(i,j,k) <= 0) return;
+#endif
                 Ez(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
                     + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k)

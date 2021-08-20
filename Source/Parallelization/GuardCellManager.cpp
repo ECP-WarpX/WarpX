@@ -4,13 +4,27 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+
 #include "GuardCellManager.H"
+
+#ifndef WARPX_DIM_RZ
+#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#else
+#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#endif
 #include "Filter/NCIGodfreyFilter.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 
+#include <AMReX_Config.H>
+#include <AMReX_INT.H>
+#include <AMReX_Math.H>
 #include <AMReX_ParmParse.H>
-#include <AMReX.H>
+#include <AMReX_SPACE.H>
+
+#include <algorithm>
 
 using namespace amrex;
 
@@ -122,6 +136,11 @@ guardCellManager::Init (
     if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
+    // Used if warpx.do_divb_cleaning = 1
+    int ng_alloc_G_int = (do_moving_window) ? 2 : 1;
+    // TODO Does the CKC solver require one additional guard cell (as for F)?
+    ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
+
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         // The number of guard cells should be enough to contain the stencil of the FFT solver.
@@ -170,33 +189,60 @@ guardCellManager::Init (
             ng_alloc_F[i_dim] = ng_required;
             ng_alloc_Rho[i_dim] = ng_required;
             ng_alloc_F_int = ng_required;
+            ng_alloc_G_int = ng_required;
         }
         ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
+        ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
     }
 
     // Compute number of cells required for Field Solver
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         ng_FieldSolver = ng_alloc_EB;
         ng_FieldSolverF = ng_alloc_EB;
-    } else {
-        ng_FieldSolver = IntVect(AMREX_D_DECL(1, 1, 1));
-        ng_FieldSolverF = IntVect(AMREX_D_DECL(1, 1, 1));
+        ng_FieldSolverG = ng_alloc_EB;
     }
+#ifdef WARPX_DIM_RZ
+    else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+        ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
+        ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
+        ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
+    }
+#else
+    else {
+        if (do_nodal) {
+            ng_FieldSolver  = CartesianNodalAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverF = CartesianNodalAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+            ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+            ng_FieldSolver  = CartesianCKCAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverF = CartesianCKCAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverG = CartesianCKCAlgorithm::GetMaxGuardCell();
+        }
+    }
+#endif
+
+    // Number of guard cells is the max of that determined by particle shape factor and
+    // the stencil used in the field solve
+    ng_alloc_EB.max( ng_FieldSolver );
+    ng_alloc_F.max( ng_FieldSolverF );
+    ng_alloc_G.max( ng_FieldSolverG );
 
     if (safe_guard_cells){
         // Run in safe mode: exchange all allocated guard cells at each
         // call of FillBoundary
         ng_FieldSolver = ng_alloc_EB;
         ng_FieldSolverF = ng_alloc_F;
+        ng_FieldSolverG = ng_alloc_G;
         ng_FieldGather = ng_alloc_EB;
         ng_UpdateAux = ng_alloc_EB;
         if (do_moving_window){
             ng_MovingWindow = ng_alloc_EB;
         }
     } else {
-
-        ng_FieldSolver = ng_FieldSolver.min(ng_alloc_EB);
-
         // Compute number of cells required for Field Gather
         int FGcell[4] = {0,1,1,2}; // Index is nox
         IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell[nox],FGcell[nox],FGcell[nox]));
@@ -216,7 +262,6 @@ guardCellManager::Init (
         // Make sure we do not exchange more guard cells than allocated.
         ng_FieldGather = ng_FieldGather.min(ng_alloc_EB);
         ng_UpdateAux = ng_UpdateAux.min(ng_alloc_EB);
-        ng_FieldSolverF = ng_FieldSolverF.min(ng_alloc_F);
         // Only FillBoundary(ng_FieldGather) is called between consecutive
         // field solves. So ng_FieldGather must have enough cells
         // for the field solve too.

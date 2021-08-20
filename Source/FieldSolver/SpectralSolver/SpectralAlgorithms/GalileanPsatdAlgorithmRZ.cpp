@@ -4,10 +4,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
 #include "GalileanPsatdAlgorithmRZ.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #include <cmath>
 
@@ -17,13 +17,15 @@ using namespace amrex::literals;
 /* \brief Initialize coefficients for the update equation */
 GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                                     amrex::DistributionMapping const & dm,
+                                                    const SpectralFieldIndex& spectral_index,
                                                     int const n_rz_azimuthal_modes, int const norder_z,
                                                     bool const nodal,
                                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                                     amrex::Real const dt,
                                                     bool const update_with_rho)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
+       m_spectral_index(spectral_index),
        m_dt(dt),
        m_v_galilean(v_galilean),
        m_update_with_rho(update_with_rho)
@@ -60,6 +62,8 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
         coefficients_initialized = true;
     }
 
+    const SpectralFieldIndex& Idx = m_spectral_index;
+
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi){
 
@@ -91,18 +95,17 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
         {
 
             // All of the fields of each mode are grouped together
-            using Idx = SpectralFieldIndex;
-            auto const Ep_m = Idx::Ex + Idx::n_fields*mode;
-            auto const Em_m = Idx::Ey + Idx::n_fields*mode;
-            auto const Ez_m = Idx::Ez + Idx::n_fields*mode;
-            auto const Bp_m = Idx::Bx + Idx::n_fields*mode;
-            auto const Bm_m = Idx::By + Idx::n_fields*mode;
-            auto const Bz_m = Idx::Bz + Idx::n_fields*mode;
-            auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
-            auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
-            auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
-            auto const rho_old_m = Idx::rho_old + Idx::n_fields*mode;
-            auto const rho_new_m = Idx::rho_new + Idx::n_fields*mode;
+            auto const Ep_m = Idx.Ex + Idx.n_fields*mode;
+            auto const Em_m = Idx.Ey + Idx.n_fields*mode;
+            auto const Ez_m = Idx.Ez + Idx.n_fields*mode;
+            auto const Bp_m = Idx.Bx + Idx.n_fields*mode;
+            auto const Bm_m = Idx.By + Idx.n_fields*mode;
+            auto const Bz_m = Idx.Bz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
+            auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
             // Record old values of the fields to be updated
             Complex const Ep_old = fields(i,j,k,Ep_m);
@@ -142,7 +145,8 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
                 Complex const divE = kr*(Ep_old - Em_old) + I*kz*Ez_old;
                 Complex const divJ = kr*(Jp - Jm) + I*kz*Jz;
 
-                rho_diff = T2*(X2 - X3)*PhysConst::ep0*divE + T_rho*X2*divJ;
+                auto const myeps0 = PhysConst::ep0;  // temporary for NVCC
+                rho_diff = T2*(X2 - X3)*myeps0*divE + T_rho*X2*divJ;
             }
 
             // Update E (see WarpX online documentation: theory section)
@@ -294,14 +298,14 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (const int lev,
     // Profiling
     WARPX_PROFILE( "GalileanPsatdAlgorithmRZ::CurrentCorrection" );
 
-    using Idx = SpectralFieldIndex;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of J and rho
-    field_data.ForwardTransform( lev, *current[0], Idx::Jx,
-                                 *current[1], Idx::Jy);
-    field_data.ForwardTransform( lev, *current[2], Idx::Jz, 0);
-    field_data.ForwardTransform( lev, *rho, Idx::rho_old, 0 );
-    field_data.ForwardTransform( lev, *rho, Idx::rho_new, 1 );
+    field_data.ForwardTransform( lev, *current[0], Idx.Jx,
+                                 *current[1], Idx.Jy);
+    field_data.ForwardTransform( lev, *current[2], Idx.Jz, 0);
+    field_data.ForwardTransform( lev, *rho, Idx.rho_old, 0 );
+    field_data.ForwardTransform( lev, *rho, Idx.rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -327,11 +331,11 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (const int lev,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             // All of the fields of each mode are grouped together
-            auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
-            auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
-            auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
-            auto const rho_old_m = Idx::rho_old + Idx::n_fields*mode;
-            auto const rho_new_m = Idx::rho_new + Idx::n_fields*mode;
+            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
+            auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
             // Shortcuts for the values of J and rho
             Complex const Jp = fields(i,j,k,Jp_m);
@@ -366,9 +370,9 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (const int lev,
 
     // Backward Fourier transform of J
     field_data.BackwardTransform( lev,
-                                  *current[0], Idx::Jx,
-                                  *current[1], Idx::Jy);
-    field_data.BackwardTransform( lev, *current[2], Idx::Jz, 0 );
+                                  *current[0], Idx.Jx,
+                                  *current[1], Idx.Jy);
+    field_data.BackwardTransform( lev, *current[2], Idx.Jz, 0 );
 
 }
 

@@ -14,19 +14,21 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1 1      # Is periodic?
 geometry.prob_lo     = -20.e-6   -20.e-6
 geometry.prob_hi     =  20.e-6    20.e-6
 
+# Boundary condition
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
+
 # Verbosity
 warpx.use_filter = 1
-warpx.do_pml = 0
 
 # Algorithms
 algo.current_deposition = esirkepov
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 warpx.serialize_ics = 1
 warpx.cfl = 1.0

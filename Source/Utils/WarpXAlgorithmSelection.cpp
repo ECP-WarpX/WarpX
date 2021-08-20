@@ -9,10 +9,15 @@
 #include "WarpX.H"
 #include "WarpXAlgorithmSelection.H"
 
+#include <AMReX.H>
+
+#include <AMReX_ParmParse.H>
+
 #include <algorithm>
 #include <cstring>
+#include <ctype.h>
 #include <map>
-
+#include <utility>
 
 // Define dictionary with correspondance between user-input strings,
 // and corresponding integer for use inside the code
@@ -80,15 +85,24 @@ const std::map<std::string, int> FieldBCType_algo_to_int = {
     {"periodic", FieldBoundaryType::Periodic},
     {"pec",      FieldBoundaryType::PEC},
     {"pmc",      FieldBoundaryType::PMC},
+    {"damped",   FieldBoundaryType::Damped},
+    {"absorbing_silver_mueller", FieldBoundaryType::Absorbing_SilverMueller},
+    {"none",     FieldBoundaryType::None},
     {"default",  FieldBoundaryType::PML}
 };
 
-const std::map<std::string, int> ParticleBCType_algo_to_int = {
+const std::map<std::string, ParticleBoundaryType> ParticleBCType_algo_to_enum = {
     {"absorbing",  ParticleBoundaryType::Absorbing},
     {"open",       ParticleBoundaryType::Open},
     {"reflecting", ParticleBoundaryType::Reflecting},
     {"periodic",   ParticleBoundaryType::Periodic},
     {"default",    ParticleBoundaryType::Absorbing}
+};
+
+const std::map<std::string, int> ReductionType_algo_to_int = {
+    {"maximum",  ReductionType::Maximum},
+    {"minimum",  ReductionType::Minimum},
+    {"integral", ReductionType::Sum}
 };
 
 int
@@ -122,6 +136,8 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = MaxwellSolver_medium_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "macroscopic_sigma_method")) {
         algo_to_int = MacroscopicSolver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "reduction_type")) {
+        algo_to_int = ReductionType_algo_to_int;
     } else {
         std::string pp_search_string = pp_search_key;
         amrex::Abort("Unknown algorithm type: " + pp_search_string);
@@ -146,22 +162,35 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 }
 
 int
-GetBCTypeInteger( std::string BCType, bool field ){
+GetFieldBCTypeInteger( std::string BCType ){
     std::transform(BCType.begin(), BCType.end(), BCType.begin(), ::tolower);
 
-    std::map<std::string, int> BCType_to_int;
-
-    if (field) BCType_to_int = FieldBCType_algo_to_int; // set field boundary
-    else BCType_to_int = ParticleBCType_algo_to_int; // set particle boundary
-
-    if (BCType_to_int.count(BCType) == 0) {
+    if (FieldBCType_algo_to_int.count(BCType) == 0) {
         std::string error_message = "Invalid string for field/particle BC. : " + BCType                         + "\nThe valid values are : \n";
-        for (const auto &valid_pair : BCType_to_int) {
+        for (const auto &valid_pair : FieldBCType_algo_to_int) {
             if (valid_pair.first != "default"){
                 error_message += " - " + valid_pair.first + "\n";
             }
         }
         amrex::Abort(error_message);
     }
-    return BCType_to_int[BCType];
+    // return FieldBCType_algo_to_int[BCType]; // This operator cannot be used for a const map
+    return FieldBCType_algo_to_int.at(BCType);
+}
+
+ParticleBoundaryType
+GetParticleBCTypeInteger( std::string BCType ){
+    std::transform(BCType.begin(), BCType.end(), BCType.begin(), ::tolower);
+
+    if (ParticleBCType_algo_to_enum.count(BCType) == 0) {
+        std::string error_message = "Invalid string for particle BC. : " + BCType + "\nThe valid values are : \n";
+        for (const auto &valid_pair : ParticleBCType_algo_to_enum) {
+            if (valid_pair.first != "default"){
+                error_message += " - " + valid_pair.first + "\n";
+            }
+        }
+        amrex::Abort(error_message);
+    }
+    // return ParticleBCType_algo_to_enum[BCType]; // This operator cannot be used for a const map
+    return ParticleBCType_algo_to_enum.at(BCType);
 }

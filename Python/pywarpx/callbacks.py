@@ -117,7 +117,7 @@ class CallbackFunctions(object):
                     self.funcs.remove(f)
                     continue
                 result = getattr(object,f[1])
-            elif isinstance(f,basestring):
+            elif isinstance(f,str):
                 import __main__
                 if f in __main__.__dict__:
                     result = __main__.__dict__[f]
@@ -137,7 +137,7 @@ class CallbackFunctions(object):
                 print("by something not callable. This can happen during restart")
                 print("if a function name had later been used as a variable name.")
                 print(self.name)
-                if isinstance(f,basestring):
+                if isinstance(f,str):
                     print("The name of the call back is %s"%f)
                 print("\n\n")
                 continue
@@ -148,7 +148,7 @@ class CallbackFunctions(object):
         if isinstance(f,types.MethodType):
             # --- If the function is a method of a class instance, then save a full
             # --- reference to that instance and the method name.
-            finstance = f.im_self
+            finstance = f.__self__
             fname = f.__name__
             self.funcs.append([finstance,fname])
         elif callable(f):
@@ -180,12 +180,12 @@ class CallbackFunctions(object):
                 if f.im_self is object and f.__name__ == func[1]:
                     self.funcs.remove(func)
                     return
-            elif isinstance(func,basestring):
+            elif isinstance(func,str):
                 if f.__name__ == func:
                     self.funcs.remove(func)
                     return
-            elif isinstance(f,basestring):
-                if isinstance(func,basestring): funcname = func
+            elif isinstance(f,str):
+                if isinstance(func,str): funcname = func
                 elif isinstance(func,list): funcname = None
                 else:                        funcname = func.__name__
                 if f == funcname:
@@ -204,7 +204,7 @@ class CallbackFunctions(object):
                 object = self._getmethodobject(func)
                 if f.im_self is object and f.__name__ == func[1]:
                     return 1
-            elif isinstance(func,basestring):
+            elif isinstance(func,str):
                 if f.__name__ == func:
                     return 1
         return 0

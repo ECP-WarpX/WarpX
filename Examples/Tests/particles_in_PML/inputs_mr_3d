@@ -7,14 +7,16 @@ amr.max_level = 1
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0     0     0     # Is periodic?
 geometry.prob_lo     = -32.e-6  -32.e-6  -32.e-6      # physical domain
 geometry.prob_hi     =  32.e-6   32.e-6   32.e-6
 warpx.fine_tag_lo     = -8.e-6  -8.e-6  -8.e-6      # physical domain
 warpx.fine_tag_hi     =  8.e-6   8.e-6   8.e-6
 
+# Boundary condition
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
 # PML
-warpx.do_pml = 1
 warpx.pml_ncell = 12
 warpx.pml_delta = 6
 warpx.pml_has_particles = 1
@@ -47,10 +49,8 @@ proton.single_particle_pos = 0. 0. 0.
 proton.single_particle_vel = -2. 0. 0.
 proton.single_particle_weight = 1.
 
-# Particle shape factor in each direction
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1

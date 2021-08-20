@@ -72,9 +72,9 @@ Build Options
 ============================= ============================================ =========================================================
 CMake Option                  Default & Values                             Description
 ============================= ============================================ =========================================================
-``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
+``CMAKE_BUILD_TYPE``          RelWithDebInfo/**Release**/Debug             Type of build, symbols & optimizations
 ``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
-``CMAKE_VERBOSE_MAKEFILES``   ON/**OFF**                                   Print all compiler commands to the terminal during build
+``CMAKE_VERBOSE_MAKEFILE``    ON/**OFF**                                   Print all compiler commands to the terminal during build
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
@@ -86,11 +86,11 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
-``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
+``WarpX_SENSEI``              ON/**OFF**                                   SENSEI in situ visualization
 ============================= ============================================ =========================================================
 
 WarpX can be configured in further detail with options from AMReX, which are `documented in the AMReX manual <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options>`_.
@@ -107,7 +107,7 @@ CMake Option                  Default & Values                               Des
 ``WarpX_amrex_internal``      **ON**/OFF                                     Needs a pre-installed AMReX library if set to ``OFF``
 ``WarpX_openpmd_src``         *None*                                         Path to openPMD-api source directory (preferred if set)
 ``WarpX_openpmd_repo``        ``https://github.com/openPMD/openPMD-api.git`` Repository URI to pull and build openPMD-api from
-``WarpX_openpmd_branch``      ``0.13.2``                                     Repository branch for ``WarpX_openpmd_repo``
+``WarpX_openpmd_branch``      ``0.14.2``                                     Repository branch for ``WarpX_openpmd_repo``
 ``WarpX_openpmd_internal``    **ON**/OFF                                     Needs a pre-installed openPMD-api library if set to ``OFF``
 ``WarpX_picsar_src``          *None*                                         Path to PICSAR source directory (preferred if set)
 ``WarpX_picsar_repo``         ``https://github.com/ECP-WarpX/picsar.git``    Repository URI to pull and build PICSAR from

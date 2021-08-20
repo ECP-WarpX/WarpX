@@ -5,20 +5,50 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <AMReX_MultiFabUtil.H>
-#include <AMReX_MultiFabUtil_C.H>
-
 #include "BackTransformedDiagnostic.H"
-#include "SliceDiagnostic.H"
+
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFabUtil.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Scan.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Utility.H>
+#include <AMReX_VectorIO.H>
+#include <AMReX_VisMF.H>
+
+#ifdef WARPX_USE_HDF5
+    #include <hdf5.h>
+#endif
+
+#include <algorithm>
+#include <cmath>
+#include <fstream>
 #include <memory>
 
 using namespace amrex;
 
 #ifdef WARPX_USE_HDF5
-
-#include <hdf5.h>
 
 /*
   Helper functions for doing the HDF5 IO.
@@ -728,7 +758,7 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
 
                 MultiFab tmp(buff_ba, buff_dm, ncomp, 0);
 
-                tmp.copy(*lf_diags->m_data_buffer_, 0, 0, ncomp);
+                tmp.ParallelCopy(*lf_diags->m_data_buffer_, 0, 0, ncomp);
 
 #ifdef WARPX_USE_HDF5
                 for (int comp = 0; comp < ncomp; ++comp) {
@@ -881,7 +911,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              // which has the dmap of the domain to
              // tmp_slice_ptr which has the dmap of the
              // data_buffer that stores the back-transformed data.
-             tmp_slice_ptr->copy(*slice, 0, 0, ncomp);
+             tmp_slice_ptr->ParallelCopy(*slice, 0, 0, ncomp);
              lf_diags->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                                map_actual_fields_to_dump);
              tmp_slice_ptr = nullptr;
@@ -890,7 +920,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
         if (WarpX::do_back_transformed_particles) {
 
             if (lf_diags->m_t_lab != prev_t_lab ) {
-               if (tmp_particle_buffer.size()>0)
+               if (!tmp_particle_buffer.empty())
                {
                   tmp_particle_buffer.clear();
                   tmp_particle_buffer.shrink_to_fit();

@@ -6,8 +6,16 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "InjectorDensity.H"
-#include "PlasmaInjector.H"
 
+#include "Initialization/CustomDensityProb.H"
+#include "Utils/WarpXUtil.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_ParmParse.H>
+
+#include <algorithm>
+#include <cctype>
+#include <vector>
 
 using namespace amrex;
 
@@ -17,7 +25,6 @@ void InjectorDensity::clear ()
     {
     case Type::parser:
     {
-        object.parser.m_parser.clear();
         break;
     }
     case Type::custom:
@@ -43,7 +50,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
 
     std::vector<amrex::Real> v;
     // Read parameters for the predefined plasma profile.
-    pp_species_name.getarr("predefined_profile_params", v);
+    getArrWithParser(pp_species_name, "predefined_profile_params", v);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {

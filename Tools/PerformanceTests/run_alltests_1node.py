@@ -114,7 +114,7 @@ module_Cname = {'cpu': 'haswell', 'knl': 'knl,quad,cache'}
 cwd = os.getcwd() + '/'
 res_dir_base = os.environ['SCRATCH'] + '/performance_warpx/'
 bin_dir = cwd + 'Bin/'
-bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MPI.OMP.ex'
+bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MTMPI.OMP.QED.ex'
 log_dir  = cwd
 
 day = time.strftime('%d')

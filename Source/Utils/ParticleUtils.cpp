@@ -5,7 +5,22 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "ParticleUtils.H"
+
 #include "WarpX.H"
+
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Box.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_REAL.H>
+#include <AMReX_SPACE.H>
 
 namespace ParticleUtils {
 
@@ -38,7 +53,7 @@ namespace ParticleUtils {
         ParticleBins bins;
         bins.build(np, particle_ptr, cbx,
             // Pass lambda function that returns the cell index
-            [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) noexcept -> IntVect
+            [=] AMREX_GPU_DEVICE (const ParticleType& p) noexcept -> IntVect
             {
                 return IntVect(AMREX_D_DECL(
                                    static_cast<int>((p.pos(0)-plo[0])*dxi[0] - lo.x),

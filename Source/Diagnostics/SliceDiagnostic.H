@@ -7,20 +7,11 @@
 #ifndef WARPX_SliceDiagnostic_H_
 #define WARPX_SliceDiagnostic_H_
 
-#include <AMReX_VisMF.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_Geometry.H>
-
-#include <WarpX.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_IArrayBox.H>
 #include <AMReX_Vector.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_MultiFabUtil.H>
-#include <AMReX_MultiFabUtil_C.H>
 
+#include <AMReX_BaseFwd.H>
 
+#include <memory>
 
 std::unique_ptr<amrex::MultiFab> CreateSlice( const amrex::MultiFab& mf,
                const amrex::Vector<amrex::Geometry> &dom_geom,

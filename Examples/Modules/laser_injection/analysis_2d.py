@@ -44,7 +44,7 @@ wavelength = 1.*um
 w0 = 5.*um
 tt = 10.*fs
 x_c = 10.*um
-t_c = 20.*fs
+t_c = 24.*fs
 # foc_dist = 13.109*um (not actually used)
 E_max = 4e12
 
@@ -149,6 +149,11 @@ def check_component(data, component, t_env_theory, coeff, X,Z,dx,dz):
 
 def check_laser(filename):
     ds = yt.load(filename)
+
+    # yt 4.0+ has rounding issues with our domain data:
+    # RuntimeError: yt attempted to read outside the boundaries
+    # of a non-periodic domain along dimension 0.
+    if 'force_periodicity' in dir(ds): ds.force_periodicity()
 
     x = np.linspace(
         ds.domain_left_edge[0].v,

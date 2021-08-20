@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 21.04)
+project(WarpX VERSION 21.08)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -16,10 +16,13 @@ endif()
 
 # CMake policies ##############################################################
 #
+# AMReX 21.06+ supports CUDA_ARCHITECTURES with CMake 3.20+
 # CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
-if(POLICY CMP0104)
-    cmake_policy(SET CMP0104 OLD)
+if(CMAKE_VERSION VERSION_LESS 3.20)
+    if(POLICY CMP0104)
+        cmake_policy(SET CMP0104 OLD)
+    endif()
 endif()
 
 
@@ -42,17 +45,20 @@ set_default_install_dirs()
 
 # Options and Variants ########################################################
 #
+include(CMakeDependentOption)
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_EB            "Embedded boundary support"                  OFF)
-option(WarpX_GPUCLOCK      "Add GPU kernel timers (cost function)"      ON)
+cmake_dependent_option(WarpX_GPUCLOCK
+                           "Add GPU kernel timers (cost function)"      ON
+                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
 option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
+option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
 option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
 option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
-# TODO: sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality (2/3/RZ)")
@@ -78,14 +84,10 @@ endif()
 option(WarpX_MPI_THREAD_MULTIPLE "MPI thread-multiple support, i.e. for async_io" ON)
 mark_as_advanced(WarpX_MPI_THREAD_MULTIPLE)
 
-set(WarpX_PARSER_DEPTH 24 CACHE STRING
-    "Maximum parser depth for input file functions")
-mark_as_advanced(WarpX_PARSER_DEPTH)
-
 option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 
-# change the default build type to RelWithDebInfo (or Release) instead of Debug
-set_default_build_type("RelWithDebInfo")
+# change the default build type to Release (or RelWithDebInfo) instead of Debug
+set_default_build_type("Release")
 
 # Option to enable interprocedural optimization
 # (also know as "link-time optimization" or "whole program optimization")
@@ -186,7 +188,6 @@ add_subdirectory(Source/Filter)
 add_subdirectory(Source/Initialization)
 add_subdirectory(Source/Laser)
 add_subdirectory(Source/Parallelization)
-add_subdirectory(Source/Parser)
 add_subdirectory(Source/Particles)
 add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
@@ -285,14 +286,9 @@ if(WarpX_PSATD)
     target_compile_definitions(WarpX PUBLIC WARPX_USE_PSATD)
 endif()
 
-target_compile_definitions(WarpX PUBLIC
-    WARPX_PARSER_DEPTH=${WarpX_PARSER_DEPTH})
-
 # <cmath>: M_PI
-# <unistd.h>: parser
 if(WIN32)
     target_compile_definitions(WarpX PRIVATE _USE_MATH_DEFINES)
-    target_compile_definitions(WarpX PRIVATE YY_NO_UNISTD_H)
 endif()
 
 

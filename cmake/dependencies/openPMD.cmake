@@ -10,13 +10,13 @@ function(find_openpmd)
     if(WarpX_openpmd_internal OR WarpX_openpmd_src)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-        # see https://openpmd-api.readthedocs.io/en/0.12.0-alpha/dev/buildoptions.html
-        set(openPMD_USE_MPI    ${WarpX_MPI}  CACHE INTERNAL "")
-        set(openPMD_USE_PYTHON OFF           CACHE INTERNAL "")
-        set(BUILD_CLI_TOOLS    OFF           CACHE INTERNAL "")  # FIXME
-        set(BUILD_EXAMPLES     OFF           CACHE INTERNAL "")  # FIXME
-        set(BUILD_TESTING      OFF           CACHE INTERNAL "")  # FIXME
-        set(openPMD_INSTALL    ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        # see https://openpmd-api.readthedocs.io/en/0.14.1/dev/buildoptions.html
+        set(openPMD_USE_MPI         ${WarpX_MPI}  CACHE INTERNAL "")
+        set(openPMD_USE_PYTHON      OFF           CACHE INTERNAL "")
+        set(openPMD_BUILD_CLI_TOOLS OFF           CACHE INTERNAL "")
+        set(openPMD_BUILD_EXAMPLES  OFF           CACHE INTERNAL "")
+        set(openPMD_BUILD_TESTING   OFF           CACHE INTERNAL "")
+        set(openPMD_INSTALL  ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
 
         if(WarpX_openpmd_src)
             add_subdirectory(${WarpX_openpmd_src} _deps/localopenpmd-build/)
@@ -65,7 +65,7 @@ function(find_openpmd)
         else()
             set(COMPONENT_WMPI NOMPI)
         endif()
-        find_package(openPMD 0.12.0 CONFIG REQUIRED COMPONENTS ${COMPONENT_WMPI})
+        find_package(openPMD 0.14.2 CONFIG REQUIRED COMPONENTS ${COMPONENT_WMPI})
         message(STATUS "openPMD-api: Found version '${openPMD_VERSION}'")
     endif()
 endfunction()
@@ -81,7 +81,7 @@ if(WarpX_OPENPMD)
     set(WarpX_openpmd_repo "https://github.com/openPMD/openPMD-api.git"
         CACHE STRING
         "Repository URI to pull and build openPMD-api from if(WarpX_openpmd_internal)")
-    set(WarpX_openpmd_branch "0.13.2"
+    set(WarpX_openpmd_branch "0.14.2"
         CACHE STRING
         "Repository branch for WarpX_openpmd_repo if(WarpX_openpmd_internal)")
 

@@ -19,12 +19,14 @@ warpx.fine_tag_hi =  10.e-6    0.4e-6
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1     0            # Is periodic?
 geometry.prob_lo     = -30.e-6    -1.25e-6       # physical domain
 geometry.prob_hi     =  30.e-6     1.25e-6
 
+# Boundary condition
+boundary.field_lo = periodic pml
+boundary.field_hi = periodic pml
+
 # PML
-warpx.do_pml = 1
 warpx.pml_ncell = 10
 
 # Verbosity
@@ -34,14 +36,13 @@ warpx.verbose = 1
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
+warpx.use_filter = 0
 
 # CFL
 warpx.cfl = 1.0
 
-# interpolation
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # Moving window
 warpx.do_moving_window = 0

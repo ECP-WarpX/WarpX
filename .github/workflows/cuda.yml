@@ -1,0 +1,47 @@
+name: 🐧 CUDA
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.head_ref }}-cuda
+  cancel-in-progress: true
+
+jobs:
+# Ref.:
+#   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
+#   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
+#   https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/
+  build_nvcc:
+    name: NVCC 11.0.2 SP
+    runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-Werror"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: |
+        .github/workflows/dependencies/nvcc11.sh
+        export CEI_SUDO="sudo"
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.14.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
+    - name: build WarpX
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+        which nvcc || echo "nvcc not in PATH!"
+
+        cmake -S . -B build_sp         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_COMPUTE=CUDA         \
+          -DWarpX_LIB=ON               \
+          -DAMReX_CUDA_ARCH=6.0        \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_openpmd_internal=OFF \
+          -DWarpX_PRECISION=SINGLE     \
+          -DWarpX_PSATD=ON             \
+          -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
+          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+        cmake --build build_sp -j 2
+
+        python3 -m pip install --upgrade pip setuptools wheel
+        export WarpX_MPI=ON
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        python3 -m pip install *.whl

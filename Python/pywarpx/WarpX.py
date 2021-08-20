@@ -9,12 +9,14 @@ from .Bucket import Bucket
 from .Constants import my_constants
 from .Amr import amr
 from .Geometry import geometry
+from .Boundary import boundary
 from .Algo import algo
 from .Langmuirwave import langmuirwave
 from .Interpolation import interpolation
 from .Lasers import lasers, lasers_list
 from . import Particles
 from .Particles import particles, particles_list
+from .Collisions import collisions, collisions_list
 from .PSATD import psatd
 from .Diagnostics import diagnostics
 
@@ -30,6 +32,7 @@ class WarpX(Bucket):
         argv += my_constants.attrlist()
         argv += amr.attrlist()
         argv += geometry.attrlist()
+        argv += boundary.attrlist()
         argv += algo.attrlist()
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
@@ -52,6 +55,10 @@ class WarpX(Bucket):
         for particle in particles_list:
             argv += particle.attrlist()
 
+        argv += collisions.attrlist()
+        for collision in collisions_list:
+            argv += collision.attrlist()
+
         argv += lasers.attrlist()
         for laser in lasers_list:
             argv += laser.attrlist()
@@ -66,10 +73,10 @@ class WarpX(Bucket):
 
         return argv
 
-    def init(self):
+    def init(self, mpi_comm=None):
         from . import wx
         argv = ['warpx'] + self.create_argv_list()
-        wx.initialize(argv)
+        wx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
         from . import wx
@@ -89,6 +96,7 @@ class WarpX(Bucket):
 
     def write_inputs(self, filename='inputs', **kw):
         argv = self.create_argv_list()
+
         with open(filename, 'w') as ff:
 
             for k, v in kw.items():

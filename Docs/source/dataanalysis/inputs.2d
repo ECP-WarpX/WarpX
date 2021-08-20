@@ -13,7 +13,8 @@ insitu.int = 2
 insitu.start = 0
 insitu.config = ez2d.xml
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0 0      # Is periodic?
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
 geometry.prob_lo     = -125.e-6 -149.e-6 
 geometry.prob_hi     =  125.e-6    1.e-6 
 warpx.fine_tag_lo    =  -12.e-6 -110.e-6
@@ -26,17 +27,14 @@ algo.current_deposition = 0
 algo.charge_deposition = 0
 algo.field_gathering = 0
 algo.particle_pusher = 0
+algo.particle_shape = 3
 algo.maxwell_solver = ckc
 warpx.use_filter = 1
-warpx.do_pml = 1
 warpx.pml_ncell = 10
 warpx.cfl = .99
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1. # in units of the speed of light
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 
 #################################
 ############ PLASMA #############

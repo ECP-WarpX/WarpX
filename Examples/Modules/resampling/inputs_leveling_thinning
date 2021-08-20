@@ -2,16 +2,18 @@ max_step = 8
 amr.n_cell = 16 16
 amr.blocking_factor = 8
 amr.max_grid_size = 8
-geometry.is_periodic = 1   1
 geometry.prob_lo     = 0.  0.
 geometry.prob_hi     = 16. 16.
 amr.max_level = 0
 
-warpx.do_pml = 0
+# Boundary condition
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 particles.species_names = resampled_part1 resampled_part2
-
-my_constants.pi = 3.141592653589793
 
 # First particle species. The particles are distributed throughout the simulation box and all have
 # the same weight.

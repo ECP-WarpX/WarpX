@@ -92,6 +92,8 @@ grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
                              upper_bound = [xmax, ymax, zmax],
                              lower_boundary_conditions = ['periodic', 'periodic', 'open'],
                              upper_boundary_conditions = ['periodic', 'periodic', 'open'],
+                             lower_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
+                             upper_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
                              moving_window_velocity = moving_window_velocity,
                              warpx_max_grid_size=32)
 
@@ -121,7 +123,8 @@ part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
 sim = picmi.Simulation(solver = solver,
                        max_steps = max_steps,
                        verbose = 1,
-                       warpx_current_deposition_algo = 'esirkepov')
+                       warpx_current_deposition_algo = 'esirkepov',
+                       warpx_use_filter = 0)
 
 sim.add_species(electrons, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_per_cell=number_per_cell_each_dim))
 

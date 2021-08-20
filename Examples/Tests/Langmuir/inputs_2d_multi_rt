@@ -13,9 +13,12 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1     1            # Is periodic?
 geometry.prob_lo     = -20.e-6   -20.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6
+
+# Boundary condition
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
 
 warpx.serialize_ics = 1
 
@@ -24,12 +27,10 @@ warpx.verbose = 1
 
 # Algorithms
 algo.field_gathering = energy-conserving
-warpx.do_pml = 0
+warpx.use_filter = 0
 
-# Interpolation
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 1.0

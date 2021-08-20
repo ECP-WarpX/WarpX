@@ -7,6 +7,8 @@
 #ifndef WARPX_SPECTRAL_SOLVER_RZ_H_
 #define WARPX_SPECTRAL_SOLVER_RZ_H_
 
+#include "SpectralSolverRZ_fwd.H"
+
 #include "SpectralAlgorithms/SpectralBaseAlgorithmRZ.H"
 #include "SpectralFieldDataRZ.H"
 
@@ -32,7 +34,11 @@ class SpectralSolverRZ
                           int const norder_z, bool const nodal,
                           const amrex::Array<amrex::Real,3>& v_galilean,
                           amrex::RealVect const dx, amrex::Real const dt,
-                          bool const update_with_rho);
+                          bool const update_with_rho,
+                          const bool fft_do_time_averaging,
+                          const bool J_linear_in_time,
+                          const bool dive_cleaning,
+                          const bool divb_cleaning);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
@@ -67,15 +73,16 @@ class SpectralSolverRZ
         }
 
         /* \brief Apply K space filtering for a scalar */
-        void ApplyFilter (int const field_index)
+        void ApplyFilter (const int lev, int const field_index)
         {
-            field_data.ApplyFilter(field_index);
+            field_data.ApplyFilter(lev, field_index);
         }
 
         /* \brief Apply K space filtering for a vector */
-        void ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+        void ApplyFilter (const int lev, int const field_index1,
+                          int const field_index2, int const field_index3)
         {
-            field_data.ApplyFilter(field_index1, field_index2, field_index3);
+            field_data.ApplyFilter(lev, field_index1, field_index2, field_index3);
         }
 
         /**
@@ -108,6 +115,42 @@ class SpectralSolverRZ
          * the three components of the current density
          */
         void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current);
+
+        /**
+         * \brief Copy spectral data from component \c src_comp to component \c dest_comp
+         *        of \c field_data.fields
+         *
+         * \param[in] src_comp  component of the source FabArray from which the data are copied
+         * \param[in] dest_comp component of the destination FabArray where the data are copied
+         */
+        void CopySpectralDataComp (const int src_comp, const int dest_comp)
+        {
+            field_data.CopySpectralDataComp(src_comp, dest_comp);
+        }
+
+        /**
+         * \brief Set to zero the data on component \c icomp of \c field_data.fields
+         *
+         * \param[in] icomp component of the FabArray where the data are set to zero
+         */
+        void ZeroOutDataComp (const int icomp)
+        {
+            field_data.ZeroOutDataComp(icomp);
+        }
+
+        /**
+         * \brief Scale the data on component \c icomp of \c field_data.fields
+         *        by a given scale factor
+         *
+         * \param[in] icomp component of the FabArray where the data are scaled
+         * \param[in] scale_factor scale factor to use for scaling
+         */
+        void ScaleDataComp (const int icomp, const amrex::Real scale_factor)
+        {
+            field_data.ScaleDataComp(icomp, scale_factor);
+        }
+
+        SpectralFieldIndex m_spectral_index;
 
     private:
 

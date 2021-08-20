@@ -7,10 +7,11 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_RZ_H_
 #define WARPX_SPECTRAL_FIELD_DATA_RZ_H_
 
-#include "SpectralKSpaceRZ.H"
+#include "SpectralBinomialFilter.H"
 #include "SpectralFieldData.H"
 #include "SpectralHankelTransform/SpectralHankelTransformer.H"
-#include "SpectralBinomialFilter.H"
+#include "SpectralKSpaceRZ.H"
+
 #include <AMReX_MultiFab.H>
 
 /* \brief Class that stores the fields in spectral space, and performs the
@@ -63,11 +64,49 @@ class SpectralFieldDataRZ
                                     amrex::MultiFab & tempHTransformedSplit,
                                     const bool is_nodal_z);
 
+        /**
+         * \brief Copy spectral data from component \c src_comp to component \c dest_comp
+         *        of \c fields
+         *
+         * \param[in] src_comp  component of the source FabArray from which the data are copied
+         * \param[in] dest_comp component of the destination FabArray where the data are copied
+         */
+        void CopySpectralDataComp (const int src_comp, const int dest_comp)
+        {
+            // The last two arguments represent the number of components and
+            // the number of ghost cells to perform this operation
+            Copy(fields, fields, src_comp, dest_comp, n_rz_azimuthal_modes, 0);
+        }
+
+        /**
+         * \brief Set to zero the data on component \c icomp of \c fields
+         *
+         * \param[in] icomp component of the FabArray where the data are set to zero
+         */
+        void ZeroOutDataComp(const int icomp)
+        {
+            // The last argument represents the number of components to perform this operation
+            fields.setVal(0., icomp, n_rz_azimuthal_modes);
+        }
+
+        /**
+         * \brief Scale the data on component \c icomp of \c fields by a given scale factor
+         *
+         * \param[in] icomp component of the FabArray where the data are scaled
+         * \param[in] scale_factor scale factor to use for scaling
+         */
+        void ScaleDataComp(const int icomp, const amrex::Real scale_factor)
+        {
+            // The last argument represents the number of components to perform this operation
+            fields.mult(scale_factor, icomp, n_rz_azimuthal_modes);
+        }
+
         void InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
                          SpectralKSpaceRZ const & k_space);
 
-        void ApplyFilter (int const field_index);
-        void ApplyFilter (int const field_index1, int const field_index2, int const field_index3);
+        void ApplyFilter (const int lev, int const field_index);
+        void ApplyFilter (const int lev, int const field_index1,
+                          int const field_index2, int const field_index3);
 
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray (amrex::MFIter const & mfi) const {
@@ -80,6 +119,9 @@ class SpectralFieldDataRZ
         int n_rz_azimuthal_modes;
 
     private:
+
+        SpectralFieldIndex m_spectral_index;
+        int m_n_fields;
 
         // tempHTransformed and tmpSpectralField store fields
         // right before/after the z Fourier transform

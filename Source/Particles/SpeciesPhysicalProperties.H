@@ -10,11 +10,11 @@
 
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_REAL.H>
 #include <AMReX_AmrCore.H>
+#include <AMReX_REAL.H>
 
-#include <map>
 #include <limits>
+#include <map>
 
 enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen, carbon, nitrogen, oxygen, copper};
 

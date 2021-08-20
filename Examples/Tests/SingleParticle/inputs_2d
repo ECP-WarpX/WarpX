@@ -4,13 +4,19 @@ amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 8
 geometry.coord_sys   = 0
-geometry.is_periodic = 0 0
 geometry.prob_lo     = -8 -12
 geometry.prob_hi     =  8  12
-warpx.do_pml = 0
+
+# Boundary condition
+boundary.field_lo = pec pec
+boundary.field_hi = pec pec
+
 algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 warpx.cfl = 1.0
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 particles.species_names = electron
 electron.charge = -q_e

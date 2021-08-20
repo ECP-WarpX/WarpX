@@ -13,9 +13,12 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   =  0            # 0: Cartesian
-geometry.is_periodic =  1    1    1  # Is periodic?
 geometry.prob_lo     = -1.  -1.  -1. # physical domain
 geometry.prob_hi     =  1.   1.   1.
+
+# Boundary condition
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -23,11 +26,8 @@ algo.field_gathering = energy-conserving # or momentum-conserving
 warpx.use_filter = 1
 algo.maxwell_solver = yee # or ckc
 
-# Interpolation
-# 1: Linear; 2: Quadratic; 3: Cubic.
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 0.99999
@@ -71,17 +71,34 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP NP EF MF MR
+warpx.reduced_diags_names = EP NP EF PP PF MF MR FR_Max FR_Min FR_Integral
 EP.type = ParticleEnergy
 EP.intervals = 200
 EF.type = FieldEnergy
 EF.intervals = 200
+PP.type = ParticleMomentum
+PP.intervals = 200
+PF.type = FieldMomentum
+PF.intervals = 200
 MF.type = FieldMaximum
 MF.intervals = 200
 MR.type = RhoMaximum
 MR.intervals = 200
 NP.type = ParticleNumber
 NP.intervals = 200
+FR_Max.type = FieldReduction
+FR_Max.intervals = 200
+FR_Max.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = sqrt(Bx**2 + By**2 + Bz**2)
+FR_Max.reduction_type = Maximum
+FR_Min.type = FieldReduction
+FR_Min.intervals = 200
+FR_Min.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = x*Ey*Bz
+FR_Min.reduction_type = Minimum
+FR_Integral.type = FieldReduction
+FR_Integral.intervals = 200
+FR_Integral.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = "if(y > 0 and z < 0,
+                            0.5*((Ex**2 + Ey**2 + Ez**2)*epsilon0+(Bx**2 + By**2 + Bz**2)/mu0), 0)"
+FR_Integral.reduction_type = Integral
 
 # Diagnostics
 diagnostics.diags_names = diag1

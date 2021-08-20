@@ -8,10 +8,15 @@ amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1     0            # Is periodic?
 # physical domain
 geometry.prob_lo     = -128.e-6   -40.e-6
 geometry.prob_hi     =  128.e-6     0.96e-6
+
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = periodic pec
+boundary.field_hi = periodic pec
 
 #################################
 ############ NUMERICS ###########
@@ -23,17 +28,16 @@ algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 algo.particle_pusher = vay
 algo.maxwell_solver = ckc
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.use_filter = 1
 warpx.cfl = 1.
-warpx.do_pml = 0
 # Moving window
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # in units of the speed of light
 warpx.serialize_ics = 1
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ####### BOOST PARAMETERS ########

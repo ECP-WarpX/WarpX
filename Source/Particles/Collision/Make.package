@@ -1,5 +1,6 @@
 CEXE_sources += CollisionHandler.cpp
 CEXE_sources += CollisionBase.cpp
-CEXE_sources += PairWiseCoulombCollision.cpp
+CEXE_sources += BackgroundMCCCollision.cpp
+CEXE_sources += MCCProcess.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles/Collision

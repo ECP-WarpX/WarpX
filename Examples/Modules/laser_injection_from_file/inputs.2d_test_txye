@@ -7,22 +7,27 @@ amr.max_grid_size = 512
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1 1 1     # Is periodic?
 geometry.prob_lo     = -25.e-6  -25.0e-6     # physical domain
 geometry.prob_hi     =  25.e-6   25.e-6
 warpx.verbose = 1
 warpx.serialize_ics = 1
 
 #################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
+
+#################################
 ############ NUMERICS ###########
 #################################
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.cfl = 0.98
 warpx.use_filter = 0
 algo.maxwell_solver = ckc
 algo.load_balance_intervals = -1
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############# LASER #############

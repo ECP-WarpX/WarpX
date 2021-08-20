@@ -44,9 +44,9 @@ def main():
         data["w"] = all_data_end[spec_name,"particle_weighting"].v
 
         if is_photon :
-            data["opt"] =  all_data_end[spec_name,"particle_optical_depth_BW"].v
+            data["opt"] =  all_data_end[spec_name, "particle_opticalDepthBW"].v
         else:
-            data["opt"] = all_data_end[spec_name,"particle_optical_depth_QSR"].v
+            data["opt"] = all_data_end[spec_name, "particle_opticalDepthQSR"].v
 
         particle_data[spec_name] = data
 

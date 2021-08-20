@@ -1,11 +1,17 @@
 #ifndef WARPX_PARTICLEDIAG_H_
 #define WARPX_PARTICLEDIAG_H_
 
-#include "Parser/WarpXParserWrapper.H"
-#include "Utils/WarpXUtil.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "ParticleDiag_fwd.H"
+
+#include "Particles/WarpXParticleContainer_fwd.H"
+
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
 
 #include <memory>
+#include <string>
 
 class ParticleDiag
 {
@@ -21,7 +27,8 @@ public:
     bool m_do_geom_filter    = false;
     amrex::Real m_random_fraction = 1.0;
     int m_uniform_stride = 1;
-    std::unique_ptr<ParserWrapper<7>> m_particle_filter_parser;
+    static constexpr int m_nvars = 7; // t, x, y, z, ux, uy, uz
+    std::unique_ptr<amrex::Parser> m_particle_filter_parser;
     amrex::RealBox m_diag_domain;
 
 private:

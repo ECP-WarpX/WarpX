@@ -1,10 +1,46 @@
 #include "FlushFormatPlotfile.H"
-#include "WarpX.H"
-#include "Utils/Interpolate.H"
-#include "Particles/Filter/FilterFunctors.H"
 
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Particles/Filter/FilterFunctors.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/Interpolate.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
 #include <AMReX_AmrParticles.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParticleIO.H>
+#include <AMReX_Particles.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_VisMF.H>
 #include <AMReX_buildInfo.H>
+
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
+
+#include <algorithm>
+#include <array>
+#include <cstring>
+#include <fstream>
+#include <map>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace amrex;
 
@@ -20,14 +56,14 @@ FlushFormatPlotfile::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, bool plot_raw_fields,
+    const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
     bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
     bool /*isLastBTDFlush*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
 
     Vector<std::string> rfs;
@@ -252,6 +288,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         WriteHeaderParticle(HeaderFile, particle_diags);
 
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
+
+        HeaderFile << warpx.getdo_moving_window() << "\n";
     }
 }
 
@@ -277,6 +315,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
+        Vector<int> real_flags;
 
         real_names.push_back("weight");
 
@@ -288,26 +327,28 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         real_names.push_back("theta");
 #endif
 
-        if(pc->DoFieldIonization()){
-            int_names.push_back("ionization_level");
-            // int_flags specifies, for each integer attribs, whether it is
-            // dumped to plotfiles. So far, ionization_level is the only
-            // integer attribs, and it is automatically dumped to plotfiles
-            // when ionization is on.
-            int_flags.resize(1, 1);
-            tmp.AddIntComp(false);
-        }
+        // add runtime real comps to tmp
+        for (int ic = 0; ic < pc->NumRuntimeRealComps(); ++ic) { tmp.AddRealComp(false); }
 
-#ifdef WARPX_QED
-        if( pc->has_breit_wheeler() ) {
-            real_names.push_back("optical_depth_BW");
-            tmp.AddRealComp(false);
-        }
-        if( pc->has_quantum_sync() ) {
-            real_names.push_back("optical_depth_QSR");
-            tmp.AddRealComp(false);
-        }
-#endif
+        // get the names of the real comps
+        real_names.resize(pc->NumRealComps());
+        auto runtime_rnames = pc->getParticleRuntimeComps();
+        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+
+        // plot any "extra" fields by default
+        real_flags = particle_diags[i].plot_flags;
+        real_flags.resize(pc->NumRealComps(), 1);
+
+        // add runtime int comps to tmp
+        for (int ic = 0; ic < pc->NumRuntimeIntComps(); ++ic) { tmp.AddIntComp(false); }
+
+        // and the names
+        int_names.resize(pc->NumIntComps());
+        auto runtime_inames = pc->getParticleRuntimeiComps();
+        for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
+
+        // plot by default
+        int_flags.resize(pc->NumIntComps(), 1);
 
         pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
@@ -316,7 +357,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
         ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                   getParser(particle_diags[i].m_particle_filter_parser),
+                                   compileParser<ParticleDiag::m_nvars>
+                                       (particle_diags[i].m_particle_filter_parser.get()),
                                    pc->getMass());
         parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
@@ -332,10 +374,10 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         }, true);
 
         // real_names contains a list of all particle attributes.
-        // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
+        // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
         tmp.WritePlotFile(
             dir, particle_diags[i].getSpeciesName(),
-            particle_diags[i].plot_flags, int_flags,
+            real_flags, int_flags,
             real_names, int_names);
 
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);

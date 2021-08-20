@@ -1,0 +1,42 @@
+name: 🐧 HIP
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.head_ref }}-hip
+  cancel-in-progress: true
+
+jobs:
+  build_hip:
+    name: HIP SP
+    runs-on: ubuntu-20.04
+    env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"}
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      shell: bash
+      run: .github/workflows/dependencies/hip.sh
+    - name: build WarpX
+      shell: bash
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        which clang
+        which clang++
+        export CXX=$(which clang++)
+        export CC=$(which clang)
+
+        cmake -S . -B build_sp \
+          -DCMAKE_VERBOSE_MAKEFILE=ON \
+          -DAMReX_AMD_ARCH=gfx900     \
+          -DWarpX_COMPUTE=HIP         \
+          -DWarpX_LIB=ON              \
+          -DWarpX_MPI=ON              \
+          -DWarpX_OPENPMD=ON          \
+          -DWarpX_PRECISION=SINGLE    \
+          -DWarpX_PSATD=ON
+        cmake --build build_sp -j 2
+
+        export WarpX_MPI=OFF
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        python3 -m pip install *.whl

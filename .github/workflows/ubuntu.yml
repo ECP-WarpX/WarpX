@@ -1,11 +1,16 @@
-name: Ubuntu build
+name: 🐧 OpenMP
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-ubuntu
+  cancel-in-progress: true
+
 jobs:
   build_cxxminimal:
-    name: GCC Minimal w/o MPI [Linux]
+    name: GCC Minimal w/o MPI
     runs-on: ubuntu-20.04
+    env: {CXXFLAGS: "-Werror"}
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -13,14 +18,20 @@ jobs:
         .github/workflows/dependencies/gcc.sh
     - name: build WarpX
       run: |
-        cmake -S . -B build            \
+        cmake -S . -B build_3D         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
-        cmake --build build -j 2
+        cmake --build build_3D -j 2
+        cmake -S . -B build_RZ         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_DIMS=RZ              \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_QED=OFF
+        cmake --build build_RZ -j 2
 
   build_pyfull:
-    name: Clang pywarpx [Linux]
+    name: Clang pywarpx
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
@@ -36,217 +47,10 @@ jobs:
         export WarpX_QED_TABLE_GEN=ON
         export CC=$(which clang)
         export CXX=$(which clang++)
+        export CXXFLAGS="-Werror -Wno-error=pass-failed"
         python3 -m pip install -v .
 
     - name: run pywarpx
       run: |
         export OMP_NUM_THREADS=1
         mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
-
-# Ref.:
-#   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
-#   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
-#   https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/
-  build_nvcc:
-    name: NVCC 11.0.2 SP [Linux]
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: install dependencies
-      run: |
-        .github/workflows/dependencies/nvcc11.sh
-        export CEI_SUDO="sudo"
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
-    - name: build WarpX
-      run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
-        which nvcc || echo "nvcc not in PATH!"
-
-        cmake -S . -B build_sp         \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_COMPUTE=CUDA         \
-          -DWarpX_LIB=ON               \
-          -DAMReX_CUDA_ARCH=6.0        \
-          -DWarpX_OPENPMD=ON           \
-          -DWarpX_openpmd_internal=OFF \
-          -DWarpX_PRECISION=SINGLE     \
-          -DWarpX_PSATD=ON             \
-          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
-        cmake --build build_sp -j 2
-
-        python3 -m pip install --upgrade pip setuptools wheel
-        export WarpX_MPI=ON
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
-        python3 -m pip install *.whl
-
-# Ref.: https://github.com/rscohn2/oneapi-ci
-# intel-basekit intel-hpckit are too large in size
-  build_icc:
-    name: oneAPI ICC SP&DP [Linux]
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: install dependencies
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo apt-get -qqq update
-        sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
-        sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-        sudo apt-get update
-        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-        sudo chmod a+x /usr/local/bin/cmake-easyinstall
-        export CEI_SUDO="sudo"
-        CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
-    - name: build WarpX
-      run: |
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        export CXX=$(which icpc)
-        export CC=$(which icc)
-
-        cmake -S . -B build_dp \
-          -DCMAKE_VERBOSE_MAKEFILE=ON \
-          -DWarpX_LIB=ON              \
-          -DWarpX_MPI=OFF             \
-          -DWarpX_OPENPMD=ON          \
-          -DWarpX_openpmd_internal=OFF
-        cmake --build build_dp -j 2
-
-        cmake -S . -B build_sp \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_LIB=ON               \
-          -DWarpX_MPI=OFF              \
-          -DWarpX_OPENPMD=ON           \
-          -DWarpX_openpmd_internal=OFF \
-          -DWarpX_PRECISION=SINGLE
-        cmake --build build_sp -j 2
-
-        python3 -m pip install --upgrade pip setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip install -v .
-
-  build_icpx:
-    name: oneAPI ICX SP [Linux]
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: install dependencies
-      shell: bash
-      run: |
-        .github/workflows/dependencies/dpcpp.sh
-    - name: build WarpX
-      shell: bash
-      run: |
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        export CXX=$(which icpx)
-        export CC=$(which icx)
-
-        cmake -S . -B build_sp         \
-          -DCMAKE_C_COMPILER_ID="Clang"                  \
-          -DCMAKE_C_COMPILER_VERSION=12.0                \
-          -DCMAKE_C_STANDARD_COMPUTED_DEFAULT="11"       \
-          -DCMAKE_CXX_COMPILER_ID="Clang"                \
-          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="14"     \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_LIB=ON               \
-          -DWarpX_MPI=OFF              \
-          -DWarpX_OPENPMD=ON           \
-          -DWarpX_PRECISION=SINGLE
-        cmake --build build_sp -j 2
-
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel -v .
-        python3 -m pip install *.whl
-     # note: setting the CXX compiler ID is a work-around for
-     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
-     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
-
-    - name: run pywarpx
-      run: |
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        export OMP_NUM_THREADS=2
-        Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
-
-  build_dpcc:
-    name: oneAPI DPC++ SP [Linux]
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: install dependencies
-      shell: bash
-      run: |
-        .github/workflows/dependencies/dpcpp.sh
-    - name: build WarpX
-      shell: bash
-      run: |
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        export CXX=$(which dpcpp)
-        export CC=$(which clang)
-
-        cmake -S . -B build_sp         \
-          -DBUILD_SHARED_LIBS=ON       \
-          -DCMAKE_CXX_COMPILER_ID="Clang"                \
-          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_COMPUTE=SYCL         \
-          -DWarpX_LIB=ON               \
-          -DWarpX_MPI=OFF              \
-          -DWarpX_OPENPMD=ON           \
-          -DWarpX_PRECISION=SINGLE
-        cmake --build build_sp -j 2
-
-     # Skip this as it will copy the binary artifacts and we are tight on disk space
-     #   python3 -m pip install --upgrade pip
-     #   python3 -m pip install --upgrade setuptools wheel
-     #   PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
-     #   python3 -m pip install *.whl
-     # note: setting the CXX compiler ID is a work-around for
-     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
-     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
-
-  build_hip:
-    name: HIP SP [Linux]
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: install dependencies
-      shell: bash
-      run: .github/workflows/dependencies/hip.sh
-    - name: build WarpX
-      shell: bash
-      run: |
-        source /etc/profile.d/rocm.sh
-        hipcc --version
-        export CXX=$(which hipcc)
-        export CC=$(which clang)
-
-        cmake -S . -B build_sp \
-          -DCMAKE_VERBOSE_MAKEFILE=ON \
-          -DAMReX_AMD_ARCH=gfx900     \
-          -DWarpX_COMPUTE=HIP         \
-          -DWarpX_LIB=ON              \
-          -DWarpX_MPI=ON              \
-          -DWarpX_OPENPMD=ON          \
-          -DWarpX_PRECISION=SINGLE    \
-          -DWarpX_PSATD=ON
-        cmake --build build_sp -j 2
-
-        export WarpX_MPI=OFF
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
-        python3 -m pip install *.whl

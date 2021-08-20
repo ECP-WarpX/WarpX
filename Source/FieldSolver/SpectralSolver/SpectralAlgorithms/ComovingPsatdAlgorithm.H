@@ -1,7 +1,18 @@
 #ifndef WARPX_COMOVING_PSATD_ALGORITHM_H_
 #define WARPX_COMOVING_PSATD_ALGORITHM_H_
 
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "SpectralBaseAlgorithm.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 #if WARPX_USE_PSATD
 
@@ -17,10 +28,12 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          */
         ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
                                 const amrex::DistributionMapping& dm,
+                                const SpectralFieldIndex& spectral_index,
                                 const int norder_x,
                                 const int norder_y,
                                 const int norder_z,
                                 const bool nodal,
+                                const amrex::IntVect& fill_guards,
                                 const amrex::Array<amrex::Real,3>& v_comoving,
                                 const amrex::Real dt,
                                 const bool update_with_rho);
@@ -29,11 +42,6 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          * \brief Override the update equations in Fourier space
          */
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
-
-        virtual int getRequiredNumberOfFields () const override final
-        {
-            return SpectralFieldIndex::n_fields;
-        }
 
         /* \brief Initialize the coefficients needed in the update equations
          */
@@ -76,6 +84,8 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
         // Real and complex spectral coefficients
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+
+        SpectralFieldIndex m_spectral_index;
 
         // k vectors
         KVectorComponent kx_vec;

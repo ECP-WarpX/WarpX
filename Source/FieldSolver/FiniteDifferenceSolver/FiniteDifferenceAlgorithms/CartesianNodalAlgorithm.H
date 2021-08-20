@@ -10,10 +10,10 @@
 
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_REAL.H>
+#include <AMReX.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
-#include <AMReX.H>
+#include <AMReX_REAL.H>
 
 #include <array>
 #include <cmath>
@@ -53,6 +53,14 @@ struct CartesianNodalAlgorithm {
                                          + 1._rt/(dx[2]*dx[2])
                                      ) ) * PhysConst::c );
         return delta_t;
+    }
+
+    /**
+     * \brief Returns maximum number of guard cells required by the field-solve
+     */
+    static amrex::IntVect GetMaxGuardCell () {
+        // The nodal solver requires one guard cell in each dimension
+        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
     }
 
     /**

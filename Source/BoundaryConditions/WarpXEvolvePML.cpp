@@ -6,18 +6,33 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
+
+#include "BoundaryConditions/PML.H"
+#include "PML_current.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX_PML_kernels.H"
 
-#include "PML_current.H"
-
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
-#include <cmath>
-#include <limits>
+#include <AMReX_BaseFwd.H>
 
+#include <array>
+#include <memory>
 
 using namespace amrex;
 

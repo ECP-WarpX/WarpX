@@ -6,16 +6,33 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXWrappers.h"
+#include "BoundaryConditions/PML.H"
 #include "Initialization/WarpXAMReXInit.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+#include "WarpXWrappers.h"
 #include "WarpX_py.H"
 
 #include <AMReX.H>
-#include <AMReX_BLProfiler.H>
+#include <AMReX_ArrayOfStructs.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_Particles.H>
+#include <AMReX_StructOfArrays.H>
 
+#include <array>
+#include <cstdlib>
 
 namespace
 {
@@ -115,6 +132,14 @@ extern "C"
         return PIdx::nattribs;
     }
 
+    int warpx_nCompsSpecies(const char* char_species_name)
+    {
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+        return myspc.NumRealComps();
+    }
+
     int warpx_SpaceDim()
     {
         return AMREX_SPACEDIM;
@@ -125,12 +150,10 @@ extern "C"
         warpx_amrex_init(argc, argv);
     }
 
-#ifdef BL_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm)
     {
         warpx_amrex_init(argc, argv, true, mpicomm);
     }
-#endif
 
     void amrex_finalize (int /*finalize_mpi*/)
     {
@@ -205,13 +228,16 @@ extern "C"
         warpx.Evolve(numsteps);
     }
 
-    void warpx_addNParticles(int speciesnumber, int lenx,
-                             amrex::ParticleReal const * x, amrex::ParticleReal const * y, amrex::ParticleReal const * z,
-                             amrex::ParticleReal const * vx, amrex::ParticleReal const * vy, amrex::ParticleReal const * vz,
-                             int nattr, amrex::ParticleReal const * attr, int uniqueparticles)
+    void warpx_addNParticles(
+        const char* char_species_name, int lenx, amrex::ParticleReal const * x,
+        amrex::ParticleReal const * y, amrex::ParticleReal const * z,
+        amrex::ParticleReal const * vx, amrex::ParticleReal const * vy,
+        amrex::ParticleReal const * vz, int nattr,
+        amrex::ParticleReal const * attr, int uniqueparticles)
     {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
         const int lev = 0;
         myspc.AddNParticles(lev, lenx, x, y, z, vx, vy, vz, nattr, attr, uniqueparticles);
     }
@@ -219,6 +245,11 @@ extern "C"
     void warpx_ConvertLabParamsToBoost()
     {
       ConvertLabParamsToBoost();
+    }
+
+    void warpx_ReadBCParams()
+    {
+      ReadBCParams();
     }
 
     void warpx_CheckGriddingForRZSpectral()
@@ -245,9 +276,10 @@ extern "C"
         return dx[dir];
     }
 
-    long warpx_getNumParticles(int speciesnumber) {
+    long warpx_getNumParticles(const char* char_species_name) {
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        const auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
         return myspc.TotalNumberOfParticles();
     }
 
@@ -357,10 +389,12 @@ extern "C"
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityCPLoVects_PML, Getj_cp)
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityFPLoVects_PML, Getj_fp)
 
-    amrex::ParticleReal** warpx_getParticleStructs(int speciesnumber, int lev,
-                                      int* num_tiles, int** particles_per_tile) {
+    amrex::ParticleReal** warpx_getParticleStructs(
+            const char* char_species_name, int lev,
+            int* num_tiles, int** particles_per_tile) {
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
         int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
@@ -379,10 +413,15 @@ extern "C"
         return data;
     }
 
-    amrex::ParticleReal** warpx_getParticleArrays(int speciesnumber, int comp, int lev,
-                                     int* num_tiles, int** particles_per_tile) {
+    amrex::ParticleReal** warpx_getParticleArrays (
+            const char* char_species_name, const char* char_comp_name,
+            int lev, int* num_tiles, int** particles_per_tile ) {
+
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+
+        int comp = warpx_getParticleCompIndex(char_species_name, char_comp_name);
 
         int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
@@ -401,22 +440,49 @@ extern "C"
         return data;
     }
 
+    int warpx_getParticleCompIndex (
+         const char* char_species_name, const char* char_comp_name )
+    {
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
+
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+
+        const std::string comp_name(char_comp_name);
+        auto particle_comps = myspc.getParticleComps();
+
+        return particle_comps.at(comp_name);
+    }
+
+    void warpx_addRealComp(const char* char_species_name,
+        const char* char_comp_name, bool comm=true)
+    {
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+
+        const std::string comp_name(char_comp_name);
+        myspc.AddRealComp(comp_name, comm);
+
+        mypc.defineAllParticleTiles();
+    }
+
     void warpx_ComputeDt () {
         WarpX& warpx = WarpX::GetInstance();
         warpx.ComputeDt ();
     }
-    void warpx_MoveWindow () {
+    void warpx_MoveWindow (int step,bool move_j) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.MoveWindow (true);
+        warpx.MoveWindow (step, move_j);
     }
 
     void warpx_EvolveE (amrex::Real dt) {
         WarpX& warpx = WarpX::GetInstance();
         warpx.EvolveE (dt);
     }
-    void warpx_EvolveB (amrex::Real dt) {
+    void warpx_EvolveB (amrex::Real dt, DtType a_dt_type) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.EvolveB (dt);
+        warpx.EvolveB (dt, a_dt_type);
     }
     void warpx_FillBoundaryE () {
         WarpX& warpx = WarpX::GetInstance();
@@ -472,6 +538,14 @@ extern "C"
     int warpx_finestLevel () {
         WarpX& warpx = WarpX::GetInstance();
         return warpx.finestLevel ();
+    }
+
+    int warpx_getMyProc () {
+        return amrex::ParallelDescriptor::MyProc();
+    }
+
+    int warpx_getNProcs () {
+        return amrex::ParallelDescriptor::NProcs();
     }
 
     void mypc_Redistribute () {

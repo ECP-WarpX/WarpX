@@ -1,5 +1,5 @@
 # Maximum number of time steps
-max_step = 220
+max_step = 240
 
 # number of grid points
 amr.n_cell =  480 352
@@ -13,9 +13,11 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                     # 0: Cartesian
-geometry.is_periodic = 0           1         # Is periodic?
 geometry.prob_lo     = -20.e-6    -15.e-6    # physical domain
 geometry.prob_hi     =  20.e-6     15.e-6
+
+boundary.field_lo = pec periodic
+boundary.field_hi = pec periodic
 
 warpx.serialize_ics = 1
 
@@ -24,9 +26,13 @@ warpx.verbose = 1
 
 # Algorithms
 algo.current_deposition = esirkepov
+warpx.use_filter = 0
 
 # CFL
 warpx.cfl = 1.0
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # Laser
 lasers.names        = laser1
@@ -38,19 +44,19 @@ laser1.e_max        = 4.e12                # Maximum amplitude of the laser fiel
 laser1.wavelength   = 1.0e-6               # The wavelength of the laser (in meters)
 laser1.profile_waist = 5.e-6               # The waist of the laser (in meters)
 laser1.profile_duration = 10.e-15          # The duration of the laser (in seconds)
-laser1.profile_t_peak = 20.e-15            # The time at which the laser reaches its peak (in seconds)
+laser1.profile_t_peak = 24.e-15            # The time at which the laser reaches its peak (in seconds)
 laser1.profile_focal_distance = 13.109e-6  # Focal distance from the antenna (in meters)
                                            #     With this focal distance the laser is at focus
                                            #     at the end of the simulation.
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 220
+diag1.intervals = 240
 diag1.diag_type = Full
-
-warpx.do_pml = 0
 
 # Moving window
 warpx.do_moving_window = 1
 warpx.moving_window_dir = x
 warpx.moving_window_v = 1.0 # in units of the speed of light
+warpx.start_moving_window_step = 20
+warpx.end_moving_window_step = 200

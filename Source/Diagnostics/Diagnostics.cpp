@@ -1,20 +1,34 @@
 #include "Diagnostics.H"
-#include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/PartPerCellFunctor.H"
-#include "ComputeDiagFunctors/PartPerGridFunctor.H"
-#include "ComputeDiagFunctors/DivBFunctor.H"
-#include "ComputeDiagFunctors/DivEFunctor.H"
-#include "FlushFormats/FlushFormatPlotfile.H"
-#include "FlushFormats/FlushFormatCheckpoint.H"
+
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormatAscent.H"
-#include "FlushFormats/FlushFormatSensei.H"
+#include "FlushFormats/FlushFormatCheckpoint.H"
 #ifdef WARPX_USE_OPENPMD
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
-#include "WarpX.H"
+#include "FlushFormats/FlushFormatPlotfile.H"
+#include "FlushFormats/FlushFormatSensei.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
 #include <AMReX_Vector.H>
+
+#include <algorithm>
 #include <string>
+
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
@@ -34,18 +48,14 @@ Diagnostics::BaseReadParameters ()
     amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
+    pp_diag_name.query("file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
+    pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
     if (!varnames_specified){
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
-    }
-
-    // If user requests rho with back-transformed diagnostics, we set plot_rho=true
-    // and compute rho at each iteration
-    if (WarpXUtilStr::is_in(m_varnames, "rho") && WarpX::do_back_transformed_diagnostics) {
-        warpx.setplot_rho(true);
     }
 
     // Sanity check if user requests to plot phi
@@ -62,6 +72,13 @@ Diagnostics::BaseReadParameters ()
             "plot F only works if warpx.do_dive_cleaning = 1");
     }
 
+    // G can be written to file only if WarpX::do_divb_cleaning = 1
+    if (WarpXUtilStr::is_in(m_varnames, "G"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
+    }
+
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
     if (amrex::ParallelDescriptor::NProcs() == 1){
@@ -74,14 +91,14 @@ Diagnostics::BaseReadParameters ()
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
 
-    bool lo_specified = pp_diag_name.queryarr("diag_lo", m_lo);
+    bool lo_specified = queryArrWithParser(pp_diag_name, "diag_lo", m_lo, 0, AMREX_SPACEDIM);
 
     if (!lo_specified) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    bool hi_specified = pp_diag_name.queryarr("diag_hi", m_hi);
+    bool hi_specified = queryArrWithParser(pp_diag_name, "diag_hi", m_hi, 0, AMREX_SPACEDIM);
     if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
@@ -186,7 +203,8 @@ Diagnostics::InitData ()
 
     amrex::ParmParse pp_diag_name(m_diag_name);
     amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
-    if ( pp_diag_name.queryarr("diag_lo", dummy_val) || pp_diag_name.queryarr("diag_hi", dummy_val) ) {
+    if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
+         queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
         // set geometry filter for particle-diags to true when the diagnostic domain-extent
         // is specified by the user
         for (int i = 0; i < m_output_species.size(); ++i) {
@@ -244,7 +262,7 @@ Diagnostics::InitBaseData ()
     } else if (m_format == "ascent"){
         m_flush_format = std::make_unique<FlushFormatAscent>();
     } else if (m_format == "sensei"){
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
@@ -311,7 +329,7 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
 
-    MovingWindowAndGalileanDomainShift ();
+    MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();

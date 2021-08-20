@@ -14,15 +14,17 @@ warpx.fine_tag_hi =  2.e-6    -7.e-6
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0 0      # Is periodic?
 geometry.prob_lo     = -30.e-6   -20.e-6      # physical domain
 geometry.prob_hi     =  30.e-6     0.e-6
+
+# Boundary condition
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
 
 # Verbosity
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
-warpx.do_pml = 1
 warpx.do_subcycling = 1
 warpx.refine_plasma = 0
 warpx.n_current_deposition_buffer = 0
@@ -36,10 +38,8 @@ warpx.cfl = .9999
 particles.species_names = driver beam plasma_e plasma_p
 particles.deposit_on_main_grid = plasma_e plasma_p
 
-# interpolation
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+# Order of particle shape factors
+algo.particle_shape = 3
 
 driver.charge = -q_e
 driver.mass = m_e

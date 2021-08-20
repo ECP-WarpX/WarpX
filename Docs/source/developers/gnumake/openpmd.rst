@@ -9,7 +9,7 @@ therefore we recommend to use `spack <https://
 spack.io>`__ in order to facilitate the installation.
 
 More specifically, we recommend that you try installing the
-`openPMD-api library 0.12.0a or newer <https://openpmd-api.readthedocs.io/en/0.12.0-alpha/>`_
+`openPMD-api library 0.14.2 or newer <https://openpmd-api.readthedocs.io/en/0.14.2/>`_
 using spack (first section below). If this fails, a back-up solution
 is to install parallel HDF5 with spack, and then install the openPMD-api
 library from source.
@@ -89,7 +89,7 @@ If optional dependencies are installed in non-system paths, one needs to `hint t
 
    # optional: only if you manually installed HDF5 and/or ADIOS2 in custom directories
    export HDF5_ROOT=$HOME/path_to_installed_software/hdf5-1.12.0/
-   export ADIOS2_ROOT=$HOME/path_to_installed_software/adios2-2.6.0/
+   export ADIOS2_ROOT=$HOME/path_to_installed_software/adios2-2.7.1/
 
 Then, in the ``$HOME/warpx_directory/``, download and build openPMD-api:
 

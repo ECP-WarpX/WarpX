@@ -6,12 +6,25 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
-#include "Utils/WarpX_Complex.H"
+
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <cmath>
-
+#include <cstdlib>
+#include <numeric>
+#include <vector>
 
 using namespace amrex;
 
@@ -98,10 +111,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Time stretching due to STCs and phi2 complex envelope
     // (1 if zeta=0, beta=0, phi2=0)
     const Complex stretch_factor = 1._rt + 4._rt *
-        (m_params.zeta+m_params.beta*m_params.focal_distance)
-        * (m_params.zeta+m_params.beta*m_params.focal_distance)
-        * (inv_tau2*inv_complex_waist_2) + 2._rt *I * (m_params.phi2
-        - m_params.beta*m_params.beta*k0*m_params.focal_distance) * inv_tau2;
+        (m_params.zeta+m_params.beta*m_params.focal_distance*inv_tau2)
+        * (m_params.zeta+m_params.beta*m_params.focal_distance*inv_complex_waist_2)
+        + 2._rt*I*(m_params.phi2-m_params.beta*m_params.beta*k0*m_params.focal_distance)*inv_tau2;
 
     // Amplitude and monochromatic oscillations
     Complex prefactor =

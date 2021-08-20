@@ -5,22 +5,30 @@ amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0
 
+my_constants.xmin = -128.e-6
+my_constants.ymin = -128.e-6
+my_constants.zmin = -40.e-6
+my_constants.xmax = +128.e-6
+my_constants.ymax = +128.e-6
+my_constants.zmax = 0.96e-6
+
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1  1   0            # Is periodic?
-geometry.prob_lo     = -128.e-6 -128.e-6  -40.e-6
-geometry.prob_hi     =  128.e-6  128.e-6   0.96e-6
+geometry.prob_lo     = xmin ymin zmin
+geometry.prob_hi     = xmax ymax zmax
+
+boundary.field_lo = periodic periodic pec
+boundary.field_hi = periodic periodic pec
 
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 algo.particle_pusher = vay
 algo.maxwell_solver = ckc
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.use_filter = 1
 warpx.cfl = 1.
-warpx.do_pml = 0
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
@@ -29,10 +37,6 @@ warpx.serialize_ics = 1
 
 warpx.gamma_boost = 10.
 warpx.boost_direction = z
-warpx.do_back_transformed_diagnostics = 1
-warpx.num_snapshots_lab = 4
-warpx.dz_snapshots_lab = 0.001
-warpx.back_transformed_diag_fields= Ex Ey Ez By rho
 
 particles.species_names = electrons ions beam
 particles.use_fdtd_nci_corr = 1
@@ -100,8 +104,8 @@ laser1.profile_t_peak = 40.e-15    # The time at which the laser reaches its pea
 laser1.profile_focal_distance = 0.5e-3  # Focal distance from the antenna (in meters)
 laser1.wavelength = 0.81e-6         # The wavelength of the laser (in meters)
 
-slice.dom_lo     = -128.e-6  0.0  -40.e-6
-slice.dom_hi     =  128.e-6  0.0  0.96e-6
+slice.dom_lo     = xmin  0.0  zmin
+slice.dom_hi     = xmax  0.0  zmax
 slice.coarsening_ratio = 1 1 1
 slice.plot_int = -1
 slice.num_slice_snapshots_lab = 4
@@ -109,6 +113,28 @@ slice.dt_slice_snapshots_lab = 3.3356409519815207e-12
 slice.particle_slice_width_lab = 2.e-6
 
 # Diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 btd_openpmd btd_pltfile
 diag1.intervals = 10000
 diag1.diag_type = Full
+
+btd_openpmd.diag_type = BackTransformed
+btd_openpmd.do_back_transformed_fields = 1
+btd_openpmd.num_snapshots_lab = 4
+btd_openpmd.dz_snapshots_lab = 0.001
+btd_openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+btd_openpmd.format = openpmd
+btd_openpmd.buffer_size = 32
+
+btd_pltfile.diag_type = BackTransformed
+btd_pltfile.do_back_transformed_fields = 1
+btd_pltfile.num_snapshots_lab = 4
+btd_pltfile.dz_snapshots_lab = 0.001
+btd_pltfile.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+btd_pltfile.format = plotfile
+btd_pltfile.buffer_size = 32
+
+# old BTD diagnostics
+warpx.do_back_transformed_diagnostics = 1
+warpx.num_snapshots_lab = 4
+warpx.dz_snapshots_lab = 0.001
+warpx.back_transformed_diag_fields= Ex Ey Ez By rho

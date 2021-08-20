@@ -7,19 +7,32 @@
 #ifndef WARPX_breit_wheeler_engine_wrapper_h_
 #define WARPX_breit_wheeler_engine_wrapper_h_
 
-#include "QedWrapperCommons.H"
+#include "BreitWheelerEngineWrapper_fwd.H"
+
 #include "QedChiFunctions.H"
+#include "QedWrapperCommons.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_Array.H>
-#include <AMReX_Vector.H>
-#include <AMReX_Gpu.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
 
-#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+#include <picsar_qed/containers/picsar_array.hpp>
+#include <picsar_qed/math/cmath_overloads.hpp>
+#include <picsar_qed/math/math_constants.h>
+#include <picsar_qed/math/vec_functions.hpp>
 #include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_core.hpp>
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+#include <picsar_qed/physics/gamma_functions.hpp>
+#include <picsar_qed/physics/phys_constants.h>
+#include <picsar_qed/physics/unit_conversion.hpp>
 
-#include <string>
+#include <cmath>
 #include <vector>
+
+namespace amrex { struct RandomEngine; }
 
 // Aliases =============================
 using BW_dndt_table_params =
@@ -145,13 +158,19 @@ public:
         const auto u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
         const auto energy = u_norm*m_e*PhysConst::c;
 
+        const auto px = m_e*ux;
+        const auto py = m_e*uy;
+        const auto pz = m_e*uz;
+
         const auto chi_phot = QedUtils::chi_photon(
-            m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
+            px, py, pz, ex, ey, ez, bx, by, bz);
 
         //Optical depth is not evolved for photons having less energy than what is
         //required to generate a pair or a quantum parameter smaller than
         //m_bw_minimum_chi_phot
-        const auto gamma_photon = u_norm/PhysConst::c;
+        const auto gamma_photon = pxr_p::compute_gamma_photon<
+                amrex::ParticleReal, pxr_p::unit_system::SI>(
+                    px, py, pz);
         if (gamma_photon < pxr_m::two<amrex::Real> ||
             chi_phot < m_bw_minimum_chi_phot)
             return 0;

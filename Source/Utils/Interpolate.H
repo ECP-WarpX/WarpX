@@ -1,9 +1,12 @@
 #ifndef WARPX_INTERPOLATE_H_
 #define WARPX_INTERPOLATE_H_
 
-#include "WarpX.H"
+#include <AMReX_REAL.H>
 
-#include<memory>
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 namespace Interpolate
 {

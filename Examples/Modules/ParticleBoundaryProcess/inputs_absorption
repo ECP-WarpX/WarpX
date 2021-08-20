@@ -1,0 +1,46 @@
+amr.n_cell = 64 64 128
+amr.max_grid_size = 128
+amr.max_level = 0
+
+max_step = 60
+
+geometry.coord_sys   = 0
+geometry.prob_lo     = -125.e-6 -125.e-6 -149.e-6
+geometry.prob_hi     =  125.e-6  125.e-6   1.e-6
+warpx.cfl = 0.99
+
+# Domain Boundary condition
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
+
+# Use parser to build EB
+# Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.
+# This sets the region from -12.5e-6 < x < 12.5e-6, -12.5e-6 < y < 12.5e-6, -8.65e-6 < z < -6.15e-6 to be "covered"
+warpx.eb_implicit_function = "-max(max(max(x-12.5e-6,-12.5e-6-x), max(y-12.5e-6,-12.5e-6-y)), max(z-(-6.15e-5),-8.65e-5-z))"
+
+diagnostics.diags_names = diag1
+diag1.intervals = 20
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+#################################
+############ PLASMA #############
+#################################
+particles.species_names = electrons
+
+electrons.species_type = electron
+electrons.injection_style = "NUniformPerCell"
+electrons.num_particles_per_cell_each_dim = 1 1 1
+electrons.xmin = -1.e-5
+electrons.xmax =  1.e-5
+electrons.ymin = -1.e-5
+electrons.ymax =  1.e-5
+electrons.zmin =  -149.e-6
+electrons.zmax =  -129.e-6
+electrons.profile = constant
+electrons.density = 1.e23  # number of electrons per m^3
+electrons.momentum_distribution_type = "constant"
+electrons.uz = 2000. # uth the std of the (unitless) momentum

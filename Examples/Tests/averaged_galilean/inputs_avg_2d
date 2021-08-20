@@ -12,10 +12,14 @@ psatd.v_galilean = 0 0 -0.99498743710662
 psatd.do_time_averaging  = 1
 
 geometry.coord_sys   = 0
-geometry.is_periodic = 1 1
-
 geometry.prob_lo     = -12.3776 -49.5104
 geometry.prob_hi     = 12.3776 49.5104
+
+#################################
+###### Boundary Condition #######
+#################################
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
 
 #################################
 ############ NUMERICS ###########
@@ -27,10 +31,9 @@ algo.current_deposition = direct
 algo.particle_pusher = vay
 
 warpx.cfl = 4.
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

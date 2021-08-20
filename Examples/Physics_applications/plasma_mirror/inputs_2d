@@ -7,18 +7,20 @@ amr.max_grid_size = 128
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0 0     # Is periodic?
 geometry.prob_lo     = -100.e-6   0.     # physical domain
 geometry.prob_hi     =  100.e-6   100.e-6
 warpx.verbose = 1
 warpx.serialize_ics = 1
 
 #################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
+
+#################################
 ############ NUMERICS ###########
 #################################
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 my_constants.zc    = 20.e-6
 my_constants.zp    = 20.05545177444479562e-6
 my_constants.lgrad = .08e-6
@@ -28,6 +30,9 @@ my_constants.zc2   = 24.05545177444479562e-6
 warpx.cfl = 1.0
 warpx.use_filter = 1
 algo.load_balance_intervals = 66
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############
@@ -44,7 +49,7 @@ electrons.uz_th = .01
 electrons.zmin = "zc-lgrad*log(400)"
 electrons.zmax = 25.47931e-6
 electrons.profile = parse_density_function
-electrons.density_function(x,y,z) = "(z<zp)*nc*exp((z-zc)/lgrad)+(z>=zp)*(z<=zp2)*2.*nc+(z>zp2)*nc*exp(-(z-zc2)/lgrad)"
+electrons.density_function(x,y,z) = "if(z<zp, nc*exp((z-zc)/lgrad), if(z<=zp2, 2.*nc, nc*exp(-(z-zc2)/lgrad)))"
 
 ions.charge = q_e
 ions.mass = m_p
@@ -56,7 +61,7 @@ ions.uz_th = 0.
 ions.zmin = 19.520e-6
 ions.zmax = 25.47931e-6
 ions.profile = parse_density_function
-ions.density_function(x,y,z) = "(z<zp)*nc*exp((z-zc)/lgrad)+(z>=zp)*(z<=zp2)*2.*nc+(z>zp2)*nc*exp(-(z-zc2)/lgrad)"
+ions.density_function(x,y,z) = "if(z<zp, nc*exp((z-zc)/lgrad), if(z<=zp2, 2.*nc, nc*exp(-(z-zc2)/lgrad)))"
 
 #################################
 ############# LASER #############

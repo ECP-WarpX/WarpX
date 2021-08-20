@@ -1,7 +1,9 @@
 #include "FlushFormatAscent.H"
+
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_REAL.H>
 
 using namespace amrex;
 
@@ -12,7 +14,7 @@ FlushFormatAscent::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, bool plot_raw_fields,
+    const std::string prefix, int /*file_min_digits*/, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool /*plot_raw_rho*/, bool plot_raw_F,
     bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/) const
 {
@@ -74,11 +76,11 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
 
         // WarpXParticleContainer compile-time extra SoA attributes (Real): PIdx::nattribs
         // not an efficient search, but N is small...
-        for(int i = 0; i < PIdx::nattribs; ++i)
+        for(int j = 0; j < PIdx::nattribs; ++j)
         {
             auto rvn_it = real_comps_map.begin();
             for (; rvn_it != real_comps_map.end(); ++rvn_it)
-                if (rvn_it->second == i)
+                if (rvn_it->second == j)
                     break;
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 rvn_it != real_comps_map.end(),

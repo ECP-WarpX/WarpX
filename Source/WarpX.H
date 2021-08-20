@@ -12,54 +12,53 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
+#include "BoundaryConditions/PML_fwd.H"
+#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
+#include "Diagnostics/MultiDiagnostics_fwd.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
-#include "Particles/MultiParticleContainer.H"
-#include "BoundaryConditions/PML.H"
-#include "Diagnostics/BackTransformedDiagnostic.H"
-#include "Diagnostics/MultiDiagnostics.H"
-#include "Filter/BilinearFilter.H"
-#include "Filter/NCIGodfreyFilter.H"
-#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/IntervalsParser.H"
-#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
-
-#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
 #   else
-#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
-
+#include "Filter/BilinearFilter.H"
+#include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Parallelization/GuardCellManager.H"
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
-#ifdef WARPX_USE_OPENPMD
-#   include "Diagnostics/WarpXOpenPMD.H"
-#endif
-
-#include "Parser/WarpXParserWrapper.H"
-
+#include <AMReX.H>
 #include <AMReX_AmrCore.H>
-#include <AMReX_BLProfiler.H>
-#include <AMReX_Print.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_RealVect.H>
-#include <AMReX_iMultiFab.H>
-#include <AMReX_VisMF.H>
-#include <AMReX_LayoutData.H>
-#include <AMReX_Interpolater.H>
-#include <AMReX_FillPatchUtil.H>
-
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
+#ifdef AMREX_USE_EB
+#   include "AMReX_EBFabFactory.H"
 #endif
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_Vector.H>
+#include <AMReX_VisMF.H>
 
-#include <iostream>
-#include <memory>
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
 #include <array>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 enum struct PatchType : int
 {
@@ -94,7 +93,7 @@ public:
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
-                         bool useparser = false, HostDeviceParser<3> const& field_parser={});
+                         bool useparser = false, amrex::ParserExecutor<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -118,14 +117,14 @@ public:
     static std::string str_Ey_ext_grid_function;
     static std::string str_Ez_ext_grid_function;
 
-    // ParserWrapper for B_external on the grid
-    std::unique_ptr<ParserWrapper<3> > Bxfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Byfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Bzfield_parser;
-    // ParserWrapper for E_external on the grid
-    std::unique_ptr<ParserWrapper<3> > Exfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Eyfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Ezfield_parser;
+    // Parser for B_external on the grid
+    std::unique_ptr<amrex::Parser> Bxfield_parser;
+    std::unique_ptr<amrex::Parser> Byfield_parser;
+    std::unique_ptr<amrex::Parser> Bzfield_parser;
+    // Parser for E_external on the grid
+    std::unique_ptr<amrex::Parser> Exfield_parser;
+    std::unique_ptr<amrex::Parser> Eyfield_parser;
+    std::unique_ptr<amrex::Parser> Ezfield_parser;
 
     // Algorithms
     static long current_deposition_algo;
@@ -138,8 +137,8 @@ public:
     static int macroscopic_solver_algo;
     static amrex::Vector<int> field_boundary_lo;
     static amrex::Vector<int> field_boundary_hi;
-    static amrex::Vector<int> particle_boundary_lo;
-    static amrex::Vector<int> particle_boundary_hi;
+    static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
+    static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
 
     // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
@@ -153,13 +152,17 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
-    // div(E) cleaning
+    // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
+    static amrex::IntVect fill_guards;
+
+    // div(E) and div(B) cleaning
     static bool do_dive_cleaning;
+    static bool do_divb_cleaning;
 
     // Interpolation order
-    static long nox;
-    static long noy;
-    static long noz;
+    static int nox;
+    static int noy;
+    static int noz;
 
     // Order of finite-order centering of fields (staggered to nodal)
     static int field_centering_nox;
@@ -181,7 +184,6 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool use_damp_fields_in_z_guard;
     static bool serialize_ics;
 
     // Back transformation diagnostic
@@ -206,6 +208,9 @@ public:
     static amrex::IntVect sort_bin_size;
 
     static int do_subcycling;
+    static int do_multi_J;
+    static int do_multi_J_n_depositions;
+    static int J_linear_in_time;
 
     static bool do_device_synchronize_before_profile;
     static bool safe_guard_cells;
@@ -242,6 +247,7 @@ public:
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
+    amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
@@ -249,6 +255,7 @@ public:
     amrex::MultiFab * get_pointer_current_cp  (int lev, int direction) const { return current_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
     amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
+    amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
 
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
@@ -265,6 +272,7 @@ public:
     const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
     const amrex::MultiFab& getphi_fp (int lev) {return *phi_fp[lev];}
     const amrex::MultiFab& getF_fp (int lev) {return *F_fp[lev];}
+    const amrex::MultiFab& getG_fp (int lev) {return *G_fp[lev];}
 
     const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
     const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
@@ -322,9 +330,20 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
+    /**
+     * \brief
+     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Calls computeMaxStepBoostAccelerator() if required.
+     */
+    void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
-    int  MoveWindow (bool move_j);
+
+    /** \brief Move the moving window
+     * \param step Time step
+     * \param move_j whether the current is shifted or not
+     */
+    int  MoveWindow (const int step, bool move_j);
 
     /**
      * \brief
@@ -336,14 +355,16 @@ public:
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
-    void EvolveB (         amrex::Real dt);
-    void EvolveB (int lev, amrex::Real dt);
+    void EvolveB (         amrex::Real dt, DtType dt_type);
+    void EvolveB (int lev, amrex::Real dt, DtType dt_type);
     void EvolveF (         amrex::Real dt, DtType dt_type);
     void EvolveF (int lev, amrex::Real dt, DtType dt_type);
-    void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
+    void EvolveG (         amrex::Real dt, DtType dt_type);
+    void EvolveG (int lev, amrex::Real dt, DtType dt_type);
+    void EvolveB (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
-    void ApplySilverMuellerBoundary (amrex::Real dt);
+    void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -385,7 +406,7 @@ public:
      * Applies a damping factor in the guards cells that extend
      * beyond the extent of the domain, reducing fluctuations that
      * can appear in parallel simulations. This will be called
-     * when use_damp_fields_in_z_guard is true.
+     * when FieldBoundaryType is set to damped.
      */
     void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
@@ -400,6 +421,9 @@ public:
                                                   int lev);
 #endif
 
+    void ApplyEfieldBoundary (const int lev, PatchType patch_type);
+    void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
+
     void DampPML ();
     void DampPML (int lev);
     void DampPML (int lev, PatchType patch_type);
@@ -409,6 +433,7 @@ public:
     void DampJPML (int lev, PatchType patch_type);
 
     void CopyJPML ();
+    bool isAnyBoundaryPML();
 
     /**
      * \brief Synchronize the nodal points of the PML MultiFabs
@@ -469,6 +494,7 @@ public:
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
     void FillBoundaryF   (amrex::IntVect ng);
+    void FillBoundaryG   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
     void FillBoundaryE   (int lev, amrex::IntVect ng);
     void FillBoundaryB   (int lev, amrex::IntVect ng);
@@ -476,6 +502,7 @@ public:
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
     void FillBoundaryF   (int lev, amrex::IntVect ng);
+    void FillBoundaryG   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     void SyncCurrent ();
@@ -493,10 +520,10 @@ public:
     void sett_new (int lev, amrex::Real time) {t_new[lev] = time;}
     amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
+    int getdo_moving_window() const {return do_moving_window;}
     amrex::Real getmoving_window_x() const {return moving_window_x;}
     amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
-    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;}
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
@@ -530,8 +557,21 @@ public:
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
     static int self_fields_max_iters;
+    static int self_fields_verbosity;
 
-    static int do_moving_window;
+    static int do_moving_window; // boolean
+    static int start_moving_window_step; // the first step to move window
+    static int end_moving_window_step; // the last step to move window
+    /** Returns true if the moving window is active for the provided step
+     *
+     * @param step time step
+     * @return true if active, else false
+     */
+    static int moving_window_active (int const step) {
+        bool const step_before_end = (step < end_moving_window_step) || (end_moving_window_step < 0);
+        bool const step_after_start = (step >= start_moving_window_step);
+        return do_moving_window && step_before_end && step_after_start;
+    }
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
@@ -575,17 +615,28 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
-                     const int max_iters=200) const;
+                     const int max_iters=200,
+                     const int verbosity=2) const;
     void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
-                       int const max_iters) const;
+                       int const max_iters,
+                       int const verbosity) const;
     void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
-                       int const max_iters) const;
+                       int const max_iters,
+                       int const verbosity) const;
+
+    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi
+                   ) const;
+    void getPhiBC (const int idim, amrex::Real &pot_lo,
+                   amrex::Real &pot_hi) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
@@ -613,8 +664,9 @@ public:
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-         HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
-         HostDeviceParser<3> const& zfield_parser, const int lev);
+         amrex::ParserExecutor<3> const& xfield_parser,
+         amrex::ParserExecutor<3> const& yfield_parser,
+         amrex::ParserExecutor<3> const& zfield_parser, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -707,6 +759,7 @@ private:
     void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
@@ -743,6 +796,11 @@ private:
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
+
+    /**
+     * \brief Perform one PIC iteration, with the multiple J deposition per time step
+     */
+    void OneStep_multiJ (const amrex::Real t);
 
     void RestrictCurrentFromFineToCoarsePatch (int lev);
     void AddCurrentFromFineLevelandSumBoundary (int lev);
@@ -859,7 +917,7 @@ private:
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
-                        const bool aux_is_nodal);
+                        const amrex::IntVect& ngG, const bool aux_is_nodal);
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
     void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
@@ -901,6 +959,7 @@ private:
 
     // Fine patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
@@ -908,6 +967,14 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
+
+    //EB grid info
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+
+    //EB level set
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
+
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
@@ -916,6 +983,7 @@ private:
 
     // Coarse patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_cp;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_cp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
@@ -934,7 +1002,7 @@ private:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
     // PML
-    int do_pml = 1;
+    int do_pml = 0;
     int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
@@ -943,8 +1011,8 @@ private:
     int do_pml_in_domain = 0;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
+    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
+    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
@@ -955,7 +1023,6 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    int n_buffer = 4;
     amrex::Real const_dt = amrex::Real(0.5e-11);
 
     // Macroscopic properties
@@ -1014,8 +1081,6 @@ private:
 
     std::string restart_chkfile;
 
-    bool plot_rho = false;
-
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
@@ -1038,6 +1103,7 @@ private:
     amrex::RealBox slice_realbox;
     amrex::IntVect slice_cr_ratio;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_slice;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_slice;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
@@ -1069,10 +1135,97 @@ private:
 
     void InitEB ();
 
+    void ComputeEdgeLengths ();
+    void ComputeFaceAreas ();
+    void ScaleEdges ();
+    void ScaleAreas ();
+    void ComputeDistanceToEB ();
+
+    void ScrapeParticles ();
+
 private:
-    // void EvolvePSATD (int numsteps);
-    void PushPSATD (amrex::Real dt);
-    void PushPSATD (int lev, amrex::Real dt);
+
+    void PushPSATD ();
+
+#ifdef WARPX_USE_PSATD
+
+    /**
+     * \brief Forward FFT of E,B on all mesh refinement levels
+     */
+    void PSATDForwardTransformEB ();
+
+    /**
+     * \brief Backward FFT of E,B on all mesh refinement levels,
+     *        with field damping in the guard cells (if needed)
+     */
+    void PSATDBackwardTransformEB ();
+
+    /**
+     * \brief Backward FFT of averaged E,B on all mesh refinement levels
+     */
+    void PSATDBackwardTransformEBavg ();
+
+    /**
+     * \brief Forward FFT of J on all mesh refinement levels,
+     *        with k-space filtering (if needed)
+     */
+    void PSATDForwardTransformJ ();
+
+    /**
+     * \brief Forward FFT of rho on all mesh refinement levels,
+     *        with k-space filtering (if needed)
+     *
+     * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
+     */
+    void PSATDForwardTransformRho (const int icomp);
+
+    /**
+     * \brief Copy rho_new to rho_old in spectral space
+     */
+    void PSATDMoveRhoNewToRhoOld ();
+
+    /**
+     * \brief Copy J_new to J_old in spectral space (when J is linear in time)
+     */
+    void PSATDMoveJNewToJOld ();
+
+    /**
+     * \brief Forward FFT of F on all mesh refinement levels
+     */
+    void PSATDForwardTransformF ();
+
+    /**
+     * \brief Backward FFT of F on all mesh refinement levels
+     */
+    void PSATDBackwardTransformF ();
+
+    /**
+     * \brief Forward FFT of G on all mesh refinement levels
+     */
+    void PSATDForwardTransformG ();
+
+    /**
+     * \brief Backward FFT of G on all mesh refinement levels
+     */
+    void PSATDBackwardTransformG ();
+
+    /**
+     * \brief Update all necessary fields in spectral space
+     */
+    void PSATDPushSpectralFields ();
+
+    /**
+     * \brief Scale averaged E,B fields to account for time integration
+     *
+     * \param[in] scale_factor scalar to multiply each field component by
+     */
+    void PSATDScaleAverageFields (const amrex::Real scale_factor);
+
+    /**
+     * \brief Set averaged E,B fields to zero before new iteration
+     */
+    void PSATDEraseAverageFields ();
+#endif
 
     int fftw_plan_measure = 1; // used with PSATD
 

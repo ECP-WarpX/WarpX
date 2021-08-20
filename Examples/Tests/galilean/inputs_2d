@@ -10,9 +10,14 @@ amr.max_level = 0
 psatd.v_galilean = 0. 0. -0.99498743710662
 
 geometry.coord_sys   = 0
-geometry.is_periodic = 1 1
 geometry.prob_lo     = -38.68 -38.68
 geometry.prob_hi     = 38.68 38.68
+
+#################################
+####### Boundary Condition ######
+#################################
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
 
 #################################
 ############ NUMERICS ###########
@@ -24,10 +29,9 @@ algo.maxwell_solver = psatd
 algo.particle_pusher = vay
 
 warpx.cfl = 1.
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

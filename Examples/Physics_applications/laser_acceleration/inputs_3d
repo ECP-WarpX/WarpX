@@ -6,7 +6,6 @@ amr.n_cell =  64  64  512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1     1     0      # Is periodic?
 geometry.prob_lo     = -30.e-6   -30.e-6   -56.e-6    # physical domain
 geometry.prob_hi     =  30.e-6    30.e-6    12.e-6
 amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
@@ -14,19 +13,24 @@ amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not s
 # warpx.fine_tag_hi =  5.e-6    5.e-6   -30.e-6
 
 #################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = periodic periodic pec
+boundary.field_hi = periodic periodic pec
+
+#################################
 ############ NUMERICS ###########
 #################################
-interpolation.nox = 3 # Particle interpolation order. Must be the same in x, y, and z
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
-warpx.do_pml = 0 # use Perfectly Matched Layer as boundary condition
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z # Only z is supported for the moment
 warpx.moving_window_v = 1.0 # units of speed of light
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############

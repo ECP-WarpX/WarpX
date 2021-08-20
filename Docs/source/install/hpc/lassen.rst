@@ -33,9 +33,9 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake/3.18.0
+   module load cmake/3.20.2
    module load gcc/8.3.1
-   module load cuda/11.0.2
+   module load cuda/11.2.0
 
    # optional: for PSATD support
    module load fftw/3.3.8

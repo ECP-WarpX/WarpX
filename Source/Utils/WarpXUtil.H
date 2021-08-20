@@ -8,17 +8,21 @@
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
 
-#include "Parser/WarpXParser.H"
-
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
-#include <AMReX_ParmParse.H>
 #include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
 
+#include <AMReX_BaseFwd.H>
+
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
+void ParseGeometryInput();
 
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);
@@ -160,39 +164,77 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
 }
 
 /**
-* \brief Initialize a WarpXParser object from a string containing a math expression
+* \brief Do a safe cast of a real to an int
+* This ensures that the float value is within the range of ints and if not,
+* raises an exception.
+*
+* \param x Real value to cast
+* \param real_name String, the name of the variable being casted to use in the error message
+*/
+int
+safeCastToInt(amrex::Real x, const std::string& real_name);
+
+/**
+* \brief Initialize an amrex::Parser object from a string containing a math expression
 *
 * \param parse_function String to read to initialize the parser.
+* \param varnames A list of predefined independent variables
 */
-WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames);
+amrex::Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames);
+
+template <int N>
+amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
+{
+    if (parser) {
+        return parser->compile<N>();
+    } else {
+        return amrex::ParserExecutor<N>{};
+    }
+}
 
 /**
  * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
  *
  * amrex::ParmParse::query reads a name and a value from the input file. This function does the
- * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
  * a math expression (including user-defined constants).
- * Only works for amrex::Real numbers, one would need another version for integers etc.
+ * Works for amrex::Real numbers and integers.
  *
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
- * \param[out] val where the value queried and parsed is stored
+ * \param[out] val where the value queried and parsed is stored, either a scalar or vector
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays)
+ * \param[in] num_val number of input values to use (optional with arrays)
  */
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                        const int start_ix, const int num_val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                        const int start_ix, const int num_val);
 
 /**
  * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
  * amrex::ParmParse::get reads a name and a value from the input file. This function does the
- * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * same, and applies the Parser to the value, so the user has the choice to specify a value or
  * a math expression (including user-defined constants).
- * Only works for amrex::Real numbers, one would need another version for integers etc.
+ * Works for amrex::Real numbers and integers.
  *
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays)
+ * \param[in] num_val number of input values to use (optional with arrays)
  */
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                       const int start_ix, const int num_val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                       const int start_ix, const int num_val);
 
 namespace WarpXUtilMsg{
 

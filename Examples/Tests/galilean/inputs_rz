@@ -10,9 +10,10 @@ amr.max_level = 0
 psatd.v_galilean = 0. 0. -0.99498743710662
 
 geometry.coord_sys   = 1
-geometry.is_periodic = 0 1
 geometry.prob_lo     =  0.  -38.68
 geometry.prob_hi     = 38.68 38.68
+boundary.field_lo = none periodic
+boundary.field_hi = none periodic
 
 #################################
 ############ NUMERICS ###########
@@ -24,10 +25,9 @@ algo.maxwell_solver = psatd
 algo.particle_pusher = vay
 
 warpx.cfl = 1.
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
 
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############
@@ -36,7 +36,6 @@ particles.species_names = electrons ions
 
 warpx.do_nodal = 1
 warpx.use_filter = 1
-warpx.do_pml = 0
 
 psatd.nox = 16
 psatd.noy = 16

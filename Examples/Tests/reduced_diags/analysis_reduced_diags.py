@@ -8,23 +8,15 @@
 
 # This script tests the reduced diagnostics.
 # The setup is a uniform plasma with electrons, protons and photons.
-# Particle energy, field energy, maximum field, maximum rho and
-# particle number values will be outputed using the reduced diagnostics.
-# And they will be compared with the data in the plotfiles.
-
-# Tolerance: 1.0e-8 for particle energy, 1.0e-3 for field energy,
-# 1.0e-9 for the maximum electric field and 1.0e-18 for the
-# maximum magnetic field.
-# The difference of the field energy is relatively large,
-# because fields data in plotfiles are cell-centered,
-# but fields data in reduced diagnostics are staggered.
-
-# Possible running time: ~ 2 s
+# Various particle and field quantities are written to file using the reduced diagnostics
+# and compared with the corresponding quantities computed from the data in the plotfiles.
 
 import sys
 import yt
 import numpy as np
-import scipy.constants as scc
+from scipy.constants import c, m_e, m_p
+from scipy.constants import mu_0 as mu0
+from scipy.constants import epsilon_0 as eps0
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -33,39 +25,121 @@ fn = sys.argv[1]
 ds = yt.load(fn)
 ad = ds.all_data()
 
-# PART1: get results from plotfiles
+#--------------------------------------------------------------------------------------------------
+# Part 1: get results from plotfiles (label '_yt')
+#--------------------------------------------------------------------------------------------------
 
-EPyt = 0.0
-# electron
-px = ad['electrons','particle_momentum_x'].to_ndarray()
-py = ad['electrons','particle_momentum_y'].to_ndarray()
-pz = ad['electrons','particle_momentum_z'].to_ndarray()
-w  = ad['electrons','particle_weight'].to_ndarray()
-EPyt = EPyt + np.sum( (np.sqrt((px**2+py**2+pz**2)*scc.c**2+scc.m_e**2*scc.c**4)-scc.m_e*scc.c**2)*w )
-num_electron = w.shape[0]
-sum_weight_electron = np.sum(w)
+# Quantities computed from plotfiles
+values_yt = dict()
 
-# proton
-px = ad['protons','particle_momentum_x'].to_ndarray()
-py = ad['protons','particle_momentum_y'].to_ndarray()
-pz = ad['protons','particle_momentum_z'].to_ndarray()
-w  = ad['protons','particle_weight'].to_ndarray()
-EPyt = EPyt + np.sum( (np.sqrt((px**2+py**2+pz**2)*scc.c**2+scc.m_p**2*scc.c**4)-scc.m_p*scc.c**2)*w )
-num_proton = w.shape[0]
-sum_weight_proton = np.sum(w)
+# Electrons
+px = ad['electrons', 'particle_momentum_x'].to_ndarray()
+py = ad['electrons', 'particle_momentum_y'].to_ndarray()
+pz = ad['electrons', 'particle_momentum_z'].to_ndarray()
+w  = ad['electrons', 'particle_weight'].to_ndarray()
+p2 = px**2 + py**2 + pz**2
 
-# photon
-px = ad['photons','particle_momentum_x'].to_ndarray()
-py = ad['photons','particle_momentum_y'].to_ndarray()
-pz = ad['photons','particle_momentum_z'].to_ndarray()
-w  = ad['photons','particle_weight'].to_ndarray()
-EPyt = EPyt + np.sum( (np.sqrt(px**2+py**2+pz**2)*scc.c)*w )
-num_photon = w.shape[0]
-sum_weight_photon = np.sum(w)
+# Accumulate particle energy, store number of particles and sum of weights
+values_yt['electrons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_e**2 * c**4) - m_e * c**2) * w)
+values_yt['electrons: particle momentum in x'] = np.sum(px * w)
+values_yt['electrons: particle momentum in y'] = np.sum(py * w)
+values_yt['electrons: particle momentum in z'] = np.sum(pz * w)
+values_yt['electrons: number of particles'] = w.shape[0]
+values_yt['electrons: sum of weights'] = np.sum(w)
 
-num_total = num_electron + num_proton + num_photon
-sum_weight_total = sum_weight_electron + sum_weight_proton + sum_weight_photon
+# Protons
+px = ad['protons', 'particle_momentum_x'].to_ndarray()
+py = ad['protons', 'particle_momentum_y'].to_ndarray()
+pz = ad['protons', 'particle_momentum_z'].to_ndarray()
+w  = ad['protons', 'particle_weight'].to_ndarray()
+p2 = px**2 + py**2 + pz**2
 
+# Accumulate particle energy, store number of particles and sum of weights
+values_yt['protons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_p**2 * c**4) - m_p * c**2) * w)
+values_yt['protons: particle momentum in x'] = np.sum(px * w)
+values_yt['protons: particle momentum in y'] = np.sum(py * w)
+values_yt['protons: particle momentum in z'] = np.sum(pz * w)
+values_yt['protons: number of particles'] = w.shape[0]
+values_yt['protons: sum of weights'] = np.sum(w)
+
+# Photons
+px = ad['photons', 'particle_momentum_x'].to_ndarray()
+py = ad['photons', 'particle_momentum_y'].to_ndarray()
+pz = ad['photons', 'particle_momentum_z'].to_ndarray()
+w  = ad['photons', 'particle_weight'].to_ndarray()
+p2 = px**2 + py**2 + pz**2
+
+# Accumulate particle energy, store number of particles and sum of weights
+values_yt['photons: particle energy'] = np.sum(np.sqrt(p2 * c**2) * w)
+values_yt['photons: particle momentum in x'] = np.sum(px * w)
+values_yt['photons: particle momentum in y'] = np.sum(py * w)
+values_yt['photons: particle momentum in z'] = np.sum(pz * w)
+values_yt['photons: number of particles'] = w.shape[0]
+values_yt['photons: sum of weights'] = np.sum(w)
+
+# Accumulate total particle diagnostics
+
+values_yt['particle energy'] = values_yt['electrons: particle energy'] \
+                               + values_yt['protons: particle energy'] \
+                               + values_yt['photons: particle energy']
+
+values_yt['particle momentum in x'] = values_yt['electrons: particle momentum in x'] \
+                                      + values_yt['protons: particle momentum in x'] \
+                                      + values_yt['photons: particle momentum in x']
+
+values_yt['particle momentum in y'] = values_yt['electrons: particle momentum in y'] \
+                                      + values_yt['protons: particle momentum in y'] \
+                                      + values_yt['photons: particle momentum in y']
+
+values_yt['particle momentum in z'] = values_yt['electrons: particle momentum in z'] \
+                                      + values_yt['protons: particle momentum in z'] \
+                                      + values_yt['photons: particle momentum in z']
+
+values_yt['number of particles'] = values_yt['electrons: number of particles'] \
+                                   + values_yt['protons: number of particles'] \
+                                   + values_yt['photons: number of particles']
+
+values_yt['sum of weights'] = values_yt['electrons: sum of weights'] \
+                              + values_yt['protons: sum of weights'] \
+                              + values_yt['photons: sum of weights']
+
+values_yt['mean particle energy'] = values_yt['particle energy'] / values_yt['sum of weights']
+
+values_yt['mean particle momentum in x'] = values_yt['particle momentum in x'] / values_yt['sum of weights']
+values_yt['mean particle momentum in y'] = values_yt['particle momentum in y'] / values_yt['sum of weights']
+values_yt['mean particle momentum in z'] = values_yt['particle momentum in z'] / values_yt['sum of weights']
+
+values_yt['electrons: mean particle energy'] = values_yt['electrons: particle energy'] \
+                                             / values_yt['electrons: sum of weights']
+
+values_yt['electrons: mean particle momentum in x'] = values_yt['electrons: particle momentum in x'] \
+                                                    / values_yt['electrons: sum of weights']
+values_yt['electrons: mean particle momentum in y'] = values_yt['electrons: particle momentum in y'] \
+                                                    / values_yt['electrons: sum of weights']
+values_yt['electrons: mean particle momentum in z'] = values_yt['electrons: particle momentum in z'] \
+                                                    / values_yt['electrons: sum of weights']
+
+values_yt['protons: mean particle energy'] = values_yt['protons: particle energy'] \
+                                           / values_yt['protons: sum of weights']
+
+values_yt['protons: mean particle momentum in x'] = values_yt['protons: particle momentum in x'] \
+                                                  / values_yt['protons: sum of weights']
+values_yt['protons: mean particle momentum in y'] = values_yt['protons: particle momentum in y'] \
+                                                  / values_yt['protons: sum of weights']
+values_yt['protons: mean particle momentum in z'] = values_yt['protons: particle momentum in z'] \
+                                                  / values_yt['protons: sum of weights']
+
+values_yt['photons: mean particle energy'] = values_yt['photons: particle energy'] \
+                                           / values_yt['photons: sum of weights']
+
+values_yt['photons: mean particle momentum in x'] = values_yt['photons: particle momentum in x'] \
+                                                  / values_yt['photons: sum of weights']
+values_yt['photons: mean particle momentum in y'] = values_yt['photons: particle momentum in y'] \
+                                                  / values_yt['photons: sum of weights']
+values_yt['photons: mean particle momentum in z'] = values_yt['photons: particle momentum in z'] \
+                                                  / values_yt['photons: sum of weights']
+
+# Load 3D data from plotfiles
 ad = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Ex = ad['Ex'].to_ndarray()
 Ey = ad['Ey'].to_ndarray()
@@ -76,90 +150,141 @@ Bz = ad['Bz'].to_ndarray()
 rho = ad['rho'].to_ndarray()
 rho_electrons = ad['rho_electrons'].to_ndarray()
 rho_protons = ad['rho_protons'].to_ndarray()
-Es = np.sum(Ex**2)+np.sum(Ey**2)+np.sum(Ez**2)
-Bs = np.sum(Bx**2)+np.sum(By**2)+np.sum(Bz**2)
-N  = np.array( ds.domain_width / ds.domain_dimensions )
-dV = N[0]*N[1]*N[2]
-EFyt = 0.5*Es*scc.epsilon_0*dV + 0.5*Bs/scc.mu_0*dV
-max_Ex = np.amax(np.abs(Ex))
-max_Ey = np.amax(np.abs(Ey))
-max_Ez = np.amax(np.abs(Ez))
-max_Bx = np.amax(np.abs(Bx))
-max_By = np.amax(np.abs(By))
-max_Bz = np.amax(np.abs(Bz))
-max_E = np.sqrt(np.amax(Ex**2+Ey**2+Ez**2))
-max_B = np.sqrt(np.amax(Bx**2+By**2+Bz**2))
-max_rho = np.amax(rho)
-min_rho = np.amin(rho)
-max_rho_electrons = np.amax(np.abs(rho_electrons))
-max_rho_protons = np.amax(np.abs(rho_protons))
+x = ad['x'].to_ndarray()
+y = ad['y'].to_ndarray()
+z = ad['z'].to_ndarray()
 
-# PART2: get results from reduced diagnostics
+# Field energy
+E2 = np.sum(Ex**2) + np.sum(Ey**2) + np.sum(Ez**2)
+B2 = np.sum(Bx**2) + np.sum(By**2) + np.sum(Bz**2)
+N  = np.array(ds.domain_width / ds.domain_dimensions)
+dV = N[0] * N[1] * N[2]
+values_yt['field energy'] = 0.5 * dV * (E2 * eps0 + B2 / mu0)
+values_yt['field momentum in x'] = eps0 * np.sum(Ey * Bz - Ez * By) * dV
+values_yt['field momentum in y'] = eps0 * np.sum(Ez * Bx - Ex * Bz) * dV
+values_yt['field momentum in z'] = eps0 * np.sum(Ex * By - Ey * Bx) * dV
 
-EFdata = np.genfromtxt("./diags/reducedfiles/EF.txt")
-EPdata = np.genfromtxt("./diags/reducedfiles/EP.txt")
-MFdata = np.genfromtxt("./diags/reducedfiles/MF.txt")
-MRdata = np.genfromtxt("./diags/reducedfiles/MR.txt")
-NPdata = np.genfromtxt("./diags/reducedfiles/NP.txt")
-EF = EFdata[1][2]
-EP = EPdata[1][2]
-max_Exdata = MFdata[1][2]
-max_Eydata = MFdata[1][3]
-max_Ezdata = MFdata[1][4]
-max_Edata  = MFdata[1][5]
-max_Bxdata = MFdata[1][6]
-max_Bydata = MFdata[1][7]
-max_Bzdata = MFdata[1][8]
-max_Bdata  = MFdata[1][9]
-max_rho_data = MRdata[1][2]
-min_rho_data = MRdata[1][3]
-max_rho_electrons_data = MRdata[1][4]
-max_rho_protons_data = MRdata[1][5]
-num_total_data = NPdata[1][2]
-num_electron_data = NPdata[1][3]
-num_proton_data = NPdata[1][4]
-num_photon_data = NPdata[1][5]
-sum_weight_total_data = NPdata[1][6]
-sum_weight_electron_data = NPdata[1][7]
-sum_weight_proton_data = NPdata[1][8]
-sum_weight_photon_data = NPdata[1][9]
+# Field energy in quarter of simulation domain
+E2 = np.sum((Ex**2 + Ey**2 + Ez**2)*(y > 0)*(z < 0))
+B2 = np.sum((Bx**2 + By**2 + Bz**2)*(y > 0)*(z < 0))
+values_yt['field energy in quarter of simulation domain'] = 0.5 * dV * (E2 * eps0 + B2 / mu0)
 
-# PART3: print and assert
+# Max/min values of various grid quantities
+values_yt['maximum of |Ex|'] = np.amax(np.abs(Ex))
+values_yt['maximum of |Ey|'] = np.amax(np.abs(Ey))
+values_yt['maximum of |Ez|'] = np.amax(np.abs(Ez))
+values_yt['maximum of |Bx|'] = np.amax(np.abs(Bx))
+values_yt['maximum of |By|'] = np.amax(np.abs(By))
+values_yt['maximum of |Bz|'] = np.amax(np.abs(Bz))
+values_yt['maximum of |E|'] = np.amax(np.sqrt(Ex**2 + Ey**2 + Ez**2))
+values_yt['maximum of |B|'] = np.amax(np.sqrt(Bx**2 + By**2 + Bz**2))
+values_yt['maximum of rho'] = np.amax(rho)
+values_yt['minimum of rho'] = np.amin(rho)
+values_yt['electrons: maximum of |rho|'] = np.amax(np.abs(rho_electrons))
+values_yt['protons: maximum of |rho|'] = np.amax(np.abs(rho_protons))
+values_yt['maximum of |B| from generic field reduction'] = np.amax(np.sqrt(Bx**2 + By**2 + Bz**2))
+values_yt['minimum of x*Ey*Bz'] = np.amin(x*Ey*Bz)
 
-max_diffEmax = max(abs(max_Exdata-max_Ex),abs(max_Eydata-max_Ey),
-                   abs(max_Ezdata-max_Ez),abs(max_Edata-max_E))
-max_diffBmax = max(abs(max_Bxdata-max_Bx),abs(max_Bydata-max_By),
-                   abs(max_Bzdata-max_Bz),abs(max_Bdata-max_B))
-max_diffrhomax = max(abs(max_rho_data-max_rho),abs(min_rho_data-min_rho),
-                     abs(max_rho_electrons_data-max_rho_electrons),
-                     abs(max_rho_protons_data-max_rho_protons))
-max_diff_number = max(abs(num_total_data-num_total),abs(num_electron_data-num_electron),
-                      abs(num_proton_data-num_proton),abs(num_photon_data-num_photon))
-max_diff_sum_weight = max(abs(sum_weight_total_data-sum_weight_total),
-                          abs(sum_weight_electron_data-sum_weight_electron),
-                          abs(sum_weight_proton_data-sum_weight_proton),
-                          abs(sum_weight_photon_data-sum_weight_photon))
+#--------------------------------------------------------------------------------------------------
+# Part 2: get results from reduced diagnostics (label '_rd')
+#--------------------------------------------------------------------------------------------------
 
-print('difference of field energy:', abs(EFyt-EF))
-print('tolerance of field energy:', 1.0e-3)
-print('difference of particle energy:', abs(EPyt-EP))
-print('tolerance of particle energy:', 1.0e-8)
-print('maximum difference of maximum electric field:', max_diffEmax)
-print('tolerance of maximum electric field difference:', 1.0e-9)
-print('maximum difference of maximum magnetic field:', max_diffBmax)
-print('tolerance of maximum magnetic field difference:', 1.0e-18)
-print('maximum difference of maximum charge density:', max_diffrhomax)
-print('tolerance of maximum charge density difference:', 1.0e-18)
-print('maximum difference of particle weight sum:', max_diff_sum_weight)
-print('tolerance of particle weight sum:', 0.5)
+# Quantities computed from reduced diagnostics
+values_rd = dict()
 
-assert(abs(EFyt-EF) < 1.0e-3)
-assert(abs(EPyt-EP) < 1.0e-8)
-assert(max_diffEmax < 1.0e-9)
-assert(max_diffBmax < 1.0e-18)
-assert(max_diffrhomax < 1.0e-18)
-assert(max_diff_number < 0.5)
-assert(max_diff_sum_weight < 0.5)
+# Load data from output files
+EFdata = np.genfromtxt('./diags/reducedfiles/EF.txt')  # Field energy
+EPdata = np.genfromtxt('./diags/reducedfiles/EP.txt')  # Particle energy
+PFdata = np.genfromtxt('./diags/reducedfiles/PF.txt')  # Field momentum
+PPdata = np.genfromtxt('./diags/reducedfiles/PP.txt')  # Particle momentum
+MFdata = np.genfromtxt('./diags/reducedfiles/MF.txt')  # Field maximum
+MRdata = np.genfromtxt('./diags/reducedfiles/MR.txt')  # Rho maximum
+NPdata = np.genfromtxt('./diags/reducedfiles/NP.txt')  # Particle number
+FR_Maxdata = np.genfromtxt('./diags/reducedfiles/FR_Max.txt')  # Field Reduction using maximum
+FR_Mindata = np.genfromtxt('./diags/reducedfiles/FR_Min.txt')  # Field Reduction using minimum
+FR_Integraldata = np.genfromtxt('./diags/reducedfiles/FR_Integral.txt')  # Field Reduction using integral
+
+# First index "1" points to the values written at the last time step
+values_rd['field energy'] = EFdata[1][2]
+values_rd['field energy in quarter of simulation domain'] = FR_Integraldata[1][2]
+values_rd['particle energy'] = EPdata[1][2]
+values_rd['electrons: particle energy'] = EPdata[1][3]
+values_rd['protons: particle energy'] = EPdata[1][4]
+values_rd['photons: particle energy'] = EPdata[1][5]
+values_rd['mean particle energy'] = EPdata[1][6]
+values_rd['electrons: mean particle energy'] = EPdata[1][7]
+values_rd['protons: mean particle energy'] = EPdata[1][8]
+values_rd['photons: mean particle energy'] = EPdata[1][9]
+values_rd['field momentum in x'] = PFdata[1][2]
+values_rd['field momentum in y'] = PFdata[1][3]
+values_rd['field momentum in z'] = PFdata[1][4]
+values_rd['particle momentum in x'] = PPdata[1][2]
+values_rd['particle momentum in y'] = PPdata[1][3]
+values_rd['particle momentum in z'] = PPdata[1][4]
+values_rd['electrons: particle momentum in x'] = PPdata[1][5]
+values_rd['electrons: particle momentum in y'] = PPdata[1][6]
+values_rd['electrons: particle momentum in z'] = PPdata[1][7]
+values_rd['protons: particle momentum in x'] = PPdata[1][8]
+values_rd['protons: particle momentum in y'] = PPdata[1][9]
+values_rd['protons: particle momentum in z'] = PPdata[1][10]
+values_rd['photons: particle momentum in x'] = PPdata[1][11]
+values_rd['photons: particle momentum in y'] = PPdata[1][12]
+values_rd['photons: particle momentum in z'] = PPdata[1][13]
+values_rd['mean particle momentum in x'] = PPdata[1][14]
+values_rd['mean particle momentum in y'] = PPdata[1][15]
+values_rd['mean particle momentum in z'] = PPdata[1][16]
+values_rd['electrons: mean particle momentum in x'] = PPdata[1][17]
+values_rd['electrons: mean particle momentum in y'] = PPdata[1][18]
+values_rd['electrons: mean particle momentum in z'] = PPdata[1][19]
+values_rd['protons: mean particle momentum in x'] = PPdata[1][20]
+values_rd['protons: mean particle momentum in y'] = PPdata[1][21]
+values_rd['protons: mean particle momentum in z'] = PPdata[1][22]
+values_rd['photons: mean particle momentum in x'] = PPdata[1][23]
+values_rd['photons: mean particle momentum in y'] = PPdata[1][24]
+values_rd['photons: mean particle momentum in z'] = PPdata[1][25]
+values_rd['maximum of |Ex|'] = MFdata[1][2]
+values_rd['maximum of |Ey|'] = MFdata[1][3]
+values_rd['maximum of |Ez|'] = MFdata[1][4]
+values_rd['maximum of |E|'] = MFdata[1][5]
+values_rd['maximum of |Bx|'] = MFdata[1][6]
+values_rd['maximum of |By|'] = MFdata[1][7]
+values_rd['maximum of |Bz|'] = MFdata[1][8]
+values_rd['maximum of |B|'] = MFdata[1][9]
+values_rd['maximum of rho'] = MRdata[1][2]
+values_rd['minimum of rho'] = MRdata[1][3]
+values_rd['electrons: maximum of |rho|'] = MRdata[1][4]
+values_rd['protons: maximum of |rho|'] = MRdata[1][5]
+values_rd['number of particles'] = NPdata[1][2]
+values_rd['electrons: number of particles'] = NPdata[1][3]
+values_rd['protons: number of particles'] = NPdata[1][4]
+values_rd['photons: number of particles'] = NPdata[1][5]
+values_rd['sum of weights'] = NPdata[1][6]
+values_rd['electrons: sum of weights'] = NPdata[1][7]
+values_rd['protons: sum of weights'] = NPdata[1][8]
+values_rd['photons: sum of weights'] = NPdata[1][9]
+values_rd['maximum of |B| from generic field reduction'] = FR_Maxdata[1][2]
+values_rd['minimum of x*Ey*Bz'] = FR_Mindata[1][2]
+
+#--------------------------------------------------------------------------------------------------
+# Part 3: compare values from plotfiles and reduced diagnostics and print output
+#--------------------------------------------------------------------------------------------------
+
+error = dict()
+tolerance = 1e-12
+field_energy_tolerance = 0.3
+
+# The comparison of field energies requires a large tolerance,
+# because the field energy from the plotfiles is computed from cell-centered data,
+# while the field energy from the reduced diagnostics is computed from (Yee) staggered data.
+for k in values_yt.keys():
+    print()
+    print('values_yt[' + k + '] = ', values_yt[k])
+    print('values_rd[' + k + '] = ', values_rd[k])
+    error[k] = abs(values_yt[k] - values_rd[k]) / abs(values_yt[k])
+    print('relative error = ', error[k])
+    tol = field_energy_tolerance if (k == 'field energy') else tolerance
+    assert(error[k] < tol)
+print()
 
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)

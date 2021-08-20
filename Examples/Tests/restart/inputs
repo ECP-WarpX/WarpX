@@ -8,9 +8,14 @@ amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1 1 0     # Is periodic?
 geometry.prob_lo     = -0.00015 -0.00015 -0.00012
 geometry.prob_hi     = 0.00015 0.00015 1.e-06
+
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = periodic periodic pml
+boundary.field_hi = periodic periodic pml
 
 #################################
 ############ NUMERICS ###########
@@ -19,17 +24,15 @@ algo.maxwell_solver = ckc
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
-warpx.do_pml = 1
 warpx.cfl = .99
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1. # in units of the speed of light
 my_constants.lramp = 8.e-3
-my_constants.pi    = 3.141592653589793
 my_constants.dens  = 1e+23
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ######### BOOSTED FRAME #########

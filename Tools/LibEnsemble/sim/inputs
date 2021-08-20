@@ -32,9 +32,7 @@ algo.field_gathering = momentum-conserving
 algo.particle_pusher = vay
 algo.maxwell_solver = ckc
 algo.load_balance_intervals = -1
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+algo.particle_shape = 3
 warpx.use_filter = 1
 warpx.filter_npass_each_dir = 1 4
 warpx.cfl = .9999
@@ -173,7 +171,6 @@ my_constants.wlen = 0.002
 my_constants.mcce = 510999.
 my_constants.gab = 30.0
 my_constants.vb = 299625860.344456
-my_constants.c = 299792458.
 my_constants.adjust_factor = 1.
 
 particles.E_ext_particle_init_style = parse_E_ext_particle_function
@@ -183,7 +180,7 @@ particles.Ez_external_particle_function(x,y,z,t) = "0."
 
 particles.B_ext_particle_init_style = parse_B_ext_particle_function
 particles.Bx_external_particle_function(x,y,z,t) = "0."
-particles.By_external_particle_function(x,y,z,t) = "( - adjust_factor * vb * gab * 2 * mcce * ga * x / (wlen * dlen * c * c) ) * ((gab*(z+vb*t))>=zlen) * ((gab*(z+vb*t))<=(zlen+wlen))"
+particles.By_external_particle_function(x,y,z,t) = "( - adjust_factor * vb * gab * 2 * mcce * ga * x / (wlen * dlen * clight * clight) ) * ((gab*(z+vb*t))>=zlen) * ((gab*(z+vb*t))<=(zlen+wlen))"
 particles.Bz_external_particle_function(x,y,z,t) = "0."
 
 warpx.num_mirrors=2

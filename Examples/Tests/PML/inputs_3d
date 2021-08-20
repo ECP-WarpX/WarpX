@@ -6,13 +6,15 @@ amr.max_level = 0
 
 # Domain and boundary conditions
 geometry.coord_sys = 0
-geometry.is_periodic = 0 0 0
 geometry.prob_lo = -1.5e-05 -1.5e-05 -1.5e-05
 geometry.prob_hi =  1.5e-05  1.5e-05  1.5e-05
 
+# Boundary condition
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
 # Numerical parameters
 warpx.cfl = 1.0
-warpx.do_pml = 1
 warpx.do_nodal = 0
 warpx.do_dive_cleaning = 0
 warpx.do_pml_dive_cleaning = 1
@@ -20,10 +22,8 @@ warpx.do_pml_divb_cleaning = 1
 warpx.use_filter = 1
 warpx.verbose = 1
 
-# Particle shape factors
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # PSATD algorithm
 algo.maxwell_solver = psatd

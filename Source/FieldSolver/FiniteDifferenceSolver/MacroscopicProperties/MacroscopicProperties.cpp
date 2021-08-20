@@ -1,8 +1,22 @@
 #include "MacroscopicProperties.H"
-#include "WarpX.H"
-#include "Utils/WarpXUtil.H"
 
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
+#include <AMReX_RealBox.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
 
@@ -38,7 +52,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         Store_parserString(pp_macroscopic, "sigma_function(x,y,z)", m_str_sigma_function);
-        m_sigma_parser = std::make_unique<ParserWrapper<3>>(
+        m_sigma_parser = std::make_unique<Parser>(
                                  makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
@@ -58,7 +72,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         Store_parserString(pp_macroscopic, "epsilon_function(x,y,z)", m_str_epsilon_function);
-        m_epsilon_parser = std::make_unique<ParserWrapper<3>>(
+        m_epsilon_parser = std::make_unique<Parser>(
                                  makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
@@ -79,7 +93,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         Store_parserString(pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
-        m_mu_parser = std::make_unique<ParserWrapper<3>>(
+        m_mu_parser = std::make_unique<Parser>(
                                  makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
@@ -95,7 +109,7 @@ MacroscopicProperties::InitData ()
     int lev = 0;
     BoxArray ba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
-    int ng = 3;
+    const amrex::IntVect ng = warpx.getngE();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
@@ -110,7 +124,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_sigma_s == "parse_sigma_function") {
 
-        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), getParser(m_sigma_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(), lev);
     }
     // Initialize epsilon
     if (m_epsilon_s == "constant") {
@@ -119,7 +133,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_epsilon_s == "parse_epsilon_function") {
 
-        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), getParser(m_epsilon_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), lev);
 
     }
     // Initialize mu
@@ -129,7 +143,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_mu_s == "parse_mu_function") {
 
-        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), getParser(m_mu_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser->compile<3>(), lev);
 
     }
 
@@ -165,18 +179,17 @@ MacroscopicProperties::InitData ()
 
 void
 MacroscopicProperties::InitializeMacroMultiFabUsingParser (
-                       MultiFab *macro_mf, HostDeviceParser<3> const& macro_parser,
+                       MultiFab *macro_mf, ParserExecutor<3> const& macro_parser,
                        int lev)
 {
     auto& warpx = WarpX::GetInstance();
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     IntVect iv = macro_mf->ixType().toIntVect();
-    IntVect grown_iv = iv ;
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 
-        const Box& tb = mfi.growntilebox(grown_iv);
+        const Box& tb = mfi.tilebox(iv, macro_mf->nGrowVect());
         auto const& macro_fab =  macro_mf->array(mfi);
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {

@@ -87,6 +87,7 @@ class CMakeBuild(build_ext):
             ## variants
             '-DWarpX_COMPUTE=' + WarpX_COMPUTE,
             '-DWarpX_MPI:BOOL=' + WarpX_MPI,
+            '-DWarpX_EB:BOOL=' + WarpX_EB,
             '-DWarpX_OPENPMD:BOOL=' + WarpX_OPENPMD,
             '-DWarpX_PRECISION=' + WarpX_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WarpX_PSATD,
@@ -177,6 +178,7 @@ PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
 #   note: changed default for SHARED, MPI, TESTING and EXAMPLES
 WarpX_COMPUTE = os.environ.get('WarpX_COMPUTE', 'OMP')
 WarpX_MPI = os.environ.get('WarpX_MPI', 'OFF')
+WarpX_EB = os.environ.get('WarpX_EB', 'OFF')
 WarpX_OPENPMD = os.environ.get('WarpX_OPENPMD', 'OFF')
 WarpX_PRECISION = os.environ.get('WarpX_PRECISION', 'DOUBLE')
 WarpX_PSATD = os.environ.get('WarpX_PSATD', 'OFF')
@@ -207,6 +209,13 @@ if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
 else:
     WarpX_MPI = "OFF"
 
+# Include embedded boundary functionality
+if WarpX_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
+    WarpX_EB = "ON"
+else:
+    WarpX_EB = "OFF"
+
+
 # for CMake
 cxx_modules = []     # values: warpx_2d, warpx_3d, warpx_rz
 cmdclass = {}        # build extensions
@@ -233,7 +242,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.04',
+    version = '21.08',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
@@ -268,7 +277,7 @@ setup(
     #    ]
     #},
     extras_require={
-        'all': ['openPMD-api~=0.13.0', 'openPMD-viewer~=1.1', 'yt~=3.6', 'matplotlib'],
+        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt~=3.6,>=4.0.1', 'matplotlib'],
     },
     # cmdclass={'test': PyTest},
     # platforms='any',

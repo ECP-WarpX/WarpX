@@ -10,17 +10,19 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0 0 0      # Is periodic?
 geometry.prob_lo     = -20.e-6   -20.e-6   -20.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6    20.e-6
+
+# Boundaries
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
+boundary.particle_lo = absorbing absorbing absorbing
+boundary.particle_hi = absorbing absorbing absorbing
 
 # Verbosity
 warpx.verbose = 1
 
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
-warpx.do_pml = 1
+algo.particle_shape = 3
 
 # CFL
 warpx.cfl = 1.0

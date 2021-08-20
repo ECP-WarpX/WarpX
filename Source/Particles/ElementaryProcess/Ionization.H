@@ -8,11 +8,24 @@
 #ifndef IONIZATION_H_
 #define IONIZATION_H_
 
-#include "Utils/WarpXConst.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Gather/FieldGather.H"
+#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <cmath>
 
 struct IonizationFilterFunc
 {
@@ -111,7 +124,7 @@ struct IonizationFilterFunc
                                );
 
             // Compute probability of ionization p
-            amrex::Real w_dtau = 1._rt/ ga * m_adk_prefactor[ion_lev] *
+            amrex::Real w_dtau = (E == 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
                 std::pow(E, m_adk_power[ion_lev]) *
                 std::exp( m_adk_exp_prefactor[ion_lev]/E );
             amrex::Real p = 1._rt - std::exp( - w_dtau );
