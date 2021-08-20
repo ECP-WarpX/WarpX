@@ -74,8 +74,13 @@ libname = "libwarpx.{0}.{1}".format(geometry_dim, mod_ext)
 
 try:
     libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), libname))
-except OSError:
-    raise Exception('"%s" was not installed. It can be installed by running "make" in the Python directory of WarpX' % libname)
+except OSError as e:
+    value = e.args[0]
+    if f'{libname}: cannot open shared object file: No such file or directory' in value:
+        raise Exception('"%s" was not installed. It can be installed by running "make" in the Python directory of WarpX' % libname) from e
+    else:
+        print("Failed to load the libwarpx shared object library")
+        raise
 
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
