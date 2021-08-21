@@ -856,6 +856,7 @@ WarpX::ReadParameters ()
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
 
+        std::vector<std::string> sort_intervals_string_vec = {"-1"};
         if (!species_names.empty() || !lasers_names.empty()) {
             int particle_shape;
             if (queryWithParser(pp_algo, "particle_shape", particle_shape) == false)
@@ -886,14 +887,12 @@ WarpX::ReadParameters ()
 
             // default sort interval for particles if species or lasers vector is not empty
 #ifdef AMREX_USE_GPU
-            std::vector<std::string>sort_intervals_string_vec = {"4"};
+            sort_intervals_string_vec = {"4"};
 #else
-            std::vector<std::string> sort_intervals_string_vec = {"-1"};
+            sort_intervals_string_vec = {"-1"};
 #endif
-        } else {
-            // default sort interval for particles is -1 if species/laser vector is empty
-            std::vector<std::string>sort_intervals_string_vec = {"-1"};
         }
+
         amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
         sort_intervals = IntervalsParser(sort_intervals_string_vec);
