@@ -96,7 +96,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
 
-    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_buffers; }
+    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
@@ -533,7 +533,6 @@ public:
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
-
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
