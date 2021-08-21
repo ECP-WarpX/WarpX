@@ -883,8 +883,8 @@ WarpX::ReadParameters ()
                                " some numerical artifact will be present at the interface between coarse and fine patch."
                                "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
             }
-            
-            // default sort interval for particles if species or lasers vector is not empty 
+
+            // default sort interval for particles if species or lasers vector is not empty
 #ifdef AMREX_USE_GPU
             std::vector<std::string>sort_intervals_string_vec = {"4"};
 #else
