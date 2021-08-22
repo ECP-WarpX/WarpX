@@ -84,13 +84,13 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
 
-        # For the scraper
-        self.scrape_xmin = kw.pop('warpx_scrape_lo_x', None)
-        self.scrape_xmax = kw.pop('warpx_scrape_hi_x', None)
-        self.scrape_ymin = kw.pop('warpx_scrape_lo_y', None)
-        self.scrape_ymax = kw.pop('warpx_scrape_hi_y', None)
-        self.scrape_zmin = kw.pop('warpx_scrape_lo_z', None)
-        self.scrape_zmax = kw.pop('warpx_scrape_hi_z', None)
+        # For the scraper buffer
+        self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
+        self.save_particles_at_xhi = kw.pop('warpx_save_particles_at_xhi', None)
+        self.save_particles_at_ylo = kw.pop('warpx_save_particles_at_ylo', None)
+        self.save_particles_at_yhi = kw.pop('warpx_save_particles_at_yhi', None)
+        self.save_particles_at_zlo = kw.pop('warpx_save_particles_at_zlo', None)
+        self.save_particles_at_zhi = kw.pop('warpx_save_particles_at_zhi', None)
 
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
@@ -115,12 +115,12 @@ class Species(picmistandard.PICMI_Species):
                                              self_fields_required_precision = self.self_fields_required_precision,
                                              self_fields_max_iters = self.self_fields_max_iters,
                                              self_fields_verbosity = self.self_fields_verbosity,
-                                             scrape_xlo = self.scrape_xmin,
-                                             scrape_xhi = self.scrape_xmax,
-                                             scrape_ylo = self.scrape_ymin,
-                                             scrape_yhi = self.scrape_ymax,
-                                             scrape_zlo = self.scrape_zmin,
-                                             scrape_zhi = self.scrape_zmax
+                                             save_particles_at_xlo = self.save_particles_at_xlo,
+                                             save_particles_at_xhi = self.save_particles_at_xhi,
+                                             save_particles_at_ylo = self.save_particles_at_ylo,
+                                             save_particles_at_yhi = self.save_particles_at_yhi,
+                                             save_particles_at_zlo = self.save_particles_at_zlo,
+                                             save_particles_at_zhi = self.save_particles_at_zhi
                                             )
         pywarpx.Particles.particles_list.append(self.species)
 

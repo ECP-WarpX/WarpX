@@ -236,9 +236,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
 int ParticleBoundaryBuffer::getNumParticlesInContainer(
         const std::string species_name, int boundary) {
-    if (m_do_boundary_buffer[boundary].size() == 0) {
-        return 0;
-    }
 
     auto& buffer = m_particle_containers[boundary];
     auto index = getSpeciesIndexFromName(species_name);
@@ -249,13 +246,13 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
 
 ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>&
 ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary].size() != 0,
-                                     "Attempted to get particle buffer for boundary "
-                                     + boundary + ", which is not used!");
 
     auto& buffer = m_particle_containers[boundary];
     auto index = getSpeciesIndexFromName(species_name);
 
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
+                                     "Attempted to get particle buffer for boundary "
+                                     + boundary + ", which is not used!");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(),
                                      "Tried to get a buffer that is not defined!");
 
