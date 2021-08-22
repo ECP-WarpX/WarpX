@@ -91,6 +91,7 @@ class Species(picmistandard.PICMI_Species):
         self.save_particles_at_yhi = kw.pop('warpx_save_particles_at_yhi', None)
         self.save_particles_at_zlo = kw.pop('warpx_save_particles_at_zlo', None)
         self.save_particles_at_zhi = kw.pop('warpx_save_particles_at_zhi', None)
+        self.save_particles_at_eb = kw.pop('warpx_save_particles_at_eb', None)
 
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
@@ -120,7 +121,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_ylo = self.save_particles_at_ylo,
                                              save_particles_at_yhi = self.save_particles_at_yhi,
                                              save_particles_at_zlo = self.save_particles_at_zlo,
-                                             save_particles_at_zhi = self.save_particles_at_zhi
+                                             save_particles_at_zhi = self.save_particles_at_zhi,
+                                             save_particles_at_eb = self.save_particles_at_eb
                                             )
         pywarpx.Particles.particles_list.append(self.species)
 
