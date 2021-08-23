@@ -489,7 +489,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                                         const bool isBTD)
+                  const bool isBTD, const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
@@ -568,7 +568,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           }, true);
       } else if (isBTD) {
           PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-          using PinnedData = PinnedMemoryParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pinned_pc);
       }
 
@@ -583,7 +582,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
          int_flags,
          real_names, int_names,
          pc->getCharge(), pc->getMass(),
-         isBTD
+         isBTD, totalParticlesFlushedAlready[i]
       );
     }
 
@@ -601,11 +600,12 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const amrex::Vector<std::string>& real_comp_names,
                     const amrex::Vector<std::string>&  int_comp_names,
                     amrex::ParticleReal const charge,
-                    amrex::ParticleReal const mass,
-                    const bool isBTD) const
+                    amrex::ParticleReal const mass, const bool isBTD,
+                    int ParticleFlushOffset)
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
+  // should this be WarpXParticleContainer for BTD?
   WarpXParticleCounter counter(pc);
   openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
 
@@ -648,18 +648,25 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       }
   }() );
 
+  amrex::Print() << " in dump to file for part, before setting up pos\n";
   //
   // define positions & offsets
   //
-  SetupPos(currSpecies, counter.GetTotalNumParticles(), charge, mass);
-  SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, counter.GetTotalNumParticles());
-
+  const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
+  SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
+  SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
+  m_ParticleSetUp = 1;
+  amrex::Print() << " in dump to file for part, pos and prop are set and before calling flush\n";
   // open files from all processors, in case some will not contribute below
   m_Series->flush();
-
+  amrex::Print() << " called flush \n";
   for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
     {
+      amrex::Print() << " currentLevel : " << currentLevel << "\n";
       uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
+      // For BTD, the offset include the number of particles already flushed
+      if (isBTD) offset += ParticleFlushOffset;
+      amrex::Print() << " offset " << offset << "\n";
 
       for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
          auto const numParticleOnTile = pti.numParticles();
@@ -751,11 +758,12 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<std::string>& real_comp_names,
                       const amrex::Vector<int>& write_int_comp,
                       const amrex::Vector<std::string>& int_comp_names,
-                      unsigned long long np) const
+                      unsigned long long np, bool isBTD = false) const
 {
-    auto dtype_real = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
-    auto dtype_int  = openPMD::Dataset(openPMD::determineDatatype<int>(), {np});
-
+    std::string options = "{}";
+    if (isBTD) options = "{\"resizeable\": true}";
+    auto dtype_real = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
+    auto dtype_int  = openPMD::Dataset(openPMD::determineDatatype<int>(), {np}, options);
     //
     // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
     // so using the min to be safe.
@@ -777,7 +785,9 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             getComponentRecord(int_comp_names[i]).resetDataset(dtype_int);
         }
     }
-
+    
+    // attributes need to be set only the first time BTD flush is called for a snapshot
+    if (isBTD and m_ParticleSetUp!=-1) return;
     std::set< std::string > addedRecords; // add meta-data per record only once
     for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
         auto ii = m_NumAoSRealAttributes + idx; // jump over AoS names
@@ -903,25 +913,33 @@ WarpXOpenPMDPlot::SetupPos (
     openPMD::ParticleSpecies& currSpecies,
     const unsigned long long& np,
     amrex::ParticleReal const charge,
-    amrex::ParticleReal const mass) const
+    amrex::ParticleReal const mass,
+    bool isBTD)
 {
-  auto const realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
-  auto const idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np});
+  std::string options = "{}";
+  if (isBTD) options = "{\"resizeable\": true}";
+  auto realType= openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
+  auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
 
   auto const positionComponents = detail::getParticlePositionComponentLabels();
   for( auto const& comp : positionComponents ) {
       currSpecies["positionOffset"][comp].resetDataset( realType );
-      currSpecies["positionOffset"][comp].makeConstant( 0. );
       currSpecies["position"][comp].resetDataset( realType );
   }
 
   auto const scalar = openPMD::RecordComponent::SCALAR;
   currSpecies["id"][scalar].resetDataset( idType );
   currSpecies["charge"][scalar].resetDataset( realType );
-  currSpecies["charge"][scalar].makeConstant( charge );
   currSpecies["mass"][scalar].resetDataset( realType );
-  currSpecies["mass"][scalar].makeConstant( mass );
 
+  if (isBTD and m_ParticleSetUp != -1) return;
+  // make constant
+  for( auto const& comp : positionComponents ) {
+      currSpecies["positionOffset"][comp].makeConstant( 0. );
+  }
+  currSpecies["charge"][scalar].makeConstant( charge );
+  currSpecies["mass"][scalar].makeConstant( mass );
+  
   // meta data
   currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
   currSpecies["positionOffset"].setUnitDimension( detail::getUnitDimension("positionOffset") );

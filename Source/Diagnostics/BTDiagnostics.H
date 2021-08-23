@@ -321,5 +321,10 @@ private:
                                    std::string newsnapshot_FabFilename);
 
     void InitializeParticleFunctors () override;
+
+    void UpdateTotalParticlesFlushed(int i_buffer);
+    void ResetTotalParticlesInBuffer(int i_buffer);
+    void ClearParticleBuffer(int i_buffer);
+    
 };
 #endif // WARPX_BTDIAGNOSTICS_H_

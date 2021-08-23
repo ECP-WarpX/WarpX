@@ -28,7 +28,7 @@ public:
                                           current_z_boost, t_lab);
                                       }
 
-    virtual void operator () (ParticleContainer& pc_dst, int i_buffer = 0) const = 0;
+    virtual void operator () (ParticleContainer& pc_dst, int &totalParticlesInBuffer, int i_buffer = 0) const = 0;
     virtual void InitData() {}
 };
 

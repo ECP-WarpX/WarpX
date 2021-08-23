@@ -178,7 +178,7 @@ struct LorentzTransformParticles
 };
 
 void
-BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buffer) const
+BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &totalParticleCounter, int i_buffer) const
 {
     if (m_perform_backtransform[i_buffer] == 0) return;
     amrex::Print() << " in BTD functor operator " << i_buffer << "\n";
@@ -189,7 +189,8 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     amrex::Print() << " nlevs : " << nlevs << "\n";
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
-
+    int total_particles_added = 0;
+    amrex::Print() << " totalNumParticles in pcdst before operator : " << pc_dst.TotalNumberOfParticles() << "\n";
     for (int lev = 0; lev < nlevs; ++lev) {
         amrex::Real t_boost = warpx.gett_new(0);
         amrex::Real dt = warpx.getdt(0);
@@ -252,11 +253,14 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int i_buff
                    if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, ptile_src, i,
                                                                  old_size + IndexLocation[i]);
                 });
-
+                total_particles_added += count; 
             }
         }        
         amrex::Gpu::synchronize();        
     }
+    amrex::Print() << " total_particles_added " << total_particles_added << "\n";
+    totalParticleCounter = pc_dst.TotalNumberOfParticles(); 
+    amrex::Print() << " totalNumParticles in pcdst after operator : " << pc_dst.TotalNumberOfParticles() << " total particle counter : " << totalParticleCounter<< "\n";
 }
 
 

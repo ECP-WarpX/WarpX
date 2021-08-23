@@ -4,6 +4,7 @@
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/ParticleBuffer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -58,8 +59,8 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
-    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool /*isLastBTDFlush*/) const
+    bool isBTD, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
@@ -82,7 +83,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags);
+    WriteParticles(filename, particle_diags, isBTD);
 
     WriteJobInfo(filename);
 
@@ -294,8 +295,9 @@ FlushFormatPlotfile::WriteWarpXHeader(
 }
 
 void
-FlushFormatPlotfile::WriteParticles (const std::string& dir,
-                                     const amrex::Vector<ParticleDiag>& particle_diags) const
+FlushFormatPlotfile::WriteParticles(const std::string& dir,
+                                    const amrex::Vector<ParticleDiag>& particle_diags,
+                                    bool isBTD) const
 {
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
@@ -334,7 +336,8 @@ FlushFormatPlotfile::WriteParticles (const std::string& dir,
         // plot by default
         int_flags.resize(pc->NumIntComps(), 1);
 
-        pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+        // temporarily disable unit conversion for BTD
+        if(!isBTD) pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
@@ -348,15 +351,19 @@ FlushFormatPlotfile::WriteParticles (const std::string& dir,
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
 
-        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-        tmp.copyParticles(*pc,
-                          [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-        {
-            const SuperParticleType& p = src.getSuperParticle(ip);
-            return random_filter(p, engine) * uniform_filter(p, engine)
-                * parser_filter(p, engine) * geometry_filter(p, engine);
-        }, true);
-
+        if (!isBTD) {
+            using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+            tmp.copyParticles(*pc,
+                              [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+            {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                    * parser_filter(p, engine) * geometry_filter(p, engine);
+            }, true);
+        } else {         
+            PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+            tmp.copyParticles(*pinned_pc);
+        }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
         tmp.WritePlotFile(
@@ -364,7 +371,8 @@ FlushFormatPlotfile::WriteParticles (const std::string& dir,
             real_flags, int_flags,
             real_names, int_names);
 
-        pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
+        // temporarily disable unit conversion for BTD
+        if (!isBTD) pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
 

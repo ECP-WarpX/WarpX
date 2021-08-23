@@ -337,7 +337,7 @@ Diagnostics::ComputeAndPack ()
         // Call Particle functor
         for (int isp = 0; isp < m_all_particle_functors.size(); ++isp) {
             amrex::Print() << " call particle functor for buffer " << i_buffer << " sp : " << m_output_species_names[isp] << "\n";
-            m_all_particle_functors[isp]->operator()(*m_particles_buffer[i_buffer][isp], i_buffer);
+            m_all_particle_functors[isp]->operator()(*m_particles_buffer[i_buffer][isp], m_totalParticles_in_buffer[i_buffer][isp], i_buffer);
         }
         
         

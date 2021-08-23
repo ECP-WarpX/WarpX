@@ -16,7 +16,7 @@ BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
 public:
     BackTransformParticleFunctor(WarpXParticleContainer *pc_src, std::string species_name, int num_buffers);
     //void operator ()() const override;
-    void operator () (ParticleContainer& pc_dst, int i_buffer) const override;
+    void operator () (ParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const override;
     void InitData() override;
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain, amrex::Real old_z_boost,
                               amrex::Real current_z_boost, amrex::Real t_lab) override;

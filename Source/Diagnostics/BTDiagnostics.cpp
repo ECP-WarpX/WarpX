@@ -106,8 +106,12 @@ void BTDiagnostics::DerivedInitData ()
     if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
     m_particles_buffer.resize(m_num_buffers);
     m_output_species.resize(m_num_buffers);
+    m_totalParticles_flushed_already.resize(m_num_buffers);
+    m_totalParticles_in_buffer.resize(m_num_buffers);
     for (int i = 0; i < m_num_buffers; ++i) {
         m_particles_buffer[i].resize(m_output_species_names.size());
+        m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
+        m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
     }
 }
 
@@ -658,7 +662,8 @@ BTDiagnostics::Flush (int i_buffer)
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
+        isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
+        m_totalParticles_flushed_already[i_buffer]);
 
     if (m_format == "plotfile") {
         MergeBuffersForPlotfile(i_buffer);
@@ -667,14 +672,19 @@ BTDiagnostics::Flush (int i_buffer)
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
     IncrementBufferFlushCounter(i_buffer);
+    UpdateTotalParticlesFlushed(i_buffer);
+    ResetTotalParticlesInBuffer(i_buffer);
+    ClearParticleBuffer(i_buffer);
 }
 
 void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 {
     amrex::Print() << " m output species size : " << m_output_species_names.size() << "\n";
-    for (int i = 0; i < m_output_species.size(); ++i) {
+    for (int i = 0; i < m_output_species_names.size(); ++i) {
+        amrex::Print() << " i is : " << i << "\n";
         amrex::Print() << " m_name : " << m_output_species_names[i] << "\n";
     }
+    amrex::Print() << " done tmp clear in BTD\n";
 //    m_output_species.clear();
 //    m_output_species_names.clear();
 }
@@ -851,6 +861,8 @@ BTDiagnostics::InitializeParticleBuffer ()
     amrex::Print() << " init part buffer \n";
     for (int i = 0; i < m_num_buffers; ++i) {
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
+            m_totalParticles_flushed_already[i][isp] = 0;
+            m_totalParticles_in_buffer[i][isp] = 0;
             m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(&WarpX::GetInstance());
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
             m_output_species[i].push_back(ParticleDiag(m_diag_name,
@@ -878,5 +890,29 @@ BTDiagnostics::PrepareParticleDataForOutput()
                                              m_current_z_boost[i_buffer], m_t_lab[i_buffer]);
             }
         }
+    }
+}
+
+void
+BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
+{
+    for (int isp = 0; isp < m_totalParticles_flushed_already.size(); ++isp) {
+        m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
+    }     
+}
+
+void
+BTDiagnostics::ResetTotalParticlesInBuffer(int i_buffer)
+{
+    for (int isp = 0; isp < m_totalParticles_in_buffer.size(); ++isp) {
+        m_totalParticles_in_buffer[i_buffer][isp] = 0;
+    }     
+}
+
+void
+BTDiagnostics::ClearParticleBuffer(int i_buffer)
+{
+    for (int isp = 0; isp < m_particles_buffer[i_buffer].size(); ++isp) {
+        m_particles_buffer[i_buffer][isp]->clearParticles();
     }
 }

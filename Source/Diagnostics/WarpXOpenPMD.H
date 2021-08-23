@@ -129,8 +129,10 @@ public:
    */
   void CloseStep (bool isBTD = false, bool isLastBTDFlush = false);
 
-  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                              const bool isBTD = false);
+  void WriteOpenPMDParticles (
+              const amrex::Vector<ParticleDiag>& particle_diags,
+              const bool isBTD = false,
+              const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
 
   void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
@@ -199,7 +201,7 @@ private:
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
         amrex::ParticleReal const charge,
-        amrex::ParticleReal const mass) const ;
+        amrex::ParticleReal const mass, bool isBTD = false);
 
   /** This function sets up the entries for particle properties
    *
@@ -215,7 +217,7 @@ private:
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
                const amrex::Vector<std::string>& int_comp_names,
-               unsigned long long np) const;
+               unsigned long long np, bool isBTD) const;
 
   /** This function saves the values of the entries for particle properties
    *
@@ -256,8 +258,8 @@ private:
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass,
-            const bool isBTD) const;
+            amrex::ParticleReal const mass, const bool isBTD = false,
+            int ParticleFlushOffset = 0);
 
   /** Get the openPMD-api filename for openPMD::Series
    *
@@ -270,6 +272,8 @@ private:
   std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
+
+  int m_ParticleSetUp = -1;
 
   /** This is the output directory
    *

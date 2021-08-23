@@ -188,6 +188,18 @@ protected:
     amrex::Vector< amrex::Vector<std::unique_ptr<PinnedMemoryParticleContainer> > > m_particles_buffer;
     /** Vector of pointers to functors to compute particle output per species*/
     amrex::Vector <std::unique_ptr<ComputeParticleDiagFunctor > > m_all_particle_functors;
+
+    /** Vector of total number of particles previously flushed, per species, per snapshot.
+     *  The first vector is for total number of snapshots and second vector loops
+     *  over the total number of species selected for diagnostics.
+     */
+    amrex::Vector< amrex::Vector <int> > m_totalParticles_flushed_already;
+    /** Vector of total number of particles in the buffer, per species, per snapshot.
+     *  The first vector is for total number of snapshots and second vector loops
+     *  over the total number of species selected for diagnostics.
+     */
+    amrex::Vector< amrex::Vector <int> > m_totalParticles_in_buffer;
+
 };
 
 #endif // WARPX_DIAGNOSTICS_H_
