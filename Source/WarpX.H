@@ -1184,8 +1184,9 @@ private:
      *        with k-space filtering (if needed)
      *
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
+     * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
      */
-    void PSATDForwardTransformRho (const int icomp);
+    void PSATDForwardTransformRho (const int icomp, const int dcomp);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space

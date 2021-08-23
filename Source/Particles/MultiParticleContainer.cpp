@@ -521,13 +521,12 @@ MultiParticleContainer::DepositCurrent (
 void
 MultiParticleContainer::DepositCharge (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-    const amrex::Real relative_t, const int icomp)
+    const amrex::Real relative_t)
 {
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        int const nc = WarpX::ncomps;
-        rho[lev]->setVal(0.0, icomp*nc, nc, rho[lev]->nGrowVect());
+        rho[lev]->setVal(0.0, 0, WarpX::ncomps, rho[lev]->nGrowVect());
     }
 
     // Push the particles in time, if needed
@@ -541,7 +540,7 @@ MultiParticleContainer::DepositCharge (
         bool const do_rz_volume_scaling = false;
         bool const interpolate_across_levels = false;
         pc->DepositCharge(rho, local, reset, do_rz_volume_scaling,
-                              interpolate_across_levels, icomp);
+                              interpolate_across_levels);
     }
 
     // Push the particles back in time
