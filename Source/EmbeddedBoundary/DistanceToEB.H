@@ -12,6 +12,8 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_Array.H>
 
+#ifdef AMREX_USE_EB
+
 namespace DistanceToEB
 {
 
@@ -69,6 +71,9 @@ void compute_weights (const amrex::ParticleReal xp,
     W[1][0] = 1.0 - W[1][1];
 
     amrex::ignore_unused(yp);
+#else
+    amrex::ignore_unused(xp, yp, zp, plo, dxi, i, j, k, W);
+    amrex::Abort("Error: compute_weights not yet implemented in RZ");
 #endif
 }
 
@@ -91,6 +96,9 @@ amrex::Real interp_distance (int i, int j, int k, const amrex::Real W[AMREX_SPAC
     phi_value += phi(i+1, j ,  k) * W[0][1] * W[1][0];
     phi_value += phi(i,   j+1, k) * W[0][0] * W[1][1];
     phi_value += phi(i+1, j+1, k) * W[0][1] * W[1][1];
+#else
+    amrex::ignore_unused(i, j, k, W, phi);
+    amrex::Abort("Error: interp_distance not yet implemented in RZ");
 #endif
     return phi_value;
 }
@@ -141,10 +149,14 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
     normal[1] += phi(i  , j+1, k) * dxi[1] * W[0][0];
     normal[1] -= phi(i+1, j  , k) * dxi[1] * W[0][1];
     normal[1] += phi(i+1, j+1, k) * dxi[1] * W[0][1];
+#else
+    amrex::RealVect normal{0.0, 0.0};
+    amrex::ignore_unused(i, j, k, W, phi, dxi);
+    amrex::Abort("Error: interp_distance not yet implemented in RZ");
 #endif
     return normal;
 }
 }
 
-
+#endif
 #endif

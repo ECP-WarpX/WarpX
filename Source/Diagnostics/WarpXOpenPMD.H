@@ -9,6 +9,8 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
@@ -58,7 +60,7 @@ private:
 class WarpXParticleCounter
 {
 public:
-  using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   WarpXParticleCounter (ParticleContainer* pc);
@@ -153,16 +155,13 @@ private:
    * @param[in] isBTD is this a backtransformed diagnostics write?
    * @return the iteration object
    */
-  inline openPMD::Iteration& GetIteration (int const iteration, bool const isBTD) const
+  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
   {
     if (isBTD)
     {
-        openPMD::Iteration& it = m_Series->iterations[iteration];
-        return it;
+        return m_Series->iterations[iteration];
     } else {
-        auto iterations = m_Series->writeIterations();
-        openPMD::Iteration& it = iterations[iteration];
-        return it;
+        return m_Series->writeIterations()[iteration];
     }
   }
 

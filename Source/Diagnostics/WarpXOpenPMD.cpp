@@ -451,7 +451,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-    ParticleContainer tmp(&WarpX::GetInstance());
+    auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
@@ -471,9 +471,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     real_names.push_back("theta");
 #endif
 
-    // add runtime real comps to tmp
-    for (int ic = 0; ic < pc->NumRuntimeRealComps(); ++ic) { tmp.AddRealComp(false); }
-
     // get the names of the real comps
     real_names.resize(pc->NumRealComps());
     auto runtime_rnames = pc->getParticleRuntimeComps();
@@ -485,9 +482,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // plot any "extra" fields by default
     real_flags = particle_diags[i].plot_flags;
     real_flags.resize(pc->NumRealComps(), 1);
-
-    // add runtime int comps to tmp
-    for (int ic = 0; ic < pc->NumRuntimeIntComps(); ++ic) { tmp.AddIntComp(false); }
 
     // and the names
     int_names.resize(pc->NumIntComps());
@@ -558,7 +552,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-  openPMD::Iteration& currIteration = GetIteration(iteration, isBTD);
+  openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -1066,7 +1060,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep, isBTD);
+  openPMD::Iteration series_iteration = GetIteration(m_CurrentStep, isBTD);
 
   // collective open
   series_iteration.open();

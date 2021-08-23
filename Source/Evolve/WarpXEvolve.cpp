@@ -23,6 +23,7 @@
 #endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -253,7 +254,15 @@ WarpX::Evolve (int numsteps)
 
         mypc->ContinuousFluxInjection(dt[0]);
 
+        m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+
         mypc->ApplyBoundaryConditions();
+
+        // interact with particles with EB walls (if present)
+#ifdef AMREX_USE_EB
+        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
+        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+#endif
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic != ElectrostaticSolverAlgo::None )
@@ -279,13 +288,10 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-        // interact with particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
-        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-#endif
         if (sort_intervals.contains(step+1)) {
-            amrex::Print() << "re-sorting particles \n";
+            if (verbose) {
+                amrex::Print() << "re-sorting particles \n";
+            }
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
@@ -494,7 +500,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             // Deposit J at relative time -dt with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], -dt[0]);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
@@ -524,7 +531,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
             // Deposit new J at relative time t_depose with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], t_depose);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], t_depose);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J

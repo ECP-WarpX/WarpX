@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
 
 .. _running-cpp-parameters-overall:
 
@@ -211,7 +211,7 @@ Domain Boundary Conditions
 --------------------------
 
 * ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D, `pml` by default)
-    Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
+    Boundary conditions applied to fields at the lower and upper domain boundaries.
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
@@ -404,8 +404,10 @@ Math parser and user-defined constants
 --------------------------------------
 
 WarpX uses AMReX's math parser that reads expressions in the input file.
-It can be used in all input parameters that consist of one or more floats.
-Note that when multiple floats are expected, the expressions are space delimited.
+It can be used in all input parameters that consist of one or more integers or floats.
+Integer input expecting boolean, 0 or 1, are not parsed.
+Note that when multiple values are expected, the expressions are space delimited.
+For integer input values, the expressions are evaluated as real numbers and the final result rounded to the nearest integer.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
@@ -429,7 +431,7 @@ User-defined constants
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Users can define their own constants in the input file.
-These constants can be used for any parameter that consists of one or more floats.
+These constants can be used for any parameter that consists of one or more integers or floats.
 User-defined constant names can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
@@ -448,7 +450,7 @@ Besides, for profiles that depend on spatial coordinates (the plasma momentum di
 
 The parser reads python-style expressions between double quotes, for instance
 ``"a0*x**2 * (1-y*1.e2) * (x>0)"`` is a valid expression where ``a0`` is a
-user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
+user-defined constant (see above) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
 Alternatively the expression above can be written as ``if(x>0, a0*x**2 * (1-y*1.e2), 0)``.
@@ -1153,6 +1155,15 @@ Laser initialization
     value of the `By` component is set to zero.
     Note that the current implementation of the parser for B-field on particles
     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
+    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
+    option requires the following parameters, in the lab frame,
+    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
+    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
+    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
+    ``repeated_plasma_lens_strengths_B``, the focusing strength of each lens, an array of floats.
+    The applied field is uniform longitudinally (along z) with a hard edge,
+    where residence corrections are used for more accurate field calculation.
+    The field is of the form :math:`B_x = \mathrm{strength} \cdot y` and :math:`B_y = -\mathrm{strength} \cdot x`, :math`:B_z = 0`.
 
 * ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
@@ -1172,16 +1183,17 @@ Laser initialization
     using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
     it is assumed that the first and second dimensions are `x` and `z`, respectively,
     and the value of the `Ey` component is set to zero.
-    The current implementation of the parser for E-field on particles
+    Note that the current implementation of the parser for E-field on particles
     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
     To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
-    option requires the following parameters,
+    option requires the following parameters, in the lab frame,
     ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
     ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
     ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
-    ``repeated_plasma_lens_strengths``, the focusing strength of each lens, an array of floats.
+    ``repeated_plasma_lens_strengths_E``, the focusing strength of each lens, an array of floats.
     The applied field is uniform longitudinally (along z) with a hard edge,
     where residence corrections are used for more accurate field calculation.
+    The field is of the form :math:`E_x = \mathrm{strength} \cdot x` and :math:`E_y = \mathrm{strength} \cdot y`, :math:`Ez = 0`.
 
 * ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
     Two separate parameters which add an externally applied uniform E-field or
@@ -1750,6 +1762,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
     Only used when ``<diag_name>.plot_raw_fields = 1``.
     Whether to include the guard cells in the output of the raw fields.
+    Only works with ``<diag_name>.format = plotfile``.
+
+    * ``<diag_name>.plot_raw_rho`` (`0` or `1`) optional (default `0`)
+    By default, the charge density written in the plot files is averaged on the cell centers.
+    When ``<diag_name>.plot_raw_rho = 1``, then the raw (i.e. non-averaged) charge density is also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)

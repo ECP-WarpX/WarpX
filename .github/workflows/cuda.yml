@@ -2,6 +2,10 @@ name: 🐧 CUDA
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-cuda
+  cancel-in-progress: true
+
 jobs:
 # Ref.:
 #   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
@@ -17,7 +21,7 @@ jobs:
       run: |
         .github/workflows/dependencies/nvcc11.sh
         export CEI_SUDO="sudo"
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.14.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
     - name: build WarpX
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}

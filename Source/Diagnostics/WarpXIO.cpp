@@ -14,7 +14,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 #include <AMReX_BoxArray.H>

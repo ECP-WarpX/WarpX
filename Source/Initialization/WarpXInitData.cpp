@@ -25,7 +25,7 @@
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 #include <AMReX_Array.H>

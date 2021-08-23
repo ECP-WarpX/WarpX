@@ -199,11 +199,10 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     IntVect iv = macro_mf->ixType().toIntVect();
-    IntVect grown_iv = iv ;
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 
-        const Box& tb = mfi.tilebox(grown_iv, macro_mf->nGrowVect());
+        const Box& tb = mfi.tilebox(iv, macro_mf->nGrowVect());
         auto const& macro_fab =  macro_mf->array(mfi);
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {

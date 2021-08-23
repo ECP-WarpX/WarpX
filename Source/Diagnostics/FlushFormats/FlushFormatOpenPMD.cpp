@@ -29,11 +29,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 
     openPMD::IterationEncoding encoding = openPMD::IterationEncoding::groupBased;
     if ( 0 == openpmd_encoding.compare("v") )
-#if OPENPMDAPI_VERSION_GE(0, 14, 0)
       encoding = openPMD::IterationEncoding::variableBased;
-#else
-      encoding = openPMD::IterationEncoding::groupBased;
-#endif
     else if ( 0 == openpmd_encoding.compare("g") )
       encoding = openPMD::IterationEncoding::groupBased;
     else if ( 0 == openpmd_encoding.compare("f") )
