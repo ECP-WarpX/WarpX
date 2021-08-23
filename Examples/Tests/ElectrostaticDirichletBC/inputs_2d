@@ -7,6 +7,7 @@ warpx.use_filter = 0
 amr.n_cell = 64 8
 amr.max_grid_size = 32
 amr.max_level = 0
+warpx.use_filter = 0
 
 geometry.coord_sys = 0
 geometry.prob_lo = 0.0 0.0
