@@ -11,31 +11,41 @@
 #ifndef WARPX_ParticleContainer_H_
 #define WARPX_ParticleContainer_H_
 
+#include "MultiParticleContainer_fwd.H"
+
+#include "Evolve/WarpXDtType.H"
+#include "Particles/Collision/CollisionHandler.H"
+#ifdef WARPX_QED
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
+#endif
+#include "PhysicalParticleContainer.H"
+#include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
-#include "PhysicalParticleContainer.H"
-#include "PhotonParticleContainer.H"
-#include "LaserParticleContainer.H"
-#include "Parser/WarpXParserWrapper.H"
-#include "Particles/Collision/CollisionHandler.H"
-#include "Particles/ParticleCreation/SmartUtils.H"
-#include "Particles/ParticleCreation/SmartCopy.H"
-#include "Particles/ParticleCreation/SmartCreate.H"
-#include "Particles/ParticleCreation/FilterCopyTransform.H"
-#include "Particles/RigidInjectedParticleContainer.H"
+#include "ParticleBoundaries.H"
 
-#ifdef WARPX_QED
-#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
-#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#endif
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_INT.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
 
-#include <AMReX_Particles.H>
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
 
-#include <memory>
-#include <map>
-#include <string>
 #include <algorithm>
+#include <array>
+#include <iosfwd>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 /**
  * The class MultiParticleContainer holds multiple instances of the polymorphic
@@ -126,6 +136,39 @@ public:
     * @param[in] lev the index of the refinement level.
     */
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+
+    /**
+     * \brief Deposit charge density.
+     *
+     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in] relative_t Time at which to deposit rho, relative to the time
+     *             of the current positions of the particles (expressed as
+     *             a fraction of dt). When different than 0, the particle
+     *             position will be temporarily modified to match the time
+     *             of the deposition.
+     * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
+     */
+    void
+    DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                   const amrex::Real relative_t, const int icomp = 0);
+
+    /**
+     * \brief Deposit current density.
+     *
+     * \param[in,out] J vector of current densities (one three-dimensional array of pointers
+     *                to MultiFabs per mesh refinement level)
+     * \param[in] dt: Time step for particle level (is used when temporarily
+     *                modifying the particle positions, either within the
+     *                Esirkepov or when `relative_t` is different than 0
+     * \param[in] relative_t: Time at which to deposit J, relative to the time of
+     *                the current positions of the particles (expressed as
+     *                a fraction of dt). When different than 0, the particle
+     *                position will be temporarily modified to match the
+     *                time of the deposition.
+     */
+    void
+    DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+                    const amrex::Real dt, const amrex::Real relative_t);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
@@ -231,23 +274,38 @@ public:
     void UpdateContinuousInjectionPosition(amrex::Real dt) const;
     int doContinuousInjection() const;
 
+    // Inject particles from a surface during the simulation
+    void ContinuousFluxInjection(amrex::Real dt) const;
+
     std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
+
+    void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
     std::string m_B_ext_particle_s = "default";
     std::string m_E_ext_particle_s = "default";
     // External fields added to particle fields.
     amrex::Vector<amrex::Real> m_B_external_particle;
     amrex::Vector<amrex::Real> m_E_external_particle;
-    // ParserWrapper for B_external on the particle
-    std::unique_ptr<ParserWrapper<4> > m_Bx_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_By_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Bz_particle_parser;
-    // ParserWrapper for E_external on the particle
-    std::unique_ptr<ParserWrapper<4> > m_Ex_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Ey_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Ez_particle_parser;
+    // Parser for B_external on the particle
+    std::unique_ptr<amrex::Parser> m_Bx_particle_parser;
+    std::unique_ptr<amrex::Parser> m_By_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Bz_particle_parser;
+    // Parser for E_external on the particle
+    std::unique_ptr<amrex::Parser> m_Ex_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
+
+    amrex::Real m_repeated_plasma_lens_period;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_E;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_B;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_E;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_B;
 
 #ifdef WARPX_QED
     /**
@@ -307,8 +365,8 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    /** Whether to absorb particles exiting the domain */
-    ParticleBC m_boundary_conditions = ParticleBC::none;
+    /** Controls boundaries for particles exiting the domain */
+    ParticleBoundaries m_boundary_conditions;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,

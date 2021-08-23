@@ -7,12 +7,13 @@
 #ifndef FILTERFUNCTORS_H
 #define FILTERFUNCTORS_H
 
-#include "WarpX.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
 #include <AMReX_Gpu.H>
+#include <AMReX_Parser.H>
 #include <AMReX_Random.H>
 
 using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
@@ -90,7 +91,8 @@ struct ParserFilter
     /** constructor
      * \param a_is_active whether the test is active
      */
-    ParserFilter(bool a_is_active, HostDeviceParser<7> const& a_filter_parser, amrex::Real a_mass)
+    ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
+                 amrex::Real a_mass)
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser), m_mass(a_mass)
     {
         m_t = WarpX::GetInstance().gett_new(0);
@@ -126,7 +128,7 @@ private:
     const bool m_is_active;
 public:
     /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
-    HostDeviceParser<7> const m_function_partparser;
+    amrex::ParserExecutor<7> const m_function_partparser;
     /** Store physical time. */
     amrex::Real m_t;
     /** Mass of particle species */

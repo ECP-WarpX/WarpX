@@ -49,12 +49,14 @@ ln -s ${tmp_dir} test_dir
 cd test_dir
 echo "cd $PWD"
 
-# Clone PICSAR and AMReX
+# Clone PICSAR, AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout 6f1085a23de1f7ee1a5f92dd173e984c59839511 && cd -
+cd amrex && git checkout 60578291de339964af938b81f2d0f7db5c6bf78c && cd -
 # Use QED brach for QED tests
 git clone https://github.com/ECP-WarpX/picsar.git
 cd picsar && git checkout c16b642e3dcf860480dd1dd21cefa3874f395773 && cd -
+# warpx-data contains various required data sets
+git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
 # Clone the AMReX regression test utility
 git clone https://github.com/ECP-WarpX/regression_testing.git

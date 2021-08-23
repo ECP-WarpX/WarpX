@@ -6,17 +6,41 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXComm_K.H"
 #include "WarpX.H"
-#include "WarpXSumGuardCells.H"
+
+#include "BoundaryConditions/PML.H"
+#include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
-#ifdef WARPX_USE_PSATD
-#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#endif
+#include "Utils/IntervalsParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpXComm_K.H"
+#include "WarpXSumGuardCells.H"
+
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_FabArrayBase.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <algorithm>
-#include <cstdlib>
+#include <array>
 #include <memory>
+#include <vector>
 
 using namespace amrex;
 
@@ -157,7 +181,11 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             // ParallelCopy from coarse level
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Btmp[i]->nGrowVect();
-                Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
+                // Guard cells may not be up to date beyond ng_FieldGather
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Bfield_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
+                // Bfield_aux and filling up to ng (=nGrow) guard cells in Btmp
+                Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
 #ifdef AMREX_USE_OMP
@@ -207,7 +235,11 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             // ParallelCopy from coarse level
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Etmp[i]->nGrowVect();
-                Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
+                // Guard cells may not be up to date beyond ng_FieldGather
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Efield_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
+                // Efield_aux and filling up to ng (=nGrow) guard cells in Etmp
+                Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
 #ifdef AMREX_USE_OMP
@@ -258,9 +290,13 @@ WarpX::UpdateAuxilaryDataSameType ()
             dBx.setVal(0.0);
             dBy.setVal(0.0);
             dBz.setVal(0.0);
-            dBx.ParallelCopy(*Bfield_aux[lev-1][0], 0, 0, Bfield_aux[lev-1][0]->nComp(), ng, ng, crse_period);
-            dBy.ParallelCopy(*Bfield_aux[lev-1][1], 0, 0, Bfield_aux[lev-1][1]->nComp(), ng, ng, crse_period);
-            dBz.ParallelCopy(*Bfield_aux[lev-1][2], 0, 0, Bfield_aux[lev-1][2]->nComp(), ng, ng, crse_period);
+            // Guard cells may not be up to date beyond ng_FieldGather
+            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+            // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
+            // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
+            dBx.ParallelCopy(*Bfield_aux[lev-1][0], 0, 0, Bfield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
+            dBy.ParallelCopy(*Bfield_aux[lev-1][1], 0, 0, Bfield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
+            dBz.ParallelCopy(*Bfield_aux[lev-1][2], 0, 0, Bfield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
             if (Bfield_cax[lev][0])
             {
                 MultiFab::Copy(*Bfield_cax[lev][0], dBx, 0, 0, Bfield_cax[lev][0]->nComp(), ng);
@@ -316,9 +352,13 @@ WarpX::UpdateAuxilaryDataSameType ()
             dEx.setVal(0.0);
             dEy.setVal(0.0);
             dEz.setVal(0.0);
-            dEx.ParallelCopy(*Efield_aux[lev-1][0], 0, 0, Efield_aux[lev-1][0]->nComp(), ng, ng, crse_period);
-            dEy.ParallelCopy(*Efield_aux[lev-1][1], 0, 0, Efield_aux[lev-1][1]->nComp(), ng, ng, crse_period);
-            dEz.ParallelCopy(*Efield_aux[lev-1][2], 0, 0, Efield_aux[lev-1][2]->nComp(), ng, ng, crse_period);
+            // Guard cells may not be up to date beyond ng_FieldGather
+            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+            // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
+            // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
+            dEx.ParallelCopy(*Efield_aux[lev-1][0], 0, 0, Efield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
+            dEy.ParallelCopy(*Efield_aux[lev-1][1], 0, 0, Efield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
+            dEz.ParallelCopy(*Efield_aux[lev-1][2], 0, 0, Efield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
             if (Efield_cax[lev][0])
             {
                 MultiFab::Copy(*Efield_cax[lev][0], dEx, 0, 0, Efield_cax[lev][0]->nComp(), ng);
@@ -938,7 +978,7 @@ WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
             IntVect ng = j[idim]->nGrowVect();
             ng += bilinear_filter.stencil_length_each_dir-1;
             MultiFab jf(j[idim]->boxArray(), j[idim]->DistributionMap(), j[idim]->nComp(), ng);
-            bilinear_filter.ApplyStencil(jf, *j[idim]);
+            bilinear_filter.ApplyStencil(jf, *j[idim], lev);
             WarpXSumGuardCells(*(j[idim]), jf, period, 0, (j[idim])->nComp());
         } else {
             WarpXSumGuardCells(*(j[idim]), period, 0, (j[idim])->nComp());
@@ -980,12 +1020,12 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 ng += bilinear_filter.stencil_length_each_dir-1;
                 MultiFab jfc(current_cp[lev+1][idim]->boxArray(),
                              current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfc, *current_cp[lev+1][idim]);
+                bilinear_filter.ApplyStencil(jfc, *current_cp[lev+1][idim], lev);
 
                 // buffer patch of fine level
                 MultiFab jfb(current_buf[lev+1][idim]->boxArray(),
                              current_buf[lev+1][idim]->DistributionMap(), current_buf[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim]);
+                bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev);
 
                 MultiFab::Add(jfb, jfc, 0, 0, current_buf[lev+1][idim]->nComp(), ng);
                 mf.ParallelAdd(jfb, 0, 0, current_buf[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
@@ -999,7 +1039,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 ng += bilinear_filter.stencil_length_each_dir-1;
                 MultiFab jf(current_cp[lev+1][idim]->boxArray(),
                             current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim]);
+                bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev);
                 mf.ParallelAdd(jf, 0, 0, current_cp[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
                 WarpXSumGuardCells(*current_cp[lev+1][idim], jf, period, 0, current_cp[lev+1][idim]->nComp());
             }
@@ -1054,7 +1094,7 @@ WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho
         IntVect ng = rho.nGrowVect();
         ng += bilinear_filter.stencil_length_each_dir-1;
         MultiFab rf(rho.boxArray(), rho.DistributionMap(), ncomp, ng);
-        bilinear_filter.ApplyStencil(rf, rho, icomp, 0, ncomp);
+        bilinear_filter.ApplyStencil(rf, rho, glev, icomp, 0, ncomp);
         WarpXSumGuardCells(rho, rf, period, icomp, ncomp );
     } else {
         WarpXSumGuardCells(rho, period, icomp, ncomp);
@@ -1095,12 +1135,12 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             ng += bilinear_filter.stencil_length_each_dir-1;
             MultiFab rhofc(rho_cp[lev+1]->boxArray(),
                          rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], lev, icomp, 0, ncomp);
 
             // buffer patch of fine level
             MultiFab rhofb(charge_buf[lev+1]->boxArray(),
                            charge_buf[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], lev, icomp, 0, ncomp);
 
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);
             mf.ParallelAdd(rhofb, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
@@ -1111,7 +1151,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             IntVect ng = rho_cp[lev+1]->nGrowVect();
             ng += bilinear_filter.stencil_length_each_dir-1;
             MultiFab rf(rho_cp[lev+1]->boxArray(), rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev, icomp, 0, ncomp);
             mf.ParallelAdd(rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
             WarpXSumGuardCells( *rho_cp[lev+1], rf, period, icomp, ncomp );
         }

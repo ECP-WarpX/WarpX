@@ -10,10 +10,10 @@
 
 #include "DefaultInitialization.H"
 
+#include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_ParallelDescriptor.H>
-#include <AMReX.H>
 
 /**
  * \brief This is a functor for performing a "smart create" that works

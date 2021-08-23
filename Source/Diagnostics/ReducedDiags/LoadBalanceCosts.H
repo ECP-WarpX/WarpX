@@ -8,9 +8,12 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_LOADBALANCECOSTS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_LOADBALANCECOSTS_H_
 
-#include "WarpX.H"
 #include "ReducedDiags.H"
 
+#include <AMReX_Vector.H>
+
+#include <string>
+#include <vector>
 
 /**
  *  This class mainly contains a function that update the
@@ -46,18 +49,27 @@ public:
      *  rectangular one */
     int m_nBoxesMax = -1;
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     LoadBalanceCosts(std::string rd_name);
 
-    /** This function updates the costs, given the current distribution mapping,
-     *  according to the number of particles and cells on the box  */
+    /**
+     * This function updates the costs, given the current distribution mapping,
+     * according to the number of particles and cells on the box
+     *
+     * @param[in] step current time step
+     */
     virtual void ComputeDiags(int step) override final;
 
-    /** write to file function for costs;  this differs from the base class
-     *  `ReducedDiags` in that it will fill in blank entries with NaN at the
-     *  final timestep, ensuring that the data array is not jagged
-     *  @param[in] step time step */
+    /**
+     * write to file function for costs;  this differs from the base class
+     * `ReducedDiags` in that it will fill in blank entries with NaN at the
+     * final timestep, ensuring that the data array is not jagged
+     *
+     * @param[in] step current time step
+     */
     virtual void WriteToFile(int step) const override final;
 
 };

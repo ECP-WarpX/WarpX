@@ -8,15 +8,14 @@
 #ifndef WARPX_WRAPPERS_H_
 #define WARPX_WRAPPERS_H_
 
-#include <AMReX.H>
-#include <AMReX_BLProfiler.H>
-
-#ifdef BL_USE_MPI
-#   include <mpi.h>
-#endif
-
+#include "Particles/WarpXParticleContainer.H"
+#include "Evolve/WarpXDtType.H"
+#include <AMReX_Config.H>
 #include <AMReX_REAL.H>
 
+#ifdef AMREX_USE_MPI
+#   include <mpi.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,11 +32,13 @@ extern "C" {
 
     int warpx_nComps();
 
+    int warpx_nCompsSpecies(const char* char_species_name);
+
     int warpx_SpaceDim();
 
     void amrex_init (int argc, char* argv[]);
 
-#ifdef BL_USE_MPI
+#ifdef AMREX_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm);
 #endif
 
@@ -64,7 +65,7 @@ extern "C" {
 
     void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
-    void warpx_addNParticles(int speciesnumber,
+    void warpx_addNParticles(const char* char_species_name,
                              int lenx,
                              amrex::ParticleReal const * x,
                              amrex::ParticleReal const * y,
@@ -78,25 +79,35 @@ extern "C" {
 
     void warpx_ConvertLabParamsToBoost();
 
+    void warpx_ReadBCParams();
+
     void warpx_CheckGriddingForRZSpectral();
 
     amrex::Real warpx_getProbLo(int dir);
 
     amrex::Real warpx_getProbHi(int dir);
 
-    long warpx_getNumParticles(int speciesnumber);
+    long warpx_getNumParticles(const char* char_species_name);
 
-    amrex::ParticleReal** warpx_getParticleStructs(int speciesnumber, int lev,
-                                                   int* num_tiles, int** particles_per_tile);
+    amrex::ParticleReal** warpx_getParticleStructs(
+        const char* char_species_name, int lev, int* num_tiles,
+        int** particles_per_tile);
 
-    amrex::ParticleReal** warpx_getParticleArrays(int speciesnumber, int comp, int lev,
-                                                  int* num_tiles, int** particles_per_tile);
+    amrex::ParticleReal** warpx_getParticleArrays(
+        const char* char_species_name, const char* char_comp_name, int lev,
+        int* num_tiles, int** particles_per_tile);
+
+    int warpx_getParticleCompIndex(
+        const char* char_species_name, const char* char_comp_name);
+
+    void warpx_addRealComp(
+        const char* char_species_name, const char* char_comp_name, bool comm);
 
   void warpx_ComputeDt ();
-  void warpx_MoveWindow ();
+  void warpx_MoveWindow (int step, bool move_j);
 
   void warpx_EvolveE (amrex::Real dt);
-  void warpx_EvolveB (amrex::Real dt);
+  void warpx_EvolveB (amrex::Real dt, DtType a_dt_type);
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
   void warpx_SyncCurrent ();
@@ -113,6 +124,10 @@ extern "C" {
   amrex::Real warpx_stopTime ();
 
   int warpx_finestLevel ();
+
+  int warpx_getMyProc ();
+  int warpx_getNProcs ();
+
 
   void mypc_Redistribute ();
 

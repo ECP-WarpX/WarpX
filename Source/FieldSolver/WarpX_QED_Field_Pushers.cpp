@@ -5,19 +5,39 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX_QED_K.H"
-#include "BoundaryConditions/WarpX_PML_kernels.H"
-#include "BoundaryConditions/PML_current.H"
-#include "WarpX_FDTD.H"
 
-#ifdef BL_USE_SENSEI_INSITU
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX_QED_K.H"
+
+#include <AMReX.H>
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array4.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuElixir.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
 
-#include <cmath>
-#include <limits>
-
+#include <array>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
 
 using namespace amrex;
 
@@ -26,14 +46,8 @@ void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
     if (WarpX::do_nodal == 0) {
-        Print()<<"The do_nodal flag is tripped.\n";
-        try{
-            throw "Error: The Hybrid QED method is currently only compatible with the nodal scheme.\n";
-        }
-        catch (const char* msg) {
-            std::cerr << msg << std::endl;
-            exit(0);
-        }
+        amrex::Abort("Error: The Hybrid QED method is "
+            "currently only compatible with the nodal scheme.");
     }
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);

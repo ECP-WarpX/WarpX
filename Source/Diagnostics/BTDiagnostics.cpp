@@ -1,19 +1,35 @@
 #include "BTDiagnostics.H"
+
 #include "BTD_Plotfile_Header_Impl.H"
-#include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/BackTransformFunctor.H"
+#include "ComputeDiagFunctors/CellCenterFunctor.H"
+#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
+#include "Diagnostics/Diagnostics.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
-
+#include <AMReX.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_CoordSys.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FileSystem.H>
+#include <AMReX_ParallelContext.H>
 #include <AMReX_ParallelDescriptor.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_VisMF.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
 
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <memory>
+#include <vector>
 
 using namespace amrex::literals;
 
@@ -91,6 +107,11 @@ BTDiagnostics::ReadParameters ()
         "The back transformed diagnostics currently only works if the boost is in the z-direction");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.do_moving_window,
            "The moving window should be on if using the boosted frame diagnostic.");
+    // The next two asserts could be relaxed with respect to check to current step
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.end_moving_window_step < 0,
+        "The moving window must not stop when using the boosted frame diagnostic.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
+        "The moving window must start at step zero for the boosted frame diagnostic.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == AMREX_SPACEDIM-1,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -122,8 +143,6 @@ BTDiagnostics::ReadParameters ()
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
-    // For BTD, we always need rho to perform Lorentz Transform of current-density
-    if (WarpXUtilStr::is_in(m_cellcenter_varnames, "rho")) warpx.setplot_rho(true);
 
     if (pp_diag_name.query("buffer_size", m_buffer_size)) {
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
@@ -134,12 +153,19 @@ BTDiagnostics::ReadParameters ()
 bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
-    // Return true if buffer is full or if force_flush == true
-    // Return false if timestep < 0, i.e., at initialization when step == -1.
-    if (step < 0 ) return false;
-    else if ( buffer_full(i_buffer) || force_flush) {
+    // timestep < 0, i.e., at initialization time when step == -1
+    if (step < 0 )
+        return false;
+    // buffer for this lab snapshot is full, time to dump it and continue
+    // to collect more slices afterwards
+    else if (buffer_full(i_buffer))
         return true;
-    }
+    // forced: at the end of the simulation
+    // empty: either lab snapshot was already fully written and buffer was reset
+    //        to zero size or that lab snapshot was not even started to be
+    //        backtransformed yet
+    else if (force_flush && !buffer_empty(i_buffer))
+        return true;
     return false;
 }
 
@@ -590,7 +616,7 @@ BTDiagnostics::Flush (int i_buffer)
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        labtime, m_output_species, nlev_output, file_name,
+        labtime, m_output_species, nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 

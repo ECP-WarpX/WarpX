@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Axel Huebl, Junmin Gu, Maxence Thevenet
+/* Copyright 2019-2021 Axel Huebl, Junmin Gu, Maxence Thevenet
  *
  *
  * This file is part of WarpX.
@@ -9,24 +9,32 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/MultiParticleContainer.H" // PIdx
-#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
 
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
 #include <AMReX_AmrParticles.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_ParIter.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
 
 //
 // helper class
@@ -34,8 +42,8 @@
 class Timer
 {
 public:
-  Timer(const char* tag) {m_Tag = tag; m_Start = amrex::second();}
-  ~Timer() {
+  Timer (const char* tag) {m_Tag = tag; m_Start = amrex::second();}
+  ~Timer () {
       m_End = amrex::second();
       amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
       amrex::Print()<<m_Tag<<" took:"<<m_End - m_Start<<" seconds\n";
@@ -52,11 +60,11 @@ private:
 class WarpXParticleCounter
 {
 public:
-  using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
-  WarpXParticleCounter(ParticleContainer* pc);
-  unsigned long GetTotalNumParticles() {return m_Total;}
+  WarpXParticleCounter (ParticleContainer* pc);
+  unsigned long GetTotalNumParticles () {return m_Total;}
 
   std::vector<unsigned long long> m_ParticleOffsetAtRank;
   std::vector<unsigned long long> m_ParticleSizeAtRank;
@@ -67,7 +75,7 @@ private:
   * @param[out] offset particle offset over all, mpi-global amrex fabs
   * @param[out] sum number of all particles from all amrex fabs
   */
-  void GetParticleOffsetOfProcessor(const long& numParticles,
+  void GetParticleOffsetOfProcessor (const long& numParticles,
                     unsigned long long& offset,
                     unsigned long long& sum)  const ;
 
@@ -93,11 +101,17 @@ public:
 
   /** Initialize openPMD I/O routines
    *
-   * @param oneFilePerTS write one file per timestep
+   * @param ie  iteration encoding from openPMD: "group, file, variable"
    * @param filetype file backend, e.g. "bp" or "h5"
+   * @param operator_type openPMD-api backend operator (compressor) for ADIOS2
+   * @param operator_parameters openPMD-api backend operator parameters for ADIOS2
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
-  WarpXOpenPMDPlot (bool oneFilePerTS, std::string filetype, std::vector<bool> fieldPMLdirections);
+  WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
+                    std::string filetype,
+                    std::string operator_type,
+                    std::map< std::string, std::string > operator_parameters,
+                    std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
 
@@ -106,7 +120,7 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep (int ts, const std::string& dirPrefix,
+  void SetStep (int ts, const std::string& dirPrefix, int file_min_digits,
                 bool isBTD=false);
 
   /** Close the step
@@ -115,12 +129,13 @@ public:
    */
   void CloseStep (bool isBTD = false, bool isLastBTDFlush = false);
 
-  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
+  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
+                              const bool isBTD = false);
 
-  void WriteOpenPMDFields (
+  void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
-              const amrex::MultiFab& mf,
-              const amrex::Geometry& geom,
+              const amrex::Vector<amrex::MultiFab>& mf,
+              amrex::Vector<amrex::Geometry>& geom,
               const int iteration, const double time,
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
@@ -128,6 +143,50 @@ public:
 
 private:
   void Init (openPMD::Access access, bool isBTD);
+
+
+  /** Get the openPMD::Iteration object of the current Series
+   *
+   * We use this helper function to differentiate between efficient, temporally
+   * sequentially increasing writes to iteration numbers and random-access
+   * writes to iterations, e.g., as needed for back-transformed diagnostics.
+   *
+   * @param[in] iteration iteration number (lab-frame for BTD)
+   * @param[in] isBTD is this a backtransformed diagnostics write?
+   * @return the iteration object
+   */
+  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
+  {
+    if (isBTD)
+    {
+        return m_Series->iterations[iteration];
+    } else {
+        return m_Series->writeIterations()[iteration];
+    }
+  }
+
+
+  /** This function does initial setup for the fields when interation is newly created
+   *  @param[in] meshes   The meshes in a series
+   *  @param[in] full_geom The geometry
+   */
+  void SetupFields (
+      openPMD::Container< openPMD::Mesh >& meshes,
+      amrex::Geometry& full_geom
+  ) const;
+
+  void SetupMeshComp (
+      openPMD::Mesh& mesh,
+      amrex::Geometry& full_geom,
+      openPMD::MeshRecordComponent& mesh_comp
+  ) const;
+
+  void GetMeshCompNames (
+      int meshLevel,
+      const std::string& varname,
+      std::string& field_name,
+      std::string& comp_name
+  ) const;
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
@@ -187,6 +246,7 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] charge         Charge of the particles (note: fix for ions)
    * @param[in] mass           Mass of the particles
+   * @param[in] isBTD is this a backtransformed diagnostics write?
    */
   void DumpToFile (ParticleContainer* pc,
             const std::string& name,
@@ -196,7 +256,8 @@ private:
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass) const;
+            amrex::ParticleReal const mass,
+            const bool isBTD) const;
 
   /** Get the openPMD-api filename for openPMD::Series
    *
@@ -218,6 +279,10 @@ private:
    */
   std::string m_dirPrefix;
 
+  /** This is the minimum number of digits in the step number that is used as the
+   * suffix for file names when doing file based encoding */
+  int m_file_min_digits;
+
   int m_MPIRank = 0;
   int m_MPISize = 1;
 
@@ -227,8 +292,9 @@ private:
   //int m_NumSoAIntAttributes = PIdx::nattribs; //! WarpX' additional int particle attributes in SoA
   int m_NumAoSIntAttributes = 0; //! WarpX definition: no additional int attributes in particle AoS
 
-  bool m_OneFilePerTS = true;  //! write in openPMD fileBased manner for individual time steps
+  openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::fileBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
+  std::string m_OpenPMDoptions = "{}"; //! JSON option string for openPMD::Series constructor
   int m_CurrentStep  = -1;
 
   // meta data

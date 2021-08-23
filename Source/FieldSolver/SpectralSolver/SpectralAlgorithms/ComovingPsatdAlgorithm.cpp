@@ -1,5 +1,20 @@
 #include "ComovingPsatdAlgorithm.H"
+
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLProfiler.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+
+#include <cmath>
 
 #if WARPX_USE_PSATD
 
@@ -7,13 +22,16 @@ using namespace amrex;
 
 ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
                                                 const DistributionMapping& dm,
+                                                const SpectralFieldIndex& spectral_index,
                                                 const int norder_x, const int norder_y,
                                                 const int norder_z, const bool nodal,
+                                                const amrex::IntVect& fill_guards,
                                                 const amrex::Array<amrex::Real, 3>& v_comoving,
                                                 const amrex::Real dt,
                                                 const bool update_with_rho)
      // Members initialization
-     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+       m_spectral_index(spectral_index),
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument nodal = false is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, false)),
@@ -48,6 +66,8 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
 void
 ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 {
+    const SpectralFieldIndex& Idx = m_spectral_index;
+
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi){
 
@@ -75,20 +95,19 @@ ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Record old values of the fields to be updated
-            using Idx = SpectralFieldIndex;
-            const Complex Ex_old = fields(i,j,k,Idx::Ex);
-            const Complex Ey_old = fields(i,j,k,Idx::Ey);
-            const Complex Ez_old = fields(i,j,k,Idx::Ez);
-            const Complex Bx_old = fields(i,j,k,Idx::Bx);
-            const Complex By_old = fields(i,j,k,Idx::By);
-            const Complex Bz_old = fields(i,j,k,Idx::Bz);
+            const Complex Ex_old = fields(i,j,k,Idx.Ex);
+            const Complex Ey_old = fields(i,j,k,Idx.Ey);
+            const Complex Ez_old = fields(i,j,k,Idx.Ez);
+            const Complex Bx_old = fields(i,j,k,Idx.Bx);
+            const Complex By_old = fields(i,j,k,Idx.By);
+            const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx::Jx);
-            const Complex Jy = fields(i,j,k,Idx::Jy);
-            const Complex Jz = fields(i,j,k,Idx::Jz);
-            const Complex rho_old = fields(i,j,k,Idx::rho_old);
-            const Complex rho_new = fields(i,j,k,Idx::rho_new);
+            const Complex Jx = fields(i,j,k,Idx.Jx);
+            const Complex Jy = fields(i,j,k,Idx.Jy);
+            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex rho_old = fields(i,j,k,Idx.rho_old);
+            const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
             // k vector values
             const amrex::Real kx_mod = modified_kx_arr[i];
@@ -114,23 +133,23 @@ ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             const Complex     X4   = X4_arr(i,j,k);
 
             // Update E
-            fields(i,j,k,Idx::Ex) = C*Ex_old + S_ck*c2*I*(ky_mod*Bz_old - kz_mod*By_old)
+            fields(i,j,k,Idx.Ex) = C*Ex_old + S_ck*c2*I*(ky_mod*Bz_old - kz_mod*By_old)
                 + X4*Jx - I*(X2*rho_new - X3*rho_old)*kx_mod;
 
-            fields(i,j,k,Idx::Ey) = C*Ey_old + S_ck*c2*I*(kz_mod*Bx_old - kx_mod*Bz_old)
+            fields(i,j,k,Idx.Ey) = C*Ey_old + S_ck*c2*I*(kz_mod*Bx_old - kx_mod*Bz_old)
                 + X4*Jy - I*(X2*rho_new - X3*rho_old)*ky_mod;
 
-            fields(i,j,k,Idx::Ez) = C*Ez_old + S_ck*c2*I*(kx_mod*By_old - ky_mod*Bx_old)
+            fields(i,j,k,Idx.Ez) = C*Ez_old + S_ck*c2*I*(kx_mod*By_old - ky_mod*Bx_old)
                 + X4*Jz - I*(X2*rho_new - X3*rho_old)*kz_mod;
 
             // Update B
-            fields(i,j,k,Idx::Bx) = C*Bx_old - S_ck*I*(ky_mod*Ez_old - kz_mod*Ey_old)
+            fields(i,j,k,Idx.Bx) = C*Bx_old - S_ck*I*(ky_mod*Ez_old - kz_mod*Ey_old)
                 + X1*I*(ky_mod*Jz - kz_mod*Jy);
 
-            fields(i,j,k,Idx::By) = C*By_old - S_ck*I*(kz_mod*Ex_old - kx_mod*Ez_old)
+            fields(i,j,k,Idx.By) = C*By_old - S_ck*I*(kz_mod*Ex_old - kx_mod*Ez_old)
                 + X1*I*(kz_mod*Jx - kx_mod*Jz);
 
-            fields(i,j,k,Idx::Bz) = C*Bz_old - S_ck*I*(kx_mod*Ey_old - ky_mod*Ex_old)
+            fields(i,j,k,Idx.Bz) = C*Bz_old - S_ck*I*(kx_mod*Ey_old - ky_mod*Ex_old)
                 + X1*I*(kx_mod*Jy - ky_mod*Jx);
         });
     }
@@ -400,14 +419,16 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
     // Profiling
     BL_PROFILE("ComovingAlgorithm::CurrentCorrection");
 
-    using Idx = SpectralFieldIndex;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of J and rho
-    field_data.ForwardTransform(lev, *current[0], Idx::Jx, 0);
-    field_data.ForwardTransform(lev, *current[1], Idx::Jy, 0);
-    field_data.ForwardTransform(lev, *current[2], Idx::Jz, 0);
-    field_data.ForwardTransform(lev, *rho, Idx::rho_old, 0);
-    field_data.ForwardTransform(lev, *rho, Idx::rho_new, 1);
+    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0);
+    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0);
+    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0);
+    field_data.ForwardTransform(lev, *rho, Idx.rho_old, 0);
+    field_data.ForwardTransform(lev, *rho, Idx.rho_new, 1);
+
+    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -439,11 +460,11 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx::Jx);
-            const Complex Jy = fields(i,j,k,Idx::Jy);
-            const Complex Jz = fields(i,j,k,Idx::Jz);
-            const Complex rho_old = fields(i,j,k,Idx::rho_old);
-            const Complex rho_new = fields(i,j,k,Idx::rho_new);
+            const Complex Jx = fields(i,j,k,Idx.Jx);
+            const Complex Jy = fields(i,j,k,Idx.Jy);
+            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex rho_old = fields(i,j,k,Idx.rho_old);
+            const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
             // k vector values, and coefficients
             const amrex::Real kx_mod = modified_kx_arr[i];
@@ -474,24 +495,24 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
                     const Complex theta = amrex::exp(- I * k_dot_v * dt * 0.5_rt);
                     const Complex den = 1._rt - theta * theta;
 
-                    fields(i,j,k,Idx::Jx) = Jx - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kx_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx::Jy) = Jy - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * ky_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx::Jz) = Jz - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kz_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jx) = Jx - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jy) = Jy - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jz) = Jz - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kz_mod / (knorm_mod * knorm_mod);
 
                 } else {
 
-                    fields(i,j,k,Idx::Jx) = Jx - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx::Jy) = Jy - (kmod_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx::Jz) = Jz - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jx) = Jx - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jy) = Jy - (kmod_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jz) = Jz - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (knorm_mod * knorm_mod);
                 }
             }
         });
     }
 
     // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx::Jx, 0);
-    field_data.BackwardTransform(lev, *current[1], Idx::Jy, 0);
-    field_data.BackwardTransform(lev, *current[2], Idx::Jz, 0);
+    field_data.BackwardTransform(lev, *current[0], Idx.Jx, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[1], Idx.Jy, 0, fill_guards);
+    field_data.BackwardTransform(lev, *current[2], Idx.Jz, 0, fill_guards);
 }
 
 void

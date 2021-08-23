@@ -18,14 +18,16 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
     public:
         PsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                          amrex::DistributionMapping const & dm,
+                         const SpectralFieldIndex& spectral_index,
                          int const n_rz_azimuthal_modes, int const norder_z,
                          bool const nodal, amrex::Real const dt_step,
-                         bool const update_with_rho);
+                         bool const update_with_rho,
+                         const bool time_averaging,
+                         const bool J_linear_in_time,
+                         const bool dive_cleaning,
+                         const bool divb_cleaning);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
-        virtual int getRequiredNumberOfFields() const override final {
-            return SpectralFieldIndex::n_fields;
-        }
 
         void InitializeSpectralCoefficients(SpectralFieldDataRZ const & f);
 
@@ -62,11 +64,19 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
+
+        SpectralFieldIndex m_spectral_index;
+
         bool coefficients_initialized;
         // Note that dt is saved to use in InitializeSpectralCoefficients
         amrex::Real m_dt;
         bool m_update_with_rho;
+        bool m_time_averaging;
+        bool m_J_linear_in_time;
+        bool m_dive_cleaning;
+        bool m_divb_cleaning;
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+        SpectralRealCoefficients X5_coef, X6_coef;
 };
 
 #endif // WARPX_PSATD_ALGORITHM_RZ_H_

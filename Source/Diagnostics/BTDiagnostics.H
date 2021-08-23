@@ -2,6 +2,20 @@
 #define WARPX_BTDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+
+#include <limits>
+#include <memory>
+#include <string>
 
 class
 BTDiagnostics final : public Diagnostics

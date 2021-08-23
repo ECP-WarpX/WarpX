@@ -9,6 +9,16 @@
 
 #include "SpectralBaseAlgorithm.H"
 
+#include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpace_fwd.H"
+
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
+
 #if WARPX_USE_PSATD
 
 /* \brief Class that updates the field in spectral space
@@ -19,8 +29,10 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
     public:
         PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const amrex::DistributionMapping& dm,
+                         const SpectralFieldIndex& spectral_index,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
+                         const amrex::IntVect& fill_guards,
                          const amrex::Real dt,
                          const bool dive_cleaning,
                          const bool divb_cleaning);
@@ -32,9 +44,6 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
 
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields() const override final {
-            return SpectralPMLIndex::n_fields;
-        }
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -69,6 +78,7 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
+        SpectralFieldIndex m_spectral_index;
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;
         amrex::Real m_dt;
         bool m_dive_cleaning;

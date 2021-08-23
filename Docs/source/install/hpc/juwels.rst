@@ -37,9 +37,12 @@ We use the following modules and environments on the system.
    export proj=<yourProject>
 
    # required dependencies
+   module load ccache
+   module load CMake
    module load GCC
+   module load CUDA/11.3
    module load OpenMPI
-   module load CUDA
+   module load FFTW
    module load HDF5
    module load Python
 
@@ -50,8 +53,8 @@ We use the following modules and environments on the system.
    export GPUS_PER_SOCKET=2
    export GPUS_PER_NODE=4
 
-   # optimize CUDA compilation for V100 (CMake hint)
-   export AMREX_CUDA_ARCH=7.0
+   # optimize CUDA compilation for V100 (7.0) or for A100 (8.0)
+   export AMREX_CUDA_ARCH=8.0
 
 Note that for now WarpX must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
 

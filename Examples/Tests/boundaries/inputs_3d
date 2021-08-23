@@ -1,0 +1,71 @@
+# Maximum number of time steps
+max_step = 8
+
+# number of grid points
+amr.n_cell =  16 16 16
+
+# The lo and hi ends of grids are multipliers of blocking factor
+amr.blocking_factor = 8
+
+# Maximum allowable size of each subdomain in the problem domain;
+#    this is used to decompose the domain for parallel calculations.
+amr.max_grid_size = 8
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.prob_lo     = -1.0  -1.0  -1.0   # physical domain
+geometry.prob_hi     =  1.0   1.0   1.0
+
+boundary.field_lo = pec pec periodic
+boundary.field_hi = pec pec periodic
+boundary.particle_lo = reflecting absorbing periodic
+boundary.particle_hi = reflecting absorbing periodic
+
+# Algorithms
+algo.particle_shape = 1
+
+# CFL
+warpx.cfl = 1.0
+
+# particles
+particles.species_names = reflecting_particles absorbing_particles periodic_particles
+
+reflecting_particles.charge = 0.
+reflecting_particles.mass = m_e
+reflecting_particles.injection_style = "MultipleParticles"
+reflecting_particles.multiple_particles_pos_x = -0.9 +0.91
+reflecting_particles.multiple_particles_pos_y = 0. 0.
+reflecting_particles.multiple_particles_pos_z = 0. 0.
+reflecting_particles.multiple_particles_vel_x = -0.9 +0.91
+reflecting_particles.multiple_particles_vel_y = 0. 0.
+reflecting_particles.multiple_particles_vel_z = 0. 0.
+reflecting_particles.multiple_particles_weight = 1. 1.
+
+absorbing_particles.charge = 0.
+absorbing_particles.mass = m_e
+absorbing_particles.injection_style = "MultipleParticles"
+absorbing_particles.multiple_particles_pos_x = 0. 0. 0.
+absorbing_particles.multiple_particles_pos_y = -0.92 +0.93 0.
+absorbing_particles.multiple_particles_pos_z = 0. 0. 0.
+absorbing_particles.multiple_particles_vel_x = 0. 0. 0.
+absorbing_particles.multiple_particles_vel_y = -0.92 +0.93 0.
+absorbing_particles.multiple_particles_vel_z = 0. 0. 0.
+absorbing_particles.multiple_particles_weight = 1. 1. 1.
+
+periodic_particles.charge = 0.
+periodic_particles.mass = m_e
+periodic_particles.injection_style = "MultipleParticles"
+periodic_particles.multiple_particles_pos_x = 0. 0.
+periodic_particles.multiple_particles_pos_y = 0. 0.
+periodic_particles.multiple_particles_pos_z = -0.94 +0.95
+periodic_particles.multiple_particles_vel_x = 0. 0.
+periodic_particles.multiple_particles_vel_y = 0. 0.
+periodic_particles.multiple_particles_vel_z = -0.94 +0.95
+periodic_particles.multiple_particles_weight = 1. 1.
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 8
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex

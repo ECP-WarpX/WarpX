@@ -9,7 +9,8 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEEXTREMA_H_
 
 #include "ReducedDiags.H"
-#include <fstream>
+
+#include <string>
 
 /**
  *  This class mainly contains a function that
@@ -19,14 +20,19 @@ class ParticleExtrema : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     ParticleExtrema(std::string rd_name);
 
     /// name of species
     std::string m_species_name;
 
-    /** This funciton computes the particle extrema
+    /**
+     * This funciton computes the particle extrema
+     *
+     * @param[in] step current time step
      */
     void ComputeDiags(int step) override final;
 

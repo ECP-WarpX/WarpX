@@ -84,12 +84,14 @@ grid = picmi.CylindricalGrid(number_of_cells = [nr, nz],
                              n_azimuthal_modes = 3,
                              lower_bound = [rmin, zmin],
                              upper_bound = [rmax, zmax],
-                             lower_boundary_conditions = ['dirichlet', 'periodic'],
-                             upper_boundary_conditions = ['dirichlet', 'periodic'],
+                             lower_boundary_conditions = ['none', 'periodic'],
+                             upper_boundary_conditions = ['none', 'periodic'],
+                             lower_boundary_conditions_particles = ['absorbing', 'periodic'],
+                             upper_boundary_conditions_particles = ['absorbing', 'periodic'],
                              moving_window_zvelocity = 0.,
                              warpx_max_grid_size=64)
 
-solver = picmi.ElectromagneticSolver(grid=grid, cfl=1., warpx_do_pml=False)
+solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
 
 ##########################
 # diagnostics
@@ -116,7 +118,8 @@ sim = picmi.Simulation(solver = solver,
                        verbose = 1,
                        warpx_current_deposition_algo = 'esirkepov',
                        warpx_field_gathering_algo = 'energy-conserving',
-                       warpx_particle_pusher_algo = 'boris')
+                       warpx_particle_pusher_algo = 'boris',
+                       warpx_use_filter = 0)
 
 sim.add_species(electrons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))
 sim.add_species(protons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))

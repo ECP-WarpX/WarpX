@@ -106,27 +106,15 @@ struct SmartCopy
             int* AMREX_RESTRICT dst_data;
             int* AMREX_RESTRICT src_data;
 
-            if (m_src_comps_i[j] < SrcData::NAI)
-            {
-                src_comp = m_src_comps_i[j];
-                src_data = src.m_idata[src_comp];
-            }
-            else
-            {
-                src_comp = m_src_comps_i[j] - SrcData::NAI;
-                src_data = src.m_runtime_idata[src_comp];
-            }
+            // note, in WarpX we only have runtime int data
+            static_assert(SrcData::NAI == 0 && DstData::NAI == 0,
+                          "SmartCopy assumes all int data is runtime-added.");
 
-            if (m_dst_comps_i[j] < DstData::NAI)
-            {
-                dst_comp = m_dst_comps_i[j];
-                dst_data = dst.m_idata[dst_comp];
-            }
-            else
-            {
-                dst_comp = m_dst_comps_i[j] - DstData::NAI;
-                dst_data = dst.m_runtime_idata[dst_comp];
-            }
+            src_comp = m_src_comps_i[j];
+            src_data = src.m_runtime_idata[src_comp];
+
+            dst_comp = m_dst_comps_i[j];
+            dst_data = dst.m_runtime_idata[dst_comp];
 
             dst_data[i_dst] = src_data[i_src];
         }

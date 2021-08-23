@@ -5,8 +5,14 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "CollisionHandler.H"
-#include "PairWiseCoulombCollision.H"
+
+#include "BinaryCollision.H"
+#include "PairWiseCoulombCollisionFunc.H"
+#include "BackgroundMCCCollision.H"
+
 #include <AMReX_ParmParse.H>
+
+#include <vector>
 
 CollisionHandler::CollisionHandler()
 {
@@ -29,7 +35,14 @@ CollisionHandler::CollisionHandler()
         collision_types[i] = type;
 
         if (type == "pairwisecoulomb") {
-            allcollisions[i] = std::make_unique<PairWiseCoulombCollision>(collision_names[i]);
+            allcollisions[i] =
+               std::make_unique<BinaryCollision<PairWiseCoulombCollisionFunc>>(collision_names[i]);
+        }
+        else if (type == "background_mcc") {
+            allcollisions[i] = std::make_unique<BackgroundMCCCollision>(collision_names[i]);
+        }
+        else{
+            amrex::Abort("Unknown collision type.");
         }
 
     }

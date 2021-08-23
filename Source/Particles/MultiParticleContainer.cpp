@@ -10,19 +10,66 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
-#include "SpeciesPhysicalProperties.H"
-#include "WarpX.H"
+#include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
-    #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
-    #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
-    #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
+#   include "Particles/ElementaryProcess/QEDPairGeneration.H"
+#   include "Particles/ElementaryProcess/QEDPhotonEmission.H"
+#endif
+#include "Particles/LaserParticleContainer.H"
+#include "Particles/ParticleCreation/FilterCopyTransform.H"
+#ifdef WARPX_QED
+#   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#endif
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/ParticleCreation/SmartCreate.H"
+#include "Particles/ParticleCreation/SmartUtils.H"
+#include "Particles/PhotonParticleContainer.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/RigidInjectedParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "SpeciesPhysicalProperties.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#ifdef AMREX_USE_EB
+#   include "EmbeddedBoundary/ParticleScraper.H"
+#   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
 #endif
 
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParticleTile.H>
+#include <AMReX_Particles.H>
+#include <AMReX_Print.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
-#include <limits>
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace amrex;
@@ -142,11 +189,11 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bx_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
-           m_By_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_By_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
-           m_Bz_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bz_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
@@ -167,13 +214,72 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp_particles, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ex_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
-           m_Ey_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ey_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
-           m_Ez_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ez_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
+        }
+
+        // if the input string for E_ext_particle_s or B_ext_particle_s is
+        // "repeated_plasma_lens" then the plasma lens properties
+        // must be provided in the input file.
+        if (m_E_ext_particle_s == "repeated_plasma_lens" ||
+            m_B_ext_particle_s == "repeated_plasma_lens") {
+            queryWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_starts", h_repeated_plasma_lens_starts);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", h_repeated_plasma_lens_lengths);
+
+            int n_lenses = static_cast<int>(h_repeated_plasma_lens_starts.size());
+            d_repeated_plasma_lens_starts.resize(n_lenses);
+            d_repeated_plasma_lens_lengths.resize(n_lenses);
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_starts.begin(), h_repeated_plasma_lens_starts.end(),
+                       d_repeated_plasma_lens_starts.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_lengths.begin(), h_repeated_plasma_lens_lengths.end(),
+                       d_repeated_plasma_lens_lengths.begin());
+
+            if (m_E_ext_particle_s == "repeated_plasma_lens") {
+                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_E", h_repeated_plasma_lens_strengths_E);
+            }
+            if (m_B_ext_particle_s == "repeated_plasma_lens") {
+                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_B", h_repeated_plasma_lens_strengths_B);
+            }
+            if (WarpX::gamma_boost > 1._rt) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                     m_E_ext_particle_s == "repeated_plasma_lens" || m_E_ext_particle_s == "default",
+                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
+                     "must be either repeated_plasma_lens or unspecified");
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                     m_B_ext_particle_s == "repeated_plasma_lens" || m_B_ext_particle_s == "default",
+                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
+                     "must be either repeated_plasma_lens or unspecified");
+                if (m_E_ext_particle_s == "default") {
+                    m_E_ext_particle_s = "repeated_plasma_lens";
+                    h_repeated_plasma_lens_strengths_E.resize(n_lenses);
+                }
+                if (m_B_ext_particle_s == "default") {
+                    m_B_ext_particle_s = "repeated_plasma_lens";
+                    h_repeated_plasma_lens_strengths_B.resize(n_lenses);
+                }
+            }
+
+            if (m_E_ext_particle_s == "repeated_plasma_lens") {
+                d_repeated_plasma_lens_strengths_E.resize(n_lenses);
+                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                           h_repeated_plasma_lens_strengths_E.begin(), h_repeated_plasma_lens_strengths_E.end(),
+                           d_repeated_plasma_lens_strengths_E.begin());
+            }
+            if (m_B_ext_particle_s == "repeated_plasma_lens") {
+                d_repeated_plasma_lens_strengths_B.resize(n_lenses);
+                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                           h_repeated_plasma_lens_strengths_B.begin(), h_repeated_plasma_lens_strengths_B.end(),
+                           d_repeated_plasma_lens_strengths_B.begin());
+            }
+            amrex::Gpu::synchronize();
         }
 
 
@@ -251,14 +357,20 @@ MultiParticleContainer::ReadParameters ()
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
 
-        std::string boundary_conditions = "none";
-        pp_particles.query("boundary_conditions", boundary_conditions);
-        if        (boundary_conditions == "none"){
-            m_boundary_conditions = ParticleBC::none;
-        } else if (boundary_conditions == "absorbing"){
-            m_boundary_conditions = ParticleBC::absorbing;
-        } else {
-            amrex::Abort("unknown particle BC type");
+        // The boundary conditions are read in in ReadBCParams
+        m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
+#ifdef WARPX_DIM_3D
+        m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
+#else
+        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+#endif
+
+        {
+            ParmParse pp_boundary("boundary");
+            bool flag = false;
+            pp_boundary.query("reflect_all_velocities", flag);
+            m_boundary_conditions.Set_reflect_all_velocities(flag);
         }
 
         ParmParse pp_lasers("lasers");
@@ -379,10 +491,74 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
     return zero_rho;
 }
 
+void
+MultiParticleContainer::DepositCurrent (
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+    const amrex::Real dt, const amrex::Real relative_t)
+{
+    // Reset the J arrays
+    for (int lev = 0; lev < J.size(); ++lev)
+    {
+        J[lev][0]->setVal(0.0, J[lev][0]->nGrowVect());
+        J[lev][1]->setVal(0.0, J[lev][1]->nGrowVect());
+        J[lev][2]->setVal(0.0, J[lev][2]->nGrowVect());
+    }
+
+    // Call the deposition kernel for each species
+    for (auto& pc : allcontainers)
+    {
+        pc->DepositCurrent(J, dt, relative_t);
+    }
+
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev < J.size(); ++lev)
+    {
+        WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(J[lev][0].get(), J[lev][1].get(), J[lev][2].get(), lev);
+    }
+#endif
+}
+
+void
+MultiParticleContainer::DepositCharge (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    const amrex::Real relative_t, const int icomp)
+{
+    // Reset the rho array
+    for (int lev = 0; lev < rho.size(); ++lev)
+    {
+        int const nc = WarpX::ncomps;
+        rho[lev]->setVal(0.0, icomp*nc, nc, rho[lev]->nGrowVect());
+    }
+
+    // Push the particles in time, if needed
+    if (relative_t != 0.) PushX(relative_t);
+
+    // Call the deposition kernel for each species
+    for (auto& pc : allcontainers)
+    {
+        bool const local = true;
+        bool const reset = false;
+        bool const do_rz_volume_scaling = false;
+        bool const interpolate_across_levels = false;
+        pc->DepositCharge(rho, local, reset, do_rz_volume_scaling,
+                              interpolate_across_levels, icomp);
+    }
+
+    // Push the particles back in time
+    if (relative_t != 0.) PushX(-relative_t);
+
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev < rho.size(); ++lev)
+    {
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+    }
+#endif
+}
+
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    if (allcontainers.size() == 0)
+    if (allcontainers.empty())
     {
         std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
         return rho;
@@ -454,7 +630,7 @@ MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 Vector<Long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
-    if (allcontainers.size() == 0)
+    if (allcontainers.empty())
     {
         const Vector<Long> r = GetZeroParticlesInGrid(lev);
         return r;
@@ -609,6 +785,18 @@ MultiParticleContainer::doContinuousInjection () const
         }
     }
     return warpx_do_continuous_injection;
+}
+
+/* \brief Continuous injection of a flux of particles
+ * Loop over all WarpXParticleContainer in MultiParticleContainer and
+ * calls virtual function ContinuousFluxInjection.
+ */
+void
+MultiParticleContainer::ContinuousFluxInjection (amrex::Real dt) const
+{
+    for (auto& pc : allcontainers){
+        pc->ContinuousFluxInjection(dt);
+    }
 }
 
 /* \brief Get ID of product species of each species.
@@ -777,6 +965,17 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
                 "ERROR: ionization product cannot be the same species");
         }
     }
+}
+
+void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
+#ifdef AMREX_USE_EB
+    for (auto& pc : allcontainers) {
+        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+    }
+#else
+    amrex::ignore_unused(distance_to_eb);
+#endif
 }
 
 #ifdef WARPX_QED
@@ -1389,7 +1588,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
-                  pc_source->particle_runtime_comps["optical_depth_QSR"],
+                  pc_source->particle_runtime_comps["opticalDepthQSR"],
                   m_shr_p_qs_engine->build_phot_em_functor(),
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
