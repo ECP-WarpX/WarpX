@@ -137,11 +137,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // Allocate fields for the potential
-    // Also, zero out the phi data
+    // Zero out the charge density
     for (int lev = 0; lev <= max_level; lev++) {
-        BoxArray nba = boxArray(lev);
-        nba.surroundingNodes();
         rho_fp[lev]->setVal(0.);
     }
 
