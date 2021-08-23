@@ -218,7 +218,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
 
-                        amrex::Real phi_value  = doGatherScalarField(
+                        amrex::Real phi_value  = doGatherScalarFieldNodal(
                             xp, yp, zp, phiarr, dxi, plo
                         );
                         return phi_value < 0.0 ? 1 : 0;

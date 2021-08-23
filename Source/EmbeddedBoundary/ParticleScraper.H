@@ -165,9 +165,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                compute_weights(xp, yp, zp, plo, dxi, i, j, k, W);
+                compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
 
-                amrex::Real phi_value  = interp_field(i, j, k, W, phi);
+                amrex::Real phi_value  = interp_field_nodal(i, j, k, W, phi);
                 amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
                 // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
