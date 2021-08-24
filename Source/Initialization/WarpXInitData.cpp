@@ -119,9 +119,6 @@ WarpX::InitData ()
     else
     {
         InitFromCheckpoint();
-        if (is_synchronized) {
-            ComputeDt();
-        }
         PostRestart();
     }
 
@@ -403,9 +400,6 @@ WarpX::InitFilter (){
 void
 WarpX::PostRestart ()
 {
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        amrex::Abort("WarpX::PostRestart: TODO for PSATD");
-    }
     mypc->PostRestart();
 }
 

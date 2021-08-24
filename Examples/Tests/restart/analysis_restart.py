@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+import re
 import yt
 import numpy as np
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -9,7 +10,9 @@ import checksumAPI
 tolerance = sys.float_info.epsilon
 print('tolerance = ', tolerance)
 
-filename = 'restart_plt00010'
+filename = sys.argv[1]
+psatd = True if re.search('psatd', filename) else False
+
 ds  = yt.load( filename )
 ad  = ds.all_data()
 xb  = ad['beam',     'particle_position_x'].to_ndarray()
@@ -17,7 +20,7 @@ xe  = ad['plasma_e', 'particle_position_x'].to_ndarray()
 zb  = ad['beam',     'particle_position_z'].to_ndarray()
 ze  = ad['plasma_e', 'particle_position_z'].to_ndarray()
 
-filename = 'orig_restart_plt00010'
+filename = 'orig_restart_psatd_plt00010' if (psatd) else 'orig_restart_plt00010'
 ds  = yt.load( filename )
 ad  = ds.all_data()
 xb0 = ad['beam',     'particle_position_x'].to_ndarray()
