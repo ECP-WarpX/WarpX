@@ -538,7 +538,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // plot by default
     int_flags.resize(pc->NumIntComps(), 1);
 
-#endif
       // Temporarily adding this if condition. For now, BTD will be output
       // in WarpX units for comparison with existing BTD output.
       // After validating BTD, we will remove the if conditionality and use a separate
