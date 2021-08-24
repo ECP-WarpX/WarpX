@@ -74,8 +74,13 @@ libname = "libwarpx.{0}.{1}".format(geometry_dim, mod_ext)
 
 try:
     libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), libname))
-except OSError:
-    raise Exception('"%s" was not installed. It can be installed by running "make" in the Python directory of WarpX' % libname)
+except OSError as e:
+    value = e.args[0]
+    if f'{libname}: cannot open shared object file: No such file or directory' in value:
+        raise Exception(f'"{libname}" was not installed. Installation instructions can be found here https://warpx.readthedocs.io/en/latest/install/users.html') from e
+    else:
+        print("Failed to load the libwarpx shared object library")
+        raise
 
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
@@ -370,7 +375,7 @@ def getCellSize(direction, level=0):
 #
 #    libwarpx.warpx_ComputePMLFactors(lev, dt)
 
-def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
+def add_particles(species_name, x=None, y=None, z=None, ux=None, uy=None, uz=None, w=None,
                   unique_particles=True, **kwargs):
     '''
 
@@ -382,11 +387,12 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     species_name     : the species to add the particle to
     x, y, z          : arrays or scalars of the particle positions (default = 0.)
     ux, uy, uz       : arrays or scalars of the particle momenta (default = 0.)
+    w                : array or scalar of particle weights (default = 0.)
     unique_particles : whether the particles are unique or duplicated on
                        several processes. (default = True)
-    kwargs           : dictionary containing an entry for the particle weights
-                       (with keyword 'w') and all the extra particle attribute
-                       arrays. If an attribute is not given it will be set to 0.
+    kwargs           : dictionary containing an entry for all the extra particle
+                       attribute arrays. If an attribute is not given it will be
+                       set to 0.
 
     '''
 
@@ -397,47 +403,69 @@ def add_particles(species_name, x=0., y=0., z=0., ux=0., uy=0., uz=0.,
     lenux = np.size(ux)
     lenuy = np.size(uy)
     lenuz = np.size(uz)
+    lenw = np.size(w)
 
-    if (lenx == 0 or leny == 0 or lenz == 0 or lenux == 0 or
-        lenuy == 0 or lenuz == 0):
-        return
+    # --- Find the max length of the parameters supplied
+    maxlen = 0
+    if x is not None:
+        maxlen = max(maxlen, lenx)
+    if y is not None:
+        maxlen = max(maxlen, leny)
+    if z is not None:
+        maxlen = max(maxlen, lenz)
+    if ux is not None:
+        maxlen = max(maxlen, lenux)
+    if uy is not None:
+        maxlen = max(maxlen, lenuy)
+    if uz is not None:
+        maxlen = max(maxlen, lenuz)
+    if w is not None:
+        maxlen = max(maxlen, lenw)
 
-    maxlen = max(lenx, leny, lenz, lenux, lenuy, lenuz)
-    assert lenx==maxlen or lenx==1, "Length of x doesn't match len of others"
-    assert leny==maxlen or leny==1, "Length of y doesn't match len of others"
-    assert lenz==maxlen or lenz==1, "Length of z doesn't match len of others"
-    assert lenux==maxlen or lenux==1, "Length of ux doesn't match len of others"
-    assert lenuy==maxlen or lenuy==1, "Length of uy doesn't match len of others"
-    assert lenuz==maxlen or lenuz==1, "Length of uz doesn't match len of others"
+    # --- Make sure that the lengths of the input parameters are consistent
+    assert x is None or lenx==maxlen or lenx==1, "Length of x doesn't match len of others"
+    assert y is None or leny==maxlen or leny==1, "Length of y doesn't match len of others"
+    assert z is None or lenz==maxlen or lenz==1, "Length of z doesn't match len of others"
+    assert ux is None or lenux==maxlen or lenux==1, "Length of ux doesn't match len of others"
+    assert uy is None or lenuy==maxlen or lenuy==1, "Length of uy doesn't match len of others"
+    assert uz is None or lenuz==maxlen or lenuz==1, "Length of uz doesn't match len of others"
+    assert w is None or lenw==maxlen or lenw==1, "Length of w doesn't match len of others"
     for key, val in kwargs.items():
         assert np.size(val)==1 or len(val)==maxlen, f"Length of {key} doesn't match len of others"
 
+    # --- If the length of the input is zero, then quietly return
+    # --- This is not an error - it just means that no particles are to be injected.
+    if maxlen == 0:
+        return
+
+    # --- Broadcast scalars into appropriate length arrays
+    # --- If the parameter was not supplied, use the default value
     if lenx == 1:
-        x = np.array(x)*np.ones(maxlen)
+        x = np.full(maxlen, (x or 0.), float)
     if leny == 1:
-        y = np.array(y)*np.ones(maxlen)
+        y = np.full(maxlen, (y or 0.), float)
     if lenz == 1:
-        z = np.array(z)*np.ones(maxlen)
+        z = np.full(maxlen, (z or 0.), float)
     if lenux == 1:
-        ux = np.array(ux)*np.ones(maxlen)
+        ux = np.full(maxlen, (ux or 0.), float)
     if lenuy == 1:
-        uy = np.array(uy)*np.ones(maxlen)
+        uy = np.full(maxlen, (uy or 0.), float)
     if lenuz == 1:
-        uz = np.array(uz)*np.ones(maxlen,'d')
+        uz = np.full(maxlen, (uz or 0.), float)
+    if lenw == 1:
+        w = np.full(maxlen, (w or 0.), float)
     for key, val in kwargs.items():
         if np.size(val) == 1:
-            kwargs[key] = np.array(val)*np.ones(maxlen)
+            kwargs[key] = np.full(maxlen, val, float)
 
     # --- The -3 is because the comps include the velocites
     nattr = get_nattr_species(species_name) - 3
     attr = np.zeros((maxlen, nattr))
+    attr[:,0] = w
 
     for key, vals in kwargs.items():
-        if key == 'w':
-            attr[:,0] = vals
-        else:
-            # --- The -3 is because components 1 to 3 are velocities
-            attr[:,get_particle_comp_index(species_name, key)-3] = vals
+        # --- The -3 is because components 1 to 3 are velocities
+        attr[:,get_particle_comp_index(species_name, key)-3] = vals
 
     libwarpx.warpx_addNParticles(
         ctypes.c_char_p(species_name.encode('utf-8')), x.size,

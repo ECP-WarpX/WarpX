@@ -525,7 +525,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     def init(self, kw):
         assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD'], Exception("Only 'Yee', 'CKC', and 'PSATD' are supported")
 
-        self.do_pml = kw.pop('warpx_do_pml', None)
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
 
         if self.method == 'PSATD':
@@ -539,7 +538,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         self.grid.initialize_inputs()
 
-        pywarpx.warpx.do_pml = self.do_pml
         pywarpx.warpx.pml_ncell = self.pml_ncell
         pywarpx.warpx.do_nodal = self.l_nodal
 
@@ -1034,6 +1032,11 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.intervals = self.period
 
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
@@ -1087,7 +1090,35 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 
 
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
+    """
+    Warp specific arguments:
+      - warpx_new_BTD: Use the new BTD diagnostics
+      - warpx_format: Passed to <diagnostic name>.format
+      - warpx_openpmd_backend: Passed to <diagnostic name>.openpmd_backend
+      - warpx_file_prefix: Passed to <diagnostic name>.file_prefix
+      - warpx_buffer_size: Passed to <diagnostic name>.buffer_size
+      - warpx_lower_bound: Passed to <diagnostic name>.lower_bound
+      - warpx_upper_bound: Passed to <diagnostic name>.upper_bound
+    """
+    __doc__ = picmistandard.PICMI_LabFrameFieldDiagnostic.__doc__ + __doc__
+    def init(self, kw):
+        self.use_new_BTD = kw.pop('warpx_new_BTD', False)
+        if self.use_new_BTD:
+            # The user is using the new BTD
+            self.format = kw.pop('warpx_format', None)
+            self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+            self.file_prefix = kw.pop('warpx_file_prefix', None)
+            self.buffer_size = kw.pop('warpx_buffer_size', None)
+            self.lower_bound = kw.pop('warpx_lower_bound', None)
+            self.upper_bound = kw.pop('warpx_upper_bound', None)
+
     def initialize_inputs(self):
+        if self.use_new_BTD:
+            self.initialize_inputs_new()
+        else:
+            self.initialize_inputs_old()
+
+    def initialize_inputs_old(self):
 
         pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
         pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
@@ -1098,6 +1129,65 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
         pywarpx.warpx.do_back_transformed_fields = 1
         pywarpx.warpx.lab_data_directory = self.write_dir
+
+    def initialize_inputs_new(self):
+
+        name = getattr(self, 'name', None)
+        if name is None:
+            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
+            self.name = 'diag{}'.format(diagnostics_number)
+
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+
+        self.diagnostic.diag_type = 'BackTransformed'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.diag_lo = self.lower_bound
+        self.diagnostic.diag_hi = self.upper_bound
+
+        self.diagnostic.do_back_transformed_fields = 1
+        self.diagnostic.num_snapshots_lab = self.num_snapshots
+        self.diagnostic.dt_snapshots_lab = self.dt_snapshots
+        self.diagnostic.buffer_size = self.buffer_size
+
+        # --- Use a set to ensure that fields don't get repeated.
+        fields_to_plot = set()
+
+        for dataname in self.data_list:
+            if dataname == 'E':
+                fields_to_plot.add('Ex')
+                fields_to_plot.add('Ey')
+                fields_to_plot.add('Ez')
+            elif dataname == 'B':
+                fields_to_plot.add('Bx')
+                fields_to_plot.add('By')
+                fields_to_plot.add('Bz')
+            elif dataname == 'J':
+                fields_to_plot.add('jx')
+                fields_to_plot.add('jy')
+                fields_to_plot.add('jz')
+            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
+                fields_to_plot.add(dataname)
+            elif dataname in ['Jx', 'Jy', 'Jz']:
+                fields_to_plot.add(dataname.lower())
+            elif dataname.startswith('rho_'):
+                # Adds rho_species diagnostic
+                fields_to_plot.add(dataname)
+
+        # --- Convert the set to a sorted list so that the order
+        # --- is the same on all processors.
+        fields_to_plot = list(fields_to_plot)
+        fields_to_plot.sort()
+        self.diagnostic.fields_to_plot = fields_to_plot
+
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
 
 
 class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):

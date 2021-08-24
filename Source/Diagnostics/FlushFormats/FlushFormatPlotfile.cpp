@@ -3,12 +3,12 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
 #include "Utils/Interpolate.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_AmrParticles.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
@@ -290,6 +290,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
+
+        HeaderFile << warpx.time_of_last_gal_shift << "\n";
     }
 }
 
@@ -304,14 +306,14 @@ FlushFormatPlotfile::WriteHeaderParticle(
 }
 
 void
-FlushFormatPlotfile::WriteParticles(const std::string& dir,
-                                    const amrex::Vector<ParticleDiag>& particle_diags) const
+FlushFormatPlotfile::WriteParticles (const std::string& dir,
+                                     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
-            tmp(&WarpX::GetInstance());
+        auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -327,9 +329,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         real_names.push_back("theta");
 #endif
 
-        // add runtime real comps to tmp
-        for (int ic = 0; ic < pc->NumRuntimeRealComps(); ++ic) { tmp.AddRealComp(false); }
-
         // get the names of the real comps
         real_names.resize(pc->NumRealComps());
         auto runtime_rnames = pc->getParticleRuntimeComps();
@@ -338,9 +337,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         // plot any "extra" fields by default
         real_flags = particle_diags[i].plot_flags;
         real_flags.resize(pc->NumRealComps(), 1);
-
-        // add runtime int comps to tmp
-        for (int ic = 0; ic < pc->NumRuntimeIntComps(); ++ic) { tmp.AddIntComp(false); }
 
         // and the names
         int_names.resize(pc->NumIntComps());

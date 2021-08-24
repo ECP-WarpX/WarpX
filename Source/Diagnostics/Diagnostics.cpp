@@ -58,12 +58,6 @@ Diagnostics::BaseReadParameters ()
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
 
-    // If user requests rho with back-transformed diagnostics, we set plot_rho=true
-    // and compute rho at each iteration
-    if (WarpXUtilStr::is_in(m_varnames, "rho") && WarpX::do_back_transformed_diagnostics) {
-        warpx.setplot_rho(true);
-    }
-
     // Sanity check if user requests to plot phi
     if (WarpXUtilStr::is_in(m_varnames, "phi")){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -204,7 +198,8 @@ Diagnostics::InitData ()
             InitializeFieldBufferData(i_buffer, lev);
         }
     }
-    // When particle buffers, m_particle_buffers are included, they will be initialized here
+    // When particle buffers, m_particle_boundary_buffer are included,
+    // they will be initialized here
     InitializeParticleBuffer();
 
     amrex::ParmParse pp_diag_name(m_diag_name);
@@ -268,7 +263,7 @@ Diagnostics::InitBaseData ()
     } else if (m_format == "ascent"){
         m_flush_format = std::make_unique<FlushFormatAscent>();
     } else if (m_format == "sensei"){
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);

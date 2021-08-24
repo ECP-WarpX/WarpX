@@ -55,25 +55,16 @@ using namespace amrex;
 
 void
 WarpX::DepositChargeDensity (WarpXParticleContainer& species, const bool local,
-                             const bool reset, const bool do_rz_volume_scaling)
+                             const bool reset, const bool do_rz_volume_scaling,
+                             const bool interpolate_across_levels)
 {
     // deposit charge density on the grid and write to rho_fp. If reset is true
     // the values in rho_fp will be overwritten, if false the charge density
     // from the current species will be added to rho_fp.
-    species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
-}
-
-void
-WarpX::ChargeDensityGridProcessing ()
-{
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyFilterandSumBoundaryRho (lev, lev, *rho_fp[lev], 0, 1);
-    }
-#ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-    }
-#endif
+    species.DepositCharge(
+        rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
+    );
+    SyncRho();
 }
 
 void
@@ -95,13 +86,21 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 
         // Loop over particles to gather to total charge density
         bool const local = true;
+        bool const interpolate_across_levels = false;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-            species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
+            species.DepositCharge(
+                rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
+            );
         }
-        ChargeDensityGridProcessing();
+#ifdef WARPX_DIM_RZ
+        for (int lev = 0; lev <= max_level; lev++) {
+            ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+        }
+#endif
+        SyncRho();
         AddSpaceChargeFieldLabFrame();
 
     } else {
@@ -243,7 +242,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    int const verbosity) const
 {
     // Create a new geometry with the z coordinate scaled by gamma
-    amrex::Real const gamma = std::sqrt(1._rt/(1. - beta[2]*beta[2]));
+    amrex::Real const gamma = std::sqrt(1._rt/(1._rt - beta[2]*beta[2]));
 
     amrex::Vector<amrex::Geometry> geom_scaled(max_level + 1);
     for (int lev = 0; lev <= max_level; ++lev) {
@@ -447,7 +446,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // one of the axes of the grid, i.e. that only *one* of the Cartesian
     // components of `beta` is non-negligible.
     linop.setSigma({AMREX_D_DECL(
-        1.-beta[0]*beta[0], 1.-beta[1]*beta[1], 1.-beta[2]*beta[2])});
+        1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
     // get the EB potential at the current time
     std::string potential_eb_str = "0";

@@ -9,6 +9,8 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
@@ -58,7 +60,7 @@ private:
 class WarpXParticleCounter
 {
 public:
-  using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   WarpXParticleCounter (ParticleContainer* pc);
@@ -127,7 +129,8 @@ public:
    */
   void CloseStep (bool isBTD = false, bool isLastBTDFlush = false);
 
-  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
+  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
+                              const bool isBTD = false);
 
   void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
@@ -142,18 +145,23 @@ private:
   void Init (openPMD::Access access, bool isBTD);
 
 
-  inline openPMD::Iteration& GetIteration(int iteration) const
+  /** Get the openPMD::Iteration object of the current Series
+   *
+   * We use this helper function to differentiate between efficient, temporally
+   * sequentially increasing writes to iteration numbers and random-access
+   * writes to iterations, e.g., as needed for back-transformed diagnostics.
+   *
+   * @param[in] iteration iteration number (lab-frame for BTD)
+   * @param[in] isBTD is this a backtransformed diagnostics write?
+   * @return the iteration object
+   */
+  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
   {
-    // so BTD will be able to revisit previous steps, so we do not use steps with these two encodings,
-    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
-          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
+    if (isBTD)
     {
-        openPMD::Iteration& it = m_Series->iterations[iteration];
-        return it;
+        return m_Series->iterations[iteration];
     } else {
-        auto iterations = m_Series->writeIterations();
-        openPMD::Iteration& it = iterations[iteration];
-        return it;
+        return m_Series->writeIterations()[iteration];
     }
   }
 
@@ -238,6 +246,7 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] charge         Charge of the particles (note: fix for ions)
    * @param[in] mass           Mass of the particles
+   * @param[in] isBTD is this a backtransformed diagnostics write?
    */
   void DumpToFile (ParticleContainer* pc,
             const std::string& name,
@@ -247,7 +256,8 @@ private:
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass) const;
+            amrex::ParticleReal const mass,
+            const bool isBTD) const;
 
   /** Get the openPMD-api filename for openPMD::Series
    *

@@ -23,7 +23,6 @@ algo.particle_shape = 3
 
 # Numerics
 warpx.do_moving_window = 1
-warpx.do_pml = 0
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.
 warpx.n_rz_azimuthal_modes = 1
@@ -39,7 +38,7 @@ warpx.do_divb_cleaning = 1
 warpx.do_multi_J = 1
 warpx.do_multi_J_n_depositions = 2
 psatd.J_linear_in_time = 1
-psatd.do_time_averaging = 0
+psatd.do_time_averaging = 1
 
 # PSATD
 psatd.update_with_rho = 1

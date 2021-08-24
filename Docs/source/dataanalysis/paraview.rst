@@ -19,7 +19,7 @@ openPMD
 -------
 
 WarpX' openPMD files can be visualized with ParaView 5.9+.
-ParaView supports ADIOS1, ADIOS2 and HDF5 files, as it implements (liked WarpX) against `openPMD-api <https://github.com/openPMD/openPMD-api>`__.
+ParaView supports ADIOS1, ADIOS2 and HDF5 files, as it implements (like WarpX) against `openPMD-api <https://github.com/openPMD/openPMD-api>`__.
 
 For openPMD output, WarpX automatically creates an ``.pmd`` file per diagnostics, which can be opened with ParaView.
 

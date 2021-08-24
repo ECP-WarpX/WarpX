@@ -10,6 +10,7 @@
 #include "Particles/Collision/CollisionBase.H"
 #include "Particles/Collision/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/ShuffleFisherYates.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/ParticleUtils.H"
@@ -36,9 +37,9 @@
 #include <AMReX_PODVector.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Particles.H>
+#include <AMReX_ParticleTile.H>
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
-#include <AMReX_StructOfArrays.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
@@ -164,19 +165,13 @@ public:
             // Extract low-level data
             int const n_cells = bins_1.numBins();
             // - Species 1
-            auto& soa_1 = ptile_1.GetStructOfArrays();
-            amrex::ParticleReal * const AMREX_RESTRICT ux_1 =
-                soa_1.GetRealData(PIdx::ux).data();
-            amrex::ParticleReal * const AMREX_RESTRICT uy_1 =
-                soa_1.GetRealData(PIdx::uy).data();
-            amrex::ParticleReal * const AMREX_RESTRICT uz_1  =
-                soa_1.GetRealData(PIdx::uz).data();
-            amrex::ParticleReal const * const AMREX_RESTRICT w_1 =
-                soa_1.GetRealData(PIdx::w).data();
+            const auto soa_1 = ptile_1.getParticleTileData();
             index_type* indices_1 = bins_1.permutationPtr();
             index_type const* cell_offsets_1 = bins_1.offsetsPtr();
             amrex::Real q1 = species_1.getCharge();
             amrex::Real m1 = species_1.getMass();
+            constexpr int getpos_offset = 0;
+            auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
@@ -218,7 +213,7 @@ public:
                         cell_start_1, cell_half_1,
                         cell_half_1, cell_stop_1,
                         indices_1, indices_1,
-                        ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
+                        soa_1, soa_1, get_position_1, get_position_1,
                         q1, q1, m1, m1, dt*ndt, dV, engine );
                 }
             );
@@ -238,29 +233,20 @@ public:
             // Extract low-level data
             int const n_cells = bins_1.numBins();
             // - Species 1
-            auto& soa_1 = ptile_1.GetStructOfArrays();
-            amrex::ParticleReal * const AMREX_RESTRICT ux_1 =
-                soa_1.GetRealData(PIdx::ux).data();
-            amrex::ParticleReal * const AMREX_RESTRICT uy_1 =
-                soa_1.GetRealData(PIdx::uy).data();
-            amrex::ParticleReal * const AMREX_RESTRICT uz_1 =
-                soa_1.GetRealData(PIdx::uz).data();
-            amrex::ParticleReal const * const AMREX_RESTRICT w_1 =
-                soa_1.GetRealData(PIdx::w).data();
+            const auto soa_1 = ptile_1.getParticleTileData();
             index_type* indices_1 = bins_1.permutationPtr();
             index_type const* cell_offsets_1 = bins_1.offsetsPtr();
             amrex::Real q1 = species_1.getCharge();
             amrex::Real m1 = species_1.getMass();
+            constexpr int getpos_offset = 0;
+            auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
             // - Species 2
-            auto& soa_2 = ptile_2.GetStructOfArrays();
-            amrex::Real* ux_2  = soa_2.GetRealData(PIdx::ux).data();
-            amrex::Real* uy_2  = soa_2.GetRealData(PIdx::uy).data();
-            amrex::Real* uz_2  = soa_2.GetRealData(PIdx::uz).data();
-            amrex::Real* w_2   = soa_2.GetRealData(PIdx::w).data();
+            const auto soa_2 = ptile_2.getParticleTileData();
             index_type* indices_2 = bins_2.permutationPtr();
             index_type const* cell_offsets_2 = bins_2.offsetsPtr();
             amrex::Real q2 = species_2.getCharge();
             amrex::Real m2 = species_2.getMass();
+            auto get_position_2  = GetParticlePosition(ptile_2, getpos_offset);
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
@@ -308,7 +294,7 @@ public:
                     binary_collision_functor(
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                         indices_1, indices_2,
-                        ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
+                        soa_1, soa_2, get_position_1, get_position_2,
                         q1, q2, m1, m2, dt*ndt, dV, engine );
                 }
             );
