@@ -61,6 +61,10 @@ macro(find_amrex)
             set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
+        if(WarpX_SENSEI)
+            set(AMReX_SENSEI ON CACHE INTERNAL "")
+        endif()
+
         set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
         set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
@@ -72,7 +76,7 @@ macro(find_amrex)
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
         if(WarpX_COMPUTE STREQUAL CUDA)
-            if(WarpX_ASCENT)
+            if(WarpX_ASCENT OR WarpX_SENSEI)
                 set(AMReX_GPU_RDC ON CACHE BOOL "")
             else()
                 # we don't need RDC and disabling it simplifies the build
@@ -81,7 +85,6 @@ macro(find_amrex)
             endif()
         endif()
 
-        # AMReX_SENSEI
         # shared libs, i.e. for Python bindings, need relocatable code
         if(WarpX_LIB)
             set(AMReX_PIC ON CACHE INTERNAL "")
@@ -215,9 +218,14 @@ macro(find_amrex)
         else()
             set(COMPONENT_PIC)
         endif()
+        if(WarpX_SENSEI)
+            set(COMPONENT_SENSEI AMReX_SENSEI)
+        else()
+            set(COMPONENT_SENSEI)
+        endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
 
-        find_package(AMReX 21.08 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
+        find_package(AMReX 21.08 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -231,7 +239,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "a4f94e7524c0348af134968a9e17c7fd08f266f7"
+set(WarpX_amrex_branch "60578291de339964af938b81f2d0f7db5c6bf78c"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

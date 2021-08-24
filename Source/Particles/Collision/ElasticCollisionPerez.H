@@ -94,8 +94,13 @@ void ElasticCollisionPerez (
 
     // compute Debye length lmdD
     T_R lmdD;
-    lmdD = T_R(1.0)/std::sqrt( n1*q1*q1/(T1t*PhysConst::ep0) +
-                         n2*q2*q2/(T2t*PhysConst::ep0) );
+    if ( T1t < T_R(0.0) || T2t < T_R(0.0) ) {
+        lmdD = T_R(0.0);
+    }
+    else {
+        lmdD = T_R(1.0)/std::sqrt( n1*q1*q1/(T1t*PhysConst::ep0) +
+                                   n2*q2*q2/(T2t*PhysConst::ep0) );
+    }
     T_R rmin = std::pow( T_R(4.0) * MathConst::pi / T_R(3.0) *
                amrex::max(n1,n2), T_R(-1.0/3.0) );
     lmdD = amrex::max(lmdD, rmin);
