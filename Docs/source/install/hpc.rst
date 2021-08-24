@@ -25,6 +25,7 @@ HPC Systems
    :maxdepth: 1
 
    hpc/cori
+   hpc/perlmutter
    hpc/summit
    hpc/spock
    hpc/juwels
