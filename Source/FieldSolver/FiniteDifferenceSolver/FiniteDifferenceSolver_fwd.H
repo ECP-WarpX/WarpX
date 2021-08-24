@@ -4,9 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
- 
- #ifndef WARPX_FINITE_DIFFERENCE_SOLVER_FWD_H
- #define WARPX_FINITE_DIFFERENCE_SOLVER_FWD_H
+
+#ifndef WARPX_FINITE_DIFFERENCE_SOLVER_FWD_H
+#define WARPX_FINITE_DIFFERENCE_SOLVER_FWD_H
 
 class FiniteDifferenceSolver;
 

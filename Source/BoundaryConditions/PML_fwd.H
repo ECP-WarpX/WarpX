@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_INJECTOR_POSITION_FWD_H
-#define WARPX_INJECTOR_POSITION_FWD_H
+#ifndef WARPX_PML_FWD_H
+#define WARPX_PML_FWD_H
 
 struct Sigma;
 struct SigmaBox;
@@ -18,4 +18,4 @@ enum struct PatchType;
 
 class PML;
 
-#endif /* WARPX_INJECTOR_POSITION_FWD_H */
+#endif /* WARPX_PML_FWD_H */

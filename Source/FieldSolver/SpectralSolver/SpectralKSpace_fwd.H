@@ -12,4 +12,4 @@ struct ShiftType;
 
 class SpectralKSpace;
 
-#endif /* WARPX_SPECTRALKSPACE_FWD_H /*
+#endif /* WARPX_SPECTRALKSPACE_FWD_H */
