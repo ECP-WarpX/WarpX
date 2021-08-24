@@ -63,7 +63,7 @@ WarnManager::print_global_warnings(const std::string& when) const
         ss << "No recorded warnings.\n";
     }
     else{
-        for(const auto warn_msg : all_warnings){
+        for(const auto& warn_msg : all_warnings){
             ss << aux_print_warn_msg(warn_msg);
             ss << "*\n";
         }
@@ -116,7 +116,7 @@ WarnManager::aux_sort_messages(
     std::sort(all_msg_with_counter.begin(), all_msg_with_counter.end(),
         [](const MsgWithCounter& a, const MsgWithCounter& b){
             return a.msg < b.msg;});
-    return all_msg_with_counter;
+    return std::move(all_msg_with_counter);
 }
 
 std::vector<MsgLogger::MsgWithCounterAndRanks>
@@ -128,7 +128,7 @@ WarnManager::aux_sort_messages(
         all_msg_with_counter_and_ranks.end(),
         [](const MsgWithCounterAndRanks& a, const MsgWithCounterAndRanks& b){
             return a.msg_with_counter.msg < b.msg_with_counter.msg;});
-    return all_msg_with_counter_and_ranks;
+    return std::move(all_msg_with_counter_and_ranks);
 }
 
 std::string WarnManager::aux_get_header(
@@ -193,6 +193,17 @@ WarnManager::aux_print_warn_msg(
 {
     std::stringstream ss;
     ss << this->aux_print_warn_msg(msg_with_counter_and_ranks.msg_with_counter);
+
+    std::string raised_by = "@ Raised by:";
+    if (!msg_with_counter_and_ranks.all_ranks){
+        raised_by += "\n";
+        for (const auto rr : msg_with_counter_and_ranks.ranks)
+            raised_by += " " + std::to_string(rr);
+    }
+    else{
+        raised_by += " ALL\n";
+    }
+    ss << aux_msg_formatter(raised_by, warn_line_size, warn_tab_size);
 
     return ss.str();
 }

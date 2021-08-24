@@ -31,7 +31,7 @@ algo.particle_shape = 1
 ######## DEBUG WARNINGS #########
 #################################
 
-warpx.test_warnings = w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15
+warpx.test_warnings = w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16
 
 w1.topic    = "Priority Sort Test"
 w1.msg      = "Test that priority is correctly sorted"
@@ -98,18 +98,23 @@ w13.msg      = "Test repeated warnings"
 w13.priority = "high"
 w13.all_involved = 1
 
-w14.topic    = "Not all involved"
+w14.topic    = "Not all involved (0)"
 w14.msg      = "Test warnings raised by a fraction of ranks"
 w14.priority = "high"
 w14.all_involved = 0
 w14.who_involved = 0
 
-w15.topic    = "Not all involved"
+w15.topic    = "Not all involved (1)"
 w15.msg      = "Test warnings raised by a fraction of ranks"
 w15.priority = "high"
 w15.all_involved = 0
-w15.who_involved = 0
+w15.who_involved = 1
 
+w16.topic    = "Not all involved (1,2)"
+w16.msg      = "Test warnings raised by a fraction of ranks"
+w16.priority = "high"
+w16.all_involved = 0
+w16.who_involved = 1 2
 
 
 

@@ -34,6 +34,7 @@
 #include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
 #ifdef AMREX_USE_SENSEI_INSITU
@@ -448,6 +449,7 @@ WarpX::PrintLocalWarnings(const std::string& when)
 void
 WarpX::PrintGlobalWarnings(const std::string& when)
 {
+    WARPX_PROFILE("WarpX::PrintGlobalWarnings");
     amrex::Print() << m_p_warn_manager->print_global_warnings(when);
 }
 

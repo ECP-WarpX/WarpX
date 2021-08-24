@@ -63,7 +63,11 @@ namespace MsgLogger{
     struct MsgWithCounterAndRanks
     {
         MsgWithCounter msg_with_counter;
+        bool all_ranks;
         std::vector<int> ranks;
+
+        std::vector<char> serialize() const;
+        static MsgWithCounterAndRanks deserialize(std::vector<char>::const_iterator& it);
     };
 
     constexpr bool operator<(const Msg& l, const Msg& r)
@@ -89,19 +93,32 @@ namespace MsgLogger{
         std::vector<MsgWithCounterAndRanks>
         collective_gather_msg_with_counter_and_ranks() const;
 
-        private:
+        //private:
+
 
         std::vector<char> serialize_msg_list(
             const std::vector<Msg>& msg_list) const;
-
         static std::vector<Msg> deserialize_msg_list(
             const std::vector<char>& serialized);
+
+        private:
 
         std::pair<int,int> aux_find_gather_rank_and_items(
             int how_many_items) const;
 
         std::vector<MsgWithCounterAndRanks>
         aux_get_msg_with_counter_and_ranks() const;
+
+        std::vector<char>
+        collective_gather_get_serialized_gather_rank_msg_list(
+            const std::vector<Msg>& my_list,
+            int gather_rank) const;
+
+        std::vector<char>
+        aux_create_data_package(
+            const std::vector<int>& gather_rank_msg_counters,
+            const std::map<Msg, int>& to_send
+        ) const;
 
         int m_rank = 0;
         int m_num_procs = 0;
