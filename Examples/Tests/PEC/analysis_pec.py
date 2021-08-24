@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
-from scipy.constants import e, m_e, epsilon_0, c
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
