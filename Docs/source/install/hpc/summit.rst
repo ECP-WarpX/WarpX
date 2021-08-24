@@ -62,7 +62,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    export Ascent_DIR=/gpfs/alpine/world-shared/csc340/software/ascent/current/summit/cuda/gnu/ascent-install
 
    # optional: for Python bindings or libEnsemble
-   module load python/3.8-anaconda3
+   module load python/3.8.10
    module load openblas/0.3.15-omp
    module load netlib-lapack/3.9.1
    if [ -d "$HOME/sw/venvs/warpx" ]
