@@ -606,6 +606,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
   // should this be WarpXParticleContainer for BTD?
   WarpXParticleCounter counter(pc);
+  if (counter.GetTotalNumParticles() == 0) return;
   openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
@@ -652,6 +653,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   // define positions & offsets
   //
   const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
+  amrex::Print() << " offst : " << ParticleFlushOffset << " total np : " << counter.GetTotalNumParticles() << " new vector size : " << NewParticleVectorSize << " isBTD " << isBTD << "\n";
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
   SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
   m_ParticleSetUp = 1;
@@ -670,7 +672,8 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
          auto const numParticleOnTile = pti.numParticles();
          uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
-
+         amrex::Print() << " numPart : " << numParticleOnTile << "\n";
+         if (numParticleOnTile == 0) continue;
          // get position and particle ID from aos
          // note: this implementation iterates the AoS 4x...
          // if we flush late as we do now, we can also copy out the data in one go
@@ -713,17 +716,21 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
                currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
            }
-#else
+#else          
+           amrex::Print() << " loop over currDim \n"; 
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
                     new amrex::ParticleReal[numParticleOnTile],
                     [](amrex::ParticleReal const *p){ delete[] p; }
                 );
                 for (auto i=0; i<numParticleOnTile; i++) {
+                     amrex::Print() << " i part : " << i << "\n";
                      curr.get()[i] = aos[i].pos(currDim);
                 }
                 std::string const positionComponent = positionComponents[currDim];
+                amrex::Print() << " about to store chunk\n";
                 currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
+                amrex::Print() << " pos stored in dim : " << currDim << "\n";
            }
 #endif
 
@@ -748,6 +755,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
          offset += numParticleOnTile64;
       }
     }
+    amrex::Print() << " about to call flush again \n";
     m_Series->flush();
 }
 

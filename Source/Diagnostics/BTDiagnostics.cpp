@@ -658,6 +658,7 @@ BTDiagnostics::Flush (int i_buffer)
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
+    amrex::Print() << " calling write to file \n";
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
