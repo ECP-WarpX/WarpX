@@ -15,6 +15,7 @@
 
 #include <limits>
 #include <map>
+#include <string>
 
 enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen, helium, boron,
                             carbon, nitrogen, oxygen, copper};
@@ -115,6 +116,38 @@ namespace species
         default:
             amrex::Abort("unknown PhysicalSpecies");
             return 0.;
+        }
+    }
+
+    AMREX_FORCE_INLINE
+    std::string get_name (PhysicalSpecies ps)
+    {
+        switch(ps) {
+        case PhysicalSpecies::unspecified:
+            return "unspecified";
+        case PhysicalSpecies::electron:
+            return "electron";
+        case PhysicalSpecies::positron:
+            return "positron";
+        case PhysicalSpecies::photon:
+            return "photon";
+        case PhysicalSpecies::hydrogen:
+            return "hydrogen";
+        case PhysicalSpecies::helium:
+            return "helium";
+        case PhysicalSpecies::boron:
+            return "boron";
+        case PhysicalSpecies::carbon:
+            return "carbon";
+        case PhysicalSpecies::nitrogen:
+            return "nitrogen";
+        case PhysicalSpecies::oxygen:
+            return "oxygen";
+        case PhysicalSpecies::copper:
+            return "copper";
+        default:
+            amrex::Abort("unknown PhysicalSpecies");
+            return "";
         }
     }
 }

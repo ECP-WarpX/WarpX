@@ -8,7 +8,7 @@
 
 #include "BinaryCollision.H"
 #include "PairWiseCoulombCollisionFunc.H"
-#include "ProtonBoronFusionFunc.H"
+#include "NuclearFusionFunc.H"
 #include "BackgroundMCCCollision.H"
 
 #include <AMReX_ParmParse.H>
@@ -42,9 +42,9 @@ CollisionHandler::CollisionHandler(MultiParticleContainer* const mypc)
         else if (type == "background_mcc") {
             allcollisions[i] = std::make_unique<BackgroundMCCCollision>(collision_names[i]);
         }
-        else if (type == "protonboronfusion") {
+        else if (type == "nuclearfusion") {
             allcollisions[i] =
-               std::make_unique<BinaryCollision<ProtonBoronFusionFunc>>(collision_names[i], mypc);
+               std::make_unique<BinaryCollision<NuclearFusionFunc>>(collision_names[i], mypc);
         }
         else{
             amrex::Abort("Unknown collision type.");

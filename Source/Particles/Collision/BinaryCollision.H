@@ -10,7 +10,7 @@
 #include "Particles/Collision/BinaryCollisionUtils.H"
 #include "Particles/Collision/CollisionBase.H"
 #include "Particles/Collision/PairWiseCoulombCollisionFunc.H"
-#include "Particles/Collision/ProtonBoronFusionFunc.H"
+#include "Particles/Collision/NuclearFusionFunc.H"
 #include "Particles/Collision/ShuffleFisherYates.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/ParticleCreation/SmartUtils.H"
@@ -246,11 +246,40 @@ public:
         auto products_np_data = products_np.data();
 #endif
 
-        const bool product_species_exists = !m_product_species.empty();
-        ParticleTileType* ptile_product = product_species_exists? &product_species_pointer->ParticlesAt(lev, mfi) : nullptr;
-        SoaData_type soa_product = product_species_exists? ptile_product->getParticleTileData(): SoaData_type();
+        // Get product species soa and positions in the form of DeviceVectors
+        const int n_product_species = m_product_species.size();
+        amrex::Gpu::DeviceVector<SoaData_type> soa_product_vector;
+        amrex::Gpu::DeviceVector<GetParticlePosition> get_position_product_vector;
         constexpr int getpos_offset = 0;
-        GetParticlePosition get_position_product = product_species_exists? GetParticlePosition(*ptile_product, getpos_offset): GetParticlePosition();
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::HostVector<SoaData_type> host_soa_product_vector;
+        amrex::Gpu::HostVector<GetParticlePosition> host_get_position_product_vector;
+        for (int i = 0; i < n_product_species; i++)
+        {
+            ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
+            host_soa_product_vector.push_back(ptile_product.getParticleTileData());
+            host_get_position_product_vector.push_back(GetParticlePosition(ptile_product,
+                                                                           getpos_offset));
+        }
+        soa_product_vector.resize(n_product_species);
+        get_position_product_vector.resize(n_product_species);
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, host_soa_product_vector.begin(),
+                              host_soa_product_vector.end(), soa_product_vector.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, host_get_position_product_vector.begin(),
+                              host_get_position_product_vector.end(),
+                              get_position_product_vector.begin());
+        amrex::Gpu::streamSynchronize();
+#else
+        for (int i = 0; i < n_product_species; i++)
+        {
+            ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
+            soa_product_vector.push_back(ptile_product.getParticleTileData());
+            get_position_product_vector.push_back(GetParticlePosition(ptile_product,
+                                                                      getpos_offset));
+        }
+#endif
+        auto soa_product_data = soa_product_vector.data();
+        auto get_position_product_data = get_position_product_vector.data();
 
         if ( m_isSameSpecies ) // species_1 == species_2
         {
