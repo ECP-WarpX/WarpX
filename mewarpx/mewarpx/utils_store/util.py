@@ -37,6 +37,25 @@ def init_libwarpx(ndim, rz):
     # variable
     assert pywarpx._libwarpx
 
+def compute_step(simulation, interval=None):
+    diag_periods = []
+    for diag in simulation.diagnostics:
+        diag_periods.append(diag.period)
+
+    step_interval = None
+    if interval:
+        step_interval = interval
+    elif (interval is None) and (len(diag_periods) > 0):
+        step_interval = max(diag_periods)
+    else:
+        step_interval = simulation.max_steps
+
+    for period in diag_periods:
+        if step_interval % period != 0:
+            warnings.warn(f'Diagnostic interval {step_interval} not divisible '
+                          f'by the minimun diagnostic period {period}! Extra '
+                          f'diagnostic data may be outputted!')
+    return step_interval
 
 def get_velocities(num_samples, T, m, emission_type='thermionic',
                    transverse_fac=1.0, rseed=None):

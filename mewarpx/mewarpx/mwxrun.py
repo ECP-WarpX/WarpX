@@ -27,6 +27,7 @@ import numpy as np
 from pywarpx import _libwarpx, picmi
 from mewarpx.utils_store import mwxconstants as constants
 from mewarpx.utils_store import parallel_util
+from mewarpx.utils_store.util import compute_step
 
 
 class MEWarpXRun(object):
@@ -207,6 +208,13 @@ class MEWarpXRun(object):
 
         else:
             raise ValueError("Unrecognized type of pywarpx.picmi Grid.")
+
+    def step(self, sim_control, interval=None):
+        sim_control.max_steps = self.simulation.max_steps
+        self.step_interval = compute_step(self.simulation, interval)
+        while sim_control.check_criteria():
+            self.simulation.step(self.step_interval)
+
 
     def get_domain_area(self):
         """Return float of simulation domain area in X & Y directions or R depending
