@@ -96,9 +96,18 @@ public:
         index_type const /*I1s*/, index_type const /*I1e*/,
         index_type const /*I2s*/, index_type const /*I2e*/,
         index_type* /*I1*/,       index_type* /*I2*/,
-        SoaData_type /*soa_1*/, SoaData_type /*soa_2*/, SoaData_type* /*soa_product*/,
+        SoaData_type /*soa_1*/, SoaData_type /*soa_2*/,
+#ifdef AMREX_USE_GPU
+        SoaData_type* /*soa_product_vector*/,
+#else
+        std::vector<SoaData_type> /*soa_product_vector*/,
+#endif
         GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
-        GetParticlePosition* /*get_position_product*/,
+#ifdef AMREX_USE_GPU
+        GetParticlePosition* /*get_position_product_vector*/,
+#else
+        std::vector<GetParticlePosition> /*get_position_product_vector*/,
+#endif
         amrex::Real const  /*q1*/, amrex::Real const  /*q2*/,
         amrex::Real const  /*m1*/, amrex::Real const  /*m2*/,
         amrex::Real const  /*dt*/, amrex::Real const /*dV*/,
