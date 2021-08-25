@@ -199,7 +199,7 @@ macro(find_amrex)
         message(STATUS "Searching for pre-installed AMReX ...")
         # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#importing-amrex-into-your-cmake-project
         if(WarpX_ASCENT)
-            set(COMPONENT_ASCENT AMReX_ASCENT AMReX_CONDUIT)
+            set(COMPONENT_ASCENT ASCENT CONDUIT)
         else()
             set(COMPONENT_ASCENT)
         endif()
