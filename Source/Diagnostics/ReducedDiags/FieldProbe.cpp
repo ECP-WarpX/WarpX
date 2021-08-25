@@ -8,7 +8,6 @@
 #include "FieldProbe.H"
 #include "Particles/Gather/FieldGather.H"
 
-#include "Utils/CoarsenIO.H"
 #include "Utils/IntervalsParser.H"
 #include "WarpX.H"
 
