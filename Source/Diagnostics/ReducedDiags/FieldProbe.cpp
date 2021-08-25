@@ -176,7 +176,7 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::Real Ex_interp = 0._rt, Ey_interp = 0._rt, Ez_interp = 0._rt;
                     amrex::Real Bx_interp = 0._rt, By_interp = 0._rt, Bz_interp = 0._rt;
 
-                    amrex::Array<amrex::Real, 3> v_galilean = {{0}};
+                    const amrex::Array<amrex::Real, 3> v_galilean = {{0}};
                     const auto
                         &xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box, v_galilean,
                                                                                lev);
