@@ -140,6 +140,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // reset rho_fp before depositing charge density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         rho_fp[lev]->setVal(0.);
+    }
 
     // Loop over particles to gather to total charge density
     bool const local = true;
