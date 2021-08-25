@@ -410,8 +410,12 @@ WarpX::PushPSATD ()
 
     PSATDForwardTransformEB();
     PSATDForwardTransformJ();
-    PSATDForwardTransformRho(0, 0); // rho old
-    PSATDForwardTransformRho(1, 1); // rho new
+    // Do rho FFTs only if needed
+    if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
+    {
+        PSATDForwardTransformRho(0,0); // rho old
+        PSATDForwardTransformRho(1,1); // rho new
+    }
     PSATDPushSpectralFields();
     PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
