@@ -45,7 +45,9 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     amrex::ParmParse pp_rd_name(rd_name);
     getWithParser(pp_rd_name, "x_probe", x_probe);
+#if (AMREX_SPACEDIM == 3)
     getWithParser(pp_rd_name, "y_probe", y_probe);
+#endif
     getWithParser(pp_rd_name, "z_probe", z_probe);
 
     pp_rd_name.query("raw_fields", raw_fields);
