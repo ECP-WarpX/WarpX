@@ -13,8 +13,6 @@
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
-#include "Utils/MsgLogger/MsgLogger.H"
-
 #include <AMReX.H>
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -63,17 +61,6 @@ int main(int argc, char* argv[])
 
     {
         WarpX warpx;
-
-
-        Utils::MsgLogger::Logger logger;
-        logger.record_msg(Utils::MsgLogger::Msg{
-            "topic topic", "text text", Utils::MsgLogger::Priority::high
-        });
-
-        auto buf = logger.serialize_msg_list(logger.get_msg_list());
-
-        auto msg_list = logger.deserialize_msg_list(buf);
-
 
         warpx.InitData();
 

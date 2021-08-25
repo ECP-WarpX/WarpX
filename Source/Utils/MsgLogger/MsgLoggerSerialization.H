@@ -26,6 +26,12 @@ namespace MsgLogger{
             non-trivally copyable types, except std::vector<char> and std::string.");
 
         const auto* ptr_val = reinterpret_cast<const char*>(&val);
+
+        std::cout << "putting in ";
+        for (auto it = ptr_val; it < ptr_val+sizeof(T);++it)
+            std::cout << (int)*it << " ";
+        std::cout << "of length " << sizeof(T) << std::endl;
+
         vec.insert(vec.end(), ptr_val, ptr_val+sizeof(T));
     }
 
@@ -41,15 +47,11 @@ namespace MsgLogger{
         const char* c_str = val.c_str();
         const auto length = val.size();
 
-        std::cout << "PUT_IN: " <<  val << " " << length << " " << vec.size() <<  std::endl;
-
-        std::vector<char> temp_vec{};
-        put_in(length, temp_vec);
-        for (auto cc : temp_vec)
-            std::cout << (int )cc << " ";
-        std::cout << std::endl;
-
         put_in(length, vec);
+        std::cout << "putting in ";
+        for (auto it = c_str; it < c_str+length;++it)
+            std::cout << *it << " ";
+        std::cout << "of length " << length << std::endl;
         vec.insert(vec.end(), c_str, c_str+length);
     }
 
@@ -122,17 +124,9 @@ namespace MsgLogger{
     template<>
     inline std::string get_out<std::string> (std::vector<char>::const_iterator& it)
     {
-        std::cout << "SSSS "
-        << (int)it[0] << " " << (int) it[1] << " "
-        << (int)it[2] << " " << (int) it[3] << " "
-        << (int)it[4] << " " << (int) it[5] << " "
-        << (int)it[6] << " " << (int) it[7] << std::endl;
-
         const auto length = get_out<std::string::size_type> (it);
         const auto str = std::string{it, it+length};
         it += length;
-
-        std::cout << "GET_OUT: " <<  str << " " << length <<  std::endl;
 
         return str;
     }

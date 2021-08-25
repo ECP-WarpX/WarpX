@@ -276,28 +276,13 @@ std::vector<char> Logger::serialize_msg_list(
     int i = 0;
     for (auto msg : msg_list){
         put_in_vec(msg.serialize(), serialized);
-        std::cout << i++ << "/" << how_many << " :::::: "  << "|" <<
-        msg.text << "|" <<
-        msg.topic << "|" << std::endl;
     }
-
-    std::cout << "ççççççççççççççç " << serialized.size() << std::endl;
-
-    std::cout << "xx " << (int)serialized[0] << (int) serialized[1]
-        << (int)serialized[2] << (int) serialized[3]
-        << (int)serialized[4] << (int) serialized[5]
-        << (int)serialized[6] << (int) serialized[7] << std::endl;
-
     return serialized;
 }
 
 std::vector<Msg> Logger::deserialize_msg_list(
     const std::vector<char>& serialized)
 {
-    std::cout << "yy " << (int)serialized[0] << (int) serialized[1]
-        << (int)serialized[2] << (int) serialized[3]
-        << (int)serialized[4] << (int) serialized[5]
-        << (int)serialized[6] << (int) serialized[7] << std::endl;
     auto it = serialized.begin();
 
     const auto how_many = get_out<int>(it);
@@ -305,13 +290,10 @@ std::vector<Msg> Logger::deserialize_msg_list(
 
     msg_list.reserve(how_many);
 
-    std::cout << "ççççççççççççççç " << serialized.size() << " " << it - serialized.begin() << std::endl;
-
     for (int i = 0; i < how_many; ++i){
-        msg_list.emplace_back(Msg::deserialize(it));
-        std::cout << i << "/" << how_many << " :::::: "  << "|" <<
-        msg_list.back().text << "|" <<
-        msg_list.back().topic << "|" << std::endl;
+        const auto vv = get_out_vec<char>(it);
+        auto iit = vv.begin();
+        msg_list.emplace_back(Msg::deserialize(iit));
     }
 
     return msg_list;
