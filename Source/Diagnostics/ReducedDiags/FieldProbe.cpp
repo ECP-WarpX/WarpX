@@ -96,7 +96,7 @@ FieldProbe::FieldProbe (std::string rd_name)
 }
 // end constructor
 
-// function that computes maximum field values
+// function that computes field values at probe position
 void FieldProbe::ComputeDiags (int step)
 {
     // Judge if the diags should be done
@@ -137,7 +137,7 @@ void FieldProbe::ComputeDiags (int step)
             const amrex::MultiFab &By = warpx.getBfield(lev, 1);
             const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
 
-            // Prepare interpolation of field components to cell center
+            // Prepare interpolation of field components to probe_position
             // The arrays below store the index type (staggering) of each MultiFab, with the third
             // component set to zero in the two-dimensional case.
             amrex::IndexType const Extype = Ex.ixType();
@@ -148,7 +148,7 @@ void FieldProbe::ComputeDiags (int step)
             amrex::IndexType const Bztype = Bz.ixType();
 
             int probe_proc = -1;
-            // MFIter loop to interpolate fields to cell center and get maximum values
+            // MFIter loop to interpolate fields to probe position
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
