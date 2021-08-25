@@ -9,6 +9,7 @@
 #include "Particles/Gather/FieldGather.H"
 
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_Array.H>
@@ -43,16 +44,16 @@ FieldProbe::FieldProbe (std::string rd_name)
     nLevel += 1;
 
     amrex::ParmParse pp_rd_name(rd_name);
-    pp_rd_name.query("x_probe", x_probe);
-    pp_rd_name.query("y_probe", y_probe);
-    pp_rd_name.query("z_probe", z_probe);
+    getWithParser(pp_rd_name, "x_probe", x_probe);
+    getWithParser(pp_rd_name, "y_probe", y_probe);
+    getWithParser(pp_rd_name, "z_probe", z_probe);
 
-    const bool raw_specified = pp_rd_name.query("raw_fields", raw_fields);
-    if(!raw_specified) raw_fields = false;
+    pp_rd_name.query("raw_fields", raw_fields);
 
-    const bool interp_order_specified = pp_rd_name.query("raw_fields", interp_order);
-    if(!interp_order_specified) interp_order = 1;
+    pp_rd_name.query("interp_order", interp_order);
 
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
+                                     "Field probe interp_order should be lower than algo.particle_shape");
     // resize data array
     m_data.resize(noutputs*nLevel, 0.0_rt);
 

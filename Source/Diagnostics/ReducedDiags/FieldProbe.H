@@ -45,8 +45,8 @@ public:
 
 private:
     amrex::ParticleReal x_probe, y_probe, z_probe;
-    int interp_order;
-    bool raw_fields;
+    int interp_order = 1;
+    bool raw_fields = false;
 
 };
 
