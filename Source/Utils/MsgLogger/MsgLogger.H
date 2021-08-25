@@ -93,15 +93,12 @@ namespace MsgLogger{
         std::vector<MsgWithCounterAndRanks>
         collective_gather_msg_with_counter_and_ranks() const;
 
-        //private:
-
+        private:
 
         std::vector<char> serialize_msg_list(
             const std::vector<Msg>& msg_list) const;
         static std::vector<Msg> deserialize_msg_list(
             const std::vector<char>& serialized);
-
-        private:
 
         std::pair<int,int> aux_find_gather_rank_and_items(
             int how_many_items) const;
@@ -119,6 +116,12 @@ namespace MsgLogger{
             const std::vector<int>& gather_rank_msg_counters,
             const std::map<Msg, int>& to_send
         ) const;
+
+        void
+        update_list_with_packaged_data(
+            std::vector<MsgWithCounterAndRanks>& list_with_ranks,
+            const std::vector<char>& all_data,
+            const std::vector<int>& disps) const;
 
         int m_rank = 0;
         int m_num_procs = 0;

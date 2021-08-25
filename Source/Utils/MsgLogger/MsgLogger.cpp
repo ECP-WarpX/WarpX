@@ -48,7 +48,9 @@ MsgWithCounter MsgWithCounter::deserialize (std::vector<char>::const_iterator& i
 {
     MsgWithCounter msg_with_counter;
 
-    msg_with_counter.msg = Msg::deserialize(it);
+    const auto vec = get_out_vec<char>(it);
+    auto iit = vec.begin();
+    msg_with_counter.msg = Msg::deserialize(iit);
     msg_with_counter.counter = get_out<int> (it);
 
     return msg_with_counter;
@@ -70,7 +72,9 @@ MsgWithCounterAndRanks::deserialize (std::vector<char>::const_iterator& it)
 {
     MsgWithCounterAndRanks msg_with_counter_and_ranks;
 
-    msg_with_counter_and_ranks.msg_with_counter = MsgWithCounter::deserialize(it);
+    const auto vec = get_out_vec<char>(it);
+    auto iit = vec.begin();
+    msg_with_counter_and_ranks.msg_with_counter = MsgWithCounter::deserialize(iit);
     msg_with_counter_and_ranks.all_ranks = get_out<bool>(it);
     msg_with_counter_and_ranks.ranks = get_out_vec<int>(it);
 
@@ -141,6 +145,7 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
 
     auto package_lengths = std::vector<int>{};
     auto all_data = std::vector<char>{};
+    auto disps = std::vector<int>{};
     if (!is_gather_rank){
         const auto gather_rank_msg_list =
             Logger::deserialize_msg_list(serialized_gather_rank_msg_list);
@@ -173,7 +178,7 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
         package_lengths =
             amrex::ParallelDescriptor::Gather(zero_size, gather_rank);
 
-        auto disps = std::vector<int>(package_lengths.size());
+        disps.resize(package_lengths.size());
         std::partial_sum(package_lengths.begin(), package_lengths.end(), disps.begin());
         std::rotate(disps.rbegin(), disps.rbegin()+1, disps.rend());
         disps[0] = 0;
@@ -190,16 +195,17 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
     auto list_with_ranks = std::vector<MsgWithCounterAndRanks>{};
 
     if(is_gather_rank){
-        //aux_update_list_with_packaged_data();
 
         for (const auto& msg_with_counter : get_msg_with_counter_list()){
             MsgWithCounterAndRanks msg_with_counter_and_ranks;
             msg_with_counter_and_ranks.msg_with_counter = msg_with_counter;
-            msg_with_counter_and_ranks.all_ranks = true;
-            msg_with_counter_and_ranks.ranks = std::vector<int>{};
+            msg_with_counter_and_ranks.all_ranks = false;
+            msg_with_counter_and_ranks.ranks = std::vector<int>{m_rank};
 
             list_with_ranks.emplace_back(msg_with_counter_and_ranks);
         }
+
+        update_list_with_packaged_data(list_with_ranks, all_data, disps);
     }
 
 
@@ -225,8 +231,10 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
             const auto vv = package;
             auto it = vv.begin();
             for (int i = 0; i < list_size; ++i){
+                const auto vec = get_out_vec<char>(it);
+                auto iit = vec.begin();
                 list_with_ranks.emplace_back(
-                    MsgWithCounterAndRanks::deserialize(it)
+                    MsgWithCounterAndRanks::deserialize(iit)
                 );
             }
         }
@@ -342,13 +350,44 @@ Logger::aux_create_data_package(
     ) const
 {
     std::vector<char> package;
-    put_in(gather_rank_msg_counters.size(), package);
-    for (const auto& el : gather_rank_msg_counters)
-        put_in(el, package);
+    put_in_vec(gather_rank_msg_counters, package);
     put_in(to_send.size(), package);
     for (const auto& el : to_send)
         put_in_vec<char>(MsgWithCounter{el.first, el.second}.serialize(), package);
 
     return package;
 }
+
+void
+Logger::update_list_with_packaged_data(
+    std::vector<MsgWithCounterAndRanks>& list_with_ranks,
+    const std::vector<char>& all_data,
+    const std::vector<int>& disps) const
+{
+
+    std::map<Msg, MsgWithCounterAndRanks> mm;
+
+    const int orig_size = list_with_ranks.size();
+
+    for(int rr = 0; rr < m_num_procs; ++rr){
+        auto it = all_data.begin() + disps[rr];
+        const auto vec = get_out_vec<int>(it);
+        int c = 0;
+        for (const auto& el : vec){
+            std::cout << c << std::endl;
+            list_with_ranks[c].msg_with_counter.counter += el;
+            if (el > 0)
+                list_with_ranks[c].ranks.push_back(rr);
+            c++;
+        }
+    }
+
+    for (int i = 0; i < orig_size; ++i){
+        if(list_with_ranks[i].ranks.size() == m_num_procs){
+            list_with_ranks[i].all_ranks = true;
+            std::vector<int>{}.swap(list_with_ranks[i].ranks);
+        }
+    }
+}
+
 

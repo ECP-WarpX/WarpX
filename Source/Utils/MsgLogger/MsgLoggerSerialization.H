@@ -26,12 +26,6 @@ namespace MsgLogger{
             non-trivally copyable types, except std::vector<char> and std::string.");
 
         const auto* ptr_val = reinterpret_cast<const char*>(&val);
-
-        std::cout << "putting in ";
-        for (auto it = ptr_val; it < ptr_val+sizeof(T);++it)
-            std::cout << (int)*it << " ";
-        std::cout << "of length " << sizeof(T) << std::endl;
-
         vec.insert(vec.end(), ptr_val, ptr_val+sizeof(T));
     }
 
@@ -48,10 +42,6 @@ namespace MsgLogger{
         const auto length = val.size();
 
         put_in(length, vec);
-        std::cout << "putting in ";
-        for (auto it = c_str; it < c_str+length;++it)
-            std::cout << *it << " ";
-        std::cout << "of length " << length << std::endl;
         vec.insert(vec.end(), c_str, c_str+length);
     }
 
