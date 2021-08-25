@@ -116,19 +116,28 @@ void FieldProbe::ComputeDiags (int step)
         const auto prob_lo = gm.ProbLo();
         const auto prob_hi = gm.ProbHi();
 
-        const bool probe_in_domain = x_probe >= prob_lo[0] and y_probe >= prob_lo[1] and
-                                     z_probe >= prob_lo[2] and x_probe <= prob_hi[0] and
-                                     y_probe <= prob_hi[1] and z_probe <= prob_hi[2];
-
+#if (AMREX_SPACEDIM == 2)
+        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
+                                     z_probe >= prob_lo[1] and z_probe <= prob_hi[1];
+#else
+        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
+                                     y_probe >= prob_lo[1] and y_probe <= prob_hi[1] and
+                                     z_probe >= prob_lo[2] and z_probe <= prob_hi[2];
+#endif
         amrex::Real fp_Ex, fp_Ey, fp_Ez, fp_E, fp_Bx, fp_By, fp_Bz, fp_B;
 
         if( probe_in_domain ) {
             const auto cell_size = gm.CellSizeArray();
 
+#if (AMREX_SPACEDIM == 2)
+            const int i_probe = amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]);
+            const int j_probe = amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]);
+            const int k_probe = 0;
+#elif(AMREX_SPACEDIM == 3)
             const int i_probe = amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]);
             const int j_probe = amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]);
             const int k_probe = amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]);
-
+#endif
             // get MultiFab data at lev
             const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
             const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
@@ -138,8 +147,7 @@ void FieldProbe::ComputeDiags (int step)
             const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
 
             // Prepare interpolation of field components to probe_position
-            // The arrays below store the index type (staggering) of each MultiFab, with the third
-            // component set to zero in the two-dimensional case.
+            // The arrays below store the index type (staggering) of each MultiFab.
             amrex::IndexType const Extype = Ex.ixType();
             amrex::IndexType const Eytype = Ey.ixType();
             amrex::IndexType const Eztype = Ez.ixType();
@@ -177,6 +185,9 @@ void FieldProbe::ComputeDiags (int step)
                     const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
                     //Interpolating to the probe point
+#if (AMREX_SPACEDIM == 2)
+                    amrex::Real y_probe = 0;
+#endif
                     doGatherShapeN(x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
                                    Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
                                    arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,

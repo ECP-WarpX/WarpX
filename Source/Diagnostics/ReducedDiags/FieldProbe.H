@@ -44,7 +44,12 @@ public:
     static constexpr int index_absB = 7;
 
 private:
+#if (AMREX_SPACEDIM == 2)
+    amrex::Real x_probe, z_probe;
+#elif (AMREX_SPACEDIM == 3)
     amrex::Real x_probe, y_probe, z_probe;
+#endif
+
     int interp_order = 1;
     bool raw_fields = false;
 
