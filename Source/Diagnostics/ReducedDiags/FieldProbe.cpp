@@ -207,46 +207,46 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParallelDescriptor::Send(&fp_Ex,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    0);
+                                                    index_Ex);
                     amrex::ParallelDescriptor::Send(&fp_Ey,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    1);
+                                                    index_Ey);
                     amrex::ParallelDescriptor::Send(&fp_Ez,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    2);
+                                                    index_Ez);
                     amrex::ParallelDescriptor::Send(&fp_E,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    3);
+                                                    index_absE);
                     amrex::ParallelDescriptor::Send(&fp_Bx,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    4);
+                                                    index_Bx);
                     amrex::ParallelDescriptor::Send(&fp_By,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    5);
+                                                    index_By);
                     amrex::ParallelDescriptor::Send(&fp_Bz,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    6);
+                                                    index_Bz);
                     amrex::ParallelDescriptor::Send(&fp_B,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    7);
+                                                    index_absB);
                 }
                 if (amrex::ParallelDescriptor::MyProc()
                     == amrex::ParallelDescriptor::IOProcessorNumber()) {
-                    amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, 0);
-                    amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, 1);
-                    amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, 2);
-                    amrex::ParallelDescriptor::Recv(&fp_E, 1, probe_proc, 3);
-                    amrex::ParallelDescriptor::Recv(&fp_Bx, 1, probe_proc, 4);
-                    amrex::ParallelDescriptor::Recv(&fp_By, 1, probe_proc, 5);
-                    amrex::ParallelDescriptor::Recv(&fp_Bz, 1, probe_proc, 6);
-                    amrex::ParallelDescriptor::Recv(&fp_B, 1, probe_proc, 7);
+                    amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, index_Ex);
+                    amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, index_Ey);
+                    amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, index_Ez);
+                    amrex::ParallelDescriptor::Recv(&fp_E, 1, probe_proc, index_absE);
+                    amrex::ParallelDescriptor::Recv(&fp_Bx, 1, probe_proc, index_Bx);
+                    amrex::ParallelDescriptor::Recv(&fp_By, 1, probe_proc, index_By);
+                    amrex::ParallelDescriptor::Recv(&fp_Bz, 1, probe_proc, index_Bz);
+                    amrex::ParallelDescriptor::Recv(&fp_B, 1, probe_proc, index_absB);
 
                 }
             }
