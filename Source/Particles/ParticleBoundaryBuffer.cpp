@@ -9,6 +9,7 @@
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/Gather/ScalarFieldGather.H"
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
@@ -57,38 +58,31 @@ struct CopyAndTimestamp {
 ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 {
     m_particle_containers.resize(numBoundaries());
+    m_do_boundary_buffer.resize(numBoundaries());
 
     for (int i = 0; i < numBoundaries(); ++i)
     {
         m_particle_containers[i].resize(numSpecies());
-    }
-
-    m_do_boundary_buffer.resize(numBoundaries());
-    for (int i = 0; i < numBoundaries(); ++i)
-    {
         m_do_boundary_buffer[i].resize(numSpecies(), 0);
     }
 
-    for (int i = 0; i < numBoundaries(); ++i)
+    for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
-        for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
-        {
-            amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
-            pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
-            pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
+        amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
+        pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
+        pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
 #if AMREX_SPACEDIM == 2
-            pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[2][ispecies]);
-            pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[3][ispecies]);
+        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[2][ispecies]);
+        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[3][ispecies]);
 #else
-            pp_species.query("save_particles_at_ylo", m_do_boundary_buffer[2][ispecies]);
-            pp_species.query("save_particles_at_yhi", m_do_boundary_buffer[3][ispecies]);
-            pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[4][ispecies]);
-            pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[5][ispecies]);
+        pp_species.query("save_particles_at_ylo", m_do_boundary_buffer[2][ispecies]);
+        pp_species.query("save_particles_at_yhi", m_do_boundary_buffer[3][ispecies]);
+        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[4][ispecies]);
+        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[5][ispecies]);
 #endif
 #ifdef AMREX_USE_EB
-            pp_species.query("save_particles_at_eb", m_do_boundary_buffer[AMREX_SPACEDIM*2][ispecies]);
+        pp_species.query("save_particles_at_eb", m_do_boundary_buffer[AMREX_SPACEDIM*2][ispecies]);
 #endif
-        }
     }
 }
 
@@ -224,11 +218,10 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
 
-                        int ii, jj, kk;
-                        amrex::Real W[AMREX_SPACEDIM][2];
-                        DistanceToEB::compute_weights(xp, yp, zp, plo, dxi, ii, jj, kk, W);
+                        amrex::Real phi_value  = doGatherScalarFieldNodal(
+                            xp, yp, zp, phiarr, dxi, plo
+                        );
 
-                        amrex::Real phi_value  = DistanceToEB::interp_distance(ii, jj, kk, W, phiarr);
                         return phi_value < 0.0 ? 1 : 0;
                     },
                     CopyAndTimestamp{timestamp_index, timestep}, 0, dst_index);

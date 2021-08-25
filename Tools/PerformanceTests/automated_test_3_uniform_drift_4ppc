@@ -24,7 +24,6 @@ warpx.verbose = 1
 
 # Algorithms
 algo.particle_shape = 3
-warpx.do_pml = 0
 
 # CFL
 warpx.cfl = 1.0

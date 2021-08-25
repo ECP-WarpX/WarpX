@@ -24,7 +24,6 @@ warpx.verbose = 1
 algo.particle_shape = 3
 warpx.use_filter = 1
 warpx.cfl = 1.0
-warpx.do_pml = 0
 
 # Moving window
 warpx.do_moving_window = 1

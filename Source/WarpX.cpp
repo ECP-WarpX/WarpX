@@ -34,7 +34,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 #include <AMReX_Array4.H>
@@ -255,8 +255,8 @@ WarpX::WarpX ()
     }
     do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
 
-    // Particle Buffers
-    m_particle_buffers = std::make_unique<ParticleBoundaryBuffer>();
+    // Particle Boundary Buffer (i.e., scraped particles on boundary)
+    m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
 
     // Diagnostics
     multi_diags = std::make_unique<MultiDiagnostics>();
@@ -411,7 +411,7 @@ WarpX::ReadParameters ()
 {
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
-        pp.query("max_step", max_step);
+        queryWithParser(pp, "max_step", max_step);
         queryWithParser(pp, "stop_time", stop_time);
         pp.query("authors", authors);
     }
@@ -431,7 +431,7 @@ WarpX::ReadParameters ()
         ParmParse pp_warpx("warpx");
 
         std::vector<int> numprocs_in;
-        pp_warpx.queryarr("numprocs", numprocs_in);
+        queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
         if (not numprocs_in.empty()) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE
                 (numprocs_in.size() == AMREX_SPACEDIM,
@@ -466,7 +466,7 @@ WarpX::ReadParameters ()
 
         queryWithParser(pp_warpx, "cfl", cfl);
         pp_warpx.query("verbose", verbose);
-        pp_warpx.query("regrid_int", regrid_int);
+        queryWithParser(pp_warpx, "regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
         pp_warpx.query("do_multi_J", do_multi_J);
         if (do_multi_J)
@@ -495,8 +495,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
         {
-            pp_warpx.query("start_moving_window_step", start_moving_window_step);
-            pp_warpx.query("end_moving_window_step", end_moving_window_step);
+            queryWithParser(pp_warpx, "start_moving_window_step", start_moving_window_step);
+            queryWithParser(pp_warpx, "end_moving_window_step", end_moving_window_step);
             std::string s;
             pp_warpx.get("moving_window_dir", s);
             if (s == "x" || s == "X") {
@@ -537,7 +537,7 @@ WarpX::ReadParameters ()
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
                    "The boosted frame diagnostic currently only works if the boost is in the z direction.");
 
-            pp_warpx.get("num_snapshots_lab", num_snapshots_lab);
+            queryWithParser(pp_warpx, "num_snapshots_lab", num_snapshots_lab);
 
             // Read either dz_snapshots_lab or dt_snapshots_lab
             bool snapshot_interval_is_specified = 0;
@@ -567,7 +567,7 @@ WarpX::ReadParameters ()
 
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
-            pp_warpx.query("self_fields_max_iters", self_fields_max_iters);
+            queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -586,7 +586,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("use_filter", use_filter);
         pp_warpx.query("use_filter_compensation", use_filter_compensation);
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
-        pp_warpx.queryarr("filter_npass_each_dir", parse_filter_npass_each_dir);
+        queryArrWithParser(pp_warpx, "filter_npass_each_dir", parse_filter_npass_each_dir, 0, AMREX_SPACEDIM);
         filter_npass_each_dir[0] = parse_filter_npass_each_dir[0];
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
 #if (AMREX_SPACEDIM == 3)
@@ -631,20 +631,6 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
         pp_warpx.query("n_field_gather_buffer", n_field_gather_buffer);
         pp_warpx.query("n_current_deposition_buffer", n_current_deposition_buffer);
-#ifdef AMREX_USE_GPU
-        std::vector<std::string>sort_intervals_string_vec = {"4"};
-#else
-        std::vector<std::string> sort_intervals_string_vec = {"-1"};
-#endif
-        pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
-        sort_intervals = IntervalsParser(sort_intervals_string_vec);
-
-        Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
-        bool sort_bin_size_is_specified = pp_warpx.queryarr("sort_bin_size", vect_sort_bin_size);
-        if (sort_bin_size_is_specified){
-            for (int i=0; i<AMREX_SPACEDIM; i++)
-                sort_bin_size[i] = vect_sort_bin_size[i];
-        }
 
         amrex::Real quantum_xi_tmp;
         int quantum_xi_is_specified = queryWithParser(pp_warpx, "quantum_xi", quantum_xi_tmp);
@@ -672,14 +658,13 @@ WarpX::ReadParameters ()
             }
         }
 
-        pp_warpx.query("do_pml", do_pml);
-        pp_warpx.query("pml_ncell", pml_ncell);
-        pp_warpx.query("pml_delta", pml_delta);
+        queryWithParser(pp_warpx, "pml_ncell", pml_ncell);
+        queryWithParser(pp_warpx, "pml_delta", pml_delta);
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
 
-        if (do_multi_J && do_pml)
+        if (do_multi_J && isAnyBoundaryPML())
         {
             amrex::Abort("Multi-J algorithm not implemented with PMLs");
         }
@@ -743,38 +728,8 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
-            "PML are not implemented in RZ geometry ; please set `warpx.do_pml=0`");
-#endif
-        // setting default to 0
-        Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,0);
-        // Switching pml lo to 1 when do_pml = 1 and if domain is non-periodic
-        // Note to remove this code when new BC API is fully functional
-        if (do_pml == 1) {
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Lo[idim] = 1;
-            }
-        }
-        pp_warpx.queryarr("do_pml_Lo", parse_do_pml_Lo);
-        do_pml_Lo[0] = parse_do_pml_Lo[0];
-        do_pml_Lo[1] = parse_do_pml_Lo[1];
-#if (AMREX_SPACEDIM == 3)
-        do_pml_Lo[2] = parse_do_pml_Lo[2];
-#endif
-        // setting default to 0
-        Vector<int> parse_do_pml_Hi(AMREX_SPACEDIM,0);
-        // Switching pml hi to 1 when do_pml = 1 and if domain is non-periodic
-        // Note to remove this code when new BC API is fully functional
-        if (do_pml == 1) {
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if ( Geom(0).isPeriodic(idim) == 0) parse_do_pml_Hi[idim] = 1;
-            }
-        }
-        pp_warpx.queryarr("do_pml_Hi", parse_do_pml_Hi);
-        do_pml_Hi[0] = parse_do_pml_Hi[0];
-        do_pml_Hi[1] = parse_do_pml_Hi[1];
-#if (AMREX_SPACEDIM == 3)
-        do_pml_Hi[2] = parse_do_pml_Hi[2];
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false,
+            "PML are not implemented in RZ geometry; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
@@ -795,11 +750,11 @@ WarpX::ReadParameters ()
             ParmParse pp_vismf("vismf");
             pp_vismf.add("usesingleread", use_single_read);
             pp_vismf.add("usesinglewrite", use_single_write);
-            pp_warpx.query("mffile_nstreams", mffile_nstreams);
+            queryWithParser(pp_warpx, "mffile_nstreams", mffile_nstreams);
             VisMF::SetMFFileInStreams(mffile_nstreams);
-            pp_warpx.query("field_io_nfiles", field_io_nfiles);
+            queryWithParser(pp_warpx, "field_io_nfiles", field_io_nfiles);
             VisMF::SetNOutFiles(field_io_nfiles);
-            pp_warpx.query("particle_io_nfiles", particle_io_nfiles);
+            queryWithParser(pp_warpx, "particle_io_nfiles", particle_io_nfiles);
             ParmParse pp_particles("particles");
             pp_particles.add("particles_nfiles", particle_io_nfiles);
         }
@@ -819,7 +774,7 @@ WarpX::ReadParameters ()
         if (do_nodal) galerkin_interpolation = false;
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
-        pp_warpx.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+        queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
 
         // If true, the current is deposited on a nodal grid and then interpolated onto a Yee grid
         pp_warpx.query("do_current_centering", do_current_centering);
@@ -903,9 +858,10 @@ WarpX::ReadParameters ()
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
 
+        std::vector<std::string> sort_intervals_string_vec = {"-1"};
         if (!species_names.empty() || !lasers_names.empty()) {
             int particle_shape;
-            if (pp_algo.query("particle_shape", particle_shape) == false)
+            if (queryWithParser(pp_algo, "particle_shape", particle_shape) == false)
             {
                 amrex::Abort("\nalgo.particle_shape must be set in the input file:"
                              "\nplease set algo.particle_shape to 1, 2, or 3");
@@ -930,6 +886,24 @@ WarpX::ReadParameters ()
                                " some numerical artifact will be present at the interface between coarse and fine patch."
                                "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
             }
+
+            // default sort interval for particles if species or lasers vector is not empty
+#ifdef AMREX_USE_GPU
+            sort_intervals_string_vec = {"4"};
+#else
+            sort_intervals_string_vec = {"-1"};
+#endif
+        }
+
+        amrex::ParmParse pp_warpx("warpx");
+        pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
+        sort_intervals = IntervalsParser(sort_intervals_string_vec);
+
+        Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
+        bool sort_bin_size_is_specified = pp_warpx.queryarr("sort_bin_size", vect_sort_bin_size);
+        if (sort_bin_size_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                sort_bin_size[i] = vect_sort_bin_size[i];
         }
     }
 
@@ -945,16 +919,16 @@ WarpX::ReadParameters ()
             // For momentum-conserving field gathering, read from input the order of
             // interpolation from the staggered positions to the grid nodes
             if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving) {
-                pp_interpolation.query("field_centering_nox", field_centering_nox);
-                pp_interpolation.query("field_centering_noy", field_centering_noy);
-                pp_interpolation.query("field_centering_noz", field_centering_noz);
+                queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
+                queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
+                queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
             }
 
             // Read order of finite-order centering of currents (nodal to staggered)
             if (WarpX::do_current_centering) {
-                pp_interpolation.query("current_centering_nox", current_centering_nox);
-                pp_interpolation.query("current_centering_noy", current_centering_noy);
-                pp_interpolation.query("current_centering_noz", current_centering_noz);
+                queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
+                queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
+                queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
             }
 
             if (maxLevel() > 0)
@@ -1001,20 +975,20 @@ WarpX::ReadParameters ()
         pp_psatd.query("noy", noy_str);
         pp_psatd.query("noz", noz_str);
 
-        if(nox_str == "inf"){
+        if(nox_str == "inf") {
             nox_fft = -1;
-        } else{
-            pp_psatd.query("nox", nox_fft);
+        } else {
+            queryWithParser(pp_psatd, "nox", nox_fft);
         }
-        if(noy_str == "inf"){
+        if(noy_str == "inf") {
             noy_fft = -1;
-        } else{
-            pp_psatd.query("noy", noy_fft);
+        } else {
+            queryWithParser(pp_psatd, "noy", noy_fft);
         }
-        if(noz_str == "inf"){
+        if(noz_str == "inf") {
             noz_fft = -1;
-        } else{
-            pp_psatd.query("noz", noz_fft);
+        } else {
+            queryWithParser(pp_psatd, "noz", noz_fft);
         }
 
 
@@ -1149,8 +1123,8 @@ WarpX::ReadParameters ()
        }
        queryArrWithParser(pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
        queryArrWithParser(pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
-       pp_slice.queryarr("coarsening_ratio",slice_crse_ratio,0,AMREX_SPACEDIM);
-       pp_slice.query("plot_int",slice_plot_int);
+       queryArrWithParser(pp_slice, "coarsening_ratio",slice_crse_ratio,0,AMREX_SPACEDIM);
+       queryWithParser(pp_slice, "plot_int",slice_plot_int);
        slice_realbox.setLo(slice_lo);
        slice_realbox.setHi(slice_hi);
        slice_cr_ratio = IntVect(AMREX_D_DECL(1,1,1));
@@ -1164,7 +1138,7 @@ WarpX::ReadParameters ()
        if (do_back_transformed_diagnostics) {
           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
                  "gamma_boost must be > 1 to use the boost frame diagnostic");
-          pp_slice.query("num_slice_snapshots_lab", num_slice_snapshots_lab);
+          queryWithParser(pp_slice, "num_slice_snapshots_lab", num_slice_snapshots_lab);
           if (num_slice_snapshots_lab > 0) {
              getWithParser(pp_slice, "dt_slice_snapshots_lab", dt_slice_snapshots_lab );
              getWithParser(pp_slice, "particle_slice_width_lab",particle_slice_width_lab);
@@ -1240,7 +1214,9 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
                      "Please use the flag use_filter, see documentation.");
     }
-
+    if ( pp_warpx.query("do_pml", backward_int) ) {
+        amrex::Abort( "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.");
+    }
     ParmParse pp_interpolation("interpolation");
     if (pp_interpolation.query("nox", backward_int) ||
         pp_interpolation.query("noy", backward_int) ||
@@ -1528,11 +1504,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
-                          || (do_electrostatic != ElectrostaticSolverAlgo::None);
+    bool deposit_charge = do_dive_cleaning || (do_electrostatic == ElectrostaticSolverAlgo::LabFrame);
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
-                         || update_with_rho || current_correction;
+        deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
     if (deposit_charge)
     {
@@ -1721,7 +1695,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_cp[y]"));
         current_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_cp[z]"));
 
-        if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)) {
+        if (deposit_charge) {
             rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_cp"));
         }
 
@@ -2346,4 +2320,14 @@ WarpX::PicsarVersion ()
         return std::string("Unknown");
     else
         return version;
+}
+
+bool
+WarpX::isAnyBoundaryPML()
+{
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) return true;
+        if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) return true;
+    }
+    return false;
 }

@@ -254,7 +254,7 @@ WarpX::Evolve (int numsteps)
 
         mypc->ContinuousFluxInjection(dt[0]);
 
-        m_particle_buffers->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+        m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
         mypc->ApplyBoundaryConditions();
 
@@ -308,6 +308,15 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
         }
 
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
+
+        // warpx_py_afterstep runs with the updated global time. It is included
+        // in the evolve timing.
+        if (warpx_py_afterstep) warpx_py_afterstep();
+
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
@@ -318,10 +327,6 @@ WarpX::Evolve (int numsteps)
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
                       << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
         }
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
 
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
@@ -331,17 +336,15 @@ WarpX::Evolve (int numsteps)
         }
         multi_diags->FilterComputePackFlush( step );
 
-        if (cur_time >= stop_time - 1.e-3*dt[0]) {
-            break;
-        }
-
-        if (warpx_py_afterstep) warpx_py_afterstep();
-
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
             early_params_checked = true;
+        }
+
+        if (cur_time >= stop_time - 1.e-3*dt[0]) {
+            break;
         }
 
         // End loop on time steps
@@ -502,7 +505,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             // Deposit J at relative time -dt with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], -dt[0]);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
@@ -532,7 +536,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
             // Deposit new J at relative time t_depose with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], t_depose);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], t_depose);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J

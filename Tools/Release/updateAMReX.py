@@ -13,6 +13,13 @@ from pathlib import Path
 import re
 import requests
 import sys
+try:
+    from configupdater import ConfigUpdater
+except ImportError:
+    print("Warning: Cannot update .ini files without 'configupdater'")
+    print("Consider running 'python -m pip install configupdater'")
+    ConfigUpdater = None
+    sys.exit(1)
 
 
 # Maintainer Inputs ###########################################################
@@ -108,6 +115,23 @@ with open(run_test_path, encoding='utf-8') as f:
 
 with open(run_test_path, "w", encoding='utf-8') as f:
     f.write(run_test_content)
+
+if ConfigUpdater is not None:
+    # WarpX-tests.ini
+    tests_ini_path = str(REPO_DIR.joinpath("Regression/WarpX-tests.ini"))
+    cp = ConfigUpdater()
+    cp.optionxform = str
+    cp.read(tests_ini_path)
+    cp['AMReX']['branch'].value = amrex_new_branch
+    cp.update_file()
+
+    # WarpX-GPU-tests.ini
+    tests_gpu_ini_path = str(REPO_DIR.joinpath("Regression/WarpX-GPU-tests.ini"))
+    cp = ConfigUpdater()
+    cp.optionxform = str
+    cp.read(tests_gpu_ini_path)
+    cp['AMReX']['branch'].value = amrex_new_branch
+    cp.update_file()
 
 # WarpX references to AMReX: cmake/dependencies/AMReX.cmake
 with open(amrex_cmake_path, encoding='utf-8') as f:

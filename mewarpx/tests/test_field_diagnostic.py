@@ -113,7 +113,7 @@ def test_field_diag(plot_on_diag_steps):
     # verify that the post processing image was created
     if post_processing:
         print("Verifying that all plots were created...", flush=True)
-        for i in range(0, STEPS + 1, DIAG_STEPS):
+        for i in range(0, STEPS - 1, DIAG_STEPS):
             for param in DIAG_DATA_LIST:
                 assert os.path.isfile("diags/fields/" + param + "_" + f"{i:05d}.png"), param + "_" + f"{i:06d}.png doesn't exist"
         print("All plots exist!", flush=True)

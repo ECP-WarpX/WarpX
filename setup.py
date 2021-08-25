@@ -174,34 +174,40 @@ with open('./README.md', encoding='utf-8') as f:
 # Pick up existing WarpX libraries or...
 PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
 
+env = os.environ.copy()
 # ... build WarpX libraries with CMake
 #   note: changed default for SHARED, MPI, TESTING and EXAMPLES
-WarpX_COMPUTE = os.environ.get('WarpX_COMPUTE', 'OMP')
-WarpX_MPI = os.environ.get('WarpX_MPI', 'OFF')
-WarpX_EB = os.environ.get('WarpX_EB', 'OFF')
-WarpX_OPENPMD = os.environ.get('WarpX_OPENPMD', 'OFF')
-WarpX_PRECISION = os.environ.get('WarpX_PRECISION', 'DOUBLE')
-WarpX_PSATD = os.environ.get('WarpX_PSATD', 'OFF')
-WarpX_QED = os.environ.get('WarpX_QED', 'ON')
-WarpX_QED_TABLE_GEN = os.environ.get('WarpX_QED_TABLE_GEN', 'OFF')
-WarpX_DIMS = os.environ.get('WarpX_DIMS', '2;3;RZ')
-BUILD_PARALLEL = os.environ.get('BUILD_PARALLEL', '2')
-BUILD_SHARED_LIBS = os.environ.get('WarpX_BUILD_SHARED_LIBS',
+WarpX_COMPUTE = env.pop('WarpX_COMPUTE', 'OMP')
+WarpX_MPI = env.pop('WarpX_MPI', 'OFF')
+WarpX_EB = env.pop('WarpX_EB', 'OFF')
+WarpX_OPENPMD = env.pop('WarpX_OPENPMD', 'OFF')
+WarpX_PRECISION = env.pop('WarpX_PRECISION', 'DOUBLE')
+WarpX_PSATD = env.pop('WarpX_PSATD', 'OFF')
+WarpX_QED = env.pop('WarpX_QED', 'ON')
+WarpX_QED_TABLE_GEN = env.pop('WarpX_QED_TABLE_GEN', 'OFF')
+WarpX_DIMS = env.pop('WarpX_DIMS', '2;3;RZ')
+BUILD_PARALLEL = env.pop('BUILD_PARALLEL', '2')
+BUILD_SHARED_LIBS = env.pop('WarpX_BUILD_SHARED_LIBS',
                                    'OFF')
-#BUILD_TESTING = os.environ.get('WarpX_BUILD_TESTING',
+#BUILD_TESTING = env.pop('WarpX_BUILD_TESTING',
 #                               'OFF')
-#BUILD_EXAMPLES = os.environ.get('WarpX_BUILD_EXAMPLES',
+#BUILD_EXAMPLES = env.pop('WarpX_BUILD_EXAMPLES',
 #                                'OFF')
 # openPMD-api sub-control
-HDF5_USE_STATIC_LIBRARIES = os.environ.get('HDF5_USE_STATIC_LIBRARIES', 'OFF')
-ADIOS_USE_STATIC_LIBS = os.environ.get('ADIOS_USE_STATIC_LIBS', 'OFF')
+HDF5_USE_STATIC_LIBRARIES = env.pop('HDF5_USE_STATIC_LIBRARIES', 'OFF')
+ADIOS_USE_STATIC_LIBS = env.pop('ADIOS_USE_STATIC_LIBS', 'OFF')
 # CMake dependency control (developers & package managers)
-WarpX_amrex_src = os.environ.get('WarpX_amrex_src')
-WarpX_amrex_internal = os.environ.get('WarpX_amrex_internal', 'ON')
-WarpX_openpmd_src = os.environ.get('WarpX_openpmd_src')
-WarpX_openpmd_internal = os.environ.get('WarpX_openpmd_internal', 'ON')
-WarpX_picsar_src = os.environ.get('WarpX_picsar_src')
-WarpX_picsar_internal = os.environ.get('WarpX_picsar_internal', 'ON')
+WarpX_amrex_src = env.pop('WarpX_amrex_src', '')
+WarpX_amrex_internal = env.pop('WarpX_amrex_internal', 'ON')
+WarpX_openpmd_src = env.pop('WarpX_openpmd_src', '')
+WarpX_openpmd_internal = env.pop('WarpX_openpmd_internal', 'ON')
+WarpX_picsar_src = env.pop('WarpX_picsar_src', '')
+WarpX_picsar_internal = env.pop('WarpX_picsar_internal', 'ON')
+
+for key in env.keys():
+    if key.lower().startswith('warpx'):
+        print(f"\nWARNING: Found environment variable '{key}', which is not a recognized WarpX option\n")
+
 
 # https://cmake.org/cmake/help/v3.0/command/if.html
 if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
@@ -277,7 +283,7 @@ setup(
     #    ]
     #},
     extras_require={
-        'all': ['openPMD-api~=0.13.0', 'openPMD-viewer~=1.1', 'yt~=3.6', 'matplotlib'],
+        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt~=3.6,>=4.0.1', 'matplotlib'],
     },
     # cmdclass={'test': PyTest},
     # platforms='any',

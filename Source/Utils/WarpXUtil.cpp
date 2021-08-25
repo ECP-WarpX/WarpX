@@ -34,11 +34,27 @@
 #include <fstream>
 #include <set>
 #include <string>
+#include <limits>
 
 using namespace amrex;
 
+void PreparseAMReXInputIntArray(amrex::ParmParse& a_pp, char const * const input_str, const bool replace)
+{
+    const int cnt = a_pp.countval(input_str);
+    if (cnt > 0) {
+        Vector<int> input_array;
+        getArrWithParser(a_pp, input_str, input_array);
+        if (replace) {
+            a_pp.remove(input_str);
+        }
+        a_pp.addarr(input_str, input_array);
+    }
+}
+
 void ParseGeometryInput()
 {
+    // Parse prob_lo and hi, evaluating any expressions since geometry does not
+    // parse its input
     ParmParse pp_geometry("geometry");
 
     Vector<Real> prob_lo(AMREX_SPACEDIM);
@@ -66,6 +82,22 @@ void ParseGeometryInput()
 
     pp_geometry.addarr("prob_lo", prob_lo);
     pp_geometry.addarr("prob_hi", prob_hi);
+
+    // Parse amr input, evaluating any expressions since amr does not parse its input
+    ParmParse pp_amr("amr");
+
+    // Note that n_cell is replaced so that only the parsed version is written out to the
+    // warpx_job_info file. This must be done since yt expects to be able to parse
+    // the value of n_cell from that file. For the rest, this doesn't matter.
+    PreparseAMReXInputIntArray(pp_amr, "n_cell", true);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size", false);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size_x", false);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size_y", false);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size_z", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor_x", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor_y", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor_z", false);
 }
 
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
@@ -239,6 +271,30 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
+int safeCastToInt(const amrex::Real x, const std::string& real_name) {
+    int result = 0;
+    bool error_detected = false;
+    std::string assert_msg;
+    // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
+    // This accepts x = 2**31-1 but rejects 2**31.
+    if (x < (2.0*(std::numeric_limits<int>::max()/2+1))) {
+        if (std::ceil(x) >= std::numeric_limits<int>::min()) {
+            result = static_cast<int>(x);
+        } else {
+            error_detected = true;
+            assert_msg = "Error: Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+        }
+    } else if (x > 0) {
+        error_detected = true;
+        assert_msg =  "Error: Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+    } else {
+        error_detected = true;
+        assert_msg =  "Error: NaN detected when casting " + real_name + " to int";
+    }
+    WarpXUtilMsg::AlwaysAssert(!error_detected, assert_msg);
+    return result;
+}
+
 Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
     // Since queryWithParser recursively calls this routine, keep track of symbols
@@ -388,6 +444,53 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
         auto parser = makeParser(tmp_str_arr[i], {});
         auto exe = parser.compileHost<0>();
         val[i] = exe();
+    }
+}
+
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
+    amrex::Real rval;
+    const int result = queryWithParser(a_pp, str, rval);
+    if (result) {
+        val = safeCastToInt(std::round(rval), str);
+    }
+    return result;
+}
+
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
+    amrex::Real rval;
+    getWithParser(a_pp, str, rval);
+    val = safeCastToInt(std::round(rval), str);
+}
+
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                        const int start_ix, const int num_val) {
+    std::vector<amrex::Real> rval;
+    const int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
+    if (result) {
+        val.resize(rval.size());
+        for (unsigned long i = 0 ; i < val.size() ; i++) {
+            val[i] = safeCastToInt(std::round(rval[i]), str);
+        }
+    }
+    return result;
+}
+
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val) {
+    std::vector<amrex::Real> rval;
+    getArrWithParser(a_pp, str, rval);
+    val.resize(rval.size());
+    for (unsigned long i = 0 ; i < val.size() ; i++) {
+        val[i] = safeCastToInt(std::round(rval[i]), str);
+    }
+}
+
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                       const int start_ix, const int num_val) {
+    std::vector<amrex::Real> rval;
+    getArrWithParser(a_pp, str, rval, start_ix, num_val);
+    val.resize(rval.size());
+    for (unsigned long i = 0 ; i < val.size() ; i++) {
+        val[i] = safeCastToInt(std::round(rval[i]), str);
     }
 }
 
@@ -550,38 +653,6 @@ void ReadBCParams ()
                 WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
                 amrex::Abort(" PEC boundary not implemented for PSATD, yet!");
             }
-        }
-    }
-    // temporarily check : If silver mueller is selected for one boundary, it should be
-    // selected at all valid boundaries.
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
-            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller){
-#if (AMREX_SPACEDIM == 3)
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                (WarpX::field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_lo[2] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[2] == FieldBoundaryType::Absorbing_SilverMueller)
-                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
-#else
-#ifndef WARPX_DIM_RZ
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                (WarpX::field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
-                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
-#else
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                (WarpX::field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller)&&
-                (WarpX::field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller)
-                , " The current implementation requires silver-mueller boundary condition to be applied at all boundaries!");
-#endif
-#endif
         }
     }
 #ifdef WARPX_DIM_RZ

@@ -542,7 +542,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     def init(self, kw):
         assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD'], Exception("Only 'Yee', 'CKC', and 'PSATD' are supported")
 
-        self.do_pml = kw.pop('warpx_do_pml', None)
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
 
         if self.method == 'PSATD':
@@ -556,7 +555,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         self.grid.initialize_inputs()
 
-        pywarpx.warpx.do_pml = self.do_pml
         pywarpx.warpx.pml_ncell = self.pml_ncell
         pywarpx.warpx.do_nodal = self.l_nodal
 

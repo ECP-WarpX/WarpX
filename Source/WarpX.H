@@ -97,7 +97,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
 
-    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_buffers; }
+    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
@@ -465,6 +465,7 @@ public:
     void DampJPML (int lev, PatchType patch_type);
 
     void CopyJPML ();
+    bool isAnyBoundaryPML();
 
     /**
      * \brief Synchronize the nodal points of the PML MultiFabs
@@ -555,7 +556,6 @@ public:
     amrex::Real getmoving_window_x() const {return moving_window_x;}
     amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
-    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;}
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
@@ -1118,8 +1118,6 @@ private:
 
     std::string restart_chkfile;
 
-    bool plot_rho = false;
-
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
@@ -1153,10 +1151,11 @@ private:
     int noy_fft = 16;
     int noz_fft = 16;
 
-    // Domain decomposition on Level 0
+    //! Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
-    std::unique_ptr<ParticleBoundaryBuffer> m_particle_buffers;
+    //! particle buffer for scraped particles on the boundaries
+    std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
 
     //
     // Embedded Boundary

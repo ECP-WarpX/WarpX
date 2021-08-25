@@ -29,8 +29,6 @@ def test_particle_diag():
     # np.random.seed()
     np.random.seed(47239475)
 
-    TOTAL_TIME = 1e-10 # s
-    DIAG_INTERVAL = 5e-10 # s
     DT = 0.5e-12 # s
 
     P_INERT = 1 # torr
@@ -82,7 +80,7 @@ def test_particle_diag():
     # verify that the plot images were created.
 
     print('Verifying that all plots were created...')
-    for i in range(diag_steps, max_steps + 1, diag_steps):
+    for i in range(diag_steps, max_steps - 1, diag_steps):
         for specimen in PLOT_SPECIES:
             for param in DIAG_PLOT_DATA_LIST:
                 file_name = os.path.join(
