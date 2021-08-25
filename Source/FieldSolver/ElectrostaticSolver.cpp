@@ -58,8 +58,6 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     if (reset_fields) {
         for (int lev = 0; lev <= max_level; lev++) {
-            // reset rho_fp before depositing charge density for this step
-            if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) rho_fp[lev]->setVal(0.);
             // Reset E and B fields before calculating space-charge fields for this step
             for (int comp=0; comp<3; comp++) {
                 Efield_fp[lev][comp]->setVal(0);
@@ -138,6 +136,10 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
+
+    // reset rho_fp before depositing charge density for this step
+    for (int lev = 0; lev <= max_level; lev++) {
+        rho_fp[lev]->setVal(0.);
 
     // Loop over particles to gather to total charge density
     bool const local = true;
