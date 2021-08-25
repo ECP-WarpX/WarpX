@@ -613,9 +613,6 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
-    void DepositChargeDensity (WarpXParticleContainer& species, const bool local,
-                               const bool reset, const bool do_rz_volume_scaling,
-                               const bool interpolate_across_levels);
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
