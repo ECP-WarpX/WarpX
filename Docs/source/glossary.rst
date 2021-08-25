@@ -29,13 +29,14 @@ Abbreviations
 * **NERSC:** `National Energy Research Scientific Computing Center <https://www.nersc.gov/>`__, a supercomputing center located in Berkeley, CA (USA)
 * **NSF:** the `National Science Foundation <https://en.wikipedia.org/wiki/National_Science_Foundation>`__, a large public agency in the United States of America, supporting research and education
 * **OLCF:** `Oak Ridge Leadership Computing Facility <https://www.olcf.ornl.gov/>`__, a supercomputing center located in Oak Ridge, TN (USA)
+* **PDE:** `partial differential equation <https://en.wikipedia.org/wiki/Partial_differential_equation>`__, an equation which imposes relations between the various partial derivatives of a multivariable function
 * **PIC:** :ref:`particle-in-cell <theory-pic>`, the method implemented in WarpX
+* **PR:** github pull request
 * **PSATD:** pseudo-spectral analytical time-domain method, a spectral field solver with better numerical properties than FDTD solvers
 * **PWFA:** plasma-wakefield acceleration
-* **PDE:** `partial differential equation <https://en.wikipedia.org/wiki/Partial_differential_equation>`__, an equation which imposes relations between the various partial derivatives of a multivariable function
-* **RZ:** for the coordinate system ``r-z`` in cylindrical geometry; we use "RZ" when we refer to quasi-cylindrical geometry, decomposed in azimuthal modes (see details `here <https://fbpic.github.io/overview/pic_algorithm.html#cylindrical-grid-with-azimuthal-decomposition>`__)
 * **QED:** `quantum electrodynamics <https://en.wikipedia.org/wiki/Quantum_electrodynamics>`__
 * **RPA:** radiation-pressure acceleration (of protons/ions), e.g. hole-boring (HB) or light-sail (LS) acceleration
+* **RZ:** for the coordinate system ``r-z`` in cylindrical geometry; we use "RZ" when we refer to quasi-cylindrical geometry, decomposed in azimuthal modes (see details `here <https://fbpic.github.io/overview/pic_algorithm.html#cylindrical-grid-with-azimuthal-decomposition>`__)
 * **TNSA:** target-normal sheet acceleration (of protons/ions)
 
 Terms
