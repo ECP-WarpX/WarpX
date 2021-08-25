@@ -1988,7 +1988,7 @@ Reduced Diagnostics
     * ``FieldProbe``
         This type computes the value of each component of the electric and magnetic fields
         and of the norm of the electric and magnetic field vectors at a point in the domain.
-        The point where the fields are measured is specified through the inputs parameters
+        The point where the fields are measured is specified through the input parameters
         ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
         ``<reduced_diags_name>.z_probe``.
 
