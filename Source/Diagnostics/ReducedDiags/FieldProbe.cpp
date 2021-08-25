@@ -165,8 +165,8 @@ void FieldProbe::ComputeDiags (int step)
                     const auto &arrBy = By[mfi].array();
                     const auto &arrBz = Bz[mfi].array();
 
-                    amrex::ParticleReal Ex_interp = 0._rt, Ey_interp = 0._rt, Ez_interp = 0._rt;
-                    amrex::ParticleReal Bx_interp = 0._rt, By_interp = 0._rt, Bz_interp = 0._rt;
+                    amrex::Real Ex_interp = 0._rt, Ey_interp = 0._rt, Ez_interp = 0._rt;
+                    amrex::Real Bx_interp = 0._rt, By_interp = 0._rt, Bz_interp = 0._rt;
 
                     amrex::Array<amrex::Real, 3> v_galilean = {{0}};
                     const auto

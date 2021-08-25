@@ -44,7 +44,7 @@ public:
     static constexpr int index_absB = 7;
 
 private:
-    amrex::ParticleReal x_probe, y_probe, z_probe;
+    amrex::Real x_probe, y_probe, z_probe;
     int interp_order = 1;
     bool raw_fields = false;
 
