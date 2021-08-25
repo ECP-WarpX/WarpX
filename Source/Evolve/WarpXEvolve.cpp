@@ -256,13 +256,16 @@ WarpX::Evolve (int numsteps)
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
         }
-        if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
-            // perform BTD, force_flush=true, BackTransform=true
-            multi_diags->FilterComputePackFlush( step, true, true );
-        } else {
-            // perform BTD, force_flush=false, BackTransform=true
-            multi_diags->FilterComputePackFlush( step, false, true );
-        }
+        //if (cur_time + dt[0] > stop_time || step == numsteps_max-1) {
+        //    // perform BTD, force_flush=true, BackTransform=true
+        //    amrex::Print() << " compulsory : " << step << "  " << numsteps_max-1 << "  " << cur_time + dt[0] << " " << stop_time << "\n";
+        //    multi_diags->FilterComputePackFlush( step, true, true );
+        //} else {
+        //    // perform BTD, force_flush=false, BackTransform=true
+        //    amrex::Print() << " filter compuite pack and flush : " << step << "  " << numsteps_max-1 << "  " << cur_time + dt[0] << " " << stop_time - 1.e-3*dt[0] << "\n";
+        //    multi_diags->FilterComputePackFlush( step, false, true );
+        //}
+        multi_diags->FilterComputePackFlush( step, false, true );
 
         bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
@@ -377,7 +380,7 @@ WarpX::Evolve (int numsteps)
 
         // End loop on time steps
     }
-
+    amrex::Print() << " last timestep flush \n";
     multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
 
     if (do_back_transformed_diagnostics) {
