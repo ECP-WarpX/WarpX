@@ -126,7 +126,8 @@ void FieldProbe::ComputeDiags (int step)
                                      y_probe >= prob_lo[1] and y_probe <= prob_hi[1] and
                                      z_probe >= prob_lo[2] and z_probe <= prob_hi[2];
 #endif
-        amrex::Real fp_Ex, fp_Ey, fp_Ez, fp_E, fp_Bx, fp_By, fp_Bz, fp_B;
+        amrex::Real fp_Ex = 0._rt, fp_Ey = 0._rt, fp_Ez = 0._rt, fp_E = 0._rt;
+        amrex::Real fp_Bx = 0._rt, fp_By = 0._rt, fp_Bz = 0._rt, fp_B = 0._rt;
 
         if( probe_in_domain ) {
             const auto cell_size = gm.CellSizeArray();
@@ -214,7 +215,7 @@ void FieldProbe::ComputeDiags (int step)
             //processors the rank of the processor which contains the point
             amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
-            if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber()) {
+            if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
                 if (amrex::ParallelDescriptor::MyProc() == probe_proc) {
                     amrex::ParallelDescriptor::Send(&fp_Ex,
                                                     1,
@@ -250,7 +251,7 @@ void FieldProbe::ComputeDiags (int step)
                                                     index_absB);
                 }
                 if (amrex::ParallelDescriptor::MyProc()
-                    == amrex::ParallelDescriptor::IOProcessorNumber()) {
+                    == amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
                     amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, index_Ex);
                     amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, index_Ey);
                     amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, index_Ez);
@@ -259,18 +260,8 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParallelDescriptor::Recv(&fp_By, 1, probe_proc, index_By);
                     amrex::ParallelDescriptor::Recv(&fp_Bz, 1, probe_proc, index_Bz);
                     amrex::ParallelDescriptor::Recv(&fp_B, 1, probe_proc, index_absB);
-
                 }
             }
-        }else{
-            fp_Ex = 0._rt;
-            fp_Ey = 0._rt;
-            fp_Ez = 0._rt;
-            fp_E = 0._rt;
-            fp_Bx = 0._rt;
-            fp_By = 0._rt;
-            fp_Bz = 0._rt;
-            fp_B = 0._rt;
         }
 
         // Fill output array
