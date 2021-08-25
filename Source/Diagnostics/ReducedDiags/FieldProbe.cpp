@@ -187,7 +187,7 @@ void FieldProbe::ComputeDiags (int step)
 
                     //Interpolating to the probe point
 #if (AMREX_SPACEDIM == 2)
-                    constexpr amrex::Real y_probe = 0;
+                    constexpr amrex::Real y_probe = 0._rt;
 #endif
                     doGatherShapeN(x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
                                    Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
