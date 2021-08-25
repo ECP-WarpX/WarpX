@@ -178,6 +178,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
                 }
             }
+            Btmp[0]->setVal(0.0);
+            Btmp[1]->setVal(0.0);
+            Btmp[2]->setVal(0.0);
             // ParallelCopy from coarse level
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Btmp[i]->nGrowVect();
@@ -232,6 +235,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                         cnba, dm, 1, ngtmp);
                 }
             }
+            Etmp[0]->setVal(0.0);
+            Etmp[1]->setVal(0.0);
+            Etmp[2]->setVal(0.0);
             // ParallelCopy from coarse level
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Etmp[i]->nGrowVect();
