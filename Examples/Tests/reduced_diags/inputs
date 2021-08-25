@@ -84,6 +84,7 @@ MF.type = FieldMaximum
 MF.intervals = 200
 FP.type = FieldProbe
 FP.intervals = 200
+#The probe is placed at a cell center to match the value in the plotfile
 FP.x_probe = 0.53125
 FP.y_probe = 0.53125
 FP.z_probe = 0.53125
