@@ -251,7 +251,7 @@ void FieldProbe::ComputeDiags (int step)
                                                     index_absB);
                 }
                 if (amrex::ParallelDescriptor::MyProc()
-                    == amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
+                    == amrex::ParallelDescriptor::IOProcessorNumber()) {
                     amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, index_Ex);
                     amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, index_Ey);
                     amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, index_Ez);
