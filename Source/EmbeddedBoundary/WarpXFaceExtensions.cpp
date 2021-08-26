@@ -87,6 +87,9 @@ WarpX::InitBorrowing() {
         borrowing_x.size.resize(box);
         borrowing_x.size.setVal<amrex::RunOn::Host>(0);
         amrex::Long ncells = box.numPts();
+        // inds, neigh_faces and area are extended to their largest possible size here, but they are
+        // resized to a much smaller size later on, based on the actual number of neighboring
+        // intruded faces for each unstable face.
         borrowing_x.inds.resize(8*ncells);
         borrowing_x.neigh_faces.resize(8*ncells);
         borrowing_x.area.resize(8*ncells);
@@ -546,8 +549,6 @@ WarpX::ComputeOneWayExtensions() {
                 }
             }, amrex::Scan::Type::exclusive);
 
-        borrowing_y.inds.resize(nelems_y);
-
     }
     // Do the extensions in the z-plane
     idim = 2;
@@ -795,7 +796,9 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             amrex::Scan::Type::exclusive);
 
-        amrex::ignore_unused(nelems_x);
+        borrowing_x.inds.resize(n_borrow_offset_x + nelems_x);
+        borrowing_x.neigh_faces.resize(n_borrow_offset_x + nelems_x);
+        borrowing_x.area.resize(n_borrow_offset_x + nelems_x);
 
     }
 
@@ -933,7 +936,9 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             amrex::Scan::Type::exclusive);
 
-        amrex::ignore_unused(nelems_y);
+        borrowing_y.inds.resize(n_borrow_offset_y + nelems_y);
+        borrowing_y.neigh_faces.resize(n_borrow_offset_y + nelems_y);
+        borrowing_y.area.resize(n_borrow_offset_y + nelems_y);
 
     }
 
@@ -1072,7 +1077,10 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             amrex::Scan::Type::exclusive);
 
-        amrex::ignore_unused(nelems_z);
+        borrowing_z.inds.resize(n_borrow_offset_z + nelems_z);
+        borrowing_z.neigh_faces.resize(n_borrow_offset_z + nelems_z);
+        borrowing_z.area.resize(n_borrow_offset_z + nelems_z);
+        
     }
 #else
     amrex::ignore_unused(temp_inds);
