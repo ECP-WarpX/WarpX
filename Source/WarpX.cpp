@@ -424,9 +424,9 @@ if(priority == WarnPriority::low)
 else if(priority == WarnPriority::medium)
     msg_priority = Utils::MsgLogger::Priority::medium;
 
-// If WARPX_ALWAYS_WARN_IMMEDIATELY is defined, WarpX prints an error message immediately
+// If WARPX_WARN_IMMEDIATELY is defined, WarpX prints an error message immediately
 // every time an error message is recorded.
-#ifdef WARPX_ALWAYS_WARN_IMMEDIATELY
+#ifdef WARPX_WARN_IMMEDIATELY
     amrex::Warning(
         "WARNING: ["
         + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
