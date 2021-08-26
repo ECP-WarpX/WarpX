@@ -416,6 +416,7 @@ WarpX::RecordWarning(
         std::string text,
         WarnPriority priority)
 {
+    WARPX_PROFILE("WarpX::RecordWarning");
 
 auto msg_priority = Utils::MsgLogger::Priority::high;
 if(priority == WarnPriority::low)
@@ -443,6 +444,7 @@ else if(priority == WarnPriority::medium)
 void
 WarpX::PrintLocalWarnings(const std::string& when)
 {
+    WARPX_PROFILE("WarpX::PrintLocalWarnings");
     amrex::AllPrint() << m_p_warn_manager->print_local_warnings(when);
 }
 
