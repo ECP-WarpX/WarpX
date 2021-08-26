@@ -233,7 +233,7 @@ endif
 
 installwarpx: libwarpx.$(PYDIM).so
 	mv libwarpx.$(PYDIM).so Python/pywarpx
-	cd Python; python setup.py install --with-libwarpx $(PYDIM) $(PYINSTALLOPTIONS)
+	cd Python; python3 setup.py develop --with-libwarpx $(PYDIM) $(PYINSTALLOPTIONS)
 
 libwarpx.$(PYDIM).a: $(objForExecs)
 	@echo Making static library $@ ...
