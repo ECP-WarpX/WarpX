@@ -72,6 +72,15 @@ The Monte-Carlo collision (MCC) model can be used to simulate capacitive dischar
 
 * :download:`test case 1 <../../../Examples/Physics_applications/capacitive_discharge/inputs_2d>`
 
+.. note::
+
+   This example needs `additional calibration data for cross sections <https://github.com/ECP-WarpX/warpx-data>`__.
+   Download this data alongside your inputs file and update the paths in the inputs file:
+
+   .. code-block:: bash
+
+      git clone https://github.com/ECP-WarpX/warpx-data.git
+
 Test cases
 ----------
 

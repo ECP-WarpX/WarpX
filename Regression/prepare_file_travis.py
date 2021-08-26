@@ -129,6 +129,7 @@ if ci_regular_cartesian_3d:
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_single_precision:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], True)

@@ -143,8 +143,6 @@ BTDiagnostics::ReadParameters ()
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
-    // For BTD, we always need rho to perform Lorentz Transform of current-density
-    if (WarpXUtilStr::is_in(m_cellcenter_varnames, "rho")) warpx.setplot_rho(true);
 
     if (pp_diag_name.query("buffer_size", m_buffer_size)) {
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
@@ -155,12 +153,19 @@ BTDiagnostics::ReadParameters ()
 bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
-    // Return true if buffer is full or if force_flush == true
-    // Return false if timestep < 0, i.e., at initialization when step == -1.
-    if (step < 0 ) return false;
-    else if ( buffer_full(i_buffer) || force_flush) {
+    // timestep < 0, i.e., at initialization time when step == -1
+    if (step < 0 )
+        return false;
+    // buffer for this lab snapshot is full, time to dump it and continue
+    // to collect more slices afterwards
+    else if (buffer_full(i_buffer))
         return true;
-    }
+    // forced: at the end of the simulation
+    // empty: either lab snapshot was already fully written and buffer was reset
+    //        to zero size or that lab snapshot was not even started to be
+    //        backtransformed yet
+    else if (force_flush && !buffer_empty(i_buffer))
+        return true;
     return false;
 }
 

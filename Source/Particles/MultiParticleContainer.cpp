@@ -223,28 +223,62 @@ MultiParticleContainer::ReadParameters ()
 
         }
 
-        // if the input string for E_ext_particle_s is
+        // if the input string for E_ext_particle_s or B_ext_particle_s is
         // "repeated_plasma_lens" then the plasma lens properties
         // must be provided in the input file.
-        if (m_E_ext_particle_s == "repeated_plasma_lens") {
+        if (m_E_ext_particle_s == "repeated_plasma_lens" ||
+            m_B_ext_particle_s == "repeated_plasma_lens") {
             queryWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
             getArrWithParser(pp_particles, "repeated_plasma_lens_starts", h_repeated_plasma_lens_starts);
             getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", h_repeated_plasma_lens_lengths);
-            getArrWithParser(pp_particles, "repeated_plasma_lens_strengths", h_repeated_plasma_lens_strengths);
 
             int n_lenses = static_cast<int>(h_repeated_plasma_lens_starts.size());
             d_repeated_plasma_lens_starts.resize(n_lenses);
             d_repeated_plasma_lens_lengths.resize(n_lenses);
-            d_repeated_plasma_lens_strengths.resize(n_lenses);
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                        h_repeated_plasma_lens_starts.begin(), h_repeated_plasma_lens_starts.end(),
                        d_repeated_plasma_lens_starts.begin());
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                        h_repeated_plasma_lens_lengths.begin(), h_repeated_plasma_lens_lengths.end(),
                        d_repeated_plasma_lens_lengths.begin());
-            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                       h_repeated_plasma_lens_strengths.begin(), h_repeated_plasma_lens_strengths.end(),
-                       d_repeated_plasma_lens_strengths.begin());
+
+            if (m_E_ext_particle_s == "repeated_plasma_lens") {
+                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_E", h_repeated_plasma_lens_strengths_E);
+            }
+            if (m_B_ext_particle_s == "repeated_plasma_lens") {
+                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_B", h_repeated_plasma_lens_strengths_B);
+            }
+            if (WarpX::gamma_boost > 1._rt) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                     m_E_ext_particle_s == "repeated_plasma_lens" || m_E_ext_particle_s == "default",
+                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
+                     "must be either repeated_plasma_lens or unspecified");
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                     m_B_ext_particle_s == "repeated_plasma_lens" || m_B_ext_particle_s == "default",
+                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
+                     "must be either repeated_plasma_lens or unspecified");
+                if (m_E_ext_particle_s == "default") {
+                    m_E_ext_particle_s = "repeated_plasma_lens";
+                    h_repeated_plasma_lens_strengths_E.resize(n_lenses);
+                }
+                if (m_B_ext_particle_s == "default") {
+                    m_B_ext_particle_s = "repeated_plasma_lens";
+                    h_repeated_plasma_lens_strengths_B.resize(n_lenses);
+                }
+            }
+
+            if (m_E_ext_particle_s == "repeated_plasma_lens") {
+                d_repeated_plasma_lens_strengths_E.resize(n_lenses);
+                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                           h_repeated_plasma_lens_strengths_E.begin(), h_repeated_plasma_lens_strengths_E.end(),
+                           d_repeated_plasma_lens_strengths_E.begin());
+            }
+            if (m_B_ext_particle_s == "repeated_plasma_lens") {
+                d_repeated_plasma_lens_strengths_B.resize(n_lenses);
+                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                           h_repeated_plasma_lens_strengths_B.begin(), h_repeated_plasma_lens_strengths_B.end(),
+                           d_repeated_plasma_lens_strengths_B.begin());
+            }
             amrex::Gpu::synchronize();
         }
 
@@ -471,10 +505,9 @@ MultiParticleContainer::DepositCurrent (
     }
 
     // Call the deposition kernel for each species
-    for (int ispecies = 0; ispecies < nSpecies(); ispecies++)
+    for (auto& pc : allcontainers)
     {
-        WarpXParticleContainer& species = GetParticleContainer(ispecies);
-        species.DepositCurrent(J, dt, relative_t);
+        pc->DepositCurrent(J, dt, relative_t);
     }
 
 #ifdef WARPX_DIM_RZ
@@ -488,28 +521,26 @@ MultiParticleContainer::DepositCurrent (
 void
 MultiParticleContainer::DepositCharge (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-    const amrex::Real relative_t, const int icomp)
+    const amrex::Real relative_t)
 {
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        int const nc = WarpX::ncomps;
-        rho[lev]->setVal(0.0, icomp*nc, nc, rho[lev]->nGrowVect());
+        rho[lev]->setVal(0.0, 0, WarpX::ncomps, rho[lev]->nGrowVect());
     }
 
     // Push the particles in time, if needed
     if (relative_t != 0.) PushX(relative_t);
 
     // Call the deposition kernel for each species
-    for (int ispecies = 0; ispecies < nSpecies(); ispecies++)
+    for (auto& pc : allcontainers)
     {
-        WarpXParticleContainer& species = GetParticleContainer(ispecies);
         bool const local = true;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
         bool const interpolate_across_levels = false;
-        species.DepositCharge(rho, local, reset, do_rz_volume_scaling,
-                              interpolate_across_levels, icomp);
+        pc->DepositCharge(rho, local, reset, do_rz_volume_scaling,
+                              interpolate_across_levels);
     }
 
     // Push the particles back in time
@@ -1571,7 +1602,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
-                  pc_source->particle_runtime_comps["optical_depth_QSR"],
+                  pc_source->particle_runtime_comps["opticalDepthQSR"],
                   m_shr_p_qs_engine->build_phot_em_functor(),
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],

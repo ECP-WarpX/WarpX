@@ -2,6 +2,10 @@ name: 🐧 OpenMP
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-ubuntu
+  cancel-in-progress: true
+
 jobs:
   build_cxxminimal:
     name: GCC Minimal w/o MPI

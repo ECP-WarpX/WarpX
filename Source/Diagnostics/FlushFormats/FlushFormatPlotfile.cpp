@@ -3,12 +3,12 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
 #include "Utils/Interpolate.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_AmrParticles.H>
 #include <AMReX_Box.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
@@ -290,6 +290,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
+
+        HeaderFile << warpx.time_of_last_gal_shift << "\n";
     }
 }
 
@@ -304,17 +306,18 @@ FlushFormatPlotfile::WriteHeaderParticle(
 }
 
 void
-FlushFormatPlotfile::WriteParticles(const std::string& dir,
-                                    const amrex::Vector<ParticleDiag>& particle_diags) const
+FlushFormatPlotfile::WriteParticles (const std::string& dir,
+                                     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
-            tmp(&WarpX::GetInstance());
+        auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
+        Vector<int> real_flags;
 
         real_names.push_back("weight");
 
@@ -326,26 +329,22 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         real_names.push_back("theta");
 #endif
 
-        if(pc->DoFieldIonization()){
-            int_names.push_back("ionization_level");
-            // int_flags specifies, for each integer attribs, whether it is
-            // dumped to plotfiles. So far, ionization_level is the only
-            // integer attribs, and it is automatically dumped to plotfiles
-            // when ionization is on.
-            int_flags.resize(1, 1);
-            tmp.AddIntComp(false);
-        }
+        // get the names of the real comps
+        real_names.resize(pc->NumRealComps());
+        auto runtime_rnames = pc->getParticleRuntimeComps();
+        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
-#ifdef WARPX_QED
-        if( pc->has_breit_wheeler() ) {
-            real_names.push_back("optical_depth_BW");
-            tmp.AddRealComp(false);
-        }
-        if( pc->has_quantum_sync() ) {
-            real_names.push_back("optical_depth_QSR");
-            tmp.AddRealComp(false);
-        }
-#endif
+        // plot any "extra" fields by default
+        real_flags = particle_diags[i].plot_flags;
+        real_flags.resize(pc->NumRealComps(), 1);
+
+        // and the names
+        int_names.resize(pc->NumIntComps());
+        auto runtime_inames = pc->getParticleRuntimeiComps();
+        for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
+
+        // plot by default
+        int_flags.resize(pc->NumIntComps(), 1);
 
         pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
@@ -371,10 +370,10 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         }, true);
 
         // real_names contains a list of all particle attributes.
-        // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
+        // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
         tmp.WritePlotFile(
             dir, particle_diags[i].getSpeciesName(),
-            particle_diags[i].plot_flags, int_flags,
+            real_flags, int_flags,
             real_names, int_names);
 
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);

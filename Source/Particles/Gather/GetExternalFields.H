@@ -30,10 +30,14 @@ struct GetExternalField
     amrex::Real m_time;
 
     amrex::Real m_repeated_plasma_lens_period;
+    amrex::Real m_gamma_boost;
+    amrex::Real m_uz_boost;
     const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_starts = nullptr;
     const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_lengths = nullptr;
-    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_strengths = nullptr;
+    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_strengths_E = nullptr;
+    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_strengths_B = nullptr;
     int m_n_lenses;
+    int m_lens_is_electric;
     amrex::Real m_dt;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
@@ -65,16 +69,21 @@ struct GetExternalField
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
 
-            amrex::ParticleReal const uxp = m_ux[i];
-            amrex::ParticleReal const uyp = m_uy[i];
-            amrex::ParticleReal const uzp = m_uz[i];
-            constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
-            const amrex::Real inv_gamma = 1._rt/std::sqrt(1._rt + (uxp*uxp + uyp*uyp + uzp*uzp)*inv_c2);
-            const amrex::ParticleReal vzp = uzp*inv_gamma;
+            const amrex::ParticleReal uxp = m_ux[i];
+            const amrex::ParticleReal uyp = m_uy[i];
+            const amrex::ParticleReal uzp = m_uz[i];
 
-            // This assumes that vzp > 0.
-            amrex::ParticleReal const zl = z;
-            amrex::ParticleReal const zr = z + vzp*m_dt;
+            constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+            const amrex::ParticleReal gamma = std::sqrt(1._rt + (uxp*uxp + uyp*uyp + uzp*uzp)*inv_c2);
+            const amrex::ParticleReal vzp = uzp/gamma;
+
+            amrex::ParticleReal zl = z;
+            amrex::ParticleReal zr = z + vzp*m_dt;
+
+            if (m_gamma_boost > 1._rt) {
+                zl = m_gamma_boost*zl + m_uz_boost*m_time;
+                zr = m_gamma_boost*zr + m_uz_boost*m_time;
+            }
 
             // This assumes that zl > 0.
             int i_lens = static_cast<int>(std::floor(zl/m_repeated_plasma_lens_period));
@@ -85,17 +94,46 @@ struct GetExternalField
             // Calculate the residence correction
             // frac will be 1 if the step is completely inside the lens, between 0 and 1
             // when entering or leaving the lens, and otherwise 0.
+            // This assumes that vzp > 0.
             amrex::Real fl = 0.;
             if (zl >= lens_start && zl < lens_end) fl = 1.;
             amrex::Real fr = 0.;
             if (zr >= lens_start && zr < lens_end) fr = 1.;
             amrex::Real frac = fl;
-            amrex::Real dzi = 1./(vzp*m_dt);
-            if (fl > fr) frac = (lens_end - zl)*dzi;
-            if (fr > fl) frac = (zr - lens_start)*dzi;
+            if (fl > fr) frac = (lens_end - zl)/(zr - zl);
+            if (fr > fl) frac = (zr - lens_start)/(zr - zl);
 
-            field_x += x*frac*m_repeated_plasma_lens_strengths[i_lens];
-            field_y += y*frac*m_repeated_plasma_lens_strengths[i_lens];
+            if (m_lens_is_electric) {
+                amrex::Real Ex = x*frac*m_repeated_plasma_lens_strengths_E[i_lens];
+                amrex::Real Ey = y*frac*m_repeated_plasma_lens_strengths_E[i_lens];
+                if (m_gamma_boost > 1._rt) {
+                    // Transform the fields to the boosted frame
+                    const amrex::Real Bx = +y*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+                    const amrex::Real By = -x*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+                    const amrex::Real vz_boost = m_uz_boost/m_gamma_boost;
+                    const amrex::Real Ex_boost = m_gamma_boost*(Ex - vz_boost*By);
+                    const amrex::Real Ey_boost = m_gamma_boost*(Ey + vz_boost*Bx);
+                    Ex = Ex_boost;
+                    Ey = Ey_boost;
+                }
+                field_x += Ex;
+                field_y += Ey;
+            } else {
+                amrex::Real Bx = +y*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+                amrex::Real By = -x*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+                if (m_gamma_boost > 1._rt) {
+                    // Transform the fields to the boosted frame
+                    const amrex::Real Ex = x*frac*m_repeated_plasma_lens_strengths_E[i_lens];
+                    const amrex::Real Ey = y*frac*m_repeated_plasma_lens_strengths_E[i_lens];
+                    const amrex::Real vz_boost = m_uz_boost/m_gamma_boost;
+                    const amrex::Real Bx_boost = m_gamma_boost*(Bx + vz_boost*Ey*inv_c2);
+                    const amrex::Real By_boost = m_gamma_boost*(By - vz_boost*Ex*inv_c2);
+                    Bx = Bx_boost;
+                    By = By_boost;
+                }
+                field_x += Bx;
+                field_y += By;
+            }
 
         }
         else

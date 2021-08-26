@@ -4,7 +4,7 @@
 #include "FlushFormat.H"
 
 #include <AMReX_AmrMesh.H>
-#if defined(BL_USE_SENSEI_INSITU)
+#if defined(AMREX_USE_SENSEI_INSITU)
 #  include <AMReX_AmrMeshInSituBridge.H>
 #else
 namespace amrex {

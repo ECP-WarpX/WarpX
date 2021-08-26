@@ -50,3 +50,8 @@ extra SoA attribute                             ``theta``
 ====================  ===========  ===========  ===========
 
 Please see the following sections for particle AoS and SoA details.
+
+Conventions
+-----------
+
+In 2D3V, we assume that the position of a particle in ``y`` is equal to ``0``.
