@@ -31,7 +31,7 @@ algo.particle_shape = 1
 ######## DEBUG WARNINGS #########
 #################################
 
-warpx.test_warnings = w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16
+warpx.test_warnings = w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22
 
 w1.topic    = "Priority Sort Test"
 w1.msg      = "Test that priority is correctly sorted"
@@ -73,14 +73,14 @@ w8.msg      = "BBB Test that msg is correctly sorted"
 w8.priority = "medium"
 w8.all_involved = 1
 
-w9.topic    = "Msg sort Test"
-w9.msg      = "BBB Test that msg is correctly sorted"
+w9.topic    = "Long line"
+w9.msg      = "Test very long line: a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a"
 w9.priority = "medium"
 w9.all_involved = 1
 
-w10.topic    = "Long line"
-w10.msg      = "Test very long line: a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a"
-w10.priority = "medium"
+w10.topic    = "Repeated warnings"
+w10.msg      = "Test repeated warnings"
+w10.priority = "high"
 w10.all_involved = 1
 
 w11.topic    = "Repeated warnings"
@@ -93,10 +93,11 @@ w12.msg      = "Test repeated warnings"
 w12.priority = "high"
 w12.all_involved = 1
 
-w13.topic    = "Repeated warnings"
-w13.msg      = "Test repeated warnings"
+w13.topic    = "Not all involved (0)"
+w13.msg      = "Test warnings raised by a fraction of ranks"
 w13.priority = "high"
-w13.all_involved = 1
+w13.all_involved = 0
+w13.who_involved = 0
 
 w14.topic    = "Not all involved (0)"
 w14.msg      = "Test warnings raised by a fraction of ranks"
@@ -116,8 +117,36 @@ w16.priority = "high"
 w16.all_involved = 0
 w16.who_involved = 1 2
 
+w17.topic    = "Different counters"
+w17.msg      = "Test that different counters are correctly summed"
+w17.priority = "low"
+w17.all_involved = 1
 
+w18.topic    = "Different counters"
+w18.msg      = "Test that different counters are correctly summed"
+w18.priority = "low"
+w18.all_involved = 1
 
+w19.topic    = "Different counters"
+w19.msg      = "Test that different counters are correctly summed"
+w19.priority = "low"
+w19.all_involved = 0
+w19.who_involved = 0
 
+w20.topic    = "Different counters B"
+w20.msg      = "Test that different counters are correctly summed"
+w20.priority = "low"
+w20.all_involved = 1
+
+w21.topic    = "Different counters B"
+w21.msg      = "Test that different counters are correctly summed"
+w21.priority = "low"
+w21.all_involved = 1
+
+w22.topic    = "Different counters B"
+w22.msg      = "Test that different counters are correctly summed"
+w22.priority = "low"
+w22.all_involved = 0
+w22.who_involved = 1
 
 
