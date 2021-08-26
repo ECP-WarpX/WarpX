@@ -72,10 +72,24 @@ enum struct PatchType : int
     coarse
 };
 
+/** Warning priority
+ * Priority is recorded together with warning messages. It influences
+ * the display order and the appearance of a warning message.
+*/
 enum class WarnPriority
 {
+    /** Low priority warning:
+     * essentially an informative message
+     */
     low,
+    /** Medium priority warning:
+     * a bug or a performance issue may affect the simulation
+     */
     medium,
+    /** High priority warning:
+     * a very serious bug or performance issue
+     * almost certainly affect the simulation
+     */
     high
 };
 
@@ -97,13 +111,32 @@ public:
 
     int Verbose () const { return verbose; }
 
+    /**
+     * \brief This function records a warning message.
+     *
+     * \param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
+     * \param[in] text the text of the warning message
+     * \param[in] priority priority of the warning message ("medium" by default)
+     */
     void RecordWarning(
         std::string topic,
         std::string text,
         WarnPriority priority = WarnPriority::medium);
 
+    /**
+     * \brief This function prints the warning messages collected on the present MPI rank
+     * (i.e., this is not a collective call). This function is mainly intended for debug purposes.
+     *
+     * \param[in] when a string to mark when the warnings are printed out (it appears in the warning message)
+     */
     void PrintLocalWarnings(const std::string& when);
 
+    /**
+     * \brief This function prints the warning messages collected by all the MPI ranks
+     * (i.e., this is a collective call). Only the I/O rank prints the message.
+     *
+     * \param[in] when a string to mark when the warnings are printed out (it appears in the warning message)
+     */
     void PrintGlobalWarnings(const std::string& when);
 
     void InitData ();
