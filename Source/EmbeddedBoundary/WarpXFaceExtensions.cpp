@@ -1060,7 +1060,7 @@ WarpX::ComputeEightWaysExtensions() {
                 }
             },
             amrex::Scan::Type::exclusive);
-        
+
     }
 
 #endif
