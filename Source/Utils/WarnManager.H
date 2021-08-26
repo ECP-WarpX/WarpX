@@ -10,10 +10,11 @@
 
 #include "WarnManager_fwd.H"
 
-#include "MsgLogger/MsgLogger.H"
+#include "MsgLogger/MsgLogger_fwd.H"
 
 #include <AMReX_ParmParse.H>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -128,7 +129,7 @@ namespace Utils
             const int tab_size) const;
 
         int m_rank = 0 /*! MPI rank (appears in the warning list)*/;
-        MsgLogger::Logger m_logger /*! Stores the warning messages*/;
+        std::unique_ptr<MsgLogger::Logger> m_p_logger /*! The Logger stores all the warning messages*/;
     };
 }
 

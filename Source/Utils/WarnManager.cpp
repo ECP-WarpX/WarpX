@@ -1,6 +1,8 @@
 
 #include "WarnManager.H"
 
+#include "MsgLogger/MsgLogger.H"
+
 #include <AMReX_ParallelDescriptor.H>
 
 #include <algorithm>
@@ -11,6 +13,7 @@ using namespace Utils::MsgLogger;
 
 WarnManager::WarnManager(){
     m_rank = amrex::ParallelDescriptor::MyProc();
+    m_p_logger = std::make_unique<Logger>();
 }
 
 void WarnManager::record_warning(
@@ -18,12 +21,12 @@ void WarnManager::record_warning(
             std::string text,
             Priority priority)
 {
-    m_logger.record_msg(Msg{topic, text, priority});
+    m_p_logger->record_msg(Msg{topic, text, priority});
 }
 
 std::string WarnManager::print_local_warnings(const std::string& when) const
 {
-    auto all_warnings = m_logger.get_msg_with_counter_list();
+    auto all_warnings = m_p_logger->get_msg_with_counter_list();
     std::sort(all_warnings.begin(), all_warnings.end(),
         [](const auto& a, const auto& b){return a.msg < b.msg;});
 
@@ -50,7 +53,7 @@ std::string
 WarnManager::print_global_warnings(const std::string& when) const
 {
     auto all_warnings =
-        m_logger.collective_gather_msg_with_counter_and_ranks();
+        m_p_logger->collective_gather_msg_with_counter_and_ranks();
 
     if(m_rank != amrex::ParallelDescriptor::IOProcessorNumber())
         return "[see I/O rank message]";
