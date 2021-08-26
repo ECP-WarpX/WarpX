@@ -593,7 +593,7 @@ WarpX::ComputeOneWayExtensions() {
                                                    flag_ext_face_z, idim);
 
 
-              borrowing_z_size(i, j, k) = n_borrow;
+                borrowing_z_size(i, j, k) = n_borrow;
                 return n_borrow;
             },
             [=] AMREX_GPU_DEVICE (int icell, int ps){
