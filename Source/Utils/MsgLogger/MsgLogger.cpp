@@ -218,7 +218,7 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
             auto package_size = static_cast<int>(package.size());
             amrex::ParallelDescriptor::Send(&package_size, 1, m_io_rank, 0);
             amrex::ParallelDescriptor::Send(package, m_io_rank, 1);
-            int list_size = static_cast<int>(my_list.size());
+            int list_size = static_cast<int>(list_with_ranks.size());
             amrex::ParallelDescriptor::Send(&list_size, 1, m_io_rank, 2);
         }
         else if (m_rank == m_io_rank){
@@ -281,7 +281,6 @@ std::vector<char> Logger::serialize_msg_list(
     const auto how_many = static_cast<int> (msg_list.size());
     put_in (how_many, serialized);
 
-    int i = 0;
     for (auto msg : msg_list){
         put_in_vec(msg.serialize(), serialized);
     }
@@ -351,7 +350,7 @@ Logger::aux_create_data_package(
 {
     std::vector<char> package;
     put_in_vec(gather_rank_msg_counters, package);
-    put_in(to_send.size(), package);
+    put_in(static_cast<int>(to_send.size()), package);
     for (const auto& el : to_send)
         put_in_vec<char>(MsgWithCounter{el.first, el.second}.serialize(), package);
 
@@ -370,24 +369,49 @@ Logger::update_list_with_packaged_data(
     const int orig_size = list_with_ranks.size();
 
     for(int rr = 0; rr < m_num_procs; ++rr){
+
+        if(rr == m_rank)
+            continue;
         auto it = all_data.begin() + disps[rr];
         const auto vec = get_out_vec<int>(it);
         int c = 0;
         for (const auto& el : vec){
-            std::cout << c << std::endl;
             list_with_ranks[c].msg_with_counter.counter += el;
             if (el > 0)
                 list_with_ranks[c].ranks.push_back(rr);
             c++;
         }
+
+        const auto how_many = get_out<int>(it);
+
+        for(int i = 0; i < how_many; ++i){
+            const auto vc = get_out_vec<char>(it);
+            auto iit = vc.begin();
+            auto msg_with_counter = MsgWithCounter::deserialize(iit);
+            if (mm.find(msg_with_counter.msg) == mm.end()){
+                const auto msg_with_counter_and_ranks =  MsgWithCounterAndRanks{
+                    msg_with_counter,
+                    false,
+                    std::vector<int>{rr}
+                };
+                mm[msg_with_counter.msg] = msg_with_counter_and_ranks;
+            }
+            else{
+                mm[msg_with_counter.msg].msg_with_counter.counter +=
+                    msg_with_counter.counter;
+                mm[msg_with_counter.msg].ranks.push_back(rr);
+            }
+        }
     }
 
     for (int i = 0; i < orig_size; ++i){
-        if(list_with_ranks[i].ranks.size() == m_num_procs){
+        if(static_cast<int>(list_with_ranks[i].ranks.size()) == m_num_procs){
             list_with_ranks[i].all_ranks = true;
             std::vector<int>{}.swap(list_with_ranks[i].ranks);
         }
     }
+
+    for(const auto& el : mm){
+        list_with_ranks.push_back(el.second);
+    }
 }
-
-

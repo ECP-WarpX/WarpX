@@ -194,14 +194,13 @@ WarnManager::aux_print_warn_msg(
     std::stringstream ss;
     ss << this->aux_print_warn_msg(msg_with_counter_and_ranks.msg_with_counter);
 
-    std::string raised_by = "@ Raised by:";
+    std::string raised_by = "@ Raised by: ";
     if (!msg_with_counter_and_ranks.all_ranks){
-        raised_by += "\n";
         for (const auto rr : msg_with_counter_and_ranks.ranks)
             raised_by += " " + std::to_string(rr);
     }
     else{
-        raised_by += " ALL\n";
+        raised_by += "ALL\n";
     }
     ss << aux_msg_formatter(raised_by, warn_line_size, warn_tab_size);
 
@@ -250,7 +249,6 @@ WarnManager::aux_msg_formatter(
 
         ss_out << '\n';
     }
-
 
     return ss_out.str();
 }

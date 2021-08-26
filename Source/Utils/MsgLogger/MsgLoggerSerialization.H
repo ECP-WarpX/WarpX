@@ -39,7 +39,7 @@ namespace MsgLogger{
     inline void put_in<std::string> (const std::string& val, std::vector<char>& vec)
     {
         const char* c_str = val.c_str();
-        const auto length = val.size();
+        const auto length = static_cast<int>(val.size());
 
         put_in(length, vec);
         vec.insert(vec.end(), c_str, c_str+length);
@@ -57,7 +57,7 @@ namespace MsgLogger{
     {
         static_assert(std::is_trivially_copyable<T>(), "Cannot serialize \
             non-trivally copyable types, except std::vector<char> and std::string.");
-        put_in(val.size(), vec);
+        put_in(static_cast<int>(val.size()), vec);
         for (const auto& el : val)
             put_in(el, vec);
     }
@@ -71,7 +71,7 @@ namespace MsgLogger{
     template <>
     inline void put_in_vec <char> (const std::vector<char>& val, std::vector<char>& vec)
     {
-        put_in(val.size(), vec);
+        put_in(static_cast<int>(val.size()), vec);
         vec.insert(vec.end(), val.begin(), val.end());
     }
 
@@ -114,7 +114,7 @@ namespace MsgLogger{
     template<>
     inline std::string get_out<std::string> (std::vector<char>::const_iterator& it)
     {
-        const auto length = get_out<std::string::size_type> (it);
+        const auto length = get_out<int> (it);
         const auto str = std::string{it, it+length};
         it += length;
 
@@ -130,9 +130,9 @@ namespace MsgLogger{
     template<typename T>
     inline std::vector<T> get_out_vec (std::vector<char>::const_iterator& it)
     {
-        const auto length = get_out<typename std::vector<T>::size_type> (it);
+        const auto length = get_out<int> (it);
         std::vector<T> res(length);
-        for (int i = 0; i < static_cast<int>(length); ++i)
+        for (int i = 0; i < length; ++i)
             res[i] = get_out<T>(it);
         return res;
     }
@@ -146,7 +146,7 @@ namespace MsgLogger{
     template<>
     inline std::vector<char> get_out_vec<char> (std::vector<char>::const_iterator& it)
     {
-        const auto length = get_out<std::vector<char>::size_type> (it);
+        const auto length = get_out<int> (it);
         std::vector<char> res(length);
         std::copy(it, it+length, res.begin());
         it += length;

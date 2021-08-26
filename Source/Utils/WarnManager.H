@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 
-
 namespace Utils
 {
     class WarnManager
