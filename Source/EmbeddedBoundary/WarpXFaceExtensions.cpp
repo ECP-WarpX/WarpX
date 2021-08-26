@@ -42,7 +42,6 @@ void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
     amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
-    amrex::ParallelDescriptor::ReduceIntSum(&(N_ext_faces(0)), 3);
     amrex::Print()<< "Faces to be extended in x:\t" << N_ext_faces(0) <<std::endl;
     amrex::Print()<< "Faces to be extended in y:\t" << N_ext_faces(1) <<std::endl;
     amrex::Print()<< "Faces to be extended in z:\t" << N_ext_faces(2) <<std::endl;
@@ -50,8 +49,6 @@ WarpX::ComputeFaceExtensions(){
     InitBorrowing();
     amrex::Array1D<int, 0, 2> temp_inds = ComputeOneWayExtensions();
     amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
-    amrex::ParallelDescriptor::ReduceIntSum(&(N_ext_faces_after_one_way(0)), 3,
-                                            amrex::ParallelDescriptor::IOProcessorNumber());
     amrex::Print()<< "Faces to be extended after one way extension in x:\t" <<
                      N_ext_faces_after_one_way(0) <<std::endl;
     amrex::Print()<< "Faces to be extended after one way extension in y:\t" <<
@@ -60,8 +57,6 @@ WarpX::ComputeFaceExtensions(){
                      N_ext_faces_after_one_way(2) <<std::endl;
     ComputeEightWaysExtensions(temp_inds);
     amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
-    amrex::ParallelDescriptor::ReduceIntSum(&(N_ext_faces_after_eight_ways(0)), 3,
-                                            amrex::ParallelDescriptor::IOProcessorNumber());
     amrex::Print()<< "Faces to be extended after eight ways extension in x:\t" <<
                      N_ext_faces_after_eight_ways(0) <<std::endl;
     amrex::Print()<< "Faces to be extended after eight ways extension in y:\t" <<
