@@ -80,7 +80,7 @@ WarpX::ComputeFaceExtensions(){
 void
 WarpX::InitBorrowing() {
     int idim = 0;
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][0]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
         amrex::Box const &box = mfi.validbox();
         auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
         borrowing_x.inds_pointer.resize(box);
