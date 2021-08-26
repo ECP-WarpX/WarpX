@@ -30,16 +30,10 @@ namespace MsgLogger{
     void put_in(const T& val, std::vector<char>& vec)
     {
         static_assert(std::is_trivially_copyable<T>(), "Cannot serialize \
-            non-trivally copyable types, except std::vector<char> and std::string.");
+            non-trivally copyable types, except std::string.");
 
         const auto* ptr_val = reinterpret_cast<const char*>(&val);
         vec.insert(vec.end(), ptr_val, ptr_val+sizeof(T));
-    }
-
-    template <typename T>
-    void put_in(const T&& val, std::vector<char>& vec)
-    {
-        put_in(val, vec);
     }
 
     template <>
@@ -51,13 +45,6 @@ namespace MsgLogger{
         put_in(length, vec);
         vec.insert(vec.end(), c_str, c_str+length);
     }
-
-    template <>
-    inline void put_in<std::string> (const std::string&& val, std::vector<char>& vec)
-    {
-        put_in<std::string> (val, vec);
-    }
-
 
     template <typename T>
     inline void put_in_vec (const std::vector<T>& val, std::vector<char>& vec)
@@ -112,12 +99,6 @@ namespace MsgLogger{
         return res;
     }
 
-    template<typename T>
-    T get_out(std::vector<char>::const_iterator&& it)
-    {
-        return get_out<T>(it);
-    }
-
     template<>
     inline std::string get_out<std::string> (std::vector<char>::const_iterator& it)
     {
@@ -126,12 +107,6 @@ namespace MsgLogger{
         it += length;
 
         return str;
-    }
-
-    template<>
-    inline std::string get_out<std::string> (std::vector<char>::const_iterator&& it)
-    {
-        return get_out<std::string>(it);
     }
 
     template<typename T>
@@ -144,12 +119,6 @@ namespace MsgLogger{
         return res;
     }
 
-    template<typename T>
-    inline std::vector<T> get_out_vec (std::vector<char>::const_iterator&& it)
-    {
-        return get_out_vec<T>(it);
-    }
-
     template<>
     inline std::vector<char> get_out_vec<char> (std::vector<char>::const_iterator& it)
     {
@@ -158,12 +127,6 @@ namespace MsgLogger{
         std::copy(it, it+length, res.begin());
         it += length;
         return res;
-    }
-
-    template<>
-    inline std::vector<char> get_out_vec<char> (std::vector<char>::const_iterator&& it)
-    {
-        return get_out_vec<char>(it);
     }
 
 }
