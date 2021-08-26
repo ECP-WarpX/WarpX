@@ -20,8 +20,7 @@ struct FaceInfoBox {
     amrex::Gpu::DeviceVector<int> inds;
     //number of entries of inds which correspond to this element
     amrex::BaseFab<int> size;
-    //each entry points an element inside the inds vector all the elements. After that element,
-    // the next #size entries indicate the indices to access the vectors
+    // Each entry points to an element inside the inds vector
     amrex::BaseFab<int*> inds_pointer;
 
     int vecs_size;
