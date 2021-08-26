@@ -5,7 +5,6 @@
  * License: BSD-3-Clause-LBNL
  */
 
-
 #ifndef WARPX_MSG_LOGGER_FWD_H
 #define WARPX_MSG_LOGGER_FWD_H
 

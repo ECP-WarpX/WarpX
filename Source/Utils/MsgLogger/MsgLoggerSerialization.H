@@ -1,3 +1,10 @@
+/* Copyright 2021 Luca Fedeli
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef WARPX_MSG_LOGGER_SERIALIZATION_H_
 #define WARPX_MSG_LOGGER_SERIALIZATION_H_
 
