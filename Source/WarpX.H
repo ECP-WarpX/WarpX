@@ -72,9 +72,9 @@ enum struct PatchType : int
     coarse
 };
 
-/** Warning priority
- * Priority is recorded together with warning messages. It influences
+/** WarnPriority is recorded together with warning messages. It influences
  * the display order and the appearance of a warning message.
+ * This enum class mirrors Utils::MsgLogger::Priority.
 */
 enum class WarnPriority
 {

@@ -18,6 +18,30 @@
 
 using namespace Utils::MsgLogger;
 
+std::string Utils::MsgLogger::PriorityToString(const Priority& priority)
+{
+    if(priority == Priority::high)
+        return "high";
+    else if (priority == Priority::medium)
+        return "medium";
+    else
+        return "low";
+}
+
+Priority Utils::MsgLogger::StringToPriority(const std::string& priority_string)
+{
+    if(priority_string == "high")
+        return Priority::high;
+    else if (priority_string == "medium")
+        return Priority::medium;
+    else if (priority_string == "low")
+        return Priority::low;
+    else
+        amrex::Abort(
+            "Priority string '" + priority_string + "' not recognized");
+    return Priority::low;
+}
+
 std::vector<char> Msg::serialize() const
 {
     std::vector<char> serialized_msg;
@@ -104,9 +128,8 @@ std::vector<Msg> Logger::get_msg_list() const
 {
     auto res = std::vector<Msg>{};
 
-    for (auto msg_w_counter : m_messages){
-        res.push_back(msg_w_counter.first);
-    }
+    for (const auto& msg_w_counter : m_messages)
+        res.emplace_back(msg_w_counter.first);
 
     return res;
 }
@@ -115,9 +138,8 @@ std::vector<MsgWithCounter> Logger::get_msg_with_counter_list() const
 {
     auto res = std::vector<MsgWithCounter>{};
 
-    for (auto msg : m_messages){
+    for (const auto& msg : m_messages)
         res.emplace_back(MsgWithCounter{msg.first, msg.second});
-    }
 
     return res;
 }
