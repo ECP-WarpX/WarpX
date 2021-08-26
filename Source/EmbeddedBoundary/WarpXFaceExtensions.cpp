@@ -126,7 +126,7 @@ WarpX::InitBorrowing() {
 
 AMREX_GPU_DEVICE
 int
-WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
+ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                       const amrex::Array4<amrex::Real>& S_red,
                                       const amrex::Array4<int>& flag_info_face,
                                       const amrex::Array4<int>& flag_ext_face, const int idim) {
@@ -203,7 +203,7 @@ WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real 
 
 AMREX_GPU_DEVICE
 int
-WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
+ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
                                          const amrex::Array4<amrex::Real>& S,
                                          const amrex::Array4<int>& flag_info_face, const int idim) {
