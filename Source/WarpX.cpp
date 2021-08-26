@@ -34,6 +34,7 @@
 #include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
 #ifdef AMREX_USE_SENSEI_INSITU
@@ -446,6 +447,13 @@ WarpX::PrintLocalWarnings(const std::string& when)
 }
 
 void
+WarpX::PrintGlobalWarnings(const std::string& when)
+{
+    WARPX_PROFILE("WarpX::PrintGlobalWarnings");
+    amrex::Print() << m_p_warn_manager->print_global_warnings(when);
+}
+
+void
 WarpX::ReadParameters ()
 {
     {
@@ -468,6 +476,8 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp_warpx("warpx");
+
+        m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
 
         std::vector<int> numprocs_in;
         queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);

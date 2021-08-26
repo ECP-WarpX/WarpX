@@ -104,6 +104,8 @@ public:
 
     void PrintLocalWarnings(const std::string& when);
 
+    void PrintGlobalWarnings(const std::string& when);
+
     void InitData ();
 
     void Evolve (int numsteps = -1);

@@ -338,6 +338,7 @@ WarpX::Evolve (int numsteps)
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
+            this->PrintGlobalWarnings("FIRST STEP");
             early_params_checked = true;
         }
 
