@@ -479,6 +479,8 @@ WarpX::ReadParameters ()
     {
         ParmParse pp_warpx("warpx");
 
+        //"Synthetic" warning messages may be injected in the Warning Manager via
+        // inputfile for debug&testing purposes.
         m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
 
         std::vector<int> numprocs_in;
