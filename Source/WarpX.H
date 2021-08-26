@@ -1204,7 +1204,7 @@ public:
     */
     void ShrinkBorrowing();
     /**
-    * \brief For the face of cell pointing in direction idim, compute the number of faces
+    * \brief For the face of cell pointing in direction idim, return the number of faces
     * we need to intrude with the one-way extension. Returns only one or zero: one if the
     * face can be extended with the the one-way extension, zeros if it can't.
     *
@@ -1221,7 +1221,7 @@ public:
                                               const amrex::Array4<int> &flag_info_face,
                                               const amrex::Array4<int> &flag_ext_face, int idim);
     /**
-    * \brief For the face of cell pointing in direction idim, compute the number of faces
+    * \brief For the face of cell pointing in direction idim, return the number of faces
     * we need to intrude with the eight-ways extension.
     *
     * \param[in] cell \c Dim3 storing the indices of the face to extended
