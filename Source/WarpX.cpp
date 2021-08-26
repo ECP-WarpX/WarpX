@@ -285,7 +285,7 @@ WarpX::WarpX ()
     m_borrowing.resize(nlevs_max);
     m_area_mod.resize(nlevs_max);
 
-    Rhofield.resize(nlevs_max);
+    ECTRhofield.resize(nlevs_max);
     Venl.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
@@ -1525,17 +1525,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Venl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Venl[x]"));
         Venl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Venl[y]"));
         Venl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Venl[z]"));
-        // DISCLAIMER: Rhofield is NOT the charge density. This multifab is needed only by the ect
-        // solver and it represents the electromotive force density. The name Rhofield has been used
+        // DISCLAIMER: ECTRhofield is NOT the charge density. This multifab is needed only by the ect
+        // solver and it represents the electromotive force density. The name ECTRhofield has been used
         // to comply with the notation of the paper
         // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
         // and below).
-        Rhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Rhofield[x]"));
-        Rhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Rhofield[y]"));
-        Rhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Rhofield[z]"));
-        Rhofield[lev][0]->setVal(0.);
-        Rhofield[lev][1]->setVal(0.);
-        Rhofield[lev][2]->setVal(0.);
+        ECTRhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[x]"));
+        ECTRhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[y]"));
+        ECTRhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[z]"));
+        ECTRhofield[lev][0]->setVal(0.);
+        ECTRhofield[lev][1]->setVal(0.);
+        ECTRhofield[lev][2]->setVal(0.);
     }
 #endif
 

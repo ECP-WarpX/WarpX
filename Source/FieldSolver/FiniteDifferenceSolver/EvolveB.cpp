@@ -58,7 +58,7 @@ void FiniteDifferenceSolver::EvolveB (
     int lev, amrex::Real const dt ) {
 
 #ifndef AMREX_USE_EB
-    amrex::ignore_unused(area_mod, Rhofield, Venl, flag_info_cell, borrowing);
+    amrex::ignore_unused(area_mod, ECTRhofield, Venl, flag_info_cell, borrowing);
 #endif
 
    // Select algorithm (The choice of algorithm is a runtime option,

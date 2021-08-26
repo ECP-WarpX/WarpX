@@ -987,7 +987,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
     //This is just needed for the ECT solver
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Rhofield;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
 
     //EB level set
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
