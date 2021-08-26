@@ -433,13 +433,13 @@ WarpX::ComputeOneWayExtensions() {
                                 && flag_ext_face_x(i, j, k)) {
                                 Sx_mod(i, j + j_n, k + k_n) -= Sx_ext;
                                 // Insert the index of the face info
-                                *(borrowing_x_inds + ps) = ps;
+                                borrowing_x_inds[ps] = ps;
                                 // Store the information about the intruded face in the dataset of the
                                 // faces which are borrowing area
                                 FaceInfoBox::addConnectedNeighbor(j_n, k_n, ps,
                                                                  borrowing_x_neigh_faces);
 
-                                *(borrowing_x_area + ps) = Sx_ext;
+                                borrowing_x_area[ps] = Sx_ext;
 
                                 flag_info_face_x(i, j + j_n, k + k_n) = 2;
                                 // Add the area to the intruding face.
@@ -530,12 +530,12 @@ WarpX::ComputeOneWayExtensions() {
                                     && flag_ext_face_y(i, j, k)) {
                                     Sy_mod(i + i_n, j, k + k_n) -= Sy_ext;
                                     // Insert the index of the face info
-                                    *(borrowing_y_inds + ps) = ps;
+                                    borrowing_y_inds[ps] = ps;
                                     // Store the information about the intruded face in the dataset of the
                                     // faces which are borrowing area
                                     FaceInfoBox::addConnectedNeighbor(i_n, k_n, ps,
                                                                       borrowing_y_neigh_faces);
-                                    *(borrowing_y_area + ps) = Sy_ext;
+                                    borrowing_y_area[ps] = Sy_ext;
 
                                     flag_info_face_y(i + i_n, j, k + k_n) = 2;
                                     // Add the area to the intruding face.
@@ -625,12 +625,12 @@ WarpX::ComputeOneWayExtensions() {
                                     && flag_ext_face_z(i, j, k)) {
                                     Sz_mod(i + i_n, j + j_n, k) -= Sz_ext;
                                     // Insert the index of the face info
-                                    *(borrowing_z_inds + ps) = ps;
+                                    borrowing_z_inds[ps] = ps;
                                     // Store the information about the intruded face in the dataset of the
                                     // faces which are borrowing area
                                     FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps,
                                                                       borrowing_z_neigh_faces);
-                                    *(borrowing_z_area+ps) = Sz_ext;
+                                    borrowing_z_area[ps] = Sz_ext;
 
                                     flag_info_face_z(i + i_n, j + j_n, k) = 2;
                                     // Add the area to the intruding face.
@@ -768,12 +768,12 @@ WarpX::ComputeEightWaysExtensions() {
                             for (int k_n = -1; k_n < 2; k_n++) {
                                 if(local_avail(j_n + 1, k_n + 1)){
                                     amrex::Real patch = Sx_ext * Sx(i, j + j_n, k + k_n) / denom;
-                                    *(borrowing_x_inds + ps + count) = ps + count;
+                                    borrowing_x_inds[ps + count] = ps + count;
                                     // Store the information about the intruded face in the dataset of the
                                     // faces which are borrowing area
                                     FaceInfoBox::addConnectedNeighbor(j_n, k_n, ps + count,
                                                                       borrowing_x_neigh_faces);
-                                    *(borrowing_x_area + ps + count) = patch;
+                                    borrowing_x_area[ps + count] = patch;
 
                                     flag_info_face_x(i, j + j_n, k + k_n) = 2;
                                     Sx_mod(i, j, k) += patch;
@@ -906,10 +906,10 @@ WarpX::ComputeEightWaysExtensions() {
                             for (int k_n = -1; k_n < 2; k_n++) {
                                 if (local_avail(i_n + 1, k_n + 1)) {
                                     amrex::Real patch = Sy_ext * Sy(i + i_n, j, k + k_n) / denom;
-                                    *(borrowing_y_inds + ps + count) = ps + count;
+                                    borrowing_y_inds[ps + count] = ps + count;
                                     FaceInfoBox::addConnectedNeighbor(i_n, k_n, ps + count,
                                                                       borrowing_y_neigh_faces);
-                                    *(borrowing_y_area + ps + count) = patch;
+                                    borrowing_y_area[ps + count] = patch;
 
                                     flag_info_face_y(i + i_n, j, k + k_n) = 2;
                                     Sy_mod(i, j, k) += patch;
@@ -1042,10 +1042,10 @@ WarpX::ComputeEightWaysExtensions() {
                             for (int j_n = -1; j_n < 2; j_n++) {
                                 if(local_avail(i_n + 1, j_n + 1)){
                                     amrex::Real patch = Sz_ext * Sz(i + i_n, j + j_n, k) / denom;
-                                    *(borrowing_z_inds + ps + count) = ps + count;
+                                    borrowing_z_inds[ps + count] = ps + count;
                                     FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps + count,
                                                                       borrowing_z_neigh_faces);
-                                    *(borrowing_z_area + ps + count) = patch;
+                                    borrowing_z_area[ps + count] = patch;
 
                                     flag_info_face_z(i + i_n, j + j_n, k) = 2;
 
