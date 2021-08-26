@@ -23,6 +23,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
+#include "ParticleBoundaries.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -145,11 +146,10 @@ public:
      *             a fraction of dt). When different than 0, the particle
      *             position will be temporarily modified to match the time
      *             of the deposition.
-     * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_t, const int icomp = 0);
+                   const amrex::Real relative_t);
 
     /**
      * \brief Deposit current density.
@@ -299,10 +299,12 @@ public:
     amrex::Real m_repeated_plasma_lens_period;
     amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
     amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_E;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_B;
     amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
     amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_E;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_B;
 
 #ifdef WARPX_QED
     /**

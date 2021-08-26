@@ -82,6 +82,10 @@ WarpX::InitEB ()
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
+#ifdef WARPX_DIM_RZ
+    amrex::Abort("Embedded Boundaries not implemented in RZ geometry");
+#endif
+
     amrex::ParmParse pp_warpx("warpx");
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);
@@ -112,10 +116,10 @@ WarpX::ComputeEdgeLengths () {
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
-        for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-        amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
-        amrex::FabType fab_type = flags[mfi].getType(box);
+    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
+            amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
+            amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular

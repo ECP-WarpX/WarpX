@@ -12,6 +12,8 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_Array.H>
 
+#ifdef AMREX_USE_EB
+
 namespace DistanceToEB
 {
 
@@ -28,71 +30,6 @@ void normalize (amrex::RealVect& a) noexcept
     AMREX_D_DECL(a[0] *= inv_norm,
                  a[1] *= inv_norm,
                  a[2] *= inv_norm);
-}
-
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void compute_weights (const amrex::ParticleReal xp,
-                      const amrex::ParticleReal yp,
-                      const amrex::ParticleReal zp,
-                      amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                      amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
-                      int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2]) noexcept
-{
-#if (defined WARPX_DIM_3D)
-    amrex::Real x = (xp - plo[0]) * dxi[0];
-    amrex::Real y = (yp - plo[1]) * dxi[1];
-    amrex::Real z = (zp - plo[2]) * dxi[2];
-
-    i = static_cast<int>(amrex::Math::floor(x));
-    j = static_cast<int>(amrex::Math::floor(y));
-    k = static_cast<int>(amrex::Math::floor(z));
-
-    W[0][1] = x - i;
-    W[1][1] = y - j;
-    W[2][1] = z - k;
-
-    W[0][0] = 1.0 - W[0][1];
-    W[1][0] = 1.0 - W[1][1];
-    W[2][0] = 1.0 - W[2][1];
-#elif (defined WARPX_DIM_XZ)
-    amrex::Real x = (xp - plo[0]) * dxi[0];
-    amrex::Real z = (zp - plo[1]) * dxi[1];
-
-    i = static_cast<int>(amrex::Math::floor(x));
-    j = static_cast<int>(amrex::Math::floor(z));
-    k = 0;
-
-    W[0][1] = x - i;
-    W[1][1] = z - j;
-
-    W[0][0] = 1.0 - W[0][1];
-    W[1][0] = 1.0 - W[1][1];
-
-    amrex::ignore_unused(yp);
-#endif
-}
-
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
-amrex::Real interp_distance (int i, int j, int k, const amrex::Real W[AMREX_SPACEDIM][2],
-                             amrex::Array4<const amrex::Real> const& phi) noexcept
-{
-    amrex::Real phi_value = 0;
-#if (defined WARPX_DIM_3D)
-    phi_value += phi(i,   j  , k  ) * W[0][0] * W[1][0] * W[2][0];
-    phi_value += phi(i+1, j  , k  ) * W[0][1] * W[1][0] * W[2][0];
-    phi_value += phi(i,   j+1, k  ) * W[0][0] * W[1][1] * W[2][0];
-    phi_value += phi(i+1, j+1, k  ) * W[0][1] * W[1][1] * W[2][0];
-    phi_value += phi(i,   j  , k+1) * W[0][0] * W[1][0] * W[2][1];
-    phi_value += phi(i+1, j  , k+1) * W[0][1] * W[1][0] * W[2][1];
-    phi_value += phi(i  , j+1, k+1) * W[0][0] * W[1][1] * W[2][1];
-    phi_value += phi(i+1, j+1, k+1) * W[0][1] * W[1][1] * W[2][1];
-#elif (defined WARPX_DIM_XZ)
-    phi_value += phi(i,   j ,  k) * W[0][0] * W[1][0];
-    phi_value += phi(i+1, j ,  k) * W[0][1] * W[1][0];
-    phi_value += phi(i,   j+1, k) * W[0][0] * W[1][1];
-    phi_value += phi(i+1, j+1, k) * W[0][1] * W[1][1];
-#endif
-    return phi_value;
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -141,10 +78,14 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
     normal[1] += phi(i  , j+1, k) * dxi[1] * W[0][0];
     normal[1] -= phi(i+1, j  , k) * dxi[1] * W[0][1];
     normal[1] += phi(i+1, j+1, k) * dxi[1] * W[0][1];
+#else
+    amrex::RealVect normal{0.0, 0.0};
+    amrex::ignore_unused(i, j, k, W, phi, dxi);
+    amrex::Abort("Error: interp_distance not yet implemented in RZ");
 #endif
     return normal;
 }
 }
 
-
-#endif
+#endif // AMREX_USE_EB
+#endif // DISTANCETOEB_H_

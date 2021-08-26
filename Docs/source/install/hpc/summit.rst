@@ -36,7 +36,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
 
    # required dependencies
    module load cmake
-   module load gcc/6.4.0
+   module load gcc/9.3.0
    module load cuda
 
    # optional: faster re-builds
@@ -46,12 +46,11 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    module load fftw
 
    # optional: for QED lookup table generation support
-   module load boost/1.66.0
+   module load boost/1.76.0
 
    # optional: for openPMD support
-   module load ums
-   module load ums-aph114
-   module load openpmd-api/0.13.2
+   #module load adios2/2.7.1 # currently broken: OLCFHELP-3319
+   module load hdf5/1.10.7
 
    # optional: for PSATD in RZ geometry support
    #   note: needs the ums modules above
@@ -60,17 +59,15 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
 
    # optional: Ascent in situ support
    #   note: build WarpX with CMake
-   export Ascent_DIR=/gpfs/alpine/world-shared/csc340/software/ascent/current/summit/cuda/gnu/ascent_install
+   export Ascent_DIR=/gpfs/alpine/world-shared/csc340/software/ascent/current/summit/cuda/gnu/ascent-install
 
    # optional: for Python bindings or libEnsemble
-   module load python/3.7.0
-
-   # optional: for libEnsemble
-   module load openblas/0.3.9-omp
-   module load netlib-lapack/3.8.0
-   if [ -d "$HOME/sw/venvs/warpx-libE" ]
+   module load python/3.8.10
+   module load openblas/0.3.15-omp
+   module load netlib-lapack/3.9.1
+   if [ -d "$HOME/sw/venvs/warpx" ]
    then
-     source $HOME/sw/venvs/warpx-libE/bin/activate
+     source $HOME/sw/venvs/warpx/bin/activate
    fi
 
    # optional: just an additional text editor
@@ -99,7 +96,7 @@ We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``
 
    source $HOME/warpx.profile
 
-Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic ensemble optimizations:
+Optionally, download and install Python packages such as :ref:`libEnsemble <libensemble>` for dynamic ensemble optimizations:
 
 .. code-block:: bash
 
@@ -107,11 +104,11 @@ Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic en
    export LAPACK=$OLCF_NETLIB_LAPACK_ROOT/lib64/liblapack.so
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
-   python3 -m venv $HOME/sw/venvs/warpx-libE
-   source $HOME/sw/venvs/warpx-libE/bin/activate
+   python3 -m venv $HOME/sw/venvs/warpx
+   source $HOME/sw/venvs/warpx/bin/activate
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade cython
-   python3 -m pip install --upgrade numpy==1.19.5
+   python3 -m pip install --upgrade numpy
    python3 -m pip install --upgrade scipy
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt

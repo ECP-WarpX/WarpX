@@ -26,7 +26,7 @@
 #include "WarpX_FDTD.H"
 
 #include <AMReX.H>
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 #include <AMReX_Array4.H>
@@ -264,12 +264,12 @@ WarpX::PSATDForwardTransformJ ()
 }
 
 void
-WarpX::PSATDForwardTransformRho (const int icomp)
+WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     // Select index in k space
-    const int dst_comp = (icomp == 0) ? Idx.rho_old : Idx.rho_new;
+    const int dst_comp = (dcomp == 0) ? Idx.rho_old : Idx.rho_new;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -312,7 +312,6 @@ WarpX::PSATDPushSpectralFields ()
     }
 }
 
-#ifndef WARPX_DIM_RZ
 void
 WarpX::PSATDMoveRhoNewToRhoOld ()
 {
@@ -400,7 +399,6 @@ WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
         }
     }
 }
-#endif // not WARPX_DIM_RZ
 #endif // WARPX_USE_PSATD
 
 void
@@ -412,8 +410,12 @@ WarpX::PushPSATD ()
 
     PSATDForwardTransformEB();
     PSATDForwardTransformJ();
-    PSATDForwardTransformRho(0); // rho old
-    PSATDForwardTransformRho(1); // rho new
+    // Do rho FFTs only if needed
+    if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
+    {
+        PSATDForwardTransformRho(0,0); // rho old
+        PSATDForwardTransformRho(1,1); // rho new
+    }
     PSATDPushSpectralFields();
     PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();

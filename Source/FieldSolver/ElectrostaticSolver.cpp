@@ -137,41 +137,33 @@ WarpX::AddSpaceChargeFieldLabFrame ()
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // Allocate fields for charge
-    const int num_levels = max_level + 1;
-    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-    // Use number of guard cells used for local deposition of rho
-    const amrex::IntVect ng = guard_cells.ng_depos_rho;
+    // Zero out the charge density
     for (int lev = 0; lev <= max_level; lev++) {
-        BoxArray nba = boxArray(lev);
-        nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
-        rho[lev]->setVal(0.);
+        rho_fp[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
         bool const local = true;
+        bool const interpolate_across_levels = false;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
-        species.DepositCharge(rho, local, reset, do_rz_volume_scaling);
-    }
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyFilterandSumBoundaryRho (lev, lev, *rho[lev], 0, 1);
+        species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels);
     }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
     }
 #endif
+    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
+    computePhi( rho_fp, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi_fp, beta );
@@ -227,7 +219,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    int const verbosity) const
 {
     // Create a new geometry with the z coordinate scaled by gamma
-    amrex::Real const gamma = std::sqrt(1._rt/(1. - beta[2]*beta[2]));
+    amrex::Real const gamma = std::sqrt(1._rt/(1._rt - beta[2]*beta[2]));
 
     amrex::Vector<amrex::Geometry> geom_scaled(max_level + 1);
     for (int lev = 0; lev <= max_level; ++lev) {
@@ -431,7 +423,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // one of the axes of the grid, i.e. that only *one* of the Cartesian
     // components of `beta` is non-negligible.
     linop.setSigma({AMREX_D_DECL(
-        1.-beta[0]*beta[0], 1.-beta[1]*beta[1], 1.-beta[2]*beta[2])});
+        1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
     // get the EB potential at the current time
     std::string potential_eb_str = "0";
