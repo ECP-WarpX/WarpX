@@ -49,8 +49,7 @@ std::string WarnManager::print_local_warnings(const std::string& when) const
     return ss.str();
 }
 
-std::string
-WarnManager::print_global_warnings(const std::string& when) const
+std::string WarnManager::print_global_warnings(const std::string& when) const
 {
     auto all_warnings =
         m_p_logger->collective_gather_msg_with_counter_and_ranks();
@@ -140,8 +139,7 @@ std::string WarnManager::get_header(
     return ss.str();
 }
 
-std::string
-WarnManager::print_warn_msg(
+std::string WarnManager::print_warn_msg(
     const MsgLogger::MsgWithCounter& msg_with_counter) const
 {
     std::stringstream ss;
@@ -157,23 +155,19 @@ WarnManager::print_warn_msg(
 
     ss << " [" + msg_with_counter.msg.topic << "] ";
 
-    if(msg_with_counter.counter == 2){
+    if(msg_with_counter.counter == 2)
         ss << "[raised twice]\n";
-    }
-    else if(msg_with_counter.counter == 1){
+    else if(msg_with_counter.counter == 1)
         ss << "[raised once]\n";
-    }
-    else{
+    else
         ss << "[raised " << msg_with_counter.counter << " times]\n";
-    }
 
     ss << msg_formatter(msg_with_counter.msg.text, warn_line_size, warn_tab_size);
 
     return ss.str();
 }
 
-std::string
-WarnManager::print_warn_msg(
+std::string WarnManager::print_warn_msg(
     const MsgLogger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const
 {
     std::stringstream ss;
