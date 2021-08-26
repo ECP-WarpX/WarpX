@@ -8,16 +8,16 @@ Perlmutter (NERSC)
    Perlmutter is still in acceptance testing.
    This page documents our internal testing workflow only.
 
-The `Perlmutter cluster <https://www.nersc.gov/systems/perlmutter/>`_ is located at NERSC.
+The `Perlmutter cluster <https://docs.nersc.gov/systems/perlmutter/>`_ is located at NERSC.
 
 If you are new to this system, please see the following resources:
 
 * `NERSC user guide <https://docs.nersc.gov/>`__
-* Batch system: `Slurm <https://docs.nersc.gov/jobs/>`__
+* Batch system: `Slurm <https://docs.nersc.gov/systems/perlmutter/#running-jobs>`__
 * `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
-* `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`__:
+* `Production directories <https://docs.nersc.gov/filesystems/perlmutter-scratch/>`__:
 
-  * ``$SCRATCH``: per-user production directory (20TB)
+  * ``$PSCRATCH``: per-user production directory (<TBD>TB)
   * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
   * ``/global/cfs/cdirs/m3239/``: community file system for users in the project ``m3239`` (100TB)
 
@@ -53,7 +53,9 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
    # TODO
 
    # optional: an alias to request an interactive node for two hours
-   # TODO
+   function getNode() {
+       salloc -N 1 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 4 -A $proj
+   }
 
    # optimize CUDA compilation for A100
    export AMREX_CUDA_ARCH=8.0
@@ -103,9 +105,10 @@ Running
 A100 GPUs
 ^^^^^^^^^
 
-The batch script below can be used to run a WarpX simulation on multiple nodes on the supercomputer Perlmutter at NERSC.
+The batch script below can be used to run a WarpX simulation on multiple nodes (change ``-N`` accordingly) on the supercomputer Perlmutter at NERSC.
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
-Note that the only option so far is to run with one MPI rank per GPU.
+Note that we run one MPI rank per GPU.
+
 
 .. literalinclude:: ../../../../Tools/BatchScripts/batch_perlmutter.sh
    :language: bash
