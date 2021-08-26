@@ -989,6 +989,7 @@ private:
 #   endif
 #endif
 
+     // Warning manager: it allows recording and printing error messages
     std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
 
     amrex::Vector<int> istep;      // which step?
