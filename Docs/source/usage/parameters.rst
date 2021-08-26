@@ -1325,6 +1325,9 @@ Numerics and algorithms
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
      - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
+     - ``ect``: Enlarged cell technique (conformal finite difference solver. See Xiao and Liu,
+                IEEE Antennas and Propagation Society International Symposium (2005),
+                <https://ieeexplore.ieee.org/document/1551259>)
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
 
