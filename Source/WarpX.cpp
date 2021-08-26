@@ -410,8 +410,6 @@ WarpX::~WarpX ()
     delete reduced_diags;
 }
 
-#define WARPX_ALWAYS_WARN_IMMEDIATELY //DEBUG
-
 void
 WarpX::RecordWarning(
         std::string topic,
@@ -422,14 +420,16 @@ WarpX::RecordWarning(
 auto msg_priority = Utils::MsgLogger::Priority::high;
 if(priority == WarnPriority::low)
     msg_priority = Utils::MsgLogger::Priority::low;
-if(priority == WarnPriority::medium)
+else if(priority == WarnPriority::medium)
     msg_priority = Utils::MsgLogger::Priority::medium;
 
+// If WARPX_ALWAYS_WARN_IMMEDIATELY is defined, WarpX prints an error message immediately
+// every time an error message is recorded.
 #ifdef WARPX_ALWAYS_WARN_IMMEDIATELY
     amrex::Warning(
-        "WARNING: "
-        "[" + std::string(Utils::MsgLogger::PriorityToString(msg_priority)) + "]" +
-        "[" + topic + "] " + text);
+        "WARNING: ["
+        + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+        + "][" + topic + "] " + text);
 #endif
 
 #ifdef AMREX_USE_OMP
