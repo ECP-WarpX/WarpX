@@ -212,6 +212,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 }
 
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
+#ifdef AMREX_USE_EB
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
@@ -282,7 +283,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
-
+#endif
 }
 
 void FiniteDifferenceSolver::EvolveBCartesianECT (
@@ -294,7 +295,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     const int lev, amrex::Real const dt ) {
-
+#ifdef AMREX_USE_EB
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
 
     Venl[0]->setVal(0.);
@@ -420,8 +421,8 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
-
     }
+#endif
 }
 
 #else // corresponds to ifndef WARPX_DIM_RZ
