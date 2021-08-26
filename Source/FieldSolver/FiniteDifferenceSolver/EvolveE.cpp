@@ -50,13 +50,13 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
 #ifdef AMREX_USE_EB
     if (m_fdtd_algo != MaxwellSolverAlgo::ECT) {
-        amrex::ignore_unused(face_areas, Rhofield);
+        amrex::ignore_unused(face_areas, ECTRhofield);
     }
 #else
     amrex::ignore_unused(face_areas, ECTRhofield);
@@ -78,7 +78,7 @@ void FiniteDifferenceSolver::EvolveE (
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 #ifdef AMREX_USE_EB
         if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
-            EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, Rhofield, lev);
+            EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, ECTRhofield, lev);
         }
 #endif
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {

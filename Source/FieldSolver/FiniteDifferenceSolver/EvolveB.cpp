@@ -51,7 +51,7 @@ void FiniteDifferenceSolver::EvolveB (
     std::unique_ptr<amrex::MultiFab> const& Gfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
@@ -82,8 +82,8 @@ void FiniteDifferenceSolver::EvolveB (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
-        EvolveBCartesianECT( Bfield, face_areas, area_mod, Rhofield, Venl, flag_info_cell,
-                             borrowing, lev, dt);
+        EvolveBCartesianECT(Bfield, face_areas, area_mod, ECTRhofield, Venl, flag_info_cell,
+                            borrowing, lev, dt);
 #endif
     } else {
         amrex::Abort("EvolveB: Unknown algorithm");
@@ -215,7 +215,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, const int lev ) {
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -223,7 +223,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for ( MFIter mfi(*Rhofield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+    for (MFIter mfi(*ECTRhofield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
@@ -233,9 +233,9 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         Array4<Real> const &Ex = Efield[0]->array(mfi);
         Array4<Real> const &Ey = Efield[1]->array(mfi);
         Array4<Real> const &Ez = Efield[2]->array(mfi);
-        Array4<Real> const &Rhox = Rhofield[0]->array(mfi);
-        Array4<Real> const &Rhoy = Rhofield[1]->array(mfi);
-        Array4<Real> const &Rhoz = Rhofield[2]->array(mfi);
+        Array4<Real> const &Rhox = ECTRhofield[0]->array(mfi);
+        Array4<Real> const &Rhoy = ECTRhofield[1]->array(mfi);
+        Array4<Real> const &Rhoz = ECTRhofield[2]->array(mfi);
         amrex::Array4<amrex::Real> const &lx = edge_lengths[0]->array(mfi);
         amrex::Array4<amrex::Real> const &ly = edge_lengths[1]->array(mfi);
         amrex::Array4<amrex::Real> const &lz = edge_lengths[2]->array(mfi);
@@ -244,9 +244,9 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         amrex::Array4<amrex::Real> const &Sz = face_areas[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        Box const &trhox = mfi.tilebox(Rhofield[0]->ixType().toIntVect());
-        Box const &trhoy = mfi.tilebox(Rhofield[1]->ixType().toIntVect());
-        Box const &trhoz = mfi.tilebox(Rhofield[2]->ixType().toIntVect());
+        Box const &trhox = mfi.tilebox(ECTRhofield[0]->ixType().toIntVect());
+        Box const &trhoy = mfi.tilebox(ECTRhofield[1]->ixType().toIntVect());
+        Box const &trhoz = mfi.tilebox(ECTRhofield[2]->ixType().toIntVect());
 
         amrex::ParallelFor(trhox, trhoy, trhoz,
 
@@ -289,7 +289,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
@@ -315,7 +315,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Extract field data for this grid/tile
             Array4<Real> const &B = Bfield[idim]->array(mfi);
-            Array4<Real> const &Rho = Rhofield[idim]->array(mfi);
+            Array4<Real> const &Rho = ECTRhofield[idim]->array(mfi);
             Array4<Real> const &Venl_dim = Venl[idim]->array(mfi);
 
             amrex::Array4<int> const &flag_info_cell_dim = flag_info_cell[idim]->array(mfi);
