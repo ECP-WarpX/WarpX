@@ -23,18 +23,20 @@ void WarnManager::record_warning(
 
 std::string WarnManager::print_local_warnings(const std::string& when) const
 {
-    const auto all_warnings = aux_sort_messages(m_logger.get_msg_with_counter_list());
+    auto all_warnings = m_logger.get_msg_with_counter_list();
+    std::sort(all_warnings.begin(), all_warnings.end(),
+        [](const auto& a, const auto& b){return a.msg < b.msg;});
 
     std::stringstream ss;
 
-    ss << "\n" << aux_get_header(when, warn_line_size, false);
+    ss << "\n" << get_header(when, warn_line_size, false);
 
     if(all_warnings.size() == 0){
         ss << "No recorded warnings.\n";
     }
     else{
         for(const auto& warn_msg : all_warnings){
-            ss << aux_print_warn_msg(warn_msg);
+            ss << print_warn_msg(warn_msg);
             ss << "*\n";
         }
     }
@@ -53,18 +55,20 @@ WarnManager::print_global_warnings(const std::string& when) const
     if(m_rank != amrex::ParallelDescriptor::IOProcessorNumber())
         return "[see I/O rank message]";
 
-    all_warnings = aux_sort_messages(std::move(all_warnings));
+    std::sort(all_warnings.begin(), all_warnings.end(),
+        [](const auto& a, const auto& b){
+            return a.msg_with_counter.msg < b.msg_with_counter.msg;});
 
     std::stringstream ss;
 
-    ss << "\n" << aux_get_header(when, warn_line_size, true);
+    ss << "\n" << get_header(when, warn_line_size, true);
 
     if(all_warnings.size() == 0){
         ss << "No recorded warnings.\n";
     }
     else{
         for(const auto& warn_msg : all_warnings){
-            ss << aux_print_warn_msg(warn_msg);
+            ss << print_warn_msg(warn_msg);
             ss << "*\n";
         }
     }
@@ -109,29 +113,7 @@ void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
 
 }
 
-std::vector<MsgLogger::MsgWithCounter>
-WarnManager::aux_sort_messages(
-        std::vector<MsgLogger::MsgWithCounter>&& all_msg_with_counter) const
-{
-    std::sort(all_msg_with_counter.begin(), all_msg_with_counter.end(),
-        [](const MsgWithCounter& a, const MsgWithCounter& b){
-            return a.msg < b.msg;});
-    return std::move(all_msg_with_counter);
-}
-
-std::vector<MsgLogger::MsgWithCounterAndRanks>
-WarnManager::aux_sort_messages(
-        std::vector<MsgLogger::MsgWithCounterAndRanks>&&
-        all_msg_with_counter_and_ranks) const
-{
-    std::sort(all_msg_with_counter_and_ranks.begin(),
-        all_msg_with_counter_and_ranks.end(),
-        [](const MsgWithCounterAndRanks& a, const MsgWithCounterAndRanks& b){
-            return a.msg_with_counter.msg < b.msg_with_counter.msg;});
-    return std::move(all_msg_with_counter_and_ranks);
-}
-
-std::string WarnManager::aux_get_header(
+std::string WarnManager::get_header(
     const std::string& when,
     int line_size,
     bool is_global) const
@@ -156,7 +138,7 @@ std::string WarnManager::aux_get_header(
 }
 
 std::string
-WarnManager::aux_print_warn_msg(
+WarnManager::print_warn_msg(
     const MsgLogger::MsgWithCounter& msg_with_counter) const
 {
     std::stringstream ss;
@@ -182,17 +164,17 @@ WarnManager::aux_print_warn_msg(
         ss << "[raised " << msg_with_counter.counter << " times]\n";
     }
 
-    ss << aux_msg_formatter(msg_with_counter.msg.text, warn_line_size, warn_tab_size);
+    ss << msg_formatter(msg_with_counter.msg.text, warn_line_size, warn_tab_size);
 
     return ss.str();
 }
 
 std::string
-WarnManager::aux_print_warn_msg(
+WarnManager::print_warn_msg(
     const MsgLogger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const
 {
     std::stringstream ss;
-    ss << this->aux_print_warn_msg(msg_with_counter_and_ranks.msg_with_counter);
+    ss << this->print_warn_msg(msg_with_counter_and_ranks.msg_with_counter);
 
     std::string raised_by = "@ Raised by: ";
     if (!msg_with_counter_and_ranks.all_ranks){
@@ -202,13 +184,13 @@ WarnManager::aux_print_warn_msg(
     else{
         raised_by += "ALL\n";
     }
-    ss << aux_msg_formatter(raised_by, warn_line_size, warn_tab_size);
+    ss << msg_formatter(raised_by, warn_line_size, warn_tab_size);
 
     return ss.str();
 }
 
 std::string
-WarnManager::aux_msg_formatter(
+WarnManager::msg_formatter(
         const std::string& msg,
         const int line_size,
         const int tab_size) const

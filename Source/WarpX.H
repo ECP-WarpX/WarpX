@@ -115,9 +115,9 @@ public:
      * \brief This function records a warning message.
      * RecordWarning is thread safe: it can be used within OpenMP parallel loops.
      *
-     * \param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
-     * \param[in] text the text of the warning message
-     * \param[in] priority priority of the warning message ("medium" by default)
+     * @param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
+     * @param[in] text the text of the warning message
+     * @param[in] priority priority of the warning message ("medium" by default)
      */
     void RecordWarning(
         std::string topic,
@@ -125,18 +125,18 @@ public:
         WarnPriority priority = WarnPriority::medium);
 
     /**
-     * \brief This function prints the warning messages collected on the present MPI rank
+     * \brief This function prints all the warning messages collected on the present MPI rank
      * (i.e., this is not a collective call). This function is mainly intended for debug purposes.
      *
-     * \param[in] when a string to mark when the warnings are printed out (it appears in the warning message)
+     * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
      */
     void PrintLocalWarnings(const std::string& when);
 
     /**
-     * \brief This function prints the warning messages collected by all the MPI ranks
+     * \brief This function prints all the warning messages collected by all the MPI ranks
      * (i.e., this is a collective call). Only the I/O rank prints the message.
      *
-     * \param[in] when a string to mark when the warnings are printed out (it appears in the warning message)
+     * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
      */
     void PrintGlobalWarnings(const std::string& when);
 
