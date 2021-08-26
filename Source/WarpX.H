@@ -1192,9 +1192,13 @@ public:
     */
     void ComputeFaceExtensions();
     /**
-    * \brief Initialize the memory for the cell FaceInfoBoxes
+    * \brief Initialize the memory for the FaceInfoBoxes
     */
     void InitBorrowing();
+    /**
+    * \brief Shrink the vectors in the FaceInfoBoxes
+    */
+    void ShrinkBorrowing();
     /**
     * \brief For the face of cell pointing in direction idim, compute the number of faces
     * we need to intrude with the one-way extension. Returns only one or zero: one if the
@@ -1232,11 +1236,11 @@ public:
     /**
     * \brief Do the one-way extension
     */
-    amrex::Array1D<int, 0, 2> ComputeOneWayExtensions();
+    void ComputeOneWayExtensions();
     /**
     * \brief Do the eight-ways extension
     */
-    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds);
+    void ComputeEightWaysExtensions();
 
 
     void ScrapeParticles ();

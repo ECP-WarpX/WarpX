@@ -24,6 +24,8 @@ struct FaceInfoBox {
     // the next #size entries indicate the indices to access the vectors
     amrex::BaseFab<int*> inds_pointer;
 
+    int vecs_size;
+
     static constexpr uint8_t ul = 1;
     static constexpr uint8_t l = 2;
     static constexpr uint8_t bl = 4;

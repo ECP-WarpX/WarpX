@@ -47,7 +47,7 @@ WarpX::ComputeFaceExtensions(){
     amrex::Print()<< "Faces to be extended in z:\t" << N_ext_faces(2) <<std::endl;
 
     InitBorrowing();
-    amrex::Array1D<int, 0, 2> temp_inds = ComputeOneWayExtensions();
+    ComputeOneWayExtensions();
     amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
     amrex::Print()<< "Faces to be extended after one way extension in x:\t" <<
                      N_ext_faces_after_one_way(0) <<std::endl;
@@ -55,7 +55,8 @@ WarpX::ComputeFaceExtensions(){
                      N_ext_faces_after_one_way(1) <<std::endl;
     amrex::Print()<< "Faces to be extended after one way extension in z:\t" <<
                      N_ext_faces_after_one_way(2) <<std::endl;
-    ComputeEightWaysExtensions(temp_inds);
+    ComputeEightWaysExtensions();
+    ShrinkBorrowing();
     amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
     amrex::Print()<< "Faces to be extended after eight ways extension in x:\t" <<
                      N_ext_faces_after_eight_ways(0) <<std::endl;
@@ -352,15 +353,11 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
 }
 
 
-amrex::Array1D<int, 0, 2>
+void
 WarpX::ComputeOneWayExtensions() {
 #ifdef AMREX_USE_EB
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &cell_size = CellSize(maxLevel());
-
-    int nelems_x = 0;
-    int nelems_y = 0;
-    int nelems_z = 0;
 
     // Do the extensions in the x-plane
     int idim = 0;
@@ -379,6 +376,7 @@ WarpX::ComputeOneWayExtensions() {
         int* borrowing_x_inds = borrowing_x.inds.data();
         uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         amrex::Real* borrowing_x_area = borrowing_x.area.data();
+        int& vecs_size_x = borrowing_x.vecs_size;
 
         auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
@@ -386,7 +384,7 @@ WarpX::ComputeOneWayExtensions() {
         const amrex::Real dy = cell_size[1];
         const amrex::Real dz = cell_size[2];
 
-        nelems_x = amrex::Scan::PrefixSum<int>(ncells,
+        vecs_size_x = amrex::Scan::PrefixSum<int>(ncells,
         [=] AMREX_GPU_DEVICE (int icell) {
             const amrex::Dim3 cell = box.atOffset(icell).dim3();
             const int i = cell.x;
@@ -473,6 +471,7 @@ WarpX::ComputeOneWayExtensions() {
         int* borrowing_y_inds = borrowing_y.inds.data();
         uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         amrex::Real* borrowing_y_area = borrowing_y.area.data();
+        int& vecs_size_y = borrowing_y.vecs_size;
 
         auto const &Sy_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
@@ -480,7 +479,7 @@ WarpX::ComputeOneWayExtensions() {
         const amrex::Real dx = cell_size[0];
         const amrex::Real dz = cell_size[2];
 
-        nelems_y = amrex::Scan::PrefixSum<int>(ncells,
+        vecs_size_y = amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell) {
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -567,6 +566,7 @@ WarpX::ComputeOneWayExtensions() {
         int* borrowing_z_inds = borrowing_z.inds.data();
         uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         amrex::Real* borrowing_z_area = borrowing_z.area.data();
+        int& vecs_size_z = borrowing_z.vecs_size;
 
         auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
@@ -574,8 +574,7 @@ WarpX::ComputeOneWayExtensions() {
         const amrex::Real dx = cell_size[0];
         const amrex::Real dy = cell_size[1];
 
-
-        nelems_z = amrex::Scan::PrefixSum<int>(ncells,
+        vecs_size_z = amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell) {
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -645,22 +644,15 @@ WarpX::ComputeOneWayExtensions() {
             },
         amrex::Scan::Type::exclusive);
 
-
     }
 
-    return {nelems_x, nelems_y, nelems_z};
-#else
-    return {0, 0, 0};
 #endif
 }
 
 
 void
-WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
+WarpX::ComputeEightWaysExtensions() {
 #ifdef AMREX_USE_EB
-    const int n_borrow_offset_x = temp_inds(0);
-    const int n_borrow_offset_y = temp_inds(1);
-    const int n_borrow_offset_z = temp_inds(2);
 
     auto const &cell_size = CellSize(maxLevel());
     int idim = 0;
@@ -678,15 +670,15 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         int* borrowing_x_inds = borrowing_x.inds.data();
         uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         amrex::Real* borrowing_x_area = borrowing_x.area.data();
+        int& vecs_size_x = borrowing_x.vecs_size;
 
         auto const &Sx_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
         const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
         const amrex::Real dy = cell_size[1];
         const amrex::Real dz = cell_size[2];
-        int nelems_x;
 
-        nelems_x = amrex::Scan::PrefixSum<int>(ncells,
+        vecs_size_x += amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell){
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -706,7 +698,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 return n_borrow;
                 },
             [=] AMREX_GPU_DEVICE (int icell, int ps){
-                ps += n_borrow_offset_x;
+                ps += vecs_size_x;
 
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -796,10 +788,6 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             amrex::Scan::Type::exclusive);
 
-        borrowing_x.inds.resize(n_borrow_offset_x + nelems_x);
-        borrowing_x.neigh_faces.resize(n_borrow_offset_x + nelems_x);
-        borrowing_x.area.resize(n_borrow_offset_x + nelems_x);
-
     }
 
     idim = 1;
@@ -818,15 +806,15 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         int* borrowing_y_inds = borrowing_y.inds.data();
         uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         amrex::Real* borrowing_y_area = borrowing_y.area.data();
+        int& vecs_size_y = borrowing_y.vecs_size;
 
         auto const &Sy_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
         const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
         amrex::Real dx = cell_size[0];
         amrex::Real dz = cell_size[2];
-        int nelems_y;
 
-        nelems_y = amrex::Scan::PrefixSum<int>(ncells,
+        vecs_size_y += amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell){
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -847,7 +835,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             [=] AMREX_GPU_DEVICE (int icell, int ps) {
 
-                ps += n_borrow_offset_y;
+                ps += vecs_size_y;
 
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -936,10 +924,6 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             amrex::Scan::Type::exclusive);
 
-        borrowing_y.inds.resize(n_borrow_offset_y + nelems_y);
-        borrowing_y.neigh_faces.resize(n_borrow_offset_y + nelems_y);
-        borrowing_y.area.resize(n_borrow_offset_y + nelems_y);
-
     }
 
     // Do the extensions in the z-plane
@@ -958,15 +942,15 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
         int* borrowing_z_inds = borrowing_z.inds.data();
         uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         amrex::Real* borrowing_z_area = borrowing_z.area.data();
+        int& vecs_size_z = borrowing_z.vecs_size;
 
         auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
         const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
         const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
         const amrex::Real dx = cell_size[0];
         const amrex::Real dy = cell_size[1];
-        int nelems_z;
 
-        nelems_z = amrex::Scan::PrefixSum<int>(ncells,
+        vecs_size_z += amrex::Scan::PrefixSum<int>(ncells,
             [=] AMREX_GPU_DEVICE (int icell){
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -987,7 +971,7 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
             },
             [=] AMREX_GPU_DEVICE (int icell, int ps) {
 
-                ps += n_borrow_offset_z;
+                ps += vecs_size_z;
 
                 const amrex::Dim3 cell = box.atOffset(icell).dim3();
                 const int i = cell.x;
@@ -1076,13 +1060,36 @@ WarpX::ComputeEightWaysExtensions(amrex::Array1D<int, 0, 2> temp_inds) {
                 }
             },
             amrex::Scan::Type::exclusive);
-
-        borrowing_z.inds.resize(n_borrow_offset_z + nelems_z);
-        borrowing_z.neigh_faces.resize(n_borrow_offset_z + nelems_z);
-        borrowing_z.area.resize(n_borrow_offset_z + nelems_z);
         
     }
-#else
-    amrex::ignore_unused(temp_inds);
+
 #endif
+}
+
+
+void
+WarpX::ShrinkBorrowing() {
+    int idim = 0;
+    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+        auto &borrowing_x = (*m_borrowing[maxLevel()][idim])[mfi];
+        borrowing_x.inds.resize(borrowing_x.vecs_size);
+        borrowing_x.neigh_faces.resize(borrowing_x.vecs_size);
+        borrowing_x.area.resize(borrowing_x.vecs_size);
+    }
+
+    idim = 1;
+    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+        auto &borrowing_y = (*m_borrowing[maxLevel()][idim])[mfi];
+        borrowing_y.inds.resize(borrowing_y.vecs_size);
+        borrowing_y.neigh_faces.resize(borrowing_y.vecs_size);
+        borrowing_y.area.resize(borrowing_y.vecs_size);
+    }
+
+    idim = 2;
+    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+        auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
+        borrowing_z.inds.resize(borrowing_z.vecs_size);
+        borrowing_z.neigh_faces.resize(borrowing_z.vecs_size);
+        borrowing_z.area.resize(borrowing_z.vecs_size);
+    }
 }
