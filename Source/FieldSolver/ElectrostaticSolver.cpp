@@ -57,8 +57,8 @@ void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     if (reset_fields) {
+        // Reset all E and B fields to 0, before calculating space-charge fields
         for (int lev = 0; lev <= max_level; lev++) {
-            // Reset E and B fields before calculating space-charge fields for this step
             for (int comp=0; comp<3; comp++) {
                 Efield_fp[lev][comp]->setVal(0);
                 Bfield_fp[lev][comp]->setVal(0);
@@ -83,6 +83,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     // since they are different arrays in that case.
     UpdateAuxilaryData();
     FillBoundaryAux(guard_cells.ng_UpdateAux);
+
 }
 
 void
@@ -142,7 +143,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
         rho_fp[lev]->setVal(0.);
     }
 
-    // Loop over particles to gather to total charge density
+    // Deposit particle charge density (source of Poisson solver)
     bool const local = true;
     bool const interpolate_across_levels = false;
     bool const reset = false;
@@ -158,7 +159,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
         ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
     }
 #endif
-    SyncRho();
+    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
