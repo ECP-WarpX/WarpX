@@ -213,12 +213,11 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 }
 
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
-#ifdef AMREX_USE_EB
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
-
+#ifdef AMREX_USE_EB
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
@@ -284,6 +283,8 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
+#else
+    amrex::ignore_unused(Efield, edge_lengths, face_areas, ECTRhofield, lev);
 #endif
 }
 
@@ -423,6 +424,9 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
+#else
+    amrex::ignore_unused(Bfield, face_areas, area_mod, ECTRhofield, Venl, flag_info_cell, borrowing,
+                         lev, dt);
 #endif
 }
 
