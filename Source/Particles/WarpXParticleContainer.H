@@ -112,6 +112,7 @@ class WarpXParticleContainer
 {
 public:
     friend MultiParticleContainer;
+    template <typename, typename> friend class BinaryCollision;
 #ifdef WARPX_USE_OPENPMD
     friend class WarpXOpenPMDPlot;
 #endif
