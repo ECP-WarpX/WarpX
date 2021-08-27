@@ -244,13 +244,36 @@ MultiParticleContainer::ReadParameters ()
 
             if (m_E_ext_particle_s == "repeated_plasma_lens") {
                 getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_E", h_repeated_plasma_lens_strengths_E);
+            }
+            if (m_B_ext_particle_s == "repeated_plasma_lens") {
+                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_B", h_repeated_plasma_lens_strengths_B);
+            }
+            if (WarpX::gamma_boost > 1._rt) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                     m_E_ext_particle_s == "repeated_plasma_lens" || m_E_ext_particle_s == "default",
+                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
+                     "must be either repeated_plasma_lens or unspecified");
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                     m_B_ext_particle_s == "repeated_plasma_lens" || m_B_ext_particle_s == "default",
+                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
+                     "must be either repeated_plasma_lens or unspecified");
+                if (m_E_ext_particle_s == "default") {
+                    m_E_ext_particle_s = "repeated_plasma_lens";
+                    h_repeated_plasma_lens_strengths_E.resize(n_lenses);
+                }
+                if (m_B_ext_particle_s == "default") {
+                    m_B_ext_particle_s = "repeated_plasma_lens";
+                    h_repeated_plasma_lens_strengths_B.resize(n_lenses);
+                }
+            }
+
+            if (m_E_ext_particle_s == "repeated_plasma_lens") {
                 d_repeated_plasma_lens_strengths_E.resize(n_lenses);
                 amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                            h_repeated_plasma_lens_strengths_E.begin(), h_repeated_plasma_lens_strengths_E.end(),
                            d_repeated_plasma_lens_strengths_E.begin());
             }
             if (m_B_ext_particle_s == "repeated_plasma_lens") {
-                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_B", h_repeated_plasma_lens_strengths_B);
                 d_repeated_plasma_lens_strengths_B.resize(n_lenses);
                 amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                            h_repeated_plasma_lens_strengths_B.begin(), h_repeated_plasma_lens_strengths_B.end(),
@@ -498,13 +521,12 @@ MultiParticleContainer::DepositCurrent (
 void
 MultiParticleContainer::DepositCharge (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-    const amrex::Real relative_t, const int icomp)
+    const amrex::Real relative_t)
 {
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        int const nc = WarpX::ncomps;
-        rho[lev]->setVal(0.0, icomp*nc, nc, rho[lev]->nGrowVect());
+        rho[lev]->setVal(0.0, 0, WarpX::ncomps, rho[lev]->nGrowVect());
     }
 
     // Push the particles in time, if needed
@@ -518,7 +540,7 @@ MultiParticleContainer::DepositCharge (
         bool const do_rz_volume_scaling = false;
         bool const interpolate_across_levels = false;
         pc->DepositCharge(rho, local, reset, do_rz_volume_scaling,
-                              interpolate_across_levels, icomp);
+                              interpolate_across_levels);
     }
 
     // Push the particles back in time

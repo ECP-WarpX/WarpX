@@ -146,11 +146,10 @@ public:
      *             a fraction of dt). When different than 0, the particle
      *             position will be temporarily modified to match the time
      *             of the deposition.
-     * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_t, const int icomp = 0);
+                   const amrex::Real relative_t);
 
     /**
      * \brief Deposit current density.

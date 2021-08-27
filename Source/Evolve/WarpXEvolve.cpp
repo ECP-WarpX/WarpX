@@ -306,6 +306,15 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
         }
 
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
+
+        // warpx_py_afterstep runs with the updated global time. It is included
+        // in the evolve timing.
+        if (warpx_py_afterstep) warpx_py_afterstep();
+
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
@@ -316,10 +325,6 @@ WarpX::Evolve (int numsteps)
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
                       << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
         }
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
 
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
@@ -329,17 +334,15 @@ WarpX::Evolve (int numsteps)
         }
         multi_diags->FilterComputePackFlush( step );
 
-        if (cur_time >= stop_time - 1.e-3*dt[0]) {
-            break;
-        }
-
-        if (warpx_py_afterstep) warpx_py_afterstep();
-
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
             early_params_checked = true;
+        }
+
+        if (cur_time >= stop_time - 1.e-3*dt[0]) {
+            break;
         }
 
         // End loop on time steps
@@ -486,13 +489,13 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // 3) Deposit rho (in rho_new, since it will be moved during the loop)
         if (WarpX::update_with_rho)
         {
-            // Deposit rho at relative time -dt in component 1 (rho_new)
+            // Deposit rho at relative time -dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCharge(rho_fp, -dt[0], 1);
+            mypc->DepositCharge(rho_fp, -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
             // Forward FFT of rho_new
-            PSATDForwardTransformRho(1);
+            PSATDForwardTransformRho(0, 1);
         }
 
         // 4) Deposit J if needed
@@ -541,12 +544,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Deposit new rho
             if (WarpX::update_with_rho)
             {
-                // Deposit rho at relative time (i_depose-n_depose+1)*sub_dt in component 1 (rho_new)
-                mypc->DepositCharge(rho_fp, (i_depose-n_depose+1)*sub_dt, 1);
+                // Deposit rho at relative time (i_depose-n_depose+1)*sub_dt
+                mypc->DepositCharge(rho_fp, (i_depose-n_depose+1)*sub_dt);
                 // Filter, exchange boundary, and interpolate across levels
                 SyncRho();
                 // Forward FFT of rho_new
-                PSATDForwardTransformRho(1);
+                PSATDForwardTransformRho(0, 1);
             }
 
             // Advance E,B,F,G fields in time and update the average fields

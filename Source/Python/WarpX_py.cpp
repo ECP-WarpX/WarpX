@@ -12,6 +12,7 @@ extern "C" {
 
     WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterinit = nullptr;
     WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforeEsolve = nullptr;
+    WARPX_CALLBACK_PY_FUNC_0 warpx_py_poissonsolver = nullptr;
     WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterEsolve = nullptr;
     WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforedeposition = nullptr;
     WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterdeposition = nullptr;

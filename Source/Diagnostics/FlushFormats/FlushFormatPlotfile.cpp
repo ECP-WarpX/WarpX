@@ -290,6 +290,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
+
+        HeaderFile << warpx.time_of_last_gal_shift << "\n";
     }
 }
 

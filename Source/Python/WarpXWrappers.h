@@ -52,6 +52,7 @@ extern "C" {
 
     void warpx_set_callback_py_afterinit (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_beforeEsolve (WARPX_CALLBACK_PY_FUNC_0);
+    void warpx_set_callback_py_poissonsolver (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_afterEsolve (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_beforedeposition (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_afterdeposition (WARPX_CALLBACK_PY_FUNC_0);

@@ -37,18 +37,13 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
     z = p.pos(2);
 #else
     x = p.pos(0);
-    y = std::numeric_limits<amrex::ParticleReal>::quiet_NaN();
+    y = amrex::ParticleReal(0.0);
     z = p.pos(1);
 #endif
 }
 
 /** \brief Functor that can be used to extract the positions of the macroparticles
  *         inside a ParallelFor kernel
- *
- * \tparam ptiType the type of the particle iterator used in the constructor
- *
- * \param a_pti iterator to the tile containing the macroparticles
- * \param a_offset offset to apply to the particle indices
 */
 struct GetParticlePosition
 {
@@ -59,11 +54,18 @@ struct GetParticlePosition
 #if (defined WARPX_DIM_RZ)
     const RType* m_theta = nullptr;
 #elif (AMREX_SPACEDIM == 2)
-    static constexpr RType m_snan = std::numeric_limits<RType>::quiet_NaN();
+    static constexpr RType m_y_default = RType(0.0);
 #endif
 
     GetParticlePosition () = default;
 
+    /** Constructor
+     *
+     * \tparam ptiType the type of the particle iterator used in the constructor
+     *
+     * \param a_pti iterator to the tile containing the macroparticles
+     * \param a_offset offset to apply to the particle indices
+     */
     template <typename ptiType>
     GetParticlePosition (const ptiType& a_pti, int a_offset = 0) noexcept
     {
@@ -93,7 +95,7 @@ struct GetParticlePosition
         z = p.pos(2);
 #else
         x = p.pos(0);
-        y = m_snan;
+        y = m_y_default;
         z = p.pos(1);
 #endif
     }
@@ -117,7 +119,7 @@ struct GetParticlePosition
         z = p.pos(2);
 #else
         x = p.pos(0);
-        y = m_snan;
+        y = m_y_default;
         z = p.pos(1);
 #endif
     }

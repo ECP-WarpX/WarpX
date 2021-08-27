@@ -83,6 +83,7 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
+        self.save_previous_position = kw.pop('warpx_save_previous_position', None)
 
         # For the scraper buffer
         self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
@@ -122,8 +123,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_yhi = self.save_particles_at_yhi,
                                              save_particles_at_zlo = self.save_particles_at_zlo,
                                              save_particles_at_zhi = self.save_particles_at_zhi,
-                                             save_particles_at_eb = self.save_particles_at_eb
-                                            )
+                                             save_particles_at_eb = self.save_particles_at_eb,
+                                             save_previous_position = self.save_previous_position)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:

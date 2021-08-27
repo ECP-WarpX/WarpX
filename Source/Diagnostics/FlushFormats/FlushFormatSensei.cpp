@@ -1,3 +1,4 @@
+#include "Utils/WarpXProfilerWrapper.H"
 #include "FlushFormatSensei.H"
 
 #include "WarpX.H"
@@ -72,6 +73,8 @@ FlushFormatSensei::WriteToFile (
     (void)plot_raw_rho;
     (void)plot_raw_F;
 #else
+    WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
+
     amrex::Vector<amrex::MultiFab> *mf_ptr =
         const_cast<amrex::Vector<amrex::MultiFab>*>(&mf);
 
