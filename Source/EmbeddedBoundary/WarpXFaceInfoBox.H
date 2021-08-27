@@ -25,14 +25,7 @@ struct FaceInfoBox {
 
     int vecs_size;
 
-    static constexpr uint8_t ul = 1;
-    static constexpr uint8_t l = 2;
-    static constexpr uint8_t bl = 4;
-    static constexpr uint8_t u = 8;
-    static constexpr uint8_t d = 16;
-    static constexpr uint8_t ur = 32;
-    static constexpr uint8_t r = 64;
-    static constexpr uint8_t br = 128;
+    enum connect : uint8_t {n, s, e, w, nw, ne, sw, se};
 
     /**
     * \brief add the neighbor i, j to the list of intruded neighbors.
@@ -41,21 +34,21 @@ struct FaceInfoBox {
     static void addConnectedNeighbor(int i, int j, int ind, uint8_t* neigh_face_ptr){
 
         if(i == -1 && j == -1){
-            *(neigh_face_ptr + ind) = ul;
+            *(neigh_face_ptr + ind) = nw;
         }else if(i == -1 && j == 0){
-            *(neigh_face_ptr + ind) = l;
+            *(neigh_face_ptr + ind) = w;
         }else if(i == -1 && j == 1){
-            *(neigh_face_ptr + ind) = bl;
+            *(neigh_face_ptr + ind) = sw;
         }else if(i == 0 && j == -1){
-            *(neigh_face_ptr + ind) = u;
+            *(neigh_face_ptr + ind) = n;
         }else if(i == 0 && j == 1){
-            *(neigh_face_ptr + ind) = d;
+            *(neigh_face_ptr + ind) = s;
         }else if(i == 1 && j == -1){
-            *(neigh_face_ptr + ind) = ur;
+            *(neigh_face_ptr + ind) = ne;
         }else if(i == 1 && j == 0){
-            *(neigh_face_ptr + ind) = r;
+            *(neigh_face_ptr + ind) = e;
         }else if(i == 1 && j == 1){
-            *(neigh_face_ptr + ind) = br;
+            *(neigh_face_ptr + ind) = se;
         }
     }
 
@@ -66,28 +59,28 @@ struct FaceInfoBox {
     static amrex::Array1D<int, 0, 1> uint8_to_inds(uint8_t mask){
         amrex::Array1D<int, 0, 1> res;
 
-        if(mask & ul){
+        if(mask & nw){
             res(0) = -1;
             res(1) = -1;
-        }else if(mask & l){
+        }else if(mask & w){
             res(0) = -1;
             res(1) = 0;
-        }else if(mask & bl){
+        }else if(mask & sw){
             res(0) = -1;
             res(1) = 1;
-        }else if(mask & u){
+        }else if(mask & n){
             res(0) = 0;
             res(1) = -1;
-        }else if(mask & d){
+        }else if(mask & s){
             res(0) = 0;
             res(1) = 1;
-        }else if(mask & ur){
+        }else if(mask & ne){
             res(0) = 1;
             res(1) = -1;
-        }else if(mask & r){
+        }else if(mask & e){
             res(0) = 1;
             res(1) = 0;
-        }else if(mask & br){
+        }else if(mask & se){
             res(0) = 1;
             res(1) = 1;
         }
