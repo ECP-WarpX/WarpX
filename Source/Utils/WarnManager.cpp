@@ -32,7 +32,7 @@ void WarnManager::record_warning(
 
 std::string WarnManager::print_local_warnings(const std::string& when) const
 {
-    auto all_warnings = m_p_logger->get_msg_with_counter_list();
+    auto all_warnings = m_p_logger->get_msgs_with_counter();
     std::sort(all_warnings.begin(), all_warnings.end(),
         [](const auto& a, const auto& b){return a.msg < b.msg;});
 
@@ -58,7 +58,7 @@ std::string WarnManager::print_local_warnings(const std::string& when) const
 std::string WarnManager::print_global_warnings(const std::string& when) const
 {
     auto all_warnings =
-        m_p_logger->collective_gather_msg_with_counter_and_ranks();
+        m_p_logger->collective_gather_msgs_with_counter_and_ranks();
 
     if(m_rank != amrex::ParallelDescriptor::IOProcessorNumber())
         return "[see I/O rank message]";

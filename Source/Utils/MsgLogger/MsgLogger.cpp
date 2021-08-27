@@ -124,7 +124,7 @@ void Logger::record_msg(Msg msg)
     m_messages[msg]++;
 }
 
-std::vector<Msg> Logger::get_msg_list() const
+std::vector<Msg> Logger::get_msgs() const
 {
     auto res = std::vector<Msg>{};
 
@@ -134,7 +134,7 @@ std::vector<Msg> Logger::get_msg_list() const
     return res;
 }
 
-std::vector<MsgWithCounter> Logger::get_msg_with_counter_list() const
+std::vector<MsgWithCounter> Logger::get_msgs_with_counter() const
 {
     auto res = std::vector<MsgWithCounter>{};
 
@@ -145,13 +145,13 @@ std::vector<MsgWithCounter> Logger::get_msg_with_counter_list() const
 }
 
 std::vector<MsgWithCounterAndRanks>
-Logger::collective_gather_msg_with_counter_and_ranks() const
+Logger::collective_gather_msgs_with_counter_and_ranks() const
 {
     if (m_num_procs == 1)
-        return aux_get_msg_with_counter_and_ranks();
+        return one_rank_gather_msgs_with_counter_and_ranks();
 
     const auto my_list =
-        get_msg_list();
+        get_msgs();
     const auto how_many_items = my_list.size();
 
     int gather_rank = 0;
@@ -225,7 +225,7 @@ Logger::collective_gather_msg_with_counter_and_ranks() const
 
     if(is_gather_rank){
 
-        for (const auto& msg_with_counter : get_msg_with_counter_list()){
+        for (const auto& msg_with_counter : get_msgs_with_counter()){
             MsgWithCounterAndRanks msg_with_counter_and_ranks;
             msg_with_counter_and_ranks.msg_with_counter = msg_with_counter;
             msg_with_counter_and_ranks.all_ranks = false;
@@ -357,7 +357,7 @@ std::pair<int,int> Logger::aux_find_gather_rank_and_items(int how_many_items) co
 }
 
 std::vector<MsgWithCounterAndRanks>
-Logger::aux_get_msg_with_counter_and_ranks() const
+Logger::one_rank_gather_msgs_with_counter_and_ranks() const
 {
     std::vector<MsgWithCounterAndRanks> res;
     for (const auto& el : m_messages)

@@ -172,42 +172,49 @@ namespace MsgLogger{
         void record_msg(Msg msg);
 
         /**
-        * \brief This function returns a list of the recorded messages
+        * \brief This function returns a vector cointaining the recorded messages
         *
-        * @return the list of messages
+        * @return a vector of the recorded messages
         */
-        std::vector<Msg> get_msg_list() const;
+        std::vector<Msg> get_msgs() const;
 
         /**
-        * \brief This function returns a list of the recorded messages
-        * with the corresponding counter
+        * \brief This function returns a vector containing the recorded messages
+        * with the corresponding counters
         *
-        * @return the list of messages with counters
+        * @return a vector of the recorded messages with counters
         */
-        std::vector<MsgWithCounter> get_msg_with_counter_list() const;
+        std::vector<MsgWithCounter> get_msgs_with_counter() const;
 
         /**
-        * \brief This (collective) function generates a list of messages
+        * \brief This (collective) function generates a vector containing the messages
         * with counters and emitting ranks by gathering data from
         * all the ranks
         *
-        * @return the list of messages with counters and ranks if I/O rank, an empty vector otherwise
+        * @return a vector of messages with counters and ranks if I/O rank, an empty vector otherwise
         */
         std::vector<MsgWithCounterAndRanks>
-        collective_gather_msg_with_counter_and_ranks() const;
+        collective_gather_msgs_with_counter_and_ranks() const;
 
         private:
 
+        /**
+        * \brief This function implements the trivial special case of
+        * collective_gather_msgs_with_counter_and_ranks when there is only one rank.
+        *
+        * @return a vector of messages with counters and ranks
+        */
+        std::vector<MsgWithCounterAndRanks>
+        one_rank_gather_msgs_with_counter_and_ranks() const;
+
         std::vector<char> serialize_msg_list(
             const std::vector<Msg>& msg_list) const;
+
         static std::vector<Msg> deserialize_msg_list(
             const std::vector<char>& serialized);
 
         std::pair<int,int> aux_find_gather_rank_and_items(
             int how_many_items) const;
-
-        std::vector<MsgWithCounterAndRanks>
-        aux_get_msg_with_counter_and_ranks() const;
 
         std::vector<char>
         collective_gather_get_serialized_gather_rank_msg_list(
