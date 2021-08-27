@@ -234,6 +234,7 @@ namespace MsgLogger{
         std::vector<MsgWithCounterAndRanks>
         one_rank_gather_msgs_with_counter_and_ranks() const;
 
+#ifdef AMREX_USE_MPI
         /**
         * \brief This collective function finds the rank having the
         * most messages and how many messages this ranks has. The
@@ -348,6 +349,7 @@ namespace MsgLogger{
         static
         std::vector<Msg> deserialize_msgs(
             const std::vector<char>& serialized);
+#endif
 
         int m_rank = 0         /*! MPI rank of the current process*/;
         int m_num_procs = 0    /*! Number of MPI ranks*/;

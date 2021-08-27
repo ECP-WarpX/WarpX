@@ -9,7 +9,9 @@
 
 #include "MsgLoggerSerialization.H"
 
-#include <AMReX_ParallelDescriptor.H>
+#ifdef AMREX_USE_MPI
+#   include <AMReX_ParallelDescriptor.H>
+#endif
 #include <AMReX_Print.H>
 
 #include <iostream>
@@ -163,6 +165,9 @@ std::vector<MsgWithCounter> Logger::get_msgs_with_counter() const
 std::vector<MsgWithCounterAndRanks>
 Logger::collective_gather_msgs_with_counter_and_ranks() const
 {
+
+#ifdef AMREX_USE_MPI
+
     // Trivial case of only one rank
     if (m_num_procs == 1)
         return one_rank_gather_msgs_with_counter_and_ranks();
@@ -216,6 +221,9 @@ Logger::collective_gather_msgs_with_counter_and_ranks() const
         gather_rank);
 
     return msgs_with_counter_and_ranks;
+#else
+    return one_rank_gather_msgs_with_counter_and_ranks();
+#endif
 }
 
 std::vector<MsgWithCounterAndRanks>
@@ -232,6 +240,8 @@ Logger::one_rank_gather_msgs_with_counter_and_ranks() const
     }
     return res;
 }
+
+#ifdef AMREX_USE_MPI
 
 std::pair<int,int> Logger::find_gather_rank_and_its_msgs(int how_many_msgs) const
 {
@@ -550,3 +560,5 @@ std::vector<Msg> Logger::deserialize_msgs(
 
     return msgs;
 }
+
+#endif
