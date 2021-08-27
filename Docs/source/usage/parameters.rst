@@ -766,18 +766,19 @@ Particle initialization
     flag can be set to `1` to also save particle data for the particles of this
     species that impact the embedded boundary.
     The scraped particle buffer can be used to track particle fluxes out of the
-    simulation. If Python is used to run the simulation ``pywarpx._libwarpx``
-    function ``get_particle_boundary_buffer()`` can be used to access the
-    scraped particle buffer. The scraped particle buffer includes an entry for
-    every particle of the timestep at which the particle was scraped. This can
-    be accessed by passing the argument ``comp_name="step_scraped"`` to the above
-    mentioned function.
+    simulation but is currently only accessible via the Python interface. The
+    ``pywarpx._libwarpx`` function ``get_particle_boundary_buffer()`` can be
+    used to access the scraped particle buffer. An entry is included for every
+    particle in the buffer of the timestep at which the particle was scraped.
+    This can be accessed by passing the argument ``comp_name="step_scraped"`` to
+    the above mentioned function.
 
     .. note::
         Currently the scraped particle buffer relies on the user to access the
         data in the buffer for processing and periodically clear the buffer. The
         buffer will grow unbounded as particles are scraped and therefore could
-        lead to memory issues if not periodically cleared.
+        lead to memory issues if not periodically cleared. To clear the buffer
+        call ``warpx_clearParticleBoundaryBuffer()``.
 
 * ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
     Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a

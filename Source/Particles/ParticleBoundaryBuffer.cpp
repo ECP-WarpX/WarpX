@@ -238,7 +238,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
         const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
-    auto index = getSpeciesIndexFromName(species_name);
+    auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
     if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false);
     else return 0;
@@ -248,7 +248,7 @@ ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>&
 ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
-    auto index = getSpeciesIndexFromName(species_name);
+    auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
                                      "Attempted to get particle buffer for boundary "

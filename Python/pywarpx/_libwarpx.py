@@ -793,7 +793,12 @@ def _get_boundary_number(boundary):
     if boundary != 'eb':
         boundary_parts = boundary.split("_")
         dim_num = dimensions[boundary_parts[0]]
-        side = 0 if boundary_parts[1] == 'lo' else 1
+        if boundary_parts[1] == 'lo':
+            side = 0
+        elif boundary_parts[1] == 'hi':
+            side = 1
+        else:
+            raise RuntimeError(f'Unknown boundary specified: {boundary}')
         boundary_num = 2 * dim_num + side
     else:
         boundary_num = 4 if geometry_dim == '2d' else 6
