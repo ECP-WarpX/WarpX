@@ -214,6 +214,8 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
     amrex::Array2D<int, 0, 2, 0, 2> local_avail{};
 
     if(idim == 0) {
+        // Use a local 3x3 array to keep track of which of the neighboring faces is available to be
+        // intruded.
         for (int j_loc = 0; j_loc <= 2; j_loc++) {
             for (int k_loc = 0; k_loc <= 2; k_loc++) {
                 local_avail(j_loc, k_loc) = (flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 1
@@ -221,6 +223,7 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
             }
         }
 
+        // denom is the total area that can be borrowed from the neighboring cells
         amrex::Real denom = local_avail(0, 1) * S(i, j - 1, k) +
             local_avail(2, 1) * S(i, j + 1, k) +
             local_avail(1, 0) * S(i, j, k - 1) +
@@ -230,8 +233,17 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
             local_avail(0, 2) * S(i, j - 1, k + 1) +
             local_avail(2, 2) * S(i, j + 1, k + 1);
 
+        // This flag will be used to check if any of the intruded faces would give away too much
+        // area and needs to be excluded from the extension process. It is initialized to true to
+        // make sure that we perform at least one iteration of the while loop.
         bool neg_face = true;
 
+        // If the total area of the neighboring available faces is greater than the area needed for
+        // the extension, then we can try to do the extension. (denom >= S_ext)
+        // If any of the surrounding faces would be giving away to much area, then we have to
+        // exclude it from the extension process and repeat. We keep trying until either all the faces
+        // are big enough to be intruded or until we find out that none of the faces can be intruded
+        // (that is denom = 0).
         while (denom >= S_ext && neg_face && denom > 0) {
             neg_face = false;
             for (int j_n = -1; j_n < 2; j_n++) {
@@ -240,6 +252,8 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
                         amrex::Real patch = S_ext * S(i, j + j_n, k + k_n) / denom;
                         if (S_red(i, j + j_n, k + k_n) - patch <= 0) {
                             neg_face = true;
+                            // Whenever a face cannot be intruded we set the corresponding entry
+                            // in local_avail to False
                             local_avail(j_n + 1, k_n + 1) = false;
                         }
                     }
@@ -343,6 +357,8 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
 
     }
 
+    // We count the number of entries in local_avail which are still True, this is the number of
+    // neighboring faces which are intruded
     for(int ii = 0; ii < 3; ii++) {
         for (int jj = 0; jj < 3; jj++) {
             n_borrow += local_avail(ii, jj);
