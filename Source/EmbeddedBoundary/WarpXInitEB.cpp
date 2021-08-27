@@ -233,12 +233,19 @@ WarpX::ScaleAreas() {
                 full_area = cell_size[0]*cell_size[1];
             }
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
-            auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
 
             amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                                face_areas_dim(i, j, k) *= full_area;
-                                mod_areas_dim(i, j, k) = face_areas_dim(i, j, k);
+                face_areas_dim(i, j, k) *= full_area;
             });
+
+            if(WarpX::maxwell_solver_id==MaxwellSolverAlgo::ECT) {
+                auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    if(WarpX::maxwell_solver_id==MaxwellSolverAlgo::ECT) {
+                        mod_areas_dim(i, j, k) = face_areas_dim(i, j, k);
+                  }
+                });
+            }
         }
     }
 #endif
