@@ -768,7 +768,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
                       unsigned long long np, bool isBTD = false) const
 {
     std::string options = "{}";
-    if (isBTD) options = "{\"resizeable\": true}";
+    if (isBTD) options = "{ \"resizable\": true }";
     auto dtype_real = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
     auto dtype_int  = openPMD::Dataset(openPMD::determineDatatype<int>(), {np}, options);
     //
@@ -924,7 +924,7 @@ WarpXOpenPMDPlot::SetupPos (
     bool isBTD)
 {
   std::string options = "{}";
-  if (isBTD) options = "{\"resizeable\": true}";
+  if (isBTD) options = "{ \"resizable\": true }";
   auto realType= openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
   auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
 
