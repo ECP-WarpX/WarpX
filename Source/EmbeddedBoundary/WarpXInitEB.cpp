@@ -241,9 +241,7 @@ WarpX::ScaleAreas() {
             if(WarpX::maxwell_solver_id==MaxwellSolverAlgo::ECT) {
                 auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    if(WarpX::maxwell_solver_id==MaxwellSolverAlgo::ECT) {
                         mod_areas_dim(i, j, k) = face_areas_dim(i, j, k);
-                  }
                 });
             }
         }
