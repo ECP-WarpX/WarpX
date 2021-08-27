@@ -110,7 +110,7 @@ To reduce numerical artifacts at the boundary of a mesh-refinement patch, WarpX 
 Runtime particle attributes
 ---------------------------
 
-WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attr_name")`` or ``AddIntComp("attr_name")``). The attribute name can then be used to access the values of that attribute. For example, using a particle iterator, ``pti``, to loop over the particles the command ``pti.GetAttribs(particle_comps["attr_name"]).dataPtr();`` will return the values of the ``"attr_name"`` attribute.
+WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``). The attribute name can then be used to access the values of that attribute. For example, using a particle iterator, ``pti``, to loop over the particles the command ``pti.GetAttribs(particle_comps["attrname"]).dataPtr();`` will return the values of the ``"attrname"`` attribute.
 
 Commonly used runtime attributes are described in the table below.
 
