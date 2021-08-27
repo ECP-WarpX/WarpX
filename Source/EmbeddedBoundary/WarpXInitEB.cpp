@@ -283,9 +283,20 @@ WarpX::MarkCells(){
                                              ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
                 }
 
-                // Does this face need to be extended? This is the same as
-                // flag_info_face(i, j, k) = 0 here but it is modified later to keep track o which
-                // faces need multi-cell extension
+                // Does this face need to be extended?
+                // The difference between flag_info_face and flag_ext_face is that:
+                //     - for every face flag_info_face contains a:
+                //          * 0 if the face needs to be extended
+                //          * 1 if the face is large enough to lend area to other faces
+                //          * 2 if the face is actually intruded by other face
+                //       Here we only take care of the first two cases. The entries corresponding
+                //       to the intruded faces are going to be set in the function ComputeFaceExtensions
+                //     - for every face flag_ext_face contains a:
+                //          * 1 if the face needs to be extended
+                //          * 0 otherwise
+                //       In the function ComputeFaceExtensions, after the cells are extended, the
+                //       corresponding entries in flag_ext_face are set to zero. This helps to keep
+                //       track of which cells could not be extended
                 flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab && S(i, j, k) > 0);
                 if(flag_ext_face(i, j, k)){
                     flag_info_face(i, j, k) = 0;
