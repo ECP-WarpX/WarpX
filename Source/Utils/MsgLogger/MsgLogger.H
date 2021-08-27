@@ -74,6 +74,15 @@ namespace MsgLogger{
         * @return a Msg struct
         */
         static Msg deserialize(std::vector<char>::const_iterator& it);
+
+        /**
+        * \brief Same as static Msg deserialize(std::vector<char>::const_iterator& it)
+        * but accepting an rvalue as an argument
+        *
+        * @param[in] it iterator of a byte array
+        * @return a Msg struct
+        */
+        static Msg deserialize(std::vector<char>::const_iterator&& it);
     };
 
     /**
@@ -101,6 +110,15 @@ namespace MsgLogger{
         * @return a MsgWithCounter struct
         */
         static MsgWithCounter deserialize(std::vector<char>::const_iterator& it);
+
+        /**
+        * \brief Same as static Msg MsgWithCounter(std::vector<char>::const_iterator& it)
+        * but accepting an rvalue as an argument
+        *
+        * @param[in] it iterator of a byte array
+        * @return a MsgWithCounter struct
+        */
+        static MsgWithCounter deserialize(std::vector<char>::const_iterator&& it);
     };
 
     /**
@@ -131,6 +149,15 @@ namespace MsgLogger{
         * @return a MsgWithCounterAndRanks struct
         */
         static MsgWithCounterAndRanks deserialize(std::vector<char>::const_iterator& it);
+
+        /**
+        * \brief Same as static Msg MsgWithCounterAndRanks(std::vector<char>::const_iterator& it)
+        * but accepting an rvalue as an argument
+        *
+        * @param[in] it iterator of a byte array
+        * @return a MsgWithCounterAndRanks struct
+        */
+        static MsgWithCounterAndRanks deserialize(std::vector<char>::const_iterator&& it);
     };
 
     /**
@@ -187,7 +214,7 @@ namespace MsgLogger{
         std::vector<MsgWithCounter> get_msgs_with_counter() const;
 
         /**
-        * \brief This (collective) function generates a vector containing the messages
+        * \brief This collective function generates a vector containing the messages
         * with counters and emitting ranks by gathering data from
         * all the ranks
         *
@@ -207,31 +234,120 @@ namespace MsgLogger{
         std::vector<MsgWithCounterAndRanks>
         one_rank_gather_msgs_with_counter_and_ranks() const;
 
-        std::vector<char> serialize_msg_list(
-            const std::vector<Msg>& msg_list) const;
+        /**
+        * \brief This collective function finds the rank having the
+        * most messages and how many messages this ranks has. The
+        * rank having the most messages is designated as "gather rank".
+        *
+        * @param[in] how_many_msgs the number of messages that the current rank has
+        * @return a pair containing the ID of the "gather rank" and its number of messages
+        */
+        std::pair<int,int> find_gather_rank_and_its_msgs(
+            int how_many_msgs) const;
 
-        static std::vector<Msg> deserialize_msg_list(
-            const std::vector<char>& serialized);
-
-        std::pair<int,int> aux_find_gather_rank_and_items(
-            int how_many_items) const;
-
+        /**
+        * \brief This collective function returns the messages of the "gather rank"
+        * as a byte array.
+        *
+        * @param[in] my_msgs the messages of the current rank
+        * @param[in] gather_rank the ID of the "gather rank"
+        * @param[in] my_rank the ID of the current rank
+        * @return the messages of the "gather rank" as a byte array
+        */
+        static
         std::vector<char>
-        collective_gather_get_serialized_gather_rank_msg_list(
-            const std::vector<Msg>& my_list,
-            int gather_rank) const;
+        get_serialized_gather_rank_msgs(
+            const std::vector<Msg>& my_msgs,
+            const int gather_rank,
+            const int my_rank);
 
+        /**
+        * \brief This function generates data to send back to the "gather rank"
+        *
+        * @param[in] serialized_gather_rank_msgs the serialized messages of the gather rank
+        * @param[in] gather_rank_how_many_msgs number of messages of the "gather rank"
+        * @param[in] my_msg_map messages and counters of the current rank (as a map)
+        * @param[in] is_gather_rank true if the rank is the "gather rank", false otherwise
+        * @return a byte array to send back to the "gather rank" (or a dummy vector in case is_gather_rank is true)
+        */
+        static
         std::vector<char>
-        aux_create_data_package(
-            const std::vector<int>& gather_rank_msg_counters,
-            const std::map<Msg, int>& to_send
+        compute_package_for_gather_rank(
+            const std::vector<char>& serialized_gather_rank_msgs,
+            const int gather_rank_how_many_msgs,
+            const std::map<Msg, int>& my_msg_map,
+            const bool is_gather_rank
+        );
+
+        /**
+        * \brief This collective function gathers data generated with compute_package_for_gather_rank
+        * to the gather rank.
+        * If my_rank != gather_rank the function returns dummy data. Otherwise the function returns
+        * a pair containing:
+        * 1) a byte array containing info on messages seen by other ranks
+        * 2) a vector of displacements to access data corresponding to a given rank
+        *
+        * @param[in] package_for_gather_rank a byte array generated by compute_package_for_gather_rank
+        * @param[in] gather_rank the ID of the "gather rank"
+        * @param[in] my_rank the ID of the current rank
+        * @return (see function description)
+        */
+        static
+        std::pair<std::vector<char>, std::vector<int>>
+        gather_all_data(
+            const std::vector<char>& package_for_gather_rank,
+            const int gather_rank, const int my_rank);
+
+        /**
+        * \brief This function uses data gathered on the "gather rank" to generate
+        * a vector of messages with global counters and emitting rank lists
+        *
+        * @param[in] my_msg_map messages and counters of the current rank (as a map)
+        * @param[in] all_data a byte array containing all the data gathered on the gather rank
+        * @param[in] displacements a vector of displacements to access data corresponding to a given rank in all_data
+        * @param[in] gather_rank the ID of the "gather rank"
+        * @return if gather_rank==m_rank a vector of messages with global counters and emitting rank lists, dummy data otherwise
+        */
+        std::vector<MsgWithCounterAndRanks>
+        compute_msgs_with_counter_and_ranks(
+            const std::map<Msg,int>& my_msg_map,
+            const std::vector<char>& all_data,
+            const std::vector<int>& displacements,
+            const int gather_rank
         ) const;
 
+
+        /**
+        * \brief If the gather_rank is not the I/O rank, this function sends msgs_with_counter_and_ranks
+        * to the I/O rank. This function uses point-to-point communications.
+        *
+        * @param[in] msgs_with_counter_and_ranks a vector of messages with counters and ranks
+        * @param[in] gather_rank the ID of the "gather rank"
+        */
         void
-        update_list_with_packaged_data(
-            std::vector<MsgWithCounterAndRanks>& list_with_ranks,
-            const std::vector<char>& all_data,
-            const std::vector<int>& disps) const;
+        swap_with_io_rank(
+        std::vector<MsgWithCounterAndRanks>& msgs_with_counter_and_ranks,
+        int gather_rank) const;
+
+        /**
+        * \brief This function converts a vector of Msg struct into a byte array
+        *
+        * @param[in] msgs the vector of Msg struct
+        * @return a byte array
+        */
+        static
+        std::vector<char> serialize_msgs(
+            const std::vector<Msg>& msgs);
+
+        /**
+        * \brief This function converts a byte array into a vector of Msg struct
+        *
+        * @param[in] serialized the byte array
+        * @return a vector of Msg struct
+        */
+        static
+        std::vector<Msg> deserialize_msgs(
+            const std::vector<char>& serialized);
 
         int m_rank = 0         /*! MPI rank of the current process*/;
         int m_num_procs = 0    /*! Number of MPI ranks*/;

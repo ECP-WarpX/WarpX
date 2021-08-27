@@ -41,7 +41,7 @@ std::string WarnManager::print_local_warnings(const std::string& when) const
     ss << "\n" << get_header(when, warn_line_size, false);
 
     if(all_warnings.size() == 0){
-        ss << "No recorded warnings.\n";
+        ss << "* No recorded warnings.\n";
     }
     else{
         for(const auto& warn_msg : all_warnings){
@@ -72,7 +72,7 @@ std::string WarnManager::print_global_warnings(const std::string& when) const
     ss << "\n" << get_header(when, warn_line_size, true);
 
     if(all_warnings.size() == 0){
-        ss << "No recorded warnings.\n";
+        ss << "* No recorded warnings.\n";
     }
     else{
         for(const auto& warn_msg : all_warnings){

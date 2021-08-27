@@ -65,6 +65,11 @@ Msg Msg::deserialize (std::vector<char>::const_iterator& it)
     return msg;
 }
 
+Msg Msg::deserialize (std::vector<char>::const_iterator&& it)
+{
+    return Msg::deserialize(it);
+}
+
 std::vector<char> MsgWithCounter::serialize() const
 {
     std::vector<char> serialized_msg_with_counter;
@@ -85,6 +90,11 @@ MsgWithCounter MsgWithCounter::deserialize (std::vector<char>::const_iterator& i
     msg_with_counter.counter = get_out<int> (it);
 
     return msg_with_counter;
+}
+
+MsgWithCounter MsgWithCounter::deserialize (std::vector<char>::const_iterator&& it)
+{
+    return MsgWithCounter::deserialize(it);
 }
 
 std::vector<char> MsgWithCounterAndRanks::serialize() const
@@ -110,6 +120,12 @@ MsgWithCounterAndRanks::deserialize (std::vector<char>::const_iterator& it)
     msg_with_counter_and_ranks.ranks = get_out_vec<int>(it);
 
     return msg_with_counter_and_ranks;
+}
+
+MsgWithCounterAndRanks
+MsgWithCounterAndRanks::deserialize (std::vector<char>::const_iterator&& it)
+{
+    return MsgWithCounterAndRanks::deserialize(it);
 }
 
 Logger::Logger(){
@@ -147,213 +163,59 @@ std::vector<MsgWithCounter> Logger::get_msgs_with_counter() const
 std::vector<MsgWithCounterAndRanks>
 Logger::collective_gather_msgs_with_counter_and_ranks() const
 {
+    // Trivial case of only one rank
     if (m_num_procs == 1)
         return one_rank_gather_msgs_with_counter_and_ranks();
 
-    const auto my_list =
-        get_msgs();
-    const auto how_many_items = my_list.size();
-
+    // Find out who is the "gather rank" and how many messages it has
+    const auto my_msgs = get_msgs();
+    const auto how_many_msgs = my_msgs.size();
     int gather_rank = 0;
-    int gather_rank_how_many = 0;
-    std::tie(gather_rank, gather_rank_how_many) =
-        aux_find_gather_rank_and_items(how_many_items);
+    int gather_rank_how_many_msgs = 0;
+    std::tie(gather_rank, gather_rank_how_many_msgs) =
+        find_gather_rank_and_its_msgs(how_many_msgs);
 
-    if(gather_rank_how_many == 0)
+    // If the "gather rank" has zero messages there are no messages at all
+    if(gather_rank_how_many_msgs == 0)
         return std::vector<MsgWithCounterAndRanks>{};
 
-    const bool is_gather_rank = (m_rank == gather_rank);
+    // All the ranks receive the msgs of the "gather rank" as a byte array
+    const auto serialized_gather_rank_msgs =
+        Logger::get_serialized_gather_rank_msgs(my_msgs, gather_rank, m_rank);
 
-    const auto serialized_gather_rank_msg_list =
-        collective_gather_get_serialized_gather_rank_msg_list(
-            my_list, gather_rank);
+    // Each rank assembles a message to send back to the "gather rank"
+    const bool is_gather_rank = (gather_rank == m_rank);
+    const auto package_for_gather_rank =
+        Logger::compute_package_for_gather_rank(
+            serialized_gather_rank_msgs,
+            gather_rank_how_many_msgs,
+            m_messages, is_gather_rank);
 
-    std::vector<int> gather_rank_msg_counters(gather_rank_how_many);
-
-    auto to_send = std::map<Msg, int>{m_messages};
-
-    auto package_lengths = std::vector<int>{};
+    // Send back all the data to the "gather rank"
     auto all_data = std::vector<char>{};
-    auto disps = std::vector<int>{};
-    if (!is_gather_rank){
-        const auto gather_rank_msg_list =
-            Logger::deserialize_msg_list(serialized_gather_rank_msg_list);
+    auto displacements = std::vector<int>{};
+    std::tie(all_data, displacements) =
+        Logger::gather_all_data(
+            package_for_gather_rank,
+            gather_rank, m_rank);
 
-        int counter = 0;
-        for (const auto& msg : gather_rank_msg_list){
-            const auto pp = to_send.find(msg);
-            if (pp != to_send.end()){
-                gather_rank_msg_counters[counter] += pp->second;
-                to_send.erase(msg);
-            }
-            counter++;
-        }
+    // Use the gathered data to generate (on the "gather rank") a vector of all the
+    // messages seen by all the ranks with the corresponding counters and
+    // emitting rank lists.
+    auto msgs_with_counter_and_ranks =
+        compute_msgs_with_counter_and_ranks(
+            m_messages,
+            all_data,
+            displacements,
+            gather_rank);
 
-        const auto package = aux_create_data_package(
-            gather_rank_msg_counters,
-            to_send
-        );
+    // If the current rank is not the I/O rank, send msgs_with_counter_and_ranks
+    // to the I/O rank
+    swap_with_io_rank(
+        msgs_with_counter_and_ranks,
+        gather_rank);
 
-        amrex::ParallelDescriptor::Gather(static_cast<int>(package.size()), gather_rank);
-        const auto dummy_recc = std::vector<int>{};
-        const auto dummy_recv = static_cast<char*>(nullptr);
-        const auto dummy_disps = std::vector<int>{};
-        amrex::ParallelDescriptor::Gatherv(
-            package.data(), package.size(), dummy_recv,  dummy_recc,
-            dummy_disps, gather_rank);
-    }
-    else{
-        const int zero_size = 0;
-        package_lengths =
-            amrex::ParallelDescriptor::Gather(zero_size, gather_rank);
-
-        disps.resize(package_lengths.size());
-        std::partial_sum(package_lengths.begin(), package_lengths.end(), disps.begin());
-        std::rotate(disps.rbegin(), disps.rbegin()+1, disps.rend());
-        disps[0] = 0;
-
-        all_data.resize(std::accumulate(package_lengths.begin(),
-            package_lengths.end(),0));
-        if(all_data.size() == 0) all_data.resize(1);
-        const auto dummy_send = static_cast<char*>(nullptr);
-        amrex::ParallelDescriptor::Gatherv(
-            dummy_send, 0, all_data.data(), package_lengths,
-            disps, gather_rank);
-    }
-
-    auto list_with_ranks = std::vector<MsgWithCounterAndRanks>{};
-
-    if(is_gather_rank){
-
-        for (const auto& msg_with_counter : get_msgs_with_counter()){
-            MsgWithCounterAndRanks msg_with_counter_and_ranks;
-            msg_with_counter_and_ranks.msg_with_counter = msg_with_counter;
-            msg_with_counter_and_ranks.all_ranks = false;
-            msg_with_counter_and_ranks.ranks = std::vector<int>{m_rank};
-
-            list_with_ranks.emplace_back(msg_with_counter_and_ranks);
-        }
-
-        update_list_with_packaged_data(list_with_ranks, all_data, disps);
-    }
-
-
-    if (gather_rank != m_io_rank){
-        if(is_gather_rank){
-            std::vector<char> package;
-            for (const auto& el: list_with_ranks)
-                put_in_vec<char>(el.serialize(), package);
-
-            auto package_size = static_cast<int>(package.size());
-            amrex::ParallelDescriptor::Send(&package_size, 1, m_io_rank, 0);
-            amrex::ParallelDescriptor::Send(package, m_io_rank, 1);
-            int list_size = static_cast<int>(list_with_ranks.size());
-            amrex::ParallelDescriptor::Send(&list_size, 1, m_io_rank, 2);
-        }
-        else if (m_rank == m_io_rank){
-            int vec_size = 0;
-            amrex::ParallelDescriptor::Recv(&vec_size, 1, gather_rank, 0);
-            std::vector<char> package(vec_size);
-            amrex::ParallelDescriptor::Recv(package, gather_rank, 1);
-            int list_size = 0;
-            amrex::ParallelDescriptor::Recv(&list_size, 1, gather_rank, 2);
-            const auto vv = package;
-            auto it = vv.begin();
-            for (int i = 0; i < list_size; ++i){
-                const auto vec = get_out_vec<char>(it);
-                auto iit = vec.begin();
-                list_with_ranks.emplace_back(
-                    MsgWithCounterAndRanks::deserialize(iit)
-                );
-            }
-        }
-    }
-
-    return list_with_ranks;
-}
-
-std::vector<char>
-Logger::collective_gather_get_serialized_gather_rank_msg_list(
-    const std::vector<Msg>& my_list,
-    int gather_rank) const
-{
-    const bool is_gather_rank = (m_rank == gather_rank);
-
-    auto serialized_gather_rank_msg_list = std::vector<char>{};
-    int size_serialized_gather_rank_msg_list = 0;
-    if (is_gather_rank){
-        serialized_gather_rank_msg_list = serialize_msg_list(my_list);
-        size_serialized_gather_rank_msg_list =
-            serialized_gather_rank_msg_list.size();
-    }
-
-    amrex::ParallelDescriptor::Bcast(
-        &size_serialized_gather_rank_msg_list, 1, gather_rank);
-
-    if (!is_gather_rank)
-        serialized_gather_rank_msg_list.resize(
-            size_serialized_gather_rank_msg_list);
-
-    amrex::ParallelDescriptor::Bcast(
-        serialized_gather_rank_msg_list.data(),
-        size_serialized_gather_rank_msg_list, gather_rank);
-
-    return serialized_gather_rank_msg_list;
-}
-
-
-std::vector<char> Logger::serialize_msg_list(
-    const std::vector<Msg>& msg_list) const
-{
-    std::vector<char> serialized;
-
-    const auto how_many = static_cast<int> (msg_list.size());
-    put_in (how_many, serialized);
-
-    for (auto msg : msg_list){
-        put_in_vec(msg.serialize(), serialized);
-    }
-    return serialized;
-}
-
-std::vector<Msg> Logger::deserialize_msg_list(
-    const std::vector<char>& serialized)
-{
-    auto it = serialized.begin();
-
-    const auto how_many = get_out<int>(it);
-    auto msg_list = std::vector<Msg>{};
-
-    msg_list.reserve(how_many);
-
-    for (int i = 0; i < how_many; ++i){
-        const auto vv = get_out_vec<char>(it);
-        auto iit = vv.begin();
-        msg_list.emplace_back(Msg::deserialize(iit));
-    }
-
-    return msg_list;
-}
-
-std::pair<int,int> Logger::aux_find_gather_rank_and_items(int how_many_items) const
-{
-    int max_items = 0;
-    int max_rank = 0;
-
-    auto num_msg =
-        amrex::ParallelDescriptor::Gather(how_many_items, m_io_rank);
-
-    if (m_am_i_io){
-        const auto it_max = std::max_element(num_msg.begin(), num_msg.end());
-        max_items = *it_max;
-        max_rank = (max_items == how_many_items) ?
-            m_io_rank : it_max - num_msg.begin();
-    }
-
-    auto pack = std::array<int,2>{max_rank, max_items};
-    amrex::ParallelDescriptor::Bcast(pack.data(), 2, m_io_rank);
-
-    return std::make_pair(pack[0], pack[1]);
+    return msgs_with_counter_and_ranks;
 }
 
 std::vector<MsgWithCounterAndRanks>
@@ -371,76 +233,320 @@ Logger::one_rank_gather_msgs_with_counter_and_ranks() const
     return res;
 }
 
-std::vector<char>
-Logger::aux_create_data_package(
-    const std::vector<int>& gather_rank_msg_counters,
-    const std::map<Msg, int>& to_send
-    ) const
+std::pair<int,int> Logger::find_gather_rank_and_its_msgs(int how_many_msgs) const
 {
-    std::vector<char> package;
-    put_in_vec(gather_rank_msg_counters, package);
-    put_in(static_cast<int>(to_send.size()), package);
-    for (const auto& el : to_send)
-        put_in_vec<char>(MsgWithCounter{el.first, el.second}.serialize(), package);
+    int max_items = 0;
+    int max_rank = 0;
 
-    return package;
+    const auto num_msg =
+        amrex::ParallelDescriptor::Gather(how_many_msgs, m_io_rank);
+
+    if (m_am_i_io){
+        const auto it_max = std::max_element(num_msg.begin(), num_msg.end());
+        max_items = *it_max;
+
+        //In case of an "ex aequo" the I/O rank should be the gather rank
+        max_rank = (max_items == how_many_msgs) ?
+            m_io_rank : it_max - num_msg.begin();
+    }
+
+    auto package = std::array<int,2>{max_rank, max_items};
+    amrex::ParallelDescriptor::Bcast(package.data(), 2, m_io_rank);
+
+    return std::make_pair(package[0], package[1]);
 }
 
-void
-Logger::update_list_with_packaged_data(
-    std::vector<MsgWithCounterAndRanks>& list_with_ranks,
-    const std::vector<char>& all_data,
-    const std::vector<int>& disps) const
+std::vector<char>
+Logger::get_serialized_gather_rank_msgs(
+    const std::vector<Msg>& my_msgs,
+    const int gather_rank,
+    const int my_rank)
 {
+    const bool is_gather_rank = (my_rank == gather_rank);
 
-    std::map<Msg, MsgWithCounterAndRanks> mm;
+    auto serialized_gather_rank_msgs = std::vector<char>{};
+    int size_serialized_gather_rank_msgs = 0;
 
-    const int orig_size = list_with_ranks.size();
+    if (is_gather_rank){
+        serialized_gather_rank_msgs = Logger::serialize_msgs(my_msgs);
+        size_serialized_gather_rank_msgs = static_cast<int>(
+            serialized_gather_rank_msgs.size());
+    }
 
-    for(int rr = 0; rr < m_num_procs; ++rr){
+    amrex::ParallelDescriptor::Bcast(
+        &size_serialized_gather_rank_msgs, 1, gather_rank);
 
-        if(rr == m_rank)
+    if (!is_gather_rank)
+        serialized_gather_rank_msgs.resize(
+            size_serialized_gather_rank_msgs);
+
+    amrex::ParallelDescriptor::Bcast(
+        serialized_gather_rank_msgs.data(),
+        size_serialized_gather_rank_msgs, gather_rank);
+
+    return serialized_gather_rank_msgs;
+}
+
+std::vector<char>
+Logger::compute_package_for_gather_rank(
+    const std::vector<char>& serialized_gather_rank_msgs,
+    const int gather_rank_how_many_msgs,
+    const std::map<Msg, int>& my_msg_map,
+    const bool is_gather_rank)
+{
+    if(!is_gather_rank){
+        auto package = std::vector<char>{};
+
+        //generates a copy of the message map
+        auto msgs_to_send = std::map<Msg, int>{my_msg_map};
+
+        // For each message of the "gather rank" store how many times
+        // the message has been emitted by the current ranks.
+        const auto gather_rank_msgs =
+            Logger::deserialize_msgs(serialized_gather_rank_msgs);
+        std::vector<int> gather_rank_msg_counters(gather_rank_how_many_msgs);
+        int counter = 0;
+        for (const auto& msg : gather_rank_msgs){
+            const auto pp = msgs_to_send.find(msg);
+            if (pp != msgs_to_send.end()){
+                gather_rank_msg_counters[counter] += pp->second;
+                // Remove messages already seend by "gather rank" from
+                // the messages to send back
+                msgs_to_send.erase(msg);
+            }
+            counter++;
+        }
+        put_in_vec(gather_rank_msg_counters, package);
+
+        // Add the additional messages seen by the current rank to the package
+        put_in(static_cast<int>(msgs_to_send.size()), package);
+        for (const auto& el : msgs_to_send)
+            put_in_vec<char>(
+                MsgWithCounter{el.first, el.second}.serialize(), package);
+
+        return package;
+    }
+
+    return std::vector<char>{};
+}
+
+std::pair<std::vector<char>, std::vector<int>>
+Logger::gather_all_data(
+    const std::vector<char>& package_for_gather_rank,
+    const int gather_rank, const int my_rank)
+{
+    auto package_lengths = std::vector<int>{};
+    auto all_data = std::vector<char>{};
+    auto displacements = std::vector<int>{};
+
+    if(gather_rank != my_rank){
+        amrex::ParallelDescriptor::Gather(
+            static_cast<int>(package_for_gather_rank.size()), gather_rank);
+        amrex::ParallelDescriptor::Gatherv(
+            package_for_gather_rank.data(),
+            package_for_gather_rank.size(),
+            all_data.data(),
+            package_lengths,
+            displacements,
+            gather_rank);
+    }
+    else{
+        const int zero_size = 0;
+        package_lengths =
+            amrex::ParallelDescriptor::Gather(zero_size, gather_rank);
+
+        // Compute displacements
+        displacements.resize(package_lengths.size());
+        std::partial_sum(package_lengths.begin(), package_lengths.end(),
+            displacements.begin());
+        std::rotate(displacements.rbegin(),
+            displacements.rbegin()+1,
+            displacements.rend());
+        displacements[0] = 0;
+
+        all_data.resize(std::accumulate(package_lengths.begin(),
+            package_lengths.end(),0));
+
+        amrex::ParallelDescriptor::Gatherv(
+            static_cast<char*>(nullptr),
+            0,
+            all_data.data(),
+            package_lengths,
+            displacements,
+            gather_rank);
+    }
+    return std::make_pair(all_data, displacements);
+}
+
+std::vector<MsgWithCounterAndRanks>
+Logger::compute_msgs_with_counter_and_ranks(
+    const std::map<Msg,int>& my_msg_map,
+    const std::vector<char>& all_data,
+    const std::vector<int>& displacements,
+    const int gather_rank) const
+{
+    if(m_rank != gather_rank) return std::vector<MsgWithCounterAndRanks>{};
+
+    std::vector<MsgWithCounterAndRanks> msgs_with_counter_and_ranks;
+
+    // Put messages of the gather rank in msgs_with_counter_and_ranks
+    for (const auto& el : my_msg_map)
+    {
+        msgs_with_counter_and_ranks.emplace_back(
+            MsgWithCounterAndRanks{
+                MsgWithCounter{el.first, el.second},
+                false,
+                std::vector<int>{m_rank}});
+    }
+
+    // We need a temporary map
+    std::map<Msg, MsgWithCounterAndRanks> tmap;
+
+#ifdef AMREX_USE_OMP
+    #pragma omp parallel for
+#endif
+    for(int rr = 0; rr < m_num_procs; ++rr){ //for each rank
+        if(rr == gather_rank) // (skip gather_rank)
             continue;
-        auto it = all_data.begin() + disps[rr];
-        const auto vec = get_out_vec<int>(it);
+
+        // get counters generated by rank rr
+        auto it = all_data.begin() + displacements[rr];
+        const auto counters_rr = get_out_vec<int>(it);
+
+         //for each counter from rank rr
         int c = 0;
-        for (const auto& el : vec){
-            list_with_ranks[c].msg_with_counter.counter += el;
-            if (el > 0)
-                list_with_ranks[c].ranks.push_back(rr);
+        for (const auto& counter : counters_rr){
+#ifdef AMREX_USE_OMP
+            #pragma omp atomic
+#endif
+            msgs_with_counter_and_ranks[c].msg_with_counter.counter +=
+                counter; //update corresponding global counter
+
+            //and add rank to rank list if it has emitted the message
+            if (counter > 0){
+#ifdef AMREX_USE_OMP
+            #pragma omp critical
+#endif
+                {
+                    msgs_with_counter_and_ranks[c].ranks.push_back(rr);
+                }
+            }
             c++;
         }
 
-        const auto how_many = get_out<int>(it);
+        // for each additional message coming from rank rr
+        const auto how_many_additional_msgs_with_counter = get_out<int>(it);
+        for(int i = 0; i < how_many_additional_msgs_with_counter; ++i){
 
-        for(int i = 0; i < how_many; ++i){
-            const auto vc = get_out_vec<char>(it);
-            auto iit = vc.begin();
-            auto msg_with_counter = MsgWithCounter::deserialize(iit);
-            if (mm.find(msg_with_counter.msg) == mm.end()){
-                const auto msg_with_counter_and_ranks =  MsgWithCounterAndRanks{
-                    msg_with_counter,
-                    false,
-                    std::vector<int>{rr}
-                };
-                mm[msg_with_counter.msg] = msg_with_counter_and_ranks;
-            }
-            else{
-                mm[msg_with_counter.msg].msg_with_counter.counter +=
-                    msg_with_counter.counter;
-                mm[msg_with_counter.msg].ranks.push_back(rr);
+            //deserialize the message
+            const auto serialized_msg_with_counter = get_out_vec<char>(it);
+            auto msg_with_counter =
+                MsgWithCounter::deserialize(serialized_msg_with_counter.begin());
+
+            //and eventually add it to the temporary map
+#ifdef AMREX_USE_OMP
+            #pragma omp critical
+#endif
+            {
+                if (tmap.find(msg_with_counter.msg) == tmap.end()){
+                    const auto msg_with_counter_and_ranks =
+                        MsgWithCounterAndRanks{
+                            msg_with_counter,
+                            false,
+                            std::vector<int>{rr}
+                        };
+                    tmap[msg_with_counter.msg] = msg_with_counter_and_ranks;
+                }
+                else{
+                    tmap[msg_with_counter.msg].msg_with_counter.counter +=
+                        msg_with_counter.counter;
+                    tmap[msg_with_counter.msg].ranks.push_back(rr);
+                }
             }
         }
     }
 
-    for (int i = 0; i < orig_size; ++i){
-        if(static_cast<int>(list_with_ranks[i].ranks.size()) == m_num_procs){
-            list_with_ranks[i].all_ranks = true;
-            std::vector<int>{}.swap(list_with_ranks[i].ranks);
+    // Check if messages emitted by "gather rank" are actually emitted by all ranks
+    const auto ssize = static_cast<int>(msgs_with_counter_and_ranks.size());
+    for (int i = 0; i < ssize; ++i){
+        const auto how_many =
+            static_cast<int>(msgs_with_counter_and_ranks[i].ranks.size());
+        if(how_many == m_num_procs){
+            msgs_with_counter_and_ranks[i].all_ranks = true;
+            // trick to force free memory
+            std::vector<int>{}.swap(msgs_with_counter_and_ranks[i].ranks);
         }
     }
 
-    for(const auto& el : mm){
-        list_with_ranks.push_back(el.second);
+    // Add elements from the temporary map
+    for(const auto& el : tmap){
+        msgs_with_counter_and_ranks.push_back(el.second);
     }
+
+    return msgs_with_counter_and_ranks;
+}
+
+void Logger::swap_with_io_rank(
+    std::vector<MsgWithCounterAndRanks>& msgs_with_counter_and_ranks,
+    int gather_rank) const
+{
+    if (gather_rank != m_io_rank){
+        if(m_rank == gather_rank){
+            auto package = std::vector<char>{};
+            for (const auto& el: msgs_with_counter_and_ranks)
+                put_in_vec<char>(el.serialize(), package);
+
+            auto package_size = static_cast<int>(package.size());
+            amrex::ParallelDescriptor::Send(&package_size, 1, m_io_rank, 0);
+            amrex::ParallelDescriptor::Send(package, m_io_rank, 1);
+            int list_size = static_cast<int>(msgs_with_counter_and_ranks.size());
+            amrex::ParallelDescriptor::Send(&list_size, 1, m_io_rank, 2);
+        }
+        else if (m_rank == m_io_rank){
+            int vec_size = 0;
+            amrex::ParallelDescriptor::Recv(&vec_size, 1, gather_rank, 0);
+            std::vector<char> package(vec_size);
+            amrex::ParallelDescriptor::Recv(package, gather_rank, 1);
+            int list_size = 0;
+            amrex::ParallelDescriptor::Recv(&list_size, 1, gather_rank, 2);
+            auto it = package.cbegin();
+            for (int i = 0; i < list_size; ++i){
+                const auto vec = get_out_vec<char>(it);
+                msgs_with_counter_and_ranks.emplace_back(
+                    MsgWithCounterAndRanks::deserialize(vec.begin())
+                );
+            }
+        }
+    }
+}
+
+std::vector<char> Logger::serialize_msgs(
+    const std::vector<Msg>& msgs)
+{
+    auto serialized = std::vector<char>{};
+
+    const auto how_many = static_cast<int> (msgs.size());
+    put_in (how_many, serialized);
+
+    for (auto msg : msgs){
+        put_in_vec(msg.serialize(), serialized);
+    }
+    return serialized;
+}
+
+std::vector<Msg> Logger::deserialize_msgs(
+    const std::vector<char>& serialized)
+{
+    auto it = serialized.begin();
+
+    const auto how_many = get_out<int>(it);
+    auto msgs = std::vector<Msg>{};
+    msgs.reserve(how_many);
+
+    for (int i = 0; i < how_many; ++i){
+        const auto vv = get_out_vec<char>(it);
+        msgs.emplace_back(Msg::deserialize(vv.begin()));
+    }
+
+    return msgs;
 }
