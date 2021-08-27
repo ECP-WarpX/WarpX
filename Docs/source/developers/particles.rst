@@ -120,3 +120,7 @@ Attribute name      ``int``/``real``  Description                        Default
 ``prev_x/y/z``      ``real``          The coordinates of the particles
                                       at the previous timestep.
 ==================  ================  =================================  =============
+
+.. note::
+
+   Only use ``_`` to separate components of vectors!
