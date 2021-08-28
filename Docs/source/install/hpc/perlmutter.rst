@@ -47,10 +47,17 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
    export PATH=$HOME/sw/cmake-3.22.0-dev/bin:$PATH
 
    # optional: just an additional text editor
-   # module load nano
+   # module load nano  # TODO: request from support
 
-   # optional: FFT, I/O, Python, ...
+   # optional: for openPMD support
+   module load cray-hdf5-parallel/1.12.0.6
+   export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
+
+   # optional: Python, ...
    # TODO
+
+   # GPU-aware MPI
+   export MPICH_GPU_SUPPORT_ENABLED=1
 
    # optional: an alias to request an interactive node for two hours
    function getNode() {
@@ -80,7 +87,15 @@ Furthermore, until Perlmutter provides a CMake 3.22.0+ module, we need to execut
 
    git clone https://gitlab.kitware.com/cmake/cmake.git $HOME/src/cmake
    cmake -S $HOME/src/cmake -B $HOME/src/cmake/build -DCMAKE_INSTALL_PREFIX=$HOME/sw/cmake-3.22.0-dev
-   cmake --build $HOME/src/cmake/build --target install -j 16
+   cmake --build $HOME/src/cmake/build --target install -j 32
+
+And install ADIOS2:
+
+.. code-block:: bash
+
+   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
+   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/adios2-2.7.1
+   cmake --build src/adios2-build --target install -j 32
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
@@ -90,7 +105,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    rm -rf build
 
    cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
-   cmake --build build -j 10
+   cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
