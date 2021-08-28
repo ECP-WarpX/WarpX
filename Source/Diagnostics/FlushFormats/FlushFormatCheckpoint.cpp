@@ -144,6 +144,7 @@ FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
 
             if (!DMFile.good()) { amrex::FileOpenFailed(DMFileName); }
 
+            DMFile << ParallelDescriptor::NProcs() << "\n";
             warpx.DistributionMap(lev).writeOn(DMFile);
 
             DMFile.flush();
