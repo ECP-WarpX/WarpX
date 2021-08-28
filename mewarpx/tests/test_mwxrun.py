@@ -2,6 +2,7 @@
 import pytest
 import numpy as np
 import yt
+import logging
 
 from mewarpx.utils_store import util as mwxutil
 
@@ -17,7 +18,8 @@ from mewarpx.utils_store import util as mwxutil
     ]
 )
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
-def test_capacitive_discharge_multigrid(capsys, name):
+def test_capacitive_discharge_multigrid(caplog, name):
+    caplog.set_level(logging.INFO)
     basename = "Run"
     use_rz = 'RZ' in name
     dim = int(name.replace(basename, '')[0])
@@ -108,9 +110,13 @@ def test_capacitive_discharge_multigrid(capsys, name):
     # Cleanup and final output                                            #
     #######################################################################
 
-    out, _ = capsys.readouterr()
+    all_log_output = ""
+    records = caplog.records
 
-    print(out)
+    for record in records:
+        all_log_output += record.msg + "\n"
+
+    print(all_log_output)
     # make sure out isn't empty
     outstr = "SimControl: Termination from criteria: eval_max_steps"
-    assert outstr in out
+    assert outstr in all_log_output

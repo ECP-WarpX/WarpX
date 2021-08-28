@@ -2,6 +2,7 @@ import collections
 import copy
 import warnings
 import os
+import logging
 
 import dill
 import matplotlib.pyplot as plt
@@ -15,6 +16,9 @@ import mewarpx.utils_store.util as mwxutil
 from mewarpx.diags_store import diag_base, timeseries
 
 from pywarpx import callbacks, _libwarpx
+
+logger = logging.getLogger(__name__)
+
 
 class ParticleCSVDiag(diag_base.WarpXDiagnostic):
 
@@ -488,7 +492,7 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
                 for x in list(ts_dict.keys())
             ]
         except KeyError:
-            print(
+            logger.error(
                 "NOTE: KeyErrors in flux plotting can be caused by creating "
                 "species after RunInfo is saved (eg by initiating a "
                 "TraceParticleInjector after RunInfo). All species should be "
@@ -688,11 +692,11 @@ class FluxDiagnostic(FluxDiagBase):
                     self._check_charge_conservation()
 
                 if self.print_per_diagnostic:
-                    print("THIS DIAGNOSTIC PERIOD:")
-                    print(self.print_fluxes(self.ts_dict))
+                    logger.info("THIS DIAGNOSTIC PERIOD:")
+                    logger.info(self.print_fluxes(self.ts_dict))
                 if self.print_total:
-                    print("TOTAL HISTORY:")
-                    print(self.print_fluxes(self.fullhist_dict))
+                    logger.info("TOTAL HISTORY:")
+                    logger.info(self.print_fluxes(self.fullhist_dict))
 
                 if self.plot:
                     self.plot_fluxes(self.fullhist_dict, save=True)

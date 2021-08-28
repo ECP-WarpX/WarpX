@@ -1,6 +1,7 @@
 """Base diagnostic code used in many diagnostics."""
 import logging
 import time
+import sys
 
 import numpy as np
 # import psutil
@@ -110,11 +111,9 @@ class WarpXDiagnostic(object):
             next_diagnum = ((diagnum // diagnum_divisor) + 1)*diagnum_divisor
             next_itnum = next_diagnum * self.diag_steps + self.diag_step_offset
 
-            print(
-                ("Waiting until diagnostic period {} (step {}) to run "
-                 "diagnostic due to extended_interval_level = "
-                 "{}").format(
-                       next_diagnum, next_itnum, self.extended_interval_level)
+            logger.info(
+                f"Waiting until diagnostic period {next_diagnum} (step {next_itnum}) to run "
+                f"diagnostic due to extended_interval_level = {self.extended_interval_level}"
             )
 
             return False
@@ -233,11 +232,10 @@ class TextDiag(WarpXDiagnostic):
 
                 # Print the string with everything that ended up in the
                 # dictionary.
-                print(self.diag_string.format(**self.status_dict), flush=True)
+                logger.info(self.diag_string.format(**self.status_dict))
 
             except Exception as err:
-                print("Failed to output diag_string {} with error {}".format(
-                    self.diag_string, err))
+                logger.error(f"Failed to output diag_string {self.diag_string} with error {err}")
 
             self.prev_time = time.time()
             self.prev_step = mwxrun.get_it()

@@ -9,6 +9,7 @@ import pytest
 
 from mewarpx.utils_store import util as mwxutil
 
+
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_particle_diag():

@@ -8,6 +8,7 @@ import pytest
 
 from mewarpx.utils_store import util as mwxutil
 
+
 def test_thermionic_emission():
     name = "thermionicEmission"
     dim = 2

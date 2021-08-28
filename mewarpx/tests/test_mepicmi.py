@@ -1,10 +1,12 @@
 """Test the functionality in mewarpx/mepicmy.py"""
-import pytest
+import logging
 import numpy as np
 
 from mewarpx.utils_store import util as mwxutil
 
-def test_extra_pid(capsys):
+
+def test_extra_pid(caplog):
+    caplog.set_level(logging.INFO)
     name = "mepicmi_extra_pid"
     dim = 2
 
@@ -79,11 +81,15 @@ def test_extra_pid(capsys):
     # Cleanup and final output                                            #
     #######################################################################
 
-    out, _ = capsys.readouterr()
+    all_log_output = ""
+    records = caplog.records
+
+    for record in records:
+        all_log_output += record.msg + "\n"
 
     # make sure out isn't empty
     outstr = "SimControl: Termination from criteria: check_particle_nums"
-    assert outstr in out
+    assert outstr in all_log_output
 
     weights = run.electrons.get_array_from_pid('w')
     extra_pid = run.electrons.get_array_from_pid('extra_pid')

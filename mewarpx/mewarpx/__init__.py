@@ -1,5 +1,8 @@
 """mewarpx package"""
 import logging
+import sys
+
+from mewarpx.utils_store import mwxlogging
 
 from ._version import __version__, __version_info__
 
@@ -12,4 +15,13 @@ __all__ = []
 # https://lists.gt.net/python/python/863016 and
 # https://docs.python.org/2/howto/logging.html and
 # https://stackoverflow.com/questions/44188270/no-handlers-could-be-found-for-logger
-logging.debug("Initializing logging for mewarpx")
+logger = logging.getLogger(__name__)
+logger.debug("Initializing logging for mewarpx")
+
+h = mwxlogging.MEHandler(sys.stdout)
+f = mwxlogging.MEFilter()
+
+h.addFilter(f)
+logger.addHandler(h)
+
+logger.setLevel(logging.INFO)

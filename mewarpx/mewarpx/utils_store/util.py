@@ -6,16 +6,19 @@ import inspect
 import os
 import warnings
 import collections
+import logging
 
 import numpy as np
 
 from pywarpx import geometry
 from mewarpx.utils_store import mwxconstants as constants
 
+logger = logging.getLogger(__name__)
 
 # http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-t
 mewarpx_dir = os.path.join(os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe()))), "..")
+
 
 def init_libwarpx(ndim, rz):
     """_libwarpx requires the geometry be set before importing.
@@ -259,12 +262,12 @@ def get_velocities(num_samples, T, m, emission_type='thermionic',
     sigma = np.sqrt(constants.kb_J * T / m)
 
     if transverse_fac < 0.:
-        print("WARNING: transverse_fac is out of bounds")
-        print("Constraining to minimum value of 0.")
+        logger.warning("Transverse_fac is out of bounds")
+        logger.warning("Constraining to minimum value of 0.")
         beta = 0.
     elif transverse_fac > 2.:
-        print("WARNING: transverse_fac is out of bounds")
-        print("Constraining to maximum value of 2.")
+        logger.warning("Transverse_fac is out of bounds")
+        logger.warning("Constraining to maximum value of 2.")
         beta = np.sqrt(2.)
     else:
         beta = np.sqrt(transverse_fac)

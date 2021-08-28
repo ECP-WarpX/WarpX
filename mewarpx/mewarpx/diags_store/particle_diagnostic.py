@@ -123,7 +123,7 @@ class ParticleDiagnostic(WarpXDiagnostic):
                 if "old" in datafolder:
                     continue
 
-                print('Reading', datafolder, '\n')
+                logger.info(f"Reading {datafolder}\n")
                 step = datafolder.replace(self.write_dir + "/" + self.name, "")
                 yt_data = yt.load(datafolder)
                 grid_data = yt_data.covering_grid(
@@ -134,7 +134,7 @@ class ParticleDiagnostic(WarpXDiagnostic):
                 for species_name in self.plot_species:
                     for param in self.plot_data_list:
                         field = (species_name, param)
-                        print(f"This is field list: {yt_data.field_list}")
+                        logger.debug(f"This is field list: {yt_data.field_list}")
                         if field not in yt_data.field_list:
                             warnings.warn(f'{field} '
                                         'not found in yt_data field list')

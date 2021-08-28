@@ -15,6 +15,7 @@ import numpy as np
 
 constants = picmi.constants
 
+
 # yt seems to be causing this error when a dataset is loaded
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.parametrize("plot_on_diag_steps",

@@ -22,6 +22,7 @@ from functools import reduce
 
 logger = logging.getLogger(__name__)
 
+
 class SimInfo(object):
 
     """Store basic simulation parameters used throughout analysis.
@@ -234,8 +235,7 @@ class RunInfo(SimInfo):
         for cdict in [injector_dict, surface_dict]:
             for cname in list(cdict.keys()):
                 if cname not in self.component_list:
-                    print(("Adding non-standard component {} to runinfo "
-                           "data.").format(cname))
+                    logger.info(f"Adding non-standard component {cname} to runinfo data.")
                     self.component_list.append(cname)
 
         # Now create ordered dictionaries internally for ease-of-use.
@@ -301,9 +301,10 @@ class RunInfo(SimInfo):
                         voltage = shape.V(mwxrun.get_t())
                     else:
                         voltage = shape.V
-                    print(f'Saved shape {shape.name} of type {component} '
-                          f'with WF {shape.WF} eV and voltage {voltage:.2f} V '
-                          f'(at t = {mwxrun.get_t()*1e9:.2f} ns)'
+                    logger.info(
+                        f"Saved shape {shape.name} of type {component} "
+                        f"with WF {shape.WF} eV and voltage {voltage:.2f} V "
+                        f"(at t = {mwxrun.get_t()*1e9:.2f} ns)"
                     )
 
     def _save_sim_info(self):

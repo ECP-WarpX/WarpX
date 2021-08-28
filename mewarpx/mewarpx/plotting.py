@@ -2,9 +2,12 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 import copy
-import collections
+import logging
 from mewarpx.mwxrun import mwxrun
 from mewarpx.utils_store import util
+
+logger = logging.getLogger(__name__)
+
 
 class ArrayPlot(object):
 
@@ -342,7 +345,7 @@ class ArrayPlot(object):
 
         if self.template == 'barrier':
             barrier_index = np.amin(barrier_indices)
-            print('Anode barrier index = %.3f eV' % barrier_index)
+            logger.info(f"Anode barrier index = {barrier_index:.3f} eV")
             self.ax.plot(self.xaxisvec * 1e6,
                          barrier_index * np.ones_like(self.xaxisvec), '--k',
                          label='minimum barrier = %.3f eV' % barrier_index)

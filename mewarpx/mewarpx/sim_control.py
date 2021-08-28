@@ -1,7 +1,11 @@
 """ Control code used to terminate simulation based on
 a set of user defined criteria
 """
+import logging
+
 from mewarpx.mwxrun import mwxrun
+
+logger = logging.getLogger(__name__)
 
 
 class SimControl:
@@ -65,7 +69,7 @@ class SimControl:
 
     def eval_max_steps(self):
         if mwxrun.get_it() >= self.max_steps:
-            print('SimControl: Max steps reached!')
+            logger.info("SimControl: Max steps reached!")
             return False
         return True
 
@@ -81,6 +85,6 @@ class SimControl:
                 terminate_statement += add_statement
 
         if not all_good:
-            print(terminate_statement)
+            logger.info(terminate_statement)
 
         return all_good

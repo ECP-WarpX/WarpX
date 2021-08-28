@@ -1,10 +1,14 @@
 import numpy as np
 from scipy.sparse import csc_matrix, linalg as sla
 from functools import partial
+import logging
 
 from mewarpx.mwxrun import mwxrun
 from pywarpx import callbacks
 from pywarpx.picmi import Cartesian2DGrid, ElectrostaticSolver, constants
+
+logger = logging.getLogger(__name__)
+
 
 class PoissonSolverPseudo1D(ElectrostaticSolver):
 
@@ -74,7 +78,7 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
 
         self.decompose_matrix()
 
-        print('Using direct solver.')
+        logger.info("Using direct solver.")
         callbacks.installpoissonsolver(self._run_solve)
 
     def decompose_matrix(self):

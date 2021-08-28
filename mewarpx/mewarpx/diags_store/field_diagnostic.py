@@ -14,6 +14,10 @@ import os
 import yt
 import glob
 import warnings
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class FieldDiagnostic(WarpXDiagnostic):
     def __init__(self, diag_steps, diag_data_list, grid, name, write_dir,
@@ -144,7 +148,7 @@ class FieldDiagnostic(WarpXDiagnostic):
                 if "old" in datafolder:
                     continue
 
-                print('Reading ', datafolder, '\n')
+                logger.info(f"Reading {datafolder}\n")
                 ds = yt.load( datafolder )
 
                 grid_data = ds.covering_grid(

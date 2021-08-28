@@ -4,6 +4,7 @@ init_libwarpx is run!
 """
 import os
 import random
+import logging
 import pandas
 import numpy as np
 
@@ -11,8 +12,11 @@ from mewarpx.utils_store import util as mwxutil
 from mewarpx.mwxrun import mwxrun
 from mpi4py import MPI
 
+logger = logging.getLogger(__name__)
+
 test_dir = os.path.join(mwxutil.mewarpx_dir, "../tests/test_files")
 temp_dir = os.path.join(mwxutil.mewarpx_dir, "../tests/temp_files")
+
 
 def initialize_testingdir(name):
     """Change into an appropriate directory for testing. This means placing it
@@ -65,7 +69,7 @@ def change_to_warpxdir(wd):
     comm.Barrier()
 
     os.chdir(wd)
-    print(f"Change to working directory {os.getcwd()}", flush=True)
+    logger.info(f"Change to working directory {os.getcwd()}")
 
     comm.Barrier()
 
@@ -159,8 +163,10 @@ def test_df_vs_ref(testname, df, suffix=None, margin=0.1, tests_root_dir=None):
         return test_df_in_margin(testdf=df, refdf=refdf, margin=margin)
 
     else:
-        print(f"Record file {record_file} does not exist. Reference data "
-              f"frame not loaded.")
+        logger.warning(
+            f"Record file {record_file} does not exist. Reference data "
+            f"frame not loaded."
+        )
         return False
 
 
@@ -186,13 +192,13 @@ def test_df_in_margin(testdf, refdf, margin=0.1):
         testmax = testdf[column].max()
         if not testmin >= get_min_wmargin(refdf[column], margin=margin):
             equal = False
-            print(
+            logger.warning(
                 f"Column {column} with test min {testmin} is not within a "
                 f"{margin} margin of reference min {refdf[column].min()}"
             )
         if not testmax <= get_max_wmargin(refdf[column], margin=margin):
             equal = False
-            print(
+            logger.warning(
                 f"Column {column} with test max {testmax} is not within a "
                 f"{margin} margin of reference max {refdf[column].max()}"
             )

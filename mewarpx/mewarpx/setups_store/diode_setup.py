@@ -9,6 +9,11 @@ from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicm
 from mewarpx.diags_store import field_diagnostic, particle_diagnostic, flux_diagnostic
 from mewarpx.utils_store import util as mwxutil
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class DiodeRun_V1(object):
 
     """A combination of settings and initialization functions to standardize
@@ -259,7 +264,7 @@ class DiodeRun_V1(object):
             self.init_fluxdiag()
 
     def init_base(self):
-        print('### Init Diode Base Setup ###', flush=True)
+        logger.info("### Init Diode Base Setup ###")
         # Set grid boundaries
         if self.dim == 1:
             # Translational symmetry in x & y, 1D simulation in z. Note warp
@@ -302,7 +307,7 @@ class DiodeRun_V1(object):
             else:
                 self.NY = int(round(self.PERIOD/self.RES_LENGTH))
 
-        print(
+        logger.info(
             f"Creating grid with NX={self.NX}, NY={self.NY}, NZ={self.NZ} and "
             f"x, y, z limits of [[{xmin:.4g}, {xmax:.4g}], [{ymin:.4g}, "
             f"{ymax:.4g}], [{zmin:.4g}, {zmax:.4g}]]"
@@ -343,12 +348,17 @@ class DiodeRun_V1(object):
             CFL_factor=self.CFL_FACTOR,
         )
 
-        print('Setting up simulation with')
-        print(f'  dt = {self.DT:.3e} s')
-        print(f'  Total time = {self.TOTAL_TIMESTEPS * self.DT:.3e} '
-            f's ({self.TOTAL_TIMESTEPS} timesteps)')
-        print('  Diag time = {self.DIAG_STEPS * self.DT:.3e} s '
-            f'({self.DIAG_STEPS} timesteps)')
+        logger.info("Setting up simulation with")
+        logger.info(f"  dt = {self.DT:.3e} s")
+        logger.info(
+            f"  Total time = {self.TOTAL_TIMESTEPS * self.DT:.3e} "
+            f"s ({self.TOTAL_TIMESTEPS} timesteps)"
+        )
+        if self.DIAG_STEPS is not None:
+            logger.info(
+                f"  Diag time = {self.DIAG_STEPS * self.DT:.3e} s "
+                f"({self.DIAG_STEPS} timesteps)"
+            )
         #######################################################################
         # Run setup calculations and print diagnostic info                    #
         #######################################################################
@@ -381,13 +391,13 @@ class DiodeRun_V1(object):
         # )
 
     def init_electrons(self):
-        print('### Init Electrons ###', flush=True)
+        logger.info("### Init Electrons ###")
         self.electrons = mepicmi.Species(
             particle_type='electron', name='electrons'
         )
 
     def init_inert_gas(self):
-        print('### Init Inert Gas Ions ###', flush=True)
+        logger.info("### Init Inert Gas Ions ###")
         if self.INERT_GAS_TYPE not in ['He', 'Ar', 'Xe']:
             raise NotImplementedError(
                 f"Inert gas is not yet implemented in mewarpx with "
@@ -401,7 +411,7 @@ class DiodeRun_V1(object):
         )
 
     def init_solver(self):
-        print('### Init Diode Solver Setup ###', flush=True)
+        logger.info("### Init Diode Solver Setup ###")
         if self.dim == 1:
             raise NotImplementedError(
                 "1D solving is not yet implemented in mewarpx")
@@ -421,7 +431,7 @@ class DiodeRun_V1(object):
         self.solver.self_fields_verbosity = 2 if self.NONINTERAC else 0
 
     def init_conductors(self):
-        print('### Init Diode Conductors Setup ###', flush=True)
+        logger.info("### Init Diode Conductors Setup ###")
         self.cathode = assemblies.Cathode(
             V=self.V_CATHODE, T=self.CATHODE_TEMP, WF=self.CATHODE_PHI
         )
@@ -437,7 +447,7 @@ class DiodeRun_V1(object):
         mwxrun.grid.potential_zmax = self.anode.V
 
     def init_scraper(self):
-        print('### Init Diode Scraper Setup ###', flush=True)
+        logger.info("### Init Diode Scraper Setup ###")
         # we need to enable the particle buffer if a flux diagnostic is used
         # in order to access scraped particle data
         if hasattr(self, 'electrons'):
@@ -448,7 +458,7 @@ class DiodeRun_V1(object):
             self.ions.scrape_zmax = 1
 
     def init_injectors(self):
-        print('### Init Diode Injectors Setup ###', flush=True)
+        logger.info("### Init Diode Injectors Setup ###")
         if self.rz:
             self.emitter = emission.ZDiscEmitter(
                 conductor=self.cathode, T=self.CATHODE_TEMP,
@@ -496,7 +506,7 @@ class DiodeRun_V1(object):
             )
 
     def init_neutral_plasma(self):
-        print('### Init Neutral Seed Plasma Setup ###', flush=True)
+        logger.info("### Init Neutral Seed Plasma Setup ###")
 
         self.vol_emitter = emission.UniformDistributionVolumeEmitter(
             T=self.T_ELEC
@@ -508,7 +518,7 @@ class DiodeRun_V1(object):
         )
 
     def init_MCC(self):
-        print('### Init MCC Setup ###', flush=True)
+        logger.info("### Init MCC Setup ###")
         if not hasattr(self, "exclude_collisions"):
             self.exclude_collisions = None
 
@@ -523,20 +533,20 @@ class DiodeRun_V1(object):
     def init_reflection(self):
         raise NotImplementedError(
             "Diode reflection is not yet implemented in mewarpx")
-        print('### Init Diode Reflection Setup ###', flush=True)
+        logger.info("### Init Diode Reflection Setup ###")
 
     def init_merging(self):
         raise NotImplementedError(
             "Diode merging is not yet implemented in mewarpx")
-        print('### Init Diode Merging ###', flush=True)
+        logger.info("### Init Diode Merging ###")
 
     def init_traceparticles(self):
         raise NotImplementedError(
             "Diode TraceParticles is not yet implemented in mewarpx")
-        print('### Init Diode TraceParticles ###', flush=True)
+        logger.info("### Init Diode TraceParticles ###")
 
     def init_runinfo(self):
-        print('### Init Diode Runinfo Setup ###')
+        logger.info("### Init Diode Runinfo Setup ###")
 
         runvars = DiodeRun_V1.__dict__.copy()
         runvars.update(self.__dict__)
@@ -564,7 +574,7 @@ class DiodeRun_V1(object):
         self.runinfo.save()
 
     def init_fluxdiag(self):
-        print('### Init Diode FluxDiag ###')
+        logger.info("### Init Diode FluxDiag ###")
         self.fluxdiag = flux_diagnostic.FluxDiagnostic(
             diag_steps=self.DIAG_STEPS,
             write_dir="diags/fluxes",
@@ -574,7 +584,7 @@ class DiodeRun_V1(object):
         )
 
     def init_field_diag(self):
-        print('### Init Diode FieldDiag ###', flush=True)
+        logger.info("### Init Diode FieldDiag ###")
 
         self.field_diag = field_diagnostic.FieldDiagnostic(
             name='fields',
@@ -589,7 +599,7 @@ class DiodeRun_V1(object):
         )
 
     def init_particle_diag(self):
-        print('### Init Diode ParticleDiag', flush=True)
+        logger.info("### Init Diode ParticleDiag")
 
         self.particle_diag = particle_diagnostic.ParticleDiagnostic(
             name='particles',
@@ -602,14 +612,14 @@ class DiodeRun_V1(object):
         )
 
     def init_simcontrol(self):
-        print('### Init Diode SimControl ###', flush=True)
+        logger.info("### Init Diode SimControl ###")
         self.control = SimControl(max_steps=self.TOTAL_TIMESTEPS)
 
     def init_simulation(self):
-        print('### Init Simulation Setup ###', flush=True)
+        logger.info("### Init Simulation Setup ###")
         mwxrun.simulation.solver = self.solver
         mwxrun.simulation.max_steps = self.TOTAL_TIMESTEPS
 
     def init_warpx(self):
-        print('### Init Simulation Run ###', flush=True)
+        logger.info("### Init Simulation Run ###")
         mwxrun.init_run()

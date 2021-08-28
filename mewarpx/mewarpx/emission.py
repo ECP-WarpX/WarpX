@@ -240,9 +240,11 @@ class FixedNumberInjector(Injector):
             self.name = "fixed_injector_" + self.species.name
         self.unique_particles = unique_particles
 
-        print(f"Fixed injection of {self.npart_total} particles, "
-              f"weight {self.weight}, every {self.injectfreq}"
-              f"timesteps.")
+        logger.info(
+            f"Fixed injection of {self.npart_total} particles, "
+            f"weight {self.weight}, every {self.injectfreq}"
+            f"timesteps."
+        )
         callbacks.installparticleinjection(self.inject_particles)
 
         # add E_total PID to this species
@@ -268,7 +270,7 @@ class FixedNumberInjector(Injector):
                 randomdt=False, velhalfstep=False
             )
 
-            print(f"Inject {len(particles_dict['x'])} particles")
+            logger.info(f"Inject {len(particles_dict['x'])} particles")
 
             # Note some parts of WarpX call the variables ux and some parts vx,
             # and they're referred to as momenta. But I don't see anywhere
@@ -362,11 +364,15 @@ class ThermionicInjector(Injector):
         # Determine weight and injection numbers
         electrons_per_step = (mwxutil.J_RD(self.T, self.WF, self.A)
                               * area * dt / picmi.constants.q_e)
-        print(f"Setting up thermionic paticle injection. Area {area:.3g} m^2, "
-              f"dt {dt:.3e} s, J {mwxutil.J_RD(self.T, self.WF, self.A):.3g} "
-              "A/m^2.")
-        print(f"Emission current corresponds to injection of "
-              f"{electrons_per_step:.2e} electrons per timestep")
+        logger.info(
+            f"Setting up thermionic paticle injection. Area {area:.3g} m^2, "
+            f"dt {dt:.3e} s, J {mwxutil.J_RD(self.T, self.WF, self.A):.3g} "
+            "A/m^2."
+        )
+        logger.info(
+            "Emission current corresponds to injection of "
+            f"{electrons_per_step:.2e} electrons per timestep"
+        )
         max_injections = int(round(npart_per_cellstep *
                                    self.emitter.cell_count))
 
@@ -376,14 +382,18 @@ class ThermionicInjector(Injector):
             self.ptcl_per_step = electrons_per_step
             self.weight = self.wfac
             self.poisson = True
-            print("Using stochastic injection of electrons with "
-                  "Poisson sampling")
+            logger.info(
+                "Using stochastic injection of electrons with "
+                "Poisson sampling"
+            )
         else:
             self.ptcl_per_step = max_injections
             self.weight = self.wfac * electrons_per_step / self.ptcl_per_step
             self.poisson = False
-            print(f"Using deterministic injection of {self.ptcl_per_step} "
-                  f"particles per step, each with weight {self.weight}")
+            logger.info(
+                f"Using deterministic injection of {self.ptcl_per_step} "
+                f"particles per step, each with weight {self.weight}"
+            )
         callbacks.installparticleinjection(self.inject_particles)
 
         # add E_total PID to this species
@@ -511,8 +521,8 @@ class PlasmaInjector(Injector):
             )
         self.unique_particles = unique_particles
 
-        print(
-            f"Plasma injection {self.name}:\n  "
+        logger.info(
+            f"Plasma injection {self.name}: "
             f"{self.npart_per_species} particles each of {self.species1.name} "
             f"and {self.species2.name}, every {self.injectfreq} timesteps,"
         )
@@ -526,7 +536,7 @@ class PlasmaInjector(Injector):
                 "Using a surface emitter with the PlasmaInjector has not been "
                 "tested for accuracy."
             )
-            print(
+            logger.info(
                 f"  full weight {self.weight:.4g}, surface density "
                 f"{self.plasma_density:.4g} m^-2, area "
                 f"{self.emitter.area:.4g} m^2."
@@ -537,14 +547,14 @@ class PlasmaInjector(Injector):
                 self.emitter.volume * self.plasma_density
                 / self.npart_per_species
             )
-            print(
+            logger.info(
                 f"  full weight {self.weight:.4g}, volume density "
                 f"{self.plasma_density:.4g} m^-3, volume "
                 f"{self.emitter.volume:.4g} m^3."
             )
             debye_length = mwxutil.plasma_Debye_length(
                 self.emitter.T, self.plasma_density)
-            print(
+            logger.info(
                 f"  Corresponding plasma Debye length is {debye_length:.3e} m."
             )
 
@@ -614,7 +624,7 @@ class PlasmaInjector(Injector):
             for key in ['x', 'y', 'z', 'w']:
                 particles2_dict[key] = particles1_dict[key]
 
-            print(
+            logger.info(
                 f"Inject {len(particles1_dict['x'])} particles each of "
                 f"{self.species1.name} and {self.species2.name}."
             )
@@ -1045,11 +1055,11 @@ class ZPlaneEmitter(Emitter):
         x_range = self.bounds[1] - self.bounds[0]
         y_range = self.bounds[3] - self.bounds[2]
         if self.solver_geom == 'Z':
-            print("x/y span is 1m for purposes of charge injection")
+            logger.info("x/y span is 1m for purposes of charge injection")
             x_range = 1.
             y_range = 1.
         if self.solver_geom == 'XZ':
-            print("y span is 1m for purposes of charge injection")
+            logger.info("y span is 1m for purposes of charge injection")
             y_range = 1.
         self.area = x_range * y_range
 

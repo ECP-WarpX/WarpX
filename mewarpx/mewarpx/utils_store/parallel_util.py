@@ -3,6 +3,7 @@ import numpy as np
 
 comm_world = mpi.COMM_WORLD
 
+
 def mpiallreduce(data=None, opstring="SUM", comm=None):
     if opstring is None or opstring == "SUM":
         op = mpi.SUM

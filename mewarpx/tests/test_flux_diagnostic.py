@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas
 import re
+import logging
 
 from mewarpx.utils_store import util as mwxutil
 
@@ -145,7 +146,8 @@ def test_injector_flux_diagnostic():
     assert os.path.isfile("diags/fluxes/flux_plots_{:010d}.png".format(100))
 
 
-def test_flux_diag_accuracy(capsys):
+def test_flux_diag_accuracy(caplog):
+    caplog.set_level(logging.INFO)
     name = "FluxDiagRun"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from mewarpx.utils_store import testing_util
@@ -209,9 +211,11 @@ def test_flux_diag_accuracy(capsys):
 
     mwxrun.simulation.step(max_steps)
 
-    captured = capsys.readouterr()
-    outtext = captured[0]
-    print(outtext)
+    all_log_output = ""
+    records = caplog.records
+
+    for record in records:
+        all_log_output += record.msg + "\n"
 
     # Check expected print output
     # Match a pattern to allow for numbers to change
@@ -227,7 +231,7 @@ Total Current Net: -?0\.[01]\d* A/cm\^2
 Total Power Net: -[01]\.[019]\d* W/cm\^2 """
     ).replace("\n", " ")
 
-    match = re.search(pattern, outtext.replace("\n", " "))
+    match = re.search(pattern, all_log_output.replace("\n", " "))
 
     assert match is not None
 

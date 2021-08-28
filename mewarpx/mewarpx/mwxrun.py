@@ -23,11 +23,14 @@ SETUP order:
 """
 import ctypes
 import numpy as np
+import logging
 
 from pywarpx import _libwarpx, picmi
 from mewarpx.utils_store import mwxconstants as constants
 from mewarpx.utils_store import parallel_util
 from mewarpx.utils_store.util import compute_step
+
+logger = logging.getLogger(__name__)
 
 
 class MEWarpXRun(object):
@@ -316,7 +319,7 @@ class MEWarpXRun(object):
                 phi_ptr[0][:] = phi_data
             except ValueError as e:
                 if 'could not broadcast input array from shape' in str(e):
-                    print("Phi data must be the same shape as the phi multifab")
+                    logger.error("Phi data must be the same shape as the phi multifab")
                 raise
         _libwarpx.libwarpx.warpx_setPhiGridFP(self.lev)
 

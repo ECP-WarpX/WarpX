@@ -6,6 +6,7 @@ import os
 
 from mewarpx.utils_store import util as mwxutil
 
+
 def test_embedded_cylinder():
     name = "Embedded_cylinder_solve"
     dim = 2
