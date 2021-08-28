@@ -14,6 +14,7 @@ Contents:
    readme
    changelog
    mewarpx
+   unit_test
 
 
 Indices and tables
