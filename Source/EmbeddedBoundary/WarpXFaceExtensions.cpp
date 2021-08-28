@@ -398,7 +398,7 @@ WarpX::ComputeOneWayExtensions() {
         auto const &borrowing_x_size = borrowing_x.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_x_inds = borrowing_x.inds.data();
-        uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
+        FaceInfoBox::Neighbours* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         amrex::Real* borrowing_x_area = borrowing_x.area.data();
         int& vecs_size_x = borrowing_x.vecs_size;
 
@@ -493,7 +493,7 @@ WarpX::ComputeOneWayExtensions() {
         auto const &borrowing_y_size = borrowing_y.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_y_inds = borrowing_y.inds.data();
-        uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
+        FaceInfoBox::Neighbours* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         amrex::Real* borrowing_y_area = borrowing_y.area.data();
         int& vecs_size_y = borrowing_y.vecs_size;
 
@@ -588,7 +588,7 @@ WarpX::ComputeOneWayExtensions() {
         auto const &borrowing_z_size = borrowing_z.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_z_inds = borrowing_z.inds.data();
-        uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
+        FaceInfoBox::Neighbours* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         amrex::Real* borrowing_z_area = borrowing_z.area.data();
         int& vecs_size_z = borrowing_z.vecs_size;
 
@@ -692,7 +692,7 @@ WarpX::ComputeEightWaysExtensions() {
         auto const &borrowing_x_size = borrowing_x.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_x_inds = borrowing_x.inds.data();
-        uint8_t* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
+        FaceInfoBox::Neighbours* borrowing_x_neigh_faces = borrowing_x.neigh_faces.data();
         amrex::Real* borrowing_x_area = borrowing_x.area.data();
         int& vecs_size_x = borrowing_x.vecs_size;
 
@@ -828,7 +828,7 @@ WarpX::ComputeEightWaysExtensions() {
         auto const &borrowing_y_size = borrowing_y.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_y_inds = borrowing_y.inds.data();
-        uint8_t* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
+        FaceInfoBox::Neighbours* borrowing_y_neigh_faces = borrowing_y.neigh_faces.data();
         amrex::Real* borrowing_y_area = borrowing_y.area.data();
         int& vecs_size_y = borrowing_y.vecs_size;
 
@@ -964,7 +964,7 @@ WarpX::ComputeEightWaysExtensions() {
         auto const &borrowing_z_size = borrowing_z.size.array();
         amrex::Long ncells = box.numPts();
         int* borrowing_z_inds = borrowing_z.inds.data();
-        uint8_t* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
+        FaceInfoBox::Neighbours* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
         amrex::Real* borrowing_z_area = borrowing_z.area.data();
         int& vecs_size_z = borrowing_z.vecs_size;
 
