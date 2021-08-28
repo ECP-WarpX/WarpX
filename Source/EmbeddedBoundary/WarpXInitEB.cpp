@@ -118,7 +118,8 @@ WarpX::ComputeEdgeLengths () {
     auto const &edge_centroid = eb_fact.getEdgeCent();
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
-            amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
+            const amrex::Box& box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_edge_lengths[maxLevel()][idim]->nGrowVect() );
             amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
@@ -164,7 +165,8 @@ WarpX::ComputeFaceAreas () {
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
             amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
@@ -200,7 +202,8 @@ WarpX::ScaleEdges () {
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            amrex::Box const &box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect());
+            const amrex::Box& box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_edge_lengths[maxLevel()][idim]->nGrowVect() );
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
@@ -224,7 +227,8 @@ WarpX::ScaleAreas() {
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
             } else if (idim == 1) {
@@ -257,7 +261,9 @@ WarpX::MarkCells(){
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
-            amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            //amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
 
             auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
             auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
