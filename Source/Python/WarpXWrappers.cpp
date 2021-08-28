@@ -181,6 +181,10 @@ extern "C"
     {
         warpx_py_beforeEsolve = callback;
     }
+    void warpx_set_callback_py_poissonsolver (WARPX_CALLBACK_PY_FUNC_0 callback)
+    {
+        warpx_py_poissonsolver = callback;
+    }
     void warpx_set_callback_py_afterEsolve (WARPX_CALLBACK_PY_FUNC_0 callback)
     {
         warpx_py_afterEsolve = callback;

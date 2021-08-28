@@ -1159,6 +1159,8 @@ public:
     * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
     *        An edge of length 0 is fully covered.
     */
+
+public:
     void ComputeEdgeLengths ();
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
@@ -1213,9 +1215,8 @@ public:
     void ComputeEightWaysExtensions();
 
 
-    void ScrapeParticles ();
-
 private:
+    void ScrapeParticles ();
 
     void PushPSATD ();
 

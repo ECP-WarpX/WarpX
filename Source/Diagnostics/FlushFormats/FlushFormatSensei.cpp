@@ -1,3 +1,4 @@
+#include "Utils/WarpXProfilerWrapper.H"
 #include "FlushFormatSensei.H"
 
 #include "WarpX.H"
