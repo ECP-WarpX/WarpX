@@ -78,8 +78,8 @@ struct LorentzTransformParticles
         auto& attribs = a_pti.GetAttribs();
         m_wpnew = attribs[PIdx::w].dataPtr(); 
         m_uxpnew = attribs[PIdx::ux].dataPtr(); 
-        m_uypnew = attribs[PIdx::ux].dataPtr(); 
-        m_uzpnew = attribs[PIdx::ux].dataPtr(); 
+        m_uypnew = attribs[PIdx::uy].dataPtr();
+        m_uzpnew = attribs[PIdx::uz].dataPtr();
 
         const auto lev = a_pti.GetLevel();
         const auto index = a_pti.GetPairIndex();
@@ -106,7 +106,6 @@ struct LorentzTransformParticles
         // get current src position
         amrex::ParticleReal xpnew, ypnew, zpnew;
         m_get_position(i_src, xpnew, ypnew, zpnew);
-
         const amrex::Real gamma_new_p = std::sqrt(1.0_rt + m_inv_c2*
                                         ( m_uxpnew[i_src] * m_uxpnew[i_src]
                                         + m_uypnew[i_src] * m_uypnew[i_src]
@@ -136,8 +135,8 @@ struct LorentzTransformParticles
                                       + m_uxpnew[i_src] * weight_new;
         const amrex::ParticleReal uyp = m_uypold[i_src] * weight_old
                                       + m_uypnew[i_src] * weight_new;
-        const amrex::ParticleReal uzp = m_uzpold[i_src] * weight_old
-                                      + m_uzpnew[i_src] * weight_new;
+        const amrex::ParticleReal uzp = uz_old_p * weight_old
+                                      + uz_new_p * weight_new;
         dst.m_aos[i_dst].pos(0) = xp;
 #if (AMREX_SPACEDIM == 3)
         dst.m_aos[i_dst].pos(1) = yp;
