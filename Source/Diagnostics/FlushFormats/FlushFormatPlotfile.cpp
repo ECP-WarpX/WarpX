@@ -303,6 +303,12 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
         auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+        if (isBTD) {
+            PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+            tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
+            tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
+            tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
+        }
 
         Vector<std::string> real_names;
         Vector<std::string> int_names;
