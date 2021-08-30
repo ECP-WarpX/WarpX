@@ -213,7 +213,8 @@ guardCellManager::Init (
             ng_FieldSolver  = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee
+                   || maxwell_solver_id == MaxwellSolverAlgo::ECT) {
             ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();
