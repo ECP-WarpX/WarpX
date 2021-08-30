@@ -79,10 +79,9 @@ WarpX::ChargeDensityGridProcessing ()
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
-    // Reset rho, and all E and B fields to 0, before calculating space-charge fields
     if (reset_fields) {
+        // Reset all E and B fields to 0, before calculating space-charge fields
         for (int lev = 0; lev <= max_level; lev++) {
-            rho_fp[lev]->setVal(0.);
             for (int comp=0; comp<3; comp++) {
                 Efield_fp[lev][comp]->setVal(0);
                 Bfield_fp[lev][comp]->setVal(0);
@@ -91,20 +90,8 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     }
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
-
-        // Loop over particles to gather to total charge density
-        bool const local = true;
-        bool const reset = false;
-        bool const do_rz_volume_scaling = false;
-        for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-            WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-            species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
-        }
-        ChargeDensityGridProcessing();
         AddSpaceChargeFieldLabFrame();
-
     } else {
-
         // Loop over the species and add their space-charge contribution to E and B
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
@@ -128,7 +115,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
-        "Error: RZ electrostatic only implemented for a single mode");
+                                     "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
     // Allocate fields for charge and potential
@@ -174,6 +161,29 @@ WarpX::AddSpaceChargeFieldLabFrame ()
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
+    // reset rho_fp before depositing charge density for this step
+    for (int lev = 0; lev <= max_level; lev++) {
+        rho_fp[lev]->setVal(0.);
+    }
+
+    // Deposit particle charge density (source of Poisson solver)
+    bool const local = true;
+    bool const interpolate_across_levels = false;
+    bool const reset = false;
+    bool const do_rz_volume_scaling = false;
+    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
+        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+        species.DepositCharge(
+            rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
+        );
+    }
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+    }
+#endif
+    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
+
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
     std::array<Real, 3> beta = {0._rt};
@@ -183,7 +193,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
                      self_fields_max_iters, self_fields_verbosity );
 
-    // Compute the electric field. Note that if the an EB is used the electric
+    // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
 #ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
@@ -488,9 +498,9 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                     get_pointer_Efield_fp(lev, 2)
                     }}
             );
+            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
 #endif
             get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
-            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
             get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
         }
     }
@@ -498,7 +508,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 }
 #endif
 
-/* \bried Set Dirichlet boundary conditions for the electrostatic solver.
+/* \brief Set Dirichlet boundary conditions for the electrostatic solver.
 
     The given potential's values are fixed on the boundaries of the given
     dimension according to the desired values from the simulation input file,
@@ -566,7 +576,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
     }} // lev & MFIter
 }
 
-/* \bried Utility function to parse input file for boundary potentials.
+/* \brief Utility function to parse input file for boundary potentials.
 
     The input values are parsed to allow math expressions for the potentials
     that specify time dependence.
@@ -627,7 +637,7 @@ WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) cons
     pot_hi = parser_hi_exe(gett_new(0));
 }
 
-/* \bried Compute the electric field that corresponds to `phi`, and
+/* \brief Compute the electric field that corresponds to `phi`, and
           add it to the set of MultiFab `E`.
 
    The electric field is calculated by assuming that the source that
@@ -730,7 +740,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 }
 
 
-/* \bried Compute the magnetic field that corresponds to `phi`, and
+/* \brief Compute the magnetic field that corresponds to `phi`, and
           add it to the set of MultiFab `B`.
 
    The magnetic field is calculated by assuming that the source that

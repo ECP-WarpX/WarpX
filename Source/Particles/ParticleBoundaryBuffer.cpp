@@ -97,7 +97,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
                 int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
                 amrex::Print() << "Species " << getSpeciesNames()[i] << " has "
                                << np << " particles in the boundary buffer "
-                               << "for side " << iside << " of dim " << idim << "\n";
+                               << " for side " << iside << " of dim " << idim << "\n";
             }
         }
     }
@@ -221,7 +221,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         amrex::Real phi_value  = doGatherScalarFieldNodal(
                             xp, yp, zp, phiarr, dxi, plo
                         );
-
                         return phi_value < 0.0 ? 1 : 0;
                     },
                     CopyAndTimestamp{timestamp_index, timestep}, 0, dst_index);

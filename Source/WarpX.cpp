@@ -1510,7 +1510,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (deposit_charge)
     {
-        rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_fp"));
+        // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
+        const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+        rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_fp"));
 
         // Also allocate the MultiFab for the full rho grid
         // get the full domain
@@ -1696,7 +1698,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_cp[z]"));
 
         if (deposit_charge) {
-            rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("rho_cp"));
+            // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
+            const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+            rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_cp"));
         }
 
         if (do_dive_cleaning)
