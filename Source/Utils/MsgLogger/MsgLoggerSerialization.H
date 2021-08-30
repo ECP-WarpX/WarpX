@@ -140,7 +140,7 @@ namespace MsgLogger{
     }
 
     /**
-    * This function extract an std::vector<T> from a byte vector, at the position
+    * This function extracts an std::vector<T> from a byte vector, at the position
     * given by a std::vector<char> iterator. The iterator is then advanced according to
     * the number of bytes read from the byte vector. T must be either a trivially copyable type
     * or an std::string.
