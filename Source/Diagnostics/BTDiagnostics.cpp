@@ -196,11 +196,16 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 
 
 bool
-BTDiagnostics::DoComputeAndPack (int step, bool /*force_flush*/)
+BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
     // computed and packed every timstep, except at initialization when step == -1.
-    return (step>=0);
+    if (step < 0 ) {
+        return false;
+    } else {
+        if (force_flush) return false;
+    }
+    return true;
 }
 
 void
@@ -886,6 +891,16 @@ BTDiagnostics::PrepareParticleDataForOutput()
             {
                 // Check if the zslice is in domain
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
+                if (ZSliceInDomain) {
+                    for (int isp = 0; isp < m_particles_buffer[i_buffer].size(); ++isp) {
+                        amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
+                        buffer_ba.maxSize(m_max_box_size);
+                        amrex::DistributionMapping buffer_dmap(buffer_ba);
+                        m_particles_buffer[i_buffer][isp]->SetParticleBoxArray(lev, buffer_ba);
+                        m_particles_buffer[i_buffer][isp]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
+                        m_particles_buffer[i_buffer][isp]->SetParticleDistributionMap(lev, buffer_dmap);
+                    }
+                }
                 m_all_particle_functors[i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain, m_old_z_boost[i_buffer],
                                              m_current_z_boost[i_buffer], m_t_lab[i_buffer]);
