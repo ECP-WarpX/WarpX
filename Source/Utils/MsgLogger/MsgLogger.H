@@ -161,7 +161,7 @@ namespace MsgLogger{
     };
 
     /**
-    * \brief This implemets the < operator for Msg.
+    * \brief This implements the < operator for Msg.
     * Warning messages are first ordered by priority (warning: high < medium < low
     * to give precedence to higher priorities), then by topic (alphabetically),
     * and finally by text (alphabetically).
