@@ -122,8 +122,8 @@ void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
 
 std::string WarnManager::get_header(
     const std::string& when,
-    int line_size,
-    bool is_global) const
+    const int line_size,
+    const bool is_global) const
 {
     const std::string warn_header{"**** WARNINGS "};
 
