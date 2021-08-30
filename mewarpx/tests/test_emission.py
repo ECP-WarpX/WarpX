@@ -85,6 +85,84 @@ def test_thermionic_emission():
     assert np.allclose(net_rho_grid, ref_rho_grid)
 
 
+def test_thermionic_emission_with_Schottky():
+    name = "thermionicEmissionSchottky"
+    dim = 2
+
+    # Initialize and import only when we know dimension
+    mwxutil.init_libwarpx(ndim=dim, rz=False)
+    from mewarpx.utils_store import testing_util
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.mwxrun import mwxrun
+
+    import mewarpx.utils_store.mwxconstants as constants
+
+    # Include a random run number to allow parallel runs to not collide.  Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed, Use a random
+    # seed instead for initial dataframe generation.
+    # np.random.seed()
+    np.random.seed(47239475)
+
+    TOTAL_TIME = 1e-10 # s
+    DIAG_INTERVAL = 5e-10 # s
+    DT = 0.5e-12 # s
+
+    P_INERT = 1 # torr
+    T_INERT = 300 # K
+
+    D_CA = 5e-4 # m
+    VOLTAGE = 25 # V
+    CATHODE_TEMP = 1100 + 273.15 # K
+    CATHODE_PHI = 2.1 # work function in eV
+    NX = 8
+    NZ = 128
+
+    DIRECT_SOLVER = True
+
+    max_steps = int(TOTAL_TIME / DT)
+    diag_steps = int(DIAG_INTERVAL / DT)
+
+    run = diode_setup.DiodeRun_V1(
+        dim=dim,
+        CATHODE_TEMP=CATHODE_TEMP,
+        CATHODE_PHI=CATHODE_PHI,
+        USE_SCHOTTKY=True,
+        V_ANODE_CATHODE=VOLTAGE,
+        D_CA=D_CA,
+        P_INERT=P_INERT,
+        T_INERT=T_INERT,
+        NPPC=50,
+        NX=NX,
+        NZ=NZ,
+        DIRECT_SOLVER=DIRECT_SOLVER,
+        PERIOD=D_CA * NX / NZ,
+        DT=DT,
+        TOTAL_TIMESTEPS=max_steps,
+        DIAG_STEPS=diag_steps,
+        DIAG_INTERVAL=DIAG_INTERVAL
+    )
+    # Only the functions we change from defaults are listed here
+    run.setup_run(
+        init_conductors=True,
+        init_scraper=False,
+        init_warpx=True
+    )
+
+    mwxrun.simulation.step(max_steps)
+
+    net_rho_grid = np.array(mwxrun.get_gathered_rho_grid()[0][:, :, 0])
+    # np.save('thermionic_emission_Schottky.npy', net_rho_grid)
+    ref_path = os.path.join(testing_util.test_dir,
+                            "thermionic_emission",
+                            "thermionic_emission_Schottky.npy")
+    ref_rho_grid = np.load(ref_path)
+
+    assert np.allclose(net_rho_grid, ref_rho_grid)
+
+
 def test_circle_emitter():
     name = "circleEmitter"
     mwxutil.init_libwarpx(ndim=2, rz=False)
@@ -135,7 +213,7 @@ def test_circle_emitter():
     #####################################
 
     emitter = emission.ArbitraryEmitter2D(
-        conductor=cylinder, T=T_cylinder, use_Schottky=False, res_fac=10
+        conductor=cylinder, T=T_cylinder, res_fac=10
     )
 
     res_dict = emitter.get_newparticles(
@@ -187,7 +265,7 @@ def test_plasma_injector():
 
     surfaceemitter = emission.ZPlaneEmitter(
         conductor=run.cathode, T=run.CATHODE_TEMP, ymin=0.0, ymax=0.0,
-        transverse_fac=1.0, use_Schottky=False,
+        transverse_fac=1.0,
     )
     volemitter = emission.ZSinDistributionVolumeEmitter(
         T=1550, zmin=0, zmax=run.D_CA,

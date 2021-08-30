@@ -80,8 +80,9 @@ class MEWarpXRun(object):
             raise ValueError("init_grid must be called before init_timestep!")
 
         if DT is not None:
-            self.simulation.time_step_size = DT
-            return DT
+            self.dt = DT
+            self.simulation.time_step_size = self.dt
+            return self.dt
 
         if CFL_factor is None:
             raise ValueError("No CFL_factor passed into init_timestep when DT is not defined!")
@@ -95,10 +96,10 @@ class MEWarpXRun(object):
         if self.geom_str == 'XYZ':
             dt_local = min(self.dx, self.dy, self.dz) / vmax * CFL_factor
 
-        dt = parallel_util.mpiallreduce(data=dt_local, opstring="MIN")
-        self.simulation.time_step_size = dt
+        self.dt = parallel_util.mpiallreduce(data=dt_local, opstring="MIN")
+        self.simulation.time_step_size = self.dt
 
-        return dt
+        return self.dt
 
 
     def init_run(self):
@@ -240,7 +241,7 @@ class MEWarpXRun(object):
 
     def get_dt(self):
         """Return the timestep."""
-        return _libwarpx.libwarpx.warpx_getdt(self.lev)
+        return self.dt
 
     def get_t(self):
         """Return the simulation time."""
@@ -339,5 +340,32 @@ class MEWarpXRun(object):
             )
         else:
             return expr
+
+    def move_particles_between_species(self, src_species_name, dst_species_name):
+        """Function to move particles from one particle container to another.
+        Particles will be removed from the source particle container.
+
+        Arguments:
+            src_species_name (str): The source species name
+            dst_species_name (str): The destination species name
+        """
+        _libwarpx.libwarpx.warpx_moveParticlesBetweenSpecies(
+            ctypes.c_char_p(src_species_name.encode('utf-8')),
+            ctypes.c_char_p(dst_species_name.encode('utf-8')),
+            self.lev
+        )
+
+    def calc_Schottky_weight(self, species_name, pre_fac):
+        """Function to calculate weight for field-enhanced Schottky emission.
+
+        Arguments:
+            species_name (str): The name of the species for which Schottky
+                enhancement will be calculated.
+            pre_fac (float): Exponent pre-factor in the Schottky enhancement
+                calculation -> sqrt(e / 4*pi*eps0) / (kT)
+        """
+        _libwarpx.libwarpx.warpx_calcSchottkyWeight(
+            ctypes.c_char_p(species_name.encode('utf-8')), pre_fac, self.lev
+        )
 
 mwxrun = MEWarpXRun()

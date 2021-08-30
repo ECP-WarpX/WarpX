@@ -52,7 +52,8 @@ class Species(picmi.Species):
             )
         )
         self.pids_initialized = False
-        self.waiting_extra_pids = set()
+        # Only keys are used; ensures pids are both unique and ordered.
+        self.waiting_extra_pids = {}
 
     def init_pid_dict(self):
         """Function to build a list of all the extra particle attributes
@@ -69,7 +70,7 @@ class Species(picmi.Species):
         # as an extra pid by AddNParticles()
         self.npids = _libwarpx.get_nattr_species(self.name) - self.nattribs + 1
 
-        for pid in self.waiting_extra_pids:
+        for pid in self.waiting_extra_pids.keys():
             self.add_pid(pid)
         del self.waiting_extra_pids
 
@@ -83,7 +84,7 @@ class Species(picmi.Species):
             pid_name (str): Name of the new PID.
         """
         if not self.pids_initialized:
-            self.waiting_extra_pids.add(pid_name)
+            self.waiting_extra_pids[pid_name] = None
             return
 
         # check if PID already exists

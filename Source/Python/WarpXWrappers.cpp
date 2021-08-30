@@ -8,6 +8,7 @@
  */
 #include "BoundaryConditions/PML.H"
 #include "Initialization/WarpXAMReXInit.H"
+#include "Particles/Gather/ScalarFieldGather.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -654,5 +655,100 @@ extern "C"
         auto parser = makeParser(expr, {"t"});
         auto parser_exe = parser.compileHost<1>();
         return parser_exe(warpx.gett_new(lev));
+    }
+
+    void warpx_moveParticlesBetweenSpecies(const char* char_src_species_name,
+        const char* char_dst_species_name, const int lev)
+    {
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string src_species_name(char_src_species_name);
+        auto & src_spc = mypc.GetParticleContainerFromName(src_species_name);
+        const std::string dst_species_name(char_dst_species_name);
+        auto & dst_spc = mypc.GetParticleContainerFromName(dst_species_name);
+
+        for (WarpXParIter pti(src_spc, lev); pti.isValid(); ++pti) {
+            auto& src_tile = src_spc.ParticlesAt(lev, pti);
+            auto& dst_tile = dst_spc.ParticlesAt(lev, pti);
+
+            auto src_np = src_tile.numParticles();
+            auto dst_np = dst_tile.numParticles();
+
+            dst_tile.resize(dst_np + src_np);
+            amrex::copyParticles(dst_tile, src_tile, 0, dst_np, src_np);
+        }
+
+        // clear the source species
+        src_spc.clearParticles();
+    }
+
+    void warpx_calcSchottkyWeight(const char* char_species_name,
+        const amrex::ParticleReal pre_fac, const int lev)
+    {
+        // get the particle container for the species of interest
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+        const auto & particle_comps = myspc.getParticleComps();
+
+        const auto & plo = myspc.Geom(lev).ProbLoArray();
+        const auto & dxi = myspc.Geom(lev).InvCellSizeArray();
+
+        // get the electric field components
+        auto& Ex = WarpX::GetInstance().getEfield(lev, 0);
+        auto& Ey = WarpX::GetInstance().getEfield(lev, 1);
+        auto& Ez = WarpX::GetInstance().getEfield(lev, 2);
+
+        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti) {
+
+            // get the data on the grid
+            const auto Ex_arr = Ex[pti].array();
+            const auto Ey_arr = Ey[pti].array();
+            const auto Ez_arr = Ez[pti].array();
+
+            // get the particle data
+            const long np = pti.numParticles();
+            const auto getPosition = GetParticlePosition(pti);
+
+            auto& attribs = pti.GetAttribs();
+            amrex::ParticleReal* w = attribs[PIdx::w].dataPtr();
+            amrex::ParticleReal* norm_x = pti.GetAttribs(particle_comps.at("norm_x")).dataPtr();
+            amrex::ParticleReal* norm_y = pti.GetAttribs(particle_comps.at("norm_y")).dataPtr();
+            amrex::ParticleReal* norm_z = pti.GetAttribs(particle_comps.at("norm_z")).dataPtr();
+
+            // TODO change this function to instead take as argument the
+            // boundary from which injection is done and get the normal
+            // from `interp_normal` (in DistanceToEB.H) or as a hard coded
+            // vector for domain boundaries
+
+            amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+            {
+                // get the particle position
+                amrex::ParticleReal xp, yp, zp;
+                getPosition(ip, xp, yp, zp);
+
+                // get the weight of each neigbouring node to use
+                // during interpolation
+                int i, j, k;
+                amrex::Real W[AMREX_SPACEDIM][2];
+                compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
+
+                // interpolate the electric field to the particle position
+                amrex::Real Ex_p = interp_field_nodal(i, j, k, W, Ex_arr);
+                amrex::Real Ey_p = interp_field_nodal(i, j, k, W, Ey_arr);
+                amrex::Real Ez_p = interp_field_nodal(i, j, k, W, Ez_arr);
+
+                // calculate the dot product of the electric field with the
+                // normal vector tied to the particle
+                amrex::Real normal_field = (
+                    Ex_p * norm_x[ip] + Ey_p * norm_y[ip] + Ez_p * norm_z[ip]
+                );
+
+                // increase the particle weight by the Schottky enhancement
+                // factor if needed
+                w[ip] *= ((normal_field < 0.0) ?
+                    std::exp(pre_fac * std::sqrt(-normal_field)) : 1.0
+                );
+            });
+        }
     }
 }

@@ -246,6 +246,7 @@ libwarpx.warpx_setistep.argtypes = [ctypes.c_int, ctypes.c_int]
 libwarpx.warpx_gett_new.argtypes = [ctypes.c_int]
 libwarpx.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
 libwarpx.warpx_getdt.argtypes = [ctypes.c_int]
+libwarpx.warpx_calcSchottkyWeight.argtypes = [ctypes.c_char_p, c_real, ctypes.c_int]
 
 def get_nattr():
     '''

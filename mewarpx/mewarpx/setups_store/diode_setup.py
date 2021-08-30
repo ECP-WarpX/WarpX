@@ -254,10 +254,10 @@ class DiodeRun_V1(object):
             self.init_field_diag()
         if init_particle_diag:
             self.init_particle_diag()
-        if init_warpx:
-            self.init_warpx()
         if init_injectors:
             self.init_injectors()
+        if init_warpx:
+            self.init_warpx()
         if init_runinfo:
             self.init_runinfo()
         if init_fluxdiag:
@@ -462,23 +462,20 @@ class DiodeRun_V1(object):
         if self.rz:
             self.emitter = emission.ZDiscEmitter(
                 conductor=self.cathode, T=self.CATHODE_TEMP,
-                transverse_fac=self.TRANSVERSE_FAC,
-                use_Schottky=self.USE_SCHOTTKY,
+                transverse_fac=self.TRANSVERSE_FAC
             )
         elif self.dim < 3:
             self.emitter = emission.ZPlaneEmitter(
                 conductor=self.cathode,
                 T=self.CATHODE_TEMP,
                 ymin=0.0, ymax=0.0,
-                transverse_fac=self.TRANSVERSE_FAC,
-                use_Schottky=self.USE_SCHOTTKY,
+                transverse_fac=self.TRANSVERSE_FAC
             )
         else:
             self.emitter = emission.ZPlaneEmitter(
                 conductor=self.cathode,
                 T=self.CATHODE_TEMP,
-                transverse_fac=self.TRANSVERSE_FAC,
-                use_Schottky=self.USE_SCHOTTKY,
+                transverse_fac=self.TRANSVERSE_FAC
             )
 
         if self.NONINTERAC:
@@ -502,7 +499,7 @@ class DiodeRun_V1(object):
 
             self.injector = emission.ThermionicInjector(
                 self.emitter, self.electrons, npart, self.CATHODE_TEMP,
-                self.CATHODE_PHI, self.CATHODE_A
+                self.CATHODE_PHI, self.CATHODE_A, self.USE_SCHOTTKY
             )
 
     def init_neutral_plasma(self):

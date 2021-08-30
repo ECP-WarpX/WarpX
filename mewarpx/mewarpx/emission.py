@@ -19,6 +19,7 @@ import mewarpx.utils_store.util as mwxutil
 from mewarpx.mwxrun import mwxrun
 import mewarpx.utils_store.mwxconstants as constants
 from mewarpx.utils_store import appendablearray, parallel_util
+from mewarpx import mepicmi
 
 # Get module-level logger
 logger = logging.getLogger(__name__)
@@ -302,7 +303,7 @@ class ThermionicInjector(Injector):
     """Performs standard every-timestep injection from a thermionic cathode."""
 
     def __init__(self, emitter, species, npart_per_cellstep, T,
-                 WF, A=constants.A0*1e4,
+                 WF, A=constants.A0*1e4, use_Schottky=True,
                  allow_poisson=False, wfac=1.0,
                  name=None, profile_decorator=None,
                  unique_particles=True):
@@ -319,6 +320,9 @@ class ThermionicInjector(Injector):
             WF (float): Cathode work function (eV)
             A (float): Coefficient of emission in Amp/m^2/K^2. Default is
                 the theoretical max, approximately 1.2e6.
+            use_Schottky (bool): Flag specifying whether or not to augment the
+                emission current via field-dependent particle weights.
+                Defaults to True.
             allow_poisson (bool): If True and < npart_per_cellstep electrons
                 would be injected per cell, inject whole electrons with a
                 Poisson distribution. If False, inject fractions of electrons.
@@ -336,12 +340,21 @@ class ThermionicInjector(Injector):
                 given it from every processor (True) or keep only a fraction of
                 particles based on processor count (False). Default True.
         """
+        # sanity check species
+        if species.particle_type != 'electron':
+            raise AttributeError(
+                "Thermionic emission is only applicable with electrons as the "
+                f"injection species, but species type {species.particle_type} "
+                "was given."
+            )
+
         # Save class parameters
         self.emitter = emitter
         self.species = species
         self.T = T
         self.WF = WF
         self.A = A
+        self.use_Schottky = use_Schottky
         self.wfac = wfac
 
         if profile_decorator is not None:
@@ -394,10 +407,33 @@ class ThermionicInjector(Injector):
                 f"Using deterministic injection of {self.ptcl_per_step} "
                 f"particles per step, each with weight {self.weight}"
             )
+
+        # create new species that will be used to properly distribute new
+        # particles and retrieve the electric field at their injection sites in
+        # order to calculate Schottky enhancement
+        if self.use_Schottky:
+            self.injection_species = mepicmi.Species(
+                particle_type='electron', name=self.species.name+'_injection'
+            )
+        else:
+            self.injection_species = self.species
+
         callbacks.installparticleinjection(self.inject_particles)
 
         # add E_total PID to this species
         self.species.add_pid("E_total")
+        self.injection_species.add_pid("E_total")
+
+        if self.use_Schottky:
+            # add PIDs to hold the normal vector
+            # TODO work out a better way to handle these PIDs since this is not
+            # a great use of memory
+            self.species.add_pid("norm_x")
+            self.species.add_pid("norm_y")
+            self.species.add_pid("norm_z")
+            self.injection_species.add_pid("norm_x")
+            self.injection_species.add_pid("norm_y")
+            self.injection_species.add_pid("norm_z")
 
     def inject_particles(self):
         """Perform the actual injection!"""
@@ -419,28 +455,83 @@ class ThermionicInjector(Injector):
             randomdt=False, velhalfstep=False
         )
 
+        extra_pids = {}
+        extra_pids['E_total'] = particles_dict['E_total']
+        extra_pids['w'] = particles_dict['w']
+        if self.use_Schottky:
+            # Determine the local surface normal for each particle
+            normal_vectors = self.emitter.get_normals(
+                particles_dict['x'], particles_dict['y'], particles_dict['z']
+            )
+            extra_pids['norm_x'] = normal_vectors[:, 0]
+            extra_pids['norm_y'] = normal_vectors[:, 1]
+            extra_pids['norm_z'] = normal_vectors[:, 2]
+
         # Note some parts of WarpX call the variables ux and some parts vx,
         # and they're referred to as momenta. But I don't see anywhere
         # they're actually used as momenta including the particle mass -
         # the actual update is in Source/Particles/Pusher/UpdatePosition.H
         _libwarpx.add_particles(
-            self.species.name,
+            self.injection_species.name,
             x=particles_dict['x'],
             y=particles_dict['y'],
             z=particles_dict['z'],
             ux=particles_dict['vx'],
             uy=particles_dict['vy'],
             uz=particles_dict['vz'],
-            w=particles_dict['w'],
-            E_total=particles_dict['E_total'],
-            unique_particles=self.unique_particles
+            unique_particles=self.unique_particles,
+            **extra_pids
         )
+
+        if self.use_Schottky:
+            # Up-weight the particles by the local Schottky factor, calculated
+            # as exp[sqrt(e / 4*pi*eps0) / (kT) * sqrt(max(-E, 0))]
+            pre_fac = (
+                np.sqrt(constants.e / (4.0 * np.pi * constants.epsilon_0))
+                / (constants.kb_eV * self.emitter.T)
+            )
+            mwxrun.calc_Schottky_weight(
+                self.injection_species.name, pre_fac
+            )
+
+            # get the total injected weight and energy
+            total_weight = 0.
+            total_energy = 0.
+            npart = 0
+            weight_arrays = _libwarpx.get_particle_arrays(
+                self.injection_species.name, 'w', 0
+            )
+            ux_arrays = _libwarpx.get_particle_arrays(
+                self.injection_species.name, 'ux', 0
+            )
+            uy_arrays = _libwarpx.get_particle_arrays(
+                self.injection_species.name, 'uy', 0
+            )
+            uz_arrays = _libwarpx.get_particle_arrays(
+                self.injection_species.name, 'uz', 0
+            )
+            for ii, w in enumerate(weight_arrays):
+                npart += len(w)
+                total_weight += np.sum(w)
+                total_energy += np.sum(self.emitter._get_E_total(
+                    ux_arrays[ii], uy_arrays[ii], uz_arrays[ii],
+                    constants.e, constants.m_e, w
+                ))
+
+            # Move particles from temporary container to "real" container
+            mwxrun.move_particles_between_species(
+                self.injection_species.name, self.species.name
+            )
+        else:
+            total_weight = np.sum(particles_dict['w'])
+            total_energy = np.sum(particles_dict['E_total'])
 
         if self.injector_diag is not None:
             self.record_injectedparticles(
                 species=self.species,
-                w=particles_dict['w'],
-                E_total=particles_dict['E_total']
+                w=total_weight,
+                E_total=total_energy,
+                n=npart
             )
 
 
@@ -688,8 +779,6 @@ class BaseEmitter(object):
     # Stores a list of functions that are used to adjust variable particle
     # weights.
     _wfnlist = None
-    # Overridden only for surface injectors that use Schottky corrections
-    use_Schottky = False
     # Needs to be overridden to specify acceptable geometries
     geoms = []
 
@@ -828,14 +917,6 @@ class BaseEmitter(object):
             for wfn in self._wfnlist:
                 particle_dict['w'] = wfn(particle_dict)
 
-        if self.use_Schottky:
-            raise RuntimeError(
-                "Error: Schottky enhancement not currently implemented!")
-
-        # if (self.use_Schottky and abs(q + e)/e < 1e-6
-        #         and abs(m - m_e)/m_e < 1e-6):
-        #     particle_dict['w'] = self.apply_Schottky_weights(particle_dict)
-
         particle_dict['E_total'] = self._get_E_total(
             vx=particle_dict['vx'],
             vy=particle_dict['vy'],
@@ -914,8 +995,7 @@ class Emitter(BaseEmitter):
     cell_count = None
     geoms = []
 
-    def __init__(self, T, conductor=None, use_Schottky=True,
-                 emission_type='thermionic'):
+    def __init__(self, T, conductor=None, emission_type='thermionic'):
         """Default initialization for all Emitter objects.
 
         Arguments:
@@ -925,12 +1005,10 @@ class Emitter(BaseEmitter):
                 to, used for recording initial voltages and energies. If None,
                 V_e is set to 0. Since there's no current use case for this, a
                 warning is printed.
-            use_Schottky (bool): Flag specifying whether or not to augment the
-                Emitter's emission current via field-dependent particle
-                weights.  Defaults to True.
             emission_type (str): Distribution function type used to sample
                 velocities of the emitted particles. Must be defined in
-                :func:`mewarpx.utils_store.util.get_velocities`. Defaults to 'thermionic'.
+                :func:`mewarpx.utils_store.util.get_velocities`. Defaults to
+                'thermionic'.
         """
         super(Emitter, self).__init__()
         self.T = T
@@ -943,12 +1021,7 @@ class Emitter(BaseEmitter):
             warnings.warn("No conductor set for emitter. Power will not be "
                           "correct.")
 
-        self.use_Schottky = use_Schottky
         self.emission_type = emission_type
-
-        if self.use_Schottky:
-            raise NotImplementedError("Schottky enhancement not implemented"
-                                      " in WarpX yet.")
 
     def getvoltage(self):
         if self.conductor is None:
@@ -963,26 +1036,6 @@ class Emitter(BaseEmitter):
 
         return self.conductor.getvoltage() + self.conductor.WF
 
-    def apply_Schottky_weights(self, particle_dict):
-        """Variable weight function for field-enhanced Schottky emission.
-
-        Notes:
-            This function requires the "T" attribute of the Emitter to be set
-            for specifying the emitter temperature in Kelvin, and also requires
-            the Emitter subclass to implement a get_normals() function.
-
-        Arguments:
-            particle_dict (dict): Particle dictionary returned by
-                get_newparticles() during standard thermionic injection. Any
-                existing variable weights in the dictionary should be
-                normalized to match the total zero-field saturation current of
-                the Emitter without any Schottky enhancement.
-
-        Returns:
-            new_weights (np.ndarray): 1D array of updated particle weights.
-        """
-        raise NotImplementedError
-
     def get_normals(self, x, y, z):
         """Calculate local surface normal at specified coordinates.
 
@@ -995,8 +1048,8 @@ class Emitter(BaseEmitter):
             normals (np.ndarray): nx3 array containing the outward surface
                 normal vector at each particle location.
         """
-        raise NotImplementedError('Normal calculations must be implemented by'
-                                  + ' Emitter sub-classes.')
+        raise NotImplementedError("Normal calculations must be implemented by "
+                                  "Emitter sub-classes.")
 
 
 class ZPlaneEmitter(Emitter):
@@ -1030,8 +1083,7 @@ class ZPlaneEmitter(Emitter):
                 this factor. Default 1. See
                 :func:`mewarpx.utils_store.util.get_velocities` for details.
             kwargs (dict): Any other keyword arguments supported by the parent
-                Emitter constructor (such as "use_Schottky" or
-                "emission_type").
+                Emitter constructor (such as "emission_type").
         """
         # Default initialization
         if T is None:
@@ -1138,8 +1190,7 @@ class ArbitraryEmitter2D(Emitter):
                 this factor. Default 1. See
                 :func:`mewarpx.utils_store.util.get_velocities` for details.
             kwargs (dict): Any other keyword arguments supported by the parent
-                Emitter constructor (such as "use_Schottky" or
-                "emission_type").
+                Emitter constructor (such as "emission_type").
         """
         # Default Emitter initialization.
         super(ArbitraryEmitter2D, self).__init__(

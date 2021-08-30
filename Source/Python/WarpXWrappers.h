@@ -146,6 +146,14 @@ extern "C" {
 
   amrex::Real eval_expression_t (const char* char_expr, int lev);
 
+  void warpx_moveParticlesBetweenSpecies(
+      const char* char_src_species_name, const char* char_dst_species_name,
+      const int lev);
+
+  void warpx_calcSchottkyWeight(
+      const char* char_species_name, const amrex::ParticleReal pre_fac,
+      const int lev);
+
 #ifdef __cplusplus
 }
 #endif

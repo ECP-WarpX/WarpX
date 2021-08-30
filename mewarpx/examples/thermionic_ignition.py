@@ -59,14 +59,17 @@ else:
     print(f' Total time = {TOTAL_TIME:3e} s ({max_steps} timesteps)')
 
 #####################################
-# grid and solver
+# grid, solver and timesteps
 #####################################
 
 mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz)
-mwxrun.grid.potential_zmin = 0.0
 mwxrun.grid.potential_zmax = V_bias
 
 solver = PoissonSolverPseudo1D(grid=mwxrun.grid)
+
+mwxrun.simulation.solver = solver
+mwxrun.init_timestep(V_bias, DT=DT)
+mwxrun.simulation.max_steps = max_steps
 
 #################################
 # physics components
@@ -101,16 +104,6 @@ field_diag = FieldDiagnostic(
     write_dir='diags/'
 )
 
-#################################
-# simulation setup
-################################
-
-mwxrun.simulation.solver = solver
-mwxrun.simulation.time_step_size = DT
-mwxrun.simulation.max_steps = max_steps
-
-mwxrun.init_run()
-
 ######################################
 # Add ME emission
 #####################################
@@ -121,12 +114,17 @@ CATHODE_A = 6e5
 cathode = assemblies.ZPlane(z=1e-10, zsign=-1, V=0, T=CATHODE_TEMP,
                             WF=CATHODE_PHI,
                             name='cathode')
-emitter = emission.ZPlaneEmitter(conductor=cathode, T=CATHODE_TEMP,
-                                 use_Schottky=False)
+emitter = emission.ZPlaneEmitter(conductor=cathode, T=CATHODE_TEMP)
 injector = emission.ThermionicInjector(emitter=emitter, species=electrons,
                                        npart_per_cellstep=50,
                                        T=CATHODE_TEMP, WF=CATHODE_PHI,
                                        A=CATHODE_A)
+
+#################################
+# simulation setup
+################################
+
+mwxrun.init_run()
 
 ####################################
 # Add ME diagnostic

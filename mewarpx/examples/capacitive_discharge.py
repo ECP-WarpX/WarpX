@@ -82,12 +82,21 @@ else:
 
 anode_voltage = f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)"
 
-##########################
-# declare the simulation grid
-##########################
+#####################################
+# grid, solver and timesteps
+#####################################
 
 mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz)
 mwxrun.grid.potential_zmax = anode_voltage
+
+# solver = picmi.ElectrostaticSolver(
+#    grid=mwxrun.grid, method='Multigrid', required_precision=1e-12
+# )
+solver = poisson_pseudo_1d.PoissonSolverPseudo1D(grid=mwxrun.grid)
+
+mwxrun.simulation.solver = solver
+mwxrun.init_timestep(None, DT=DT)
+mwxrun.simulation.max_steps = max_steps
 
 ##########################
 # declare species
@@ -119,15 +128,6 @@ mcc = mcc_wrapper.MCC(
 )
 
 ##########################
-# declare solver
-##########################
-
-# solver = picmi.ElectrostaticSolver(
-#    grid=mwxrun.grid, method='Multigrid', required_precision=1e-12
-# )
-solver = poisson_pseudo_1d.PoissonSolverPseudo1D(grid=mwxrun.grid)
-
-##########################
 # diagnostics
 ##########################
 
@@ -138,13 +138,6 @@ field_diag = FieldDiagnostic(
     name='diags',
     write_dir='diags/'
 )
-##########################
-# simulation setup
-##########################
-
-mwxrun.simulation.solver = solver
-mwxrun.simulation.time_step_size = DT
-mwxrun.simulation.max_steps = max_steps
 
 ##########################
 # WarpX and mewarpx initialization
