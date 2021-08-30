@@ -2376,8 +2376,10 @@ A single slice can have 0, 1 or 2 colons ``:``, just as `numpy slices <https://n
 Any value that is not given is set to default.
 Default is ``0`` for the start, ``std::numeric_limits<int>::max()`` for the stop and ``1`` for the
 period.
-For the 1 and 2 colon syntax, actually having the integers in the string is optional
+For the 1 and 2 colon syntax, actually having values in the string is optional
 (this means that ``::5``, ``100 ::10`` and ``100 :`` are all valid syntaxes).
+
+All values can be expressions that will be parsed in the same way as other integer input parameters.
 
 **Examples**
 
