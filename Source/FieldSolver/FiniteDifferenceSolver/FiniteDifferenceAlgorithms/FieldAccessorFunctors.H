@@ -36,7 +36,7 @@ struct FieldAccessorMacroscopic
      * \param[in] ncomp  index along fourth component of the Array4, containing field-data
                          to be returned after diving with zero-th component
                          of m_paramter.
-     * 
+     *
      * \return           m_field/m_paramter at (i,j,k,ncomp)
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
