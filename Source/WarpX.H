@@ -1143,15 +1143,15 @@ private:
 
     void InitEB ();
 
+public:
     void ComputeEdgeLengths ();
     void ComputeFaceAreas ();
     void ScaleEdges ();
     void ScaleAreas ();
     void ComputeDistanceToEB ();
 
-    void ScrapeParticles ();
-
 private:
+    void ScrapeParticles ();
 
     void PushPSATD ();
 
