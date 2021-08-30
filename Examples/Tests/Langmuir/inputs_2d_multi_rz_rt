@@ -1,5 +1,16 @@
+# Parameters for the plasma wave
+my_constants.max_step = 80
+my_constants.epsilon = 0.01
+my_constants.n0 = 2.e24  # electron density, #/m^3
+my_constants.wp = sqrt(n0*q_e**2/(epsilon0*m_e))  # plasma frequency
+my_constants.kp = wp/clight  # plasma wavenumber
+my_constants.k0 = 2.*pi/20.e-6  # longitudianl perturbation wavenumber
+my_constants.w0 = 5.e-6  # transverse perturbation length
+# Note: kp is calculated in SI for a density of 2e24
+# k0 is calculated so as to have 2 periods within the 40e-6 wide box.
+
 # Maximum number of time steps
-max_step = 80
+max_step = max_step
 
 # number of grid points
 amr.n_cell =   64  128
@@ -36,16 +47,6 @@ warpx.cfl = 1.0
 
 # Having this turned on makes for a more sensitive test
 warpx.do_dive_cleaning = 1
-
-# Parameters for the plasma wave
-my_constants.epsilon = 0.01
-my_constants.n0 = 2.e24  # electron density, #/m^3
-my_constants.wp = sqrt(n0*q_e**2/(epsilon0*m_e))  # plasma frequency
-my_constants.kp = wp/clight  # plasma wavenumber
-my_constants.k0 = 2.*pi/20.e-6  # longitudianl perturbation wavenumber
-my_constants.w0 = 5.e-6  # transverse perturbation length
-# Note: kp is calculated in SI for a density of 2e24
-# k0 is calculated so as to have 2 periods within the 40e-6 wide box.
 
 # Particles
 particles.species_names = electrons ions
@@ -85,25 +86,25 @@ ions.uz = 0.
 
 # Diagnostics
 diagnostics.diags_names = diag1 diag_parser_filter diag_uniform_filter diag_random_filter
-diag1.intervals = 40
+diag1.intervals = max_step/2
 diag1.diag_type = Full
 diag1.fields_to_plot = jx jz Ex Ez By
 
 ## diag_parser_filter is a diag used to test the particle filter function.
-diag_parser_filter.intervals = 80:80:
+diag_parser_filter.intervals = max_step:max_step:
 diag_parser_filter.diag_type = Full
 diag_parser_filter.species = electrons
 diag_parser_filter.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = "(uy-uz < 0) *
                                                                  (sqrt(x**2+y**2)<10e-6) * (z > 0)"
 
 ## diag_uniform_filter is a diag used to test the particle uniform filter.
-diag_uniform_filter.intervals = 80:80:
+diag_uniform_filter.intervals = max_step:max_step:
 diag_uniform_filter.diag_type = Full
 diag_uniform_filter.species = electrons
 diag_uniform_filter.electrons.uniform_stride = 3
 
 ## diag_random_filter is a diag used to test the particle random filter.
-diag_random_filter.intervals = 80:80:
+diag_random_filter.intervals = max_step:max_step:
 diag_random_filter.diag_type = Full
 diag_random_filter.species = electrons
 diag_random_filter.electrons.random_fraction = 0.66
