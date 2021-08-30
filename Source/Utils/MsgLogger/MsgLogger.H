@@ -199,7 +199,7 @@ namespace MsgLogger{
         void record_msg(Msg msg);
 
         /**
-        * \brief This function returns a vector cointaining the recorded messages
+        * \brief This function returns a vector containing the recorded messages
         *
         * @return a vector of the recorded messages
         */
