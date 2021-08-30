@@ -186,12 +186,12 @@ libwarpx.warpx_getChargeDensityCP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
 libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getGatheredChargeDensityFP.restype = _LP_LP_c_real
-libwarpx.warpx_getGatheredPhiFP.restype = _LP_LP_c_real
-libwarpx.warpx_getPointerFullPhiFP.restype = _LP_LP_c_real
 libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
+libwarpx.warpx_getGatheredChargeDensityFP.restype = _LP_LP_c_real
+libwarpx.warpx_getGatheredPhiFP.restype = _LP_LP_c_real
+libwarpx.warpx_getPointerFullPhiFP.restype = _LP_LP_c_real
 
 libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
@@ -862,6 +862,127 @@ def add_real_comp(species_name, pid_name, comm=True):
         ctypes.c_char_p(species_name.encode('utf-8')),
         ctypes.c_char_p(pid_name.encode('utf-8')), comm
     )
+
+
+def _get_boundary_number(boundary):
+    '''
+
+    Utility function to find the boundary number given a boundary name.
+
+    Parameters
+    ----------
+
+        boundary       : the boundary from which to get the scraped particle data.
+                         In the form x/y/z_hi/lo or eb.
+
+    Returns
+    -------
+
+    Integer index in the boundary scraper buffer for the given boundary.
+    '''
+    if geometry_dim == '3d':
+        dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
+    elif geometry_dim == '2d':
+        dimensions = {'x' : 0, 'z' : 1}
+    else:
+        raise NotImplementedError("RZ is not supported for particle scraping.")
+
+    if boundary != 'eb':
+        boundary_parts = boundary.split("_")
+        dim_num = dimensions[boundary_parts[0]]
+        if boundary_parts[1] == 'lo':
+            side = 0
+        elif boundary_parts[1] == 'hi':
+            side = 1
+        else:
+            raise RuntimeError(f'Unknown boundary specified: {boundary}')
+        boundary_num = 2 * dim_num + side
+    else:
+        boundary_num = 4 if geometry_dim == '2d' else 6
+
+    return boundary_num
+
+
+def get_particle_boundary_buffer_size(species_name, boundary):
+    '''
+
+    This returns the number of particles that have been scraped so far in the simulation
+    from the specified boundary and of the specified species.
+
+    Parameters
+    ----------
+
+        species_name   : return the number of scraped particles of this species
+        boundary       : the boundary from which to get the scraped particle data.
+                         In the form x/y/z_hi/lo
+
+    Returns
+    -------
+
+        The number of particles scraped so far from a boundary and of a species.
+
+    '''
+    return libwarpx.warpx_getParticleBoundaryBufferSize(
+        ctypes.c_char_p(species_name.encode('utf-8')),
+        _get_boundary_number(boundary)
+    )
+
+
+def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
+    '''
+
+    This returns a list of numpy arrays containing the particle array data
+    for a species that has been scraped by a specific simulation boundary.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        species_name   : the species name that the data will be returned for.
+        boundary       : the boundary from which to get the scraped particle data.
+                         In the form x/y/z_hi/lo or eb.
+        comp_name      : the component of the array data that will be returned.
+                         If "step_scraped" the special attribute holding the
+                         timestep at which a particle was scraped will be
+                         returned.
+        level          : Which AMR level to retrieve scraped particle data from.
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+    particles_per_tile = _LP_c_int()
+    num_tiles = ctypes.c_int(0)
+    if comp_name == 'step_scraped':
+        data = libwarpx.warpx_getParticleBoundaryBufferScrapedSteps(
+            ctypes.c_char_p(species_name.encode('utf-8')),
+            _get_boundary_number(boundary), level,
+            ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
+        )
+    else:
+        data = libwarpx.warpx_getParticleBoundaryBuffer(
+            ctypes.c_char_p(species_name.encode('utf-8')),
+            _get_boundary_number(boundary), level,
+            ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
+            ctypes.c_char_p(comp_name.encode('utf-8'))
+        )
+
+    particle_data = []
+    for i in range(num_tiles.value):
+        arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
+        try:
+            # This fails on some versions of numpy
+            arr.setflags(write=1)
+        except ValueError:
+            pass
+        particle_data.append(arr)
+
+    _libc.free(particles_per_tile)
+    _libc.free(data)
+    return particle_data
 
 
 def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
@@ -1784,6 +1905,7 @@ def get_mesh_charge_density_cp_lovects(level, include_ghosts=True):
 
     '''
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityCPLoVects)
+
 
 def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
     '''

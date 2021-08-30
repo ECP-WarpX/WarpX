@@ -451,11 +451,11 @@ class DiodeRun_V1(object):
         # we need to enable the particle buffer if a flux diagnostic is used
         # in order to access scraped particle data
         if hasattr(self, 'electrons'):
-            self.electrons.scrape_zmin = 1
-            self.electrons.scrape_zmax = 1
+            self.electrons.save_particles_at_zlo = 1
+            self.electrons.save_particles_at_zhi = 1
         if hasattr(self, 'ions'):
-            self.ions.scrape_zmin = 1
-            self.ions.scrape_zmax = 1
+            self.ions.save_particles_at_zlo = 1
+            self.ions.save_particles_at_zhi = 1
 
     def init_injectors(self):
         logger.info("### Init Diode Injectors Setup ###")
