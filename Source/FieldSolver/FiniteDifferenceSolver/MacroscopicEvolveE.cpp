@@ -103,9 +103,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     // properties from their respective staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
     amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
+    amrex::GpuArray<int, 3> const& mu_stag = macroscopic_properties->mu_IndexType;
     amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
+    amrex::GpuArray<int, 3> const& Bx_stag = macroscopic_properties->Bx_IndexType;
+    amrex::GpuArray<int, 3> const& By_stag = macroscopic_properties->By_IndexType;
+    amrex::GpuArray<int, 3> const& Bz_stag = macroscopic_properties->Bz_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
 
 
@@ -139,9 +143,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
 
-        FieldAccessorMacroscopic const Hx(Bx, mu_arr);
-        FieldAccessorMacroscopic const Hy(By, mu_arr);
-        FieldAccessorMacroscopic const Hz(Bz, mu_arr);
+        FieldAccessorMacroscopic const Hx(Bx, mu_arr, Bx_stag, mu_stag, macro_cr);
+        FieldAccessorMacroscopic const Hy(By, mu_arr, By_stag, mu_stag, macro_cr);
+        FieldAccessorMacroscopic const Hz(Bz, mu_arr, Bz_stag, mu_stag, macro_cr);
 
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());

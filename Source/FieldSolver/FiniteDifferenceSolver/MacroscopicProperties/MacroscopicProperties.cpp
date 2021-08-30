@@ -154,6 +154,10 @@ MacroscopicProperties::InitData ()
     IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
     IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
     IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
+    IntVect Bx_stag = warpx.getBfield_fp(0,0).ixType().toIntVect();
+    IntVect By_stag = warpx.getBfield_fp(0,1).ixType().toIntVect();
+    IntVect Bz_stag = warpx.getBfield_fp(0,2).ixType().toIntVect();
+
 
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         sigma_IndexType[idim]   = sigma_stag[idim];
@@ -162,6 +166,9 @@ MacroscopicProperties::InitData ()
         Ex_IndexType[idim]      = Ex_stag[idim];
         Ey_IndexType[idim]      = Ey_stag[idim];
         Ez_IndexType[idim]      = Ez_stag[idim];
+        Bx_IndexType[idim]      = Bx_stag[idim];
+        By_IndexType[idim]      = By_stag[idim];
+        Bz_IndexType[idim]      = Bz_stag[idim];
         macro_cr_ratio[idim]    = 1;
     }
 #if (AMREX_SPACEDIM==2)
@@ -171,6 +178,9 @@ MacroscopicProperties::InitData ()
         Ex_IndexType[2]      = 0;
         Ey_IndexType[2]      = 0;
         Ez_IndexType[2]      = 0;
+        Bx_IndexType[2]      = 0;
+        By_IndexType[2]      = 0;
+        Bz_IndexType[2]      = 0;
         macro_cr_ratio[2]    = 1;
 #endif
 
