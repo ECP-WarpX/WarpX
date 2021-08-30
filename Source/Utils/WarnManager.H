@@ -36,7 +36,6 @@ namespace Utils
 
         /**
         * \brief This function records a warning message.
-        * RecordWarning is thread safe: it can be used within OpenMP parallel loops.
         *
         * @param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
         * @param[in] text the text of the warning message
