@@ -88,7 +88,7 @@ enum class WarnPriority
     medium,
     /** High priority warning:
      * a very serious bug or performance issue
-     * almost certainly affect the simulation
+     * almost certainly affects the simulation
      */
     high
 };
