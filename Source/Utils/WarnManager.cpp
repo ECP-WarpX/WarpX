@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <sstream>
 
-using namespace Utils;
 using namespace Utils::MsgLogger;
 
 WarnManager::WarnManager(){
