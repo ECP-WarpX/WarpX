@@ -28,13 +28,15 @@ struct FieldAccessorMacroscopic
 
     /**
      * \brief return field value at (i,j,k,ncomp) scaled by (1/m_parameters(i,j,k,ncomp))
+     *        Note that if the m_parameter has a different staggering than the field, then the
+     *        value is first interpolated to the location of the field and then scaled.
      * \param[in] i      index along x of the Array4, m_field and m_parameter.
      * \param[in] j      index along y of the Array4, m_field and m_parameter.
      * \param[in] k      index along z of the Array4, m_field and m_parameter.
      * \param[in] ncomp  index along fourth component of the Array4, containing field-data
                          to be returned after diving with zero-th component
                          of m_paramter.
-     *
+     * 
      * \return           m_field/m_paramter at (i,j,k,ncomp)
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
