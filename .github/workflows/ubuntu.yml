@@ -43,7 +43,6 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
-        export WarpX_EB=ON
         export WarpX_MPI=ON
         export WarpX_OPENPMD=ON
         export WarpX_PSATD=ON
