@@ -304,6 +304,7 @@ public:
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
             const auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
                                                      p_n_pairs_in_each_cell, pair_offsets.data());
+            auto p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
@@ -335,7 +336,7 @@ public:
 
                     // Same but for the pairs
                     index_type const cell_start_pair = have_product_species?
-                                                             pair_offsets[i_cell] : 0;
+                                                           p_pair_offsets[i_cell] : 0;
 
                     // Do not collide if there is only one particle in the cell
                     if ( cell_stop_1 - cell_start_1 <= 1 ) return;
@@ -451,6 +452,7 @@ public:
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
             auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
                                                      p_n_pairs_in_each_cell, pair_offsets.data());
+            auto p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
@@ -483,7 +485,7 @@ public:
                     index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
                     // Same but for the pairs
                     index_type const cell_start_pair = have_product_species?
-                                                             pair_offsets[i_cell] : 0;
+                                                           p_pair_offsets[i_cell] : 0;
 
                     // ux from species1 can be accessed like this:
                     // ux_1[ indices_1[i] ], where i is between
