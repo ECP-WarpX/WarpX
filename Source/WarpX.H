@@ -98,6 +98,8 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
 
+    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
+
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
                          bool useparser = false, amrex::ParserExecutor<3> const& field_parser={});
