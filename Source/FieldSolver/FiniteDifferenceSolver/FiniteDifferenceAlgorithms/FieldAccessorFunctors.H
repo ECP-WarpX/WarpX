@@ -52,8 +52,11 @@ private:
     amrex::Array4<amrex::Real const> const m_field;
     /** Array4 of the macroscopic parameter used to divide m_field in the operator() */
     amrex::Array4<amrex::Real const> const m_parameter;
+    /**  Staggering of the field multifab, m_field */
     amrex::GpuArray<int,3> const m_field_stag;
+    /**  Staggering of the macroparameter multifab, m_parameter_stag */
     amrex::GpuArray<int,3> const m_parameter_stag;
+    /**  Coarsening ratio when interpolated macroparameter to location of field */
     amrex::GpuArray<int,3> const m_cr_ratio;
 };
 
