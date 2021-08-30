@@ -49,7 +49,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    module load boost/1.76.0
 
    # optional: for openPMD support
-   #module load adios2/2.7.1 # currently broken: OLCFHELP-3319
+   module load adios2/2.7.1
    module load hdf5/1.10.7
 
    # optional: for PSATD in RZ geometry support
