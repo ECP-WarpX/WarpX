@@ -237,7 +237,7 @@ namespace MsgLogger{
 #ifdef AMREX_USE_MPI
         /**
         * \brief This collective function finds the rank having the
-        * most messages and how many messages this ranks has. The
+        * most messages and how many messages this rank has. The
         * rank having the most messages is designated as "gather rank".
         *
         * @param[in] how_many_msgs the number of messages that the current rank has
