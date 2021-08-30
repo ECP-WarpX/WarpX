@@ -89,8 +89,8 @@ namespace Utils
         */
         std::string get_header(
             const std::string& when,
-            int line_size,
-            bool is_global) const;
+            const int line_size,
+            const bool is_global) const;
 
         /**
         * \brief This function generates a string for a single entry of the warning list
