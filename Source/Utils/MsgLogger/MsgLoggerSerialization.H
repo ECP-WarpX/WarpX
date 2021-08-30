@@ -152,7 +152,7 @@ namespace MsgLogger{
     template<typename T>
     inline std::vector<T> get_out_vec (std::vector<char>::const_iterator& it)
     {
-        static_assert(std::is_trivially_copyable<T>(),
+        static_assert(std::is_trivially_copyable<T>() || std::is_same<T,std::string>(),
             "Cannot extract non-trivally copyable types from char vectors,"
             " with the exception of std::string.");
 
