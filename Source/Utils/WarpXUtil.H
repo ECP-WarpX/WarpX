@@ -182,13 +182,25 @@ safeCastToInt(amrex::Real x, const std::string& real_name);
 */
 amrex::Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames);
 
-/**
- * \brief Parse a string and return either a real or an int
+/** Parse a string and return as a real
+ *
+ * In case the string cannot be interpreted as Real,
+ * this function ... <throws an exception? aborts with error message?>
  *
  * \param str The string to be parsed
- * \param name For integers, the name, to be used in error messages
+ * \return representation as real
  */
 amrex::Real parseStringtoReal(std::string str);
+
+/** Parse a string and return an int
+ *
+ * In case the string cannot be interpreted as Real,
+ * this function ... <throws an exception? aborts with error message?>
+  *
+ * \param str The string to be parsed
+ * \param name For integers, the name, to be used in error messages
+ * \return rounded closest integer
+ */
 int parseStringtoInt(std::string str, std::string name);
 
 template <int N>
