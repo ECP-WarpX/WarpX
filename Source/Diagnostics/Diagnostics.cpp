@@ -354,12 +354,12 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
-
-        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-            if ( !DoDump (step, i_buffer, force_flush) ) continue;
-            Flush(i_buffer);
-        }
-
     }
+
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        if ( !DoDump (step, i_buffer, force_flush) ) continue;
+        Flush(i_buffer);
+    }
+
 
 }
