@@ -322,7 +322,7 @@ Logger::compute_package_for_gather_rank(
             const auto pp = msgs_to_send.find(msg);
             if (pp != msgs_to_send.end()){
                 gather_rank_msg_counters[counter] += pp->second;
-                // Remove messages already seend by "gather rank" from
+                // Remove messages already seen by "gather rank" from
                 // the messages to send back
                 msgs_to_send.erase(msg);
             }
