@@ -229,4 +229,16 @@ class BTDMultiFabHeaderImpl
                   amrex::Vector<amrex::Real> src);
 };
 
+class BTDSpeciesHeaderImpl
+{
+public:
+    /** Constructor.
+     * \param[in] string containing path of Headerfile
+     */
+    BTDSpeciesHeaderImpl (std::string const& Headerfile_path, std::string const& species_name);
+    ~BTDSpeciesHeaderImpl () = default;
+    private:
+    std::string m_Header_path;
+    std::string m_species_name;
+};
 #endif

@@ -341,3 +341,10 @@ BTDMultiFabHeaderImpl::CopyVec(amrex::Vector<amrex::Real>& dst,
         dst[i] = src[i];
     }
 }
+
+
+BTDSpeciesHeaderImpl::BTDSpeciesHeaderImpl (std::string const & Headerfile_path, std::string const& species_name)
+    : m_Header_path(Headerfile_path), m_species_name(species_name)
+{
+
+}
