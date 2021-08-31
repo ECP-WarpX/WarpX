@@ -716,6 +716,16 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Create Level_0 directory to store all Cell_D and Cell_H files
             if (!amrex::UtilCreateDirectory(snapshot_Level0_path, 0755) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
+            // Create directory for each species selected for diagnostic
+            for (int i = 0; i < m_output_species_names.size(); ++i) {
+                std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
+                if ( !amrex::UtilCreateDirectory(snapshot_species_path, 0755))
+                    amrex::CreateDirectoryFailed(snapshot_species_path);
+                // Create Level_0 directory for particles to store Particle_H and DATA files
+                std::string species_Level0_path = snapshot_species_path + "/Level_0";
+                if ( !amrex::UtilCreateDirectory(species_Level0_path, 0755))
+                    amrex::CreateDirectoryFailed(species_Level0_path);
+            }
         }
 
         // Path of the buffer recently flushed
@@ -758,6 +768,27 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::rename(recent_Buffer_FabFilename.c_str(),
                         snapshot_FabFilename.c_str());
         }
+        for (int i = 0; i < m_output_species_names.size(); ++i) {            
+            std::string recent_species_prefix = recent_Buffer_filepath+"/"+m_output_species_names[i];
+            std::string recent_species_Header = recent_species_prefix + "/Header";
+            std::string recent_ParticleHdrFilename = recent_species_prefix + "/Level_0/Particle_H";
+            std::string recent_ParticleDataFilename = recent_species_prefix + "/Level_0/DATA_00000";
+            amrex::Print() << " recent species Hdr " << recent_species_Header << "\n";
+            // Path to snapshot particle files
+            std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
+            std::string snapshot_species_Level0path = snapshot_species_path + "/Level_0";
+            std::string snapshot_species_Header = snapshot_species_path + "/Header";
+            std::string snapshot_ParticleHdrFilename = snapshot_species_Level0path + "/Particle_H";
+            std::string snapshot_ParticleDataFilename = amrex::Concatenate(snapshot_species_Level0path + "/DATA_",m_buffer_flush_counter[i_snapshot],5);
+            amrex::Print() << " snapshot sp Hdr " << snapshot_species_Header << "\n";
+            if (m_buffer_flush_counter[i_snapshot] == 0) {
+                std::rename(recent_species_Header.c_str(), snapshot_species_Header.c_str());
+                amrex::Print() << " " << recent_ParticleHdrFilename << " " << snapshot_ParticleHdrFilename << "\n"; 
+                std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());
+                amrex::Print() << " " << recent_ParticleDataFilename << " " << snapshot_ParticleDataFilename << "\n"; 
+                std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());
+            }
+        }          
         // Destroying the recently flushed buffer directory since it is already merged.
         amrex::FileSystem::RemoveAll(recent_Buffer_filepath);
 
