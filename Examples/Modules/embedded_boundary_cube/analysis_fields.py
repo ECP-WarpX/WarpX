@@ -32,7 +32,13 @@ Lx = 1
 Ly = 1
 Lz = 1
 h_2 = (m * pi / Lx) ** 2 + (n * pi / Ly) ** 2 + (p * pi / Lz) ** 2
-t = 1.3342563807926085e-08
+
+# Open the right plot file
+filename = sys.argv[1]
+ds = yt.load(filename)
+data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+
+t = ds.current_time.to_value()
 
 # Compute the analytic solution
 Bx_th = np.zeros(ncells)
@@ -64,11 +70,6 @@ for i in range(ncells[0]):
                                    (-Ly/2 <= y < Ly/2) *
                                    (-Lz/2 <= z < Lz/2) *
                                    np.cos(np.sqrt(2) * np.pi / Lx * c * t))
-
-# Open the right plot file
-filename = sys.argv[1]
-ds = yt.load(filename)
-data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 
 rel_tol_err = 1e-1
 

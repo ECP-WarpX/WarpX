@@ -759,6 +759,27 @@ Particle initialization
     If `1` is given, this species will not be pushed
     by any pusher during the simulation.
 
+* ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
+    If `1` particles of this species will be copied to the scraped particle
+    buffer for the specified boundary if they leave the simulation domain in
+    the specified direction. **If USE_EB=TRUE** the ``save_particles_at_eb``
+    flag can be set to `1` to also save particle data for the particles of this
+    species that impact the embedded boundary.
+    The scraped particle buffer can be used to track particle fluxes out of the
+    simulation but is currently only accessible via the Python interface. The
+    ``pywarpx._libwarpx`` function ``get_particle_boundary_buffer()`` can be
+    used to access the scraped particle buffer. An entry is included for every
+    particle in the buffer of the timestep at which the particle was scraped.
+    This can be accessed by passing the argument ``comp_name="step_scraped"`` to
+    the above mentioned function.
+
+    .. note::
+        Currently the scraped particle buffer relies on the user to access the
+        data in the buffer for processing and periodically clear the buffer. The
+        buffer will grow unbounded as particles are scraped and therefore could
+        lead to memory issues if not periodically cleared. To clear the buffer
+        call ``warpx_clearParticleBoundaryBuffer()``.
+
 * ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
     Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
     boosted frame, whether or not to plot back-transformed diagnostics for
@@ -1375,6 +1396,9 @@ Numerics and algorithms
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
      - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
+     - ``ect``: Enlarged cell technique (conformal finite difference solver. See Xiao and Liu,
+                IEEE Antennas and Propagation Society International Symposium (2005),
+                <https://ieeexplore.ieee.org/document/1551259>)
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
 
@@ -2376,8 +2400,10 @@ A single slice can have 0, 1 or 2 colons ``:``, just as `numpy slices <https://n
 Any value that is not given is set to default.
 Default is ``0`` for the start, ``std::numeric_limits<int>::max()`` for the stop and ``1`` for the
 period.
-For the 1 and 2 colon syntax, actually having the integers in the string is optional
+For the 1 and 2 colon syntax, actually having values in the string is optional
 (this means that ``::5``, ``100 ::10`` and ``100 :`` are all valid syntaxes).
+
+All values can be expressions that will be parsed in the same way as other integer input parameters.
 
 **Examples**
 

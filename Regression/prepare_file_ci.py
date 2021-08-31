@@ -6,8 +6,8 @@
 # License: BSD-3-Clause-LBNL
 
 # This script modifies `WarpX-test.ini` (which is used for nightly builds)
-# and creates the file `travis-test.ini` (which is used for continous
-# integration on TravisCI (https://travis-ci.org/)
+# and creates the file `ci-test.ini` (which is used for continous
+# integration)
 # The subtests that are selected are controlled by WARPX_TEST_DIM
 # The architecture (CPU/GPU) is selected by WARPX_TEST_ARCH
 import re
@@ -67,9 +67,10 @@ if ci_ccache:
     text = re.sub('addToCompileString =',
                   'addToCompileString = USE_CCACHE=TRUE ', text)
 
-# Add runtime option: crash for unused variables
+# Add runtime options: crash for unused variables; trap NaNs, divisions by zero, and overflows
 text = re.sub('runtime_params =',
-              'runtime_params = amrex.abort_on_unused_inputs=1 ',
+              'runtime_params = amrex.abort_on_unused_inputs=1 amrex.fpe_trap_invalid=1 ' +
+              'amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1',
               text)
 
 # Use less/more cores for compiling, e.g. public CI only provides 2 cores
@@ -149,5 +150,5 @@ if ci_eb:
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)
 
-with open('travis-tests.ini', 'w') as f:
+with open('ci-tests.ini', 'w') as f:
     f.write(text)

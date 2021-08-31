@@ -3,7 +3,7 @@
 Checksum regression tests
 =========================
 
-WarpX has checksum regression tests: as part of TravisCI testing, when running a given test, the checksum module computes one aggregated number per field (``Ex_checksum = np.sum(np.abs(Ex))``) and compares it to a reference (benchmark). This should be sensitive enough to make the test fail if your PR causes a significant difference, print meaningful error messages, and give you a chance to fix a bug or reset the benchmark if needed.
+WarpX has checksum regression tests: as part of CI testing, when running a given test, the checksum module computes one aggregated number per field (``Ex_checksum = np.sum(np.abs(Ex))``) and compares it to a reference (benchmark). This should be sensitive enough to make the test fail if your PR causes a significant difference, print meaningful error messages, and give you a chance to fix a bug or reset the benchmark if needed.
 
 The checksum module is located in ``Regression/Checksum/``, and the benchmarks are stored as human-readable `JSON <https://www.json.org/json-en.html>`__ files in ``Regression/Checksum/benchmarks_json/``, with one file per benchmark (for instance, test ``Langmuir_2d`` has a corresponding benchmark ``Regression/Checksum/benchmarks_json/Langmuir_2d.json``).
 

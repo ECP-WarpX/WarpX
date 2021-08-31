@@ -23,6 +23,7 @@ The install can be done using a decorator, which has the prefix "callfrom". See 
 Functions can be called at the following times:
  - afterinit <installafterinit>: immediately after the init is complete
  - beforeEsolve <installbeforeEsolve>: before the solve for E fields
+ - poissonsolver <installpoissonsolver>: In place of the computePhi call but only in an electrostatic simulation
  - afterEsolve <installafterEsolve>: after the solve for E fields
  - beforedeposition <installbeforedeposition>: before the particle deposition (for charge and/or current)
  - afterdeposition <installafterdeposition>: after particle deposition (for charge and/or current)
@@ -228,6 +229,7 @@ class CallbackFunctions(object):
 # --- Now create the actual instances.
 _afterinit = CallbackFunctions('afterinit')
 _beforeEsolve = CallbackFunctions('beforeEsolve')
+_poissonsolver = CallbackFunctions('poissonsolver')
 _afterEsolve = CallbackFunctions('afterEsolve')
 _beforedeposition = CallbackFunctions('beforedeposition')
 _afterdeposition = CallbackFunctions('afterdeposition')
@@ -246,6 +248,7 @@ _c_afterinit = _CALLBACK_FUNC_0(_afterinit)
 libwarpx.warpx_set_callback_py_afterinit(_c_afterinit)
 _c_beforeEsolve = _CALLBACK_FUNC_0(_beforeEsolve)
 libwarpx.warpx_set_callback_py_beforeEsolve(_c_beforeEsolve)
+_c_poissonsolver = _CALLBACK_FUNC_0(_poissonsolver)
 _c_afterEsolve = _CALLBACK_FUNC_0(_afterEsolve)
 libwarpx.warpx_set_callback_py_afterEsolve(_c_afterEsolve)
 _c_beforedeposition = _CALLBACK_FUNC_0(_beforedeposition)
@@ -275,7 +278,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
     - ff=None: If given, timings will be written to the file object instead of stdout
     """
     if ff is None: ff = sys.stdout
-    for c in [_afterinit,_beforeEsolve,_afterEsolve,
+    for c in [_afterinit,_beforeEsolve,_poissonsolver,_afterEsolve,
               _beforedeposition,_afterdeposition,
               _particlescraper,
               _particleloader,
@@ -329,6 +332,24 @@ def uninstallbeforeEsolve(f):
 def isinstalledbeforeEsolve(f):
     "Checks if the function is called before an E solve"
     return _beforeEsolve.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfrompoissonsolver(f):
+    installpoissonsolver(f)
+    return f
+def installpoissonsolver(f):
+    """Adds a function to solve Poisson's equation. Note that the C++ object
+    warpx_py_poissonsolver is declared as a nullptr but once the call to set it
+    to _c_poissonsolver below is executed it is no longer a nullptr, and therefore
+    if (warpx_py_poissonsolver) evaluates to True. For this reason a poissonsolver
+    cannot be uninstalled with the uninstallfuncinlist functionality at present."""
+    if _poissonsolver.hasfuncsinstalled():
+        raise RuntimeError('Only one field solver can be installed.')
+    libwarpx.warpx_set_callback_py_poissonsolver(_c_poissonsolver)
+    _poissonsolver.installfuncinlist(f)
+def isinstalledpoissonsolver(f):
+    """Checks if the function is called for a field solve"""
+    return _poissonsolver.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromafterEsolve(f):

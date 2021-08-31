@@ -9,6 +9,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Initialization/WarpXAMReXInit.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -180,6 +181,10 @@ extern "C"
     void warpx_set_callback_py_beforeEsolve (WARPX_CALLBACK_PY_FUNC_0 callback)
     {
         warpx_py_beforeEsolve = callback;
+    }
+    void warpx_set_callback_py_poissonsolver (WARPX_CALLBACK_PY_FUNC_0 callback)
+    {
+        warpx_py_poissonsolver = callback;
     }
     void warpx_set_callback_py_afterEsolve (WARPX_CALLBACK_PY_FUNC_0 callback)
     {
@@ -465,6 +470,72 @@ extern "C"
         myspc.AddRealComp(comp_name, comm);
 
         mypc.defineAllParticleTiles();
+    }
+
+    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary)
+    {
+        const std::string name(species_name);
+        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
+        return particle_buffers.getNumParticlesInContainer(species_name, boundary);
+    }
+
+    int** warpx_getParticleBoundaryBufferScrapedSteps(const char* species_name, int boundary, int lev,
+                     int* num_tiles, int** particles_per_tile)
+    {
+        const std::string name(species_name);
+        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
+        auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
+
+        const int comp = particle_buffer.NumIntComps() - 1;
+
+        int i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
+
+        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
+        *num_tiles = i;
+        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+
+        int** data = (int**) malloc(*num_tiles*sizeof(int*));
+        i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
+            auto& soa = pti.GetStructOfArrays();
+            data[i] = (int*) soa.GetIntData(comp).dataPtr();
+            (*particles_per_tile)[i] = pti.numParticles();
+        }
+
+        return data;
+    }
+
+    amrex::ParticleReal** warpx_getParticleBoundaryBuffer(const char* species_name, int boundary, int lev,
+                     int* num_tiles, int** particles_per_tile, const char* comp_name)
+    {
+        const std::string name(species_name);
+        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
+        auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
+
+        const int comp = warpx_getParticleCompIndex(species_name, comp_name);
+
+        int i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
+
+        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
+        *num_tiles = i;
+        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+
+        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(amrex::ParticleReal*));
+        i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
+            auto& soa = pti.GetStructOfArrays();
+            data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
+            (*particles_per_tile)[i] = pti.numParticles();
+        }
+
+        return data;
+    }
+
+    void warpx_clearParticleBoundaryBuffer () {
+        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
+        particle_buffers.clearParticles();
     }
 
     void warpx_ComputeDt () {
