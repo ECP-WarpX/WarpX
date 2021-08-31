@@ -41,6 +41,9 @@ Priority Utils::MsgLogger::StringToPriority(const std::string& priority_string)
     else
         amrex::Abort(
             "Priority string '" + priority_string + "' not recognized");
+
+    //this silences a "non-void function does not return a value in all control paths" warning
+    return Priority::low;
 }
 
 std::vector<char> Msg::serialize() const
