@@ -42,6 +42,7 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
    module load cmake
    module swap PrgEnv-nvidia PrgEnv-gnu
    module swap gcc gcc/9.3.0
+   module load cuda
 
    # newer CMake (3.22+) for HPE/Cray FindMPI.cmake improvement
    export PATH=$HOME/sw/cmake-3.22.0-dev/bin:$PATH
