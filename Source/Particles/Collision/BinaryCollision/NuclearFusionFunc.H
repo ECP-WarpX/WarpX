@@ -5,8 +5,10 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef PROTON_BORON_FUSION_FUNC_H_
-#define PROTON_BORON_FUSION_FUNC_H_
+#ifndef NUCLEAR_FUSION_FUNC_H_
+#define NUCLEAR_FUSION_FUNC_H_
+
+#include "BinaryCollisionUtils.H"
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
@@ -18,12 +20,15 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
-
-enum NuclearFusionType { ProtonBoron };
+#include <AMReX_Vector.H>
 
 /**
- * \brief This functor performs proton boron fusion on a single cell.
- *  It also reads and contains the fusion multiplier.
+ * \brief This functor does binary nuclear fusions on a single cell.
+ *  Particles of the two reacting species are paired with each other and for each pair we compute
+ *  if a fusion event occurs. If so, we fill a mask (input parameter p_mask) with true so that
+ *  product particles corresponding to a given pair can be effectively created in the particle
+ *  creation functor.
+ *  This functor also reads and contains the fusion multiplier.
  */
 class NuclearFusionFunc{
     // Define shortcuts for frequently-used type names
@@ -47,28 +52,10 @@ public:
     NuclearFusionFunc (const std::string collision_name, MultiParticleContainer* const mypc)
     {
         using namespace amrex::literals;
+
+        m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
+
         amrex::ParmParse pp_collision_name(collision_name);
-
-        amrex::Vector<std::string> species_names;
-        pp_collision_name.getarr("species", species_names);
-        auto& species1 = mypc->GetParticleContainerFromName(species_names[0]);
-        auto& species2 = mypc->GetParticleContainerFromName(species_names[1]);
-
-        if ((species1.AmIA<PhysicalSpecies::hydrogen>() && species2.AmIA<PhysicalSpecies::boron>())
-            ||
-            (species1.AmIA<PhysicalSpecies::boron>() && species2.AmIA<PhysicalSpecies::hydrogen>())
-            )
-        {
-            m_fusion_type = NuclearFusionType::ProtonBoron;
-        }
-        else
-        {
-            amrex::Abort("Binary nuclear fusion not implemented between species " +
-                species_names[0] + " of type " + species1.getSpeciesTypeName() +
-                " and species " + species_names[1] + " of type " +
-                species2.getSpeciesTypeName());
-        }
-
         amrex::Vector<std::string> product_species_name;
         pp_collision_name.getarr("product_species", product_species_name);
 
@@ -97,18 +84,19 @@ public:
         index_type const /*I2s*/, index_type const /*I2e*/,
         index_type* /*I1*/,       index_type* /*I2*/,
         SoaData_type /*soa_1*/, SoaData_type /*soa_2*/,
-        SoaData_type* /*soa_product_data*/,
         GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
-        GetParticlePosition* /*get_position_product_data*/,
         amrex::Real const  /*q1*/, amrex::Real const  /*q2*/,
         amrex::Real const  /*m1*/, amrex::Real const  /*m2*/,
         amrex::Real const  /*dt*/, amrex::Real const /*dV*/,
+        index_type const /*cell_start_pair*/, index_type* /*p_mask*/,
+        index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
+        amrex::ParticleReal* /*p_pair_reaction_weight*/,
         amrex::RandomEngine const& /*engine*/) const
         {}
 
 private:
     amrex::Real m_fusion_multiplier;
-    int m_fusion_type;
+    NuclearFusionType m_fusion_type;
 };
 
-#endif // PROTON_BORON_FUSION_FUNC_H_
+#endif // NUCLEAR_FUSION_FUNC_H_
