@@ -147,7 +147,8 @@ endif()
 
 # collect all objects for compilation
 add_library(WarpX OBJECT)
-set(_ALL_TARGETS WarpX)
+add_library(ablastr OBJECT)
+set(_ALL_TARGETS WarpX ablastr)
 
 # executable application
 #   note: we currently avoid a dependency on a core library
@@ -155,7 +156,7 @@ set(_ALL_TARGETS WarpX)
 if(WarpX_APP)
     add_executable(app)
     add_executable(WarpX::app ALIAS app)
-    target_link_libraries(app PRIVATE WarpX)
+    target_link_libraries(app PRIVATE WarpX ablastr)
     set(_BUILDINFO_SRC app)
     list(APPEND _ALL_TARGETS app)
 endif()
@@ -164,11 +165,11 @@ endif()
 if(WarpX_LIB)
     add_library(shared MODULE)
     add_library(WarpX::shared ALIAS shared)
-    target_link_libraries(shared PUBLIC WarpX)
+    target_link_libraries(shared PUBLIC WarpX ablastr)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
-    set_target_properties(WarpX shared PROPERTIES
+    set_target_properties(WarpX ablastr shared PROPERTIES
         POSITION_INDEPENDENT_CODE ON
         WINDOWS_EXPORT_ALL_SYMBOLS ON
     )
@@ -176,6 +177,9 @@ endif()
 
 # own headers
 target_include_directories(WarpX PUBLIC
+    $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+)
+target_include_directories(ablastr PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
 )
 
@@ -220,12 +224,13 @@ endif()
 
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
+target_link_libraries(ablastr PUBLIC WarpX::thirdparty::AMReX)
 
 if(WarpX_PSATD)
-    target_link_libraries(WarpX PUBLIC WarpX::thirdparty::FFT)
+    target_link_libraries(ablastr PUBLIC WarpX::thirdparty::FFT)
     if(WarpX_DIMS STREQUAL RZ)
-        target_link_libraries(WarpX PUBLIC blaspp)
-        target_link_libraries(WarpX PUBLIC lapackpp)
+        target_link_libraries(ablastr PUBLIC blaspp)
+        target_link_libraries(ablastr PUBLIC lapackpp)
     endif()
 endif()
 
@@ -244,7 +249,8 @@ endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties
 if(WarpX_COMPUTE STREQUAL CUDA)
-    setup_target_for_cuda_compilation(WarpX)
+    #setup_target_for_cuda_compilation(WarpX)
+    #setup_target_for_cuda_compilation(ablastr)
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
         setup_target_for_cuda_compilation(${warpx_tgt})
     endforeach()
@@ -300,7 +306,7 @@ endif()
 
 # <cmath>: M_PI
 if(WIN32)
-    target_compile_definitions(WarpX PRIVATE _USE_MATH_DEFINES)
+    target_compile_definitions(ablastr PRIVATE _USE_MATH_DEFINES)
 endif()
 
 
