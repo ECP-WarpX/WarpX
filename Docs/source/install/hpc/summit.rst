@@ -79,6 +79,9 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    # fix system defaults: do not escape $ with a \ on tab completion
    shopt -s direxpand
 
+   # make output group-readable by default
+   umask 0027
+
    # optimize CUDA compilation for V100
    export AMREX_CUDA_ARCH=7.0
 
