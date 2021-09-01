@@ -18,6 +18,9 @@
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
 
+# make output group-readable by default
+umask 0027
+
 source $HOME/warpx.profile
 
 export OMP_NUM_THREADS=1
