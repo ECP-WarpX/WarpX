@@ -76,11 +76,13 @@ def test_thermionic_emission():
 
     mwxrun.simulation.step(max_steps)
 
-    net_rho_grid = np.array(mwxrun.get_gathered_rho_grid()[0][:, :, 0])
+    net_rho_grid = np.array(mwxrun.get_gathered_rho_grid(include_ghosts=False)[0][:, :, 0])
     ref_path = os.path.join(testing_util.test_dir,
                             "thermionic_emission",
                             "thermionic_emission.npy")
-    ref_rho_grid = np.load(ref_path)
+
+    # slice the reference data to just get the non ghost cells
+    ref_rho_grid = np.load(ref_path)[2:11, 2:131]
 
     assert np.allclose(net_rho_grid, ref_rho_grid)
 
