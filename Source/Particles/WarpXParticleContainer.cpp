@@ -1104,6 +1104,8 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
 
     if (boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
+    auto reflection_models = getReflectionModels();
+
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -1128,9 +1130,9 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
             amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
 
             // Loop over particles and apply BC to each particle
-            amrex::ParallelFor(
+            amrex::ParallelForRNG(
                 pti.numParticles(),
-                [=] AMREX_GPU_DEVICE (long i) {
+                [=] AMREX_GPU_DEVICE (long i, amrex::RandomEngine const& engine) {
                     ParticleType& p = pp[i];
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);
@@ -1143,10 +1145,11 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
-                                                              boundary_conditions);
+                                                              boundary_conditions,
+                                                              reflection_models, engine);
 
                     if (particle_lost) {
-                        p.id() = -1;
+                        p.id() = -p.id();
                     } else {
                         SetPosition.AsStored(i, x, y, z);
                     }

@@ -343,6 +343,9 @@ public:
 
     amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 
+    //std::vector<amrex::ParserExecutor<1>> getReflectionModels () const { return m_boundary_reflection_models; }
+    std::vector<amrex::Real> getReflectionModels () const { return m_boundary_reflection_models; }
+
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
      * Empty body is here because making the method purely virtual would mean that we need to
@@ -394,6 +397,10 @@ protected:
     int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
+
+    // Vector to store reflection models for absorbing boundaries
+    // std::vector<amrex::ParserExecutor<1>> m_boundary_reflection_models;
+    std::vector<amrex::Real> m_boundary_reflection_models;
 
 #ifdef WARPX_QED
     //Species can receive a shared pointer to a QED engine (species for

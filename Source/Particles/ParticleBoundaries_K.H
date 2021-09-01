@@ -20,11 +20,21 @@ namespace ApplyParticleBoundaries {
     void
     apply_boundary (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
                     bool& change_sign_ux, bool& particle_lost,
-                    ParticleBoundaryType xmin_bc, ParticleBoundaryType xmax_bc)
+                    ParticleBoundaryType xmin_bc, ParticleBoundaryType xmax_bc,
+                    amrex::Real refl_xmin, amrex::Real refl_xmax,
+                    amrex::RandomEngine const& engine )
     {
         if (x < xmin) {
-            if (xmin_bc == ParticleBoundaryType::Absorbing || xmin_bc == ParticleBoundaryType::Open) {
+            if (xmin_bc == ParticleBoundaryType::Open) {
                 particle_lost = true;
+            }
+            else if (xmin_bc == ParticleBoundaryType::Absorbing) {
+                if (amrex::Random(engine) > refl_xmin) particle_lost = true;
+                else
+                {
+                    x = 2*xmin - x;
+                    change_sign_ux = true;
+                }
             }
             else if (xmin_bc == ParticleBoundaryType::Reflecting) {
                 x = 2*xmin - x;
@@ -32,8 +42,16 @@ namespace ApplyParticleBoundaries {
             }
         }
         else if (x > xmax) {
-            if (xmax_bc == ParticleBoundaryType::Absorbing || xmin_bc == ParticleBoundaryType::Open) {
+            if (xmin_bc == ParticleBoundaryType::Open) {
                 particle_lost = true;
+            }
+            else if (xmax_bc == ParticleBoundaryType::Absorbing) {
+                if (amrex::Random(engine) > refl_xmax) particle_lost = true;
+                else
+                {
+                    x = 2*xmax - x;
+                    change_sign_ux = true;
+                }
             }
             else if (xmax_bc == ParticleBoundaryType::Reflecting) {
                 x = 2*xmax - x;
@@ -65,17 +83,21 @@ namespace ApplyParticleBoundaries {
                       amrex::ParticleReal& z, amrex::Real zmin, amrex::Real zmax,
                       amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                       bool& particle_lost,
-                      ParticleBoundaries const& boundaries)
+                      ParticleBoundaries const& boundaries,
+                      std::vector<amrex::Real> const& reflection_models,
+                      amrex::RandomEngine const& engine)
     {
         bool change_sign_ux = false;
         bool change_sign_uy = false;
         bool change_sign_uz = false;
 
-        apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost, boundaries.xmin_bc, boundaries.xmax_bc);
+        apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost, boundaries.xmin_bc, boundaries.xmax_bc, reflection_models[0], reflection_models[1], engine);
 #ifdef WARPX_DIM_3D
-        apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost, boundaries.ymin_bc, boundaries.ymax_bc);
+        apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost, boundaries.ymin_bc, boundaries.ymax_bc, reflection_models[2], reflection_models[3], engine);
+        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost, boundaries.zmin_bc, boundaries.zmax_bc, reflection_models[4], reflection_models[5], engine);
+#else
+        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost, boundaries.zmin_bc, boundaries.zmax_bc, reflection_models[2], reflection_models[3], engine);
 #endif
-        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost, boundaries.zmin_bc, boundaries.zmax_bc);
 
         if (boundaries.reflect_all_velocities && (change_sign_ux | change_sign_uy | change_sign_uz)) {
             change_sign_ux = true;
