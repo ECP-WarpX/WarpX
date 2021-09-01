@@ -85,6 +85,15 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
 
+        # For particle reflection
+        self.reflection_model_x_lo = kw.pop('warpx_reflection_model_x_lo', None)
+        self.reflection_model_x_hi = kw.pop('warpx_reflection_model_x_hi', None)
+        self.reflection_model_y_lo = kw.pop('warpx_reflection_model_y_lo', None)
+        self.reflection_model_y_hi = kw.pop('warpx_reflection_model_y_hi', None)
+        self.reflection_model_z_lo = kw.pop('warpx_reflection_model_z_lo', None)
+        self.reflection_model_z_hi = kw.pop('warpx_reflection_model_z_hi', None)
+        self.reflection_model_eb = kw.pop('warpx_reflection_model_eb', None)
+
         # For the scraper buffer
         self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
         self.save_particles_at_xhi = kw.pop('warpx_save_particles_at_xhi', None)
@@ -125,6 +134,16 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_zhi = self.save_particles_at_zhi,
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position)
+
+        # add reflection models
+        self.species.add_new_attr("reflection_model_x_lo(E)", self.reflection_model_x_lo)
+        self.species.add_new_attr("reflection_model_x_hi(E)", self.reflection_model_x_hi)
+        self.species.add_new_attr("reflection_model_y_lo(E)", self.reflection_model_y_lo)
+        self.species.add_new_attr("reflection_model_y_hi(E)", self.reflection_model_y_hi)
+        self.species.add_new_attr("reflection_model_z_lo(E)", self.reflection_model_z_lo)
+        self.species.add_new_attr("reflection_model_z_hi(E)", self.reflection_model_z_hi)
+        self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
