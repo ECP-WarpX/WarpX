@@ -83,6 +83,16 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
+        self.save_previous_position = kw.pop('warpx_save_previous_position', None)
+
+        # For the scraper buffer
+        self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
+        self.save_particles_at_xhi = kw.pop('warpx_save_particles_at_xhi', None)
+        self.save_particles_at_ylo = kw.pop('warpx_save_particles_at_ylo', None)
+        self.save_particles_at_yhi = kw.pop('warpx_save_particles_at_yhi', None)
+        self.save_particles_at_zlo = kw.pop('warpx_save_particles_at_zlo', None)
+        self.save_particles_at_zhi = kw.pop('warpx_save_particles_at_zhi', None)
+        self.save_particles_at_eb = kw.pop('warpx_save_particles_at_eb', None)
 
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
@@ -106,7 +116,15 @@ class Species(picmistandard.PICMI_Species):
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
                                              self_fields_max_iters = self.self_fields_max_iters,
-                                             self_fields_verbosity = self.self_fields_verbosity)
+                                             self_fields_verbosity = self.self_fields_verbosity,
+                                             save_particles_at_xlo = self.save_particles_at_xlo,
+                                             save_particles_at_xhi = self.save_particles_at_xhi,
+                                             save_particles_at_ylo = self.save_particles_at_ylo,
+                                             save_particles_at_yhi = self.save_particles_at_yhi,
+                                             save_particles_at_zlo = self.save_particles_at_zlo,
+                                             save_particles_at_zhi = self.save_particles_at_zhi,
+                                             save_particles_at_eb = self.save_particles_at_eb,
+                                             save_previous_position = self.save_previous_position)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:

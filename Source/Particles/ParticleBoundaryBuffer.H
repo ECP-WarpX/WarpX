@@ -40,6 +40,10 @@ public:
 
     void printNumParticles () const;
 
+    int getNumParticlesInContainer(const std::string species_name, int boundary);
+
+    ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>& getParticleBuffer(const std::string species_name, int boundary);
+
     constexpr int numBoundaries () const {
         return AMREX_SPACEDIM*2
 #ifdef AMREX_USE_EB

@@ -1,3 +1,10 @@
+/* Copyright 2021 Lorenzo Giacomel
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #include "WarpX.H"
 
 #ifdef AMREX_USE_EB
@@ -22,17 +29,15 @@
 #  include <AMReX_Loop.H>
 #  include <AMReX_MFIter.H>
 #  include <AMReX_MultiFab.H>
+#  include <AMReX_iMultiFab.H>
 #  include <AMReX_ParmParse.H>
 #  include <AMReX_Parser.H>
 #  include <AMReX_REAL.H>
 #  include <AMReX_SPACE.H>
 #  include <AMReX_Vector.H>
 
-#  include <array>
 #  include <cstdlib>
-#  include <memory>
 #  include <string>
-#  include <vector>
 
 #endif
 
@@ -101,10 +106,7 @@ WarpX::InitEB ()
 #endif
 }
 
-/**
- * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
- *        An edge of length 0 is fully covered.
- */
+
 void
 WarpX::ComputeEdgeLengths () {
 #ifdef AMREX_USE_EB
@@ -115,26 +117,24 @@ WarpX::ComputeEdgeLengths () {
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-        amrex::Box const &box = mfi.validbox();
-        amrex::FabType fab_type = flags[mfi].getType(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
+            const amrex::Box& box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_edge_lengths[maxLevel()][idim]->nGrowVect() );
+            amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 1.;
                 });
             } else if (fab_type == amrex::FabType::covered) {
                 // every cell in box is all covered
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     edge_lengths_dim(i, j, k) = 0.;
                 });
             } else {
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_cent).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     if (edge_cent(i, j, k) == amrex::Real(-1.0)) {
                         // This edge is all covered
                         edge_lengths_dim(i, j, k) = 0.;
@@ -153,10 +153,7 @@ WarpX::ComputeEdgeLengths () {
 #endif
 }
 
-/**
- * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
- *        An edge of area 0 is fully covered.
- */
+
 void
 WarpX::ComputeFaceAreas () {
 #ifdef AMREX_USE_EB
@@ -167,26 +164,24 @@ WarpX::ComputeFaceAreas () {
     auto const &area_frac = eb_fact.getAreaFrac();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
-        amrex::FabType fab_type = flags[mfi].getType(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
+            amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(1.);
                 });
             } else if (fab_type == amrex::FabType::covered) {
                 // every cell in box is all covered
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                                 [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = amrex::Real(0.);
                 });
             } else {
                 auto const &face = area_frac[idim]->const_array(mfi);
-                amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face).ixType()),
-                                [=](int i, int j, int k) {
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = face(i, j, k);
                 });
             }
@@ -195,9 +190,7 @@ WarpX::ComputeFaceAreas () {
 #endif
 }
 
-/**
- * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
- */
+
 void
 WarpX::ScaleEdges () {
 #ifdef AMREX_USE_EB
@@ -208,11 +201,11 @@ WarpX::ScaleEdges () {
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            const amrex::Box& box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_edge_lengths[maxLevel()][idim]->nGrowVect() );
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
-            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
-                             [=](int i, int j, int k) {
+            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
             });
         }
@@ -220,9 +213,7 @@ WarpX::ScaleEdges () {
 #endif
 }
 
-/**
- * \brief Scale the edges areas by the mesh width to obtain the real areas.
- */
+
 void
 WarpX::ScaleAreas() {
 #ifdef AMREX_USE_EB
@@ -235,8 +226,9 @@ WarpX::ScaleAreas() {
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
             } else if (idim == 1) {
@@ -245,18 +237,88 @@ WarpX::ScaleAreas() {
                 full_area = cell_size[0]*cell_size[1];
             }
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
-            amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
-                             [=](int i, int j, int k) {
-                                face_areas_dim(i, j, k) *= full_area;
+
+            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                face_areas_dim(i, j, k) *= full_area;
+            });
+
+            if(WarpX::maxwell_solver_id==MaxwellSolverAlgo::ECT) {
+                auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
+                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        mod_areas_dim(i, j, k) = face_areas_dim(i, j, k);
+                });
+            }
+        }
+    }
+#endif
+}
+
+
+void
+WarpX::MarkCells(){
+#ifdef AMREX_USE_EB
+    auto const &cell_size = CellSize(maxLevel());
+
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+            //amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
+                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
+
+            auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
+            auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
+            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+            const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
+            const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
+            const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+            const amrex::Real dx = cell_size[0];
+            const amrex::Real dy = cell_size[1];
+            const amrex::Real dz = cell_size[2];
+
+            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                // Minimal area for this cell to be stable
+                double S_stab;
+                if(idim == 0){
+                    S_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
+                                                    lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
+                }else if(idim == 1){
+                    S_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
+                                             lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+                }else {
+                    S_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
+                                             ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
+                }
+
+                // Does this face need to be extended?
+                // The difference between flag_info_face and flag_ext_face is that:
+                //     - for every face flag_info_face contains a:
+                //          * 0 if the face needs to be extended
+                //          * 1 if the face is large enough to lend area to other faces
+                //          * 2 if the face is actually intruded by other face
+                //       Here we only take care of the first two cases. The entries corresponding
+                //       to the intruded faces are going to be set in the function ComputeFaceExtensions
+                //     - for every face flag_ext_face contains a:
+                //          * 1 if the face needs to be extended
+                //          * 0 otherwise
+                //       In the function ComputeFaceExtensions, after the cells are extended, the
+                //       corresponding entries in flag_ext_face are set to zero. This helps to keep
+                //       track of which cells could not be extended
+                flag_ext_face(i, j, k) = int(S(i, j, k) < S_stab && S(i, j, k) > 0);
+                if(flag_ext_face(i, j, k)){
+                    flag_info_face(i, j, k) = 0;
+                }
+                // Is this face available to lend area to other faces?
+                // The criterion is that the face has to be interior and not already unstable itself
+                if(int(S(i, j, k) > 0 && !flag_ext_face(i, j, k))) {
+                    flag_info_face(i, j, k) = 1;
+                }
             });
         }
     }
 #endif
 }
 
-/**
- * \brief Compute the level set function used for particle-boundary interaction.
- */
+
 void
 WarpX::ComputeDistanceToEB () {
 #ifdef AMREX_USE_EB

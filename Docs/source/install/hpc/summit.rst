@@ -49,7 +49,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    module load boost/1.76.0
 
    # optional: for openPMD support
-   #module load adios2/2.7.1 # currently broken: OLCFHELP-3319
+   module load adios2/2.7.1
    module load hdf5/1.10.7
 
    # optional: for PSATD in RZ geometry support
@@ -62,7 +62,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    export Ascent_DIR=/gpfs/alpine/world-shared/csc340/software/ascent/current/summit/cuda/gnu/ascent-install
 
    # optional: for Python bindings or libEnsemble
-   module load python/3.8-anaconda3
+   module load python/3.8.10
    module load openblas/0.3.15-omp
    module load netlib-lapack/3.9.1
    if [ -d "$HOME/sw/venvs/warpx" ]
@@ -78,6 +78,9 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
 
    # fix system defaults: do not escape $ with a \ on tab completion
    shopt -s direxpand
+
+   # make output group-readable by default
+   umask 0027
 
    # optimize CUDA compilation for V100
    export AMREX_CUDA_ARCH=7.0

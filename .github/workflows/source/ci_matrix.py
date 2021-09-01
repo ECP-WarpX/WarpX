@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# Concatenation of tests in each of the 6 elements in Travis matrix
-f = open('./travis_matrix_elements.txt') ; matrix_elements = f.readlines() ; f.close()
-# All tests read by prepare_travis_tests.py
-f = open('./travis_all_tests.txt') ; all_tests = f.readlines() ; f.close()
+# Concatenation of tests in each of the 6 elements in CI matrix
+f = open('./ci_matrix_elements.txt') ; matrix_elements = f.readlines() ; f.close()
+# All tests read by prepare_file_ci.py
+f = open('./ci_all_tests.txt') ; all_tests = f.readlines() ; f.close()
 
 # Now let's make sure these two are equal
 

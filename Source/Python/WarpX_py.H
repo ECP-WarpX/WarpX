@@ -15,6 +15,7 @@ extern "C" {
 
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterinit;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforeEsolve;
+    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_poissonsolver;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterEsolve;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforedeposition;
     extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterdeposition;

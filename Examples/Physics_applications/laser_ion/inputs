@@ -239,8 +239,8 @@ histuH.species                              = hydrogen
 histuH.bin_number                           = 1000
 histuH.bin_min                              =  0.0
 histuH.bin_max                              = 35.0
-histuH.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(ux*ux+uy*uy+uz*uz)"
-histuH.filter_function(t,x,y,z,ux,uy,uz) = "abs(acos(uz / sqrt(ux*ux+uy*uy+uz*uz))) <= 0.017453"
+histuH.histogram_function(t,x,y,z,ux,uy,uz) = "u2=ux*ux+uy*uy+uz*uz; if(u2>0, sqrt(u2), 0.0)"
+histuH.filter_function(t,x,y,z,ux,uy,uz) = "u2=ux*ux+uy*uy+uz*uz; if(u2>0, abs(acos(uz / sqrt(u2))) <= 0.017453, 0)"
 
 histue.type                                 = ParticleHistogram
 histue.intervals                            = 100
@@ -249,8 +249,8 @@ histue.species                              = electrons
 histue.bin_number                           = 1000
 histue.bin_min                              = 0.0
 histue.bin_max                              = 0.1
-histue.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(ux*ux+uy*uy+uz*uz)"
-histue.filter_function(t,x,y,z,ux,uy,uz) = "abs(acos(uz / sqrt(ux*ux+uy*uy+uz*uz))) <= 0.017453"
+histue.histogram_function(t,x,y,z,ux,uy,uz) = "u2=ux*ux+uy*uy+uz*uz; if(u2>0, sqrt(u2), 0.0)"
+histue.filter_function(t,x,y,z,ux,uy,uz) = "u2=ux*ux+uy*uy+uz*uz; if(u2>0, abs(acos(uz / sqrt(u2))) <= 0.017453, 0)"
 
 # just a test entry to make sure that the histogram filter is purely optional:
 # this one just records uz of all hydrogen ions, independent of their pointing

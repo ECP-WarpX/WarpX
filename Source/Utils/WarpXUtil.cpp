@@ -359,6 +359,23 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     return parser;
 }
 
+amrex::Real
+parseStringtoReal(std::string str)
+{
+    auto parser = makeParser(str, {});
+    auto exe = parser.compileHost<0>();
+    amrex::Real result = exe();
+    return result;
+}
+
+int
+parseStringtoInt(std::string str, std::string name)
+{
+    amrex::Real rval = parseStringtoReal(str);
+    int ival = safeCastToInt(std::round(rval), name);
+    return ival;
+}
+
 int
 queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
 {
@@ -370,11 +387,7 @@ queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Re
         // If so, create a parser object and apply it to the value provided by the user.
         std::string str_val;
         Store_parserString(a_pp, str, str_val);
-
-        auto parser = makeParser(str_val, {});
-        auto exe = parser.compileHost<0>();
-
-        val = exe();
+        val = parseStringtoReal(str_val);
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
@@ -386,10 +399,7 @@ getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real
     // If so, create a parser object and apply it to the value provided by the user.
     std::string str_val;
     Store_parserString(a_pp, str, str_val);
-
-    auto parser = makeParser(str_val, {});
-    auto exe = parser.compileHost<0>();
-    val = exe();
+    val = parseStringtoReal(str_val);
 }
 
 int
@@ -405,9 +415,7 @@ queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::v
         int const n = static_cast<int>(tmp_str_arr.size());
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
-            auto parser = makeParser(tmp_str_arr[i], {});
-            auto exe = parser.compileHost<0>();
-            val[i] = exe();
+            val[i] = parseStringtoReal(tmp_str_arr[i]);
         }
     }
     // return the same output as amrex::ParmParse::query
@@ -424,9 +432,7 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     int const n = static_cast<int>(tmp_str_arr.size());
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
-        auto parser = makeParser(tmp_str_arr[i], {});
-        auto exe = parser.compileHost<0>();
-        val[i] = exe();
+        val[i] = parseStringtoReal(tmp_str_arr[i]);
     }
 }
 
@@ -441,9 +447,7 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     int const n = static_cast<int>(tmp_str_arr.size());
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
-        auto parser = makeParser(tmp_str_arr[i], {});
-        auto exe = parser.compileHost<0>();
-        val[i] = exe();
+        val[i] = parseStringtoReal(tmp_str_arr[i]);
     }
 }
 

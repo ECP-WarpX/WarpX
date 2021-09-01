@@ -49,11 +49,21 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+#ifdef AMREX_USE_EB
+    if (m_fdtd_algo != MaxwellSolverAlgo::ECT) {
+        amrex::ignore_unused(face_areas, ECTRhofield);
+    }
+#else
+    amrex::ignore_unused(face_areas, ECTRhofield);
+#endif
+
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
         ignore_unused(edge_lengths);
@@ -63,10 +73,14 @@ void FiniteDifferenceSolver::EvolveE (
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
-
+#ifdef AMREX_USE_EB
+        if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+            EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, ECTRhofield, lev);
+        }
+#endif
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
@@ -157,13 +171,16 @@ void FiniteDifferenceSolver::EvolveECartesian (
                 // Skip field push if this cell is fully covered by embedded boundaries
                 if (ly(i,j,k) <= 0) return;
 #endif
+
                 Ey(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
                     - PhysConst::mu0 * jy(i, j, k) );
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
                 if (lz(i,j,k) <= 0) return;

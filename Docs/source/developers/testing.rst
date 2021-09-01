@@ -3,7 +3,7 @@
 Testing the code
 ================
 
-When adding a new feature, you want to make sure that (i) you did not break the existing code and (ii) your contribution gives correct results. While existing capabilities are tested regularly remotely (when commits are pushed to an open PR on TravisCI, and every night on local clusters), it can also be useful to run tests on your custom input file. This section details how to use both automated and custom tests.
+When adding a new feature, you want to make sure that (i) you did not break the existing code and (ii) your contribution gives correct results. While existing capabilities are tested regularly remotely (when commits are pushed to an open PR on CI, and every night on local clusters), it can also be useful to run tests on your custom input file. This section details how to use both automated and custom tests.
 
 Continuous Integration in WarpX
 -------------------------------
@@ -78,7 +78,7 @@ There are three steps to follow to add a new automated test (illustrated here fo
 
 * An input file for your test, in folder `Example/Tests/...`. For the PML test, the input file is at ``Examples/Tests/PML/inputs_2d``. You can also re-use an existing input file (even better!) and pass specific parameters at runtime (see below).
 * A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see ``Examples/Tests/PML/analysis_pml_yee.py``. It typically ends with Python statement `assert( error<0.01 )`.
-* Add an entry to [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini), so that a WarpX simulation runs your test in the continuous integration process on [Travis CI](https://docs.travis-ci.com/user/tutorial/), and the Python script is executed to assess the correctness. For the PML test, the entry is
+* Add an entry to [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini), so that a WarpX simulation runs your test in the continuous integration process, and the Python script is executed to assess the correctness. For the PML test, the entry is
 
 .. code-block::
 

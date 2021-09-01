@@ -65,7 +65,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
         CartesianNodalAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );
 
-    } else if (fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (fdtd_algo == MaxwellSolverAlgo::Yee || fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         CartesianYeeAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );

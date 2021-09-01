@@ -9,11 +9,13 @@ It is important to us to make it easy to interact with the WarpX community and t
 Abbreviations
 -------------
 
+* **2FA:** `Two-factor-authentication <https://en.wikipedia.org/wiki/Multi-factor_authentication>`__
 * **ALCF:** `Argonne Leadership Computing Facility <https://www.alcf.anl.gov/>`__, a supercomputing center located near Chicago, IL (USA)
 * **AMR:** adaptive mesh-refinement
 * **BC:** boundary condition (of a simulation)
 * **BTD:** backtransformed diagnosics, a method to collect data for analysis from a *boosted frame* simulation
 * **CFL:** the Courant-Friedrichs-Lewy condition, a numerical parameter for the numerical convergence of PDE solvers
+* **CI:** continuous integration, automated tests that we perform before a proposed code-change is accepted; see PR
 * **CPU:** `central processing unit <https://en.wikipedia.org/wiki/Central_processing_unit>`__, we usual mean a socket or generally the host-side of a computer (compared to the accelerator, e.g. GPU)
 * **DOE:** `The United States Department of Energy <https://en.wikipedia.org/wiki/United_States_Department_of_Energy>`__, the largest sponsor of national laboratory research in the United States of America
 * **EB:** embedded boundary, boundary conditions inside the simulation box, e.g. following material surfaces
@@ -29,13 +31,15 @@ Abbreviations
 * **NERSC:** `National Energy Research Scientific Computing Center <https://www.nersc.gov/>`__, a supercomputing center located in Berkeley, CA (USA)
 * **NSF:** the `National Science Foundation <https://en.wikipedia.org/wiki/National_Science_Foundation>`__, a large public agency in the United States of America, supporting research and education
 * **OLCF:** `Oak Ridge Leadership Computing Facility <https://www.olcf.ornl.gov/>`__, a supercomputing center located in Oak Ridge, TN (USA)
+* **OTP:** `One-Time-Password <https://en.wikipedia.org/wiki/One-time_password>`__; see 2FA
+* **PDE:** `partial differential equation <https://en.wikipedia.org/wiki/Partial_differential_equation>`__, an equation which imposes relations between the various partial derivatives of a multivariable function
 * **PIC:** :ref:`particle-in-cell <theory-pic>`, the method implemented in WarpX
+* **PR:** github pull request, a proposed change to the WarpX code base
 * **PSATD:** pseudo-spectral analytical time-domain method, a spectral field solver with better numerical properties than FDTD solvers
 * **PWFA:** plasma-wakefield acceleration
-* **PDE:** `partial differential equation <https://en.wikipedia.org/wiki/Partial_differential_equation>`__, an equation which imposes relations between the various partial derivatives of a multivariable function
-* **RZ:** for the coordinate system ``r-z`` in cylindrical geometry; we use "RZ" when we refer to quasi-cylindrical geometry, decomposed in azimuthal modes (see details `here <https://fbpic.github.io/overview/pic_algorithm.html#cylindrical-grid-with-azimuthal-decomposition>`__)
 * **QED:** `quantum electrodynamics <https://en.wikipedia.org/wiki/Quantum_electrodynamics>`__
 * **RPA:** radiation-pressure acceleration (of protons/ions), e.g. hole-boring (HB) or light-sail (LS) acceleration
+* **RZ:** for the coordinate system ``r-z`` in cylindrical geometry; we use "RZ" when we refer to quasi-cylindrical geometry, decomposed in azimuthal modes (see details `here <https://fbpic.github.io/overview/pic_algorithm.html#cylindrical-grid-with-azimuthal-decomposition>`__)
 * **TNSA:** target-normal sheet acceleration (of protons/ions)
 
 Terms
