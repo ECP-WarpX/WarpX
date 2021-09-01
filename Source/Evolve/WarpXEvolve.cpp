@@ -404,12 +404,16 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryE(guard_cells.ng_alloc_EB);
         }
         PushPSATD();
-        FillBoundaryE(guard_cells.ng_alloc_EB);
-        FillBoundaryB(guard_cells.ng_alloc_EB);
 
         if (use_hybrid_QED) {
+            FillBoundaryE(guard_cells.ng_alloc_EB);
+            FillBoundaryB(guard_cells.ng_alloc_EB);
             WarpX::Hybrid_QED_Push(dt);
             FillBoundaryE(guard_cells.ng_alloc_EB);
+        }
+        else {
+            FillBoundaryE(IntVect{AMREX_D_DECL(3,3,3)});
+            FillBoundaryB(IntVect{AMREX_D_DECL(3,3,3)});
         }
 
         // Synchronize E and B fields on nodal points
