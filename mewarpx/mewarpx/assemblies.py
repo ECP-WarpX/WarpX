@@ -196,6 +196,8 @@ class Cathode(ZPlane):
         super(Cathode, self).__init__(
             z=0, zsign=-1, V=V, T=T, WF=WF, name="Cathode"
         )
+        # set solver boundary potential
+        mwxrun.grid.potential_zmin = self.V
 
 
 class Anode(ZPlane):
@@ -206,6 +208,8 @@ class Anode(ZPlane):
         super(Anode, self).__init__(
             z=z, zsign=1, V=V, T=T, WF=WF, name="Anode"
         )
+        # set solver boundary potential
+        mwxrun.grid.potential_zmax = self.V
 
 
 class Cylinder(Assembly):
@@ -232,6 +236,7 @@ class Cylinder(Assembly):
         self.center_x = center_x
         self.center_z = center_z
         self.radius = radius
+        # negative means outside of object
         self.implicit_function = (
             f"-((x-{self.center_x})**2+(z-{self.center_z})**2-{self.radius}**2)"
         )
@@ -283,6 +288,198 @@ class Cylinder(Assembly):
         nhat[0, :] = (px - self.center_x) / dist
         nhat[2, :] = (pz - self.center_z) / dist
         return nhat
+
+    def _install_in_simulation(self):
+        """Function to pass this EB object to the WarpX simulation."""
+
+        if mwxrun.simulation.embedded_boundary is not None:
+            raise RuntimeError('Currently only 1 EB is supported.')
+
+        mwxrun.simulation.embedded_boundary = picmi.EmbeddedBoundary(
+            implicit_function=self.implicit_function,
+            potential=self.V
+        )
+
+
+class Rectangle(Assembly):
+    """A rectangle that sits on the xz plane"""
+
+    def __init__(self, center_x, center_z, length_x, length_z, V, T, WF, name,
+                 install_in_simulation=True):
+        """Basic initialization.
+
+        Arguments:
+            center_x (float): The x-coordinates of the center of the rectangle.
+                Coordinates are in (m)
+            center_z (float): The z-coordinates of the center of the rectangle.
+                Coordinates are in (m)
+            length_x (float): The length the rectangle in the x direction (m)
+            length_z (float): The length the rectangle in the z direction (m)
+            V (float): Voltage (V)
+            T (float): Temperature (K)
+            WF (float): Work function (eV)
+            name (str): Assembly name
+            install_in_simulation (bool): If True and the Assembly is an
+                embedded boundary it will be included in the WarpX simulation
+        """
+        super(Rectangle, self).__init__(V=V, T=T, WF=WF, name=name)
+        self.center_x = float(center_x)
+        self.center_z = float(center_z)
+        self.length_x = float(length_x)
+        self.length_z = float(length_z)
+        self.xmin = float(center_x - length_x/2)
+        self.xmax = float(center_x + length_x/2)
+        self.zmin = float(center_z - length_z/2)
+        self.zmax = float(center_z + length_z/2)
+
+        self.scaled_h = (
+            2.0 * max(self.length_x, self.length_z) / min(self.length_x, self.length_z)
+        )
+
+        # the regions change depending on whether x or z is longer, so we need to adjust
+        # the preset normals for these regions depending on the x and z lengths
+        if self.length_x <= self.length_z:
+            self.region_normals = np.array([
+                (0, -1), (1, 0), (0, 1), (-1, 0)
+            ])
+        else:
+            self.region_normals = np.array([
+                (-1, 0), (0, -1), (1, 0), (0, 1)
+            ])
+
+        self.transformation_matrix = self._get_transformation_matrix()
+
+        # Negative means outside of object
+        self.implicit_function = (
+            f"-max(max(x-({self.xmax}),({self.xmin})-x),max(z-({self.zmax}),({self.zmin})-z))"
+        )
+        self.scraper_label = 'eb'
+
+        if install_in_simulation:
+            self._install_in_simulation()
+
+    def calculatenormal(self, px, py, pz):
+        """
+        Calculates Normal of particle inside/outside of conductor to nearest
+        surface of conductor. Nearest surface of conductor is determined by the region
+        of the transformed rectangle that the transformed particle belongs to.
+
+        The 4 regions in order from 0 - 3 are:
+            0: bottom portion of transformed rectangle and below transformed rectangle (-y)
+            1: right portion of transformed rectangle and to the right of transformed rectangle (+x)
+            2: top portion of transformed rectangle and above transformed rectangle (+y)
+            3: left portion of transformed rectangle and to the left of transformed rectangle (-x)
+
+        Arguments:
+            px (np.ndarray): x-coordinate of particle in meters.
+            py (np.ndarray): y-coordinate of particle in meters.
+            pz (np.ndarray): z-coordinate of particle in meters.
+
+        Returns:
+            nhat (np.ndarray): Normal of particles of conductor to nearest
+                surface of conductor.
+        """
+        arr_length = px.shape[0]
+        points = np.zeros((arr_length, 2))
+        points[:, 0] = px
+        points[:, 1] = pz
+        transformed_points = self._transform_coordinates(points)
+        idx = self._sort_particles(transformed_points)
+        normals = self.region_normals[idx]
+        nhat = np.zeros((3, (normals.shape[0])))
+        nhat[0, :] = normals[:, 0]
+        nhat[2, :] = normals[:, 1]
+        return nhat
+
+    def _get_transformation_matrix(self):
+        """Tranform1 is used to move the rectangle to the appropriate location
+        in the plane and scale it to the appropriate size. The rectangle is
+        placed such that the longest side is along the z-axis and the bottom
+        right corner is at (1, -1). This placement makes it simple to pick out
+        positions that are in regions 0 or 1 as well as positions in region 4
+        or 5.
+        """
+        # first transpose the box to the origin
+        transpose1 = np.identity(3)
+        transpose1[0, 2] = (-self.center_x + self.length_x / 2.0)
+        transpose1[1, 2] = (-self.center_z + self.length_z / 2.0)
+
+        # next scale the axes to make zone 0 equilateral with side length 1
+        l = min(self.length_x, self.length_z)
+        scale = np.identity(3)
+        scale[0, 0] = 2.0 / l
+        scale[1, 1] = 2.0 / l
+
+        # next transpose again so the center is at the origin
+        transpose2 = np.identity(3)
+        transpose2[0, 2] = -1
+        transpose2[1, 2] = -1
+
+        # rotate by 90 deg if the length_z is smallest
+        rotate = np.identity(3)
+        if self.length_z < self.length_x:
+            rotate[0,0] = np.cos(np.pi/2)
+            rotate[0,1] = -np.sin(np.pi/2)
+            rotate[1,0] = np.sin(np.pi/2)
+            rotate[1,1] = np.cos(np.pi/2)
+
+        transformation_matrix = np.dot(
+            np.dot(rotate, transpose2),
+            np.dot(scale, transpose1)
+        )
+        return transformation_matrix
+
+    def _transform_coordinates(self, points_in):
+        """Transforms the coordinates of the particles using the
+        transformation matrix of the rectangle"""
+        points = np.ones((len(points_in), 3))
+        points[:, 0] = points_in[:, 0]
+        points[:, 1] = points_in[:, 1]
+
+        points = points.dot(self.transformation_matrix.T)
+
+        return points[:, 0:2]
+
+    def _sort_particles(self, points):
+        """Finds the regions of the rectangle that each point belongs to"""
+        # The checks below isolate the region in which the given position lies.
+        # c0 and c2 are True iff a particle is in region 0 or 2, respectively
+        # not_c1 indicates a particle may be in regions 0, 2, or 3.
+        c0 = np.array(points[:, 1] < -abs(points[:, 0]), dtype=int)
+        c2 = np.array(points[:, 1] - self.scaled_h + 2.0 > abs(points[:, 0]), dtype=int)
+        not_c1 = np.array(points[:, 0] <= 0, dtype=int)
+        # the booleans below form bit values to build up the index of the
+        # region in which a given position lies.
+        # bit2 is True if in region 2 or 3.
+        bit2 = c2 | (not_c1 & np.logical_not(c0))
+        # bit1 is True if in region 1 or 3; equivalently, if it's not in 0 or 2.
+        bit1 = np.logical_not(c0 | c2)
+        idx = 2*bit2 + bit1
+
+        return idx
+
+    def isinside(self, X, Y, Z, aura=0):
+        """
+        Calculates which grid tiles are within the rectangle.
+
+        Arguments:
+            X (np.ndarray): array of x coordinates of flattened grid.
+            Y (np.ndarray): array of y coordinates of flattened grid.
+            Z (np.ndarray): array of z coordinates of flattened grid.
+            aura (float): extra space around the conductor that is considered inside. Useful
+                for small, thin conductors that don't overlap any grid points. In
+                units of meters.
+
+        Returns:
+            result (np.ndarray): array of flattened grid where all tiles
+                inside the rectangle are 1, and other tiles are 0.
+        """
+
+        X_in_bounds = np.where(np.maximum(X-self.xmax-aura, self.xmin-aura-X) <= 0, 1, 0)
+        Z_in_bounds = np.where(np.maximum(Z-self.zmax-aura, self.zmin-aura-Z) <= 0, 1, 0)
+        result = np.where(X_in_bounds + Z_in_bounds > 1, 1, 0)
+
+        return result
 
     def _install_in_simulation(self):
         """Function to pass this EB object to the WarpX simulation."""

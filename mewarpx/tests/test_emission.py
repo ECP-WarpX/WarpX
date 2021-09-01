@@ -238,6 +238,85 @@ def test_circle_emitter():
     assert os.path.exists(plotfile)
 
 
+def test_rectangle_emitter():
+    name = "rectangleEmitter"
+    mwxutil.init_libwarpx(ndim=2, rz=False)
+    from pywarpx import picmi
+    from mewarpx import assemblies, emission, mepicmi
+    from mewarpx.utils_store import testing_util
+
+    from mewarpx.mwxrun import mwxrun
+
+    # Include a random run number to allow parallel runs to not collide.  Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed. Use a random
+    # seed instead for initial dataframe generation.
+    np.random.seed(274737523)
+
+    #####################################
+    # embedded boundary, grid, and solver
+    #####################################
+
+    T_rectangle = 2173.15 # K
+    # cylinder = assemblies.Cylinder(
+    #     center_x=0.2, center_z=0.4, radius=0.1, V=0, T=T_box,
+    #     WF=1.2, name='circle'
+    # )
+
+    rectangle = assemblies.Rectangle(
+        center_x=0.2, center_z=0.4, length_x=0.2, length_z =0.4, V=0,
+        T=T_rectangle, WF=1.2, name="rectangle")
+
+    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20)
+    solver = picmi.ElectrostaticSolver(
+        grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
+    )
+
+    #################################
+    # physics components
+    ################################
+
+    electrons = mepicmi.Species(particle_type='electron', name='electrons')
+
+    #################################
+    # simulation setup
+    ################################
+
+    mwxrun.simulation.solver = solver
+    mwxrun.init_run()
+
+    ######################################
+    # Add ME emission
+    #####################################
+
+    emitter = emission.ArbitraryEmitter2D(
+        conductor=rectangle, T=T_rectangle, res_fac=10
+    )
+
+    res_dict = emitter.get_newparticles(
+        10000, 1, electrons.sq, electrons.sm, randomdt=False, velhalfstep=False
+    )
+    df = pandas.DataFrame(index=list(range(1)))
+
+    # Compare main results, leave out E_total, since variation is too high
+    for label in ['vx', 'vy', 'vz', 'x', 'y', 'z']:
+        df[label + '_min'] = np.min(res_dict[label])
+        df[label + '_max'] = np.max(res_dict[label])
+        df[label + '_mean'] = np.mean(res_dict[label])
+        df[label + '_std'] = np.std(res_dict[label])
+
+    assert testing_util.test_df_vs_ref(
+        testname="rectangle_emitter", df=df, margin=0.3
+    )
+
+    emitter.plot_contours()
+    plotfile =  f"{rectangle.name}_contour_plot.png"
+
+    assert os.path.exists(plotfile)
+
+
 def test_plasma_injector():
     name = "plasmainjector"
     mwxutil.init_libwarpx(ndim=2, rz=False)
@@ -361,6 +440,7 @@ def test_plasma_injector():
             df[label_base + key + '_std'] = np.std(val)
 
     assert testing_util.test_df_vs_ref(testname=name, df=df, margin=0.3)
+
 
 def test_plasma_injector_fixedT2():
     name = "plasmainjector_fixedT2"

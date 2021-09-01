@@ -442,10 +442,6 @@ class DiodeRun_V1(object):
 
         self.surface_list = [self.cathode, self.anode]
 
-        # Set solver boundary potentials
-        mwxrun.grid.potential_zmin = self.cathode.V
-        mwxrun.grid.potential_zmax = self.anode.V
-
     def init_scraper(self):
         logger.info("### Init Diode Scraper Setup ###")
         # we need to enable the particle buffer if a flux diagnostic is used
