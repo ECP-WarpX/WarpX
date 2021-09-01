@@ -59,7 +59,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
 
    # optional: Ascent in situ support
    #   note: build WarpX with CMake
-   export Ascent_DIR=/gpfs/alpine/csc340/world-shared/software/ascent/2021_08_26/summit/cuda/gnu/ascent-install/
+   export Ascent_DIR=/gpfs/alpine/csc340/world-shared/software/ascent/2021_08_31/summit/cuda/gnu/ascent-install/
 
    # optional: for Python bindings or libEnsemble
    module load python/3.8.10
