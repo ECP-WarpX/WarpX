@@ -90,7 +90,6 @@ include guards. Below we provide a simple example:
 ``MyClass.H``:
 
 .. code-block:: cpp
-
    #ifndef MY_CLASS_H
    #define MY_CLASS_H
 
@@ -103,14 +102,12 @@ include guards. Below we provide a simple example:
 ``MyClass.cpp``:
 
 .. code-block:: cpp
-
    #include "MyClass.H"
    class MyClass{/* stuff */};
 
 Usage: in ``SimpleUsage.H``
 
 .. code-block:: cpp
-
    #include "MyClass_fwd.H"
    #include <memory>
 
