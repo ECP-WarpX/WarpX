@@ -8,6 +8,7 @@
 
 """Classes following the PICMI standard
 """
+import os
 import re
 import picmistandard
 import numpy as np
@@ -807,7 +808,11 @@ class Simulation(picmistandard.PICMI_Simulation):
             diagnostic.initialize_inputs()
 
         if self.amr_checkpoint:
-            pywarpx.amr.restart = self.amr_checkpoint
+            if os.path.exists(self.amr_checkpoint):
+                pywarpx.amr.restart = self.amr_checkpoint
+            else:
+                print(f'Could not find checkpoint {self.amr_checkpoint} !')
+                pywarpx.amr.restart = None
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
