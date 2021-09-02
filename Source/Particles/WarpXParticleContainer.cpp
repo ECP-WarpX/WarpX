@@ -1104,8 +1104,6 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
 
     if (boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
-    auto reflection_models = getReflectionModels();
-
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -1138,6 +1136,23 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                     GetPosition.AsStored(i, x, y, z);
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
+                    auto E = (0.5_rt * mass
+                        * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])
+                        / PhysConst::q_e
+                    );
+
+                    auto refl_coef_xmin = getReflectionCoefficient(0, E);
+                    auto refl_coef_xmax = getReflectionCoefficient(0, E);
+#ifdef WARPX_DIM_3D
+                    auto refl_coef_ymin = getReflectionCoefficient(2, E);
+                    auto refl_coef_ymax = getReflectionCoefficient(3, E);
+                    auto refl_coef_zmin = getReflectionCoefficient(4, E);
+                    auto refl_coef_zmax = getReflectionCoefficient(5, E);
+#else
+                    auto refl_coef_zmin = getReflectionCoefficient(2, E);
+                    auto refl_coef_zmax = getReflectionCoefficient(3, E);
+#endif
+
                     bool particle_lost = false;
                     ApplyParticleBoundaries::apply_boundaries(x, xmin, xmax,
 #ifdef WARPX_DIM_3D
@@ -1146,7 +1161,12 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
                                                               boundary_conditions,
-                                                              reflection_models, engine);
+                                                              refl_coef_xmin, refl_coef_xmax,
+#ifdef WARPX_DIM_3D
+                                                              refl_coef_ymin, refl_coef_ymax,
+#endif
+                                                              refl_coef_zmin, refl_coef_zmax,
+                                                              engine);
 
                     if (particle_lost) {
                         p.id() = -p.id();

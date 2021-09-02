@@ -250,30 +250,21 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     n_boundaries++;
 #endif
 
-    std::vector<std::string> reflection_models(n_boundaries, "0");
-    pp_species_name.query("reflection_model_x_lo(E)", reflection_models[0]);
-    pp_species_name.query("reflection_model_x_hi(E)", reflection_models[1]);
+    m_boundary_reflection_models.resize(n_boundaries, "0");
+    pp_species_name.query("reflection_model_x_lo(E)", m_boundary_reflection_models[0]);
+    pp_species_name.query("reflection_model_x_hi(E)", m_boundary_reflection_models[1]);
 #if AMREX_SPACEDIM == 2
-    pp_species_name.query("reflection_model_z_lo(E)", reflection_models[2]);
-    pp_species_name.query("reflection_model_z_hi(E)", reflection_models[3]);
+    pp_species_name.query("reflection_model_z_lo(E)", m_boundary_reflection_models[2]);
+    pp_species_name.query("reflection_model_z_hi(E)", m_boundary_reflection_models[3]);
 #else
-    pp_species_name.query("reflection_model_y_lo(E)", reflection_models[2]);
-    pp_species_name.query("reflection_model_y_hi(E)", reflection_models[3]);
-    pp_species_name.query("reflection_model_z_lo(E)", reflection_models[4]);
-    pp_species_name.query("reflection_model_z_hi(E)", reflection_models[5]);
+    pp_species_name.query("reflection_model_y_lo(E)", m_boundary_reflection_models[2]);
+    pp_species_name.query("reflection_model_y_hi(E)", m_boundary_reflection_models[3]);
+    pp_species_name.query("reflection_model_z_lo(E)", m_boundary_reflection_models[4]);
+    pp_species_name.query("reflection_model_z_hi(E)", m_boundary_reflection_models[5]);
 #endif
 #ifdef AMREX_USE_EB
-    pp_species_name.query("reflection_model_eb(E)", reflection_models[AMREX_SPACEDIM*2]);
+    pp_species_name.query("reflection_model_eb(E)", m_boundary_reflection_models[AMREX_SPACEDIM*2]);
 #endif
-
-    m_boundary_reflection_models.resize(n_boundaries);
-    for (int i = 0; i < n_boundaries; i++)
-    {
-        auto parser = makeParser(reflection_models[i], {"E"});
-        auto parser_exe = parser.compileHost<1>();
-        // m_boundary_reflection_models[i] = parser_exe;
-        m_boundary_reflection_models[i] = parser_exe(0.0);
-    }
 
     // Get Galilean velocity
     ParmParse pp_psatd("psatd");

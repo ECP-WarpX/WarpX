@@ -12,7 +12,10 @@
 #include <AMReX_MultiFab.H>
 
 #include <EmbeddedBoundary/DistanceToEB.H>
+#include "EmbeddedBoundary/ParticleBoundaryProcess.H"
 #include "Particles/Gather/ScalarFieldGather.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 
 /**
  * \brief Interact particles with the embedded boundary walls.
@@ -150,12 +153,21 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     {
         const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
+        const auto mass = pc.getMass();
+        const auto reflection_coef = pc.getReflectionCoefficient(AMREX_SPACEDIM*2, 0);
+
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
+
+            auto& soa = pc.ParticlesAt(lev, pti).GetStructOfArrays();
+            amrex::ParticleReal * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
+            amrex::ParticleReal * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
+            amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
+
             auto phi = (*distance_to_eb[lev])[pti].array();  // signed distance function
             amrex::ParallelForRNG( np,
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
@@ -178,8 +190,38 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 DistanceToEB::normalize(normal);
 
+                // get reflection coefficient if absorbing boundary condition is used
+//                auto E = (0.5 * mass
+//                    * (ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip])
+//                    / PhysConst::q_e
+//                );
+//                auto reflection_coef = reflection_model(AMREX_SPACEDIM*2, E);
+
                 if (phi_value < 0.0) {
-                    f(ptd, ip, pos, normal, engine);
+                    if (amrex::Random(engine) > reflection_coef)
+                    {
+                        f(ptd, ip, pos, normal, engine);
+                    }
+                    else
+                    {
+                        // TODO: This is technically wrong since all reflections
+                        // should be done around the normal to the surface at the
+                        // intersection point not the final point of the particle
+
+                        // reflect particle position by moving it along the
+                        // normal to the surface by twice the distance to the
+                        // surface - note phi and the normal vector is multiplied
+                        // by -1 so it cancels
+                        xp += 2.0 * phi_value * normal[0];
+                        yp += 2.0 * phi_value * normal[1];
+                        zp += 2.0 * phi_value * normal[2];
+
+                        // reflect velocity by the normal as well
+                        amrex::Real un_dot = ux[ip] * normal[0] + uy[ip] * normal[1] + uz[ip] * normal[2];
+                        ux[ip] -= 2.0 * un_dot * normal[0];
+                        uy[ip] -= 2.0 * un_dot * normal[1];
+                        uz[ip] -= 2.0 * un_dot * normal[2];
+                    }
                 }
             });
         }

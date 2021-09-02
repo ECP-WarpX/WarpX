@@ -21,6 +21,7 @@
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "MultiParticleContainer_fwd.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
@@ -343,8 +344,16 @@ public:
 
     amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 
-    //std::vector<amrex::ParserExecutor<1>> getReflectionModels () const { return m_boundary_reflection_models; }
-    std::vector<amrex::Real> getReflectionModels () const { return m_boundary_reflection_models; }
+    /**
+     * \brief Function that returns the reflection coefficient for a given boundary (idx)
+     * and incoming particle energy.
+     */
+    amrex::Real getReflectionCoefficient (int idx, amrex::Real E) const
+    {
+        auto parser = makeParser(m_boundary_reflection_models[idx], {"E"});
+        auto parser_exe = parser.compileHost<1>();
+        return parser_exe(E);
+    }
 
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
@@ -399,8 +408,7 @@ protected:
     int do_back_transformed_diagnostics = 1;
 
     // Vector to store reflection models for absorbing boundaries
-    // std::vector<amrex::ParserExecutor<1>> m_boundary_reflection_models;
-    std::vector<amrex::Real> m_boundary_reflection_models;
+    std::vector<std::string> m_boundary_reflection_models;
 
 #ifdef WARPX_QED
     //Species can receive a shared pointer to a QED engine (species for
