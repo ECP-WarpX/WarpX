@@ -734,6 +734,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
+        self.amr_checkpoint = kw.pop('warpx_amr_checkpoint', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -804,6 +805,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
+
+        if self.amr_checkpoint:
+            pywarpx.amr.restart = self.amr_checkpoint
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
@@ -942,8 +946,7 @@ class CheckpointDiagnostic(picmistandard.PICMI_FieldDiagnostic):
 
     def initialize_inputs(self):
 
-        diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
-        self.name = 'chkpoint{}'.format(diagnostics_number)
+        self.name = 'chkpoint'
 
         try:
             self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
