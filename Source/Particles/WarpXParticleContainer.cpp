@@ -104,6 +104,17 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
     local_jz.resize(num_threads);
+
+    // The boundary conditions are read in in ReadBCParams but a child class
+    // can allow these value to be overwritten if different boundary
+    // conditions are desired for a specific species
+    m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
+#ifdef WARPX_DIM_3D
+    m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+    m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
+#else
+    m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+#endif
 }
 
 void
@@ -1099,10 +1110,10 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
 }
 
 void
-WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions){
+WarpXParticleContainer::ApplyBoundaryConditions (){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
 
-    if (boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
+    if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
@@ -1136,23 +1147,6 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                     GetPosition.AsStored(i, x, y, z);
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
-                    auto E = (0.5_rt * mass
-                        * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])
-                        / PhysConst::q_e
-                    );
-
-                    auto refl_coef_xmin = getReflectionCoefficient(0, E);
-                    auto refl_coef_xmax = getReflectionCoefficient(0, E);
-#ifdef WARPX_DIM_3D
-                    auto refl_coef_ymin = getReflectionCoefficient(2, E);
-                    auto refl_coef_ymax = getReflectionCoefficient(3, E);
-                    auto refl_coef_zmin = getReflectionCoefficient(4, E);
-                    auto refl_coef_zmax = getReflectionCoefficient(5, E);
-#else
-                    auto refl_coef_zmin = getReflectionCoefficient(2, E);
-                    auto refl_coef_zmax = getReflectionCoefficient(3, E);
-#endif
-
                     bool particle_lost = false;
                     ApplyParticleBoundaries::apply_boundaries(x, xmin, xmax,
 #ifdef WARPX_DIM_3D
@@ -1160,13 +1154,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
-                                                              boundary_conditions,
-                                                              refl_coef_xmin, refl_coef_xmax,
-#ifdef WARPX_DIM_3D
-                                                              refl_coef_ymin, refl_coef_ymax,
-#endif
-                                                              refl_coef_zmin, refl_coef_zmax,
-                                                              engine);
+                                                              m_boundary_conditions, engine);
 
                     if (particle_lost) {
                         p.id() = -p.id();

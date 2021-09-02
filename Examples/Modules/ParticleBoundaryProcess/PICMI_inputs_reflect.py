@@ -69,7 +69,7 @@ electrons = picmi.Species(
     warpx_save_particles_at_zlo=1,
     # warpx_save_particles_at_eb=1,
     # warpx_save_previous_position=True,
-    warpx_reflection_model_z_hi="0.5"
+    warpx_reflection_model_zhi="0.5"
 )
 
 ##########################

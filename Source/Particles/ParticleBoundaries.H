@@ -35,6 +35,15 @@ struct ParticleBoundaries
     ParticleBoundaryType zmin_bc;
     ParticleBoundaryType zmax_bc;
 
+    // reflection coefficients for absorbing boundaries
+    amrex::Real reflection_coef_xlo = 0.0;
+    amrex::Real reflection_coef_xhi = 0.0;
+    amrex::Real reflection_coef_ylo = 0.0;
+    amrex::Real reflection_coef_yhi = 0.0;
+    amrex::Real reflection_coef_zlo = 0.0;
+    amrex::Real reflection_coef_zhi = 0.0;
+    amrex::Real reflection_coef_eb = 0.0;
+
     bool reflect_all_velocities;
 
 };

@@ -86,11 +86,6 @@ namespace ApplyParticleBoundaries {
                       amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                       bool& particle_lost,
                       ParticleBoundaries const& boundaries,
-                      amrex::Real refl_coef_xmin, amrex::Real refl_coef_xmax,
-#ifdef WARPX_DIM_3D
-                      amrex::Real refl_coef_ymin, amrex::Real refl_coef_ymax,
-#endif
-                      amrex::Real refl_coef_zmin, amrex::Real refl_coef_zmax,
                       amrex::RandomEngine const& engine)
     {
         bool change_sign_ux = false;
@@ -99,19 +94,19 @@ namespace ApplyParticleBoundaries {
 
         apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost,
                        boundaries.xmin_bc, boundaries.xmax_bc,
-                       refl_coef_xmin, refl_coef_xmax, engine);
+                       boundaries.reflection_coef_xlo, boundaries.reflection_coef_xhi,
+                       engine);
 #ifdef WARPX_DIM_3D
         apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost,
                        boundaries.ymin_bc, boundaries.ymax_bc,
-                       refl_coef_ymin, refl_coef_ymax, engine);
-        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost,
-                       boundaries.zmin_bc, boundaries.zmax_bc,
-                       refl_coef_zmin, refl_coef_zmax, engine);
-#else
-        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost,
-                       boundaries.zmin_bc, boundaries.zmax_bc,
-                       refl_coef_zmin, refl_coef_zmax, engine);
+                       boundaries.reflection_coef_ylo, boundaries.reflection_coef_yhi,
+                       engine);
 #endif
+        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost,
+                       boundaries.zmin_bc, boundaries.zmax_bc,
+                       boundaries.reflection_coef_zlo, boundaries.reflection_coef_zhi,
+                       engine);
+
 
         if (boundaries.reflect_all_velocities && (change_sign_ux | change_sign_uy | change_sign_uz)) {
             change_sign_ux = true;

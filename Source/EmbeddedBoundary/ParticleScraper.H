@@ -153,8 +153,8 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     {
         const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
-        const auto mass = pc.getMass();
-        const auto reflection_coef = pc.getReflectionCoefficient(AMREX_SPACEDIM*2, 0);
+        // get reflection coefficient
+        const auto reflection_coef = 0.0;
 
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
@@ -189,13 +189,6 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 pos[2] = zp - normal[2]*phi_value;
 
                 DistanceToEB::normalize(normal);
-
-                // get reflection coefficient if absorbing boundary condition is used
-//                auto E = (0.5 * mass
-//                    * (ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip])
-//                    / PhysConst::q_e
-//                );
-//                auto reflection_coef = reflection_model(AMREX_SPACEDIM*2, E);
 
                 if (phi_value < 0.0) {
                     if (amrex::Random(engine) > reflection_coef)

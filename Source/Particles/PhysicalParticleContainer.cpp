@@ -243,28 +243,20 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
     }
 
-    // Add reflection models for absorbing boundaries defaults to a zero
+    // Read reflection models for absorbing boundaries defaults to a zero
     // reflection probability
-    int n_boundaries = AMREX_SPACEDIM*2;
-#ifdef AMREX_USE_EB
-    n_boundaries++;
-#endif
+    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_coef_xlo);
+    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_coef_xhi);
+    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_coef_ylo);
+    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_coef_yhi);
+    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_coef_zlo);
+    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_coef_zhi);
+    pp_species_name.query("reflection_model_eb(E)", m_boundary_conditions.reflection_coef_eb);
 
-    m_boundary_reflection_models.resize(n_boundaries, "0");
-    pp_species_name.query("reflection_model_x_lo(E)", m_boundary_reflection_models[0]);
-    pp_species_name.query("reflection_model_x_hi(E)", m_boundary_reflection_models[1]);
-#if AMREX_SPACEDIM == 2
-    pp_species_name.query("reflection_model_z_lo(E)", m_boundary_reflection_models[2]);
-    pp_species_name.query("reflection_model_z_hi(E)", m_boundary_reflection_models[3]);
-#else
-    pp_species_name.query("reflection_model_y_lo(E)", m_boundary_reflection_models[2]);
-    pp_species_name.query("reflection_model_y_hi(E)", m_boundary_reflection_models[3]);
-    pp_species_name.query("reflection_model_z_lo(E)", m_boundary_reflection_models[4]);
-    pp_species_name.query("reflection_model_z_hi(E)", m_boundary_reflection_models[5]);
-#endif
-#ifdef AMREX_USE_EB
-    pp_species_name.query("reflection_model_eb(E)", m_boundary_reflection_models[AMREX_SPACEDIM*2]);
-#endif
+    ParmParse pp_boundary("boundary");
+    bool flag = false;
+    pp_boundary.query("reflect_all_velocities", flag);
+    m_boundary_conditions.Set_reflect_all_velocities(flag);
 
     // Get Galilean velocity
     ParmParse pp_psatd("psatd");

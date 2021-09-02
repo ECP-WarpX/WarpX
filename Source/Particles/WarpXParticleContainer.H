@@ -281,7 +281,7 @@ public:
      * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
      * are supported
      */
-    void ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions);
+    void ApplyBoundaryConditions ();
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
@@ -345,17 +345,6 @@ public:
     amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 
     /**
-     * \brief Function that returns the reflection coefficient for a given boundary (idx)
-     * and incoming particle energy.
-     */
-    amrex::Real getReflectionCoefficient (int idx, amrex::Real E) const
-    {
-        auto parser = makeParser(m_boundary_reflection_models[idx], {"E"});
-        auto parser_exe = parser.compileHost<1>();
-        return parser_exe(E);
-    }
-
-    /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
      * Empty body is here because making the method purely virtual would mean that we need to
      * override the method for every derived class. Note that in practice this function is never
@@ -375,6 +364,9 @@ protected:
     amrex::Real charge;
     amrex::Real mass;
     PhysicalSpecies physical_species;
+
+    // Controls boundaries for particles exiting the domain
+    ParticleBoundaries m_boundary_conditions;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     bool m_deposit_on_main_grid = false;
@@ -406,9 +398,6 @@ protected:
     int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
-
-    // Vector to store reflection models for absorbing boundaries
-    std::vector<std::string> m_boundary_reflection_models;
 
 #ifdef WARPX_QED
     //Species can receive a shared pointer to a QED engine (species for
