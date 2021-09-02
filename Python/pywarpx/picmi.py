@@ -933,6 +933,29 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
 ElectrostaticFieldDiagnostic = FieldDiagnostic
 
 
+class CheckpointDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+    def init(self, kw):
+
+        self.format = kw.pop('warpx_format', 'plotfile')
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+
+    def initialize_inputs(self):
+
+        diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
+        self.name = 'chkpoint{}'.format(diagnostics_number)
+
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+
+        self.diagnostic.intervals = self.period
+        self.diagnostic.diag_type = 'Full'
+        self.diagnostic.format = 'checkpoint'
+
+
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
     def init(self, kw):
 
