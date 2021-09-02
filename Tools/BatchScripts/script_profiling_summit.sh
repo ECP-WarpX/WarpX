@@ -16,9 +16,9 @@
 # make output group-readable by default
 umask 0027
 
-module load pgi
-module load cuda/9.1.85
-module list
+#module load pgi
+#module load cuda/9.1.85
+#module list
 set -x
 
 omp=1

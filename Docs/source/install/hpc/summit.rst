@@ -52,6 +52,9 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    module load adios2/2.7.1
    module load hdf5/1.10.7
 
+   # often unstable at runtime with dependencies
+   module unload darshan-runtime
+
    # optional: for PSATD in RZ geometry support
    #   note: needs the ums modules above
    module load blaspp
