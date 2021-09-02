@@ -201,6 +201,7 @@ public:
     static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
+    static bool field_gathering_centering;
 
     // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     static bool do_current_centering;

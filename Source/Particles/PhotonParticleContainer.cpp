@@ -148,7 +148,6 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const Dim3 lo = lbound(box);
 
     bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
@@ -170,6 +169,12 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
+    const bool field_gathering_centering = WarpX::field_gathering_centering;
+
+    const int nox = (field_gathering_centering) ? WarpX::field_centering_nox : WarpX::nox;
+    const int noy = (field_gathering_centering) ? WarpX::field_centering_noy : WarpX::noy;
+    const int noz = (field_gathering_centering) ? WarpX::field_centering_noz : WarpX::noz;
+
     amrex::ParallelFor(
         np_to_push,
         [=] AMREX_GPU_DEVICE (long i) {
@@ -180,13 +185,24 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
             amrex::ParticleReal Exp=0, Eyp=0, Ezp=0;
             amrex::ParticleReal Bxp=0, Byp=0, Bzp=0;
 
-            if(!t_do_not_gather){
+            if(!t_do_not_gather)
+            {
                 // first gather E and B to the particle positions
-                doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                               nox, galerkin_interpolation);
+                if (field_gathering_centering)
+                {
+                    doGatherFiniteCentering(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                        ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                        ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                        dx_arr, xyzmin_arr, lo, nox, noy, noz);
+                }
+                else
+                {
+                    doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                                   nox, galerkin_interpolation);
+                }
             }
             getExternalE(i, Exp, Eyp, Ezp);
             getExternalB(i, Bxp, Byp, Bzp);

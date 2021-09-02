@@ -126,6 +126,8 @@ amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
+bool WarpX::field_gathering_centering = false;
+
 bool WarpX::do_current_centering = false;
 
 int WarpX::n_rz_azimuthal_modes = 1;
@@ -857,6 +859,8 @@ WarpX::ReadParameters ()
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
 
+        pp_warpx.query("field_gathering_centering", field_gathering_centering);
+
         // If true, the current is deposited on a nodal grid and then interpolated onto a Yee grid
         pp_warpx.query("do_current_centering", do_current_centering);
 
@@ -910,6 +914,11 @@ WarpX::ReadParameters ()
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
             galerkin_interpolation = false;
+        }
+
+        if (field_gathering_centering == true && field_gathering_algo != GatheringAlgo::MomentumConserving)
+        {
+            amrex::Abort("Field gathering with finite centering implemented only for momentum-conserving gathering");
         }
 
         em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");

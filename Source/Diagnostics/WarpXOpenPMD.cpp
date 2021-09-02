@@ -625,7 +625,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       switch( WarpX::field_gathering_algo ) {
           case GatheringAlgo::EnergyConserving : return "energyConserving";
           case GatheringAlgo::MomentumConserving : return "momentumConserving";
-          case GatheringAlgo::FiniteCentering : return "finiteCentering";
           default: return "other";
       }
   }() );

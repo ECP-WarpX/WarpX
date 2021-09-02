@@ -338,7 +338,6 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const Dim3 lo = lbound(box);
 
             bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
             int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
             amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
@@ -383,6 +382,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
 
+            const bool field_gathering_centering = WarpX::field_gathering_centering;
+
+            const int nox = (field_gathering_centering) ? WarpX::field_centering_nox : WarpX::nox;
+            const int noy = (field_gathering_centering) ? WarpX::field_centering_noy : WarpX::noy;
+            const int noz = (field_gathering_centering) ? WarpX::field_centering_noz : WarpX::noz;
+
             amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
             {
                 ux_save[ip] = uxpp[ip];
@@ -396,11 +401,21 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
 
                 // first gather E and B to the particle positions
-                doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                               nox, galerkin_interpolation);
+                if (field_gathering_centering)
+                {
+                    doGatherFiniteCentering(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                        ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                        ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                        dx_arr, xyzmin_arr, lo, nox, noy, noz);
+                }
+                else
+                {
+                    doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                                   nox, galerkin_interpolation);
+                }
                 getExternalE(ip, Exp, Eyp, Ezp);
                 getExternalB(ip, Bxp, Byp, Bzp);
 

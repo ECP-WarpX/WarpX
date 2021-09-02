@@ -571,4 +571,137 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
 }
 
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void doGatherFiniteCentering (const amrex::ParticleReal xp,
+                              const amrex::ParticleReal yp,
+                              const amrex::ParticleReal zp,
+                              amrex::ParticleReal& Exp,
+                              amrex::ParticleReal& Eyp,
+                              amrex::ParticleReal& Ezp,
+                              amrex::ParticleReal& Bxp,
+                              amrex::ParticleReal& Byp,
+                              amrex::ParticleReal& Bzp,
+                              const amrex::Array4<amrex::Real const>& ex_arr,
+                              const amrex::Array4<amrex::Real const>& ey_arr,
+                              const amrex::Array4<amrex::Real const>& ez_arr,
+                              const amrex::Array4<amrex::Real const>& bx_arr,
+                              const amrex::Array4<amrex::Real const>& by_arr,
+                              const amrex::Array4<amrex::Real const>& bz_arr,
+                              const amrex::IndexType ex_type,
+                              const amrex::IndexType ey_type,
+                              const amrex::IndexType ez_type,
+                              const amrex::IndexType bx_type,
+                              const amrex::IndexType by_type,
+                              const amrex::IndexType bz_type,
+                              const amrex::GpuArray<amrex::Real,3>& dxyz,
+                              const amrex::GpuArray<amrex::Real,3>& xyz_min,
+                              const amrex::Dim3& lo,
+                              const int nox,
+                              const int noy,
+                              const int noz)
+{
+    using namespace amrex;
+
+#if defined(WARPX_DIM_XZ)
+    amrex::ignore_unused(yp, noy);
+#endif
+
+    amrex::ignore_unused(lo);
+
+    // TODO These will be used to gather from Yee grid
+    amrex::ignore_unused(ex_type, ey_type, ez_type, bx_type, by_type, bz_type);
+
+    // Pad input arrays with zeros beyond ghost cells
+    // for out-of-bound accesses due to large-stencil operations
+    const auto ex_arr_zeropad = [ex_arr] (const int ii, const int jj, const int kk) noexcept
+    {
+        return ex_arr.contains(ii,jj,kk) ? ex_arr(ii,jj,kk) : 0.0_rt;
+    };
+    const auto ey_arr_zeropad = [ey_arr] (const int ii, const int jj, const int kk) noexcept
+    {
+        return ey_arr.contains(ii,jj,kk) ? ey_arr(ii,jj,kk) : 0.0_rt;
+    };
+    const auto ez_arr_zeropad = [ez_arr] (const int ii, const int jj, const int kk) noexcept
+    {
+        return ez_arr.contains(ii,jj,kk) ? ez_arr(ii,jj,kk) : 0.0_rt;
+    };
+    const auto bx_arr_zeropad = [bx_arr] (const int ii, const int jj, const int kk) noexcept
+    {
+        return bx_arr.contains(ii,jj,kk) ? bx_arr(ii,jj,kk) : 0.0_rt;
+    };
+    const auto by_arr_zeropad = [by_arr] (const int ii, const int jj, const int kk) noexcept
+    {
+        return by_arr.contains(ii,jj,kk) ? by_arr(ii,jj,kk) : 0.0_rt;
+    };
+    const auto bz_arr_zeropad = [bz_arr] (const int ii, const int jj, const int kk) noexcept
+    {
+        return bz_arr.contains(ii,jj,kk) ? bz_arr(ii,jj,kk) : 0.0_rt;
+    };
+
+    const amrex::Real x = (xp - xyz_min[0]) / dxyz[0];
+#if (AMREX_SPACEDIM == 3)
+    const amrex::Real y = (yp - xyz_min[1]) / dxyz[1];
+#endif
+    const amrex::Real z = (zp - xyz_min[2]) / dxyz[2];
+
+    // Compute largest nearest integer index
+    const int ip = std::ceil(x);
+#if   (AMREX_SPACEDIM == 2)
+    const int jp = std::ceil(z);
+    const int kp = 0;
+#elif (AMREX_SPACEDIM == 3)
+    const int jp = std::ceil(y);
+    const int kp = std::ceil(z);
+#endif
+
+    const int noi = nox;
+#if   (AMREX_SPACEDIM == 2)
+    const int noj = noz;
+#elif (AMREX_SPACEDIM == 3)
+    const int noj = noy;
+    const int nok = noz;
+#endif
+
+    // Min and max for interpolation loop along i
+    const int imin = ip - noi/2;
+    const int imax = ip + noi/2 - 1;
+
+    // Min and max for interpolation loop along j
+    const int jmin = jp - noj/2;
+    const int jmax = jp + noj/2 - 1;
+
+    // Min and max for interpolation loop along k
+#if   (AMREX_SPACEDIM == 2)
+    // kp = 0 always
+    const int kmin = kp;
+    const int kmax = kp;
+#elif (AMREX_SPACEDIM == 3)
+    const int kmin = kp - nok/2;
+    const int kmax = kp + nok/2 - 1;
+#endif
+
+    // Number of interpolation points
+    const int ni = imax - imin;
+    const int nj = jmax - jmin;
+    const int nk = kmax - kmin;
+
+    // TODO Include new coefficients
+    for (int kk = 0; kk <= nk; kk++)
+    {
+        for (int jj = 0; jj <= nj; jj++)
+        {
+            for (int ii = 0; ii <= ni; ii++)
+            {
+                Exp += ex_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Eyp += ey_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Ezp += ez_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+
+                Bxp += bx_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Byp += by_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Bzp += bz_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+            }
+        }
+    }
+}
+
 #endif // FIELDGATHER_H_

@@ -2099,7 +2099,6 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const Dim3 lo = lbound(box);
 
             bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
             int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
             amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
@@ -2138,6 +2137,12 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto t_do_not_gather = do_not_gather;
 
+            const bool field_gathering_centering = WarpX::field_gathering_centering;
+
+            const int nox = (field_gathering_centering) ? WarpX::field_centering_nox : WarpX::nox;
+            const int noy = (field_gathering_centering) ? WarpX::field_centering_noy : WarpX::noy;
+            const int noz = (field_gathering_centering) ? WarpX::field_centering_noz : WarpX::noz;
+
             amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
             {
                 amrex::ParticleReal xp, yp, zp;
@@ -2146,13 +2151,24 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
                 amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
 
-                if (!t_do_not_gather){
+                if (!t_do_not_gather)
+                {
                     // first gather E and B to the particle positions
-                    doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                                   nox, galerkin_interpolation);
+                    if (field_gathering_centering)
+                    {
+                        doGatherFiniteCentering(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                            ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                            dx_arr, xyzmin_arr, lo, nox, noy, noz);
+                    }
+                    else
+                    {
+                        doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                                       nox, galerkin_interpolation);
+                    }
                 }
                 // Externally applied E-field in Cartesian co-ordinates
                 getExternalE(ip, Exp, Eyp, Ezp);
@@ -2458,7 +2474,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const Dim3 lo = lbound(box);
 
     bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
@@ -2533,6 +2548,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
+    const bool field_gathering_centering = WarpX::field_gathering_centering;
+
+    const int nox = (field_gathering_centering) ? WarpX::field_centering_nox : WarpX::nox;
+    const int noy = (field_gathering_centering) ? WarpX::field_centering_noy : WarpX::noy;
+    const int noz = (field_gathering_centering) ? WarpX::field_centering_noz : WarpX::noz;
+
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
         amrex::ParticleReal xp, yp, zp;
@@ -2551,13 +2572,24 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
         amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
 
-        if(!t_do_not_gather){
+        if(!t_do_not_gather)
+        {
             // first gather E and B to the particle positions
-            doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                           ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                           dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, galerkin_interpolation);
+            if (field_gathering_centering)
+            {
+                doGatherFiniteCentering(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                    dx_arr, xyzmin_arr, lo, nox, noy, noz);
+            }
+            else
+            {
+                doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                               nox, galerkin_interpolation);
+            }
         }
         // Externally applied E-field in Cartesian co-ordinates
         getExternalE(ip, Exp, Eyp, Ezp);

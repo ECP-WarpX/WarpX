@@ -59,7 +59,6 @@ const std::map<std::string, int> charge_deposition_algo_to_int = {
 const std::map<std::string, int> gathering_algo_to_int = {
     {"energy-conserving",   GatheringAlgo::EnergyConserving },
     {"momentum-conserving", GatheringAlgo::MomentumConserving },
-    {"finite-centering",    GatheringAlgo::FiniteCentering },
     {"default",             GatheringAlgo::EnergyConserving }
 };
 
