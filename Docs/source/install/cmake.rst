@@ -159,6 +159,7 @@ An executable WarpX binary with the current compile-time options encoded in its 
 
 Additionally, a `symbolic link <https://en.wikipedia.org/wiki/Symbolic_link>`_ named ``warpx`` can be found in that directory, which points to the last built WarpX executable.
 
+.. _building-cmake-python:
 
 Python Bindings
 ---------------
