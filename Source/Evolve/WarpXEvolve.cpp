@@ -325,7 +325,7 @@ WarpX::Evolve (int numsteps)
             amrex::ParmParse().QueryUnusedInputs();
             early_params_checked = true;
         }
- 
+
         // warpx_py_afterstep runs with the updated global time. It is included
         // in the evolve timing.
         if (warpx_py_afterstep) warpx_py_afterstep();
