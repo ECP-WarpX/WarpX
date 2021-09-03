@@ -723,6 +723,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                                        const bool interpolate_across_levels,
                                        const int icomp)
 {
+    WARPX_PROFILE("WarpXParticleContainer::DepositCharge");
+
 #ifdef WARPX_DIM_RZ
     (void)do_rz_volume_scaling;
 #endif

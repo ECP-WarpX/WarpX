@@ -10,6 +10,8 @@ All the WarpX source code is located in ``Source/``.
 All sub-directories have a pretty straightforward name.
 The PIC loop is part of the WarpX class, in function ``WarpX::EvolveEM`` implemented in ``Source/WarpXEvolveEM.cpp``.
 The core of the PIC loop (i.e., without diagnostics etc.) is in ``WarpX::OneStep_nosub`` (when subcycling is OFF) or ``WarpX::OneStep_sub1`` (when subcycling is ON, with method 1).
+Here is a `visual representation <https://octo-repo-visualization.vercel.app/?repo=ECP-WarpX%2FWarpX>`__ of the repository structure.
+
 
 Code organization
 -----------------
@@ -72,22 +74,32 @@ Forward Declaration Headers
 ---------------------------
 Forward declarations can be used when a header file needs only to know that a given class exists, without any further detail (e.g., when only a pointer to an instance of
 that class is used). Forward declaration headers are a convenient way to organize forward declarations. If a forward declaration is needed for a given class ``MyClass``, declared in ``MyClass.H``,
-the forward declaration should appear in a header file named ``MyClass_fwd.H``, placed in the same folder containing ``MyClass.H``.
-Below we provide a simple example:
+the forward declaration should appear in a header file named ``MyClass_fwd.H``, placed in the same folder containing ``MyClass.H``. As for regular header files, forward declaration headers must have
+include guards. Below we provide a simple example:
 
 ``MyClass_fwd.H``:
 
 .. code-block:: cpp
 
-  class MyClass;
+   #ifndef MY_CLASS_FWD_H
+   #define MY_CLASS_FWD_H
+
+   class MyClass;
+
+   #endif //MY_CLASS_FWD_H
 
 ``MyClass.H``:
 
 .. code-block:: cpp
 
+   #ifndef MY_CLASS_H
+   #define MY_CLASS_H
+
    #include "MyClass_fwd.H"
    #include "someHeader.H"
    class MyClass{/* stuff */};
+
+   #endif //MY_CLASS_H
 
 ``MyClass.cpp``:
 
@@ -102,4 +114,8 @@ Usage: in ``SimpleUsage.H``
 
    #include "MyClass_fwd.H"
    #include <memory>
+
+   /* stuff */
+   std::unique_ptr<MyClass> p_my_class;
+   /* stuff */
 
