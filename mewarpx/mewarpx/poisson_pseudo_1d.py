@@ -28,6 +28,7 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
             grid=grid, method=kwargs.pop('method', 'Multigrid'),
             required_precision=1, **kwargs
         )
+        mwxrun.simulation.allocate_full_rho_phi = True
 
     def initialize_inputs(self):
         """Grab geometrical quantities from the grid. The boundary potentials

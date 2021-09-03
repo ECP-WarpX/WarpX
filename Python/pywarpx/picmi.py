@@ -800,6 +800,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
+        self.allocate_full_rho_phi = kw.pop('warpx_allocate_full_rho_phi', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -833,6 +834,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.costs_heuristic_particles_wt = self.costs_heuristic_particles_wt
         pywarpx.algo.costs_heuristic_cells_wt = self.costs_heuristic_cells_wt
 
+        pywarpx.warpx.allocate_full_rho_phi = self.allocate_full_rho_phi
         pywarpx.warpx.use_filter = self.use_filter
         pywarpx.warpx.serialize_ics = self.serialize_ics
 

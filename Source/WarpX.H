@@ -196,6 +196,8 @@ public:
     static bool use_filter_compensation;
     static bool serialize_ics;
 
+    static bool allocate_full_rho_phi;
+
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
     static std::string lab_data_directory;

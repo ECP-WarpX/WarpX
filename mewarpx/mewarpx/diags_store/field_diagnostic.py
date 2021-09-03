@@ -73,6 +73,8 @@ class FieldDiagnostic(WarpXDiagnostic):
         if self.post_processing:
             callbacks.installafterstep(self.check_for_end_of_sim)
 
+        mwxrun.simulation.allocate_full_rho_phi = True
+
     def add_field_diag(self):
         diagnostic = picmi.FieldDiagnostic(
             grid=self.grid,
