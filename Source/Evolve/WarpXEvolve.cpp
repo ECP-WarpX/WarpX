@@ -306,6 +306,21 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
         }
 
+        /// reduced diags
+        if (reduced_diags->m_plot_rd != 0)
+        {
+            reduced_diags->ComputeDiags(step);
+            reduced_diags->WriteToFile(step);
+        }
+        multi_diags->FilterComputePackFlush( step );
+
+        // inputs: unused parameters (e.g. typos) check after step 1 has finished
+        if (!early_params_checked) {
+            amrex::Print() << "\n"; // better: conditional \n based on return value
+            amrex::ParmParse().QueryUnusedInputs();
+            early_params_checked = true;
+        }
+
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
@@ -324,21 +339,6 @@ WarpX::Evolve (int numsteps)
             amrex::Print()<< "Evolve time = " << evolve_time
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
                       << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
-        }
-
-        /// reduced diags
-        if (reduced_diags->m_plot_rd != 0)
-        {
-            reduced_diags->ComputeDiags(step);
-            reduced_diags->WriteToFile(step);
-        }
-        multi_diags->FilterComputePackFlush( step );
-
-        // inputs: unused parameters (e.g. typos) check after step 1 has finished
-        if (!early_params_checked) {
-            amrex::Print() << "\n"; // better: conditional \n based on return value
-            amrex::ParmParse().QueryUnusedInputs();
-            early_params_checked = true;
         }
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
