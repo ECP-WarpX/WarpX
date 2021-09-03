@@ -18,7 +18,8 @@
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
 
-source $HOME/warpx.profile
+# make output group-readable by default
+umask 0027
 
 export OMP_NUM_THREADS=1
 jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" <path/to/executable> <input file> > output.txt
