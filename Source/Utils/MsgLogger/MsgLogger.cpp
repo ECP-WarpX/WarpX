@@ -368,6 +368,10 @@ Logger::gather_all_data(
             amrex::ParallelDescriptor::Gather(zero_size, gather_rank);
 
         // Compute displacements
+        // Given (n1, n2, n3, n4, ..., n_n) we need (0, n1, n1+n2, n1+n2+n3, ...),
+        // but partial_sum gives us (n1,n1+n2, n1+n2+n3, n1+n2+n3+n4, ...).
+        // Rotating this last vector by one is just shifting: (n1+n2+n3+n4+...,n1, n1+n2, n1+n2+n3, ...).
+        // Then we just need to replace the first element with zero: (0,n1, n1+n2, n1+n2+n3, ...).
         displacements.resize(package_lengths.size());
         std::partial_sum(package_lengths.begin(), package_lengths.end(),
             displacements.begin());
