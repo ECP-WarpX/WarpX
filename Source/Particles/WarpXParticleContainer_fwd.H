@@ -19,8 +19,6 @@ class WarpXParIter;
 
 class WarpXParticleContainer;
 
-template <typename, typename> class BinaryCollision;
-
 enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
 struct PIdx

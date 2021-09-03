@@ -112,10 +112,6 @@ class WarpXParticleContainer
 {
 public:
     friend MultiParticleContainer;
-    template <typename, typename> friend class BinaryCollision;
-#ifdef WARPX_USE_OPENPMD
-    friend class WarpXOpenPMDPlot;
-#endif
 
     // amrex::StructOfArrays with DiagIdx::nattribs amrex::ParticleReal components
     // and 0 int components for the particle data.
@@ -352,6 +348,14 @@ public:
      */
     virtual void resample (const int /*timestep*/) {}
 
+    /**
+     * When using runtime components, AMReX requires to touch all tiles
+     * in serial and create particles tiles with runtime components if
+     * they do not exist (or if they were defined by default, i.e.,
+     * without runtime component).
+     */
+     void defineAllParticleTiles () noexcept;
+
 protected:
     amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
@@ -425,14 +429,6 @@ public:
 
 protected:
     TmpParticles tmp_particle_data;
-
-    /**
-     * When using runtime components, AMReX requires to touch all tiles
-     * in serial and create particles tiles with runtime components if
-     * they do not exist (or if they were defined by default, i.e.,
-     * without runtime component).
-     */
-     void defineAllParticleTiles () noexcept;
 
 private:
     virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
