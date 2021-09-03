@@ -78,8 +78,12 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
      source $HOME/sw/venvs/warpx/bin/activate
    fi
 
-   # an alias to request an interactive node for two hours
-   alias getNode="bsub -P $proj -W 2:00 -nnodes 1 -Is /bin/bash"
+   # an alias to request an interactive batch node for two hours
+   #   for paralle execution, start on the batch node: jsrun <command>
+   alias getNode="bsub -q debug -P $proj -W 2:00 -nnodes 1 -Is /bin/bash"
+   # an alias to run a command on a batch node for up to 30min
+   #   usage: nrun <command>
+   alias runNode="bsub -q debug -P $proj -W 0:30 -nnodes 1 -I"
 
    # fix system defaults: do not escape $ with a \ on tab completion
    shopt -s direxpand
@@ -140,7 +144,8 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
-For a full PICMI install, follow the :ref:`instructions for Python (PICMI) bindings <building-cmake-python>`:
+For a full PICMI install, follow the :ref:`instructions for Python (PICMI) bindings <building-cmake-python>`.
+We only prefix it to request a node for the compilation (``runNode``), so we can compile faster:
 
 .. code-block:: bash
 
@@ -148,7 +153,7 @@ For a full PICMI install, follow the :ref:`instructions for Python (PICMI) bindi
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   WarpX_MPI=ON WarpX_COMPUTE=CUDA WarpX_PSATD=ON WarpX_OPENPMD=ON BUILD_PARALLEL=6 python3 -m pip install --force-reinstall -v .
+   runNode WarpX_MPI=ON WarpX_COMPUTE=CUDA WarpX_PSATD=ON WarpX_OPENPMD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
 
 
 .. _running-cpp-summit:
