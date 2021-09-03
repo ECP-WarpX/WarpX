@@ -375,7 +375,7 @@ Logger::gather_all_data(
         displacements.resize(package_lengths.size());
         std::partial_sum(package_lengths.begin(), package_lengths.end(),
             displacements.begin());
-        const auto total_sum = partial_sum.back();
+        const auto total_sum = displacements.back();
         std::rotate(displacements.rbegin(),
             displacements.rbegin()+1,
             displacements.rend());
