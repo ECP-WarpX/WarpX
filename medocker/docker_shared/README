@@ -1,0 +1,19 @@
+To compile and upload:
+- Create a directory with this structure:
+├── WarpX
+│   ├── medocker
+│   │   ├── docker_<yourimagefolder>
+│   │   │   └── Dockerfile
+│   │   ├── docker_shared
+│   │   │   ├── make_docker.sh
+│   │   │   ├── README
+│   │   │   └── run_warpx.sh
+│   ├── mewarpx
+├── warpx-data
+
+- Move into the docker_<yourimagefolder>
+- Make sure the aws command line is installed and your credentials are
+  configured.
+- Run ../docker_shared/make_docker.sh <current git branch or tag> <yourimagesuffix>
+  (eg with a suffix '-ubuntumpich', and a git branch 'psdevel', this will push
+   to simteam/mewarpx-psdevel-ubuntumpich)
