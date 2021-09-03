@@ -60,6 +60,8 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    module load hdf5/1.10.7
 
    # optional: for openPMD support (GNUmake only)
+   #module load ums
+   #module load ums-aph114
    #module load openpmd-api/0.14.2
 
    # often unstable at runtime with dependencies
