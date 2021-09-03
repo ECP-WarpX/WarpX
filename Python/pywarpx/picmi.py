@@ -735,7 +735,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
-        self.amr_checkpoint = kw.pop('warpx_amr_checkpoint', None)
+        self.amr_restart = kw.pop('warpx_amr_restart', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -942,16 +942,20 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
 ElectrostaticFieldDiagnostic = FieldDiagnostic
 
 
-class CheckpointDiagnostic(picmistandard.PICMI_FieldDiagnostic):
-    def init(self, kw):
+class Checkpoint(picmistandard.base._ClassWithInit):
 
-        self.format = kw.pop('warpx_format', 'plotfile')
-        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
-        self.file_prefix = kw.pop('warpx_file_prefix', None)
+    def __init__(self, period = 1, write_dir = None, name = None, **kw):
+
+        self.period = period
+        self.write_dir = write_dir
+        self.name = name
+
+        if self.name is None:
+            self.name = 'chkpoint'
+
+        self.handle_init(kw)
 
     def initialize_inputs(self):
-
-        self.name = 'chkpoint'
 
         try:
             self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
