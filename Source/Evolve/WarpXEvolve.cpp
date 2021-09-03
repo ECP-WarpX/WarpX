@@ -305,7 +305,7 @@ WarpX::Evolve (int numsteps)
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
         }
-        
+
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
