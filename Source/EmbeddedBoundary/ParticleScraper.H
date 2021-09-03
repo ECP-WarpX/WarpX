@@ -12,10 +12,7 @@
 #include <AMReX_MultiFab.H>
 
 #include <EmbeddedBoundary/DistanceToEB.H>
-#include "EmbeddedBoundary/ParticleBoundaryProcess.H"
 #include "Particles/Gather/ScalarFieldGather.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 
 /**
  * \brief Interact particles with the embedded boundary walls.
@@ -42,6 +39,7 @@
  * \param distance_to_eb a set of MultiFabs that store the signed distance function
  * \param lev the mesh refinement level to work on.
  * \param f the callable that defines what to do when a particle hits the boundary.
+ * \param reflection_coef optional argument giving the surface's reflection probability
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -56,9 +54,10 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f,
+                 amrex::Real reflection_coef=0.0)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
+    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f), reflection_coef);
 }
 
 /**
@@ -85,6 +84,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  * \param pc the particle container to test for boundary interactions.
  * \param distance_to_eb a set of MultiFabs that store the signed distance function
  * \param f the callable that defines what to do when a particle hits the boundary.
+ * \param reflection_coef optional argument giving the surface's reflection probability
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -99,9 +99,10 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f,
+                 amrex::Real reflection_coef=0.0)
 {
-    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
+    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f), reflection_coef);
 }
 
 /**
@@ -130,6 +131,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  * \param lev_min the minimum mesh refinement level to work on.
  * \param lev_max the maximum mesh refinement level to work on.
  * \param f the callable that defines what to do when a particle hits the boundary.
+ * \param reflection_coef optional argument giving the surface's reflection probability
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -145,7 +147,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
-                 int lev_min, int lev_max, F&& f)
+                 int lev_min, int lev_max, F&& f, amrex::Real reflection_coef=0.0)
 {
     BL_PROFILE("scrapeParticles");
 
@@ -153,8 +155,6 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     {
         const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
-        // get reflection coefficient
-        const auto reflection_coef = 0.0;
 
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {

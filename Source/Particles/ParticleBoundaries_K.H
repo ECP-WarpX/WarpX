@@ -29,7 +29,9 @@ namespace ApplyParticleBoundaries {
                 particle_lost = true;
             }
             else if (xmin_bc == ParticleBoundaryType::Absorbing) {
-                if (amrex::Random(engine) > refl_xmin) particle_lost = true;
+                if (refl_xmin == 0 || amrex::Random(engine) > refl_xmin) {
+                    particle_lost = true;
+                }
                 else
                 {
                     x = 2*xmin - x;
@@ -42,11 +44,13 @@ namespace ApplyParticleBoundaries {
             }
         }
         else if (x > xmax) {
-            if (xmin_bc == ParticleBoundaryType::Open) {
+            if (xmax_bc == ParticleBoundaryType::Open) {
                 particle_lost = true;
             }
             else if (xmax_bc == ParticleBoundaryType::Absorbing) {
-                if (amrex::Random(engine) > refl_xmax) particle_lost = true;
+                if (refl_xmax == 0 || amrex::Random(engine) > refl_xmax) {
+                    particle_lost = true;
+                }
                 else
                 {
                     x = 2*xmax - x;

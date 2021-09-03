@@ -243,8 +243,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
     }
 
-    // Read reflection models for absorbing boundaries defaults to a zero
-    // reflection probability
+    // Read reflection models for absorbing boundaries; defaults to a zero
     pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_coef_xlo);
     pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_coef_xhi);
     pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_coef_ylo);

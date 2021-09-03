@@ -21,7 +21,6 @@
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "MultiParticleContainer_fwd.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>

@@ -1,6 +1,5 @@
 # --- Input file to test particle reflection off an absorbing boundary
 
-import numpy as np
 from pywarpx import picmi
 
 constants = picmi.constants
