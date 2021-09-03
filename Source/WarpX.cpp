@@ -459,7 +459,8 @@ void
 WarpX::PrintGlobalWarnings(const std::string& when)
 {
     WARPX_PROFILE("WarpX::PrintGlobalWarnings");
-    amrex::Print() << m_p_warn_manager->print_global_warnings(when);
+    amrex::Print(amrex::ErrorStream())
+        << m_p_warn_manager->print_global_warnings(when);
 }
 
 void
