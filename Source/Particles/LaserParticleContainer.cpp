@@ -618,7 +618,12 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
 
 #if !(defined WARPX_DIM_RZ)
-    const Real eps = static_cast<Real>(dx[0]*1.e-50);
+    const float small_float_coeff = 1.e-25f;
+    const float small_double_coeff = 1.e-50;
+    constexpr const Real eps = std::is_same<Real,float>()?
+        static_cast<Real>(dx[0]*small_float_coeff) ?
+        static_cast<Real>(dx[0]*small_double_coeff);
+     ;
 #endif
 #if (AMREX_SPACEDIM == 3)
     Sx = std::min(std::min(dx[0]/(std::abs(m_u_X[0])+eps),
