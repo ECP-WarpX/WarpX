@@ -36,4 +36,6 @@ export MPICH_MAX_THREAD_SAFETY=multiple
 
 EXE="<path/to/executable>"
 
-srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) ${EXE} <input file>
+srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) \
+  ${EXE} <input file> \
+  > output.txt

@@ -9,6 +9,7 @@ It is important to us to make it easy to interact with the WarpX community and t
 Abbreviations
 -------------
 
+* **2FA:** `Two-factor-authentication <https://en.wikipedia.org/wiki/Multi-factor_authentication>`__
 * **ALCF:** `Argonne Leadership Computing Facility <https://www.alcf.anl.gov/>`__, a supercomputing center located near Chicago, IL (USA)
 * **AMR:** adaptive mesh-refinement
 * **BC:** boundary condition (of a simulation)
@@ -30,6 +31,7 @@ Abbreviations
 * **NERSC:** `National Energy Research Scientific Computing Center <https://www.nersc.gov/>`__, a supercomputing center located in Berkeley, CA (USA)
 * **NSF:** the `National Science Foundation <https://en.wikipedia.org/wiki/National_Science_Foundation>`__, a large public agency in the United States of America, supporting research and education
 * **OLCF:** `Oak Ridge Leadership Computing Facility <https://www.olcf.ornl.gov/>`__, a supercomputing center located in Oak Ridge, TN (USA)
+* **OTP:** `One-Time-Password <https://en.wikipedia.org/wiki/One-time_password>`__; see 2FA
 * **PDE:** `partial differential equation <https://en.wikipedia.org/wiki/Partial_differential_equation>`__, an equation which imposes relations between the various partial derivatives of a multivariable function
 * **PIC:** :ref:`particle-in-cell <theory-pic>`, the method implemented in WarpX
 * **PR:** github pull request, a proposed change to the WarpX code base

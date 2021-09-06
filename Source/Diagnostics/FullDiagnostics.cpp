@@ -235,7 +235,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     }
     // rho
     if (rho_requested) {
-        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, ncomp_multimodefab);
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }

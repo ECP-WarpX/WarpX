@@ -1503,6 +1503,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (lev == maxLevel())
     {
         if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
+           || WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC
            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
             m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
             m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
