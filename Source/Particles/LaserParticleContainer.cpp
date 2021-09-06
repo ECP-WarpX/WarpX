@@ -621,7 +621,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
     const float small_float_coeff = 1.e-25f;
     const float small_double_coeff = 1.e-50;
     constexpr const Real eps = std::is_same<Real,float>()?
-        static_cast<Real>(dx[0]*small_float_coeff) ?
+        static_cast<Real>(dx[0]*small_float_coeff) :
         static_cast<Real>(dx[0]*small_double_coeff);
      ;
 #endif
