@@ -115,6 +115,8 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 #else
     m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
 #endif
+    // The reflection model parsers can also be overwritten by child classes
+    m_boundary_conditions.BuildReflectionModelParsers();
 }
 
 void
@@ -1154,7 +1156,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
-                                                              m_boundary_conditions, engine);
+                                                              this->m_boundary_conditions, engine);
 
                     if (particle_lost) {
                         p.id() = -p.id();
