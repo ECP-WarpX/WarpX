@@ -137,8 +137,6 @@ Diagnostics::BaseReadParameters ()
 
     // Names of species to write to output
     bool species_specified = pp_diag_name.queryarr("species", m_output_species_names);
-    amrex::Print() << " species specified : " << species_specified << "\n";
-    amrex::Print() << " m output species anmse size : " << m_output_species_names.size() << "\n";
 
     // Names of all species in the simulation
     m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
@@ -237,8 +235,6 @@ Diagnostics::InitData ()
         m_output_species.clear();
         m_output_species_names.clear();
     }
-    // temporarily clear out species output sincce particle buffers are not supported.
-    TMP_ClearSpeciesDataForBTD();
 }
 
 
@@ -336,7 +332,6 @@ Diagnostics::ComputeAndPack ()
         }
         // Call Particle functor
         for (int isp = 0; isp < m_all_particle_functors.size(); ++isp) {
-            amrex::Print() << " call particle functor for buffer " << i_buffer << " sp : " << m_output_species_names[isp] << "\n";
             m_all_particle_functors[isp]->operator()(*m_particles_buffer[i_buffer][isp], m_totalParticles_in_buffer[i_buffer][isp], i_buffer);
         }
         

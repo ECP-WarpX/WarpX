@@ -16,7 +16,6 @@ BackTransformParticleFunctor::BackTransformParticleFunctor (
                               int num_buffers)
     : m_pc_src(pc_src), m_species_name(species_name), m_num_buffers(num_buffers)
 {
-    amrex::Print() << " in functor : sp name: " << species_name << "\n";;
     InitData();
 }
 
@@ -180,16 +179,12 @@ void
 BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &totalParticleCounter, int i_buffer) const
 {
     if (m_perform_backtransform[i_buffer] == 0) return;
-    amrex::Print() << " in BTD functor operator " << i_buffer << "\n";
 //    ParticleContainer pc_tmp(&WarpX::GetInstance());
     auto &warpx = WarpX::GetInstance();
     // get particle slice
-    amrex::Print() << " finest level : " << m_pc_src->finestLevel() << "\n"; 
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
-    amrex::Print() << " nlevs : " << nlevs << "\n";
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
     int total_particles_added = 0;
-    amrex::Print() << " totalNumParticles in pcdst before operator : " << pc_dst.TotalNumberOfParticles() << "\n";
     for (int lev = 0; lev < nlevs; ++lev) {
         amrex::Real t_boost = warpx.gett_new(0);
         amrex::Real dt = warpx.getdt(0);
@@ -243,7 +238,6 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
                 auto& ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
                 auto old_size = ptile_dst.numParticles();
                 ptile_dst.resize(old_size + total_partdiag_size); 
-                amrex::Print() << " old size : " << old_size <<  " new added : " << total_partdiag_size << "\n";
                 auto count = amrex::filterParticles(ptile_dst, ptile_src, GetParticleFilter, 0, old_size, np);
                 auto dst_data = ptile_dst.getParticleTileData();
                 amrex::ParallelFor(np,
@@ -257,9 +251,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
         }        
         amrex::Gpu::synchronize();        
     }
-    amrex::Print() << " total_particles_added " << total_particles_added << "\n";
     totalParticleCounter = pc_dst.TotalNumberOfParticles(); 
-    amrex::Print() << " totalNumParticles in pcdst after operator : " << pc_dst.TotalNumberOfParticles() << " total particle counter : " << totalParticleCounter<< "\n";
 }
 
 

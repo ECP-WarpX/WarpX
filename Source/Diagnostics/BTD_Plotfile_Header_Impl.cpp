@@ -370,7 +370,6 @@ BTDSpeciesHeaderImpl::ReadHeader ()
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
     
     is >> m_file_version;
-    amrex::Print() << " file version : " << m_file_version << "\n";
     is >> m_spacedim;
     is >> m_num_output_real;
     m_real_comp_names.resize(m_num_output_real);
@@ -471,7 +470,6 @@ BTDParticleDataHeaderImpl::BTDParticleDataHeaderImpl (std::string const & Header
 void
 BTDParticleDataHeaderImpl::ReadHeader ()
 {
-    amrex::Print() << " read prt hdr " << m_Header_path << "\n";
     // Read existing fab Header first
     amrex::Vector<char> HeaderCharPtr;
     amrex::Long fileLength(0), fileLengthPadded(0);
@@ -500,7 +498,6 @@ BTDParticleDataHeaderImpl::ReadHeader ()
         amrex::Box bx;
         is >> bx;
         m_ba.set(ibox, bx);
-        amrex::Print() << " bx " << bx << "\n";
     }
     is.ignore(bl_ignore_max, ')');
     

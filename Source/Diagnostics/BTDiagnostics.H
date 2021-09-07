@@ -301,9 +301,6 @@ private:
                                                           "Bx", "By", "Bz",
                                                           "jx", "jy", "jz", "rho"};
 
-    /** Temporarily clear species output for BTD until particle buffer is added */
-    void TMP_ClearSpeciesDataForBTD() override;
-
     /** Merge the lab-frame buffer multifabs so it can be visualized as
      *  a single plotfile
      */

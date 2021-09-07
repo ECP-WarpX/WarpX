@@ -182,8 +182,6 @@ protected:
     int m_num_buffers;
     /** Array of species indices that dump rho per species */
     amrex::Vector<int> m_rho_per_species_index;
-    /** Temporarily clear species output for BTD until particle buffer is added */
-    virtual void TMP_ClearSpeciesDataForBTD() {}
     /** Vector of particle buffer vectors for each snapshot */
     amrex::Vector< amrex::Vector<std::unique_ptr<PinnedMemoryParticleContainer> > > m_particles_buffer;
     /** Vector of pointers to functors to compute particle output per species*/
