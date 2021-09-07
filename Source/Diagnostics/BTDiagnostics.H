@@ -320,6 +320,12 @@ private:
                                    std::string snapshot_FabHeaderFilename,
                                    std::string newsnapshot_FabFilename);
 
+    void InterleaveSpeciesHeader(std::string buffer_species_Header_path,
+                                 std::string snapshot_species_Header_path,
+                                 std::string species_name, const int new_data_index);
+
+    void InterleaveParticleDataHeader( std::string buffer_ParticleHdrFilename,
+                                       std::string snapshot_ParticleHdrFilename);
     void InitializeParticleFunctors () override;
 
     void UpdateTotalParticlesFlushed(int i_buffer);

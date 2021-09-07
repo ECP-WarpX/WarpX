@@ -237,8 +237,59 @@ public:
      */
     BTDSpeciesHeaderImpl (std::string const& Headerfile_path, std::string const& species_name);
     ~BTDSpeciesHeaderImpl () = default;
+    /** Reads the Header file for BTD species*/
+    void ReadHeader ();
+    void WriteHeader ();
+    void set_DataIndex (const int lev, const int box_id, const int data_index);
+    void AddTotalParticles (const int new_particles) { m_total_particles += new_particles;}
+    void IncrementParticleBoxArraySize () { m_particleBoxArray_size[m_finestLevel]++; }
+    void AppendParticleInfoForNewBox (const int data_index, const int particles_per_box, const int offset);
+    amrex::Vector< amrex::Vector<int> > m_which_data;
+    amrex::Vector< amrex::Vector<int> > m_particles_per_box;
+    amrex::Vector< amrex::Vector<int> > m_offset_per_box;
+    amrex::Vector<int> m_particleBoxArray_size;
+    int m_total_particles;
+    int m_nextid;
+    int m_finestLevel;
     private:
     std::string m_Header_path;
     std::string m_species_name;
+    /** String containing file version of the species output */
+    std::string m_file_version;
+    /** Number of dimensions stored in the plotfile, should be same as AMREX_SPACEDIM */
+    int m_spacedim;
+    int m_num_output_real;
+    int m_num_output_int;    
+    amrex::Vector<std::string> m_real_comp_names;
+    amrex::Vector<std::string> m_int_comp_names;
+    bool m_is_checkpoint;
 };
+
+class BTDParticleDataHeaderImpl
+{
+public:
+    /** Constructor.
+     * \param[in] string containing path of Headerfile
+     */
+    BTDParticleDataHeaderImpl (std::string const& Headerfile_path);
+    ~BTDParticleDataHeaderImpl () = default;
+    void ReadHeader ();
+    void WriteHeader ();
+    int ba_size () {return m_ba_size; }
+    void IncreaseBoxArraySize ( const int add_size) { m_ba_size += add_size;}
+    /** Returns box corresponding to the ith box in the BoxArray, m_ba.
+     *  \param[in] int ibox, index of the box in the BoxArray.
+     */
+    amrex::Box ba_box (int ibox) {return m_ba[ibox]; }
+    /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
+     *  \param[in] int ibox, index of the ith box in BoxArray, m_ba.
+     *  \param[in] amrex::Box box dimensions corresponding to the ith Fab.
+     */
+    void ResizeBoxArray () { m_ba.resize(m_ba_size); }
+    void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
+    int m_ba_size;
+    amrex::BoxArray m_ba;    
+    std::string m_Header_path;
+};
+
 #endif
