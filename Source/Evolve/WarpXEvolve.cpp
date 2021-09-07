@@ -311,6 +311,10 @@ WarpX::Evolve (int numsteps)
             t_new[i] = cur_time;
         }
 
+        // warpx_py_afterstep runs with the updated global time. It is included
+        // in the evolve timing.
+        if (warpx_py_afterstep) warpx_py_afterstep();
+
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
         {
@@ -326,10 +330,7 @@ WarpX::Evolve (int numsteps)
             early_params_checked = true;
         }
 
-        // warpx_py_afterstep runs with the updated global time. It is included
-        // in the evolve timing.
-        if (warpx_py_afterstep) warpx_py_afterstep();
-
+        // create ending time stamp for calculating ellapsed time each iteration
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
