@@ -800,6 +800,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
+        self.amr_restart = kw.pop('warpx_amr_restart', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -882,6 +883,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
+
+        if self.amr_restart:
+            pywarpx.amr.restart = self.amr_restart
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
@@ -1009,6 +1013,32 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
 
 
 ElectrostaticFieldDiagnostic = FieldDiagnostic
+
+
+class Checkpoint(picmistandard.base._ClassWithInit):
+
+    def __init__(self, period = 1, write_dir = None, name = None, **kw):
+
+        self.period = period
+        self.write_dir = write_dir
+        self.name = name
+
+        if self.name is None:
+            self.name = 'chkpoint'
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+
+        self.diagnostic.intervals = self.period
+        self.diagnostic.diag_type = 'Full'
+        self.diagnostic.format = 'checkpoint'
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
