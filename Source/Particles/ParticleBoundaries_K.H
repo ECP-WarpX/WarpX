@@ -96,21 +96,22 @@ namespace ApplyParticleBoundaries {
         bool change_sign_uy = false;
         bool change_sign_uz = false;
 
+        const amrex::Real u = std::sqrt(ux*ux + uy*uy + uz*uz);
+
         apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost,
                        boundaries.xmin_bc, boundaries.xmax_bc,
-                       boundaries.reflection_coef_xlo, boundaries.reflection_coef_xhi,
+                       boundaries.reflection_model_xlo(u), boundaries.reflection_model_xhi(u),
                        engine);
 #ifdef WARPX_DIM_3D
         apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost,
                        boundaries.ymin_bc, boundaries.ymax_bc,
-                       boundaries.reflection_coef_ylo, boundaries.reflection_coef_yhi,
+                       boundaries.reflection_model_ylo(u), boundaries.reflection_model_yhi(u),
                        engine);
 #endif
         apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost,
                        boundaries.zmin_bc, boundaries.zmax_bc,
-                       boundaries.reflection_coef_zlo, boundaries.reflection_coef_zhi,
+                       boundaries.reflection_model_zlo(u), boundaries.reflection_model_zhi(u),
                        engine);
-
 
         if (boundaries.reflect_all_velocities && (change_sign_ux | change_sign_uy | change_sign_uz)) {
             change_sign_ux = true;

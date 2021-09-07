@@ -8,8 +8,10 @@
 #define PARTICLEBOUNDARIES_H_
 
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_AmrCore.H>
+#include <AMReX_Parser.H>
 
 /**
  *  This allows a different boundary condition on each edge of the grid.
@@ -28,6 +30,8 @@ struct ParticleBoundaries
 
     bool CheckAll (ParticleBoundaryType bc);
 
+    void BuildReflectionModelParsers ();
+
     ParticleBoundaryType xmin_bc;
     ParticleBoundaryType xmax_bc;
     ParticleBoundaryType ymin_bc;
@@ -35,14 +39,29 @@ struct ParticleBoundaries
     ParticleBoundaryType zmin_bc;
     ParticleBoundaryType zmax_bc;
 
-    // reflection coefficients for absorbing boundaries
-    amrex::Real reflection_coef_xlo = 0.0;
-    amrex::Real reflection_coef_xhi = 0.0;
-    amrex::Real reflection_coef_ylo = 0.0;
-    amrex::Real reflection_coef_yhi = 0.0;
-    amrex::Real reflection_coef_zlo = 0.0;
-    amrex::Real reflection_coef_zhi = 0.0;
+    // reflection models for absorbing boundaries
+    std::string reflection_model_xlo_str = "0.0";
+    std::string reflection_model_xhi_str = "0.0";
+    std::string reflection_model_ylo_str = "0.0";
+    std::string reflection_model_yhi_str = "0.0";
+    std::string reflection_model_zlo_str = "0.0";
+    std::string reflection_model_zhi_str = "0.0";
     amrex::Real reflection_coef_eb = 0.0;
+
+    std::unique_ptr<amrex::Parser> reflection_model_xlo_parser;
+    std::unique_ptr<amrex::Parser> reflection_model_xhi_parser;
+    std::unique_ptr<amrex::Parser> reflection_model_ylo_parser;
+    std::unique_ptr<amrex::Parser> reflection_model_yhi_parser;
+    std::unique_ptr<amrex::Parser> reflection_model_zlo_parser;
+    std::unique_ptr<amrex::Parser> reflection_model_zhi_parser;
+
+    amrex::ParserExecutor<1> reflection_model_xlo;
+    amrex::ParserExecutor<1> reflection_model_xhi;
+    amrex::ParserExecutor<1> reflection_model_ylo;
+    amrex::ParserExecutor<1> reflection_model_yhi;
+    amrex::ParserExecutor<1> reflection_model_zlo;
+    amrex::ParserExecutor<1> reflection_model_zhi;
+    // amrex::ParserExecutor<1> reflection_model_eb;
 
     bool reflect_all_velocities;
 

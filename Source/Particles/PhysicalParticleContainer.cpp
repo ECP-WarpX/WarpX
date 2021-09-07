@@ -244,13 +244,14 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     }
 
     // Read reflection models for absorbing boundaries; defaults to a zero
-    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_coef_xlo);
-    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_coef_xhi);
-    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_coef_ylo);
-    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_coef_yhi);
-    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_coef_zlo);
-    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_coef_zhi);
+    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
+    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
+    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_model_ylo_str);
+    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_model_yhi_str);
+    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_model_zlo_str);
+    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_model_zhi_str);
     pp_species_name.query("reflection_model_eb(E)", m_boundary_conditions.reflection_coef_eb);
+    m_boundary_conditions.BuildReflectionModelParsers();
 
     ParmParse pp_boundary("boundary");
     bool flag = false;
