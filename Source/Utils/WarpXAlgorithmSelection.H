@@ -79,7 +79,7 @@ struct ChargeDepositionAlgo {
 struct GatheringAlgo {
     enum {
          EnergyConserving = 0,
-         MomentumConserving = 1
+         MomentumConserving
     };
 };
 
