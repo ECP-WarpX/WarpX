@@ -654,6 +654,17 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
     const int kp = std::ceil(z);
 #endif
 
+    // Compute difference r in each direction
+    // (r always negative, by construction)
+    const amrex::Real ri = x - ip;
+#if   (AMREX_SPACEDIM == 2)
+    const amrex::Real rj = z - jp;
+    const amrex::Real rk = 0.;
+#elif (AMREX_SPACEDIM == 3)
+    const amrex::Real rj = y - jp;
+    const amrex::Real rk = z - kp;
+#endif
+
     const int noi = nox;
 #if   (AMREX_SPACEDIM == 2)
     const int noj = noz;
