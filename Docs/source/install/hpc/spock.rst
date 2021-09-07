@@ -35,7 +35,7 @@ We use the following modules and environments on the system (``$HOME/warpx_spock
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake
+   module load cmake/3.20.0
    module load craype-accel-amd-gfx908
    module load rocm/4.1.0
 
