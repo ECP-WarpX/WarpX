@@ -78,7 +78,7 @@ field_diag = picmi.ParticleDiagnostic(
     data_list=['previous_positions'],
     period = 10,
     write_dir = '.',
-    warpx_file_prefix = 'Python_particle_reflect_plt'
+    warpx_file_prefix = 'Python_particle_reflection_plt'
 )
 
 ##########################
