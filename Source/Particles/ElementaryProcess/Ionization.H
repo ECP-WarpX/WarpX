@@ -8,11 +8,24 @@
 #ifndef IONIZATION_H_
 #define IONIZATION_H_
 
-#include "Utils/WarpXConst.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Gather/FieldGather.H"
+#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <cmath>
 
 struct IonizationFilterFunc
 {
@@ -51,7 +64,7 @@ struct IonizationFilterFunc
 
     amrex::Dim3 m_lo;
 
-    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, int ngE,
+    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
                           amrex::FArrayBox const& exfab,
                           amrex::FArrayBox const& eyfab,
                           amrex::FArrayBox const& ezfab,
@@ -77,7 +90,7 @@ struct IonizationFilterFunc
         if (ion_lev < m_atomic_number)
         {
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2_inv = 1./c/c;
+            constexpr amrex::Real c2_inv = amrex::Real(1.)/c/c;
 
             // gather E and B
             amrex::ParticleReal xp, yp, zp;
@@ -101,7 +114,8 @@ struct IonizationFilterFunc
             amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
             amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
 
-            amrex::Real ga = std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv);
+            amrex::Real ga = static_cast<amrex::Real>(
+                std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv));
             amrex::Real E = std::sqrt(
                                - ( ux*ex + uy*ey + uz*ez ) * ( ux*ex + uy*ey + uz*ez ) * c2_inv
                                + ( ga   *ex + uy*bz - uz*by ) * ( ga   *ex + uy*bz - uz*by )
@@ -110,10 +124,10 @@ struct IonizationFilterFunc
                                );
 
             // Compute probability of ionization p
-            amrex::Real w_dtau = 1./ ga * m_adk_prefactor[ion_lev] *
+            amrex::Real w_dtau = (E == 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
                 std::pow(E, m_adk_power[ion_lev]) *
                 std::exp( m_adk_exp_prefactor[ion_lev]/E );
-            amrex::Real p = 1. - std::exp( - w_dtau );
+            amrex::Real p = 1._rt - std::exp( - w_dtau );
 
             amrex::Real random_draw = amrex::Random(engine);
             if (random_draw < p)
@@ -129,7 +143,9 @@ struct IonizationTransformFunc
 {
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& /*dst*/, SrcData& src, int i_src, int /*i_dst*/) const noexcept
+    void operator() (DstData& /*dst*/, SrcData& src,
+        int i_src, int /*i_dst*/,
+        amrex::RandomEngine const& /*engine*/) const noexcept
     {
         src.m_runtime_idata[0][i_src] += 1;
     }

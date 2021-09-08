@@ -11,7 +11,6 @@
 
 #include <AMReX_REAL.H>
 
-
 /**
  * Push the particle's positions over one timestep,
  * given the value of its momenta `ux`, `uy`, `uz`.
@@ -72,8 +71,8 @@ void UpdateMomentumBorisWithRadiationReaction(
     const amrex::Real coeff = gamma_n*gamma_n*(fl_q2-bdotE2);
 
     //Radiation reaction constant
-    const amrex::Real RRcoeff = 2.0_rt*PhysConst::r_e*q*q/
-        (3.0_rt*m*m*PhysConst::c*PhysConst::c);
+    const amrex::Real q_over_mc = q/(m*PhysConst::c);
+    const amrex::Real RRcoeff = (2.0_rt/3.0_rt)*PhysConst::r_e*q_over_mc*q_over_mc;
 
     //Compute the components of the RR force
     const amrex::Real frx =

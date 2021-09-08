@@ -7,19 +7,108 @@
  */
 #include "SpectralFieldData.H"
 
-#include <map>
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
+
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
 
 #if WARPX_USE_PSATD
 
 using namespace amrex;
 
+SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
+                                        const bool time_averaging,
+                                        const bool J_linear_in_time,
+                                        const bool dive_cleaning,
+                                        const bool divb_cleaning,
+                                        const bool pml)
+{
+    // TODO Use these to allocate rho_old, rho_new, F, and G only when needed
+    amrex::ignore_unused(update_with_rho);
+
+    int c = 0;
+
+    if (pml == false)
+    {
+        Ex = c++; Ey = c++; Ez = c++;
+        Bx = c++; By = c++; Bz = c++;
+        Jx = c++; Jy = c++; Jz = c++;
+
+        // TODO Allocate rho_old and rho_new only when needed
+        rho_old = c++; rho_new = c++;
+
+        // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
+        divE = 3;
+
+        if (time_averaging)
+        {
+            Ex_avg = c++; Ey_avg = c++; Ez_avg = c++;
+            Bx_avg = c++; By_avg = c++; Bz_avg = c++;
+        }
+
+        if (J_linear_in_time)
+        {
+            Jx_new = c++; Jy_new = c++; Jz_new = c++;
+
+            if (dive_cleaning)
+            {
+                F = c++;
+            }
+
+            if (divb_cleaning)
+            {
+                G = c++;
+            }
+        }
+    }
+    else // PML
+    {
+        Exy = c++; Exz = c++; Eyx = c++; Eyz = c++; Ezx = c++; Ezy = c++;
+        Bxy = c++; Bxz = c++; Byx = c++; Byz = c++; Bzx = c++; Bzy = c++;
+
+        if (dive_cleaning)
+        {
+            Exx = c++; Eyy = c++; Ezz = c++;
+            Fx  = c++; Fy  = c++; Fz  = c++;
+        }
+
+        if (divb_cleaning)
+        {
+            Bxx = c++; Byy = c++; Bzz = c++;
+            Gx  = c++; Gy  = c++; Gz  = c++;
+        }
+    }
+
+    // This is the number of arrays that will be actually allocated in spectral space
+    n_fields = c;
+}
+
 /* \brief Initialize fields in spectral space, and FFT plans */
-SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
+SpectralFieldData::SpectralFieldData( const int lev,
+                                      const amrex::BoxArray& realspace_ba,
                                       const SpectralKSpace& k_space,
                                       const amrex::DistributionMapping& dm,
                                       const int n_field_required,
-                                      const bool periodic_single_box )
+                                      const bool periodic_single_box)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     m_periodic_single_box = periodic_single_box;
 
     const BoxArray& spectralspace_ba = k_space.spectralspace_ba;
@@ -62,6 +151,12 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
     // Loop over boxes and allocate the corresponding plan
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
         // the FFT plan, the valid dimensions are those of the real-space box.
@@ -76,13 +171,20 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
             fft_size, tmpRealField[mfi].dataPtr(),
             reinterpret_cast<AnyFFT::Complex*>( tmpSpectralField[mfi].dataPtr()),
             AnyFFT::direction::C2R, AMREX_SPACEDIM);
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
 
 SpectralFieldData::~SpectralFieldData()
 {
-    if (tmpRealField.size() > 0){
+    if (!tmpRealField.empty()){
         for ( MFIter mfi(tmpRealField); mfi.isValid(); ++mfi ){
             AnyFFT::DestroyPlan(forward_plan[mfi]);
             AnyFFT::DestroyPlan(backward_plan[mfi]);
@@ -94,9 +196,12 @@ SpectralFieldData::~SpectralFieldData()
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral field specified by `field_index`) */
 void
-SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
+SpectralFieldData::ForwardTransform (const int lev,
+                     const MultiFab& mf, const int field_index,
                                      const int i_comp, const IntVect& stag)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space
     const bool is_nodal_x = (stag[0] == amrex::IndexType::NODE) ? true : false;
 #if (AMREX_SPACEDIM == 3)
@@ -107,7 +212,14 @@ SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
 #endif
 
     // Loop over boxes
+    // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
+    //       the FFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
 
         // Copy the real-space field `mf` to the temporary field `tmpRealField`
         // This ensures that all fields have the same number of points
@@ -164,6 +276,13 @@ SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
                 fields_arr(i,j,k,field_index) = spectral_field_value;
             });
         }
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 }
 
@@ -171,10 +290,14 @@ SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `mf` */
 void
-SpectralFieldData::BackwardTransform( MultiFab& mf,
+SpectralFieldData::BackwardTransform (const int lev,
+                                      MultiFab& mf,
                                       const int field_index,
-                                      const int i_comp )
+                                      const int i_comp,
+                                      const amrex::IntVect& fill_guards)
 {
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
     // Check field index type, in order to apply proper shift in spectral space
     const bool is_nodal_x = mf.is_nodal(0);
 #if (AMREX_SPACEDIM == 3)
@@ -184,8 +307,27 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
     const bool is_nodal_z = mf.is_nodal(1);
 #endif
 
+    const int si = (is_nodal_x) ? 1 : 0;
+#if   (AMREX_SPACEDIM == 2)
+    const int sj = (is_nodal_z) ? 1 : 0;
+    const int sk = 0;
+#elif (AMREX_SPACEDIM == 3)
+    const int sj = (is_nodal_y) ? 1 : 0;
+    const int sk = (is_nodal_z) ? 1 : 0;
+#endif
+
+    // Numbers of guard cells
+    const amrex::IntVect& mf_ng = mf.nGrowVect();
+
     // Loop over boxes
+    // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
+    //       the iFFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
 
         // Copy the spectral-space field `tmpSpectralField` to the appropriate
         // field (specified by the input argument field_index)
@@ -216,51 +358,66 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
                 // Copy field into temporary array
                 tmp_arr(i,j,k) = spectral_field_value;
             });
-
         }
 
         // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
         AnyFFT::Execute(backward_plan[mfi]);
 
-        // Copy the temporary field `tmpRealField` to the real-space field `mf`
-        // (only in the valid cells ; not in the guard cells)
-        // Normalize (divide by 1/N) since the FFT+IFFT results in a factor N
+        // Copy the temporary field tmpRealField to the real-space field mf and
+        // normalize, dividing by N, since (FFT + inverse FFT) results in a factor N
         {
-            Array4<Real> mf_arr = mf[mfi].array();
-            Array4<const Real> tmp_arr = tmpRealField[mfi].array();
-            // Normalization: divide by the number of points in realspace
-            // (includes the guard cells)
-            const Box realspace_bx = tmpRealField[mfi].box();
-            const Real inv_N = 1./realspace_bx.numPts();
+            amrex::Box mf_box = (m_periodic_single_box) ? mfi.validbox() : mfi.fabbox();
+            amrex::Array4<amrex::Real> mf_arr = mf[mfi].array();
+            amrex::Array4<const amrex::Real> tmp_arr = tmpRealField[mfi].array();
 
-            if (m_periodic_single_box) {
-                // Enforce periodicity on the nodes, by using modulo in indices
-                // This is because `tmp_arr` is cell-centered while `mf_arr` can be nodal
-                int const nx = realspace_bx.length(0);
-                int const ny = realspace_bx.length(1);
-#if (AMREX_SPACEDIM == 3)
-                int const nz = realspace_bx.length(2);
-#else
-                int constexpr nz = 1;
+            const amrex::Real inv_N = 1._rt / tmpRealField[mfi].box().numPts();
+
+            // Total number of cells, including ghost cells (nj represents ny in 3D and nz in 2D)
+            const int ni = mf_box.length(0);
+            const int nj = mf_box.length(1);
+#if   (AMREX_SPACEDIM == 2)
+            constexpr int nk = 1;
+#elif (AMREX_SPACEDIM == 3)
+            const int nk = mf_box.length(2);
 #endif
-                ParallelFor(
-                    mfi.validbox(),
-                    /* GCC 8.1-8.2 work-around (ICE):
-                     *   named capture in nonexcept lambda needed for modulo operands
-                     *   https://godbolt.org/z/ppbAzd
-                     */
-                    [mf_arr, i_comp, inv_N, tmp_arr, nx, ny, nz]
-                    AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
-                        mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx, j%ny, k%nz);
-                    });
-            } else {
-                ParallelFor( mfi.validbox(),
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-                    // Copy and normalize field
-                    mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i,j,k);
-                });
+            // Lower bound of the box (lo_j represents lo_y in 3D and lo_z in 2D)
+            const int lo_i = amrex::lbound(mf_box).x;
+            const int lo_j = amrex::lbound(mf_box).y;
+#if   (AMREX_SPACEDIM == 2)
+            constexpr int lo_k = 0;
+#elif (AMREX_SPACEDIM == 3)
+            const int lo_k = amrex::lbound(mf_box).z;
+#endif
+            // If necessary, do not fill the guard cells
+            // (shrink box by passing negative number of cells)
+            if (m_periodic_single_box == false)
+            {
+                for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+                {
+                    if (static_cast<bool>(fill_guards[dir]) == false) mf_box.grow(dir, -mf_ng[dir]);
+                }
             }
 
+            // Loop over cells within full box, including ghost cells
+            ParallelFor(mf_box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+                // Assume periodicity and set the last outer guard cell equal to the first one:
+                // this is necessary in order to get the correct value along a nodal direction,
+                // because the last point along a nodal direction is always discarded when FFTs
+                // are computed, as the real-space box is always cell-centered.
+                const int ii = (i == lo_i + ni - si) ? lo_i : i;
+                const int jj = (j == lo_j + nj - sj) ? lo_j : j;
+                const int kk = (k == lo_k + nk - sk) ? lo_k : k;
+                // Copy and normalize field
+                mf_arr(i,j,k,i_comp) = inv_N * tmp_arr(ii,jj,kk);
+            });
+        }
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }

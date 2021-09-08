@@ -9,6 +9,16 @@
 
 #include "SpectralBaseAlgorithm.H"
 
+#include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpace_fwd.H"
+
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
+
 #if WARPX_USE_PSATD
 
 /* \brief Class that updates the field in spectral space
@@ -19,9 +29,13 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
     public:
         PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const amrex::DistributionMapping& dm,
+                         const SpectralFieldIndex& spectral_index,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
-                         const amrex::Real dt);
+                         const amrex::IntVect& fill_guards,
+                         const amrex::Real dt,
+                         const bool dive_cleaning,
+                         const bool divb_cleaning);
 
         void InitializeSpectralCoefficients(
             const SpectralKSpace& spectral_kspace,
@@ -30,9 +44,6 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
 
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields() const override final {
-            return SpectralPMLIndex::n_fields;
-        }
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -46,7 +57,8 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
          *                           the three components of the current density
          * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection (SpectralFieldData& field_data,
+        virtual void CurrentCorrection (const int lev,
+                                        SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                         const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
@@ -61,12 +73,16 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          */
-        virtual void VayDeposition (SpectralFieldData& field_data,
+        virtual void VayDeposition (const int lev,
+                                    SpectralFieldData& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
-        SpectralRealCoefficients C_coef, S_ck_coef;
-
+        SpectralFieldIndex m_spectral_index;
+        SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;
+        amrex::Real m_dt;
+        bool m_dive_cleaning;
+        bool m_divb_cleaning;
 };
 
 #endif // WARPX_USE_PSATD

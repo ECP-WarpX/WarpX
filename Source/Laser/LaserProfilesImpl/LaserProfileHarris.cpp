@@ -5,9 +5,17 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
-#include "Utils/WarpX_Complex.H"
-#include "Utils/WarpXConst.H"
 
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX_Extension.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
+
+#include <cmath>
 
 using namespace amrex;
 
@@ -18,9 +26,9 @@ WarpXLaserProfiles::HarrisLaserProfile::init (
     CommonLaserParameters params)
 {
     // Parse the properties of the Harris profile
-    ppl.get("profile_waist", m_params.waist);
-    ppl.get("profile_duration", m_params.duration);
-    ppl.get("profile_focal_distance", m_params.focal_distance);
+    getWithParser(ppl, "profile_waist", m_params.waist);
+    getWithParser(ppl, "profile_duration", m_params.duration);
+    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
     //Copy common params
     m_common_params = params;
 }

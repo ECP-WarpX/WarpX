@@ -7,19 +7,31 @@
 #ifndef WARPX_quantum_sync_engine_wrapper_h_
 #define WARPX_quantum_sync_engine_wrapper_h_
 
-#include "QedWrapperCommons.H"
+#include "BreitWheelerEngineWrapper_fwd.H"
+
 #include "QedChiFunctions.H"
+#include "QedWrapperCommons.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Gpu.H>
 
-#include <physics/quantum_sync/quantum_sync_engine_tables.hpp>
-#include <physics/quantum_sync/quantum_sync_engine_core.hpp>
+#include <picsar_qed/containers/picsar_array.hpp>
+#include <picsar_qed/math/cmath_overloads.hpp>
+#include <picsar_qed/math/vec_functions.hpp>
+#include <picsar_qed/physics/phys_constants.h>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_core.hpp>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp>
+#include <picsar_qed/physics/unit_conversion.hpp>
 
-#include <string>
+#include <cmath>
 #include <vector>
+
+namespace amrex { struct RandomEngine; }
 
 // Aliases =============================
 using QS_dndt_table_params =
@@ -70,7 +82,7 @@ public:
      * does not require control parameters or lookup tables.
      */
     QuantumSynchrotronGetOpticalDepth ()
-    {};
+    {}
 
     /**
      * () operator is just a thin wrapper around a very simple function to
@@ -78,12 +90,12 @@ public:
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real operator() () const noexcept
+    amrex::Real operator() (amrex::RandomEngine const& engine) const noexcept
     {
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
         //A random number in [0,1) should be provided as an argument.
-        return pxr_qs::get_optical_depth(amrex::Random());
+        return pxr_qs::get_optical_depth(amrex::Random(engine));
     }
 };
 //____________________________________________
@@ -110,7 +122,7 @@ public:
     QuantumSynchrotronEvolveOpticalDepth (
         const QS_dndt_table_view table_view,
         const amrex::ParticleReal qs_minimum_chi_part):
-        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{};
+        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{}
 
     /**
      * Evolves the optical depth. It can be used on GPU.
@@ -184,7 +196,7 @@ public:
      */
     QuantumSynchrotronPhotonEmission (
         const QS_phot_em_table_view table_view):
-        m_table_view{table_view}{};
+        m_table_view{table_view}{}
 
     /**
      * Generates photons according to Quantum Synchrotron process.
@@ -194,22 +206,26 @@ public:
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
      * @param[out] g_ux,g_uy,g_uz gamma*v components of the generated photon (SI units)
+     * @param[in] engine random number generator engine
      * @return a flag which is 1 if chi_photon was out of table
      */
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     bool operator()(
-    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
-    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-    amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz) const noexcept
+    amrex::ParticleReal& ux, amrex::ParticleReal& uy,
+    amrex::ParticleReal& uz,
+    const amrex::ParticleReal ex, const amrex::ParticleReal ey,
+    const amrex::ParticleReal ez, const amrex::ParticleReal bx,
+    const amrex::ParticleReal by, const amrex::ParticleReal bz,
+    amrex::ParticleReal& g_ux, amrex::ParticleReal& g_uy,
+    amrex::ParticleReal& g_uz, amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
         namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
-        const auto rand_zero_one_minus_epsi = amrex::Random();
+        const auto rand_zero_one_minus_epsi = amrex::Random(engine);
 
         constexpr ParticleReal me = PhysConst::m_e;
         constexpr ParticleReal one_over_me = 1._prt/me;
@@ -223,11 +239,11 @@ public:
         const auto chi_particle = QedUtils::chi_ele_pos(
             px, py, pz, ex, ey, ez, bx, by, bz);
 
-        auto momentum_particle = pxr_m::vec3<amrex::Real>{px, py, pz};
-        auto momentum_photon = pxr_m::vec3<amrex::Real>();
+        auto momentum_particle = pxr_m::vec3<amrex::ParticleReal>{px, py, pz};
+        auto momentum_photon = pxr_m::vec3<amrex::ParticleReal>();
 
         const auto is_out = pxr_qs::generate_photon_update_momentum<
-            amrex::Real,
+            amrex::ParticleReal,
             QS_phot_em_table_view,
             pxr_p::unit_system::SI>(
                 chi_particle, momentum_particle,

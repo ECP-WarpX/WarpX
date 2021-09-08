@@ -13,9 +13,12 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 1     1     0      # Is periodic?
 geometry.prob_lo     = -20.e-6   -20.e-6   -12.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6    12.e-6
+
+# Boundary condition
+boundary.field_lo = periodic periodic pec
+boundary.field_hi = periodic periodic pec
 
 warpx.serialize_ics = 1
 
@@ -23,10 +26,13 @@ warpx.serialize_ics = 1
 warpx.verbose = 1
 
 # Algorithms
-warpx.do_pml = 0
+warpx.use_filter = 0
 
 # CFL
 warpx.cfl = 1.0
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # Laser
 lasers.names        = laser1
@@ -43,7 +49,7 @@ laser1.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 20
+diag1.intervals = 20
 diag1.diag_type = Full
 diag1.fields_to_plot = jx jy jz Ex Ey Ez Bx Bz
 

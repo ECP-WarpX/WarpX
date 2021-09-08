@@ -6,14 +6,23 @@
  */
 #include "QuantumSyncEngineWrapper.H"
 
+#include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_GpuDevice.H>
+
+#include "picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp"
 //Functions needed to generate a new table
 #ifdef WARPX_QED_TABLE_GEN
-#   include <physics/quantum_sync/quantum_sync_engine_tables_generator.hpp>
+#   include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables_generator.hpp>
 #endif
+#include "picsar_qed/utils/serialization.hpp"
 
-#include <utility>
-#include <vector>
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <initializer_list>
+#include <iosfwd>
+#include <vector>
 
 using namespace std;
 using namespace amrex;
@@ -144,6 +153,7 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
 
     m_lookup_tables_initialized = true;
 #else
+    amrex::ignore_unused(ctrl, qs_minimum_chi_part);
     amrex::Abort("WarpX was not compiled with table generation support!");
 #endif
 }

@@ -8,12 +8,12 @@
 #ifndef DEFAULTINITIALIZATION_H_
 #define DEFAULTINITIALIZATION_H_
 
-#include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_REAL.H>
 
+#include <cmath>
 #include <map>
 #include <string>
-#include <cmath>
 
 /**
  * \brief This set of initialization policies describes what happens
@@ -46,8 +46,8 @@ static std::map<std::string, InitializationPolicy> initialization_policies = {
 #endif
 
 #ifdef WARPX_QED
-    {"optical_depth_BW",   InitializationPolicy::RandomExp},
-    {"optical_depth_QSR",   InitializationPolicy::RandomExp}
+    {"opticalDepthBW",   InitializationPolicy::RandomExp},
+    {"opticalDepthQSR",   InitializationPolicy::RandomExp}
 #endif
 
 };
@@ -59,7 +59,7 @@ amrex::ParticleReal initializeRealValue (const InitializationPolicy policy, amre
         case InitializationPolicy::Zero : return 0.0;
         case InitializationPolicy::One  : return 1.0;
         case InitializationPolicy::RandomExp : {
-            return -log(amrex::Random(engine));
+            return -std::log(amrex::Random(engine));
         }
         default : {
             amrex::Abort("Initialization Policy not recognized");

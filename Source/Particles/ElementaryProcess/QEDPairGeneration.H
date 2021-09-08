@@ -8,12 +8,21 @@
 #ifndef QED_PAIR_GENERATION_H_
 #define QED_PAIR_GENERATION_H_
 
-#include "Utils/WarpXConst.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Gather/FieldGather.H"
+#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "QEDInternals/BreitWheelerEngineWrapper.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
 
 /** @file
  *
@@ -78,7 +87,7 @@ public:
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
-                                const WarpXParIter& a_pti, int lev, int ngE,
+                                const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
                                 amrex::FArrayBox const& exfab,
                                 amrex::FArrayBox const& eyfab,
                                 amrex::FArrayBox const& ezfab,
@@ -98,11 +107,13 @@ public:
     * @param[in] i_src particle index of the source species
     * @param[in] i_dst1 particle index of target species 1
     * @param[in] i_dst2 particle index of target species 2
+    * @param[in] engine random number generator engine
     */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData& dst1, DstData& dst2, SrcData& src,
-        int const i_src, int const i_dst1, int const i_dst2) const noexcept
+        int const i_src, int const i_dst1, int const i_dst2,
+        amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
 
@@ -139,7 +150,8 @@ public:
             ex, ey, ez,
             bx, by, bz,
             e_ux, e_uy, e_uz,
-            p_ux, p_uy, p_uz);
+            p_ux, p_uy, p_uz,
+            engine);
 
         src.m_aos[i_src].id() = -1; //destroy photon after pair generation
     }

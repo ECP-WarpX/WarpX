@@ -5,27 +5,110 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXUtil.H"
-#include "WarpXConst.H"
 #include "WarpX.H"
 
+#include "WarpXAlgorithmSelection.H"
+#include "WarpXConst.H"
+#include "WarpXProfilerWrapper.H"
+#include "WarpXUtil.H"
+
+#include <AMReX.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstring>
 #include <fstream>
-
+#include <set>
+#include <string>
+#include <limits>
 
 using namespace amrex;
+
+void PreparseAMReXInputIntArray(amrex::ParmParse& a_pp, char const * const input_str, const bool replace)
+{
+    const int cnt = a_pp.countval(input_str);
+    if (cnt > 0) {
+        Vector<int> input_array;
+        getArrWithParser(a_pp, input_str, input_array);
+        if (replace) {
+            a_pp.remove(input_str);
+        }
+        a_pp.addarr(input_str, input_array);
+    }
+}
+
+void ParseGeometryInput()
+{
+    // Parse prob_lo and hi, evaluating any expressions since geometry does not
+    // parse its input
+    ParmParse pp_geometry("geometry");
+
+    Vector<Real> prob_lo(AMREX_SPACEDIM);
+    Vector<Real> prob_hi(AMREX_SPACEDIM);
+
+    getArrWithParser(pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
+    getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+
+#ifdef WARPX_DIM_RZ
+    ParmParse pp_algo("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
+    }
+    else
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
+    }
+#endif
+
+    pp_geometry.addarr("prob_lo", prob_lo);
+    pp_geometry.addarr("prob_hi", prob_hi);
+
+    // Parse amr input, evaluating any expressions since amr does not parse its input
+    ParmParse pp_amr("amr");
+
+    // Note that n_cell is replaced so that only the parsed version is written out to the
+    // warpx_job_info file. This must be done since yt expects to be able to parse
+    // the value of n_cell from that file. For the rest, this doesn't matter.
+    PreparseAMReXInputIntArray(pp_amr, "n_cell", true);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size", false);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size_x", false);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size_y", false);
+    PreparseAMReXInputIntArray(pp_amr, "max_grid_size_z", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor_x", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor_y", false);
+    PreparseAMReXInputIntArray(pp_amr, "blocking_factor_z", false);
+}
 
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
-    ParmParse pp("warpx");
-    pp.query("gamma_boost", gamma_boost);
+    ParmParse pp_warpx("warpx");
+    queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
         beta_boost = std::sqrt(1.-1./pow(gamma_boost,2));
         std::string s;
-        pp.get("boost_direction", s);
+        pp_warpx.get("boost_direction", s);
         if (s == "x" || s == "X") {
             boost_direction[0] = 1;
         }
@@ -64,26 +147,24 @@ void ConvertLabParamsToBoost()
     Vector<Real> slice_lo(AMREX_SPACEDIM);
     Vector<Real> slice_hi(AMREX_SPACEDIM);
 
-    ParmParse pp_geom("geometry");
-    ParmParse pp_wpx("warpx");
+    ParmParse pp_geometry("geometry");
+    ParmParse pp_warpx("warpx");
     ParmParse pp_amr("amr");
     ParmParse pp_slice("slice");
 
-    pp_geom.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
-    pp_geom.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
-    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+    getArrWithParser(pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
+    getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
 
-    pp_slice.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
+    queryArrWithParser(pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
-    pp_slice.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
+    queryArrWithParser(pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
 
 
     pp_amr.query("max_level", max_level);
     if (max_level > 0){
-      pp_wpx.getarr("fine_tag_lo", fine_tag_lo);
-      pp_wpx.getarr("fine_tag_hi", fine_tag_hi);
+      getArrWithParser(pp_warpx, "fine_tag_lo", fine_tag_lo);
+      getArrWithParser(pp_warpx, "fine_tag_hi", fine_tag_hi);
     }
 
 
@@ -111,11 +192,11 @@ void ConvertLabParamsToBoost()
         }
     }
 
-    pp_geom.addarr("prob_lo", prob_lo);
-    pp_geom.addarr("prob_hi", prob_hi);
+    pp_geometry.addarr("prob_lo", prob_lo);
+    pp_geometry.addarr("prob_hi", prob_hi);
     if (max_level > 0){
-      pp_wpx.addarr("fine_tag_lo", fine_tag_lo);
-      pp_wpx.addarr("fine_tag_hi", fine_tag_hi);
+      pp_warpx.addarr("fine_tag_lo", fine_tag_lo);
+      pp_warpx.addarr("fine_tag_hi", fine_tag_hi);
     }
 
     pp_slice.addarr("dom_lo",slice_lo);
@@ -128,7 +209,7 @@ void ConvertLabParamsToBoost()
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
     WARPX_PROFILE("WarpXUtil::NullifyMF()");
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
@@ -178,7 +259,7 @@ namespace WarpXUtilIO{
     }
 }
 
-void Store_parserString(amrex::ParmParse& pp, std::string query_string,
+void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
                         std::string& stored_string)
 {
     std::vector<std::string> f;
@@ -190,27 +271,231 @@ void Store_parserString(amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
+int safeCastToInt(const amrex::Real x, const std::string& real_name) {
+    int result = 0;
+    bool error_detected = false;
+    std::string assert_msg;
+    // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
+    // This accepts x = 2**31-1 but rejects 2**31.
+    if (x < (2.0*(std::numeric_limits<int>::max()/2+1))) {
+        if (std::ceil(x) >= std::numeric_limits<int>::min()) {
+            result = static_cast<int>(x);
+        } else {
+            error_detected = true;
+            assert_msg = "Error: Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+        }
+    } else if (x > 0) {
+        error_detected = true;
+        assert_msg =  "Error: Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+    } else {
+        error_detected = true;
+        assert_msg =  "Error: NaN detected when casting " + real_name + " to int";
+    }
+    WarpXUtilMsg::AlwaysAssert(!error_detected, assert_msg);
+    return result;
+}
 
-WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
+Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
-    WarpXParser parser(parse_function);
+    // Since queryWithParser recursively calls this routine, keep track of symbols
+    // in case an infinite recursion is found (a symbol's value depending on itself).
+    static std::set<std::string> recursive_symbols;
+
+    Parser parser(parse_function);
     parser.registerVariables(varnames);
-    ParmParse pp("my_constants");
+
     std::set<std::string> symbols = parser.symbols();
     for (auto const& v : varnames) symbols.erase(v.c_str());
+
+    // User can provide inputs under this name, through which expressions
+    // can be provided for arbitrary variables. PICMI inputs are aware of
+    // this convention and use the same prefix as well. This potentially
+    // includes variable names that match physical or mathematical
+    // constants, in case the user wishes to enforce a different
+    // system of units or some form of quasi-physical behavior in the
+    // simulation. Thus, this needs to override any built-in
+    // constants.
+    ParmParse pp_my_constants("my_constants");
+
+    // Physical / Numerical Constants available to parsed expressions
+    static std::map<std::string, amrex::Real> warpx_constants =
+      {
+       {"clight", PhysConst::c},
+       {"epsilon0", PhysConst::ep0},
+       {"mu0", PhysConst::mu0},
+       {"q_e", PhysConst::q_e},
+       {"m_e", PhysConst::m_e},
+       {"m_p", PhysConst::m_p},
+       {"m_u", PhysConst::m_u},
+       {"pi", MathConst::pi},
+      };
+
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
-        if (pp.query(it->c_str(), v)) {
-           parser.setConstant(*it, v);
-           it = symbols.erase(it);
-        } else {
-           ++it;
+
+        WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
+        recursive_symbols.insert(*it);
+        const bool is_input = queryWithParser(pp_my_constants, it->c_str(), v);
+        recursive_symbols.erase(*it);
+
+        if (is_input) {
+            parser.setConstant(*it, v);
+            it = symbols.erase(it);
+            continue;
         }
+
+        auto constant = warpx_constants.find(*it);
+        if (constant != warpx_constants.end()) {
+          parser.setConstant(*it, constant->second);
+          it = symbols.erase(it);
+          continue;
+        }
+
+        ++it;
     }
     for (auto const& s : symbols) {
         amrex::Abort("makeParser::Unknown symbol "+s);
     }
     return parser;
+}
+
+amrex::Real
+parseStringtoReal(std::string str)
+{
+    auto parser = makeParser(str, {});
+    auto exe = parser.compileHost<0>();
+    amrex::Real result = exe();
+    return result;
+}
+
+int
+parseStringtoInt(std::string str, std::string name)
+{
+    amrex::Real rval = parseStringtoReal(str);
+    int ival = safeCastToInt(std::round(rval), name);
+    return ival;
+}
+
+int
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::string tmp_str;
+    int is_specified = a_pp.query(str, tmp_str);
+    if (is_specified)
+    {
+        // If so, create a parser object and apply it to the value provided by the user.
+        std::string str_val;
+        Store_parserString(a_pp, str, str_val);
+        val = parseStringtoReal(str_val);
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+void
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+{
+    // If so, create a parser object and apply it to the value provided by the user.
+    std::string str_val;
+    Store_parserString(a_pp, str, str_val);
+    val = parseStringtoReal(str_val);
+}
+
+int
+queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                    const int start_ix, const int num_val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::vector<std::string> tmp_str_arr;
+    int is_specified = a_pp.queryarr(str, tmp_str_arr, start_ix, num_val);
+    if (is_specified)
+    {
+        // If so, create parser objects and apply them to the values provided by the user.
+        int const n = static_cast<int>(tmp_str_arr.size());
+        val.resize(n);
+        for (int i=0 ; i < n ; i++) {
+            val[i] = parseStringtoReal(tmp_str_arr[i]);
+        }
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+void
+getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val)
+{
+    // Create parser objects and apply them to the values provided by the user.
+    std::vector<std::string> tmp_str_arr;
+    a_pp.getarr(str, tmp_str_arr);
+
+    int const n = static_cast<int>(tmp_str_arr.size());
+    val.resize(n);
+    for (int i=0 ; i < n ; i++) {
+        val[i] = parseStringtoReal(tmp_str_arr[i]);
+    }
+}
+
+void
+getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                    const int start_ix, const int num_val)
+{
+    // Create parser objects and apply them to the values provided by the user.
+    std::vector<std::string> tmp_str_arr;
+    a_pp.getarr(str, tmp_str_arr, start_ix, num_val);
+
+    int const n = static_cast<int>(tmp_str_arr.size());
+    val.resize(n);
+    for (int i=0 ; i < n ; i++) {
+        val[i] = parseStringtoReal(tmp_str_arr[i]);
+    }
+}
+
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
+    amrex::Real rval;
+    const int result = queryWithParser(a_pp, str, rval);
+    if (result) {
+        val = safeCastToInt(std::round(rval), str);
+    }
+    return result;
+}
+
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
+    amrex::Real rval;
+    getWithParser(a_pp, str, rval);
+    val = safeCastToInt(std::round(rval), str);
+}
+
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                        const int start_ix, const int num_val) {
+    std::vector<amrex::Real> rval;
+    const int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
+    if (result) {
+        val.resize(rval.size());
+        for (unsigned long i = 0 ; i < val.size() ; i++) {
+            val[i] = safeCastToInt(std::round(rval[i]), str);
+        }
+    }
+    return result;
+}
+
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val) {
+    std::vector<amrex::Real> rval;
+    getArrWithParser(a_pp, str, rval);
+    val.resize(rval.size());
+    for (unsigned long i = 0 ; i < val.size() ; i++) {
+        val[i] = safeCastToInt(std::round(rval[i]), str);
+    }
+}
+
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                       const int start_ix, const int num_val) {
+    std::vector<amrex::Real> rval;
+    getArrWithParser(a_pp, str, rval, start_ix, num_val);
+    val.resize(rval.size());
+    for (unsigned long i = 0 ; i < val.size() ; i++) {
+        val[i] = safeCastToInt(std::round(rval[i]), str);
+    }
 }
 
 /**
@@ -223,7 +508,23 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
  */
 void CheckGriddingForRZSpectral ()
 {
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#ifndef WARPX_DIM_RZ
+    amrex::Abort("CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
+#else
+
+    // Ensure that geometry.coord_sys is set properly.
+    ParmParse pp_geometry("geometry");
+    int coord_sys = 1;
+    pp_geometry.query("coord_sys", coord_sys);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coord_sys == 1, "geometry.coord_sys needs to be 1 when using cylindrical geometry");
+    pp_geometry.add("coord_sys", coord_sys);
+
+    ParmParse pp_algo("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+
+    // only check for PSATD in RZ
+    if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        return;
 
     int max_level;
     Vector<int> n_cell(AMREX_SPACEDIM, -1);
@@ -289,8 +590,86 @@ void CheckGriddingForRZSpectral ()
         mg[0] /= 2;
     }
     pp_amr.addarr("max_grid_size_y", mg);
-
 #endif
+}
+
+
+void ReadBCParams ()
+{
+
+    amrex::Vector<std::string> field_BC_lo(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> field_BC_hi(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
+    amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
+    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
+    ParmParse pp_geometry("geometry");
+    ParmParse pp_warpx("warpx");
+    ParmParse pp_algo("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
+        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
+    }
+    // particle boundary may not be explicitly specified for some applications
+    bool particle_boundary_specified = false;
+    ParmParse pp_boundary("boundary");
+    pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
+    pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
+    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
+        particle_boundary_specified = true;
+    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM))
+        particle_boundary_specified = true;
+    AMREX_ALWAYS_ASSERT(field_BC_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(field_BC_hi.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
+
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        // Get field boundary type
+        WarpX::field_boundary_lo[idim] = GetFieldBCTypeInteger(field_BC_lo[idim]);
+        WarpX::field_boundary_hi[idim] = GetFieldBCTypeInteger(field_BC_hi[idim]);
+        // Get particle boundary type
+        WarpX::particle_boundary_lo[idim] = GetParticleBCTypeInteger(particle_BC_lo[idim]);
+        WarpX::particle_boundary_hi[idim] = GetParticleBCTypeInteger(particle_BC_hi[idim]);
+
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic ||
+            WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ||
+            WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic ||
+            WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic ) {
+            geom_periodicity[idim] = 1;
+            // to ensure both lo and hi are set to periodic consistently for both field and particles.
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[idim]  == FieldBoundaryType::Periodic) &&
+                (WarpX::field_boundary_hi[idim]  == FieldBoundaryType::Periodic),
+            "field boundary must be consistenly periodic in both lo and hi");
+            if (particle_boundary_specified) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic) &&
+                    (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic),
+               "field and particle boundary must be periodic in both lo and hi");
+            } else {
+                // set particle boundary to periodic
+                WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
+                WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
+            }
+        }
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ||
+                WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
+                amrex::Abort(" PEC boundary not implemented for PSATD, yet!");
+            }
+        }
+    }
+#ifdef WARPX_DIM_RZ
+    // Ensure code aborts if PEC is specified at r=0 for RZ
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
+        "Error : Field boundary at r=0 must be ``none``. \n");
+#endif
+
+    // Appending periodicity information to input so that it can be used by amrex
+    // to set parameters necessary to define geometry and perform communication
+    // such as FillBoundary. The periodicity is 1 if user-define boundary condition is
+    // periodic else it is set to 0.
+    pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 
 namespace WarpXUtilMsg{
@@ -327,4 +706,3 @@ namespace WarpXUtilStr
     }
 
 }
-

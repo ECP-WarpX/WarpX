@@ -10,15 +10,17 @@
 
    \linenumbers
 
-The electromagnetic Particle-In-Cell method
-===========================================
+.. _theory-pic:
+
+Particle-in-Cell Method
+=======================
 
 .. figure:: PIC.png
    :alt: [fig:PIC] The Particle-In-Cell (PIC) method follows the evolution of a collection of charged macro-particles (positively charged in blue on the left plot, negatively charged in red) that evolve self-consistently with their electromagnetic (or electrostatic) fields. The core PIC algorithm involves four operations at each time step: 1) evolve the velocity and position of the particles using the Newton-Lorentz equations, 2) deposit the charge and/or current densities through interpolation from the particles distributions onto the grid, 3) evolve Maxwell’s wave equations (for electromagnetic) or solve Poisson’s equation (for electrostatic) on the grid, 4) interpolate the fields from the grid onto the particles for the next particle push. Additional “add-ons” operations are inserted between these core operations to account for additional physics (e.g. absorption/emission of particles, addition of external forces to account for accelerator focusing or accelerating component) or numerical effects (e.g. smoothing/filtering of the charge/current densities and/or fields on the grid).
 
    [fig:PIC] The Particle-In-Cell (PIC) method follows the evolution of a collection of charged macro-particles (positively charged in blue on the left plot, negatively charged in red) that evolve self-consistently with their electromagnetic (or electrostatic) fields. The core PIC algorithm involves four operations at each time step: 1) evolve the velocity and position of the particles using the Newton-Lorentz equations, 2) deposit the charge and/or current densities through interpolation from the particles distributions onto the grid, 3) evolve Maxwell’s wave equations (for electromagnetic) or solve Poisson’s equation (for electrostatic) on the grid, 4) interpolate the fields from the grid onto the particles for the next particle push. Additional “add-ons” operations are inserted between these core operations to account for additional physics (e.g. absorption/emission of particles, addition of external forces to account for accelerator focusing or accelerating component) or numerical effects (e.g. smoothing/filtering of the charge/current densities and/or fields on the grid).
 
-In the electromagnetic Particle-In-Cell method (Birdsall and Langdon 1991),
+In the *electromagnetic particle-in-cell method* (Birdsall and Langdon 1991),
 the electromagnetic fields are solved on a grid, usually using Maxwell’s
 equations
 
@@ -49,6 +51,8 @@ on the grid from the particles’ positions and velocities, while the
 electric and magnetic field components are interpolated from the grid
 to the particles’ positions for the velocity update.
 
+.. _theory-pic-push:
+
 Particle push
 -------------
 
@@ -63,6 +67,8 @@ equations of motion is given by
 
 In order to close the system, :math:`\bar{\mathbf{v}}^{i}` must be
 expressed as a function of the other quantities. The two implementations that have become the most popular are presented below.
+
+.. _theory-pic-push-boris:
 
 Boris relativistic velocity rotation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,6 +99,8 @@ where :math:`\mathbf{t}=\left(q\Delta t/2m\right)\mathbf{B}^{i}/\bar{\gamma}^{i}
 :math:`\bar{\gamma}^{i}` can be calculated as :math:`\bar{\gamma}^{i}=\sqrt{1+(\mathbf{u}^-/c)^2}`.
 
 The Boris implementation is second-order accurate, time-reversible and fast. Its implementation is very widespread and used in the vast majority of PIC codes.
+
+.. _theory-pic-push-vay:
 
 Vay Lorentz-invariant formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -125,6 +133,8 @@ charged particle beams, where the accurate account of the cancellation
 of the self-generated electric and magnetic fields is essential, as
 shown in (Vay 2008).
 
+.. _theory-pic-mwsolve:
+
 Field solve
 -----------
 
@@ -138,6 +148,8 @@ to non-standard finite-differences as well as the pseudo-spectral
 analytical time-domain (PSATD) and pseudo-spectral time-domain (PSTD)
 algorithms. Extension to multiresolution (or mesh refinement) PIC
 is described in, e.g. (Vay et al. 2012; Vay, Adam, and Heron 2004).
+
+.. _theory-pic-mwsolve-fdtd:
 
 Finite-Difference Time-Domain (FDTD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,6 +190,8 @@ between nodes and the magnetic field components are located in the
 center of the cell faces. Knowing the current densities at half-integer steps,
 the electric field components are updated alternately with the magnetic
 field components at integer and half-integer steps respectively.
+
+.. _theory-pic-mwsolve-nsfdtd:
 
 Non-Standard Finite-Difference Time-Domain (NSFDTD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -235,6 +249,8 @@ wavelength at (or very near) such a timestep. It is also shown in
 the same paper that removing the Nyquist component in all the source
 terms using a bilinear filter (see description of the filter below)
 suppresses this instability.
+
+.. _theory-pic-mwsolve-psatd:
 
 Pseudo Spectral Analytical Time Domain (PSATD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -524,6 +540,8 @@ with
 
 where :math:`\Gamma` is the macro-particle form factor.
 The contributions for :math:`k=0` are integrated directly in real space (Jean Luc Vay, Haber, and Godfrey 2013).
+
+.. _theory-pic-filter:
 
 Filtering
 =========

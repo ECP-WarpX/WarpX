@@ -1,5 +1,13 @@
 #include "CellCenterFunctor.H"
+
 #include "Utils/CoarsenIO.H"
+#ifdef WARPX_DIM_RZ
+#   include "WarpX.H"
+#endif
+
+#include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 
 CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
                                      amrex::IntVect crse_ratio,
@@ -33,6 +41,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio);
+    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio);
+    amrex::ignore_unused(m_lev, m_convertRZmodes2cartesian);
 #endif
 }

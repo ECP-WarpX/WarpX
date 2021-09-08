@@ -8,20 +8,22 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0 0 0      # Is periodic?
 geometry.prob_lo     = -150.e-6   -150.e-6  -80.e-6    # physical domain
 geometry.prob_hi     =  150.e-6    150.e-6    0.
+
+# Boundaries
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
+boundary.particle_lo = absorbing absorbing absorbing
+boundary.particle_hi = absorbing absorbing absorbing
 
 # Verbosity
 warpx.verbose = 1
 
 # Numerics
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
+algo.particle_shape = 3
 warpx.use_filter = 1
 warpx.cfl = 1.0
-warpx.do_pml = 0
 
 # Moving window
 warpx.do_moving_window = 1
@@ -38,7 +40,6 @@ warpx.num_snapshots_lab = 20
 warpx.dt_snapshots_lab = 7.0e-14
 
 # Species
-particles.nspecies = 2
 particles.species_names = electrons ions
 
 electrons.charge = -q_e
@@ -70,7 +71,6 @@ ions.momentum_distribution_type = "constant"
 ions.do_continuous_injection = 1
 
 # Laser
-lasers.nlasers = 1
 lasers.names = laser
 laser.profile      = Gaussian
 laser.position     = 0. 0. -1.e-6 # This point is on the laser plane

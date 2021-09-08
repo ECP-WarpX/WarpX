@@ -1,5 +1,16 @@
 #include "CoarsenMR.H"
 
+#include <AMReX_BLProfiler.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+
 using namespace amrex;
 
 void
@@ -42,7 +53,7 @@ CoarsenMR::Loop ( MultiFab& mf_dst,
     cr[2] = crse_ratio[2];
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     // Loop over boxes (or tiles if not on GPU)

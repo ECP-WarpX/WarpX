@@ -13,9 +13,12 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   =  0            # 0: Cartesian
-geometry.is_periodic =  1    1    1  # Is periodic?
 geometry.prob_lo     =  0.   0.   0. # physical domain
 geometry.prob_hi     =  4.   4.   4.
+
+# Boundary condition
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -24,14 +27,11 @@ warpx.use_filter = 1
 algo.maxwell_solver = yee # or ckc
 
 # Load balancing
-warpx.load_balance_int = 2
+algo.load_balance_intervals = 2
 #algo.load_balance_costs_update = Timers
 
-# Interpolation
-# 1: Linear; 2: Quadratic; 3: Cubic.
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 0.99999
@@ -57,9 +57,9 @@ electrons.uz_th = 0.0
 #################################
 warpx.reduced_diags_names = LBC
 LBC.type = LoadBalanceCosts
-LBC.frequency = 1
+LBC.intervals = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 3
+diag1.intervals = 3
 diag1.diag_type = Full

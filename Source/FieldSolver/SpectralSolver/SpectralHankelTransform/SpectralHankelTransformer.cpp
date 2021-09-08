@@ -4,8 +4,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "Utils/WarpXConst.H"
 #include "SpectralHankelTransformer.H"
+
+#include "Utils/WarpXConst.H"
+
+#include <memory>
 
 SpectralHankelTransformer::SpectralHankelTransformer (int const nr,
                                                       int const n_rz_azimuthal_modes,
@@ -18,9 +21,9 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr,
     dhtm.resize(m_n_rz_azimuthal_modes);
 
     for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
-        dht0[mode].reset( new HankelTransform(mode  , mode, m_nr, rmax) );
-        dhtp[mode].reset( new HankelTransform(mode+1, mode, m_nr, rmax) );
-        dhtm[mode].reset( new HankelTransform(mode-1, mode, m_nr, rmax) );
+        dht0[mode] = std::make_unique<HankelTransform>(mode  , mode, m_nr, rmax);
+        dhtp[mode] = std::make_unique<HankelTransform>(mode+1, mode, m_nr, rmax);
+        dhtm[mode] = std::make_unique<HankelTransform>(mode-1, mode, m_nr, rmax);
     }
 
     ExtractKrArray();

@@ -1,20 +1,34 @@
 #include "Diagnostics.H"
-#include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/PartPerCellFunctor.H"
-#include "ComputeDiagFunctors/PartPerGridFunctor.H"
-#include "ComputeDiagFunctors/DivBFunctor.H"
-#include "ComputeDiagFunctors/DivEFunctor.H"
-#include "FlushFormats/FlushFormatPlotfile.H"
-#include "FlushFormats/FlushFormatCheckpoint.H"
+
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormatAscent.H"
-#include "FlushFormats/FlushFormatSensei.H"
+#include "FlushFormats/FlushFormatCheckpoint.H"
 #ifdef WARPX_USE_OPENPMD
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
-#include "WarpX.H"
+#include "FlushFormats/FlushFormatPlotfile.H"
+#include "FlushFormats/FlushFormatSensei.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
 #include <AMReX_Vector.H>
+
+#include <algorithm>
 #include <string>
+
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
@@ -24,33 +38,47 @@ Diagnostics::Diagnostics (int i, std::string name)
 
 Diagnostics::~Diagnostics ()
 {
-    delete m_flush_format;
 }
 
 bool
 Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
-    // Read list of fields requested by the user.
-    amrex::ParmParse pp(m_diag_name);
+
+    amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
-    pp.query("file_prefix", m_file_prefix);
-    pp.query("format", m_format);
-    bool varnames_specified = pp.queryarr("fields_to_plot", m_varnames);
+    pp_diag_name.query("file_prefix", m_file_prefix);
+    pp_diag_name.query("file_min_digits", m_file_min_digits);
+    pp_diag_name.query("format", m_format);
+    pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
+
+    // Query list of grid fields to write to output
+    bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
     if (!varnames_specified){
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
-    // If user requests rho with back-transformed diagnostics, we set plot_rho=true
-    // and compute rho at each iteration
-    if (WarpXUtilStr::is_in(m_varnames, "rho") && WarpX::do_back_transformed_diagnostics) {
-        warpx.setplot_rho(true);
+
+    // Sanity check if user requests to plot phi
+    if (WarpXUtilStr::is_in(m_varnames, "phi")){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            warpx.do_electrostatic==ElectrostaticSolverAlgo::LabFrame,
+            "plot phi only works if do_electrostatic = labframe");
     }
+
     // Sanity check if user requests to plot F
     if (WarpXUtilStr::is_in(m_varnames, "F")){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_dive_cleaning,
             "plot F only works if warpx.do_dive_cleaning = 1");
     }
+
+    // G can be written to file only if WarpX::do_divb_cleaning = 1
+    if (WarpXUtilStr::is_in(m_varnames, "G"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
+    }
+
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
     if (amrex::ParallelDescriptor::NProcs() == 1){
@@ -63,14 +91,14 @@ Diagnostics::BaseReadParameters ()
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
 
-    bool lo_specified = pp.queryarr("diag_lo", m_lo);
+    bool lo_specified = queryArrWithParser(pp_diag_name, "diag_lo", m_lo, 0, AMREX_SPACEDIM);
 
     if (!lo_specified) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    bool hi_specified = pp.queryarr("diag_hi", m_hi);
+    bool hi_specified = queryArrWithParser(pp_diag_name, "diag_hi", m_hi, 0, AMREX_SPACEDIM);
     if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
@@ -96,69 +124,47 @@ Diagnostics::BaseReadParameters ()
     // Initialize cr_ratio with default value of 1 for each dimension.
     amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
-    bool cr_specified = pp.queryarr("coarsening_ratio", cr_ratio);
+    bool cr_specified = pp_diag_name.queryarr("coarsening_ratio", cr_ratio);
     if (cr_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
        }
     }
 
-    bool species_specified = pp.queryarr("species", m_species_names);
+    // Names of species to write to output
+    bool species_specified = pp_diag_name.queryarr("species", m_output_species_names);
 
-    // Prepare to dump rho per species:
-    // - add the string "rho_<species_names>" to m_varnames if "rho" is listed in
-    //   <diag_name>.<species_name>.variables in the input file
-    // - while looping over all species, count the number ns_dump_rho of species
-    //   that request to dump rho per species
-    // - allocate and fill the array m_rho_per_species_index, which contains the
-    //   indices of the species that request to dump rho per species; the indices
-    //   will be then passed to the constructor of RhoFunctor and used in
-    //   RhoFunctor::operator() to get the correct particle container for the given species
-    amrex::Vector<std::string> species_variables;
-    const MultiParticleContainer& mpc = warpx.GetPartContainer();
-    // If <diag_name>.species is not provided, loop over all species to check whether
-    // rho per species is requested
-    if (m_species_names.size() == 0u) m_species_names = mpc.GetSpeciesNames();
-    // ns_dump_rho: number of species that dump rho per species
-    int ns_dump_rho = 0;
-    // Loop over all species
-    for (const auto& species_name : m_species_names) {
-        // Parse input argument <diag_name>.<species_name>.variables
-        amrex::ParmParse pp_sp(m_diag_name + "." + species_name);
-        if (pp_sp.queryarr("variables", species_variables)) {
-            for (const auto& var : species_variables) {
-                if (var == "rho") {
-                    // Add string "rho_<species_name>" to m_varnames
-                    m_varnames.push_back("rho_" + species_name);
-                    // Count number of species that dump rho per species
-                    ns_dump_rho++;
+    // Names of all species in the simulation
+    m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
+
+    // Auxiliary variables
+    std::string species;
+    bool species_name_is_wrong;
+    // Loop over all fields stored in m_varnames
+    for (const auto& var : m_varnames) {
+        // Check if m_varnames contains a string of the form rho_<species_name>
+        if (var.rfind("rho_", 0) == 0) {
+            // Extract species name from the string rho_<species_name>
+            species = var.substr(var.find("rho_") + 4);
+            // Boolean used to check if species name was misspelled
+            species_name_is_wrong = true;
+            // Loop over all species
+            for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
+                // Check if species name extracted from the string rho_<species_name>
+                // matches any of the species in the simulation
+                if (species == m_all_species_names[i]) {
+                    // Store species index: will be used in RhoFunctor to dump
+                    // rho for this species
+                    m_rho_per_species_index.push_back(i);
+                    species_name_is_wrong = false;
                 }
             }
-        }
-        // Clear content of species_variables before moving to the next species
-        species_variables.clear();
-    }
-    // Allocate array of species indices that dump rho per species
-    m_rho_per_species_index.resize(ns_dump_rho);
-    // ns: total number of species
-    const int ns = int(m_species_names.size());
-    // is_dump_rho: species index to loop over species that dump rho per species
-    int is_dump_rho = 0;
-    // Loop over all species
-    for (int is = 0; is < ns; is++) {
-        // Parse input argument <diag_name>.<species_name>.variables
-        amrex::ParmParse pp_sp(m_diag_name + "." + m_species_names[is]);
-        if (pp_sp.queryarr("variables", species_variables)) {
-            for (const auto& var : species_variables) {
-                if (var == "rho") {
-                    // Fill array of species indices that dump rho per species
-                    m_rho_per_species_index.at(is_dump_rho) = is;
-                    is_dump_rho++;
-                }
+            // If species name was misspelled, abort with error message
+            if (species_name_is_wrong) {
+                amrex::Abort("Input error: string " + var + " in " + m_diag_name +
+                             ".fields_to_plot does not match any species");
             }
         }
-        // Clear content of species_variables before moving to the next species
-        species_variables.clear();
     }
 
     bool checkpoint_compatibility = false;
@@ -192,23 +198,39 @@ Diagnostics::InitData ()
             InitializeFieldBufferData(i_buffer, lev);
         }
     }
-    // When particle buffers, m_particle_buffers are included, they will be initialized here
+    // When particle buffers, m_particle_boundary_buffer are included,
+    // they will be initialized here
     InitializeParticleBuffer();
 
-    amrex::ParmParse pp(m_diag_name);
+    amrex::ParmParse pp_diag_name(m_diag_name);
     amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
-    if ( pp.queryarr("diag_lo", dummy_val) || pp.queryarr("diag_hi", dummy_val) ) {
+    if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
+         queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
         // set geometry filter for particle-diags to true when the diagnostic domain-extent
         // is specified by the user
-        for (int i = 0; i < m_all_species.size(); ++i) {
-            m_all_species[i].m_do_geom_filter = true;
+        for (int i = 0; i < m_output_species.size(); ++i) {
+            m_output_species[i].m_do_geom_filter = true;
         }
         // Disabling particle-io for reduced domain diagnostics by reducing
         // the particle-diag vector to zero.
         // This is a temporary fix until particle_buffer is supported in diagnostics.
-        m_all_species.clear();
+        m_output_species.clear();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
     }
+
+    // default for writing species output is 1
+    int write_species = 1;
+    pp_diag_name.query("write_species", write_species);
+    if (write_species == 0) {
+        if (m_format == "checkpoint"){
+            amrex::Abort("For checkpoint format, write_species flag must be 1.");
+        }
+        // if user-defined value for write_species == 0, then clear species vector
+        m_output_species.clear();
+        m_output_species_names.clear();
+    }
+    // temporarily clear out species output sincce particle buffers are not supported.
+    TMP_ClearSpeciesDataForBTD();
 }
 
 
@@ -234,15 +256,15 @@ Diagnostics::InitBaseData ()
     }
     // Construct Flush class.
     if        (m_format == "plotfile"){
-        m_flush_format = new FlushFormatPlotfile;
+        m_flush_format = std::make_unique<FlushFormatPlotfile>() ;
     } else if (m_format == "checkpoint"){
         // creating checkpoint format
-        m_flush_format = new FlushFormatCheckpoint;
+        m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
     } else if (m_format == "ascent"){
-        m_flush_format = new FlushFormatAscent;
+        m_flush_format = std::make_unique<FlushFormatAscent>();
     } else if (m_format == "sensei"){
-#ifdef BL_USE_SENSEI_INSITU
-        m_flush_format = new FlushFormatSensei(
+#ifdef AMREX_USE_SENSEI_INSITU
+        m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
 #else
@@ -250,7 +272,7 @@ Diagnostics::InitBaseData ()
 #endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
-        m_flush_format = new FlushFormatOpenPMD(m_diag_name);
+        m_flush_format = std::make_unique<FlushFormatOpenPMD>(m_diag_name);
 #else
         amrex::Abort("To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
 #endif
@@ -276,7 +298,10 @@ Diagnostics::ComputeAndPack ()
 {
     // prepare the field-data necessary to compute output data
     PrepareFieldDataForOutput();
-    // compute the necessary fields and stiore result in m_mf_output.
+
+    auto & warpx = WarpX::GetInstance();
+
+    // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
@@ -290,6 +315,11 @@ Diagnostics::ComputeAndPack ()
             }
             // Check that the proper number of components of mf_avg were updated.
             AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
+
+            // needed for contour plots of rho, i.e. ascent/sensei
+            if (m_format == "sensei" || m_format == "ascent") {
+                m_mf_output[i_buffer][lev].FillBoundary(warpx.Geom(lev).periodicity());
+            }
         }
     }
 }
@@ -300,14 +330,14 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
 
-    MovingWindowAndGalileanDomainShift ();
+    MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
 
         for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
             if ( !DoDump (step, i_buffer, force_flush) ) continue;
-                Flush(i_buffer);
+            Flush(i_buffer);
         }
 
     }

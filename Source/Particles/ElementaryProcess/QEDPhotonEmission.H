@@ -8,13 +8,25 @@
 #ifndef QED_PHOTON_EMISSION_H_
 #define QED_PHOTON_EMISSION_H_
 
-#include "Utils/WarpXConst.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Gather/FieldGather.H"
+#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "QEDInternals/QuantumSyncEngineWrapper.H"
+#include "Utils/WarpXConst.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <algorithm>
 #include <limits>
 
 /** @file
@@ -89,7 +101,7 @@ public:
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
         int const opt_depth_runtime_comp,
         QuantumSynchrotronPhotonEmission const emission_functor,
-        const WarpXParIter& a_pti, int lev, int ngE,
+        const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
         amrex::FArrayBox const& exfab,
         amrex::FArrayBox const& eyfab,
         amrex::FArrayBox const& ezfab,
@@ -107,10 +119,12 @@ public:
     * @param[in, out] src source species (either electrons or positrons)
     * @param[in] i_src particle index of the source species
     * @param[in] i_dst particle index of target species
+    * @param[in] engine random number generator engine
     */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
+    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst,
+        amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
 
@@ -140,11 +154,12 @@ public:
             ux, uy, uz,
             ex, ey, ez,
             bx, by, bz,
-            g_ux, g_uy, g_uz);
+            g_ux, g_uy, g_uz,
+            engine);
 
         //Initialize the optical depth component of the source species.
         src.m_runtime_rdata[m_opt_depth_runtime_comp][i_src] =
-            m_opt_depth_functor();
+            m_opt_depth_functor(engine);
     }
 
 private:

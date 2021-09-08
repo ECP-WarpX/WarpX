@@ -6,24 +6,39 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PhotonParticleContainer.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
 
-// Import low-level single-particle kernels
-#include "Particles/Pusher/UpdatePositionPhoton.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/Pusher/CopyParticleAttribs.H"
+#ifdef WARPX_QED
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#endif
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
+#include "Particles/PhysicalParticleContainer.H"
+#include "Particles/Pusher/CopyParticleAttribs.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/UpdatePositionPhoton.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "WarpX.H"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Particles.H>
+#include <AMReX_StructOfArrays.H>
 
-#include <limits>
-#include <sstream>
 #include <algorithm>
-
+#include <array>
+#include <map>
+#include <memory>
 
 using namespace amrex;
 
@@ -31,23 +46,22 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
                                                   const std::string& name)
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
-    ParmParse pp(species_name);
+    ParmParse pp_species_name(species_name);
 
 #ifdef WARPX_QED
-        //IF m_do_qed is enabled, find out if Breit Wheeler process is enabled
-        if(m_do_qed)
-            pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+        //Find out if Breit Wheeler process is enabled
+        pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
 
         //If Breit Wheeler process is enabled, look for the target electron and positron
         //species
         if(m_do_qed_breit_wheeler){
-            pp.get("qed_breit_wheeler_ele_product_species", m_qed_breit_wheeler_ele_product_name);
-            pp.get("qed_breit_wheeler_pos_product_species", m_qed_breit_wheeler_pos_product_name);
+            pp_species_name.get("qed_breit_wheeler_ele_product_species", m_qed_breit_wheeler_ele_product_name);
+            pp_species_name.get("qed_breit_wheeler_pos_product_species", m_qed_breit_wheeler_pos_product_name);
         }
 
         //Check for processes which do not make sense for photons
         bool test_quantum_sync = false;
-        pp.query("do_qed_quantum_sync", test_quantum_sync);
+        pp_species_name.query("do_qed_quantum_sync", test_quantum_sync);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         test_quantum_sync == 0,
         "ERROR: do_qed_quantum_sync can be 1 for species NOT listed in particles.photon_species only!");
@@ -72,7 +86,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                  amrex::FArrayBox const * bxfab,
                                  amrex::FArrayBox const * byfab,
                                  amrex::FArrayBox const * bzfab,
-                                 const int ngE, const int /*e_is_nodal*/,
+                                 const amrex::IntVect ngE, const int /*e_is_nodal*/,
                                  const long offset,
                                  const long np_to_push,
                                  int lev, int gather_lev,
@@ -97,17 +111,17 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     auto& attribs = pti.GetAttribs();
 
     // Extract pointers to the different particle quantities
-    ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-    ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-    ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+    ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr() + offset;
+    ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
+    ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
 #ifdef WARPX_QED
     BreitWheelerEvolveOpticalDepth evolve_opt;
-    amrex::Real* AMREX_RESTRICT p_optical_depth_BW = nullptr;
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_BW = nullptr;
     const bool local_has_breit_wheeler = has_breit_wheeler();
     if (local_has_breit_wheeler) {
         evolve_opt = m_shr_p_bw_engine->build_evolve_functor();
-        p_optical_depth_BW = pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr();
+        p_optical_depth_BW = pti.GetAttribs(particle_comps["opticalDepthBW"]).dataPtr() + offset;
     }
 #endif
 
@@ -194,27 +208,23 @@ void
 PhotonParticleContainer::Evolve (int lev,
                                  const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                  const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                 const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
-                                 const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                  MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                  MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                  MultiFab* rho, MultiFab* crho,
                                  const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                 Real t, Real dt, DtType /*a_dt_type*/)
+                                 Real t, Real dt, DtType a_dt_type, bool skip_deposition)
 {
     // This does gather, push and depose.
     // Push and depose have been re-written for photons
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
-                                       Ex_avg, Ey_avg, Ez_avg,
-                                       Bx_avg, By_avg, Bz_avg,
                                        jx, jy, jz,
                                        cjx, cjy, cjz,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt);
+                                       t, dt, a_dt_type, skip_deposition);
 
 }

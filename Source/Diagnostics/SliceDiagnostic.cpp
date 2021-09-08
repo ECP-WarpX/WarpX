@@ -6,11 +6,35 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SliceDiagnostic.H"
-#include <AMReX_MultiFabUtil.H>
-#include <AMReX_PlotFileUtil.H>
+
+#include "WarpX.H"
 #include "Parallelization/WarpXCommUtil.H"
 
-#include <WarpX.H>
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_MultiFabUtil.H>
+#include <AMReX_PlotFileUtil.H>
+
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+
+#include <cmath>
+#include <memory>
 
 using namespace amrex;
 
@@ -114,8 +138,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     Vector<DistributionMapping> sdmap(1);
     sdmap[0] = DistributionMapping{sba[0]};
 
-    smf.reset(new MultiFab(amrex::convert(sba[0],SliceType), sdmap[0],
-                           ncomp, nghost));
+    smf = std::make_unique<MultiFab>(amrex::convert(sba[0],SliceType), sdmap[0],
+                           ncomp, nghost);
 
     // Copy data from domain to slice that has same cell size as that of //
     // the domain mf. src and dst have the same number of ghost cells    //
@@ -139,8 +163,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
        AMREX_ALWAYS_ASSERT(crse_ba[0].size() == sba[0].size());
 
-       cs_mf.reset( new MultiFab(amrex::convert(crse_ba[0],SliceType),
-                    sdmap[0], ncomp,nghost));
+       cs_mf = std::make_unique<MultiFab>(amrex::convert(crse_ba[0],SliceType),
+                    sdmap[0], ncomp,nghost);
 
        MultiFab& mfSrc = *smf;
        MultiFab& mfDst = *cs_mf;
@@ -369,8 +393,8 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                                  + real_box.lo(idim) );
             slice_realbox.setHi( idim, index_hi * dom_geom[0].CellSize(idim)
                                  + real_box.lo(idim) );
-            slice_cc_nd_box.setLo( idim, slice_realbox.lo(idim) + fac );
-            slice_cc_nd_box.setHi( idim, slice_realbox.hi(idim) - fac );
+            slice_cc_nd_box.setLo( idim, slice_realbox.lo(idim) + Real(fac) );
+            slice_cc_nd_box.setHi( idim, slice_realbox.hi(idim) - Real(fac) );
         }
     }
 }
@@ -430,7 +454,7 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
                            double ratio  = (maxval - minval) / (maxpos - minpos);
                            double xdiff  = slice_minpos - minpos;
                            double newval = minval + xdiff * ratio;
-                           fabarr(i,j,k,n) = newval;
+                           fabarr(i,j,k,n) = static_cast<Real>(newval);
                      }
                  }
               }
@@ -450,7 +474,7 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
                         double ratio  = (maxval - minval) / (maxpos - minpos);
                         double xdiff  = slice_minpos - minpos;
                         double newval = minval + xdiff * ratio;
-                        fabarr(i,j,k,n) = newval;
+                        fabarr(i,j,k,n) = static_cast<Real>(newval);
                     }
                  }
               }
@@ -470,7 +494,7 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
                         double ratio  = (maxval - minval) / (maxpos - minpos);
                         double xdiff  = slice_minpos - minpos;
                         double newval = minval + xdiff * ratio;
-                        fabarr(i,j,k,n) = newval;
+                        fabarr(i,j,k,n) = static_cast<Real>(newval);
                     }
                  }
               }
@@ -482,10 +506,3 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
     }
 
 }
-
-
-
-
-
-
-

@@ -57,12 +57,12 @@ struct CopyParticleAttribs
 
         const auto lev = a_pti.GetLevel();
         const auto index = a_pti.GetPairIndex();
-        xpold  = tmp_particle_data[lev][index][TmpIdx::xold ].dataPtr() + a_offset;
-        ypold  = tmp_particle_data[lev][index][TmpIdx::yold ].dataPtr() + a_offset;
-        zpold  = tmp_particle_data[lev][index][TmpIdx::zold ].dataPtr() + a_offset;
-        uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr() + a_offset;
-        uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr() + a_offset;
-        uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr() + a_offset;
+        xpold  = tmp_particle_data[lev].at(index)[TmpIdx::xold ].dataPtr() + a_offset;
+        ypold  = tmp_particle_data[lev].at(index)[TmpIdx::yold ].dataPtr() + a_offset;
+        zpold  = tmp_particle_data[lev].at(index)[TmpIdx::zold ].dataPtr() + a_offset;
+        uxpold = tmp_particle_data[lev].at(index)[TmpIdx::uxold].dataPtr() + a_offset;
+        uypold = tmp_particle_data[lev].at(index)[TmpIdx::uyold].dataPtr() + a_offset;
+        uzpold = tmp_particle_data[lev].at(index)[TmpIdx::uzold].dataPtr() + a_offset;
 
         m_get_position = GetParticlePosition(a_pti, a_offset);
     }

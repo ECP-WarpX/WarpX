@@ -7,24 +7,36 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
+#include "BoundaryConditions/PML.H"
 #include "FieldIO.H"
-#include "SliceDiagnostic.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/CoarsenIO.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
-#ifdef WARPX_USE_OPENPMD
-#   include "Diagnostics/WarpXOpenPMD.H"
-#endif
-
-#include <AMReX_MultiFabUtil.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_buildInfo.H>
-
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+#include <AMReX_VisMF.H>
 
+#include <array>
+#include <istream>
+#include <memory>
+#include <string>
+#include <utility>
 
 using namespace amrex;
 
@@ -90,7 +102,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                t_new[i++] = std::stod(word);
+                t_new[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -99,7 +111,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                t_old[i++] = std::stod(word);
+                t_old[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -108,11 +120,12 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                dt[i++] = std::stod(word);
+                dt[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
-        is >> moving_window_x;
+        amrex::Real moving_window_x_checkpoint;
+        is >> moving_window_x_checkpoint;
         GotoNextLine(is);
 
         is >> is_synchronized;
@@ -124,7 +137,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                prob_lo[i++] = std::stod(word);
+                prob_lo[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -134,7 +147,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                prob_hi[i++] = std::stod(word);
+                prob_hi[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -151,6 +164,19 @@ WarpX::InitFromCheckpoint ()
         }
 
         mypc->ReadHeader(is);
+        is >> current_injection_position;
+        GotoNextLine(is);
+
+        int do_moving_window_before_restart;
+        is >> do_moving_window_before_restart;
+        GotoNextLine(is);
+
+        if (do_moving_window_before_restart) {
+            moving_window_x = moving_window_x_checkpoint;
+        }
+
+        is >> time_of_last_gal_shift;
+        GotoNextLine(is);
     }
 
     const int nlevs = finestLevel()+1;
@@ -233,7 +259,7 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
-    // Initilize particles
+    // Initialize particles
     mypc->AllocData();
     mypc->Restart(restart_chkfile);
 
@@ -245,14 +271,14 @@ WarpX::GetCellCenteredData() {
 
     WARPX_PROFILE("WarpX::GetCellCenteredData()");
 
-    const int ng =  1;
+    const amrex::IntVect ng(1);
     const int nc = 10;
 
     Vector<std::unique_ptr<MultiFab> > cc(finest_level+1);
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        cc[lev].reset( new MultiFab(grids[lev], dmap[lev], nc, ng) );
+        cc[lev] = std::make_unique<MultiFab>(grids[lev], dmap[lev], nc, ng );
 
         int dcomp = 0;
         // first the electric field

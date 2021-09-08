@@ -1,7 +1,26 @@
 #include "BackTransformFunctor.H"
+
+#include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Utils/WarpXConst.H"
 #include "WarpX.H"
+
+#include <AMReX_Array4.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
-#include <AMReX_MultiFabUtil_C.H>
+
+#include <cmath>
+#include <map>
+#include <memory>
+
 using namespace amrex;
 
 BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int lev,
@@ -50,12 +69,12 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         // Define MultiFab with the distribution map of the destination multifab and
         // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
-        tmp_slice_ptr.reset( new MultiFab ( slice_ba, mf_dst.DistributionMap(),
-                                            slice->nComp(), 0) );
+        tmp_slice_ptr = std::make_unique<MultiFab> ( slice_ba, mf_dst.DistributionMap(),
+                                            slice->nComp(), 0 );
         // Parallel copy the lab-frame data from "slice" MultiFab with
         // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
         // ncomp=10 and dmap of the destination Multifab, which will store the final data
-        tmp_slice_ptr->copy( *slice, 0, 0, slice->nComp() );
+        tmp_slice_ptr->ParallelCopy( *slice, 0, 0, slice->nComp() );
         // Now we will cherry pick only the user-defined fields from
         // tmp_slice_ptr to dst_mf
         const int k_lab = m_k_index_zlab[i_buffer];
@@ -73,17 +92,10 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 #endif
         for (amrex::MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            // Box spanning the user-defined index-space for diagnostic, mf_dst
-            amrex::Box bx = m_buffer_box[i_buffer];
-            // Box of tmp_slice_ptr spanning full domain in x,y and z_boost
-            // of the respective buffer , i_buffer
             const Box& tbx = mfi.tilebox();
-            // Modify bx, such that the z-index is equal to the sliced tmp_mf
-            bx.setSmall( moving_window_dir, tbx.smallEnd( moving_window_dir ) );
-            bx.setBig( moving_window_dir, tbx.bigEnd( moving_window_dir ) );
             amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
-            amrex::ParallelFor( bx, ncomp_dst,
+            amrex::ParallelFor( tbx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {
                     const int icomp = field_map_ptr[n];
@@ -96,11 +108,8 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         }
 
         // Reset the temporary MultiFabs generated
-        slice.reset(new MultiFab);
-        slice.reset(nullptr);
-        tmp_slice_ptr.reset(new MultiFab);
-        tmp_slice_ptr.reset(nullptr);
-
+        slice = nullptr;
+        tmp_slice_ptr = nullptr;
     }
 
 }
@@ -108,13 +117,15 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
                           bool ZSliceInDomain, amrex::Real current_z_boost,
-                          amrex::Box buffer_box, const int k_index_zlab )
+                          amrex::Box buffer_box, const int k_index_zlab,
+                          const int max_box_size )
 {
     m_buffer_box[i_buffer] = buffer_box;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
     if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
+    m_max_box_size = max_box_size;
 }
 
 void
@@ -151,7 +162,7 @@ void
 BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamma_boost,
                                          amrex::Real beta_boost) const
 {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(data, TilingIfNotGPU()); mfi.isValid(); ++mfi) {

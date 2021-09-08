@@ -6,22 +6,46 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "PML.H"
+
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
-#include "Utils/WarpXConst.H"
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#endif
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 #include "Parallelization/WarpXCommUtil.H"
 
-#include <AMReX_Print.H>
+#include <AMReX.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FBI.H>
+#include <AMReX_FabArrayBase.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
 
-#ifdef _OPENMP
-#   include <omp.h>
-#endif
-
 #include <algorithm>
-
+#include <cmath>
+#include <memory>
+#include <utility>
 
 using namespace amrex;
 
@@ -48,12 +72,12 @@ namespace
             Real offset = static_cast<Real>(glo-i);
             p_sigma[i-slo] = fac*(offset*offset);
             // sigma_cumsum is the analytical integral of sigma function at same points than sigma
-            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-            if (i <= ohi) {
-                offset = static_cast<Real>(glo-i) - 0.5;
+            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
+            if (i <= ohi+1) {
+                offset = static_cast<Real>(glo-i) - 0.5_rt;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
                 // sigma_star_cumsum is the analytical integral of sigma function at same points than sigma_star
-                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
             }
         });
     }
@@ -78,11 +102,11 @@ namespace
             i += olo;
             Real offset = static_cast<Real>(i-ghi-1);
             p_sigma[i-slo] = fac*(offset*offset);
-            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-            if (i <= ohi) {
-                offset = static_cast<Real>(i-ghi) - 0.5;
+            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
+            if (i <= ohi+1) {
+                offset = static_cast<Real>(i-ghi) - 0.5_rt;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
-                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
             }
         });
     }
@@ -106,7 +130,7 @@ namespace
             i += olo;
             p_sigma[i-slo] = Real(0.0);
             p_sigma_cumsum[i-slo] = Real(0.0);
-            if (i <= ohi) {
+            if (i <= ohi+1) {
                 p_sigma_star[i-sslo] = Real(0.0);
                 p_sigma_star_cumsum[i-sslo] = Real(0.0);
             }
@@ -153,7 +177,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     Array<Real,AMREX_SPACEDIM> fac;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        fac[idim] = 4.0*PhysConst::c/(dx[idim]*static_cast<Real>(delta*delta));
+        fac[idim] = 4.0_rt*PhysConst::c/(dx[idim]*static_cast<Real>(delta*delta));
     }
 
     const std::vector<std::pair<int,Box> >& isects = grids.intersections(box, false, ncell);
@@ -389,7 +413,7 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
 MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
                               const BoxArray& grid_ba, const Real* dx, int ncell, int delta)
     : FabArray<SigmaBox>(ba,dm,1,0,MFInfo(),
-                         FabFactory<SigmaBox>(grid_ba,dx,ncell,delta))
+                         SigmaBoxFactory(grid_ba,dx,ncell,delta))
 {}
 
 void
@@ -399,8 +423,8 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 
     dt_B = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -415,8 +439,8 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 
     dt_E = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -424,34 +448,34 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
-PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
+PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
           const Geometry* geom, const Geometry* cgeom,
-          int ncell, int delta, int ref_ratio,
-#ifdef WARPX_USE_PSATD
+          int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-#endif
-          int do_dive_cleaning, int do_moving_window,
-          int /*pml_has_particles*/, int do_pml_in_domain,
+          int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
+          const bool J_linear_in_time,
+          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
-    : m_geom(geom),
+    : m_dive_cleaning(do_pml_dive_cleaning),
+      m_divb_cleaning(do_pml_divb_cleaning),
+      m_geom(geom),
       m_cgeom(cgeom)
 {
-
     // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain
     // (instead of extending `ncell` outside of the physical domain)
     // In order to implement this, a reduced domain is created here (decreased by ncells in all direction)
     // and passed to `MakeBoxArray`, which surrounds it by PML boxes
     // (thus creating the PML boxes at the right position, where they overlap with the original domain)
-    Box domain0 = geom->Domain();
+    // minimalBox provides the bounding box around grid_ba for level, lev.
+    // Note that this is okay to build pml inside domain for a single patch, or joint patches
+    // with same [min,max]. But it does not support multiple disjoint refinement patches.
+    Box domain0 = grid_ba.minimalBox();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if ( ! geom->isPeriodic(idim)) {
-            if (do_pml_Lo[idim]){
-                domain0.growLo(idim, -ncell);
-            }
-            if (do_pml_Hi[idim]){
-                domain0.growHi(idim, -ncell);
-            }
-
+        if (do_pml_Lo[idim]){
+            domain0.growLo(idim, -ncell);
+        }
+        if (do_pml_Hi[idim]){
+            domain0.growHi(idim, -ncell);
         }
     }
     const BoxArray grid_ba_reduced = BoxArray(grid_ba.boxList().intersect(domain0));
@@ -459,8 +483,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     const BoxArray& ba = (do_pml_in_domain)?
           MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
           MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
-    if (ba.size() == 0) {
+    if (ba.empty()) {
         m_ok = false;
         return;
     } else {
@@ -475,38 +498,52 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     int ngf_int = (do_moving_window) ? 2 : 0;
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
-#ifdef WARPX_USE_PSATD
-    // Increase the number of guard cells, in order to fit the extent
-    // of the stencil for the spectral solver
-    IntVect ngFFT;
-    if (do_nodal) {
-        ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
-    } else {
-        ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
-    }
-    // Set the number of guard cells to the maximum of each field
-    // (all fields should have the same number of guard cells)
-    ngFFT = ngFFT.max(nge);
-    ngFFT = ngFFT.max(ngb);
-    ngFFT = ngFFT.max(ngf);
-    nge = ngFFT;
-    ngb = ngFFT;
-    ngf = ngFFT;
+
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        // Increase the number of guard cells, in order to fit the extent
+        // of the stencil for the spectral solver
+        int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
+        int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
+        int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
+
+        ParmParse pp_psatd("psatd");
+        pp_psatd.query("nx_guard", ngFFt_x);
+        pp_psatd.query("ny_guard", ngFFt_y);
+        pp_psatd.query("nz_guard", ngFFt_z);
+
+#if (AMREX_SPACEDIM == 3)
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+#elif (AMREX_SPACEDIM == 2)
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #endif
 
-    pml_E_fp[0].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 3, nge ) );
-    pml_E_fp[1].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, 3, nge ) );
-    pml_E_fp[2].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, 3, nge ) );
-    pml_B_fp[0].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, 2, ngb ) );
-    pml_B_fp[1].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, 2, ngb ) );
-    pml_B_fp[2].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, 2, ngb ) );
+        // Set the number of guard cells to the maximum of each field
+        // (all fields should have the same number of guard cells)
+        ngFFT = ngFFT.max(nge);
+        ngFFT = ngFFT.max(ngb);
+        ngFFT = ngFFT.max(ngf);
+        nge = ngFFT;
+        ngb = ngFFT;
+        ngf = ngFFT;
+    }
 
+    // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
+    const int ncompe = (m_dive_cleaning) ? 3 : 2;
+    const int ncompb = (m_divb_cleaning) ? 3 : 2;
+
+    pml_E_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, ncompe, nge );
+    pml_E_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, ncompe, nge );
+    pml_E_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, ncompe, nge );
+
+    pml_B_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, ncompb, ngb );
+    pml_B_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, ncompb, ngb );
+    pml_B_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, ncompb, ngb );
 
     pml_E_fp[0]->setVal(0.0);
     pml_E_fp[1]->setVal(0.0);
@@ -515,72 +552,109 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     pml_B_fp[1]->setVal(0.0);
     pml_B_fp[2]->setVal(0.0);
 
-    pml_j_fp[0].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect() ), dm, 1, ngb ) );
-    pml_j_fp[1].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getcurrent_fp(0,1).ixType().toIntVect() ), dm, 1, ngb ) );
-    pml_j_fp[2].reset( new MultiFab( amrex::convert( ba,
-        WarpX::GetInstance().getcurrent_fp(0,2).ixType().toIntVect() ), dm, 1, ngb ) );
+    pml_j_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect() ), dm, 1, ngb );
+    pml_j_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getcurrent_fp(0,1).ixType().toIntVect() ), dm, 1, ngb );
+    pml_j_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getcurrent_fp(0,2).ixType().toIntVect() ), dm, 1, ngb );
+
     pml_j_fp[0]->setVal(0.0);
     pml_j_fp[1]->setVal(0.0);
     pml_j_fp[2]->setVal(0.0);
 
-    if (do_dive_cleaning)
+    if (m_dive_cleaning)
     {
-        pml_F_fp.reset(new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()), dm, 3, ngf));
+        pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dm, 3, ngf);
         pml_F_fp->setVal(0.0);
     }
 
+    if (m_divb_cleaning)
+    {
+        // TODO Shall we define a separate guard cells parameter ngG?
+        pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()), dm, 3, ngf);
+        pml_G_fp->setVal(0.0);
+    }
+
     if (do_pml_in_domain){
-        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba_reduced, geom->CellSize(), ncell, delta));
+        sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(), ncell, delta);
     }
     else {
-        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba, geom->CellSize(), ncell, delta));
+        sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba, geom->CellSize(), ncell, delta);
     }
 
-
-#ifdef WARPX_USE_PSATD
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml_in_domain==false,
-        "PSATD solver cannot be used with `do_pml_in_domain`.");
-    const bool in_pml = true; // Tells spectral solver to use split-PML equations
-    const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
-    // Get the cell-centered box, with guard cells
-    BoxArray realspace_ba = ba;  // Copy box
-    Array<Real,3> v_galilean_zero = {0,0,0};
-    realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
-    spectral_solver_fp.reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, dx, dt, in_pml ) );
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+#ifndef WARPX_USE_PSATD
+        amrex::ignore_unused(lev, dt, J_linear_in_time);
+#   if(AMREX_SPACEDIM!=3)
+        amrex::ignore_unused(noy_fft);
+#   endif
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                         "PML: PSATD solver selected but not built.");
+#else
+        // Flags passed to the spectral solver constructor
+        const bool in_pml = true;
+        const bool periodic_single_box = false;
+        const bool update_with_rho = false;
+        const bool fft_do_time_averaging = false;
+        const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
+        // Get the cell-centered box, with guard cells
+        BoxArray realspace_ba = ba; // Copy box
+        Array<Real,3> const v_galilean_zero = {0., 0., 0.};
+        Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+        realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
+        spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
+            nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+            v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
+            fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
+    }
 
     if (cgeom)
     {
-#ifndef WARPX_USE_PSATD
-        nge = IntVect(AMREX_D_DECL(1, 1, 1));
-        ngb = IntVect(AMREX_D_DECL(1, 1, 1));
-#endif
+        if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
+            nge = IntVect(AMREX_D_DECL(1, 1, 1));
+            ngb = IntVect(AMREX_D_DECL(1, 1, 1));
+        }
 
         BoxArray grid_cba = grid_ba;
         grid_cba.coarsen(ref_ratio);
-        const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain0));
 
+        // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches, similar to fine patch.
+        amrex::Box domain1 = grid_cba.minimalBox();
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (do_pml_Lo[idim]){
+                // ncell is divided by refinement ratio to ensure that the
+                // physical width of the PML region is equal in fine and coarse patch
+                domain1.growLo(idim, -ncell/ref_ratio[idim]);
+            }
+            if (do_pml_Hi[idim]){
+                // ncell is divided by refinement ratio to ensure that the
+                // physical width of the PML region is equal in fine and coarse patch
+                domain1.growHi(idim, -ncell/ref_ratio[idim]);
+            }
+        }
+        const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain1));
+
+        // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = (do_pml_in_domain) ?
-            MakeBoxArray(*cgeom, grid_cba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
+            MakeBoxArray(*cgeom, grid_cba_reduced, ncell/ref_ratio[0], do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
             MakeBoxArray(*cgeom, grid_cba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
         DistributionMapping cdm{cba};
 
-        pml_E_cp[0].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, 3, nge ) );
-        pml_E_cp[1].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, 3, nge ) );
-        pml_E_cp[2].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, 3, nge ) );
-        pml_B_cp[0].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect() ), cdm, 2, ngb ) );
-        pml_B_cp[1].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getBfield_cp(1,1).ixType().toIntVect() ), cdm, 2, ngb ) );
-        pml_B_cp[2].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getBfield_cp(1,2).ixType().toIntVect() ), cdm, 2, ngb ) );
+        pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, ncompe, nge );
+        pml_E_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, ncompe, nge );
+        pml_E_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, ncompe, nge );
+
+        pml_B_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect() ), cdm, ncompb, ngb );
+        pml_B_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getBfield_cp(1,1).ixType().toIntVect() ), cdm, ncompb, ngb );
+        pml_B_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getBfield_cp(1,2).ixType().toIntVect() ), cdm, ncompb, ngb );
 
         pml_E_cp[0]->setVal(0.0);
         pml_E_cp[1]->setVal(0.0);
@@ -589,38 +663,60 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         pml_B_cp[1]->setVal(0.0);
         pml_B_cp[2]->setVal(0.0);
 
-        if (do_dive_cleaning)
+        if (m_dive_cleaning)
         {
-            pml_F_cp.reset(new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()), cdm, 3, ngf));
+            pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()), cdm, 3, ngf);
             pml_F_cp->setVal(0.0);
-
         }
-        pml_j_cp[0].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getcurrent_cp(1,0).ixType().toIntVect() ), cdm, 1, ngb ) );
-        pml_j_cp[1].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getcurrent_cp(1,1).ixType().toIntVect() ), cdm, 1, ngb ) );
-        pml_j_cp[2].reset( new MultiFab( amrex::convert( cba,
-            WarpX::GetInstance().getcurrent_cp(1,2).ixType().toIntVect() ), cdm, 1, ngb ) );
+
+        if (m_divb_cleaning)
+        {
+            // TODO Shall we define a separate guard cells parameter ngG?
+            pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()), cdm, 3, ngf);
+            pml_G_cp->setVal(0.0);
+        }
+
+        pml_j_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getcurrent_cp(1,0).ixType().toIntVect() ), cdm, 1, ngb );
+        pml_j_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getcurrent_cp(1,1).ixType().toIntVect() ), cdm, 1, ngb );
+        pml_j_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
+            WarpX::GetInstance().getcurrent_cp(1,2).ixType().toIntVect() ), cdm, 1, ngb );
+
         pml_j_cp[0]->setVal(0.0);
         pml_j_cp[1]->setVal(0.0);
         pml_j_cp[2]->setVal(0.0);
 
         if (do_pml_in_domain){
-            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell, delta));
+            // Note - assuming that the refinement ratio is equal in all dimensions
+            sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell/ref_ratio[0], delta/ref_ratio[0]);
         } else {
-            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta));
+            sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta);
         }
 
-#ifdef WARPX_USE_PSATD
-        const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
-        // Get the cell-centered box, with guard cells
-        BoxArray realspace_cba = cba;  // Copy box
-        // const bool in_pml = true; // Tells spectral solver to use split-PML equations
-
-        realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
-        spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, cdx, dt, in_pml ) );
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+#ifndef WARPX_USE_PSATD
+            amrex::ignore_unused(dt);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                             "PML: PSATD solver selected but not built.");
+#else
+            // Flags passed to the spectral solver constructor
+            const bool in_pml = true;
+            const bool periodic_single_box = false;
+            const bool update_with_rho = false;
+            const bool fft_do_time_averaging = false;
+            const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
+            // Get the cell-centered box, with guard cells
+            BoxArray realspace_cba = cba; // Copy box
+            Array<Real,3> const v_galilean_zero = {0., 0., 0.};
+            Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+            realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
+            spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
+                nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+                v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
+                fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
+        }
     }
 }
 
@@ -631,13 +727,11 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
 {
     Box domain = geom.Domain();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if ( ! geom.isPeriodic(idim) ) {
-            if (do_pml_Lo[idim]){
-                domain.growLo(idim, ncell);
-            }
-            if (do_pml_Hi[idim]){
-                domain.growHi(idim, ncell);
-            }
+        if (do_pml_Lo[idim]){
+            domain.growLo(idim, ncell);
+        }
+        if (do_pml_Hi[idim]){
+            domain.growHi(idim, ncell);
         }
     }
     BoxList bl;
@@ -651,12 +745,10 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
             //  the PML cells surrounding these patches cannot overlap
             // The check is only needed along the axis where PMLs are being used.
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if (! geom.isPeriodic(idim)) {
-                    if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
-                        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                            grid_bx.length(idim) > ncell,
-                            "Consider using larger amr.blocking_factor with PMLs");
-                    }
+                if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
+                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        grid_bx.length(idim) > ncell,
+                        "Consider using larger amr.blocking_factor with PMLs");
                 }
             }
         }
@@ -764,6 +856,18 @@ PML::GetF_cp ()
     return pml_F_cp.get();
 }
 
+MultiFab*
+PML::GetG_fp ()
+{
+    return pml_G_fp.get();
+}
+
+MultiFab*
+PML::GetG_cp ()
+{
+    return pml_G_cp.get();
+}
+
 void
 PML::ExchangeB (const std::array<amrex::MultiFab*,3>& B_fp,
                 const std::array<amrex::MultiFab*,3>& B_cp,
@@ -846,7 +950,6 @@ PML::CopyJtoPMLs (const std::array<amrex::MultiFab*,3>& j_fp,
     CopyJtoPMLs(PatchType::coarse, j_cp);
 }
 
-
 void
 PML::ExchangeF (amrex::MultiFab* F_fp, amrex::MultiFab* F_cp, int do_pml_in_domain)
 {
@@ -863,7 +966,6 @@ PML::ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain)
         Exchange(*pml_F_cp, *Fp, *m_cgeom, do_pml_in_domain);
     }
 }
-
 
 void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
@@ -899,7 +1001,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
             WarpXCommUtil::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(reg); mfi.isValid(); ++mfi)
@@ -952,6 +1054,7 @@ PML::FillBoundary ()
     FillBoundaryE();
     FillBoundaryB();
     FillBoundaryF();
+    FillBoundaryG();
 }
 
 void
@@ -1025,6 +1128,28 @@ PML::FillBoundaryF (PatchType patch_type)
 }
 
 void
+PML::FillBoundaryG ()
+{
+    FillBoundaryG(PatchType::fine);
+    FillBoundaryG(PatchType::coarse);
+}
+
+void
+PML::FillBoundaryG (PatchType patch_type)
+{
+    if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
+    {
+        const auto& period = m_geom->periodicity();
+        pml_G_fp->FillBoundary(period);
+    }
+    else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
+    {
+        const auto& period = m_cgeom->periodicity();
+        pml_G_cp->FillBoundary(period);
+    }
+}
+
+void
 PML::CheckPoint (const std::string& dir) const
 {
     if (pml_E_fp[0])
@@ -1074,54 +1199,99 @@ PML::Restart (const std::string& dir)
 
 #ifdef WARPX_USE_PSATD
 void
-PML::PushPSATD () {
+PML::PushPSATD (const int lev) {
 
     // Update the fields on the fine and coarse patch
-    PushPMLPSATDSinglePatch( *spectral_solver_fp, pml_E_fp, pml_B_fp );
+    PushPMLPSATDSinglePatch(lev, *spectral_solver_fp, pml_E_fp, pml_B_fp, pml_F_fp, pml_G_fp);
     if (spectral_solver_cp) {
-        PushPMLPSATDSinglePatch( *spectral_solver_cp, pml_E_cp, pml_B_cp );
+        PushPMLPSATDSinglePatch(lev, *spectral_solver_cp, pml_E_cp, pml_B_cp, pml_F_cp, pml_G_cp);
     }
 }
 
 void
 PushPMLPSATDSinglePatch (
+    const int lev,
     SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B ) {
+    std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B,
+    std::unique_ptr<amrex::MultiFab>& pml_F,
+    std::unique_ptr<amrex::MultiFab>& pml_G)
+{
+    const SpectralFieldIndex& Idx = solver.m_spectral_index;
 
-    using SpIdx = SpectralPMLIndex;
+    // Perform forward Fourier transforms
+    solver.ForwardTransform(lev, *pml_E[0], Idx.Exy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_E[0], Idx.Exz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_E[1], Idx.Eyx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_E[1], Idx.Eyz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_E[2], Idx.Ezx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_E[2], Idx.Ezy, PMLComp::zy);
+    solver.ForwardTransform(lev, *pml_B[0], Idx.Bxy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_B[0], Idx.Bxz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_B[1], Idx.Byx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_B[1], Idx.Byz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_B[2], Idx.Bzx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_B[2], Idx.Bzy, PMLComp::zy);
 
-    // Perform forward Fourier transform
-    // Note: the correspondance between the spectral PML index
-    // (Exy, Ezx, etc.) and the component (PMLComp::xy, PMComp::zx, etc.)
-    // of the MultiFabs (e.g. pml_E) is dictated by the
-    // function that damps the PML
-    solver.ForwardTransform(*pml_E[0], SpIdx::Exy, PMLComp::xy);
-    solver.ForwardTransform(*pml_E[0], SpIdx::Exz, PMLComp::xz);
-    solver.ForwardTransform(*pml_E[1], SpIdx::Eyz, PMLComp::yz);
-    solver.ForwardTransform(*pml_E[1], SpIdx::Eyx, PMLComp::yx);
-    solver.ForwardTransform(*pml_E[2], SpIdx::Ezx, PMLComp::zx);
-    solver.ForwardTransform(*pml_E[2], SpIdx::Ezy, PMLComp::zy);
-    solver.ForwardTransform(*pml_B[0], SpIdx::Bxy, PMLComp::xy);
-    solver.ForwardTransform(*pml_B[0], SpIdx::Bxz, PMLComp::xz);
-    solver.ForwardTransform(*pml_B[1], SpIdx::Byz, PMLComp::yz);
-    solver.ForwardTransform(*pml_B[1], SpIdx::Byx, PMLComp::yx);
-    solver.ForwardTransform(*pml_B[2], SpIdx::Bzx, PMLComp::zx);
-    solver.ForwardTransform(*pml_B[2], SpIdx::Bzy, PMLComp::zy);
+    // WarpX::do_pml_dive_cleaning = true
+    if (pml_F)
+    {
+        solver.ForwardTransform(lev, *pml_E[0], Idx.Exx, PMLComp::xx);
+        solver.ForwardTransform(lev, *pml_E[1], Idx.Eyy, PMLComp::yy);
+        solver.ForwardTransform(lev, *pml_E[2], Idx.Ezz, PMLComp::zz);
+        solver.ForwardTransform(lev, *pml_F, Idx.Fx, PMLComp::x);
+        solver.ForwardTransform(lev, *pml_F, Idx.Fy, PMLComp::y);
+        solver.ForwardTransform(lev, *pml_F, Idx.Fz, PMLComp::z);
+    }
+
+    // WarpX::do_pml_divb_cleaning = true
+    if (pml_G)
+    {
+        solver.ForwardTransform(lev, *pml_B[0], Idx.Bxx, PMLComp::xx);
+        solver.ForwardTransform(lev, *pml_B[1], Idx.Byy, PMLComp::yy);
+        solver.ForwardTransform(lev, *pml_B[2], Idx.Bzz, PMLComp::zz);
+        solver.ForwardTransform(lev, *pml_G, Idx.Gx, PMLComp::x);
+        solver.ForwardTransform(lev, *pml_G, Idx.Gy, PMLComp::y);
+        solver.ForwardTransform(lev, *pml_G, Idx.Gz, PMLComp::z);
+    }
+
     // Advance fields in spectral space
     solver.pushSpectralFields();
-    // Perform backward Fourier Transform
-    solver.BackwardTransform(*pml_E[0], SpIdx::Exy, PMLComp::xy);
-    solver.BackwardTransform(*pml_E[0], SpIdx::Exz, PMLComp::xz);
-    solver.BackwardTransform(*pml_E[1], SpIdx::Eyz, PMLComp::yz);
-    solver.BackwardTransform(*pml_E[1], SpIdx::Eyx, PMLComp::yx);
-    solver.BackwardTransform(*pml_E[2], SpIdx::Ezx, PMLComp::zx);
-    solver.BackwardTransform(*pml_E[2], SpIdx::Ezy, PMLComp::zy);
-    solver.BackwardTransform(*pml_B[0], SpIdx::Bxy, PMLComp::xy);
-    solver.BackwardTransform(*pml_B[0], SpIdx::Bxz, PMLComp::xz);
-    solver.BackwardTransform(*pml_B[1], SpIdx::Byz, PMLComp::yz);
-    solver.BackwardTransform(*pml_B[1], SpIdx::Byx, PMLComp::yx);
-    solver.BackwardTransform(*pml_B[2], SpIdx::Bzx, PMLComp::zx);
-    solver.BackwardTransform(*pml_B[2], SpIdx::Bzy, PMLComp::zy);
+
+    // Perform backward Fourier transforms
+    solver.BackwardTransform(lev, *pml_E[0], Idx.Exy, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_E[0], Idx.Exz, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyx, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyz, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezx, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezy, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxy, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxz, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_B[1], Idx.Byx, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_B[1], Idx.Byz, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzx, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzy, PMLComp::zy);
+
+    // WarpX::do_pml_dive_cleaning = true
+    if (pml_F)
+    {
+        solver.BackwardTransform(lev, *pml_E[0], Idx.Exx, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_E[1], Idx.Eyy, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_E[2], Idx.Ezz, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fx, PMLComp::x);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fy, PMLComp::y);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fz, PMLComp::z);
+    }
+
+    // WarpX::do_pml_divb_cleaning = true
+    if (pml_G)
+    {
+        solver.BackwardTransform(lev, *pml_B[0], Idx.Bxx, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_B[1], Idx.Byy, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_B[2], Idx.Bzz, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gx, PMLComp::x);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gy, PMLComp::y);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gz, PMLComp::z);
+    }
 }
 #endif

@@ -53,6 +53,7 @@ elif test_number == '2':
     Bx_test = 1679288857.0516706
     By_test = 525665014.1557486
     Bz_test = 1836353079.9561853
+    dV = dV/2. # Schwinger is only activated in part of the simulation domain
 elif test_number == '3':
     # Third Schwinger test with intermediate electric field such that average created pair per cell
     # is 1. A Poisson distribution is used to obtain the weights of the particles.
@@ -63,6 +64,7 @@ elif test_number == '4':
     # case.
     Ez_test = 2.5e+20
     By_test = 833910140000.
+    dV = dV*(3./4.)**2. # Schwinger is only activated in part of the simulation domain
 else:
     assert(False)
 
@@ -110,7 +112,7 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
         # Sorting the arrays is required because electrons and positrons are not necessarily
         # dumped in the same order.
         assert(np.array_equal(np.sort(ele_data),np.sort(pos_data)))
-        # 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
+        # 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
         error = np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)
         print("difference between expected and actual number of pairs created: " + str(error))
         print("tolerance: " + str(5*std_total_physical_pairs_created))

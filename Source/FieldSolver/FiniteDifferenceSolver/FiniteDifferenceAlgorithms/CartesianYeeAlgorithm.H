@@ -8,13 +8,13 @@
 #ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
 
-#include "Utils/WarpXConst.H"
 #include "FieldAccessorFunctors.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
-#include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_REAL.H>
 
 #include <array>
 #include <cmath>
@@ -56,6 +56,14 @@ struct CartesianYeeAlgorithm {
     }
 
     /**
+     * \brief Returns maximum number of guard cells required by the field-solve
+     */
+    static amrex::IntVect GetMaxGuardCell () {
+        // The yee solver requires one guard cell in each dimension
+        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
+    }
+
+    /**
      * Perform derivative along x on a cell-centered grid, from a nodal field `F`*/
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
@@ -91,8 +99,8 @@ struct CartesianYeeAlgorithm {
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
         amrex::ignore_unused(n_coefs_y);
+        return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -115,8 +123,8 @@ struct CartesianYeeAlgorithm {
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
         amrex::ignore_unused(n_coefs_y);
+        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);

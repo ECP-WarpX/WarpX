@@ -11,30 +11,41 @@
 #ifndef WARPX_ParticleContainer_H_
 #define WARPX_ParticleContainer_H_
 
-#include "WarpXParticleContainer.H"
-#include "PhysicalParticleContainer.H"
-#include "PhotonParticleContainer.H"
-#include "Laser/LaserParticleContainer.H"
-#include "Parser/WarpXParserWrapper.H"
-#include "Particles/Collision/CollisionType.H"
-#include "Particles/ParticleCreation/SmartUtils.H"
-#include "Particles/ParticleCreation/SmartCopy.H"
-#include "Particles/ParticleCreation/SmartCreate.H"
-#include "Particles/ParticleCreation/FilterCopyTransform.H"
-#include "Particles/RigidInjectedParticleContainer.H"
+#include "MultiParticleContainer_fwd.H"
 
+#include "Evolve/WarpXDtType.H"
+#include "Particles/Collision/CollisionHandler.H"
 #ifdef WARPX_QED
-#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
-#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
+#include "PhysicalParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpXParticleContainer.H"
+#include "ParticleBoundaries.H"
 
-#include <AMReX_Particles.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_INT.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
 
-#include <memory>
-#include <map>
-#include <string>
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
 #include <algorithm>
+#include <array>
+#include <iosfwd>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 /**
  * The class MultiParticleContainer holds multiple instances of the polymorphic
@@ -65,6 +76,14 @@ public:
     WarpXParticleContainer*
     GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
 
+    WarpXParticleContainer&
+    GetParticleContainerFromName (std::string name) const {
+        auto it = std::find(species_names.begin(), species_names.end(), name);
+        WarpXUtilMsg::AlwaysAssert(it != species_names.end(), "ERROR: Unknown species name");
+        int i = std::distance(species_names.begin(), it);
+        return *allcontainers[i];
+    }
+
 #ifdef WARPX_USE_OPENPMD
     std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
       return  allcontainers[ispecies];
@@ -86,14 +105,12 @@ public:
     void Evolve (int lev,
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-                 const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg, const amrex::MultiFab& Ez_avg,
-                 const amrex::MultiFab& Bx_avg, const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg,
                  amrex::MultiFab& jx,  amrex::MultiFab& jy, amrex::MultiFab& jz,
                  amrex::MultiFab* cjx,  amrex::MultiFab* cjy, amrex::MultiFab* cjz,
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
                  const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                  const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full);
+                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
 
     ///
     /// This pushes the particle positions by one half time step for all the species in the
@@ -112,6 +129,46 @@ public:
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
+    /**
+    * \brief This returns a MultiFAB filled with zeros. It is used to return the charge density
+    * when there is no particle species.
+    *
+    * @param[in] lev the index of the refinement level.
+    */
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+
+    /**
+     * \brief Deposit charge density.
+     *
+     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in] relative_t Time at which to deposit rho, relative to the time
+     *             of the current positions of the particles (expressed as
+     *             a fraction of dt). When different than 0, the particle
+     *             position will be temporarily modified to match the time
+     *             of the deposition.
+     */
+    void
+    DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                   const amrex::Real relative_t);
+
+    /**
+     * \brief Deposit current density.
+     *
+     * \param[in,out] J vector of current densities (one three-dimensional array of pointers
+     *                to MultiFabs per mesh refinement level)
+     * \param[in] dt: Time step for particle level (is used when temporarily
+     *                modifying the particle positions, either within the
+     *                Esirkepov or when `relative_t` is different than 0
+     * \param[in] relative_t: Time at which to deposit J, relative to the time of
+     *                the current positions of the particles (expressed as
+     *                a fraction of dt). When different than 0, the particle
+     *                position will be temporarily modified to match the
+     *                time of the deposition.
+     */
+    void
+    DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+                    const amrex::Real dt, const amrex::Real relative_t);
+
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
@@ -122,7 +179,7 @@ public:
                             const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                             const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
-    void doCoulombCollisions (amrex::Real cur_time);
+    void doCollisions (amrex::Real cur_time);
 
     /**
     * \brief This function loops over all species and performs resampling if appropriate.
@@ -140,6 +197,12 @@ public:
      * particles.
      */
     void doQEDSchwinger ();
+
+    /** This function computes the box outside which Schwinger process is disabled. The box is
+     * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
+     * object (to make the link between Real and int quatities).
+     */
+    amrex::Box ComputeSchwingerGlobalBox () const;
 #endif
 
     void Restart (const std::string& dir);
@@ -154,13 +217,24 @@ public:
 
     void Redistribute ();
 
+    void defineAllParticleTiles ();
+
     void RedistributeLocal (const int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
     void ApplyBoundaryConditions ();
 
-    amrex::Vector<long> NumberOfParticlesInGrid(int lev) const;
+    /**
+    * \brief This returns a vector filled with zeros whose size is the number of boxes in the
+    * simulation boxarray. It is used to return the number of particles in each grid when there is
+    * no particle species.
+    *
+    * @param[in] lev the index of the refinement level.
+    */
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
+
+    amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
     void Increment (amrex::MultiFab& mf, int lev);
 
@@ -199,23 +273,38 @@ public:
     void UpdateContinuousInjectionPosition(amrex::Real dt) const;
     int doContinuousInjection() const;
 
+    // Inject particles from a surface during the simulation
+    void ContinuousFluxInjection(amrex::Real dt) const;
+
     std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
+
+    void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
     std::string m_B_ext_particle_s = "default";
     std::string m_E_ext_particle_s = "default";
     // External fields added to particle fields.
     amrex::Vector<amrex::Real> m_B_external_particle;
     amrex::Vector<amrex::Real> m_E_external_particle;
-    // ParserWrapper for B_external on the particle
-    std::unique_ptr<ParserWrapper<4> > m_Bx_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_By_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Bz_particle_parser;
-    // ParserWrapper for E_external on the particle
-    std::unique_ptr<ParserWrapper<4> > m_Ex_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Ey_particle_parser;
-    std::unique_ptr<ParserWrapper<4> > m_Ez_particle_parser;
+    // Parser for B_external on the particle
+    std::unique_ptr<amrex::Parser> m_Bx_particle_parser;
+    std::unique_ptr<amrex::Parser> m_By_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Bz_particle_parser;
+    // Parser for E_external on the particle
+    std::unique_ptr<amrex::Parser> m_Ex_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
+    std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
+
+    amrex::Real m_repeated_plasma_lens_period;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_E;
+    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_B;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_E;
+    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_B;
 
 #ifdef WARPX_QED
     /**
@@ -265,9 +354,7 @@ protected:
 
     std::vector<std::string> lasers_names;
 
-    std::vector<std::string> collision_names;
-
-    amrex::Vector<std::unique_ptr<CollisionType> > allcollisions;
+    std::unique_ptr<CollisionHandler> collisionhandler;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
@@ -277,8 +364,8 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    /** Whether to absorb particles exiting the domain */
-    ParticleBC m_boundary_conditions = ParticleBC::none;
+    /** Controls boundaries for particles exiting the domain */
+    ParticleBoundaries m_boundary_conditions;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
@@ -292,7 +379,7 @@ protected:
             info.EnableTiling(pc_src.tile_size);
         }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         info.SetDynamic(true);
 #endif
 
@@ -374,6 +461,15 @@ protected:
      * a Poisson distribution for the pair production rate calculations
      */
     int m_qed_schwinger_threshold_poisson_gaussian = 25;
+    /** The 6 following variables are spatial boundaries beyond which Schwinger process is
+     *  deactivated
+     */
+    amrex::Real m_qed_schwinger_xmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_xmax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_ymin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_ymax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_zmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_zmax = std::numeric_limits<amrex::Real>::max();
 
 #endif
 

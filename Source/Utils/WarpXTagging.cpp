@@ -7,9 +7,21 @@
  */
 
 #include <WarpX.H>
+
+#include <AMReX_BaseFab.H>
 #include <AMReX_BoxIterator.H>
-#include <array>
-#include <algorithm>
+#include <AMReX_Config.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_TagBox.H>
+
+#include <AMReX_BaseFwd.H>
 
 using namespace amrex;
 
@@ -19,8 +31,8 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
     const Real* problo = Geom(lev).ProbLo();
     const Real* dx = Geom(lev).CellSize();
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(tags); mfi.isValid(); ++mfi)
     {
@@ -38,4 +50,3 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
         }
     }
 }
-

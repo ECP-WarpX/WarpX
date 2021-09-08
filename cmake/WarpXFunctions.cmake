@@ -4,9 +4,12 @@ macro(set_ccache)
     find_program(CCACHE_PROGRAM ccache)
     if(CCACHE_PROGRAM)
         set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-        if(ENABLE_CUDA)
+        if(WarpX_COMPUTE STREQUAL CUDA)
             set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
         endif()
+        message(STATUS "Found CCache: ${CCACHE_PROGRAM}")
+    else()
+        message(STATUS "Could NOT find CCache")
     endif()
     mark_as_advanced(CCACHE_PROGRAM)
 endmacro()
@@ -69,13 +72,10 @@ macro(set_default_build_type default_build_type)
             set_property(CACHE CMAKE_BUILD_TYPE
                 PROPERTY STRINGS ${CMAKE_CONFIGURATION_TYPES})
         endif()
-
-        # RelWithDebInfo uses -O2 which is sub-ideal for how it is intended to be used
-        #   https://gitlab.kitware.com/cmake/cmake/-/merge_requests/591
-        list(TRANSFORM CMAKE_C_FLAGS_RELWITHDEBINFO REPLACE "-O2" "-O3")
-        list(TRANSFORM CMAKE_CXX_FLAGS_RELWITHDEBINFO REPLACE "-O2" "-O3")
-        # FIXME: due to the "AMReX inits CUDA first" logic we will first see this with -O2 in output
-        list(TRANSFORM CMAKE_CUDA_FLAGS_RELWITHDEBINFO REPLACE "-O2" "-O3")
+        if(NOT CMAKE_BUILD_TYPE IN_LIST CMAKE_CONFIGURATION_TYPES)
+            message(WARNING "CMAKE_BUILD_TYPE '${CMAKE_BUILD_TYPE}' is not one of "
+                    "${CMAKE_CONFIGURATION_TYPES}. Is this a typo?")
+        endif()
     endif()
 endmacro()
 
@@ -83,7 +83,8 @@ endmacro()
 # Note: this is a bit legacy and one should use CMake TOOLCHAINS instead.
 #
 macro(set_cxx_warnings)
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    # On Windows, Clang -Wall aliases -Weverything; default is /W3
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND NOT WIN32)
         # list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address") # address, memory, undefined
         # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
         # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
@@ -112,6 +113,19 @@ macro(set_cxx_warnings)
     endif ()
 endmacro()
 
+# Enables interprocedural optimization for a list of targets
+#
+function(enable_IPO all_targets_list)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT is_IPO_available)
+    if(is_IPO_available)
+        foreach(tgt IN ITEMS ${all_targets_list})
+            set_target_properties(${tgt} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+        endforeach()
+    else()
+        message(FATAL_ERROR "Interprocedural optimization is not available, set WarpX_IPO=OFF")
+    endif()
+endfunction()
 
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
@@ -119,9 +133,17 @@ endmacro()
 function(make_third_party_includes_system imported_target propagated_name)
     add_library(WarpX::thirdparty::${propagated_name} INTERFACE IMPORTED)
     target_link_libraries(WarpX::thirdparty::${propagated_name} INTERFACE ${imported_target})
-    get_target_property(ALL_INCLUDES ${imported_target} INCLUDE_DIRECTORIES)
-    set_target_properties(WarpX::thirdparty::${propagated_name} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
-    target_include_directories(WarpX::thirdparty::${propagated_name} SYSTEM INTERFACE ${ALL_INCLUDES})
+
+    if(TARGET ${imported_target})
+        get_target_property(imported_target_type ${imported_target} TYPE)
+        if(NOT imported_target_type STREQUAL INTERFACE_LIBRARY)
+            get_target_property(ALL_INCLUDES ${imported_target} INCLUDE_DIRECTORIES)
+            if(ALL_INCLUDES)
+                set_target_properties(WarpX::thirdparty::${propagated_name} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
+                target_include_directories(WarpX::thirdparty::${propagated_name} SYSTEM INTERFACE ${ALL_INCLUDES})
+            endif()
+        endif()
+    endif()
 endfunction()
 
 
@@ -129,55 +151,99 @@ endfunction()
 # warpx symlink to it. Only sets options relevant for users (see summary).
 #
 function(set_warpx_binary_name)
-    set_target_properties(WarpX PROPERTIES OUTPUT_NAME "warpx")
-    if(WarpX_DIMS STREQUAL 3)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".3d")
-    elseif(WarpX_DIMS STREQUAL 2)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".2d")
-    elseif(WarpX_DIMS STREQUAL RZ)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
+    set(warpx_bin_names)
+    if(WarpX_APP)
+        list(APPEND warpx_bin_names app)
     endif()
-
-    if(WarpX_MPI)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".MPI")
-    else()
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".NOMPI")
+    if(WarpX_LIB)
+        list(APPEND warpx_bin_names shared)
     endif()
+    foreach(tgt IN LISTS _ALL_TARGETS)
+        set_target_properties(${tgt} PROPERTIES OUTPUT_NAME "warpx")
+        if(WarpX_DIMS STREQUAL 3)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".3d")
+        elseif(WarpX_DIMS STREQUAL 2)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".2d")
+        elseif(WarpX_DIMS STREQUAL RZ)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
+        endif()
 
-    set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_COMPUTE}")
+        if(WarpX_MPI)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".MPI")
+        else()
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".NOMPI")
+        endif()
 
-    if(WarpX_PRECISION STREQUAL "double")
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".DP")
-    else()
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".SP")
+        set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_COMPUTE}")
+
+        if(WarpX_PRECISION STREQUAL "DOUBLE")
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DP")
+        else()
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".SP")
+        endif()
+
+        if(WarpX_ASCENT)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".ASCENT")
+        endif()
+
+        if(WarpX_OPENPMD)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".OPMD")
+        endif()
+
+        if(WarpX_PSATD)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".PSATD")
+        endif()
+
+        if(WarpX_EB)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".EB")
+        endif()
+
+        if(WarpX_QED)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".QED")
+        endif()
+
+        if(WarpX_QED_TABLE_GEN)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".GENQEDTABLES")
+        endif()
+
+        if(WarpX_SENSEI)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".SENSEI")
+        endif()
+
+
+        if(CMAKE_BUILD_TYPE MATCHES "Debug")
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
+        endif()
+    endforeach()
+
+    if(WarpX_APP)
+        # alias to the latest build, because using the full name is often confusing
+        add_custom_command(TARGET app POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+                $<TARGET_FILE_NAME:app>
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
+        )
     endif()
-
-    if(WarpX_ASCENT)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".ASCENT")
+    if(WarpX_LIB)
+        # alias to the latest build; this is the one expected by Python bindings
+        if(WarpX_DIMS STREQUAL 3)
+            set(lib_suffix "3d")
+        elseif(WarpX_DIMS STREQUAL 2)
+            set(lib_suffix "2d")
+        elseif(WarpX_DIMS STREQUAL RZ)
+            set(lib_suffix "rz")
+        endif()
+        if(WIN32)
+            set(mod_ext "dll")
+        else()
+            set(mod_ext "so")
+        endif()
+        add_custom_command(TARGET shared POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+                $<TARGET_FILE_NAME:shared>
+                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx.${lib_suffix}.${mod_ext}
+        )
     endif()
-
-    if(WarpX_OPENPMD)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".OPMD")
-    endif()
-
-    if(WarpX_PSATD)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".PSATD")
-    endif()
-
-    if(WarpX_QED)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".QED")
-    endif()
-
-    if(CMAKE_BUILD_TYPE MATCHES "Debug")
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
-    endif()
-
-    # alias to the latest build, because using the full name is often confusing
-    add_custom_command(TARGET WarpX POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-            $<TARGET_FILE:WarpX>
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
-    )
 endfunction()
 
 
@@ -206,12 +272,40 @@ function(configure_mpiexec num_ranks)
 endfunction()
 
 
+# FUNCTION: get_source_version
+#
+# Retrieves source version info and sets internal cache variables
+# ${NAME}_GIT_VERSION and ${NAME}_PKG_VERSION
+#
+function(get_source_version NAME SOURCE_DIR)
+    find_package(Git QUIET)
+    set(_tmp "")
+
+    # Try to inquire software version from git
+    if(EXISTS ${SOURCE_DIR}/.git AND ${GIT_FOUND})
+        execute_process(COMMAND git describe --abbrev=12 --dirty --always --tags
+            WORKING_DIRECTORY ${SOURCE_DIR}
+            OUTPUT_VARIABLE _tmp)
+        string( STRIP ${_tmp} _tmp)
+    endif()
+
+    # Is there a CMake project version?
+    # For deployed releases that build from tarballs, this is what we want to pick
+    if(NOT _tmp AND ${NAME}_VERSION)
+        set(_tmp "${${NAME}_VERSION}-nogit")
+    endif()
+
+    set(${NAME}_GIT_VERSION "${_tmp}" CACHE INTERNAL "")
+    unset(_tmp)
+endfunction ()
+
+
 # Prints a summary of WarpX options at the end of the CMake configuration
 #
 function(warpx_print_summary)
     message("")
     message("WarpX build configuration:")
-    message("  Version: ${WarpX_VERSION}")
+    message("  Version: ${WarpX_VERSION} (${WarpX_GIT_VERSION})")
     message("  C++ Compiler: ${CMAKE_CXX_COMPILER_ID} "
                             "${CMAKE_CXX_COMPILER_VERSION} "
                             "${CMAKE_CXX_COMPILER_WRAPPER}")
@@ -226,27 +320,39 @@ function(warpx_print_summary)
         message("     python: ${CMAKE_INSTALL_PYTHONDIR}")
     endif()
     message("")
-    message("  Build type: ${CMAKE_BUILD_TYPE}")
-    #if(BUILD_SHARED_LIBS)
-    #    message("  Library: shared")
-    #else()
-    #    message("  Library: static")
-    #endif()
+    set(BLD_TYPE_UNKNOWN "")
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR AND
+       NOT CMAKE_BUILD_TYPE IN_LIST CMAKE_CONFIGURATION_TYPES)
+        set(BLD_TYPE_UNKNOWN " (unknown type, check warning)")
+    endif()
+    message("  Build type: ${CMAKE_BUILD_TYPE}${BLD_TYPE_UNKNOWN}")
+    set(LIB_TYPE "")
+    if(WarpX_LIB)
+        if(BUILD_SHARED_LIBS)
+            set(LIB_TYPE " (shared)")
+        else()
+            set(LIB_TYPE " (static)")
+        endif()
+    endif()
     #message("  Testing: ${BUILD_TESTING}")
-    #message("  Invasive Tests: ${WarpX_USE_INVASIVE_TESTS}")
-    #message("  Internal VERIFY: ${WarpX_USE_VERIFY}")
     message("  Build options:")
+    message("    APP: ${WarpX_APP}")
     message("    ASCENT: ${WarpX_ASCENT}")
     message("    COMPUTE: ${WarpX_COMPUTE}")
     message("    DIMS: ${WarpX_DIMS}")
+    message("    Embedded Boundary: ${WarpX_EB}")
+    message("    GPU clock timers: ${WarpX_GPUCLOCK}")
+    message("    IPO/LTO: ${WarpX_IPO}")
+    message("    LIB: ${WarpX_LIB}${LIB_TYPE}")
     message("    MPI: ${WarpX_MPI}")
     if(MPI)
         message("    MPI (thread multiple): ${WarpX_MPI_THREAD_MULTIPLE}")
     endif()
-    message("    Parser depth: ${WarpX_PARSER_DEPTH}")
     message("    PSATD: ${WarpX_PSATD}")
     message("    PRECISION: ${WarpX_PRECISION}")
     message("    OPENPMD: ${WarpX_OPENPMD}")
     message("    QED: ${WarpX_QED}")
+    message("    QED table generation: ${WarpX_QED_TABLE_GEN}")
+    message("    SENSEI: ${WarpX_SENSEI}")
     message("")
 endfunction()

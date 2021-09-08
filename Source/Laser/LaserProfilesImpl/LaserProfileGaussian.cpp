@@ -6,11 +6,25 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
-#include "Utils/WarpX_Complex.H"
+
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <cmath>
-
+#include <cstdlib>
+#include <numeric>
+#include <vector>
 
 using namespace amrex;
 
@@ -24,13 +38,14 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     m_common_params = params;
 
     // Parse the properties of the Gaussian profile
-    ppl.get("profile_waist", m_params.waist);
-    ppl.get("profile_duration", m_params.duration);
-    ppl.get("profile_t_peak", m_params.t_peak);
-    ppl.get("profile_focal_distance", m_params.focal_distance);
-    ppl.query("zeta", m_params.zeta);
-    ppl.query("beta", m_params.beta);
-    ppl.query("phi2", m_params.phi2);
+    getWithParser(ppl, "profile_waist", m_params.waist);
+    getWithParser(ppl, "profile_duration", m_params.duration);
+    getWithParser(ppl, "profile_t_peak", m_params.t_peak);
+    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
+    queryWithParser(ppl, "zeta", m_params.zeta);
+    queryWithParser(ppl, "beta", m_params.beta);
+    queryWithParser(ppl, "phi2", m_params.phi2);
+    queryWithParser(ppl, "phi0", m_params.phi0);
 
     m_params.stc_direction = m_common_params.p_X;
     ppl.queryarr("stc_direction", m_params.stc_direction);
@@ -53,7 +68,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     // Get angle between p_X and stc_direction
     // in 2d, stcs are in the simulation plane
 #if AMREX_SPACEDIM == 3
-    m_params.theta_stc = acos(
+    m_params.theta_stc = std::acos(
         m_params.stc_direction[0]*m_common_params.p_X[0] +
         m_params.stc_direction[1]*m_common_params.p_X[1] +
         m_params.stc_direction[2]*m_common_params.p_X[2]);
@@ -82,9 +97,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
 {
     Complex I(0,1);
     // Calculate a few factors which are independent of the macroparticle
-    const Real k0 = 2.*MathConst::pi/m_common_params.wavelength;
+    const Real k0 = 2._rt*MathConst::pi/m_common_params.wavelength;
     const Real inv_tau2 = 1._rt /(m_params.duration * m_params.duration);
-    const Real oscillation_phase = k0 * PhysConst::c * ( t - m_params.t_peak );
+    const Real oscillation_phase = k0 * PhysConst::c * ( t - m_params.t_peak ) + m_params.phi0;
     // The coefficients below contain info about Gouy phase,
     // laser diffraction, and phase front curvature
     const Complex diffract_factor =
@@ -96,10 +111,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Time stretching due to STCs and phi2 complex envelope
     // (1 if zeta=0, beta=0, phi2=0)
     const Complex stretch_factor = 1._rt + 4._rt *
-        (m_params.zeta+m_params.beta*m_params.focal_distance)
-        * (m_params.zeta+m_params.beta*m_params.focal_distance)
-        * (inv_tau2*inv_complex_waist_2) + 2._rt *I * (m_params.phi2
-        - m_params.beta*m_params.beta*k0*m_params.focal_distance) * inv_tau2;
+        (m_params.zeta+m_params.beta*m_params.focal_distance*inv_tau2)
+        * (m_params.zeta+m_params.beta*m_params.focal_distance*inv_complex_waist_2)
+        + 2._rt*I*(m_params.phi2-m_params.beta*m_params.beta*k0*m_params.focal_distance)*inv_tau2;
 
     // Amplitude and monochromatic oscillations
     Complex prefactor =
@@ -108,7 +122,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
     // and the amplitude of the laser
-#if (AMREX_SPACEDIM == 3)
+#if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
     prefactor = prefactor / diffract_factor;
 #elif (AMREX_SPACEDIM == 2)
     prefactor = prefactor / amrex::sqrt(diffract_factor);

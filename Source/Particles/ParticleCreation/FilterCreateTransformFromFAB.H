@@ -8,6 +8,8 @@
 #ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
+#include "WarpX.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_TypeTraits.H>
 
@@ -58,19 +60,14 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const int level_0 = 0;
     Geometry const & geom = warpx.Geom(level_0);
 
-    // Note that we use here x and y for the 2 directions in 2D, which is not consistent with
-    // the rest of the code (x and z are usually chosen)
+    constexpr int spacedim = AMREX_SPACEDIM;
+
     const Real xlo_global = geom.ProbLo(0);
-    const Real ylo_global = geom.ProbLo(1);
     const Real dx         = geom.CellSize(0);
-    const Real dy         = geom.CellSize(1);
-#if (AMREX_SPACEDIM == 3)
-    const Real zlo_global = geom.ProbLo(2);
-    const Real dz         = geom.CellSize(2);
-#else
-    const Real zlo_global = 0.0;
-    const Real dz         = 0.0;
-#endif
+    const Real ylo_global = (spacedim == 3) ? geom.ProbLo(1) : amrex::Real(0.);
+    const Real dy         = (spacedim == 3) ? geom.CellSize(1) : amrex::Real(0.);
+    const Real zlo_global = (spacedim == 3) ? geom.ProbLo(2) : geom.ProbLo(1);
+    const Real dz         = (spacedim == 3) ? geom.CellSize(2) : geom.CellSize(1);
 
     const auto arrNumPartCreation = src_FAB->array();
     Gpu::DeviceVector<Index> offsets(ncells);
@@ -83,8 +80,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
-
-    constexpr int spacedim = AMREX_SPACEDIM;
 
     // For loop over all cells in the box. If mask is true in the given cell,
     // we create the particles in the cell and apply a transform function to the
@@ -102,8 +97,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
             // Currently all particles are created on nodes. This makes it useless
             // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
-            const Real y = (spacedim == 3) ? ylo_global + k*dy : 0.0_rt;
-            const Real z = zlo_global + l*dz;
+            const Real y = ylo_global + k*dy;
+            const Real z = (spacedim == 3) ? zlo_global + l*dz : zlo_global + k*dz;
 
             for (int n = 0; n < N; ++n)
             {
@@ -139,8 +134,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
  * \param[in,out] dst1 the first destination tile
  * \param[in,out] dst2 the second destination tile
  * \param[in] box the box where the particles are created
- * \param[in] src_FABs An Array of Array4 (e.g. EM fields) defined on box on which
- *            the filter operation is applied/
+ * \param[in] src_FABs A collection of source data, e.g. a class with Array4 to the EM fields,
+ *            defined on box on which the filter operation is applied
  * \param[in] dst1_index the location at which to starting writing the result to dst1
  * \param[in] dst2_index the location at which to starting writing the result to dst2
  * \param[in] filter a callable returning a value > 0 if particles are to be created

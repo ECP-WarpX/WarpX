@@ -6,21 +6,33 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX_PML_kernels.H"
-#ifdef WARPX_USE_PY
-#   include "Python/WarpX_py.H"
-#endif
 
+#include "BoundaryConditions/PML.H"
 #include "PML_current.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX_PML_kernels.H"
 
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
-#include <cmath>
-#include <limits>
+#include <AMReX_BaseFwd.H>
 
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -46,15 +58,37 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
     WARPX_PROFILE("WarpX::DampPML()");
 
+    const bool dive_cleaning = WarpX::do_pml_dive_cleaning;
+    const bool divb_cleaning = WarpX::do_pml_divb_cleaning;
+
     if (pml[lev]->ok())
     {
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
         const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
         const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+        const auto& pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
-                                                              : pml[lev]->GetMultiSigmaBox_cp();
+                                                            : pml[lev]->GetMultiSigmaBox_cp();
 
-#ifdef _OPENMP
+        const amrex::IntVect Ex_stag = pml_E[0]->ixType().toIntVect();
+        const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
+        const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
+
+        const amrex::IntVect Bx_stag = pml_B[0]->ixType().toIntVect();
+        const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
+        const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
+
+        amrex::IntVect F_stag;
+        if (pml_F) {
+            F_stag = pml_F->ixType().toIntVect();
+        }
+
+        amrex::IntVect G_stag;
+        if (pml_G) {
+            G_stag = pml_G->ixType().toIntVect();
+        }
+
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
@@ -99,47 +133,60 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
             amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_ex(i,j,k,pml_Exfab,sigma_fac_y,sigma_fac_z,
-                                  sigma_star_fac_x,x_lo,y_lo,z_lo);
+                warpx_damp_pml_ex(i, j, k, pml_Exfab, Ex_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
+                                  dive_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_ey(i,j,k,pml_Eyfab,sigma_fac_z,sigma_fac_x,
-                                  sigma_star_fac_y,x_lo,y_lo,z_lo);
+                warpx_damp_pml_ey(i, j, k, pml_Eyfab, Ey_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
+                                  dive_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_ez(i,j,k,pml_Ezfab,sigma_fac_x,sigma_fac_y,
-                                  sigma_star_fac_z,x_lo,y_lo,z_lo);
+                warpx_damp_pml_ez(i, j, k, pml_Ezfab, Ez_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
+                                  dive_cleaning);
             });
 
             amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_bx(i,j,k,pml_Bxfab,sigma_star_fac_y,
-                                  sigma_star_fac_z,y_lo,z_lo);
+                warpx_damp_pml_bx(i, j, k, pml_Bxfab, Bx_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
+                                  divb_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_by(i,j,k,pml_Byfab,sigma_star_fac_z,
-                                  sigma_star_fac_x,z_lo,x_lo);
+                warpx_damp_pml_by(i, j, k, pml_Byfab, By_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
+                                  divb_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_bz(i,j,k,pml_Bzfab,sigma_star_fac_x,
-                                  sigma_star_fac_y,x_lo,y_lo);
+                warpx_damp_pml_bz(i, j, k, pml_Bzfab, Bz_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
+                                  divb_cleaning);
             });
 
+            // For warpx_damp_pml_F(), mfi.nodaltilebox is used in the ParallelFor loop and here we
+            // use mfi.tilebox. However, it does not matter because in damp_pml, where nodaltilebox
+            // is used, only a simple multiplication is performed.
             if (pml_F) {
-               // Note that for warpx_damp_pml_F(), mfi.nodaltilebox is used in
-               // the ParallelFor loop and here we use mfi.tilebox.
-               /// But, it does not matter because in damp_pml, where
-               // nodaltilebox is used, only a simple multiplication is performed.
-                const Box& tnd  = mfi.nodaltilebox();
+                const Box& tnd = mfi.nodaltilebox();
                 auto const& pml_F_fab = pml_F->array(mfi);
-                amrex::ParallelFor(tnd,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                amrex::ParallelFor(tnd, [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    warpx_damp_pml_F(i,j,k,pml_F_fab,sigma_fac_x,
-                                     sigma_fac_y,sigma_fac_z,
-                                     x_lo,y_lo,z_lo);
+                    warpx_damp_pml_scalar(i, j, k, pml_F_fab, F_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                          sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo);
                 });
+            }
 
+            // Damp G when WarpX::do_divb_cleaning = true
+            if (pml_G) {
+                const Box& tb = mfi.tilebox();
+                auto const& pml_G_fab = pml_G->array(mfi);
+                amrex::ParallelFor(tb, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                {
+                    warpx_damp_pml_scalar(i, j, k, pml_G_fab, G_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                          sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo);
+                });
             }
         }
     }
@@ -175,7 +222,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
                                                             : pml[lev]->GetMultiSigmaBox_cp();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(*pml_j[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )

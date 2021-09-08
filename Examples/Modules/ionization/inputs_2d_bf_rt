@@ -3,19 +3,24 @@ amr.n_cell =  16 800
 amr.max_grid_size = 64
 amr.blocking_factor = 16
 geometry.coord_sys   = 0
-geometry.is_periodic = 1     0
 geometry.prob_lo     = -5.e-6 -40.e-6
 geometry.prob_hi     =  5.e-6   0.e-6
 amr.max_level = 0
 
+boundary.field_lo = periodic pml
+boundary.field_hi = periodic pml
+
 algo.maxwell_solver = ckc
-warpx.do_pml = 1
 warpx.cfl = .999
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0
 warpx.gamma_boost = 2.
 warpx.boost_direction = z
+warpx.use_filter = 0
+
+# Order of particle shape factors
+algo.particle_shape = 1
 
 particles.species_names = electrons ions
 
@@ -50,7 +55,7 @@ laser1.profile      = Gaussian
 laser1.position     = 0. 0. -1.e-6
 laser1.direction    = 0. 0. 1.
 laser1.polarization = 1. 0. 0.
-laser1.e_max        = 7.224e12 # a0=1.8
+laser1.a0           = 1.8
 laser1.profile_waist = 1.e10
 laser1.profile_duration = 26.685e-15
 laser1.profile_t_peak = 60.e-15
@@ -59,5 +64,5 @@ laser1.wavelength = 0.8e-6
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10000
+diag1.intervals = 10000
 diag1.diag_type = Full

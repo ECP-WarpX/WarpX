@@ -3,6 +3,15 @@
 
 #include "ComputeDiagFunctor.H"
 
+#include <AMReX_Box.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <string>
+
 /**
  * \brief Functor to back-transform cell-centered data and store result in mf_out
  *
@@ -55,10 +64,12 @@ public:
      * \param[in] buffer_box, Box with index-space in lab-frame for the ith buffer
      * \param[in] k_index_zlab, k-index in the lab-frame corresponding to the
      *                          current z co-ordinate in the lab-frame for the ith buffer.
+     * \param[in] max_box_size, maximum box size for the multifab to generate box arrays
      */
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                               amrex::Real current_z_boost,
-                              amrex::Box buffer_box, const int k_index_zlab ) override;
+                              amrex::Box buffer_box, const int k_index_zlab,
+                              const int max_box_size ) override;
     /** Allocate and initialize member variables and arrays required to back-transform
      *  field-data from boosted-frame to lab-frame.
      */

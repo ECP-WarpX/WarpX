@@ -6,11 +6,15 @@
  */
 
 #include "ReducedDiags.H"
+
 #include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Utility.H>
 
+#include <fstream>
 #include <iomanip>
 
 using namespace amrex;
@@ -18,16 +22,17 @@ using namespace amrex;
 // constructor
 ReducedDiags::ReducedDiags (std::string rd_name)
 {
-
     m_rd_name = rd_name;
 
-    ParmParse pp(m_rd_name);
+    BackwardCompatibility();
+
+    ParmParse pp_rd_name(m_rd_name);
 
     // read path
-    pp.query("path", m_path);
+    pp_rd_name.query("path", m_path);
 
     // read extension
-    pp.query("extension", m_extension);
+    pp_rd_name.query("extension", m_extension);
 
     // check if it is a restart run
     std::string restart_chkfile = "";
@@ -44,31 +49,37 @@ ReducedDiags::ReducedDiags (std::string rd_name)
         // replace / create output file
         if ( m_IsNotRestart ) // not a restart
         {
-            std::ofstream ofs;
-            ofs.open(m_path+m_rd_name+"."+m_extension, std::ios::trunc);
+            std::ofstream ofs{m_path+m_rd_name+"."+m_extension, std::ios::trunc};
             ofs.close();
         }
     }
 
-    // read reduced diags frequency
+    // read reduced diags intervals
     std::vector<std::string> intervals_string_vec = {"1"};
-    pp.queryarr("frequency", intervals_string_vec);
+    pp_rd_name.queryarr("intervals", intervals_string_vec);
     m_intervals = IntervalsParser(intervals_string_vec);
 
     // read separator
-    pp.query("separator", m_sep);
-
+    pp_rd_name.query("separator", m_sep);
 }
 // end constructor
+
+void ReducedDiags::BackwardCompatibility ()
+{
+    amrex::ParmParse pp_rd_name(m_rd_name);
+    std::vector<std::string> backward_strings;
+    if (pp_rd_name.queryarr("frequency", backward_strings)){
+        amrex::Abort("<reduced_diag_name>.frequency is no longer a valid option. "
+                     "Please use the renamed option <reduced_diag_name>.intervals instead.");
+    }
+}
 
 // write to file function
 void ReducedDiags::WriteToFile (int step) const
 {
-
     // open file
-    std::ofstream ofs;
-    ofs.open(m_path + m_rd_name + "." + m_extension,
-        std::ofstream::out | std::ofstream::app);
+    std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+        std::ofstream::out | std::ofstream::app};
 
     // write step
     ofs << step+1;
@@ -94,6 +105,5 @@ void ReducedDiags::WriteToFile (int step) const
 
     // close file
     ofs.close();
-
 }
 // end ReducedDiags::WriteToFile

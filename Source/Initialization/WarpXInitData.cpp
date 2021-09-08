@@ -9,18 +9,58 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
+#include "BoundaryConditions/PML.H"
+#include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
-#include "Parser/GpuParser.H"
-#include "Utils/WarpXUtil.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParmParse.H>
-
-#ifdef BL_USE_SENSEI_INSITU
+#include <AMReX.H>
+#include <AMReX_AmrCore.H>
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 
 using namespace amrex;
@@ -66,6 +106,10 @@ void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
+    Print() << "WarpX (" << WarpX::Version() << ")\n";
+#ifdef WARPX_QED
+    Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
+#endif
 
     if (restart_chkfile.empty())
     {
@@ -75,11 +119,10 @@ WarpX::InitData ()
     else
     {
         InitFromCheckpoint();
-        if (is_synchronized) {
-            ComputeDt();
-        }
         PostRestart();
     }
+
+    ComputeMaxStep();
 
     ComputePMLFactors();
 
@@ -104,9 +147,18 @@ WarpX::InitData ()
         printGridSummary(std::cout, 0, finestLevel());
     }
 
+    // Check that the number of guard cells is smaller than the number of valid cells for all MultiFabs
+    // (example: a box with 16 valid cells and 32 guard cells in z will not be considered valid)
+    CheckGuardCells();
+
     if (restart_chkfile.empty())
     {
-        multi_diags->FilterComputePackFlush( -1, true );
+        // Loop through species and calculate their space-charge field
+        bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+        ComputeSpaceChargeField(reset_fields);
+
+        // Write full diagnostics before the first iteration.
+        multi_diags->FilterComputePackFlush( -1 );
 
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
@@ -115,6 +167,8 @@ WarpX::InitData ()
             reduced_diags->WriteToFile(-1);
         }
     }
+
+    PerformanceHints();
 }
 
 void
@@ -125,9 +179,12 @@ WarpX::InitDiagnostics () {
         const Real* current_hi = geom[0].ProbHi();
         Real dt_boost = dt[0];
         // Find the positions of the lab-frame box that corresponds to the boosted-frame box at t=0
-        Real zmin_lab = current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
-        Real zmax_lab = current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
-        myBFD.reset(new BackTransformedDiagnostic(zmin_lab,
+        Real zmin_lab = static_cast<Real>(
+            current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
+        Real zmax_lab = static_cast<Real>(
+            current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
+        myBFD = std::make_unique<BackTransformedDiagnostic>(
+                                               zmin_lab,
                                                zmax_lab,
                                                moving_window_v, dt_snapshots_lab,
                                                num_snapshots_lab,
@@ -136,7 +193,7 @@ WarpX::InitDiagnostics () {
                                                gamma_boost, t_new[0], dt_boost,
                                                moving_window_dir, geom[0],
                                                slice_realbox,
-                                               particle_slice_width_lab));
+                                               particle_slice_width_lab);
     }
 }
 
@@ -150,16 +207,24 @@ WarpX::InitFromScratch ()
     mypc->AllocData();
     mypc->InitData();
 
-    // Loop through species and calculate their space-charge field
-    bool const reset_fields = false; // Do not erase previous user-specified values on the grid
-    ComputeSpaceChargeField(reset_fields);
-
     InitPML();
 }
 
 void
 WarpX::InitPML ()
 {
+
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Lo[idim] = 1;
+        }
+        if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Hi[idim] = 1;
+        }
+    }
+    if (finest_level > 0) do_pml = 1;
     if (do_pml)
     {
         amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
@@ -167,32 +232,40 @@ WarpX::InitPML ()
 #ifdef WARPX_DIM_RZ
         do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
 #endif
-        pml[0].reset(new PML(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
-                             pml_ncell, pml_delta, 0,
-#ifdef WARPX_USE_PSATD
+        pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
+                             pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
-#endif
-                             do_dive_cleaning, do_moving_window,
-                             pml_has_particles, do_pml_in_domain,
-                             do_pml_Lo_corrected, do_pml_Hi));
+                             do_moving_window, pml_has_particles, do_pml_in_domain,
+                             J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
+            amrex::IntVect do_pml_Hi_MR = amrex::IntVect::TheUnitVector();
+            // check if fine patch edges co-incide with domain boundary
+            amrex::Box levelBox = boxArray(lev).minimalBox();
+            // Domain box at level, lev
+            amrex::Box DomainBox = Geom(lev).Domain();
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
+                    do_pml_Lo_MR[idim] = do_pml_Lo[idim];
+                if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
+                    do_pml_Hi_MR[idim] = do_pml_Hi[idim];
+            }
+
 #ifdef WARPX_DIM_RZ
             //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
             if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
                 do_pml_Lo_MR[0] = 0;
             }
 #endif
-            pml[lev].reset(new PML(boxArray(lev), DistributionMap(lev),
+            pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
-                                   pml_ncell, pml_delta, refRatio(lev-1)[0],
-#ifdef WARPX_USE_PSATD
+                                   pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
-#endif
-                                   do_dive_cleaning, do_moving_window,
-                                   pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector()));
+                                   do_moving_window, pml_has_particles, do_pml_in_domain,
+                                   J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
 }
@@ -207,6 +280,74 @@ WarpX::ComputePMLFactors ()
             pml[lev]->ComputePMLFactors(dt[lev]);
         }
     }
+}
+
+void
+WarpX::ComputeMaxStep ()
+{
+    if (do_compute_max_step_from_zmax) {
+        computeMaxStepBoostAccelerator(geom[0]);
+    }
+
+    // Make max_step and stop_time self-consistent, assuming constant dt.
+
+    // If max_step is the limiting condition, decrease stop_time consistently
+    if (stop_time > t_new[0] + dt[0]*(max_step - istep[0]) ) {
+        stop_time = t_new[0] + dt[0]*(max_step - istep[0]);
+    }
+    // If stop_time is the limiting condition instead, decrease max_step consistently
+    else {
+        // The static_cast should not overflow since stop_time is the limiting condition here
+        max_step = static_cast<int>(istep[0] + std::ceil( (stop_time-t_new[0])/dt[0] ));
+    }
+}
+
+/* \brief computes max_step for wakefield simulation in boosted frame.
+ * \param geom: Geometry object that contains simulation domain.
+ *
+ * max_step is set so that the simulation stop when the lower corner of the
+ * simulation box passes input parameter zmax_plasma_to_compute_max_step.
+ */
+void
+WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
+    // Sanity checks: can use zmax_plasma_to_compute_max_step only if
+    // the moving window and the boost are all in z direction.
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
+        "Can use zmax_plasma_to_compute_max_step only if " +
+        "moving window along z. TODO: all directions.");
+    if (gamma_boost > 1){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
+            (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
+            (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
+            "Can use zmax_plasma_to_compute_max_step in boosted frame only if " +
+            "warpx.boost_direction = z. TODO: all directions.");
+    }
+
+    // Lower end of the simulation domain. All quantities are given in boosted
+    // frame except zmax_plasma_to_compute_max_step.
+    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
+    // End of the plasma: Transform input argument
+    // zmax_plasma_to_compute_max_step to boosted frame.
+    const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
+    // Plasma velocity
+    const Real v_plasma_boost = -beta_boost * PhysConst::c;
+    // Get time at which the lower end of the simulation domain passes the
+    // upper end of the plasma (in the z direction).
+    const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost)/
+        (moving_window_v-v_plasma_boost);
+    // Divide by dt, and update value of max_step.
+    int computed_max_step;
+    if (do_subcycling){
+        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
+    } else {
+        computed_max_step =
+            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
+    }
+    max_step = computed_max_step;
+    Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
+           <<computed_max_step<<std::endl;
 }
 
 void
@@ -229,9 +370,11 @@ WarpX::InitNCICorrector ()
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz
             const bool nodal_gather = !galerkin_interpolation;
-            nci_godfrey_filter_exeybz[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather) );
+            nci_godfrey_filter_exeybz[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather);
             // Same filter for fields Bx, By and Ez
-            nci_godfrey_filter_bxbyez[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather) );
+            nci_godfrey_filter_bxbyez[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather);
             // Compute Godfrey filters stencils
             nci_godfrey_filter_exeybz[lev]->ComputeStencils();
             nci_godfrey_filter_bxbyez[lev]->ComputeStencils();
@@ -242,7 +385,7 @@ WarpX::InitNCICorrector ()
 void
 WarpX::InitFilter (){
     if (WarpX::use_filter){
-        WarpX::bilinear_filter.npass_each_dir = WarpX::filter_npass_each_dir;
+        WarpX::bilinear_filter.npass_each_dir = WarpX::filter_npass_each_dir.toArray<unsigned int>();
         WarpX::bilinear_filter.ComputeStencils();
     }
 }
@@ -250,9 +393,6 @@ WarpX::InitFilter (){
 void
 WarpX::PostRestart ()
 {
-#ifdef WARPX_USE_PSATD
-    amrex::Abort("WarpX::PostRestart: TODO for PSATD");
-#endif
     mypc->PostRestart();
 }
 
@@ -261,18 +401,18 @@ void
 WarpX::InitLevelData (int lev, Real /*time*/)
 {
 
-    ParmParse pp("warpx");
+    ParmParse pp_warpx("warpx");
 
     // default values of E_external_grid and B_external_grid
     // are used to set the E and B field when "constant" or
     // "parser" is not explicitly used in the input.
-    pp.query("B_ext_grid_init_style", B_ext_grid_s);
+    pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s);
     std::transform(B_ext_grid_s.begin(),
                    B_ext_grid_s.end(),
                    B_ext_grid_s.begin(),
                    ::tolower);
 
-    pp.query("E_ext_grid_init_style", E_ext_grid_s);
+    pp_warpx.query("E_ext_grid_init_style", E_ext_grid_s);
     std::transform(E_ext_grid_s.begin(),
                    E_ext_grid_s.end(),
                    E_ext_grid_s.begin(),
@@ -281,22 +421,33 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
-        pp.getarr("B_external_grid", B_external_grid);
+        getArrWithParser(pp_warpx, "B_external_grid", B_external_grid);
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (E_ext_grid_s == "constant")
-        pp.getarr("E_external_grid", E_external_grid);
+        getArrWithParser(pp_warpx, "E_external_grid", E_external_grid);
 
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
-    ParmParse ppsatd("psatd");
-    ppsatd.query("do_time_averaging", fft_do_time_averaging );
+    ParmParse pp_psatd("psatd");
+    pp_psatd.query("do_time_averaging", fft_do_time_averaging );
 
     for (int i = 0; i < 3; ++i) {
         current_fp[lev][i]->setVal(0.0);
         if (lev > 0)
            current_cp[lev][i]->setVal(0.0);
+
+        // Initialize aux MultiFabs on level 0
+        if (lev == 0) {
+            Bfield_aux[lev][i]->setVal(0.0);
+            Efield_aux[lev][i]->setVal(0.0);
+        }
+
+        if (WarpX::do_current_centering)
+        {
+            current_fp_nodal[lev][i]->setVal(0.0);
+        }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
@@ -308,7 +459,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Bfield_aux[lev][i]->setVal(B_external_grid[i]);
               Bfield_cp[lev][i]->setVal(B_external_grid[i]);
               if (fft_do_time_averaging) {
-                  Bfield_avg_aux[lev][i]->setVal(B_external_grid[i]);
                   Bfield_avg_cp[lev][i]->setVal(B_external_grid[i]);
               }
            }
@@ -323,13 +473,46 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Efield_aux[lev][i]->setVal(E_external_grid[i]);
               Efield_cp[lev][i]->setVal(E_external_grid[i]);
               if (fft_do_time_averaging) {
-                  Efield_avg_aux[lev][i]->setVal(E_external_grid[i]);
                   Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
               }
-
            }
         }
     }
+
+#ifdef AMREX_USE_EB
+    if(lev==maxLevel()) {
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
+            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            ComputeEdgeLengths();
+            ComputeFaceAreas();
+            ScaleEdges();
+            ScaleAreas();
+            ComputeDistanceToEB();
+
+            const auto &period = Geom(lev).periodicity();
+            m_edge_lengths[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_edge_lengths[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_edge_lengths[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_face_areas[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_face_areas[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            m_face_areas[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+
+            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+                m_area_mod[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_area_mod[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_area_mod[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                MarkCells();
+                m_flag_info_face[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_info_face[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_info_face[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_ext_face[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_ext_face[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                m_flag_ext_face[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                ComputeFaceExtensions();
+            }
+        }
+    }
+#endif
 
     // if the input string for the B-field is "parse_b_ext_grid_function",
     // then the analytical expression or function must be
@@ -339,42 +522,45 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Bx_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
                                                     str_Bx_ext_grid_function);
-       Store_parserString(pp, "By_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
                                                     str_By_ext_grid_function);
-       Store_parserString(pp, "Bz_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
                                                     str_Bz_ext_grid_function);
-       Bxfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Bx_ext_grid_function,{"x","y","z"})));
-       Byfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_By_ext_grid_function,{"x","y","z"})));
-       Bzfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Bz_ext_grid_function,{"x","y","z"})));
+       Bxfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+       Byfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_By_ext_grid_function,{"x","y","z"}));
+       Bzfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
                                                  Bfield_fp[lev][1].get(),
                                                  Bfield_fp[lev][2].get(),
-                                                 getParser(Bxfield_parser),
-                                                 getParser(Byfield_parser),
-                                                 getParser(Bzfield_parser),
+                                                 Bxfield_parser->compile<3>(),
+                                                 Byfield_parser->compile<3>(),
+                                                 Bzfield_parser->compile<3>(),
+                                                 m_face_areas[lev],
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
                                                     Bfield_aux[lev][1].get(),
                                                     Bfield_aux[lev][2].get(),
-                                                    getParser(Bxfield_parser),
-                                                    getParser(Byfield_parser),
-                                                    getParser(Bzfield_parser),
+                                                    Bxfield_parser->compile<3>(),
+                                                    Byfield_parser->compile<3>(),
+                                                    Bzfield_parser->compile<3>(),
+                                                    m_face_areas[lev],
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
                                                     Bfield_cp[lev][1].get(),
                                                     Bfield_cp[lev][2].get(),
-                                                    getParser(Bxfield_parser),
-                                                    getParser(Byfield_parser),
-                                                    getParser(Bzfield_parser),
+                                                    Bxfield_parser->compile<3>(),
+                                                    Byfield_parser->compile<3>(),
+                                                    Bzfield_parser->compile<3>(),
+                                                    m_face_areas[lev],
                                                     lev);
        }
     }
@@ -387,49 +573,56 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Ex_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
                                                     str_Ex_ext_grid_function);
-       Store_parserString(pp, "Ey_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
                                                     str_Ey_ext_grid_function);
-       Store_parserString(pp, "Ez_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
                                                     str_Ez_ext_grid_function);
 
-       Exfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ex_ext_grid_function,{"x","y","z"})));
-       Eyfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ey_ext_grid_function,{"x","y","z"})));
-       Ezfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ez_ext_grid_function,{"x","y","z"})));
+       Exfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+       Eyfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+       Ezfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
 
        // Initialize Efield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
                                                  Efield_fp[lev][1].get(),
                                                  Efield_fp[lev][2].get(),
-                                                 getParser(Exfield_parser),
-                                                 getParser(Eyfield_parser),
-                                                 getParser(Ezfield_parser),
+                                                 Exfield_parser->compile<3>(),
+                                                 Eyfield_parser->compile<3>(),
+                                                 Ezfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
                                                     Efield_aux[lev][1].get(),
                                                     Efield_aux[lev][2].get(),
-                                                    getParser(Exfield_parser),
-                                                    getParser(Eyfield_parser),
-                                                    getParser(Ezfield_parser),
+                                                    Exfield_parser->compile<3>(),
+                                                    Eyfield_parser->compile<3>(),
+                                                    Ezfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
                                                     Efield_cp[lev][1].get(),
                                                     Efield_cp[lev][2].get(),
-                                                    getParser(Exfield_parser),
-                                                    getParser(Eyfield_parser),
-                                                    getParser(Ezfield_parser),
+                                                    Exfield_parser->compile<3>(),
+                                                    Eyfield_parser->compile<3>(),
+                                                    Ezfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     lev);
        }
     }
 
     if (F_fp[lev]) {
         F_fp[lev]->setVal(0.0);
+    }
+
+    if (G_fp[lev]) {
+        G_fp[lev]->setVal(0.0);
     }
 
     if (rho_fp[lev]) {
@@ -440,6 +633,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         F_cp[lev]->setVal(0.0);
     }
 
+    if (G_cp[lev]) {
+        G_cp[lev]->setVal(0.0);
+    }
+
     if (rho_cp[lev]) {
         rho_cp[lev]->setVal(0.0);
     }
@@ -447,6 +644,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (costs[lev]) {
         for (int i : costs[lev]->IndexArray()) {
             (*costs[lev])[i] = 0.0;
+            WarpX::setLoadBalanceEfficiency(lev, -1);
         }
     }
 }
@@ -454,8 +652,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
-       HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
-       HostDeviceParser<3> const& zfield_parser, const int lev)
+       ParserExecutor<3> const& xfield_parser, ParserExecutor<3> const& yfield_parser,
+       ParserExecutor<3> const& zfield_parser,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data,
+       const int lev)
 {
 
     const auto dx_lev = geom[lev].CellSizeArray();
@@ -473,8 +673,19 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        auto const& mfyfab = mfy->array(mfi);
        auto const& mfzfab = mfz->array(mfi);
 
+#ifdef AMREX_USE_EB
+       amrex::Array4<amrex::Real> const& geom_data_x = geom_data[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& geom_data_y = geom_data[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& geom_data_z = geom_data[2]->array(mfi);
+#else
+       amrex::ignore_unused(geom_data);
+#endif
+
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(geom_data_x(i, j, k)<=0) return;
+#endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
                 amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
@@ -493,6 +704,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 mfxfab(i,j,k) = xfield_parser(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(geom_data_y(i, j, k)<=0) return;
+#endif
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
@@ -509,6 +723,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 mfyfab(i,j,k)  = yfield_parser(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(geom_data_z(i, j, k)<=0) return;
+#endif
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
@@ -525,5 +742,116 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 mfzfab(i,j,k) = zfield_parser(x,y,z);
             }
         );
+    }
+}
+
+void
+WarpX::PerformanceHints ()
+{
+    // Check requested MPI ranks and available boxes
+    amrex::Long total_nboxes = 0; // on all MPI ranks
+    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
+        total_nboxes += boxArray(ilev).size();
+    }
+    if (ParallelDescriptor::NProcs() > total_nboxes)
+        amrex::Print() << "\n[Warning] [Performance] Too many resources / too little work!\n"
+            << "  It looks like you requested more compute resources than "
+            << "there are total number of boxes of cells available ("
+            << total_nboxes << "). "
+            << "You started with (" << ParallelDescriptor::NProcs()
+            << ") MPI ranks, so (" << ParallelDescriptor::NProcs() - total_nboxes
+            << ") rank(s) will have no work.\n"
+#ifdef AMREX_USE_GPU
+            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+            << "each GPU's memory sufficiently. If you do not rely on dynamic "
+            << "load-balancing, then one large box per GPU is ideal.\n"
+#endif
+            << "  More information:\n"
+            << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
+
+    // TODO: warn if some ranks have disproportionally more work than all others
+    //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
+    //               all other ranks; we need to measure this with our load-balancing
+    //               routines and issue a warning only of some ranks stall all other ranks
+    // TODO: check MPI-rank to GPU ratio (should be 1:1)
+    // TODO: check memory per MPI rank, especially if GPUs are underutilized
+    // TODO: CPU tiling hints with OpenMP
+}
+
+void WarpX::CheckGuardCells()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        for (int dim = 0; dim < 3; ++dim)
+        {
+            CheckGuardCells(*Efield_fp[lev][dim]);
+            CheckGuardCells(*Bfield_fp[lev][dim]);
+            CheckGuardCells(*current_fp[lev][dim]);
+
+            if (WarpX::fft_do_time_averaging)
+            {
+                CheckGuardCells(*Efield_avg_fp[lev][dim]);
+                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+            }
+        }
+
+        if (rho_fp[lev])
+        {
+            CheckGuardCells(*rho_fp[lev]);
+        }
+
+        if (F_fp[lev])
+        {
+            CheckGuardCells(*F_fp[lev]);
+        }
+
+        // MultiFabs on coarse patch
+        if (lev > 0)
+        {
+            for (int dim = 0; dim < 3; ++dim)
+            {
+                CheckGuardCells(*Efield_cp[lev][dim]);
+                CheckGuardCells(*Bfield_cp[lev][dim]);
+                CheckGuardCells(*current_cp[lev][dim]);
+
+                if (WarpX::fft_do_time_averaging)
+                {
+                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
+                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                }
+            }
+
+            if (rho_cp[lev])
+            {
+                CheckGuardCells(*rho_cp[lev]);
+            }
+
+            if (F_cp[lev])
+            {
+                CheckGuardCells(*F_cp[lev]);
+            }
+        }
+    }
+}
+
+void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
+{
+    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
+    {
+        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+        const amrex::IntVect gc = mf.nGrowVect();
+        if (vc.allGT(gc) == false)
+        {
+            std::stringstream ss;
+            ss << "\nMultiFab "
+               << mf.tags()[1]
+               << ":\nthe number of guard cells "
+               << gc
+               << " is larger than or equal to the number of valid cells "
+               << vc
+               << ",\nplease reduce the number of guard cells"
+               << " or increase the grid size by changing domain decomposition";
+            amrex::Abort(ss.str());
+        }
     }
 }

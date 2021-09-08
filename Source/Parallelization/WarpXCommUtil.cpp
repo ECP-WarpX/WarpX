@@ -1,5 +1,12 @@
 #include "WarpXCommUtil.H"
 
+#include <AMReX.H>
+#include <AMReX_BaseFab.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
+
 namespace WarpXCommUtil {
 
 void ParallelCopy (amrex::MultiFab&            dst,
@@ -14,6 +21,8 @@ void ParallelCopy (amrex::MultiFab&            dst,
 {
     BL_PROFILE("WarpXCommUtil::ParallelCopy");
 
+    using WarpXCommUtil::comm_float_type;
+    
     if (WarpX::do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > src_tmp(src.boxArray(),

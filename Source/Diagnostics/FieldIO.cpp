@@ -6,19 +6,17 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "FieldIO.H"
-#include "WarpX.H"
+
 #include "Utils/CoarsenIO.H"
-#include "Utils/WarpXUtil.H"
-
-#ifdef WARPX_USE_PSATD
-#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
-#endif
-
-#ifdef WARPX_USE_OPENPMD
-#   include <openPMD/openPMD.hpp>
-#endif
 
 #include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_SPACE.H>
+
+#include <algorithm>
+#include <cstdint>
+#include <memory>
 
 using namespace amrex;
 
@@ -108,7 +106,7 @@ void
 AverageAndPackVectorField( MultiFab& mf_avg,
                            const std::array< std::unique_ptr<MultiFab>, 3 >& vector_field,
                            const DistributionMapping& dm,
-                           const int dcomp, const int ngrow )
+                           const int dcomp, const IntVect ngrow )
 {
 #ifndef WARPX_DIM_RZ
     (void)dm;
@@ -121,15 +119,15 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     if (vector_field[0]->nComp() > 1) {
         // With the RZ solver, if there are more than one component, the total
         // fields needs to be constructed in temporary MultiFabs.
-        vector_total[0].reset(new MultiFab(vector_field[0]->boxArray(), dm, 1, vector_field[0]->nGrowVect()));
-        vector_total[1].reset(new MultiFab(vector_field[1]->boxArray(), dm, 1, vector_field[1]->nGrowVect()));
-        vector_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
+        vector_total[0] = std::make_unique<MultiFab>(vector_field[0]->boxArray(), dm, 1, vector_field[0]->nGrowVect());
+        vector_total[1] = std::make_unique<MultiFab>(vector_field[1]->boxArray(), dm, 1, vector_field[1]->nGrowVect());
+        vector_total[2] = std::make_unique<MultiFab>(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect());
         ConstructTotalRZVectorField(vector_total, vector_field);
     } else {
         // Create aliases of the MultiFabs
-        vector_total[0].reset(new MultiFab(*vector_field[0], amrex::make_alias, 0, 1));
-        vector_total[1].reset(new MultiFab(*vector_field[1], amrex::make_alias, 0, 1));
-        vector_total[2].reset(new MultiFab(*vector_field[2], amrex::make_alias, 0, 1));
+        vector_total[0] = std::make_unique<MultiFab>(*vector_field[0], amrex::make_alias, 0, 1);
+        vector_total[1] = std::make_unique<MultiFab>(*vector_field[1], amrex::make_alias, 0, 1);
+        vector_total[2] = std::make_unique<MultiFab>(*vector_field[2], amrex::make_alias, 0, 1);
     }
 #else
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
@@ -148,7 +146,7 @@ void
 AverageAndPackScalarField (MultiFab& mf_avg,
                            const MultiFab & scalar_field,
                            const DistributionMapping& dm,
-                           const int dcomp, const int ngrow )
+                           const int dcomp, const IntVect ngrow )
 {
 
 #ifdef WARPX_DIM_RZ

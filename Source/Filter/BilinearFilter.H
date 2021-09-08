@@ -10,6 +10,8 @@
 
 #include "Filter.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_Config.H>
 
 class BilinearFilter : public Filter
 {
@@ -19,7 +21,7 @@ public:
 
     void ComputeStencils();
 
-    amrex::IntVect npass_each_dir;
+    amrex::Array<unsigned int, AMREX_SPACEDIM> npass_each_dir;
 
 };
 #endif // #ifndef WARPX_BILIN_FILTER_H_

@@ -10,55 +10,37 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
-#include "Parser/WarpXParserWrapper.H"
-#include "Utils/WarpXConst.H"
-#include "SpeciesPhysicalProperties.H"
+#include "WarpXParticleContainer_fwd.H"
+
 #include "Evolve/WarpXDtType.H"
-#include "Particles/Resampling/Resampling.H"
+#include "Particles/ParticleBoundaries.H"
+#include "SpeciesPhysicalProperties.H"
 
 #ifdef WARPX_QED
-#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
+#include "MultiParticleContainer_fwd.H"
 
+#include <AMReX_Array.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_INT.H>
+#include <AMReX_ParIter.H>
 #include <AMReX_Particles.H>
-#include <AMReX_AmrCore.H>
+#include <AMReX_REAL.H>
+#include <AMReX_StructOfArrays.H>
+#include <AMReX_Vector.H>
 
+#include <AMReX_BaseFwd.H>
+#include <AMReX_AmrCoreFwd.H>
+
+#include <array>
+#include <iosfwd>
+#include <map>
 #include <memory>
-
-enum struct ParticleBC { none=0, absorbing };
-
-enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
-
-struct PIdx
-{
-    enum { // Particle Attributes stored in amrex::ParticleContainer's struct of array
-        w = 0,  // weight
-        ux, uy, uz,
-#ifdef WARPX_DIM_RZ
-        theta, // RZ needs all three position components
-#endif
-        nattribs
-    };
-};
-
-struct DiagIdx
-{
-    enum {
-        w = 0,
-        x, y, z, ux, uy, uz,
-        nattribs
-    };
-};
-
-struct TmpIdx
-{
-    enum {
-        xold = 0,
-        yold, zold, uxold, uyold, uzold,
-        nattribs
-    };
-};
+#include <string>
+#include <utility>
 
 namespace ParticleStringNames
 {
@@ -103,9 +85,6 @@ public:
         return GetStructOfArrays().GetIntData(comp);
     }
 };
-
-// Forward-declaration needed by WarpXParticleContainer below
-class MultiParticleContainer;
 
 /**
  * WarpXParticleContainer is the base polymorphic class from which all concrete
@@ -159,14 +138,12 @@ public:
     virtual void Evolve (int lev,
                          const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                          const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-                         const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg, const amrex::MultiFab& Ez_avg,
-                         const amrex::MultiFab& Bx_avg, const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg,
                          amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
                          amrex::MultiFab* cjx, amrex::MultiFab* cjy, amrex::MultiFab* cjz,
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
                          const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                          const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full) = 0;
+                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false) = 0;
 
     virtual void PostRestart () = 0;
 
@@ -196,12 +173,42 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) = 0;
 
-    void DepositCharge(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       bool local = false, bool reset = false,
-                       bool do_rz_volume_scaling = false );
+    /**
+     * \brief Deposit current density.
+     *
+     * \param[in,out] J vector of current densities (one three-dimensional array of pointers
+     *                to MultiFabs per mesh refinement level)
+     * \param[in] dt: Time step for particle level (is used when temporarily
+     *                modifying the particle positions, either within the
+     *                Esirkepov or when `relative_t` is different than 0
+     * \param[in] relative_t: Time at which to deposit J, relative to the time
+     *                of the current positions of the particles (expressed as
+     *                a fraction of dt). When different than 0, the particle
+     *                position will be temporarily modified to match the
+     *                time of the deposition.
+     */
+    void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
+                         const amrex::Real dt, const amrex::Real relative_t);
+
+    /**
+     * \brief Deposit charge density.
+     *
+     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in] local if false, exchange the data in the guard cells after the deposition
+     * \param[in] reset if true, reset all values of rho to zero
+     * \param[in] do_rz_volume_scaling whether to scale the final density by some volume norm in RZ geometry
+     * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
+     * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
+     */
+    void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                        const bool local = false, const bool reset = false,
+                        const bool do_rz_volume_scaling = false,
+                        const bool interpolate_across_levels = true,
+                        const int icomp = 0);
+
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
-    virtual void DepositCharge(WarpXParIter& pti,
+    virtual void DepositCharge (WarpXParIter& pti,
                                RealVector& wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
@@ -212,21 +219,22 @@ public:
                                int lev,
                                int depos_lev);
 
-    virtual void DepositCurrent(WarpXParIter& pti,
-                                RealVector& wp,
-                                RealVector& uxp,
-                                RealVector& uyp,
-                                RealVector& uzp,
-                                const int * const ion_lev,
-                                amrex::MultiFab* jx,
-                                amrex::MultiFab* jy,
-                                amrex::MultiFab* jz,
-                                const long offset,
-                                const long np_to_depose,
-                                int thread_num,
-                                int lev,
-                                int depos_lev,
-                                amrex::Real dt);
+    virtual void DepositCurrent (WarpXParIter& pti,
+                                RealVector const & wp,
+                                RealVector const & uxp,
+                                RealVector const & uyp,
+                                RealVector const & uzp,
+                                int const * const ion_lev,
+                                amrex::MultiFab* const jx,
+                                amrex::MultiFab* const jy,
+                                amrex::MultiFab* const jz,
+                                long const offset,
+                                long const np_to_depose,
+                                int const thread_num,
+                                int const lev,
+                                int const depos_lev,
+                                amrex::Real const dt,
+                                amrex::Real const relative_time);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and
@@ -238,6 +246,9 @@ public:
     virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
     // Update optional sub-class-specific injection location.
     virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
+
+    // Inject a continuous flux of particles from a defined plane
+    virtual void ContinuousFluxInjection(amrex::Real /*dt*/) {}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -269,11 +280,14 @@ public:
      * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
      * are supported
      */
-    void ApplyBoundaryConditions (ParticleBC boundary_conditions);
+    void ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions);
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
-    amrex::Real self_fields_required_precision = 1.e-11;
+    amrex::Real self_fields_required_precision =
+        amrex::Real(1.e-11);
+    int self_fields_max_iters = 200;
+    int self_fields_verbosity = 2;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;
@@ -308,24 +322,16 @@ public:
     amrex::ParticleReal getMass () const {return mass;}
 
     int DoFieldIonization() const { return do_field_ionization; }
-    int DoQED() const {
+
 #ifdef WARPX_QED
-        return m_do_qed;
-#else
-        return false;
-#endif
-    }
     //Species for which QED effects are relevant should override these methods
     virtual bool has_quantum_sync() const {return false;}
     virtual bool has_breit_wheeler() const {return false;}
 
-    // build filter functors
-    bool m_do_random_filter  = false;
-    bool m_do_uniform_filter = false;
-    bool m_do_parser_filter  = false;
-    amrex::Real m_random_fraction = 1.0;
-    int m_uniform_stride = 1;
-    std::unique_ptr<ParserWrapper<7>> m_particle_filter_parser;
+    int DoQED() const { return has_quantum_sync() || has_breit_wheeler(); }
+#else
+    int DoQED() const { return false; }
+#endif
 
     /* \brief This function tests if the current species
     *  is of a given PhysicalSpecies (specified as a template parameter).
@@ -390,14 +396,12 @@ protected:
     int do_back_transformed_diagnostics = 1;
 
 #ifdef WARPX_QED
-    bool m_do_qed = false;
-
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void
-    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){};
+    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){}
     virtual void
-    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){};
+    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){}
 
     int m_qed_breit_wheeler_ele_product;
     std::string m_qed_breit_wheeler_ele_product_name;

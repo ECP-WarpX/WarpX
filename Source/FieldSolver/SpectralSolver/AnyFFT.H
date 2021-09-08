@@ -8,13 +8,19 @@
 #ifndef ANYFFT_H_
 #define ANYFFT_H_
 
-#ifdef AMREX_USE_GPU
+#include <AMReX_Config.H>
+#include <AMReX_LayoutData.H>
+
+#if defined(AMREX_USE_CUDA)
 #  include <cufft.h>
+#elif defined(AMREX_USE_HIP)
+// cstddef: work-around for ROCm/rocFFT <=4.3.0
+// https://github.com/ROCmSoftwarePlatform/rocFFT/blob/rocm-4.3.0/library/include/rocfft.h#L36-L42
+#  include <cstddef>
+#  include <rocfft.h>
 #else
 #  include <fftw3.h>
 #endif
-
-#include <AMReX_LayoutData.H>
 
 /**
  * Wrapper around FFT libraries. The header file defines the API and the base types
@@ -27,11 +33,17 @@ namespace AnyFFT
     // First, define library-dependent types (complex, FFT plan)
 
     /** Complex type for FFT, depends on FFT library */
-#ifdef AMREX_USE_GPU
+#if defined(AMREX_USE_CUDA)
 #  ifdef AMREX_USE_FLOAT
     using Complex = cuComplex;
 #  else
     using Complex = cuDoubleComplex;
+#  endif
+#elif defined(AMREX_USE_HIP)
+#  ifdef AMREX_USE_FLOAT
+    using Complex = float2;
+#  else
+    using Complex = double2;
 #  endif
 #else
 #  ifdef AMREX_USE_FLOAT
@@ -44,8 +56,10 @@ namespace AnyFFT
     /** Library-dependent FFT plans type, which holds one fft plan per box
      * (plans are only initialized for the boxes that are owned by the local MPI rank).
      */
-#ifdef AMREX_USE_GPU
+#if defined(AMREX_USE_CUDA)
     using VendorFFTPlan = cufftHandle;
+#elif defined(AMREX_USE_HIP)
+    using VendorFFTPlan = rocfft_plan;
 #else
 #  ifdef AMREX_USE_FLOAT
     using VendorFFTPlan = fftwf_plan;

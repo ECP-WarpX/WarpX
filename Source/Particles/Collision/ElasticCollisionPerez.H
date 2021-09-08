@@ -7,8 +7,9 @@
 #ifndef WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 #define WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 
-#include "UpdateMomentumPerezElastic.H"
 #include "ComputeTemperature.H"
+#include "UpdateMomentumPerezElastic.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Random.H>
@@ -17,12 +18,11 @@
 /** \brief Prepare information for and call
  *        UpdateMomentumPerezElastic().
  * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
- * @param[in] I1e,I2e is the start index for I1,I2 (exclusive).
- * @param[in] I1 and I2 are the index arrays.
+ * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
+ * @param[in] I1 and I2 are the index arrays. They determine all elements that will be used.
  * @param[in,out] u1 and u2 are the velocity arrays (u=v*gamma),
  *                they could be either different or the same,
  *                their lengths are not needed,
- * @param[in] I1 and I2 determine all elements that will be used.
  * @param[in] w1 and w2 are arrays of weights.
  * @param[in] q1 and q2 are charges. m1 and m2 are masses.
  * @param[in] T1 and T2 are temperatures (Joule)
@@ -34,24 +34,32 @@
  * @param[in] dV is the volume of the corresponding cell.
 */
 
-template <typename T_index, typename T_R>
+template <typename T_index, typename T_R, typename SoaData_type, typename GetParticlePosition>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void ElasticCollisionPerez (
     T_index const I1s, T_index const I1e,
     T_index const I2s, T_index const I2e,
     T_index *I1,       T_index *I2,
-    T_R *u1x, T_R *u1y, T_R *u1z,
-    T_R *u2x, T_R *u2y, T_R *u2z,
-    T_R const *w1, T_R const *w2,
+    SoaData_type soa_1, SoaData_type soa_2,
+    GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
     T_R const  q1, T_R const  q2,
     T_R const  m1, T_R const  m2,
     T_R const  T1, T_R const  T2,
     T_R const  dt, T_R const   L, T_R const dV,
     amrex::RandomEngine const& engine)
 {
-
     int NI1 = I1e - I1s;
     int NI2 = I2e - I2s;
+
+    T_R * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
+    T_R * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
+    T_R * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy];
+    T_R * const AMREX_RESTRICT u1z = soa_1.m_rdata[PIdx::uz];
+
+    T_R * const AMREX_RESTRICT w2 = soa_2.m_rdata[PIdx::w];
+    T_R * const AMREX_RESTRICT u2x = soa_2.m_rdata[PIdx::ux];
+    T_R * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy];
+    T_R * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
 
     // get local T1t and T2t
     T_R T1t; T_R T2t;
@@ -86,8 +94,13 @@ void ElasticCollisionPerez (
 
     // compute Debye length lmdD
     T_R lmdD;
-    lmdD = T_R(1.0)/std::sqrt( n1*q1*q1/(T1t*PhysConst::ep0) +
-                         n2*q2*q2/(T2t*PhysConst::ep0) );
+    if ( T1t < T_R(0.0) || T2t < T_R(0.0) ) {
+        lmdD = T_R(0.0);
+    }
+    else {
+        lmdD = T_R(1.0)/std::sqrt( n1*q1*q1/(T1t*PhysConst::ep0) +
+                                   n2*q2*q2/(T2t*PhysConst::ep0) );
+    }
     T_R rmin = std::pow( T_R(4.0) * MathConst::pi / T_R(3.0) *
                amrex::max(n1,n2), T_R(-1.0/3.0) );
     lmdD = amrex::max(lmdD, rmin);

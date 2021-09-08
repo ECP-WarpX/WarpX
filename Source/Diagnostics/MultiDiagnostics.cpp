@@ -1,5 +1,13 @@
 #include "MultiDiagnostics.H"
+
+#include "Diagnostics/BTDiagnostics.H"
+#include "Diagnostics/FullDiagnostics.H"
+
 #include <AMReX_ParmParse.H>
+#include <AMReX.H>
+#include <AMReX_REAL.H>
+
+#include <algorithm>
 
 using namespace amrex;
 
@@ -12,9 +20,9 @@ MultiDiagnostics::MultiDiagnostics ()
     alldiags.resize( ndiags );
     for (int i=0; i<ndiags; i++){
         if ( diags_types[i] == DiagTypes::Full ){
-            alldiags[i].reset( new FullDiagnostics(i, diags_names[i]) );
+            alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
-            alldiags[i].reset( new BTDiagnostics(i, diags_names[i]) );
+            alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
         } else {
             amrex::Abort("Unknown diagnostic type");
         }
@@ -41,17 +49,20 @@ MultiDiagnostics::InitializeFieldFunctors ( int lev )
 void
 MultiDiagnostics::ReadParameters ()
 {
-    ParmParse pp("diagnostics");
+    ParmParse pp_diagnostics("diagnostics");
 
-    pp.queryarr("diags_names", diags_names);
-    ndiags = diags_names.size();
-    Print()<<"ndiags "<<ndiags<<'\n';
+    int enable_diags = 1;
+    pp_diagnostics.query("enable", enable_diags);
+    if (enable_diags == 1) {
+        pp_diagnostics.queryarr("diags_names", diags_names);
+        ndiags = diags_names.size();
+    }
 
     diags_types.resize( ndiags );
     for (int i=0; i<ndiags; i++){
-        ParmParse ppd(diags_names[i]);
+        ParmParse pp_diag_name(diags_names[i]);
         std::string diag_type_str;
-        ppd.get("diag_type", diag_type_str);
+        pp_diag_name.get("diag_type", diag_type_str);
         if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
         if (diag_type_str == "BackTransformed") diags_types[i] = DiagTypes::BackTransformed;
     }
@@ -62,6 +73,17 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     for (auto& diag : alldiags){
         diag->FilterComputePackFlush (step, force_flush);
+    }
+}
+
+void
+MultiDiagnostics::FilterComputePackFlushLastTimestep (int step)
+{
+    for (auto& diag : alldiags){
+        if (diag->DoDumpLastTimestep()){
+            constexpr bool force_flush = true;
+            diag->FilterComputePackFlush (step, force_flush);
+        }
     }
 }
 

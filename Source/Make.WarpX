@@ -5,6 +5,7 @@ OPENBC_HOME ?= ../../../openbc_poisson
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
+USE_GPU_RDC   = FALSE
 BL_NO_FORT    = TRUE
 ifeq ($(USE_DPCPP),TRUE)
   CXXSTD        = c++17
@@ -35,6 +36,7 @@ ifeq ($(USE_ASCENT_INSITU),TRUE)
   endif
   USE_CONDUIT = TRUE
   USE_ASCENT = TRUE
+  USE_GPU_RDC = TRUE
 endif
 
 ifndef USE_PYTHON_MAIN
@@ -50,7 +52,6 @@ endif
   XTRA_FFLAGS   += -fPIC
   XTRA_F90FLAGS += -fPIC
   USERSuffix := .Lib
-  DEFINES += -DWARPX_USE_PY
 endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
@@ -69,12 +70,12 @@ endif
 include $(WARPX_HOME)/Source/Make.package
 include $(WARPX_HOME)/Source/BoundaryConditions/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/Make.package
+include $(WARPX_HOME)/Source/EmbeddedBoundary/Make.package
 include $(WARPX_HOME)/Source/FieldSolver/Make.package
 include $(WARPX_HOME)/Source/Filter/Make.package
 include $(WARPX_HOME)/Source/Initialization/Make.package
 include $(WARPX_HOME)/Source/Laser/Make.package
 include $(WARPX_HOME)/Source/Parallelization/Make.package
-include $(WARPX_HOME)/Source/Parser/Make.package
 include $(WARPX_HOME)/Source/Particles/Make.package
 include $(WARPX_HOME)/Source/Python/Make.package
 include $(WARPX_HOME)/Source/Utils/Make.package
@@ -89,10 +90,16 @@ include $(AMREX_HOME)/Src/LinearSolvers/MLMG/Make.package
 ifeq ($(USE_SENSEI_INSITU),TRUE)
   include $(AMREX_HOME)/Src/Amr/Make.package
   include $(AMREX_HOME)/Src/Extern/SENSEI/Make.package
+  USE_GPU_RDC = TRUE
+endif
+
+ifeq ($(USE_EB),TRUE)
+  include $(AMREX_HOME)/Src/EB/Make.package
+  USERSuffix := $(USERSuffix).EB
 endif
 
 ifeq ($(QED),TRUE)
-  INCLUDE_LOCATIONS += $(PICSAR_HOME)/src/multi_physics/QED/src
+  INCLUDE_LOCATIONS += $(PICSAR_HOME)/multi_physics/QED/include
   CXXFLAGS += -DWARPX_QED
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED
@@ -130,12 +137,6 @@ DEFINES += -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
 DEFINES += -DPICSAR_NO_ASSUMED_ALIGNMENT
 DEFINES += -DWARPX
 
-ifdef PARSER_DEPTH
-  DEFINES += -DWARPX_PARSER_DEPTH=$(PARSER_DEPTH)
-else
-  DEFINES += -DWARPX_PARSER_DEPTH=24
-endif
-
 ifeq ($(USE_OPENBC_POISSON),TRUE)
   include $(OPENBC_HOME)/Make.package
   DEFINES += -DFFT_FFTW -DMPIPARALLEL -DUSE_OPENBC_POISSON
@@ -143,7 +144,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.12.0"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.14.2"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -167,7 +168,15 @@ endif
 ifeq ($(USE_PSATD),TRUE)
   USERSuffix := $(USERSuffix).PSATD
   DEFINES += -DWARPX_USE_PSATD
-  ifeq ($(USE_CUDA),FALSE) # Running on CPU
+  ifeq ($(USE_CUDA),TRUE)
+    # Use cuFFT
+    libraries += -lcufft
+  else ifeq ($(USE_HIP),TRUE)
+    # Use rocFFT.  ROC_PATH is defined in amrex
+    INCLUDE_LOCATIONS += $(ROC_PATH)/rocfft/include
+    LIBRARY_LOCATIONS += $(ROC_PATH)/rocfft/lib
+    libraries += -lrocfft
+  else # Running on CPU
      # Use FFTW
      ifeq ($(PRECISION),FLOAT)
           libraries += -lfftw3f_mpi -lfftw3f -lfftw3f_threads
@@ -180,9 +189,6 @@ ifeq ($(USE_PSATD),TRUE)
        INCLUDE_LOCATIONS += $(FFTW_HOME)/include
        LIBRARY_LOCATIONS += $(FFTW_HOME)/lib
      endif
-  else
-    # Use cuFFT
-    libraries += -lcufft
   endif
   ifeq ($(USE_RZ),TRUE)
     # Use blas and lapack
@@ -200,6 +206,11 @@ endif
 
 ifeq ($(USE_HDF5),TRUE)
     DEFINES += -DWARPX_USE_HDF5
+endif
+
+ifeq ($(USE_GPUCLOCK),TRUE)
+  USERSuffix := $(USERSuffix).GPUCLOCK
+  DEFINES += -DWARPX_USE_GPUCLOCK
 endif
 
 # job_info support
@@ -220,17 +231,17 @@ else
   PYDIM = $(DIM)d
 endif
 
-installwarpx: libwarpx$(PYDIM).so
-	mv libwarpx$(PYDIM).so Python/pywarpx
+installwarpx: libwarpx.$(PYDIM).so
+	mv libwarpx.$(PYDIM).so Python/pywarpx
 	cd Python; python setup.py install --with-libwarpx $(PYDIM) $(PYINSTALLOPTIONS)
 
-libwarpx$(PYDIM).a: $(objForExecs)
+libwarpx.$(PYDIM).a: $(objForExecs)
 	@echo Making static library $@ ...
 	$(SILENT) $(AR) -crv $@ $^
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 	@echo SUCCESS
 
-libwarpx$(PYDIM).so: $(objForExecs)
+libwarpx.$(PYDIM).so: $(objForExecs)
 	@echo Making dynamic library $@ ...
 ifeq ($(USE_CUDA),TRUE)
 	$(SILENT) $(CXX) $(LINKFLAGS) $(SHARED_OPTION) -Xlinker=$(SHARED_OPTION) -Xlinker=-fPIC -o $@ $^ $(LDFLAGS) $(libraries)
@@ -242,9 +253,9 @@ endif
 
 clean::
 	$(SILENT) $(RM) -rf build
-	$(SILENT) $(RM) -f libwarpx?d.a
-	$(SILENT) $(RM) -f libwarpx?d.so
-	$(SILENT) $(RM) -f pywarpx/libwarpx?d.so
+	$(SILENT) $(RM) -f libwarpx.?d.a
+	$(SILENT) $(RM) -f libwarpx.?d.so
+	$(SILENT) $(RM) -f pywarpx/libwarpx.?d.so
 
 else
 

@@ -12,6 +12,8 @@
 # The electric field in the simulation is given (in theory) by:
 # $$ E_r = -\partial_r \phi = \epsilon \,\frac{mc^2}{e}\frac{2\,r}{w_0^2} \exp\left(-\frac{r^2}{w_0^2}\right) \sin(k_0 z) \sin(\omega_p t)
 # $$ E_z = -\partial_z \phi = - \epsilon \,\frac{mc^2}{e} k_0 \exp\left(-\frac{r^2}{w_0^2}\right) \cos(k_0 z) \sin(\omega_p t)
+# Unrelated to the Langmuir waves, we also test the plotfile particle filter function in this
+# analysis script.
 import sys
 import re
 import matplotlib
@@ -21,6 +23,7 @@ import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
 from scipy.constants import e, m_e, epsilon_0, c
+import post_processing_utils
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -68,7 +71,7 @@ def Ez( z, r, epsilon, k0, w0, wp, t) :
 
 # Read the file
 ds = yt.load(fn)
-t0 = ds.current_time.to_ndarray().mean()
+t0 = ds.current_time.to_value()
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                         dims=ds.domain_dimensions)
 
@@ -107,10 +110,7 @@ plt.savefig(test_name+'_analysis.png')
 
 error_rel = overall_max_error
 
-if current_correction:
-   tolerance_rel = 0.06
-else:
-   tolerance_rel = 0.04
+tolerance_rel = 0.12
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
@@ -127,5 +127,27 @@ if current_correction:
     print("error_rel = {}".format(error_rel))
     print("tolerance = {}".format(tolerance))
     assert( error_rel < tolerance )
+
+
+## In the final past of the test, we verify that the diagnostic particle filter function works as
+## expected in RZ geometry. For this, we only use the last simulation timestep.
+
+dim = "rz"
+species_name = "electrons"
+
+parser_filter_fn = "diags/diag_parser_filter00080"
+parser_filter_expression = "(py-pz < 0) * (r<10e-6) * (z > 0)"
+post_processing_utils.check_particle_filter(fn, parser_filter_fn, parser_filter_expression,
+                                            dim, species_name)
+
+uniform_filter_fn = "diags/diag_uniform_filter00080"
+uniform_filter_expression = "ids%3 == 0"
+post_processing_utils.check_particle_filter(fn, uniform_filter_fn, uniform_filter_expression,
+                                            dim, species_name)
+
+random_filter_fn = "diags/diag_random_filter00080"
+random_fraction = 0.66
+post_processing_utils.check_random_filter(fn, random_filter_fn, random_fraction,
+                                          dim, species_name)
 
 checksumAPI.evaluate_checksum(test_name, fn)

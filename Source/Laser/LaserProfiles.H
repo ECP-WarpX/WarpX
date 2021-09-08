@@ -7,18 +7,17 @@
 #ifndef WARPX_LaserProfiles_H_
 #define WARPX_LaserProfiles_H_
 
-#include "Parser/WarpXParserWrapper.H"
-
-#include <AMReX_REAL.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
-#include <map>
-#include <string>
-#include <memory>
 #include <functional>
 #include <limits>
+#include <map>
+#include <memory>
+#include <string>
 #include <utility>
 
 
@@ -134,6 +133,7 @@ private:
         amrex::Real zeta           = 0;
         amrex::Real beta           = 0;
         amrex::Real phi2           = 0;
+        amrex::Real phi0           = 0;
 
         amrex::Vector<amrex::Real> stc_direction; //! Direction of the spatio-temporal couplings
         amrex::Real theta_stc; //! Angle between polarization (p_X) and direction of spatiotemporal coupling (stc_direction)
@@ -207,8 +207,7 @@ private:
         std::string field_function;
     } m_params;
 
-    WarpXParser m_parser;
-    std::unique_ptr<ParserWrapper<3> > m_gpu_parser;
+    amrex::Parser m_parser;
 };
 
 /**
@@ -362,6 +361,10 @@ private:
         int last_time_index;
         /** Field data */
         amrex::Gpu::DeviceVector<amrex::Real> E_data;
+        /** This parameter is subtracted to simulation time before interpolating field data in txye file.
+        *   If t_delay > 0, the laser is delayed, otherwise it is anticipated. */
+        amrex::Real t_delay = amrex::Real(0.0);
+
     } m_params;
 
     CommonLaserParameters m_common_params;

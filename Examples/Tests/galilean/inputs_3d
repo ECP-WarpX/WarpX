@@ -9,11 +9,15 @@ amr.blocking_factor = 32
 amr.max_level = 0
 psatd.v_galilean = 0. 0. 0.99498743710662
 
-
 geometry.coord_sys   = 0
-geometry.is_periodic = 1 1 1
 geometry.prob_lo     = -9.67 -9.67 -9.67
 geometry.prob_hi     = 9.67 9.67 9.67
+
+#################################
+###### Boundary condition #######
+#################################
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 #################################
 ############ NUMERICS ###########
@@ -21,13 +25,11 @@ geometry.prob_hi     = 9.67 9.67 9.67
 warpx.verbose = 1
 
 algo.current_deposition = direct
+algo.maxwell_solver = psatd
 algo.particle_pusher = vay
 
 warpx.cfl = 1.
-interpolation.nox = 3
-interpolation.noy = 3
-interpolation.noz = 3
-
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############
@@ -79,5 +81,5 @@ ions.uz_th = 0.0001
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 100
+diag1.intervals = 100
 diag1.diag_type = Full

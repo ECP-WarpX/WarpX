@@ -11,6 +11,17 @@
 
 #include "DefaultInitialization.H"
 
+#include <AMReX_Config.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_ParallelDescriptor.H>
+
+#include <map>
+#include <string>
+#include <vector>
+
 using NameMap = std::map<std::string, int>;
 using PolicyVec = amrex::Gpu::DeviceVector<InitializationPolicy>;
 
@@ -40,7 +51,7 @@ template <typename PTile>
 void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
 {
     amrex::Long pid;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp critical (ionization_nextid)
 #endif
     {

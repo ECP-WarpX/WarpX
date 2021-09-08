@@ -1,7 +1,15 @@
 #include "DivEFunctor.H"
+
 #include "Utils/CoarsenIO.H"
+#ifdef WARPX_DIM_RZ
+#   include "Utils/WarpXAlgorithmSelection.H"
+#endif
+#include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 
 DivEFunctor::DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev,
                          const amrex::IntVect crse_ratio,
@@ -20,13 +28,13 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    // For RZ spectral, all quantities are cell centered.
-    amrex::IntVect cell_type = amrex::IntVect::TheCellVector();
-#else
     // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
     amrex::IntVect cell_type = amrex::IntVect::TheNodeVector();
+#ifdef WARPX_DIM_RZ
+    // For RZ spectral, all quantities are cell centered.
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        cell_type = amrex::IntVect::TheCellVector();
 #endif
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev), cell_type);
     amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );

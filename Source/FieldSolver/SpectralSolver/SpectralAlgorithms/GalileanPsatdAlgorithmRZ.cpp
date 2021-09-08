@@ -4,10 +4,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
 #include "GalileanPsatdAlgorithmRZ.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 #include <cmath>
 
@@ -17,14 +17,18 @@ using namespace amrex::literals;
 /* \brief Initialize coefficients for the update equation */
 GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                                     amrex::DistributionMapping const & dm,
+                                                    const SpectralFieldIndex& spectral_index,
                                                     int const n_rz_azimuthal_modes, int const norder_z,
                                                     bool const nodal,
                                                     const amrex::Array<amrex::Real,3>& v_galilean,
-                                                    amrex::Real const dt)
+                                                    amrex::Real const dt,
+                                                    bool const update_with_rho)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
+       m_spectral_index(spectral_index),
        m_dt(dt),
-       m_v_galilean(v_galilean)
+       m_v_galilean(v_galilean),
+       m_update_with_rho(update_with_rho)
 {
 
     // Allocate the arrays of coefficients
@@ -36,15 +40,20 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
     X3_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     X4_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     Theta2_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    T_rho_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
 
     coefficients_initialized = false;
 }
 
 /* Advance the E and B field in spectral space (stored in `f`)
- * over one time step */
+ * over one time step
+ * The algorithm is described in https://doi.org/10.1103/PhysRevE.94.053305
+ * */
 void
 GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
 {
+
+    bool const update_with_rho = m_update_with_rho;
 
     if (not coefficients_initialized) {
         // This is called from here since it needs the kr values
@@ -52,6 +61,8 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
         InitializeSpectralCoefficients(f);
         coefficients_initialized = true;
     }
+
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Loop over boxes
     for (amrex::MFIter mfi(f.fields); mfi.isValid(); ++mfi){
@@ -68,6 +79,7 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
         amrex::Array4<const Complex> const& X3_arr = X3_coef[mfi].array();
         amrex::Array4<const Complex> const& X4_arr = X4_coef[mfi].array();
         amrex::Array4<const Complex> const& Theta2_arr = Theta2_coef[mfi].array();
+        amrex::Array4<const Complex> const& T_rho_arr = T_rho_coef[mfi].array();
 
         // Extract pointers for the k vectors
         auto const & kr_modes = f.getKrArray(mfi);
@@ -83,18 +95,17 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
         {
 
             // All of the fields of each mode are grouped together
-            using Idx = SpectralFieldIndex;
-            auto const Ep_m = Idx::Ex + Idx::n_fields*mode;
-            auto const Em_m = Idx::Ey + Idx::n_fields*mode;
-            auto const Ez_m = Idx::Ez + Idx::n_fields*mode;
-            auto const Bp_m = Idx::Bx + Idx::n_fields*mode;
-            auto const Bm_m = Idx::By + Idx::n_fields*mode;
-            auto const Bz_m = Idx::Bz + Idx::n_fields*mode;
-            auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
-            auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
-            auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
-            auto const rho_old_m = Idx::rho_old + Idx::n_fields*mode;
-            auto const rho_new_m = Idx::rho_new + Idx::n_fields*mode;
+            auto const Ep_m = Idx.Ex + Idx.n_fields*mode;
+            auto const Em_m = Idx.Ey + Idx.n_fields*mode;
+            auto const Ez_m = Idx.Ez + Idx.n_fields*mode;
+            auto const Bp_m = Idx.Bx + Idx.n_fields*mode;
+            auto const Bm_m = Idx.By + Idx.n_fields*mode;
+            auto const Bz_m = Idx.Bz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
+            auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
             // Record old values of the fields to be updated
             Complex const Ep_old = fields(i,j,k,Ep_m);
@@ -125,17 +136,29 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
             Complex const X3 = X3_arr(i,j,k,mode);
             Complex const X4 = X4_arr(i,j,k,mode);
             Complex const T2 = Theta2_arr(i,j,k,mode);
+            Complex const T_rho = T_rho_arr(i,j,k,mode);
+
+            Complex rho_diff;
+            if (update_with_rho) {
+                rho_diff = X2*rho_new - T2*X3*rho_old;
+            } else {
+                Complex const divE = kr*(Ep_old - Em_old) + I*kz*Ez_old;
+                Complex const divJ = kr*(Jp - Jm) + I*kz*Jz;
+
+                auto const myeps0 = PhysConst::ep0;  // temporary for NVCC
+                rho_diff = T2*(X2 - X3)*myeps0*divE + T_rho*X2*divJ;
+            }
 
             // Update E (see WarpX online documentation: theory section)
             fields(i,j,k,Ep_m) = T2*C*Ep_old
                         + T2*S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old)
-                        + X4*Jp + 0.5_rt*kr*(X2*rho_new - T2*X3*rho_old);
+                        + X4*Jp + 0.5_rt*kr*rho_diff;
             fields(i,j,k,Em_m) = T2*C*Em_old
                         + T2*S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old)
-                        + X4*Jm - 0.5_rt*kr*(X2*rho_new - T2*X3*rho_old);
+                        + X4*Jm - 0.5_rt*kr*rho_diff;
             fields(i,j,k,Ez_m) = T2*C*Ez_old
                         + T2*S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old)
-                        + X4*Jz - I*kz*(X2*rho_new - T2*X3*rho_old);
+                        + X4*Jz - I*kz*rho_diff;
             // Update B (see WarpX online documentation: theory section)
             // Note: here X1 is T2*x1/(ep0*c*c*k_norm*k_norm), where
             // x1 has the same definition as in the original paper
@@ -173,6 +196,7 @@ void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldData
         amrex::Array4<Complex> const& X3 = X3_coef[mfi].array();
         amrex::Array4<Complex> const& X4 = X4_coef[mfi].array();
         amrex::Array4<Complex> const& Theta2 = Theta2_coef[mfi].array();
+        amrex::Array4<Complex> const& T_rho = T_rho_coef[mfi].array();
 
         // Extract real (for portability on GPU)
         amrex::Real vz = m_v_galilean[2];
@@ -213,12 +237,18 @@ void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldData
 
                 Theta2(i,j,k,mode) = theta*theta;
 
+                if (kz == 0._rt) {
+                    T_rho(i,j,k,mode) = -dt;
+                } else {
+                    T_rho(i,j,k,mode) = (1._rt - theta*theta)/(I*kz*vz);
+                }
+
                 if ( (nu != 1._rt) && (nu != 0._rt) ) {
 
                     // Note: the coefficients X1, X2, X do not correspond
                     // exactly to the original Galilean paper, but the
                     // update equation have been modified accordingly so that
-                    // the expressions/ below (with the update equations)
+                    // the expressions below (with the update equations)
                     // are mathematically equivalent to those of the paper.
                     Complex x1 = 1._rt/(1._rt-nu*nu) *
                         (theta_star - C(i,j,k,mode)*theta + I*kv*S_ck(i,j,k,mode)*theta);
@@ -260,21 +290,22 @@ void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldData
 }
 
 void
-GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
+GalileanPsatdAlgorithmRZ::CurrentCorrection (const int lev,
+                                             SpectralFieldDataRZ& field_data,
                                              std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                              const std::unique_ptr<amrex::MultiFab>& rho )
 {
     // Profiling
     WARPX_PROFILE( "GalileanPsatdAlgorithmRZ::CurrentCorrection" );
 
-    using Idx = SpectralFieldIndex;
+    const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of J and rho
-    field_data.ForwardTransform( *current[0], Idx::Jx,
-                                 *current[1], Idx::Jy);
-    field_data.ForwardTransform( *current[2], Idx::Jz, 0);
-    field_data.ForwardTransform( *rho, Idx::rho_old, 0 );
-    field_data.ForwardTransform( *rho, Idx::rho_new, 1 );
+    field_data.ForwardTransform( lev, *current[0], Idx.Jx,
+                                 *current[1], Idx.Jy);
+    field_data.ForwardTransform( lev, *current[2], Idx.Jz, 0);
+    field_data.ForwardTransform( lev, *rho, Idx.rho_old, 0 );
+    field_data.ForwardTransform( lev, *rho, Idx.rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -300,11 +331,11 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             // All of the fields of each mode are grouped together
-            auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
-            auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
-            auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
-            auto const rho_old_m = Idx::rho_old + Idx::n_fields*mode;
-            auto const rho_new_m = Idx::rho_new + Idx::n_fields*mode;
+            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
+            auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
             // Shortcuts for the values of J and rho
             Complex const Jp = fields(i,j,k,Jp_m);
@@ -338,14 +369,16 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
     }
 
     // Backward Fourier transform of J
-    field_data.BackwardTransform( *current[0], Idx::Jx,
-                                  *current[1], Idx::Jy);
-    field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
+    field_data.BackwardTransform( lev,
+                                  *current[0], Idx.Jx,
+                                  *current[1], Idx.Jy);
+    field_data.BackwardTransform( lev, *current[2], Idx.Jz, 0 );
 
 }
 
 void
-GalileanPsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/,
+GalileanPsatdAlgorithmRZ::VayDeposition (const int /*lev*/,
+                                         SpectralFieldDataRZ& /*field_data*/,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry");

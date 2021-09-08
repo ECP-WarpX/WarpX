@@ -1,4 +1,8 @@
 target_sources(WarpX
   PRIVATE
-    CollisionType.cpp
+    CollisionHandler.cpp
+    CollisionBase.cpp
+    BackgroundMCCCollision.cpp
+    MCCProcess.cpp
 )
+

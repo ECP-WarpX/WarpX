@@ -4,7 +4,7 @@
 #include "FlushFormat.H"
 
 #include <AMReX_AmrMesh.H>
-#if defined(BL_USE_SENSEI_INSITU)
+#if defined(AMREX_USE_SENSEI_INSITU)
 #  include <AMReX_AmrMeshInSituBridge.H>
 #else
 namespace amrex {
@@ -50,10 +50,14 @@ public:
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
-        const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
+        const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
+        const std::string prefix, int file_min_digits,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
-        bool plot_raw_rho, bool plot_raw_F) const override;
+        bool plot_raw_rho, bool plot_raw_F,
+        bool isBTD = false, int snapshotID = -1,
+        const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
+        bool isLastBTDFlush = false) const override;
 
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.

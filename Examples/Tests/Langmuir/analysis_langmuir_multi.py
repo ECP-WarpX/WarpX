@@ -96,7 +96,7 @@ for field in ['particle_momentum_x',
     print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 
-t0 = ds.current_time.to_ndarray().mean()
+t0 = ds.current_time.to_value()
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                                     dims=ds.domain_dimensions)
 

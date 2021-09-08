@@ -8,19 +8,26 @@
 #ifndef WARPX_FielIO_H_
 #define WARPX_FielIO_H_
 
-#include <WarpX.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 void
 AverageAndPackVectorField( amrex::MultiFab& mf_avg,
                          const std::array< std::unique_ptr<amrex::MultiFab>, 3 >& vector_field,
                          const amrex::DistributionMapping& dm,
-                         const int dcomp, const int ngrow );
+                         const int dcomp, const amrex::IntVect ngrow );
 
 void
 AverageAndPackScalarField( amrex::MultiFab& mf_avg,
                          const amrex::MultiFab & scalar_field,
                          const amrex::DistributionMapping& dm,
-                         const int dcomp, const int ngrow );
+                         const int dcomp, const amrex::IntVect ngrow );
 
 std::vector<std::uint64_t>
 getReversedVec( const amrex::IntVect& v );

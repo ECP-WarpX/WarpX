@@ -9,17 +9,28 @@
 #ifndef WARPX_PML_H_
 #define WARPX_PML_H_
 
-#include "Utils/WarpXProfilerWrapper.H"
+#include "PML_fwd.H"
 
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
 #include <AMReX_MultiFab.H>
-#include <AMReX_Geometry.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <array>
-
+#include <memory>
+#include <string>
+#include <vector>
 
 struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 {
@@ -49,29 +60,36 @@ struct SigmaBox
 
 };
 
-namespace amrex {
-    template<>
-    class FabFactory<SigmaBox>
-    {
-    public:
-        FabFactory<SigmaBox> (const BoxArray& grid_ba, const Real* dx, int ncell, int delta)
-            : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta) {}
-        virtual SigmaBox* create (const Box& box, int /*ncomps*/,
-                                  const FabInfo& /*info*/, int /*box_index*/) const final
-            { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta); }
-        virtual void destroy (SigmaBox* fab) const final {
-            delete fab;
-        }
-        virtual FabFactory<SigmaBox>* clone () const {
-            return new FabFactory<SigmaBox>(*this);
-        }
-    private:
-        const BoxArray& m_grids;
-        const Real* m_dx;
-        int m_ncell;
-        int m_delta;
-    };
-}
+class SigmaBoxFactory
+    : public amrex::FabFactory<SigmaBox>
+{
+public:
+    SigmaBoxFactory (const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta)
+        : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta) {}
+    virtual ~SigmaBoxFactory () = default;
+
+    SigmaBoxFactory (const SigmaBoxFactory&) = default;
+    SigmaBoxFactory (SigmaBoxFactory&&) noexcept = default;
+
+    SigmaBoxFactory () = delete;
+    SigmaBoxFactory& operator= (const SigmaBoxFactory&) = delete;
+    SigmaBoxFactory& operator= (SigmaBoxFactory&&) = delete;
+
+    virtual SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
+                              const amrex::FabInfo& /*info*/, int /*box_index*/) const final
+        { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta); }
+    virtual void destroy (SigmaBox* fab) const final {
+        delete fab;
+    }
+    virtual SigmaBoxFactory* clone () const final {
+        return new SigmaBoxFactory(*this);
+    }
+private:
+    const amrex::BoxArray& m_grids;
+    const amrex::Real* m_dx;
+    int m_ncell;
+    int m_delta;
+};
 
 class MultiSigmaBox
     : public amrex::FabArray<SigmaBox>
@@ -91,14 +109,14 @@ enum struct PatchType : int;
 class PML
 {
 public:
-    PML (const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
+    PML (const int lev,
+         const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
-         int ncell, int delta, int ref_ratio,
-#ifdef WARPX_USE_PSATD
+         int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-#endif
-         int do_dive_cleaning, int do_moving_window,
-         int pml_has_particles, int do_pml_in_domain,
+         int do_moving_window, int pml_has_particles, int do_pml_in_domain,
+         const bool J_linear_in_time,
+         const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 
@@ -111,8 +129,13 @@ public:
     std::array<amrex::MultiFab*,3> GetB_cp ();
     std::array<amrex::MultiFab*,3> Getj_cp ();
 
+    // Used when WarpX::do_pml_dive_cleaning = true
     amrex::MultiFab* GetF_fp ();
     amrex::MultiFab* GetF_cp ();
+
+    // Used when WarpX::do_pml_divb_cleaning = true
+    amrex::MultiFab* GetG_fp ();
+    amrex::MultiFab* GetG_cp ();
 
     const MultiSigmaBox& GetMultiSigmaBox_fp () const
         { return *sigba_fp; }
@@ -121,7 +144,7 @@ public:
         { return *sigba_cp; }
 
 #ifdef WARPX_USE_PSATD
-    void PushPSATD ();
+    void PushPSATD (const int lev);
 #endif
 
     void ExchangeB (const std::array<amrex::MultiFab*,3>& B_fp,
@@ -146,9 +169,11 @@ public:
     void FillBoundaryE ();
     void FillBoundaryB ();
     void FillBoundaryF ();
+    void FillBoundaryG ();
     void FillBoundaryE (PatchType patch_type);
     void FillBoundaryB (PatchType patch_type);
     void FillBoundaryF (PatchType patch_type);
+    void FillBoundaryG (PatchType patch_type);
 
     bool ok () const { return m_ok; }
 
@@ -157,8 +182,13 @@ public:
 
     static void Exchange (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom, int do_pml_in_domain);
 
+    ~PML () = default;
+
 private:
     bool m_ok;
+
+    bool m_dive_cleaning;
+    bool m_divb_cleaning;
 
     const amrex::Geometry* m_geom;
     const amrex::Geometry* m_cgeom;
@@ -171,8 +201,13 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_cp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_cp;
 
+    // Used when WarpX::do_pml_dive_cleaning = true
     std::unique_ptr<amrex::MultiFab> pml_F_fp;
     std::unique_ptr<amrex::MultiFab> pml_F_cp;
+
+    // Used when WarpX::do_pml_divb_cleaning = true
+    std::unique_ptr<amrex::MultiFab> pml_G_fp;
+    std::unique_ptr<amrex::MultiFab> pml_G_cp;
 
     std::unique_ptr<MultiSigmaBox> sigba_fp;
     std::unique_ptr<MultiSigmaBox> sigba_cp;
@@ -192,9 +227,12 @@ private:
 };
 
 #ifdef WARPX_USE_PSATD
-void PushPMLPSATDSinglePatch( SpectralSolver& solver,
+void PushPMLPSATDSinglePatch( const int lev,
+    SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B );
+    std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B,
+    std::unique_ptr<amrex::MultiFab>& pml_F,
+    std::unique_ptr<amrex::MultiFab>& pml_G);
 #endif
 
 #endif

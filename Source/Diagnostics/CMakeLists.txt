@@ -10,6 +10,7 @@ target_sources(WarpX
     WarpXIO.cpp
     WarpXOpenPMD.cpp
     BTDiagnostics.cpp
+    BTD_Plotfile_Header_Impl.cpp
 )
 
 add_subdirectory(ComputeDiagFunctors)

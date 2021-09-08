@@ -6,13 +6,16 @@
  */
 #include "MPIInitHelpers.H"
 
-#include <AMReX.H>
+#include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
 
+#if defined(AMREX_USE_MPI)
+#   include <mpi.h>
+#endif
+
 #include <string>
 #include <utility>
-
 
 namespace utils
 {
@@ -30,6 +33,8 @@ namespace utils
         thread_required = MPI_THREAD_MULTIPLE;
 #   endif
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
+#else
+        amrex::ignore_unused(argc, argv);
 #endif
         return std::make_pair(thread_required, thread_provided);
     }
@@ -52,6 +57,8 @@ namespace utils
                            << mtn(thread_provided) << ") is stricter than requested "
                            << mtn(thread_required) << "). This might reduce multi-node "
                            << "communication performance.";
+#else
+        amrex::ignore_unused(mpi_thread_levels);
 #endif
     }
 

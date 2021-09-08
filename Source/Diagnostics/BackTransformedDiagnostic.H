@@ -8,17 +8,24 @@
 #ifndef WARPX_BackTransformedDiagnostic_H_
 #define WARPX_BackTransformedDiagnostic_H_
 
-#include "Particles/MultiParticleContainer.H"
-#include "Utils/WarpXConst.H"
+#include "BackTransformedDiagnostic_fwd.H"
 
-#include <AMReX_Geometry.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_VisMF.H>
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
+
+#include <AMReX_Box.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #include <map>
+#include <memory>
+#include <string>
 #include <vector>
-
 
 /** \brief
  * The capability for back-transformed lab-frame data is implemented to generate
@@ -122,7 +129,8 @@ class LabFrameSnapShot : public LabFrameDiag {
                      amrex::IntVect prob_ncells_lab, int ncomp_to_dump,
                      std::vector<std::string> mesh_field_names,
                      amrex::RealBox diag_domain_lab,
-                     amrex::Box diag_box, int file_num_in);
+                     amrex::Box diag_box, int file_num_in, const int max_box_size,
+                     const int buffer_size);
     void AddDataToBuffer( amrex::MultiFab& tmp_slice, int k_lab,
          amrex::Vector<int> const& map_actual_fields_to_dump) override;
     void AddPartDataToParticleBuffer(
@@ -149,7 +157,9 @@ class LabFrameSlice : public LabFrameDiag {
                      std::vector<std::string> mesh_field_names,
                      amrex::RealBox diag_domain_lab,
                      amrex::Box diag_box, int file_num_in,
-                     amrex::Real particle_slice_dx_lab);
+                     amrex::Real particle_slice_dx_lab,
+                     const int max_box_size,
+                     const int buffer_size);
     void AddDataToBuffer( amrex::MultiFab& tmp_slice_ptr, int i_lab,
          amrex::Vector<int> const& map_actual_fields_to_dump) override;
     void AddPartDataToParticleBuffer(

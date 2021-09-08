@@ -5,13 +5,20 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "NCIGodfreyFilter.H"
+
 #include "Utils/NCIGodfreyTables.H"
-#include "WarpX.H"
 
-#ifdef _OPENMP
-#   include <omp.h>
-#endif
+#include <AMReX.H>
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Dim3.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Vector.H>
 
+#include <vector>
 
 using namespace amrex;
 
@@ -31,6 +38,8 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
 }
 
 void NCIGodfreyFilter::ComputeStencils(){
+
+    using namespace warpx::nci_godfrey;
 
     // Sanity checks: filter length shoulz be 5 in z
 #if  (AMREX_SPACEDIM == 3)
@@ -92,19 +101,19 @@ void NCIGodfreyFilter::ComputeStencils(){
     // Compute h_stencil_x and h_stencil_y (no filter in these directions,
     // so only 1 coeff, equal to 1)
     Vector<Real> h_stencil_x(1);
-    h_stencil_x[0] = 1.;
+    h_stencil_x[0] = 1._rt;
 #if (AMREX_SPACEDIM == 3)
     Vector<Real> h_stencil_y(1);
-    h_stencil_y[0] = 1.;
+    h_stencil_y[0] = 1._rt;
 #endif
 
     // Due to the way Filter::DoFilter() is written,
     // coefficient 0 has to be /2
-    h_stencil_x[0] /= 2.;
+    h_stencil_x[0] /= 2._rt;
 #if (AMREX_SPACEDIM == 3)
-    h_stencil_y[0] /= 2.;
+    h_stencil_y[0] /= 2._rt;
 #endif
-    h_stencil_z[0] /= 2.;
+    h_stencil_z[0] /= 2._rt;
 
     stencil_x.resize(h_stencil_x.size());
 #if (AMREX_SPACEDIM == 3)

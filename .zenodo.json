@@ -1,0 +1,189 @@
+{
+    "creators": [
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Vay, Jean-Luc",
+        "orcid": "0000-0002-0040-799X"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Almgren, Ann",
+        "orcid": "0000-0003-2103-312X"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Amorim, L\u00edgia Diana",
+        "orcid": "0000-0002-1445-0032"
+      },
+      {
+        "affiliation": "Laboratoire d'Optique Appliqu\u00e9e",
+        "name": "Andriyash, Igor",
+        "orcid": "0000-0003-0313-4496"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Belkin, Daniel",
+        "orcid": "0000-0002-3936-6419"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Bizzozero, David"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Blelly, Aurore"
+      },
+      {
+        "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
+        "name": "Fedeli, Luca",
+        "orcid": "0000-0002-7215-4178"
+      },
+      {
+        "affiliation": "SLAC National Accelerator Laboratory",
+        "name": "Ge, Lixin",
+        "orcid": "0000-0002-1442-0706"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Gott, Kevin",
+        "orcid": "0000-0003-3244-5525"
+      },
+      {
+        "affiliation": "Lawrence Livermore National Laboratory",
+        "name": "Harrison, Cyrus",
+        "orcid": "0000-0001-8985-0906"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Huebl, Axel",
+        "orcid": "0000-0003-1943-7141"
+      },
+      {
+        "affiliation": "Lawrence Livermore National Laboratory",
+        "name": "Grote, David",
+        "orcid": "0000-0002-4057-8582"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Gu, Junmin",
+        "orcid": "0000-0002-1521-8534"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Jambunathan, Revathi",
+        "orcid": "0000-0001-9432-2091"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory, now DESY",
+        "name": "Th\u00e9venet, Maxence",
+        "orcid": "0000-0001-7216-2277"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Richardson, Glenn",
+        "orcid": "0000-0003-0313-4496"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Shapoval, Olga",
+        "orcid": "0000-0003-4003-4507"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Lehe, Remi",
+        "orcid": "0000-0002-3656-9659"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Loring, Burlen",
+        "orcid": "0000-0002-4678-8142"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Myers, Andrew",
+        "orcid": "0000-0001-8427-8330"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Rowan, Michael E.",
+        "orcid": "0000-0003-2406-1273"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Weber, Gunther H.",
+        "orcid": "0000-0002-1794-1398"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Yang, Eloise",
+        "orcid": "0000-0002-9319-4216"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Zhang, Weiqun",
+        "orcid": "0000-0001-8092-1974"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Zhao, Yinjian",
+        "orcid": "0000-0003-4362-3630"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Zoni, Edoardo",
+        "orcid": "0000-0001-5662-4646"
+      },
+      {
+        "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
+        "name": "Zaim, Ne\u00efl",
+        "orcid": "0000-0003-0313-4496"
+      }
+    ],
+    "contributors": [
+      {
+        "type": "Other",
+        "affiliation": "Intel",
+        "name": "Cohn, Robert"
+      },
+      {
+        "type": "Other",
+        "affiliation": "Bloomberg LP",
+        "name": "Levine, Michael"
+      },
+      {
+        "type": "Other",
+        "affiliation": "Helmholtz Institute Jena",
+        "name": "Liu, Bin",
+        "orcid": "0000-0002-8066-184X"
+      },
+      {
+        "type": "Other",
+        "affiliation": "SLAC National Accelerator Laboratory",
+        "name": "Ng, Cho-Kuen",
+        "orcid": "0000-0002-1903-904X"
+      },
+      {
+        "type": "Other",
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Park, Jaehong"
+      }
+    ],
+    "license": {
+      "id": "BSD-3-Clause-LBNL"
+    },
+    "language": "eng",
+    "keywords": [
+      "research",
+      "simulation",
+      "plasma",
+      "particle-in-cell",
+      "gpu",
+      "laser",
+      "physics",
+      "pic"
+    ],
+    "access_right": "open",
+    "references": [
+      "J.-L. Vay et al. Modeling of a chain of three plasma accelerator stages with the WarpX electromagnetic PIC code on GPUs. Physics of Plasmas 28, 023105 (2021) DOI:10.1063/5.0028512"
+    ]
+}

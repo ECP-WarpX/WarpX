@@ -31,32 +31,36 @@ dims_RZ  = True if re.search('rz', filename) else False
 
 ds = yt.load( filename )
 
-Ex= ds.index.grids[0]['boxlib', 'Ex'].squeeze().v
-Ey= ds.index.grids[0]['boxlib', 'Ey'].squeeze().v
-Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
+# yt 4.0+ has rounding issues with our domain data:
+# RuntimeError: yt attempted to read outside the boundaries
+# of a non-periodic domain along dimension 0.
+if 'force_periodicity' in dir(ds): ds.force_periodicity()
+
+all_data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
+Ex = all_data['boxlib', 'Ex'].squeeze().v
+Ey = all_data['boxlib', 'Ey'].squeeze().v
+Ez = all_data['boxlib', 'Ez'].squeeze().v
 
 if (averaged):
     # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
-    energyE_ref = 26913.546573259937
-    tolerance_rel = 1e-5
+    energyE_ref = 32532.00882239954
+    tolerance_rel = 1e-6
 elif (not dims_RZ and not current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
-    energyE_ref = 38362.88743899688
+    energyE_ref = 35657.99361677053
     tolerance_rel = 1e-8
 elif (not dims_RZ and current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
-    # difference with respect to reference energy above due to absence of real-space filter
-    energyE_ref = 745973.5742103161
-    tolerance_rel = 1e-8
+    energyE_ref = 35024.02751955393
+    tolerance_rel = 2e-8
 elif (dims_RZ and not current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
-    energyE_ref = 178013.54481470847
+    energyE_ref = 239019.10670780553
     tolerance_rel = 1e-8
 elif (dims_RZ and current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
-    # difference with respect to reference energy above due to absence of k-space filter
-    energyE_ref = 10955626.277865639
-    tolerance_rel = 1e-8
+    energyE_ref = 471730.0524143545
+    tolerance_rel = 1e-9
 
 energyE = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
@@ -69,8 +73,8 @@ assert( error_rel < tolerance_rel )
 
 # Check charge conservation (relative L-infinity norm of error) with current correction
 if current_correction:
-    divE = ds.index.grids[0]['boxlib', 'divE'].squeeze().v
-    rho  = ds.index.grids[0]['boxlib', 'rho' ].squeeze().v / scc.epsilon_0
+    divE = all_data['boxlib', 'divE'].squeeze().v
+    rho  = all_data['boxlib', 'rho' ].squeeze().v / scc.epsilon_0
     error_rel = np.amax(np.abs(divE - rho)) / max(np.amax(divE), np.amax(rho))
     tolerance = 1e-9
     print("Check charge conservation:")

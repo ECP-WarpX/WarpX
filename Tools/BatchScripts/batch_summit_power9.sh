@@ -17,6 +17,12 @@
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
 
+# make output group-readable by default
+umask 0027
+
+# fix problems with collectives since RHEL8 update: OLCFHELP-3545
+# disable all the IBM optimized barriers and drop back to HCOLL or OMPI's barrier implementations
+export OMPI_MCA_coll_ibm_skip_barrier=true
 
 export OMP_NUM_THREADS=21
 jsrun -n 2 -a 1 -c 21 -r 2 -l CPU-CPU -d packed -b rs <path/to/executable> <input file> > output.txt

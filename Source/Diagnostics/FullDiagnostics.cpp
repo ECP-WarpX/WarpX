@@ -1,28 +1,47 @@
 #include "FullDiagnostics.H"
-#include "WarpX.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
+
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/PartPerCellFunctor.H"
-#include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "ComputeDiagFunctors/PartPerCellFunctor.H"
+#include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
+#include "Diagnostics/Diagnostics.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
-#include "FlushFormats/FlushFormatPlotfile.H"
-#include "FlushFormats/FlushFormatCheckpoint.H"
-#include "FlushFormats/FlushFormatAscent.H"
-#ifdef WARPX_USE_OPENPMD
-#    include "FlushFormats/FlushFormatOpenPMD.H"
-#endif
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
+
 #include <AMReX.H>
-#include <AMReX_Vector.H>
+#include <AMReX_Array.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_CoordSys.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MakeType.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <vector>
+
 using namespace amrex::literals;
 
 FullDiagnostics::FullDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
     ReadParameters();
+    BackwardCompatibility();
 }
 
 void
@@ -35,12 +54,11 @@ FullDiagnostics::InitializeParticleBuffer ()
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
-    if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
+    if (m_output_species_names.empty()) m_output_species_names = mpc.GetSpeciesNames();
     // Initialize one ParticleDiag per species requested
-    for (auto const& species : m_species_names){
+    for (auto const& species : m_output_species_names){
         const int idx = mpc.getSpeciesID(species);
-        m_all_species.push_back(ParticleDiag(m_diag_name, species,
-                                             mpc.GetParticleContainerPtr(idx)));
+        m_output_species.push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
     }
 }
 
@@ -49,21 +67,23 @@ FullDiagnostics::ReadParameters ()
 {
     // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = BaseReadParameters();
-    amrex::ParmParse pp(m_diag_name);
+    amrex::ParmParse pp_diag_name(m_diag_name);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
-    std::vector<std::string> period_string_vec = {"0"};
-    pp.queryarr("period", period_string_vec);
-    m_intervals = IntervalsParser(period_string_vec);
-    bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
-    raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
-    raw_specified += pp.query("plot_raw_rho", m_plot_raw_rho);
+    std::vector<std::string> intervals_string_vec = {"0"};
+    pp_diag_name.queryarr("intervals", intervals_string_vec);
+    m_intervals = IntervalsParser(intervals_string_vec);
+    bool raw_specified = pp_diag_name.query("plot_raw_fields", m_plot_raw_fields);
+    raw_specified += pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+    raw_specified += pp_diag_name.query("plot_raw_rho", m_plot_raw_rho);
 
 #ifdef WARPX_DIM_RZ
-    pp.query("dump_rz_modes", m_dump_rz_modes);
+    pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
+#else
+    amrex::ignore_unused(m_dump_rz_modes);
 #endif
 
     if (m_format == "checkpoint"){
@@ -74,8 +94,19 @@ FullDiagnostics::ReadParameters ()
             "to file for a restart");
     }
     // Number of buffers = 1 for FullDiagnostics.
-    // It is used to allocate the number of output multu-level MultiFab, m_mf_output
+    // It is used to allocate the number of output multi-level MultiFab, m_mf_output
     m_num_buffers = 1;
+}
+
+void
+FullDiagnostics::BackwardCompatibility ()
+{
+    amrex::ParmParse pp_diag_name(m_diag_name);
+    std::vector<std::string> backward_strings;
+    if (pp_diag_name.queryarr("period", backward_strings)){
+        amrex::Abort("<diag_name>.period is no longer a valid option. "
+                     "Please use the renamed option <diag_name>.intervals instead.");
+    }
 }
 
 void
@@ -87,7 +118,7 @@ FullDiagnostics::Flush ( int i_buffer )
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_all_species, nlev_output, m_file_prefix,
+        warpx.gett_new(0), m_output_species, nlev_output, m_file_prefix, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
     FlushRaw();
@@ -204,7 +235,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     }
     // rho
     if (rho_requested) {
-        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, ncomp_multimodefab);
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
@@ -248,10 +279,19 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     // Check if warpx BoxArray is coarsenable.
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
-        ba.coarsenable(m_crse_ratio),
-        "Invalid coarsening ratio for warpx boxArray. Must be an integer divisor of the blocking factor."
-    );
+    if (warpx.get_numprocs() == 0)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+            ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
+            "Must be an integer divisor of the blocking factor.");
+    }
+    else
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+            ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
+            "The total number of cells must be a multiple of the coarsening ratio multiplied by numprocs.");
+    }
+
     // Find if user-defined physical dimensions are different from the simulation domain.
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
          // To ensure that the diagnostic lo and hi are within the domain defined at level, lev.
@@ -265,9 +305,13 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
              use_warpxba = false;
 
         // User-defined value for coarsening should be an integer divisor of
-        // blocking factor at level, lev.
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
-                       " coarsening ratio must be integer divisor of blocking factor");
+        // blocking factor at level, lev. This assert is not relevant and thus
+        // removed if warpx.numprocs is used for the domain decomposition.
+        if (warpx.get_numprocs() == 0)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
+                           " coarsening ratio must be integer divisor of blocking factor");
+        }
     }
 
     if (use_warpxba == false) {
@@ -322,7 +366,7 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // is different from the lo and hi physical co-ordinates of the simulation domain.
     if (use_warpxba == false) dmap = amrex::DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
-    int ngrow = (m_format == "sensei") ? 1 : 0;
+    int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
     m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
@@ -349,11 +393,12 @@ void
 FullDiagnostics::InitializeFieldFunctors (int lev)
 {
     auto & warpx = WarpX::GetInstance();
+
     // Clear any pre-existing vector to release stored data.
     m_all_field_functors[lev].clear();
 
     // Species index to loop over species that dump rho per species
-    int is_dump_rho = 0;
+    int i = 0;
 
     m_all_field_functors[lev].resize( m_varnames.size() );
     // Fill vector of functors for all components except individual cylindrical modes.
@@ -377,25 +422,18 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
-            if ( WarpX::do_back_transformed_diagnostics ) {
-#ifdef WARPX_USE_PSATD
-                // rho_new is stored in component 1 of rho_fp when using PSATD
-                amrex::MultiFab* rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
-#else
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
-#endif
-            }
-            else {
-                // Initialize rho functor to dump total rho
-                m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
-            }
-        } else if ( m_varnames[comp].find("rho_") != std::string::npos ){
+            // Initialize rho functor to dump total rho
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
+        } else if ( m_varnames[comp].rfind("rho_", 0) == 0 ){
             // Initialize rho functor to dump rho per species
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[is_dump_rho]);
-            is_dump_rho++;
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i]);
+            i++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "G" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_G_fp(lev), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "phi" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_phi_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
             m_all_field_functors[lev][comp] = std::make_unique<PartPerCellFunctor>(nullptr, lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_grid" ){
@@ -419,21 +457,19 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     // First, make sure all guard cells are properly filled
     // Probably overkill/unnecessary, but safe and shouldn't happen often !!
     auto & warpx = WarpX::GetInstance();
-    warpx.FillBoundaryE(warpx.getngE(), warpx.getngExtra());
-    warpx.FillBoundaryB(warpx.getngE(), warpx.getngExtra());
-#ifndef WARPX_USE_PSATD
-    warpx.FillBoundaryAux(warpx.getngUpdateAux());
-#endif
+    warpx.FillBoundaryE(warpx.getngE());
+    warpx.FillBoundaryB(warpx.getngE());
     warpx.UpdateAuxilaryData();
+    warpx.FillBoundaryAux(warpx.getngUpdateAux());
 
     // Update the RealBox used for the geometry filter in particle diags
-    for (int i = 0; i < m_all_species.size(); ++i) {
-        m_all_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
+    for (int i = 0; i < m_output_species.size(); ++i) {
+        m_output_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
     }
 }
 
 void
-FullDiagnostics::MovingWindowAndGalileanDomainShift ()
+FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
 {
     auto & warpx = WarpX::GetInstance();
 
@@ -462,7 +498,7 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift ()
     }
 
     // For Moving Window Shift
-    if (warpx.do_moving_window) {
+    if (warpx.moving_window_active(step+1)) {
         int moving_dir = warpx.moving_window_dir;
         amrex::Real moving_window_x = warpx.getmoving_window_x();
         // Get the updated lo and hi of the geom domain
