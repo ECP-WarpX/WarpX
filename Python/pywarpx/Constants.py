@@ -27,7 +27,7 @@ class Constants(Bucket):
             # WarpX has a single global dictionary of expression variables, my_constants,
             # so each variable must be unique.
             # Check if keyword has already been defined. If so and it has a different
-            # value that the already defined value, then mangle the name.
+            # value than the already defined value, then mangle the name.
             mangle_number = 0
             k_mangled = k
             while k_mangled in self.argvattrs and self.argvattrs[k_mangled] != v:
