@@ -14,8 +14,8 @@
 #SBATCH -S 4
 #SBATCH -J <job name>
 #SBATCH -A <allocation ID>
-#SBATCH -e error.txt
-#SBATCH -o output.txt
+#SBATCH -e WarpX.e%j
+#SBATCH -o WarpX.o%j
 
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
@@ -40,4 +40,6 @@ export WARPX_THREAD_COUNT=$(( ${CORI_NHYPERTHREADS_MAX} / ${WARPX_NMPI_PER_NODE}
 # for async_io support: (optional)
 export MPICH_MAX_THREAD_SAFETY=multiple
 
-srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) -c ${WARPX_THREAD_COUNT} <path/to/executable> <input file>
+srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) -c ${WARPX_THREAD_COUNT} \
+  <path/to/executable> <input file> \
+  > output.txt

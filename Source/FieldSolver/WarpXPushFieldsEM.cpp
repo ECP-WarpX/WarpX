@@ -26,7 +26,7 @@
 #include "WarpX_FDTD.H"
 
 #include <AMReX.H>
-#ifdef BL_USE_SENSEI_INSITU
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 #include <AMReX_Array4.H>
@@ -264,12 +264,12 @@ WarpX::PSATDForwardTransformJ ()
 }
 
 void
-WarpX::PSATDForwardTransformRho (const int icomp)
+WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     // Select index in k space
-    const int dst_comp = (icomp == 0) ? Idx.rho_old : Idx.rho_new;
+    const int dst_comp = (dcomp == 0) ? Idx.rho_old : Idx.rho_new;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -312,7 +312,6 @@ WarpX::PSATDPushSpectralFields ()
     }
 }
 
-#ifndef WARPX_DIM_RZ
 void
 WarpX::PSATDMoveRhoNewToRhoOld ()
 {
@@ -400,7 +399,6 @@ WarpX::PSATDScaleAverageFields (const amrex::Real scale_factor)
         }
     }
 }
-#endif // not WARPX_DIM_RZ
 #endif // WARPX_USE_PSATD
 
 void
@@ -412,8 +410,12 @@ WarpX::PushPSATD ()
 
     PSATDForwardTransformEB();
     PSATDForwardTransformJ();
-    PSATDForwardTransformRho(0); // rho old
-    PSATDForwardTransformRho(1); // rho new
+    // Do rho FFTs only if needed
+    if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
+    {
+        PSATDForwardTransformRho(0,0); // rho old
+        PSATDForwardTransformRho(1,1); // rho new
+    }
     PSATDPushSpectralFields();
     PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
@@ -459,10 +461,12 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], G_fp[lev],
-                                        m_face_areas[lev], lev, a_dt);
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
         m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], G_cp[lev],
-                                        m_face_areas[lev], lev, a_dt);
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
 
     // Evolve B field in PML cells
@@ -507,10 +511,12 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], m_edge_lengths[lev],
+                                       m_face_areas[lev], ECTRhofield[lev],
                                        F_fp[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
                                        current_cp[lev], m_edge_lengths[lev],
+                                       m_face_areas[lev], ECTRhofield[lev],
                                        F_cp[lev], lev, a_dt );
     }
 

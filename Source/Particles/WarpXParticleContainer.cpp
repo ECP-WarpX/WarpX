@@ -13,6 +13,7 @@
 #include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
+#include "ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -139,13 +140,6 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
                                        int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
 {
-    // nattr is unused below but needed in the BL_ASSERT
-    amrex::ignore_unused(nattr);
-
-    BL_ASSERT(nattr == 1);
-
-    const ParticleReal* weight = attr;
-
     int ibegin, iend;
     if (uniqueparticles) {
         ibegin = 0;
@@ -174,6 +168,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
     std::size_t np = iend-ibegin;
+
+    // treat weight as a special attr since it will always be specified
+    Vector<ParticleReal> weight(np);
 
 #ifdef WARPX_DIM_RZ
     Vector<ParticleReal> theta(np);
@@ -204,16 +201,15 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = z[i];
 #endif
 
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
-            DefineAndReturnParticleTile(0, 0, 0);
-        }
-
         pinned_tile.push_back(p);
+
+        // grab weight from the attr array
+        weight[i-ibegin] = attr[i*nattr];
     }
 
     if (np > 0)
     {
-        pinned_tile.push_back_real(PIdx::w , weight + ibegin, weight + iend);
+        pinned_tile.push_back_real(PIdx::w , weight.data(), weight.data() + np);
         pinned_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
         pinned_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
         pinned_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
@@ -236,9 +232,20 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 #endif
         }
 
-        for (int i = PIdx::nattribs; i < NumRealComps(); ++i)
+        for (int j = PIdx::nattribs; j < NumRealComps(); ++j)
         {
-            pinned_tile.push_back_real(i, 0.0);
+            if (j - PIdx::nattribs < nattr - 1) {
+                // get the next attribute from attr array
+                Vector<ParticleReal> attr_vals(np);
+                for (int i = ibegin; i < iend; ++i)
+                {
+                    attr_vals[i-ibegin] = attr[j - PIdx::nattribs + 1 + i*nattr];
+                }
+                pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
+            }
+            else {
+                pinned_tile.push_back_real(j, np, 0.0);
+            }
         }
 
         auto old_np = particle_tile.numParticles();
@@ -716,6 +723,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                                        const bool interpolate_across_levels,
                                        const int icomp)
 {
+    WARPX_PROFILE("WarpXParticleContainer::DepositCharge");
+
 #ifdef WARPX_DIM_RZ
     (void)do_rz_volume_scaling;
 #endif
@@ -1128,13 +1137,13 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
                     bool particle_lost = false;
-                    ParticleBoundaries::apply_boundaries(x, xmin, xmax,
+                    ApplyParticleBoundaries::apply_boundaries(x, xmin, xmax,
 #ifdef WARPX_DIM_3D
-                                                         y, ymin, ymax,
+                                                              y, ymin, ymax,
 #endif
-                                                         z, zmin, zmax,
-                                                         ux[i], uy[i], uz[i], particle_lost,
-                                                         boundary_conditions);
+                                                              z, zmin, zmax,
+                                                              ux[i], uy[i], uz[i], particle_lost,
+                                                              boundary_conditions);
 
                     if (particle_lost) {
                         p.id() = -1;

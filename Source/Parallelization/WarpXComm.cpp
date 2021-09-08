@@ -178,10 +178,17 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                     Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
                 }
             }
+            Btmp[0]->setVal(0.0);
+            Btmp[1]->setVal(0.0);
+            Btmp[2]->setVal(0.0);
             // ParallelCopy from coarse level
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Btmp[i]->nGrowVect();
-                Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
+                // Guard cells may not be up to date beyond ng_FieldGather
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Bfield_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
+                // Bfield_aux and filling up to ng (=nGrow) guard cells in Btmp
+                Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
 #ifdef AMREX_USE_OMP
@@ -228,10 +235,17 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                         cnba, dm, 1, ngtmp);
                 }
             }
+            Etmp[0]->setVal(0.0);
+            Etmp[1]->setVal(0.0);
+            Etmp[2]->setVal(0.0);
             // ParallelCopy from coarse level
             for (int i = 0; i < 3; ++i) {
                 IntVect ng = Etmp[i]->nGrowVect();
-                Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
+                // Guard cells may not be up to date beyond ng_FieldGather
+                const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+                // Copy Efield_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
+                // Efield_aux and filling up to ng (=nGrow) guard cells in Etmp
+                Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
 #ifdef AMREX_USE_OMP
@@ -282,9 +296,13 @@ WarpX::UpdateAuxilaryDataSameType ()
             dBx.setVal(0.0);
             dBy.setVal(0.0);
             dBz.setVal(0.0);
-            dBx.ParallelCopy(*Bfield_aux[lev-1][0], 0, 0, Bfield_aux[lev-1][0]->nComp(), ng, ng, crse_period);
-            dBy.ParallelCopy(*Bfield_aux[lev-1][1], 0, 0, Bfield_aux[lev-1][1]->nComp(), ng, ng, crse_period);
-            dBz.ParallelCopy(*Bfield_aux[lev-1][2], 0, 0, Bfield_aux[lev-1][2]->nComp(), ng, ng, crse_period);
+            // Guard cells may not be up to date beyond ng_FieldGather
+            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+            // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
+            // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
+            dBx.ParallelCopy(*Bfield_aux[lev-1][0], 0, 0, Bfield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
+            dBy.ParallelCopy(*Bfield_aux[lev-1][1], 0, 0, Bfield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
+            dBz.ParallelCopy(*Bfield_aux[lev-1][2], 0, 0, Bfield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
             if (Bfield_cax[lev][0])
             {
                 MultiFab::Copy(*Bfield_cax[lev][0], dBx, 0, 0, Bfield_cax[lev][0]->nComp(), ng);
@@ -340,9 +358,13 @@ WarpX::UpdateAuxilaryDataSameType ()
             dEx.setVal(0.0);
             dEy.setVal(0.0);
             dEz.setVal(0.0);
-            dEx.ParallelCopy(*Efield_aux[lev-1][0], 0, 0, Efield_aux[lev-1][0]->nComp(), ng, ng, crse_period);
-            dEy.ParallelCopy(*Efield_aux[lev-1][1], 0, 0, Efield_aux[lev-1][1]->nComp(), ng, ng, crse_period);
-            dEz.ParallelCopy(*Efield_aux[lev-1][2], 0, 0, Efield_aux[lev-1][2]->nComp(), ng, ng, crse_period);
+            // Guard cells may not be up to date beyond ng_FieldGather
+            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+            // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
+            // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
+            dEx.ParallelCopy(*Efield_aux[lev-1][0], 0, 0, Efield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
+            dEy.ParallelCopy(*Efield_aux[lev-1][1], 0, 0, Efield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
+            dEz.ParallelCopy(*Efield_aux[lev-1][2], 0, 0, Efield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
             if (Efield_cax[lev][0])
             {
                 MultiFab::Copy(*Efield_cax[lev][0], dEx, 0, 0, Efield_cax[lev][0]->nComp(), ng);

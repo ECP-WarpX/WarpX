@@ -18,8 +18,12 @@
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
 
-module load gcc
-module load cuda
+# make output group-readable by default
+umask 0027
+
+# fix problems with collectives since RHEL8 update: OLCFHELP-3545
+# disable all the IBM optimized barriers and drop back to HCOLL or OMPI's barrier implementations
+export OMPI_MCA_coll_ibm_skip_barrier=true
 
 export OMP_NUM_THREADS=1
 jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" <path/to/executable> <input file> > output.txt

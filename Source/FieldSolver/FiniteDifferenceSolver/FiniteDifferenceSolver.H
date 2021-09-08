@@ -8,6 +8,7 @@
 #ifndef WARPX_FINITE_DIFFERENCE_SOLVER_H_
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FiniteDifferenceSolver_fwd.H"
 
 #include "BoundaryConditions/PML_fwd.H"
@@ -49,12 +50,19 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                        std::unique_ptr<amrex::MultiFab> const& Gfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+                       std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
                        int lev, amrex::Real const dt );
 
         void EvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
                        std::unique_ptr<amrex::MultiFab> const& Ffield,
                        int lev, amrex::Real const dt );
 
@@ -72,7 +80,9 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
-            amrex::Real const dt );
+            amrex::Real const dt,
+            amrex::Vector<int> field_boundary_lo,
+            amrex::Vector<int> field_boundary_hi);
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
@@ -197,6 +207,23 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab>& Gfield,
             std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
             amrex::Real const dt);
+
+        void EvolveRhoCartesianECT (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, int lev);
+
+        void EvolveBCartesianECT (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+            std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+            std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+            int lev, amrex::Real const dt
+        );
 
         template< typename T_Algo >
         void ComputeDivECartesian (

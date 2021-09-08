@@ -61,6 +61,10 @@ macro(find_amrex)
             set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
+        if(WarpX_SENSEI)
+            set(AMReX_SENSEI ON CACHE INTERNAL "")
+        endif()
+
         set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
         set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
@@ -72,7 +76,7 @@ macro(find_amrex)
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
         if(WarpX_COMPUTE STREQUAL CUDA)
-            if(WarpX_ASCENT)
+            if(WarpX_ASCENT OR WarpX_SENSEI)
                 set(AMReX_GPU_RDC ON CACHE BOOL "")
             else()
                 # we don't need RDC and disabling it simplifies the build
@@ -81,7 +85,6 @@ macro(find_amrex)
             endif()
         endif()
 
-        # AMReX_SENSEI
         # shared libs, i.e. for Python bindings, need relocatable code
         if(WarpX_LIB)
             set(AMReX_PIC ON CACHE INTERNAL "")
@@ -196,7 +199,7 @@ macro(find_amrex)
         message(STATUS "Searching for pre-installed AMReX ...")
         # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#importing-amrex-into-your-cmake-project
         if(WarpX_ASCENT)
-            set(COMPONENT_ASCENT AMReX_ASCENT AMReX_CONDUIT)
+            set(COMPONENT_ASCENT ASCENT CONDUIT)
         else()
             set(COMPONENT_ASCENT)
         endif()
@@ -215,9 +218,14 @@ macro(find_amrex)
         else()
             set(COMPONENT_PIC)
         endif()
+        if(WarpX_SENSEI)
+            set(COMPONENT_SENSEI SENSEI)
+        else()
+            set(COMPONENT_SENSEI)
+        endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
 
-        find_package(AMReX 21.07 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
+        find_package(AMReX 21.09 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -231,7 +239,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "cd1f5430be29aed0a85348669394d7fbb8355dba"
+set(WarpX_amrex_branch "b15b1cf8d282cbb2c0d0bc0c7b049a79375ea63c"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

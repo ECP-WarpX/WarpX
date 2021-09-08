@@ -2,11 +2,15 @@ name: 🐧 HIP
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-hip
+  cancel-in-progress: true
+
 jobs:
   build_hip:
     name: HIP SP
     runs-on: ubuntu-20.04
-    env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations"}
+    env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"}
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -17,13 +21,21 @@ jobs:
       run: |
         source /etc/profile.d/rocm.sh
         hipcc --version
-        export CXX=$(which hipcc)
+        which clang
+        which clang++
+        export CXX=$(which clang++)
         export CC=$(which clang)
+
+        # "mpic++ --showme" forgets open-pal in Ubuntu 20.04 + OpenMPI 4.0.3
+        #   https://bugs.launchpad.net/ubuntu/+source/openmpi/+bug/1941786
+        #   https://github.com/open-mpi/ompi/issues/9317
+        export LDFLAGS="-lopen-pal"
 
         cmake -S . -B build_sp \
           -DCMAKE_VERBOSE_MAKEFILE=ON \
           -DAMReX_AMD_ARCH=gfx900     \
           -DWarpX_COMPUTE=HIP         \
+          -DWarpX_EB=ON               \
           -DWarpX_LIB=ON              \
           -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \

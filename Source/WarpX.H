@@ -17,8 +17,10 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Particles/ParticleBoundaryBuffer_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -43,6 +45,7 @@
 #endif
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
@@ -59,6 +62,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+static_assert(false, "Embedded boundaries are not supported in RZ mode.");
+#endif
 
 enum struct PatchType : int
 {
@@ -90,6 +97,8 @@ public:
     void Evolve (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
+
+    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
@@ -365,7 +374,6 @@ public:
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
-    void ApplySilverMuellerBoundary (amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -434,6 +442,7 @@ public:
     void DampJPML (int lev, PatchType patch_type);
 
     void CopyJPML ();
+    bool isAnyBoundaryPML();
 
     /**
      * \brief Synchronize the nodal points of the PML MultiFabs
@@ -524,7 +533,6 @@ public:
     amrex::Real getmoving_window_x() const {return moving_window_x;}
     amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
-    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;}
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
@@ -661,13 +669,15 @@ public:
      * \param[in] xfield_parser, parser function to initialize x-field
      * \param[in] yfield_parser, parser function to initialize y-field
      * \param[in] zfield_parser, parser function to initialize z-field
+     * \param[in] geom_data, geometric data, can be m_edge_lengths or m_face_areass
      * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          amrex::ParserExecutor<3> const& xfield_parser,
          amrex::ParserExecutor<3> const& yfield_parser,
-         amrex::ParserExecutor<3> const& zfield_parser, const int lev);
+         amrex::ParserExecutor<3> const& zfield_parser,
+         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -970,8 +980,19 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
     //EB grid info
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
+    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
+
+    //This is just needed for the ECT solver
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
+
+    //EB level set
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
 
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
@@ -1000,7 +1021,7 @@ private:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
     // PML
-    int do_pml = 1;
+    int do_pml = 0;
     int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
@@ -1009,8 +1030,8 @@ private:
     int do_pml_in_domain = 0;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
+    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
+    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
@@ -1021,7 +1042,6 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    int n_buffer = 4;
     amrex::Real const_dt = amrex::Real(0.5e-11);
 
     // Macroscopic properties
@@ -1080,8 +1100,6 @@ private:
 
     std::string restart_chkfile;
 
-    bool plot_rho = false;
-
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
@@ -1117,11 +1135,14 @@ private:
     int noy_fft = 16;
     int noz_fft = 16;
 
-    // Domain decomposition on Level 0
+    //! Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
+    //! particle buffer for scraped particles on the boundaries
+    std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
+
     //
-    // Embeded Boundary
+    // Embedded Boundary
     //
 
     // Factory for field data
@@ -1136,14 +1157,70 @@ private:
     }
 #endif
 
+public:
     void InitEB ();
+    /**
+    * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
+    *        An edge of length 0 is fully covered.
+    */
 
+public:
     void ComputeEdgeLengths ();
+    /**
+    * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
+    *        An edge of area 0 is fully covered.
+    */
     void ComputeFaceAreas ();
+    /**
+    * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
+    */
     void ScaleEdges ();
+    /**
+    * \brief Scale the edges areas by the mesh width to obtain the real areas.
+    */
     void ScaleAreas ();
+    /**
+    * \brief Initialize information for cell extensions.
+    *        The flags convention for m_flag_info_face is as follows
+    *          - 0 for unstable cells
+    *          - 1 for stable cells which have not been intruded
+    *          - 2 for stable cells which have been intruded
+    *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
+    */
+    void MarkCells();
+    /**
+    * \brief Compute the level set function used for particle-boundary interaction.
+    */
+    void ComputeDistanceToEB ();
+    /**
+    * \brief Auxiliary function to count the amount of faces which still need to be extended
+    */
+    amrex::Array1D<int, 0, 2> CountExtFaces();
+    /**
+    * \brief Main function computing the cell extension. Where possible it computes one-way
+    *       extensions and, when this is not possible, it does eight-ways extensions.
+    */
+    void ComputeFaceExtensions();
+    /**
+    * \brief Initialize the memory for the FaceInfoBoxes
+    */
+    void InitBorrowing();
+    /**
+    * \brief Shrink the vectors in the FaceInfoBoxes
+    */
+    void ShrinkBorrowing();
+    /**
+    * \brief Do the one-way extension
+    */
+    void ComputeOneWayExtensions();
+    /**
+    * \brief Do the eight-ways extension
+    */
+    void ComputeEightWaysExtensions();
+
 
 private:
+    void ScrapeParticles ();
 
     void PushPSATD ();
 
@@ -1176,8 +1253,9 @@ private:
      *        with k-space filtering (if needed)
      *
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
+     * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
      */
-    void PSATDForwardTransformRho (const int icomp);
+    void PSATDForwardTransformRho (const int icomp, const int dcomp);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space

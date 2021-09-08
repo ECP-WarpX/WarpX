@@ -34,53 +34,64 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    # please set your project account
    export proj=<yourProject>
 
+   # optional: just an additional text editor
+   module load nano
+
    # required dependencies
-   module load cmake
-   module load gcc/6.4.0
-   module load cuda
+   module load cmake/3.20.2
+   module load gcc/9.3.0
+   module load cuda/11.0.3
 
    # optional: faster re-builds
    module load ccache
 
-   # optional: for PSATD support
-   module load fftw
+   # optional: for PSATD in RZ geometry support
+   module load blaspp/2021.04.01
+   module load lapackpp/2021.04.00
+
+   # optional: for PSATD support (CPU only)
+   #module load fftw/3.3.9
 
    # optional: for QED lookup table generation support
-   module load boost/1.66.0
+   module load boost/1.76.0
 
    # optional: for openPMD support
-   module load ums
-   module load ums-aph114
-   module load openpmd-api/0.13.2
+   module load adios2/2.7.1
+   module load hdf5/1.10.7
 
-   # optional: for PSATD in RZ geometry support
-   #   note: needs the ums modules above
-   module load blaspp
-   module load lapackpp
+   # optional: for openPMD support (GNUmake only)
+   #module load ums
+   #module load ums-aph114
+   #module load openpmd-api/0.14.2
+
+   # often unstable at runtime with dependencies
+   module unload darshan-runtime
 
    # optional: Ascent in situ support
    #   note: build WarpX with CMake
-   export Ascent_DIR=/gpfs/alpine/world-shared/csc340/software/ascent/current/summit/cuda/gnu/ascent_install
+   export Ascent_DIR=/gpfs/alpine/csc340/world-shared/software/ascent/2021_09_01_gcc_9_3_0_warpx/summit/cuda/gnu/ascent-install
 
    # optional: for Python bindings or libEnsemble
-   module load python/3.7.0
-
-   # optional: for libEnsemble
-   module load openblas/0.3.9-omp
-   module load netlib-lapack/3.8.0
-   if [ -d "$HOME/sw/venvs/warpx-libE" ]
+   module load python/3.8.10
+   module load openblas/0.3.5-omp  # numpy; same as for blaspp & lapackpp
+   module load freetype/2.10.4     # matplotlib
+   if [ -d "$HOME/sw/venvs/warpx" ]
    then
-     source $HOME/sw/venvs/warpx-libE/bin/activate
+     source $HOME/sw/venvs/warpx/bin/activate
    fi
 
-   # optional: just an additional text editor
-   module load nano
-
-   # optional: an alias to request an interactive node for two hours
-   alias getNode="bsub -P $proj -W 2:00 -nnodes 1 -Is /bin/bash"
+   # an alias to request an interactive batch node for two hours
+   #   for paralle execution, start on the batch node: jsrun <command>
+   alias getNode="bsub -q debug -P $proj -W 2:00 -nnodes 1 -Is /bin/bash"
+   # an alias to run a command on a batch node for up to 30min
+   #   usage: nrun <command>
+   alias runNode="bsub -q debug -P $proj -W 0:30 -nnodes 1 -I"
 
    # fix system defaults: do not escape $ with a \ on tab completion
    shopt -s direxpand
+
+   # make output group-readable by default
+   umask 0027
 
    # optimize CUDA compilation for V100
    export AMREX_CUDA_ARCH=7.0
@@ -99,22 +110,29 @@ We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``
 
    source $HOME/warpx.profile
 
-Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic ensemble optimizations:
+Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):
 
 .. code-block:: bash
 
    export BLAS=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
-   export LAPACK=$OLCF_NETLIB_LAPACK_ROOT/lib64/liblapack.so
+   export LAPACK=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
-   python3 -m venv $HOME/sw/venvs/warpx-libE
-   source $HOME/sw/venvs/warpx-libE/bin/activate
+   python3 -m pip cache purge
+   rm -rf $HOME/sw/venvs/warpx
+   python3 -m venv $HOME/sw/venvs/warpx
+   source $HOME/sw/venvs/warpx/bin/activate
    python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade wheel
    python3 -m pip install --upgrade cython
-   python3 -m pip install --upgrade numpy==1.19.5
+   python3 -m pip install --upgrade numpy
    python3 -m pip install --upgrade scipy
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
-   python3 -m pip install --upgrade -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
+   python3 -m pip install --upgrade yt
+   # WIP: issues with nlopt
+   # python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
@@ -124,9 +142,20 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    rm -rf build
 
    cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
-   cmake --build build -j 10
+   cmake --build build -j 6
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+For a full PICMI install, follow the :ref:`instructions for Python (PICMI) bindings <building-cmake-python>`.
+We only prefix it to request a node for the compilation (``runNode``), so we can compile faster:
+
+.. code-block:: bash
+
+   # PICMI build
+   cd $HOME/src/warpx
+
+   # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
+   runNode WarpX_MPI=ON WarpX_COMPUTE=CUDA WarpX_PSATD=ON WarpX_OPENPMD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
 
 
 .. _running-cpp-summit:

@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 21.07)
+project(WarpX VERSION 21.09)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -56,9 +56,9 @@ option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
+option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
 option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
 option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
-# TODO: sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality (2/3/RZ)")

@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Axel Huebl, Junmin Gu
+/* Copyright 2019-2021 Axel Huebl, Junmin Gu
  *
  * This file is part of WarpX.
  *
@@ -35,6 +35,7 @@
 #include <AMReX_StructOfArrays.H>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -46,6 +47,39 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
+    /** \brief Convert a snake_case string to a camelCase one.
+     *
+     *  WarpX uses snake_case internally for some component
+     *  names, but OpenPMD assumes "_" indicates vector or
+     *  tensor fields.
+     *
+     * @return camelCase version of input
+     */
+    inline std::string
+    snakeToCamel (const std::string& snake_string)
+    {
+        std::string camelString = snake_string;
+        int n = camelString.length();
+        for (int x = 0; x < n; x++)
+        {
+            if (x == 0)
+            {
+                std::transform(camelString.begin(), camelString.begin()+1, camelString.begin(),
+                               [](unsigned char c){ return std::tolower(c); });
+            }
+            if (camelString[x] == '_')
+            {
+                std::string tempString = camelString.substr(x + 1, 1);
+                std::transform(tempString.begin(), tempString.end(), tempString.begin(),
+                               [](unsigned char c){ return std::toupper(c); });
+                camelString.erase(x, 2);
+                camelString.insert(x, tempString);
+            }
+        }
+
+        return camelString;
+    }
+
     /** Create the option string
      *
      * @return JSON option string for openPMD::Series
@@ -284,7 +318,7 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters);
 }
 
-WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
+WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
 {
   if( m_Series )
   {
@@ -341,7 +375,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
     if (isBTD and !isLastBTDFlush) callClose = false;
     if (callClose) {
         if (m_Series) {
-            GetIteration(m_CurrentStep).close();
+            GetIteration(m_CurrentStep, isBTD).close();
         }
 
         // create a little helper file for ParaView 5.9+
@@ -409,17 +443,19 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 }
 
 void
-WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags)
+WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
+                                         const bool isBTD)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-    ParticleContainer tmp(&WarpX::GetInstance());
+    auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
     amrex::Vector<int> int_flags;
+    amrex::Vector<int> real_flags;
 
     // see openPMD ED-PIC extension for namings
     // note: an underscore separates the record name from its component
@@ -433,26 +469,29 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 #ifdef WARPX_DIM_RZ
     real_names.push_back("theta");
 #endif
-    if(pc->DoFieldIonization()){
-       int_names.push_back("ionizationLevel");
-       // int_flags specifies, for each integer attribs, whether it is
-       // dumped as particle record in a plotfile. So far, ionization_level is the only
-       // integer attribs, and it is automatically dumped as particle record
-       // when ionization is on.
-       int_flags.resize(1, 1);
-       tmp.AddIntComp(false);
+
+    // get the names of the real comps
+    real_names.resize(pc->NumRealComps());
+    auto runtime_rnames = pc->getParticleRuntimeComps();
+    for (auto const& x : runtime_rnames)
+    {
+        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
 
-#ifdef WARPX_QED
-    if( pc->has_breit_wheeler() ) {
-        real_names.push_back("opticalDepthBW");
-        tmp.AddRealComp(false);
+    // plot any "extra" fields by default
+    real_flags = particle_diags[i].plot_flags;
+    real_flags.resize(pc->NumRealComps(), 1);
+
+    // and the names
+    int_names.resize(pc->NumIntComps());
+    auto runtime_inames = pc->getParticleRuntimeiComps();
+    for (auto const& x : runtime_inames)
+    {
+        int_names[x.second+0] = detail::snakeToCamel(x.first);
     }
-    if( pc->has_quantum_sync() ) {
-        real_names.push_back("opticalDepthQSR");
-        tmp.AddRealComp(false);
-    }
-#endif
+
+    // plot by default
+    int_flags.resize(pc->NumIntComps(), 1);
 
       pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
@@ -478,16 +517,17 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       }, true);
 
     // real_names contains a list of all real particle attributes.
-    // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
+    // real_flags is 1 or 0, whether quantity is dumped or not.
 
     {
       DumpToFile(&tmp,
          particle_diags[i].getSpeciesName(),
          m_CurrentStep,
-         particle_diags[i].plot_flags,
+         real_flags,
          int_flags,
          real_names, int_names,
-         pc->getCharge(), pc->getMass()
+         pc->getCharge(), pc->getMass(),
+         isBTD
       );
     }
 
@@ -505,12 +545,13 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const amrex::Vector<std::string>& real_comp_names,
                     const amrex::Vector<std::string>&  int_comp_names,
                     amrex::ParticleReal const charge,
-                    amrex::ParticleReal const mass) const
+                    amrex::ParticleReal const mass,
+                    const bool isBTD) const
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   WarpXParticleCounter counter(pc);
-  openPMD::Iteration& currIteration = GetIteration(iteration);
+  openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
 
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
   // meta data for ED-PIC extension
@@ -807,7 +848,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
 
 void
-WarpXOpenPMDPlot::SetupPos(
+WarpXOpenPMDPlot::SetupPos (
     openPMD::ParticleSpecies& currSpecies,
     const unsigned long long& np,
     amrex::ParticleReal const charge,
@@ -851,15 +892,15 @@ WarpXOpenPMDPlot::SetupPos(
 
 
 /*
- * Set up paramter for mesh container using the geometry (from level 0)
+ * Set up parameter for mesh container using the geometry (from level 0)
  *
  * @param [IN] meshes: openPMD-api mesh container
  * @param [IN] full_geom: field geometry
  *
  */
 void
-WarpXOpenPMDPlot::SetupFields(  openPMD::Container< openPMD::Mesh >& meshes,
-                                amrex::Geometry& full_geom  ) const
+WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
+                                amrex::Geometry& full_geom ) const
 {
       // meta data for ED-PIC extension
       auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
@@ -930,9 +971,9 @@ WarpXOpenPMDPlot::SetupFields(  openPMD::Container< openPMD::Mesh >& meshes,
  * @param [IN]: mesh_comp     a component for the mesh
  */
 void
-WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
+WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  amrex::Geometry& full_geom,
-                                 openPMD::MeshRecordComponent& mesh_comp ) const
+                                 openPMD::MeshRecordComponent& mesh_comp) const
 {
        amrex::Box const & global_box = full_geom.Domain();
        auto const global_size = getReversedVec(global_box.size());
@@ -966,10 +1007,10 @@ WarpXOpenPMDPlot::SetupMeshComp( openPMD::Mesh& mesh,
  * @param comp_name [OUT]:   comp name for openPMD-api output
  */
 void
-WarpXOpenPMDPlot::GetMeshCompNames( int meshLevel,
+WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
                                     const std::string& varname,
                                     std::string& field_name,
-                                    std::string& comp_name ) const
+                                    std::string& comp_name) const
 {
     if (varname.size() >= 2u ) {
         std::string const varname_1st = varname.substr(0u, 1u); // 1st character
@@ -1018,7 +1059,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   // meta data
-  openPMD::Iteration& series_iteration = GetIteration(m_CurrentStep);
+  openPMD::Iteration series_iteration = GetIteration(m_CurrentStep, isBTD);
+
+  // collective open
+  series_iteration.open();
 
   auto meshes = series_iteration.meshes;
   if (first_write_to_iteration) {
@@ -1088,7 +1132,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter(ParticleContainer* pc)
+WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc)
 {
   m_MPISize = amrex::ParallelDescriptor::NProcs();
   m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -1135,11 +1179,11 @@ WarpXParticleCounter::WarpXParticleCounter(ParticleContainer* pc)
 //     sum of all particles in the comm
 //
 void
-WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
-                           unsigned long long& offset,
-                           unsigned long long& sum)  const
-
-
+WarpXParticleCounter::GetParticleOffsetOfProcessor (
+    const long& numParticles,
+    unsigned long long& offset,
+    unsigned long long& sum
+) const
 {
     offset = 0;
 #if defined(AMREX_USE_MPI)

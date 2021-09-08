@@ -218,17 +218,30 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #ifdef WARPX_QED
     pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
     if (m_do_qed_quantum_sync)
-        AddRealComp("optical_depth_QSR");
+        AddRealComp("opticalDepthQSR");
 
     pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
     if (m_do_qed_breit_wheeler)
-        AddRealComp("optical_depth_BW");
+        AddRealComp("opticalDepthBW");
 
     if(m_do_qed_quantum_sync){
         pp_species_name.get("qed_quantum_sync_phot_product_species",
             m_qed_quantum_sync_phot_product_name);
     }
 #endif
+
+    // If old particle positions should be saved add the needed components
+    pp_species_name.query("save_previous_position", m_save_previous_position);
+    if (m_save_previous_position) {
+        AddRealComp("prev_x");
+#if (AMREX_SPACEDIM == 3)
+        AddRealComp("prev_y");
+#endif
+        AddRealComp("prev_z");
+#ifdef WARPX_DIM_RZ
+      amrex::Abort("Saving previous particle positions not yet implemented in RZ");
+#endif
+    }
 
     // Get Galilean velocity
     ParmParse pp_psatd("psatd");
@@ -819,10 +832,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         bool loc_has_breit_wheeler = has_breit_wheeler();
         if (loc_has_quantum_sync)
             p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["optical_depth_QSR"]).data() + old_size;
+                particle_comps["opticalDepthQSR"]).data() + old_size;
         if(loc_has_breit_wheeler)
             p_optical_depth_BW = soa.GetRealData(
-                particle_comps["optical_depth_BW"]).data() + old_size;
+                particle_comps["opticalDepthBW"]).data() + old_size;
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -1237,10 +1250,10 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         bool loc_has_breit_wheeler = has_breit_wheeler();
         if (loc_has_quantum_sync)
             p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["optical_depth_QSR"]).data() + old_size;
+                particle_comps["opticalDepthQSR"]).data() + old_size;
         if(loc_has_breit_wheeler)
             p_optical_depth_BW = soa.GetRealData(
-                particle_comps["optical_depth_BW"]).data() + old_size;
+                particle_comps["opticalDepthBW"]).data() + old_size;
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -2317,6 +2330,20 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
     }
 
+    const bool save_previous_position = m_save_previous_position;
+    ParticleReal* x_old = nullptr;
+    ParticleReal* y_old = nullptr;
+    ParticleReal* z_old = nullptr;
+    if (save_previous_position) {
+        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
+#if (AMREX_SPACEDIM == 3)
+        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
+#else
+    amrex::ignore_unused(y_old);
+#endif
+        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr();
+    }
+
     // Loop over the particles and update their momentum
     const amrex::Real q = this->charge;
     const amrex::Real m = this-> mass;
@@ -2333,7 +2360,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const bool local_has_quantum_sync = has_quantum_sync();
     if (local_has_quantum_sync) {
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
-        p_optical_depth_QSR = pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
+        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr();
     }
 #endif
 
@@ -2343,6 +2370,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
+
+        if (save_previous_position) {
+            x_old[ip] = xp;
+#if (AMREX_SPACEDIM == 3)
+            y_old[ip] = yp;
+#endif
+            z_old[ip] = zp;
+        }
 
         amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
         amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
@@ -2534,14 +2569,14 @@ PhotonEmissionFilterFunc
 PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
 {
     WARPX_PROFILE("PhysicalParticleContainer::getPhotonEmissionFunc()");
-    return PhotonEmissionFilterFunc{particle_runtime_comps["optical_depth_QSR"]};
+    return PhotonEmissionFilterFunc{particle_runtime_comps["opticalDepthQSR"]};
 }
 
 PairGenerationFilterFunc
 PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
     WARPX_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
-    return PairGenerationFilterFunc{particle_runtime_comps["optical_depth_BW"]};
+    return PairGenerationFilterFunc{particle_runtime_comps["opticalDepthBW"]};
 }
 
 #endif

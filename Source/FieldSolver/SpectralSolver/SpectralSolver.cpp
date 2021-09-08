@@ -63,7 +63,8 @@ SpectralSolver::SpectralSolver(
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards,
-                v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time);
+                v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time,
+                dive_cleaning, divb_cleaning);
         }
     }
 

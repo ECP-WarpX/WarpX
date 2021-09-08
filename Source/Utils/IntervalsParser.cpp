@@ -14,23 +14,23 @@ SliceParser::SliceParser (const std::string& instr)
     auto insplit = WarpXUtilStr::split<std::vector<std::string>>(instr, m_separator, true);
 
     if(insplit.size() == 1){ // no colon in input string. The input is the period.
-        WarpXUtilMsg::AlwaysAssert(amrex::is_it<int>(insplit[0], m_period),assert_msg);}
+        m_period = parseStringtoInt(insplit[0], "interval period");}
     else if(insplit.size() == 2) // 1 colon in input string. The input is start:stop
     {
         if (!insplit[0].empty()){
-            WarpXUtilMsg::AlwaysAssert(amrex::is_it<int>(insplit[0], m_start),assert_msg);}
+            m_start = parseStringtoInt(insplit[0], "interval start");}
         if (!insplit[1].empty()){
-            WarpXUtilMsg::AlwaysAssert(amrex::is_it<int>(insplit[1], m_stop),assert_msg);}
+            m_stop = parseStringtoInt(insplit[1], "interval stop");}
     }
     else // 2 colons in input string. The input is start:stop:period
     {
         WarpXUtilMsg::AlwaysAssert(insplit.size() == 3,assert_msg);
         if (!insplit[0].empty()){
-            WarpXUtilMsg::AlwaysAssert(amrex::is_it<int>(insplit[0], m_start),assert_msg);}
+            m_start = parseStringtoInt(insplit[0], "interval start");}
         if (!insplit[1].empty()){
-            WarpXUtilMsg::AlwaysAssert(amrex::is_it<int>(insplit[1], m_stop),assert_msg);}
+            m_stop = parseStringtoInt(insplit[1], "interval stop");}
         if (!insplit[2].empty()){
-            WarpXUtilMsg::AlwaysAssert(amrex::is_it<int>(insplit[2], m_period),assert_msg);}
+            m_period = parseStringtoInt(insplit[2], "interval period");}
     }
 }
 

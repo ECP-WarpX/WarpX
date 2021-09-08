@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Axel Huebl, Junmin Gu, Maxence Thevenet
+/* Copyright 2019-2021 Axel Huebl, Junmin Gu, Maxence Thevenet
  *
  *
  * This file is part of WarpX.
@@ -9,6 +9,8 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
@@ -40,8 +42,8 @@
 class Timer
 {
 public:
-  Timer(const char* tag) {m_Tag = tag; m_Start = amrex::second();}
-  ~Timer() {
+  Timer (const char* tag) {m_Tag = tag; m_Start = amrex::second();}
+  ~Timer () {
       m_End = amrex::second();
       amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
       amrex::Print()<<m_Tag<<" took:"<<m_End - m_Start<<" seconds\n";
@@ -58,11 +60,11 @@ private:
 class WarpXParticleCounter
 {
 public:
-  using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
-  WarpXParticleCounter(ParticleContainer* pc);
-  unsigned long GetTotalNumParticles() {return m_Total;}
+  WarpXParticleCounter (ParticleContainer* pc);
+  unsigned long GetTotalNumParticles () {return m_Total;}
 
   std::vector<unsigned long long> m_ParticleOffsetAtRank;
   std::vector<unsigned long long> m_ParticleSizeAtRank;
@@ -73,7 +75,7 @@ private:
   * @param[out] offset particle offset over all, mpi-global amrex fabs
   * @param[out] sum number of all particles from all amrex fabs
   */
-  void GetParticleOffsetOfProcessor(const long& numParticles,
+  void GetParticleOffsetOfProcessor (const long& numParticles,
                     unsigned long long& offset,
                     unsigned long long& sum)  const ;
 
@@ -127,7 +129,8 @@ public:
    */
   void CloseStep (bool isBTD = false, bool isLastBTDFlush = false);
 
-  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
+  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
+                              const bool isBTD = false);
 
   void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
@@ -142,18 +145,23 @@ private:
   void Init (openPMD::Access access, bool isBTD);
 
 
-  inline openPMD::Iteration& GetIteration(int iteration) const
+  /** Get the openPMD::Iteration object of the current Series
+   *
+   * We use this helper function to differentiate between efficient, temporally
+   * sequentially increasing writes to iteration numbers and random-access
+   * writes to iterations, e.g., as needed for back-transformed diagnostics.
+   *
+   * @param[in] iteration iteration number (lab-frame for BTD)
+   * @param[in] isBTD is this a backtransformed diagnostics write?
+   * @return the iteration object
+   */
+  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
   {
-    // so BTD will be able to revisit previous steps, so we do not use steps with these two encodings,
-    if (  (openPMD::IterationEncoding::fileBased == m_Encoding ) ||
-          (openPMD::IterationEncoding::groupBased == m_Encoding )  )
+    if (isBTD)
     {
-        openPMD::Iteration& it = m_Series->iterations[iteration];
-        return it;
+        return m_Series->iterations[iteration];
     } else {
-        auto iterations = m_Series->writeIterations();
-        openPMD::Iteration& it = iterations[iteration];
-        return it;
+        return m_Series->writeIterations()[iteration];
     }
   }
 
@@ -162,17 +170,23 @@ private:
    *  @param[in] meshes   The meshes in a series
    *  @param[in] full_geom The geometry
    */
-  void SetupFields(  openPMD::Container< openPMD::Mesh >& meshes, amrex::Geometry& full_geom  ) const;
+  void SetupFields (
+      openPMD::Container< openPMD::Mesh >& meshes,
+      amrex::Geometry& full_geom
+  ) const;
 
-  void SetupMeshComp( openPMD::Mesh& mesh,
-                      amrex::Geometry& full_geom,
-                      openPMD::MeshRecordComponent& mesh_comp
-                     ) const;
+  void SetupMeshComp (
+      openPMD::Mesh& mesh,
+      amrex::Geometry& full_geom,
+      openPMD::MeshRecordComponent& mesh_comp
+  ) const;
 
-  void GetMeshCompNames( int meshLevel,
-                         const std::string& varname,
-                         std::string& field_name,
-                         std::string& comp_name ) const;
+  void GetMeshCompNames (
+      int meshLevel,
+      const std::string& varname,
+      std::string& field_name,
+      std::string& comp_name
+  ) const;
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
@@ -232,6 +246,7 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] charge         Charge of the particles (note: fix for ions)
    * @param[in] mass           Mass of the particles
+   * @param[in] isBTD is this a backtransformed diagnostics write?
    */
   void DumpToFile (ParticleContainer* pc,
             const std::string& name,
@@ -241,7 +256,8 @@ private:
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass) const;
+            amrex::ParticleReal const mass,
+            const bool isBTD) const;
 
   /** Get the openPMD-api filename for openPMD::Series
    *

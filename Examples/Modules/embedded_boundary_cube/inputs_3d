@@ -4,12 +4,13 @@ amr.max_grid_size = 128
 amr.max_level = 0
 
 geometry.coord_sys   = 0
-geometry.is_periodic = 0 0 0
 geometry.prob_lo     = -0.8 -0.8 -0.8
 geometry.prob_hi     =  0.8  0.8  0.8
-warpx.do_pml = 0
 warpx.const_dt = 1e-6
 warpx.cfl = 1
+
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
 
 eb2.geom_type = box
 eb2.box_lo = -0.5 -0.5 -0.5
@@ -23,16 +24,14 @@ warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 my_constants.m = 0
 my_constants.n = 1
 my_constants.p = 1
-my_constants.pi = 3.141592653589793
 my_constants.Lx = 1
 my_constants.Ly = 1
 my_constants.Lz = 1
 my_constants.h_2 = (m * pi / Lx) ** 2 + (n * pi / Ly) ** 2 + (p * pi / Lz) ** 2
-my_constants.mu_0 = 1.25663706212e-06
 
-warpx.By_external_grid_function(x,y,z) = -2/h_2 * (n * pi / Ly) * (p * pi / Lz) * cos(m * pi / Lx * (x - Lx / 2)) * sin(n * pi / Ly * (y - Ly / 2)) * cos(p * pi / Lz * (z - Lz / 2))*mu_0*(x>-Lx/2)*(x<Lx/2)*(y>-Ly/2)*(y<Ly/2)*(z>-Lz/2)*(z<Lz/2)
-warpx.Bx_external_grid_function(x,y,z) = -2/h_2 * (m * pi / Lx) * (p * pi / Lz) * sin(m * pi / Lx * (x - Lx / 2)) * cos(n * pi / Ly * (y - Ly / 2)) * cos(p * pi / Lz * (z - Lz / 2))*mu_0*(x>-Lx/2)*(x<Lx/2)*(y>-Ly/2)*(y<Ly/2)*(z>-Lz/2)*(z<Lz/2)
-warpx.Bz_external_grid_function(x,y,z) = cos(m * pi / Lx * (x - Lx / 2)) * cos(n * pi / Ly * (y - Ly / 2)) * sin(p * pi / Lz * (z - Lz / 2))*mu_0*(x>-0.5)*(x<0.5)*(y>-0.5)*(y<0.5)*(z>-0.5)*(z<0.5)
+warpx.By_external_grid_function(x,y,z) = -2/h_2 * (n * pi / Ly) * (p * pi / Lz) * cos(m * pi / Lx * (x - Lx / 2)) * sin(n * pi / Ly * (y - Ly / 2)) * cos(p * pi / Lz * (z - Lz / 2))*mu0*(x>-Lx/2)*(x<Lx/2)*(y>-Ly/2)*(y<Ly/2)*(z>-Lz/2)*(z<Lz/2)
+warpx.Bx_external_grid_function(x,y,z) = -2/h_2 * (m * pi / Lx) * (p * pi / Lz) * sin(m * pi / Lx * (x - Lx / 2)) * cos(n * pi / Ly * (y - Ly / 2)) * cos(p * pi / Lz * (z - Lz / 2))*mu0*(x>-Lx/2)*(x<Lx/2)*(y>-Ly/2)*(y<Ly/2)*(z>-Lz/2)*(z<Lz/2)
+warpx.Bz_external_grid_function(x,y,z) = cos(m * pi / Lx * (x - Lx / 2)) * cos(n * pi / Ly * (y - Ly / 2)) * sin(p * pi / Lz * (z - Lz / 2))*mu0*(x>-0.5)*(x<0.5)*(y>-0.5)*(y<0.5)*(z>-0.5)*(z<0.5)
 
 diagnostics.diags_names = diag1
 diag1.intervals = 1000

@@ -3,15 +3,16 @@
 Cori (NERSC)
 ============
 
-The `Cori cluster <http://www.nersc.gov/users/computational-systems/cori>`_ is located at NERSC.
+The `Cori cluster <https://docs.nersc.gov/systems/cori/>`_ is located at NERSC.
 
 If you are new to this system, please see the following resources:
 
 * `GPU nodes <https://docs-dev.nersc.gov/cgpu/access>`__
 
-* `Cori user guide <https://docs.nersc.gov/>`_
-* Batch system: `Slurm <https://docs.nersc.gov/jobs/>`_
-* `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`_:
+* `Cori user guide <https://docs.nersc.gov/>`__
+* Batch system: `Slurm <https://docs.nersc.gov/jobs/>`__
+* `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
+* `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`__:
 
   * ``$SCRATCH``: per-user production directory (20TB)
   * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
@@ -35,12 +36,18 @@ We use the following modules and environments on the system (``$HOME/knl_warpx.p
 
    module swap craype-haswell craype-mic-knl
    module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.18.2
+   module load cmake/3.20.5
    module load cray-hdf5-parallel/1.10.5.2
-   module load cray-fftw
+   module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
 
-   export CMAKE_PREFIX_PATH=$PWD/adios2-2.7.1-knl-install:$CMAKE_PREFIX_PATH
+   export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
+   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-knl-install:$CMAKE_PREFIX_PATH
+
+   if [ -d "$HOME/sw/venvs/knl_warpx" ]
+   then
+     source $HOME/sw/venvs/knl_warpx/bin/activate
+   fi
 
    export CXXFLAGS="-march=knl"
    export CFLAGS="-march=knl"
@@ -51,9 +58,23 @@ And install ADIOS2:
 
    source $HOME/knl_warpx.profile
 
-   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git adios2
-   cmake -S adios2 -B adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=adios2-2.7.1-knl-install
-   cmake --build adios2-build --target install --parallel 16
+   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
+   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-knl-install
+   cmake --build src/adios2-build --target install --parallel 16
+
+For PICMI and Python workflows, also install a virtual environment:
+
+.. code-block:: bash
+
+   # establish Python dependencies
+   python3 -m pip install --user --upgrade pip
+   python3 -m pip install --user virtualenv
+
+   python3 -m venv $HOME/sw/venvs/knl_warpx
+   source $HOME/sw/venvs/knl_warpx/bin/activate
+
+   python3 -m pip install --upgrade pip
+   MPICC="cc -shared" python3 -m pip install -U --no-cache-dir -v mpi4py
 
 Haswell
 ^^^^^^^
@@ -62,12 +83,19 @@ We use the following modules and environments on the system (``$HOME/haswell_war
 
 .. code-block:: bash
 
-   module load cmake/3.18.2
+   module swap PrgEnv-intel PrgEnv-gnu
+   module load cmake/3.20.5
    module load cray-hdf5-parallel/1.10.5.2
-   module load cray-fftw
+   module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
 
-   export CMAKE_PREFIX_PATH=$PWD/adios2-2.7.1-haswell-install:$CMAKE_PREFIX_PATH
+   export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
+   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-haswell-install:$CMAKE_PREFIX_PATH
+
+   if [ -d "$HOME/sw/venvs/haswell_warpx" ]
+   then
+     source $HOME/sw/venvs/haswell_warpx/bin/activate
+   fi
 
 And install ADIOS2:
 
@@ -75,13 +103,28 @@ And install ADIOS2:
 
    source $HOME/haswell_warpx.profile
 
-   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git adios2
-   cmake -S adios2 -B adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=adios2-2.7.1-haswell-install
-   cmake --build adios2-build --target install --parallel 16
+   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
+   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-haswell-install
+   cmake --build src/adios2-build --target install --parallel 16
 
-GPU
-^^^
+For PICMI and Python workflows, also install a virtual environment:
 
+.. code-block:: bash
+
+   # establish Python dependencies
+   python3 -m pip install --user --upgrade pip
+   python3 -m pip install --user virtualenv
+
+   python3 -m venv $HOME/sw/venvs/haswell_warpx
+   source $HOME/sw/venvs/haswell_warpx/bin/activate
+
+   python3 -m pip install --upgrade pip
+   MPICC="cc -shared" python3 -m pip install -U --no-cache-dir -v mpi4py
+
+GPU (V100)
+^^^^^^^^^^
+
+Cori provides a partition with `18 nodes that include V100 (16 GB) GPUs <https://docs-dev.nersc.gov/cgpu/>`__.
 We use the following modules and environments on the system (``$HOME/gpu_warpx.profile``).
 
 .. code-block:: bash
@@ -89,12 +132,28 @@ We use the following modules and environments on the system (``$HOME/gpu_warpx.p
    export proj="m1759"
 
    module purge
-   module load cgpu gcc cuda cmake
-   module load mvapich2
-   # OpenMPI-UCX instead of mvapich:
-   #module load openmpi/4.0.1-ucx-1.6
+   module load modules
+   module load cgpu
+   module load esslurm
+   module load gcc/8.3.0 cuda/11.4.0 cmake/3.20.5
+   module load openmpi
 
-   export CMAKE_PREFIX_PATH=$PWD/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
+   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
+
+   if [ -d "$HOME/sw/venvs/gpu_warpx" ]
+   then
+     source $HOME/sw/venvs/gpu_warpx/bin/activate
+   fi
+
+   # compiler environment hints
+   export CC=$(which gcc)
+   export CXX=$(which g++)
+   export FC=$(which gfortran)
+   export CUDACXX=$(which nvcc)
+   export CUDAHOSTCXX=$(which g++)
+
+   # optimize CUDA compilation for V100
+   export AMREX_CUDA_ARCH=7.0
 
    # allocate a GPU, e.g. to compile on
    #   10 logical cores (5 physical), 1 GPU
@@ -108,10 +167,23 @@ And install ADIOS2:
 
    source $HOME/gpu_warpx.profile
 
-   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git adios2
-   cmake -S adios2 -B adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=adios2-2.7.1-gpu-install
-   cmake --build adios2-build --target install --parallel 16
+   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
+   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-gpu-install
+   cmake --build src/adios2-build --target install --parallel 16
 
+For PICMI and Python workflows, also install a virtual environment:
+
+.. code-block:: bash
+
+   # establish Python dependencies
+   python3 -m pip install --user --upgrade pip
+   python3 -m pip install --user virtualenv
+
+   python3 -m venv $HOME/sw/venvs/gpu_warpx
+   source $HOME/sw/venvs/gpu_warpx/bin/activate
+
+   python3 -m pip install --upgrade pip
+   python3 -m pip install -U --no-cache-dir -v mpi4py
 
 Building WarpX
 --------------
@@ -130,6 +202,15 @@ If you want to run on either of the three partitions of Cori, open a new termina
    # GPU:
    #source $HOME/gpu_warpx.profile
 
+.. warning::
+
+   Consider that all three Cori partitions are *incompatible*.
+
+   Do not *source* multiple ``...warpx.profile`` files in the same terminal session.
+   Open a new terminal and log into Cori again, if you want to switch the targeted Cori partition.
+
+   If you re-submit an already compiled simulation that you ran on another day or in another session, *make sure to source* the corresponding ``...warpx.profile`` again after login!
+
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
 .. code-block:: bash
@@ -141,16 +222,15 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3
    cmake --build build -j 16
 
-The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake>` apply as usual.
+The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake-python>` apply as usual:
 
-.. warning::
+.. code-block:: bash
 
-   Consider that all three Cori partitions are *incompatible*.
+   # PICMI build
+   cd $HOME/src/warpx
 
-   Do not *source* multiple ``...warpx.profile`` files in the same terminal session.
-   Open a new terminal and log into Cori again, if you want to switch the targeted Cori partition.
-
-   If you re-submit an already compiled simulation that you ran on another day or in another session, *make sure to source* the corresponding ``...warpx.profile`` again after login!
+   # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
+   WarpX_MPI=ON WarpX_OPENPMD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
 
 .. _running-cpp-cori:
 
@@ -165,6 +245,8 @@ KNL
 The batch script below can be used to run a WarpX simulation on 2 KNL nodes on
 the supercomputer Cori at NERSC. Replace descriptions between chevrons ``<>``
 by relevant values, for instance ``<job name>`` could be ``laserWakefield``.
+
+For PICMI Python runs, the ``<path/to/executable>`` has to read ``python3`` and the ``<input file>`` is the path to your PICMI input script.
 
 .. literalinclude:: ../../../../Tools/BatchScripts/batch_cori.sh
    :language: bash

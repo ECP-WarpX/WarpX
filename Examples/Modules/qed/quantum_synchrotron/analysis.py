@@ -155,9 +155,9 @@ def get_spec(ytdata, specname, is_photon):
     w = ytdata[specname,"particle_weighting"].v
 
     if (is_photon):
-        opt = ytdata[specname,"particle_optical_depth_BW"].v
+        opt = ytdata[specname,"particle_opticalDepthBW"].v
     else:
-        opt = ytdata[specname,"particle_optical_depth_QSR"].v
+        opt = ytdata[specname,"particle_opticalDepthQSR"].v
 
     return {"px" : px, "py" : py, "pz" : pz, "w" : w, "opt" : opt}
 
