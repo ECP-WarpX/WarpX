@@ -113,7 +113,7 @@ void BTDiagnostics::DerivedInitData ()
         m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
         m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
         // initialize these values to 0
-        for (int isp = 0; isp < m_output_species_names.size(); ++isp) {
+        for (int isp = 0; isp < m_totalParticles_flushed_already[i].size(); ++isp) {
             m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;
         }
@@ -715,7 +715,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             if (!amrex::UtilCreateDirectory(snapshot_Level0_path, 0755) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
             // Create directory for each species selected for diagnostic
-            for (int i = 0; i < m_output_species_names.size(); ++i) {
+            for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
                 std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
                 if ( !amrex::UtilCreateDirectory(snapshot_species_path, 0755))
                     amrex::CreateDirectoryFailed(snapshot_species_path);
@@ -765,7 +765,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::rename(recent_Buffer_FabFilename.c_str(),
                         snapshot_FabFilename.c_str());
         }
-        for (int i = 0; i < m_output_species_names.size(); ++i) {            
+        for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
             std::string recent_species_prefix = recent_Buffer_filepath+"/"+m_output_species_names[i];
             std::string recent_species_Header = recent_species_prefix + "/Header";
             std::string recent_ParticleHdrFilename = recent_species_prefix + "/Level_0/Particle_H";
