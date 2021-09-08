@@ -954,8 +954,7 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
 {
 #ifdef AMREX_USE_EB
     for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb(),
-                        pc->m_boundary_conditions.reflection_coef_eb);
+        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
     }
 #else
     amrex::ignore_unused(distance_to_eb);

@@ -39,7 +39,6 @@
  * \param distance_to_eb a set of MultiFabs that store the signed distance function
  * \param lev the mesh refinement level to work on.
  * \param f the callable that defines what to do when a particle hits the boundary.
- * \param reflection_coef optional argument giving the surface's reflection probability
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -54,10 +53,9 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f,
-                 amrex::Real reflection_coef=0.0)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f), reflection_coef);
+    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
 }
 
 /**
@@ -84,7 +82,6 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  * \param pc the particle container to test for boundary interactions.
  * \param distance_to_eb a set of MultiFabs that store the signed distance function
  * \param f the callable that defines what to do when a particle hits the boundary.
- * \param reflection_coef optional argument giving the surface's reflection probability
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -99,10 +96,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f,
-                 amrex::Real reflection_coef=0.0)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
 {
-    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f), reflection_coef);
+    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
 }
 
 /**
@@ -131,7 +127,6 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  * \param lev_min the minimum mesh refinement level to work on.
  * \param lev_max the maximum mesh refinement level to work on.
  * \param f the callable that defines what to do when a particle hits the boundary.
- * \param reflection_coef optional argument giving the surface's reflection probability
  *
  *        The form of the callable should model:
  *        template <typename PData>
@@ -147,7 +142,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
-                 int lev_min, int lev_max, F&& f, amrex::Real reflection_coef=0.0)
+                 int lev_min, int lev_max, F&& f)
 {
     BL_PROFILE("scrapeParticles");
 
@@ -155,19 +150,12 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     {
         const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
-
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
-
-            auto& soa = pc.ParticlesAt(lev, pti).GetStructOfArrays();
-            amrex::ParticleReal * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
-            amrex::ParticleReal * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
-            amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
-
             auto phi = (*distance_to_eb[lev])[pti].array();  // signed distance function
             amrex::ParallelForRNG( np,
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
@@ -191,30 +179,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 DistanceToEB::normalize(normal);
 
                 if (phi_value < 0.0) {
-                    if (amrex::Random(engine) > reflection_coef)
-                    {
-                        f(ptd, ip, pos, normal, engine);
-                    }
-                    else
-                    {
-                        // TODO: This is technically wrong since all reflections
-                        // should be done around the normal to the surface at the
-                        // intersection point not the final point of the particle
-
-                        // reflect particle position by moving it along the
-                        // normal to the surface by twice the distance to the
-                        // surface - note phi and the normal vector is multiplied
-                        // by -1 so it cancels
-                        xp += 2.0 * phi_value * normal[0];
-                        yp += 2.0 * phi_value * normal[1];
-                        zp += 2.0 * phi_value * normal[2];
-
-                        // reflect velocity by the normal as well
-                        amrex::Real un_dot = ux[ip] * normal[0] + uy[ip] * normal[1] + uz[ip] * normal[2];
-                        ux[ip] -= 2.0 * un_dot * normal[0];
-                        uy[ip] -= 2.0 * un_dot * normal[1];
-                        uz[ip] -= 2.0 * un_dot * normal[2];
-                    }
+                    f(ptd, ip, pos, normal, engine);
                 }
             });
         }

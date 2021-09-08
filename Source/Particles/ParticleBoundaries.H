@@ -46,7 +46,6 @@ struct ParticleBoundaries
     std::string reflection_model_yhi_str = "0.0";
     std::string reflection_model_zlo_str = "0.0";
     std::string reflection_model_zhi_str = "0.0";
-    amrex::Real reflection_coef_eb = 0.0;
 
     std::unique_ptr<amrex::Parser> reflection_model_xlo_parser;
     std::unique_ptr<amrex::Parser> reflection_model_xhi_parser;
@@ -61,7 +60,6 @@ struct ParticleBoundaries
     amrex::ParserExecutor<1> reflection_model_yhi;
     amrex::ParserExecutor<1> reflection_model_zlo;
     amrex::ParserExecutor<1> reflection_model_zhi;
-    // amrex::ParserExecutor<1> reflection_model_eb;
 
     bool reflect_all_velocities;
 

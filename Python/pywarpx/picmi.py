@@ -92,7 +92,7 @@ class Species(picmistandard.PICMI_Species):
         self.reflection_model_yhi = kw.pop('warpx_reflection_model_yhi', None)
         self.reflection_model_zlo = kw.pop('warpx_reflection_model_zlo', None)
         self.reflection_model_zhi = kw.pop('warpx_reflection_model_zhi', None)
-        self.reflection_model_eb = kw.pop('warpx_reflection_model_eb', None)
+        # self.reflection_model_eb = kw.pop('warpx_reflection_model_eb', None)
 
         # For the scraper buffer
         self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
@@ -142,7 +142,7 @@ class Species(picmistandard.PICMI_Species):
         self.species.add_new_attr("reflection_model_yhi(E)", self.reflection_model_yhi)
         self.species.add_new_attr("reflection_model_zlo(E)", self.reflection_model_zlo)
         self.species.add_new_attr("reflection_model_zhi(E)", self.reflection_model_zhi)
-        self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+        # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
 
         pywarpx.Particles.particles_list.append(self.species)
 
