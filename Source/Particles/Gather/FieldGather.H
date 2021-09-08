@@ -647,6 +647,7 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
                               const amrex::IndexType bz_type,
                               const amrex::GpuArray<amrex::Real,3>& dxyz,
                               const amrex::GpuArray<amrex::Real,3>& xyz_min,
+                              const amrex::Dim3& lo,
                               const int nox,
                               const int noy,
                               const int noz)
@@ -780,13 +781,13 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
             {
                 ci = sci[ii];
 
-                Exp += ci * cj * ck * ex_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Eyp += ci * cj * ck * ey_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Ezp += ci * cj * ck * ez_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Exp += ci * cj * ck * ex_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
+                Eyp += ci * cj * ck * ey_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
+                Ezp += ci * cj * ck * ez_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
 
-                Bxp += ci * cj * ck * bx_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Byp += ci * cj * ck * by_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Bzp += ci * cj * ck * bz_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Bxp += ci * cj * ck * bx_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
+                Byp += ci * cj * ck * by_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
+                Bzp += ci * cj * ck * bz_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
             }
         }
     }
