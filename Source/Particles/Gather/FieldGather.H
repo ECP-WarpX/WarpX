@@ -571,6 +571,58 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
 }
 
+// TODO Move this to more appropriate location?
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void compute_centering_coefficients(amrex::Gpu::DeviceVector<amrex::Real>& cc,
+                                    const amrex::Real r, const int m)
+{
+    using namespace amrex;
+
+    if (m == 4)
+    {
+        const amrex::Real r2 = r*r;
+        const amrex::Real r3 = r*r2;
+        cc[0] = - r3/6. + r/6.;
+        cc[1] = r3/2. + r2/2. - r;
+        cc[2] = - r3/2. - r2 + r/2. + 1.;
+        cc[3] = r3/6. + r2/2. + r/3.;
+    }
+    else if (m == 6)
+    {
+        const amrex::Real r2 = r*r;
+        const amrex::Real r3 = r*r2;
+        const amrex::Real r4 = r*r3;
+        const amrex::Real r5 = r*r4;
+        cc[0] = - r5/120. + r3/24. - r/30.;
+        cc[1] = r5/24. + r4/24. - r3*7./24. - r2/24. + r/4.;
+        cc[2] = - r5/12. - r4/6. + r3*7./12. + r2*2./3. - r;
+        cc[3] = r5/12. + r4/4. - r3*5./12. - r2*5./4. + r/3. + 1.;
+        cc[4] = - r5/24. - r4/6. + r3/24. + r2*2./3. + r/2.;
+        cc[5] = r5/120. + r4/24. + r3/24. - r2/24. - r/20.;
+    }
+    else if (m == 8)
+    {
+        const amrex::Real r2 = r*r;
+        const amrex::Real r3 = r*r2;
+        const amrex::Real r4 = r*r3;
+        const amrex::Real r5 = r*r4;
+        const amrex::Real r6 = r*r5;
+        const amrex::Real r7 = r*r6;
+        cc[0] = - r7/5040. + r5/360. - r3*7./720. + r/140.;
+        cc[1] = r7/720. + r6/720. - r5*17./720. - r4/144. + r3*4./45. + r2/180. - r/15.;
+        cc[2] = - r7/240. - r6/120. + r5*3./40. + r4/12. - r3*89./240. - r2*3./40. + r*3./10.;
+        cc[3] = r7/144. + r6/48. - r5*17./144. - r4*13./48. + r3*11./18. + r2*3./4. - r;
+        cc[4] = - r7/144. - r6/36. + r5*7./72. + r4*7./18. - r3*49./144. - r2*49./36. + r/4. + 1.;
+        cc[5] = r7/240. + r6/48. - r5*3./80. - r4*13./48. - r3/15. + r2*3./4. + r*3./5.;
+        cc[6] = - r7/720. - r6/120. + r5/360. + r4/12. + r3*71./720. - r2*3./40. - r/10.;
+        cc[7] = r7/5040. + r6/720. + r5/720. - r4/144. - r3/90. + r2/180. + r/105.;
+    }
+    else
+    {
+        amrex::Abort("Centering coefficients implemented only for orders 4,6,8");
+    }
+}
+
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doGatherFiniteCentering (const amrex::ParticleReal xp,
                               const amrex::ParticleReal yp,
@@ -595,7 +647,6 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
                               const amrex::IndexType bz_type,
                               const amrex::GpuArray<amrex::Real,3>& dxyz,
                               const amrex::GpuArray<amrex::Real,3>& xyz_min,
-                              const amrex::Dim3& lo,
                               const int nox,
                               const int noy,
                               const int noz)
@@ -605,8 +656,6 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
 #if defined(WARPX_DIM_XZ)
     amrex::ignore_unused(yp, noy);
 #endif
-
-    amrex::ignore_unused(lo);
 
     // TODO These will be used to gather from Yee grid
     amrex::ignore_unused(ex_type, ey_type, ez_type, bx_type, by_type, bz_type);
@@ -645,24 +694,13 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
     const amrex::Real z = (zp - xyz_min[2]) / dxyz[2];
 
     // Compute largest nearest integer index
-    const int ip = std::ceil(x);
+    const int ip = static_cast<int>(std::ceil(x));
 #if   (AMREX_SPACEDIM == 2)
-    const int jp = std::ceil(z);
+    const int jp = static_cast<int>(std::ceil(z));
     const int kp = 0;
 #elif (AMREX_SPACEDIM == 3)
-    const int jp = std::ceil(y);
-    const int kp = std::ceil(z);
-#endif
-
-    // Compute difference r in each direction
-    // (r always negative, by construction)
-    const amrex::Real ri = x - ip;
-#if   (AMREX_SPACEDIM == 2)
-    const amrex::Real rj = z - jp;
-    const amrex::Real rk = 0.;
-#elif (AMREX_SPACEDIM == 3)
-    const amrex::Real rj = y - jp;
-    const amrex::Real rk = z - kp;
+    const int jp = static_cast<int>(std::ceil(y));
+    const int kp = static_cast<int>(std::ceil(z));
 #endif
 
     const int noi = nox;
@@ -696,20 +734,59 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
     const int nj = jmax - jmin;
     const int nk = kmax - kmin;
 
-    // TODO Include new coefficients
+    // Compute difference r in each direction
+    // (r always negative, by construction)
+    const amrex::Real ri = x - ip;
+#if   (AMREX_SPACEDIM == 2)
+    const amrex::Real rj = z - jp;
+#elif (AMREX_SPACEDIM == 3)
+    const amrex::Real rj = y - jp;
+    const amrex::Real rk = z - kp;
+#endif
+
+    // Compute centering coefficients
+    amrex::Gpu::DeviceVector<amrex::Real> sci;
+    amrex::Gpu::DeviceVector<amrex::Real> scj;
+#if (AMREX_SPACEDIM == 3)
+    amrex::Gpu::DeviceVector<amrex::Real> sck;
+#endif
+
+    sci.resize(2*noi);
+    scj.resize(2*noj);
+#if (AMREX_SPACEDIM == 3)
+    sck.resize(2*nok);
+#endif
+
+    compute_centering_coefficients(sci, ri, noi);
+    compute_centering_coefficients(scj, rj, noj);
+#if (AMREX_SPACEDIM == 3)
+    compute_centering_coefficients(sck, rk, nok);
+#endif
+
+    amrex::Real ci = 1.0_rt;
+    amrex::Real cj = 1.0_rt;
+    amrex::Real ck = 1.0_rt;
+
     for (int kk = 0; kk <= nk; kk++)
     {
+#if (AMREX_SPACEDIM == 3)
+        ck = sck[kk];
+#endif
         for (int jj = 0; jj <= nj; jj++)
         {
+            cj = scj[jj];
+
             for (int ii = 0; ii <= ni; ii++)
             {
-                Exp += ex_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Eyp += ey_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Ezp += ez_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                ci = sci[ii];
 
-                Bxp += bx_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Byp += by_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
-                Bzp += bz_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Exp += ci * cj * ck * ex_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Eyp += ci * cj * ck * ey_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Ezp += ci * cj * ck * ez_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+
+                Bxp += ci * cj * ck * bx_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Byp += ci * cj * ck * by_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
+                Bzp += ci * cj * ck * bz_arr_zeropad(imin+ii,jmin+jj,kmin+kk);
             }
         }
     }
