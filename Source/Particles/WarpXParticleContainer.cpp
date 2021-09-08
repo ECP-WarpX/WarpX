@@ -1159,7 +1159,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                                                               this->m_boundary_conditions, engine);
 
                     if (particle_lost) {
-                        p.id() = -p.id();
+                        p.id() = -1; //-p.id();
                     } else {
                         SetPosition.AsStored(i, x, y, z);
                     }

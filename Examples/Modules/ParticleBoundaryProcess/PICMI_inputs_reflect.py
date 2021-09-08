@@ -37,7 +37,6 @@ grid = picmi.Cartesian2DGrid(
     upper_boundary_conditions = ['dirichlet', 'dirichlet'],
     lower_boundary_conditions_particles = ['open', 'absorbing'],
     upper_boundary_conditions_particles = ['open', 'absorbing'],
-    moving_window_velocity = None,
     warpx_max_grid_size = 32
 )
 
@@ -66,8 +65,6 @@ electrons = picmi.Species(
     initial_distribution=uniform_plasma_elec,
     warpx_save_particles_at_zhi=1,
     warpx_save_particles_at_zlo=1,
-    # warpx_save_particles_at_eb=1,
-    # warpx_save_previous_position=True,
     warpx_reflection_model_zhi="0.5"
 )
 
