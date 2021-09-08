@@ -330,7 +330,7 @@ WarpX::Evolve (int numsteps)
             early_params_checked = true;
         }
 
-        // create ending time stamp for calculating ellapsed time each iteration
+        // create ending time stamp for calculating elapsed time each iteration
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
