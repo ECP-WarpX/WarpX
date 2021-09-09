@@ -573,7 +573,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
 // TODO Move this to more appropriate location?
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void compute_centering_coefficients(amrex::Gpu::DeviceVector<amrex::Real>& cc,
+void compute_centering_coefficients(amrex::GpuArray<amrex::Real, 8>& cc,
                                     const amrex::Real r, const int m)
 {
     using namespace amrex;
@@ -737,16 +737,11 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
 #endif
 
     // Compute centering coefficients
-    amrex::Gpu::DeviceVector<amrex::Real> sci;
-    amrex::Gpu::DeviceVector<amrex::Real> scj;
+    // TODO Currently using maximum size to fix GPU builds, needs to be optimized
+    amrex::GpuArray<amrex::Real, 8> sci;
+    amrex::GpuArray<amrex::Real, 8> scj;
 #if (AMREX_SPACEDIM == 3)
-    amrex::Gpu::DeviceVector<amrex::Real> sck;
-#endif
-
-    sci.resize(noi);
-    scj.resize(noj);
-#if (AMREX_SPACEDIM == 3)
-    sck.resize(nok);
+    amrex::GpuArray<amrex::Real, 8> sck;
 #endif
 
     compute_centering_coefficients(sci, ri, noi);
