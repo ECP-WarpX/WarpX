@@ -159,7 +159,7 @@ void FillBoundary (amrex::MultiFab&          mf,
     }
 }
 
-void FillBoundary (amrex::MultiFab& imf, const amrex::Periodicity& period)
+void FillBoundary (amrex::iMultiFab& imf, const amrex::Periodicity& period)
 {
     BL_PROFILE("WarpXCommUtil::FillBoundary");
 
