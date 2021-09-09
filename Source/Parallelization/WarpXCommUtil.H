@@ -3,7 +3,7 @@
 
 #include "AMReX_FabArray.H"
 #include "AMReX_iMultiFab.H"
-#include "AMReX_MultFab.H"
+#include "AMReX_MultiFab.H"
 #include "AMReX_Periodicity.H"
 #include "AMReX_TypeTraits.H"
 
