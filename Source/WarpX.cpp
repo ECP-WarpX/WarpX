@@ -119,7 +119,6 @@ bool WarpX::do_divb_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 int WarpX::do_single_precision_comms=0;
-int WarpX::do_single_precision_mesh=0;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -633,7 +632,6 @@ WarpX::ReadParameters ()
         }
 
         pp_warpx.query("do_single_precision_comms", do_single_precision_comms);
-        pp_warpx.query("do_single_precision_mesh", do_single_precision_mesh);
         pp_warpx.query("serialize_ics", serialize_ics);
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
