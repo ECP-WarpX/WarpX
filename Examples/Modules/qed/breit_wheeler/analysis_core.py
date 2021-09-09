@@ -175,7 +175,9 @@ def check_energy(energy_phot, energy_ele, energy_pos):
 def check_opt_depths(phot_data, ele_data, pos_data):
     data = (phot_data, ele_data, pos_data)
     for dd in data:
-        loc, scale = st.expon.fit(dd["opt"])
+        # Remove the negative optical depths that correspond to photons that will decay into pairs
+        # at the beginning of the next timestep
+        loc, scale = st.expon.fit(dd["opt"][dd["opt"] > 0])
         assert( np.abs(loc - 0) < tol_red )
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
@@ -219,7 +221,7 @@ def check_energy_distrib(energy_ele, energy_pos, gamma_phot,
 
 #__________________
 
-def check(sim_time, particle_data):
+def check(dt, particle_data):
 
     for idx in range(4):
         phot_name = spec_names_phot[idx]
@@ -237,7 +239,7 @@ def check(sim_time, particle_data):
         print("  initial momentum: ", p0)
         print("  quantum parameter: {:f}".format(chi_phot))
         print("  normalized photon energy: {:f}".format(gamma_phot))
-        print("  timestep: {:f} fs".format(sim_time*1e15))
+        print("  timestep: {:f} fs".format(dt*1e15))
 
         phot_data = particle_data[phot_name]
         ele_data = particle_data[ele_name]
@@ -252,7 +254,7 @@ def check(sim_time, particle_data):
 
         n_lost = check_number_of_pairs(particle_data,
                               phot_name, ele_name, pos_name,
-                              chi_phot, gamma_phot, sim_time,
+                              chi_phot, gamma_phot, dt,
                               initial_particle_number)
 
         check_weights(phot_data, ele_data, pos_data)
