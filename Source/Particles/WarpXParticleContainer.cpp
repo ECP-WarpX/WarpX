@@ -1117,6 +1117,8 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 
     if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
+    auto boundary_conditions = m_boundary_conditions;
+
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -1156,7 +1158,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
-                                                              this->m_boundary_conditions, engine);
+                                                              boundary_conditions, engine);
 
                     if (particle_lost) {
                         p.id() = -1; //-p.id();
