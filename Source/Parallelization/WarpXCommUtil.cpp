@@ -167,6 +167,75 @@ FillBoundary (amrex::Vector<amrex::MultiFab*> const& mf, const amrex::Periodicit
     }
 }
 
+void SumBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
+{
+    BL_PROFILE("WarpXCommUtil::SumBoundary");
+
+    if (WarpX::do_single_precision_comms)
+    {
+        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                 mf.DistributionMap(),
+                                                                 mf.nComp(),
+                                                                 mf.nGrowVect());
+
+        mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
+
+        mf_tmp.SumBoundary(period);
+
+        mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
+    }
+    else
+    {
+        mf.SumBoundary(period);
+    }
+    if (WarpX::do_single_precision_mesh) {
+        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                 mf.DistributionMap(),
+                                                                 mf.nComp(),
+                                                                 mf.nGrowVect());
+
+        mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
+        mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
+    }
+}
+
+void SumBoundary (amrex::MultiFab&          mf,
+                  int                       start_comp,
+                  int                       num_comps,
+                  amrex::IntVect            ng,
+                  const amrex::Periodicity& period)
+{
+    BL_PROFILE("WarpXCommUtil::FillBoundary");
+
+    if (WarpX::do_single_precision_comms)
+    {
+        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                 mf.DistributionMap(),
+                                                                 num_comps,
+                                                                 ng);
+
+        mixedCopy(mf_tmp, mf, start_comp, 0, num_comps, ng);
+
+        mf_tmp.SumBoundary(0, num_comps, ng, period);
+
+        mixedCopy(mf, mf_tmp, 0, start_comp, num_comps, ng);
+    }
+    else
+    {
+        mf.SumBoundary(start_comp, num_comps, ng, period);
+    }
+
+    if (WarpX::do_single_precision_mesh) {
+        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                 mf.DistributionMap(),
+                                                                 mf.nComp(),
+                                                                 mf.nGrowVect());
+
+        mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
+        mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
+    }
+}
+
 void OverrideSync (amrex::MultiFab&          mf,
                    const amrex::Periodicity& period)
 {

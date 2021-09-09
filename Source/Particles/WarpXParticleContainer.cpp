@@ -772,7 +772,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 #endif
 
         // Exchange guard cells
-        if (local == false) rho[lev]->SumBoundary(m_gdb->Geom(lev).periodicity());
+        if (local == false) { WarpXCommUtil::SumBoundary(*rho[lev], m_gdb->Geom(lev).periodicity()); }
     }
 
     // Now that the charge has been deposited at each level,
@@ -853,7 +853,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (local == false) rho->SumBoundary(gm.periodicity());
+    if (local == false) { WarpXCommUtil::SumBoundary(*rho, gm.periodicity()); }
 
     return rho;
 }
