@@ -743,10 +743,10 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
     amrex::Gpu::DeviceVector<amrex::Real> sck;
 #endif
 
-    sci.resize(2*noi);
-    scj.resize(2*noj);
+    sci.resize(noi);
+    scj.resize(noj);
 #if (AMREX_SPACEDIM == 3)
-    sck.resize(2*nok);
+    sck.resize(nok);
 #endif
 
     compute_centering_coefficients(sci, ri, noi);
