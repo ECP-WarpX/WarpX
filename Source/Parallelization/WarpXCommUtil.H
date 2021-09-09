@@ -2,6 +2,8 @@
 #define WARPX_COMMUTIL_H_
 
 #include "AMReX_FabArray.H"
+#include "AMReX_iMultiFab.H"
+#include "AMReX_MultFab.H"
 #include "AMReX_Periodicity.H"
 #include "AMReX_TypeTraits.H"
 
@@ -10,7 +12,7 @@
 namespace WarpXCommUtil
 {
 
-    using comm_float_type = float;
+using comm_float_type = float;
 
 template <class FAB1, class FAB2>
 void
@@ -59,6 +61,14 @@ void FillBoundary (amrex::MultiFab&          mf,
 void FillBoundary (amrex::MultiFab&          mf,
                    amrex::IntVect            ng,
                    const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());
+
+void FillBoundary (amrex::iMultiFab&         mf,
+                   const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());
+
+void FillBoundary (amrex::iMultiFab&         mf,
+                   amrex::IntVect            ng,
+                   const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());
+
 void
 FillBoundary (amrex::Vector<amrex::MultiFab*> const& mf, const amrex::Periodicity& period);
 

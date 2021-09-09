@@ -159,6 +159,21 @@ void FillBoundary (amrex::MultiFab&          mf,
     }
 }
 
+void FillBoundary (amrex::MultiFab& imf, const amrex::Periodicity& period)
+{
+    BL_PROFILE("WarpXCommUtil::FillBoundary");
+
+    mf.FillBoundary(period);
+}
+
+void FillBoundary (amrex::iMultiFab&         mf,
+                   amrex::IntVect            ng,
+                   const amrex::Periodicity& period)
+{
+    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    imf.FillBoundary(ng, period);
+}
+
 void
 FillBoundary (amrex::Vector<amrex::MultiFab*> const& mf, const amrex::Periodicity& period)
 {
