@@ -835,14 +835,14 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
 
         if (safe_guard_cells)
         {
-            G_fp[lev]->FillBoundary(period);
+            WarpXCommUtil::FillBoundary(*G_fp[lev], period);
         }
         else
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ng <= G_fp[lev]->nGrowVect(),
                 "Error: in FillBoundaryG, requested more guard cells than allocated");
 
-            G_fp[lev]->FillBoundary(ng, period);
+            WarpXCommUtil::FillBoundary(*G_fp[lev], ng, period);
         }
     }
     else if (patch_type == PatchType::coarse && G_cp[lev])
@@ -853,14 +853,14 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
 
         if (safe_guard_cells)
         {
-            G_cp[lev]->FillBoundary(cperiod);
+            WarpXCommUtil::FillBoundary(*G_cp[lev], cperiod);
         }
         else
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ng <= G_cp[lev]->nGrowVect(),
                 "Error: in FillBoundaryG, requested more guard cells than allocated");
 
-            G_cp[lev]->FillBoundary(ng, cperiod);
+            WarpXCommUtil::FillBoundary(*G_cp[lev], ng, cperiod);
         }
     }
 }

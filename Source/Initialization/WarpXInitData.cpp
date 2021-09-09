@@ -18,6 +18,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -490,24 +491,24 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             ComputeDistanceToEB();
 
             const auto &period = Geom(lev).periodicity();
-            m_edge_lengths[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
-            m_edge_lengths[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
-            m_edge_lengths[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
-            m_face_areas[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
-            m_face_areas[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
-            m_face_areas[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][0], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][1], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][2], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][0], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][1], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][2], guard_cells.ng_alloc_EB, period);
 
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
-                m_area_mod[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
-                m_area_mod[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
-                m_area_mod[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][2], guard_cells.ng_alloc_EB, period);
                 MarkCells();
-                m_flag_info_face[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
-                m_flag_info_face[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
-                m_flag_info_face[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
-                m_flag_ext_face[lev][0]->FillBoundary(guard_cells.ng_alloc_EB, period);
-                m_flag_ext_face[lev][1]->FillBoundary(guard_cells.ng_alloc_EB, period);
-                m_flag_ext_face[lev][2]->FillBoundary(guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][2], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][2], guard_cells.ng_alloc_EB, period);
                 ComputeFaceExtensions();
             }
         }

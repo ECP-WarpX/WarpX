@@ -1140,12 +1140,12 @@ PML::FillBoundaryG (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        pml_G_fp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_G_fp, period);
     }
     else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        pml_G_cp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_G_cp, period);
     }
 }
 
