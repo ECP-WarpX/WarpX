@@ -639,12 +639,6 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
                               const amrex::Array4<amrex::Real const>& bx_arr,
                               const amrex::Array4<amrex::Real const>& by_arr,
                               const amrex::Array4<amrex::Real const>& bz_arr,
-                              const amrex::IndexType ex_type,
-                              const amrex::IndexType ey_type,
-                              const amrex::IndexType ez_type,
-                              const amrex::IndexType bx_type,
-                              const amrex::IndexType by_type,
-                              const amrex::IndexType bz_type,
                               const amrex::GpuArray<amrex::Real,3>& dxyz,
                               const amrex::GpuArray<amrex::Real,3>& xyz_min,
                               const amrex::Dim3& lo,
@@ -657,9 +651,6 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
 #if defined(WARPX_DIM_XZ)
     amrex::ignore_unused(yp, noy);
 #endif
-
-    // TODO These will be used to gather from Yee grid
-    amrex::ignore_unused(ex_type, ey_type, ez_type, bx_type, by_type, bz_type);
 
     // Pad input arrays with zeros beyond ghost cells
     // for out-of-bound accesses due to large-stencil operations
