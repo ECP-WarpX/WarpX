@@ -315,17 +315,6 @@ WarpX::Evolve (int numsteps)
         // in the evolve timing.
         if (warpx_py_afterstep) warpx_py_afterstep();
 
-        Real evolve_time_end_step = amrex::second();
-        evolve_time += evolve_time_end_step - evolve_time_beg_step;
-
-        if (verbose) {
-            amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
-                        << " DT = " << dt[0] << "\n";
-            amrex::Print()<< "Evolve time = " << evolve_time
-                      << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
-                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
-        }
-
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
         {
@@ -339,6 +328,18 @@ WarpX::Evolve (int numsteps)
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
             early_params_checked = true;
+        }
+
+        // create ending time stamp for calculating elapsed time each iteration
+        Real evolve_time_end_step = amrex::second();
+        evolve_time += evolve_time_end_step - evolve_time_beg_step;
+
+        if (verbose) {
+            amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
+                        << " DT = " << dt[0] << "\n";
+            amrex::Print()<< "Evolve time = " << evolve_time
+                      << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
+                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
         }
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
