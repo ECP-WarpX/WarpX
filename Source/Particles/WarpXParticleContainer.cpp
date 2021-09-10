@@ -115,6 +115,7 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 #else
     m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
 #endif
+    m_boundary_conditions.BuildReflectionModelParsers();
 }
 
 void
@@ -1116,7 +1117,6 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
     // Periodic boundaries are handled in AMReX code
     if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
-    m_boundary_conditions.BuildReflectionModelParsers();
     auto boundary_conditions = m_boundary_conditions.data;
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
