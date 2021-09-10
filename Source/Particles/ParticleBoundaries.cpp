@@ -68,12 +68,12 @@ ParticleBoundaries::BuildReflectionModelParsers ()
     reflection_model_xlo = reflection_model_xlo_parser->compile<1>();
     auto reflection_model_xhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_xhi_str, {"v"}));
     reflection_model_xhi = reflection_model_xhi_parser->compile<1>();
-
+#ifdef WARPX_DIM_3D
     auto reflection_model_ylo_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_ylo_str, {"v"}));
     reflection_model_ylo = reflection_model_ylo_parser->compile<1>();
     auto reflection_model_yhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_yhi_str, {"v"}));
     reflection_model_yhi = reflection_model_yhi_parser->compile<1>();
-
+#endif
     auto reflection_model_zlo_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_zlo_str, {"v"}));
     reflection_model_zlo = reflection_model_zlo_parser->compile<1>();
     auto reflection_model_zhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_zhi_str, {"v"}));

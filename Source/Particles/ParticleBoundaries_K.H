@@ -21,7 +21,7 @@ namespace ApplyParticleBoundaries {
     apply_boundary (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
                     bool& change_sign_ux, bool& particle_lost,
                     ParticleBoundaryType xmin_bc, ParticleBoundaryType xmax_bc,
-                    amrex::Real refl_xmin, amrex::Real refl_xmax,
+                    amrex::Real refl_probability_xmin, amrex::Real refl_probability_xmax,
                     amrex::RandomEngine const& engine )
     {
         if (x < xmin) {
@@ -29,7 +29,7 @@ namespace ApplyParticleBoundaries {
                 particle_lost = true;
             }
             else if (xmin_bc == ParticleBoundaryType::Absorbing) {
-                if (refl_xmin == 0 || amrex::Random(engine) > refl_xmin) {
+                if (refl_probability_xmin == 0 || amrex::Random(engine) > refl_probability_xmin) {
                     particle_lost = true;
                 }
                 else
@@ -48,7 +48,7 @@ namespace ApplyParticleBoundaries {
                 particle_lost = true;
             }
             else if (xmax_bc == ParticleBoundaryType::Absorbing) {
-                if (refl_xmax == 0 || amrex::Random(engine) > refl_xmax) {
+                if (refl_probability_xmax == 0 || amrex::Random(engine) > refl_probability_xmax) {
                     particle_lost = true;
                 }
                 else
