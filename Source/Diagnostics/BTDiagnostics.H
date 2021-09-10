@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_BTDIAGNOSTICS_H_
 #define WARPX_BTDIAGNOSTICS_H_
 
@@ -78,6 +84,7 @@ private:
      *  is sliced, back-transformed, and stored in the output multifab, m_mf_output.
      */
     void PrepareFieldDataForOutput () override;
+    /** The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output */
     void PrepareParticleDataForOutput() override;
 
     /** whether z-slice that corresponds to the buffer, i_buffer, is within the
@@ -159,6 +166,8 @@ private:
     /** Vector of boosted-frame z co-ordinate corresponding to each back-transformed
         snapshot at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_boost;
+    /** Vector of previous boosted-frame z co-ordinate corresponding to each
+        back-transformed snapshot*/
     amrex::Vector<amrex::Real> m_old_z_boost;
     /** Geometry that defines the domain attributes corresponding to the
      *  full snapshot in the back-transformed lab-frame.
@@ -316,17 +325,27 @@ private:
     void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
                                    std::string snapshot_FabHeaderFilename,
                                    std::string newsnapshot_FabFilename);
-
+    /** Interleave lab-frame metadata of the species header file in the buffers to
+     *  be consistent with the merged plotfile lab-frame data
+     */
     void InterleaveSpeciesHeader(std::string buffer_species_Header_path,
                                  std::string snapshot_species_Header_path,
                                  std::string species_name, const int new_data_index);
 
+    /** Interleave lab-frame metadata of the particle header file in the buffers to
+     *  be consistent with the merged plotfile lab-frame data
+     */
     void InterleaveParticleDataHeader( std::string buffer_ParticleHdrFilename,
                                        std::string snapshot_ParticleHdrFilename);
+    /** Initialize particle functors for each species to compute the back-transformed
+        lab-frame data. */
     void InitializeParticleFunctors () override;
 
+    /** Update total number of particles flushed for all species for ith snapshot */
     void UpdateTotalParticlesFlushed(int i_buffer);
+    /** Reset total number of particles in the particle buffer to 0 for ith snapshot */
     void ResetTotalParticlesInBuffer(int i_buffer);
+    /** Clear particle data stored in the particle buffer */
     void ClearParticleBuffer(int i_buffer);
     
 };

@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "BackTransformParticleFunctor.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"

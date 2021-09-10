@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "BTD_Plotfile_Header_Impl.H"
 
 #include "WarpX.H"

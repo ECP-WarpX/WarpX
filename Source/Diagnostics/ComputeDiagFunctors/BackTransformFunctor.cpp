@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "BackTransformFunctor.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"

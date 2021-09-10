@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_BACKTRANSFORMPARTICLEFUNCTOR_H_
 #define WARPX_BACKTRANSFORMPARTICLEFUNCTOR_H_
 
@@ -10,15 +16,34 @@
 
 
 
-
+/**
+ * \brief Filter to select particles that correspond to a z-slice of the corresponding lab-frame.
+ */
 struct SelectParticles
 {
     using TmpParticles = WarpXParticleContainer::TmpParticles;
 
+    /**
+     * \brief Constructor of SelectParticles functor.
+     *
+     * @param[in] a_pti, WarpX particle iterator
+     * @param[in] tmp_particle_data, temporary particle data
+     * @param[in] current_z_boost, current z-position of the slice in boosted frame
+     * @param[in] old_z_boost, previous z-position of the slice in boosted frame
+     */
     SelectParticles( const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
                      amrex::Real current_z_boost, amrex::Real old_z_boost,
                      int a_offset = 0);
 
+    /**
+     * \brief Functor call. This method determines if a given particle should be selected
+     * for Lorentz transformation in obtaining the lab-frame data. The particles that
+     * with positions that correspond to the specific z-slice in boosted frame are selected.
+     *
+     * @param[in] SrcData particle tile data
+     * @param[in] i particle index
+     * @return 1 if particles is selected for transformation, else 0
+     */
     template <typename SrcData>
     AMREX_GPU_HOST_DEVICE
     int operator() (const SrcData& src, int i) const noexcept
@@ -36,20 +61,44 @@ struct SelectParticles
     }
 
     GetParticlePosition m_get_position;
+    /** Z coordinate in boosted frame that corresponds to a give snapshot*/
     amrex::Real m_current_z_boost;
+    /** Previous Z coordinate in boosted frame that corresponds to a give snapshot*/
     amrex::Real m_old_z_boost;
+    /** Particle z coordinate in boosted frame*/
     amrex::ParticleReal* AMREX_RESTRICT zpold = nullptr;
 };
 
+/**
+ * \brief Transform functor to Lorentz-transform particles and obtain lab-frame data.
+ */
 struct LorentzTransformParticles
 {
 
     using TmpParticles = WarpXParticleContainer::TmpParticles;
 
+    /**
+     * \brief Constructor of the LorentzTransformParticles functor.
+     *
+     * @param[in] a_pti, WarpX particle iterator
+     * @param[in] tmp_particle_data, temporary particle data
+     * @param[in] t_boost, time in boosted frame
+     * @param[in] dt, timestep in boosted-frame.
+     * @param[in] t_lab, time in lab-fram.
+     */
     LorentzTransformParticles ( const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
                                 amrex::Real t_boost, amrex::Real dt,
                                 amrex::Real t_lab, int a_offset = 0);
 
+    /**
+     * \brief Functor call. This method computes the Lorentz-transform for particle
+     * attributes to obtain the lab-frame snapshot data.
+     *
+     * @param[out] DstData particle tile data that stores the transformed particle data
+     * @param[in] SrcData particle tile data that is selected for transformation
+     * @param[in] i_src particle index of the source particles
+     * @param[in] i_dst particle index of the target particles (transformed data).
+     */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
     void operator () (const DstData& dst, const SrcData& src, int i_src, int i_dst) const noexcept
@@ -130,26 +179,45 @@ struct LorentzTransformParticles
 };
 
 /**
- * \brief Functor to compute Lorentz Transform and store the selected particles in existing
- * particle buffers
+ * \brief BackTransform functor to select particles and Lorentz Transform them
+ *  and store in particle buffers
  */
 class
 BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
 {
 public:
     BackTransformParticleFunctor(WarpXParticleContainer *pc_src, std::string species_name, int num_buffers);
-    //void operator ()() const override;
+    /** Computes the Lorentz transform of source particles to obtain lab-frame data in pc_dst*/
     void operator () (ParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const override;
     void InitData() override;
+    /** \brief Prepare data required to back-transform particle attribtutes for lab-frame snapshot, i_buffer
+     *
+     * \param[in] i_buffer, index of the snapshot
+     * \param[in] ZSliceInDomain, if the z-slice at current_z_boost is within the bounds of
+     *            the boosted-frame and lab-frame domain. The particles are transformed
+     *            only if this value is true.
+     * \param[in] current_z_boost, z co-ordinate of the slice selected in boosted-frame.
+     * \param[in] t_lab, current time in lab-frame for snapshot, i_buffer.
+     */
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain, amrex::Real old_z_boost,
                               amrex::Real current_z_boost, amrex::Real t_lab) override;
 private:
+    /** Source particle container */
     WarpXParticleContainer* m_pc_src = nullptr;
+    /** String containing species name of particles being transformed*/
     std::string m_species_name;
+    /** Number of buffers or snapshots*/
     int m_num_buffers;
+    /** Vector of current z co-ordinate in the boosted frame for each snapshot*/
     amrex::Vector<amrex::Real> m_current_z_boost;
+    /** Vector of previous z co-ordinate in the boosted frame for each snapshot*/
     amrex::Vector<amrex::Real> m_old_z_boost;
+    /** Vector of lab-frame time for each snapshot*/
     amrex::Vector<amrex::Real> m_t_lab;
+    /** Vector of 0s and 1s stored to check if back-transformation is to be performed for
+     *  the ith snapshot. The value is set to 0 (false) or 1 (true) using the
+     *  boolean ZSliceInDomain in PrepareFunctorData()
+     */
     amrex::Vector<int> m_perform_backtransform;
 };
 
