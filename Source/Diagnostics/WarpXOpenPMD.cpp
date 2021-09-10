@@ -648,31 +648,24 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       }
   }() );
 
-  amrex::Print() << " in dump to file for part, before setting up pos\n";
   //
   // define positions & offsets
   //
   const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
-  amrex::Print() << " offst : " << ParticleFlushOffset << " total np : " << counter.GetTotalNumParticles() << " new vector size : " << NewParticleVectorSize << " isBTD " << isBTD << "\n";
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
   SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
   m_ParticleSetUp = 1;
-  amrex::Print() << " in dump to file for part, pos and prop are set and before calling flush\n";
   // open files from all processors, in case some will not contribute below
   m_Series->flush();
-  amrex::Print() << " called flush \n";
   for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
     {
-      amrex::Print() << " currentLevel : " << currentLevel << "\n";
       uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
       // For BTD, the offset include the number of particles already flushed
       if (isBTD) offset += ParticleFlushOffset;
-      amrex::Print() << " offset " << offset << "\n";
 
       for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
          auto const numParticleOnTile = pti.numParticles();
          uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
-         amrex::Print() << " numPart : " << numParticleOnTile << "\n";
          if (numParticleOnTile == 0) continue;
          // get position and particle ID from aos
          // note: this implementation iterates the AoS 4x...
@@ -717,20 +710,16 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
            }
 #else          
-           amrex::Print() << " loop over currDim \n"; 
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
                     new amrex::ParticleReal[numParticleOnTile],
                     [](amrex::ParticleReal const *p){ delete[] p; }
                 );
                 for (auto i=0; i<numParticleOnTile; i++) {
-                     amrex::Print() << " i part : " << i << "\n";
                      curr.get()[i] = aos[i].pos(currDim);
                 }
                 std::string const positionComponent = positionComponents[currDim];
-                amrex::Print() << " about to store chunk\n";
                 currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
-                amrex::Print() << " pos stored in dim : " << currDim << "\n";
            }
 #endif
 
@@ -755,7 +744,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
          offset += numParticleOnTile64;
       }
     }
-    amrex::Print() << " about to call flush again \n";
     m_Series->flush();
 }
 
