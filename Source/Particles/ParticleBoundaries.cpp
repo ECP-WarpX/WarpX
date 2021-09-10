@@ -64,19 +64,18 @@ ParticleBoundaries::CheckAll (ParticleBoundaryType bc)
 void
 ParticleBoundaries::BuildReflectionModelParsers ()
 {
-    /*
-    reflection_model_xlo_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_xlo_str, {"v"}));
+    auto reflection_model_xlo_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_xlo_str, {"v"}));
     reflection_model_xlo = reflection_model_xlo_parser->compile<1>();
-    reflection_model_xhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_xhi_str, {"v"}));
+    auto reflection_model_xhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_xhi_str, {"v"}));
     reflection_model_xhi = reflection_model_xhi_parser->compile<1>();
 
-    reflection_model_ylo_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_ylo_str, {"v"}));
+    auto reflection_model_ylo_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_ylo_str, {"v"}));
     reflection_model_ylo = reflection_model_ylo_parser->compile<1>();
-    reflection_model_yhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_yhi_str, {"v"}));
+    auto reflection_model_yhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_yhi_str, {"v"}));
     reflection_model_yhi = reflection_model_yhi_parser->compile<1>();
-    */
-    auto reflection_model_zlo_parser = std::make_unique<amrex::Parser>(makeParser("0", {"v"}));
+
+    auto reflection_model_zlo_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_zlo_str, {"v"}));
     reflection_model_zlo = reflection_model_zlo_parser->compile<1>();
-    auto reflection_model_zhi_parser = std::make_unique<amrex::Parser>(makeParser("0.5", {"v"}));
+    auto reflection_model_zhi_parser = std::make_unique<amrex::Parser>(makeParser(reflection_model_zhi_str, {"v"}));
     reflection_model_zhi = reflection_model_zhi_parser->compile<1>();
 }

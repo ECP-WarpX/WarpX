@@ -115,8 +115,6 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 #else
     m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
 #endif
-    // The reflection model parsers can also be overwritten by child classes
-    m_boundary_conditions.BuildReflectionModelParsers();
 }
 
 void
@@ -1118,6 +1116,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
     if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
     auto boundary_conditions = m_boundary_conditions;
+    boundary_conditions.BuildReflectionModelParsers();
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {

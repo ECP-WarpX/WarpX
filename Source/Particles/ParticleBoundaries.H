@@ -38,7 +38,7 @@ struct ParticleBoundaries
     ParticleBoundaryType ymax_bc;
     ParticleBoundaryType zmin_bc;
     ParticleBoundaryType zmax_bc;
-    /*
+
     // reflection models for absorbing boundaries
     std::string reflection_model_xlo_str = "0.0";
     std::string reflection_model_xhi_str = "0.0";
@@ -47,13 +47,6 @@ struct ParticleBoundaries
     std::string reflection_model_zlo_str = "0.0";
     std::string reflection_model_zhi_str = "0.0";
 
-    std::unique_ptr<amrex::Parser> reflection_model_xlo_parser;
-    std::unique_ptr<amrex::Parser> reflection_model_xhi_parser;
-    std::unique_ptr<amrex::Parser> reflection_model_ylo_parser;
-    std::unique_ptr<amrex::Parser> reflection_model_yhi_parser;
-    std::unique_ptr<amrex::Parser> reflection_model_zlo_parser;
-    std::unique_ptr<amrex::Parser> reflection_model_zhi_parser;
-    */
     amrex::ParserExecutor<1> reflection_model_xlo;
     amrex::ParserExecutor<1> reflection_model_xhi;
     amrex::ParserExecutor<1> reflection_model_ylo;
