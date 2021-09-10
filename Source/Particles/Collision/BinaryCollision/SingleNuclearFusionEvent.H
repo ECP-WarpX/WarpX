@@ -102,7 +102,7 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
     const amrex::ParticleReal E_kin_star = std::sqrt(E_star_sq) - (m1 + m2)*c_sq;
 
     // Compute fusion cross section as a function of kinetic energy in the center of mass frame
-    amrex::ParticleReal fusion_cross_section;
+    auto fusion_cross_section = amrex::ParticleReal(0.);
     if (fusion_type == NuclearFusionType::ProtonBoron)
     {
         fusion_cross_section = ProtonBoronFusionCrossSection(E_kin_star);
