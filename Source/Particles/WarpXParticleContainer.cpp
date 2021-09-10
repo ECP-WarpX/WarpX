@@ -1116,8 +1116,8 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
     // Periodic boundaries are handled in AMReX code
     if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
 
-    auto boundary_conditions = m_boundary_conditions;
-    boundary_conditions.BuildReflectionModelParsers();
+    m_boundary_conditions.BuildReflectionModelParsers();
+    auto boundary_conditions = m_boundary_conditions.data;
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {

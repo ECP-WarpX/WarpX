@@ -89,7 +89,7 @@ namespace ApplyParticleBoundaries {
                       amrex::ParticleReal& z, amrex::Real zmin, amrex::Real zmax,
                       amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                       bool& particle_lost,
-                      ParticleBoundaries const& boundaries,
+                      ParticleBoundaries::ParticleBoundariesData const& boundaries,
                       amrex::RandomEngine const& engine)
     {
         bool change_sign_ux = false;
