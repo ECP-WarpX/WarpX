@@ -296,6 +296,7 @@ WarpX::Evolve (int numsteps)
         }
 
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
+            if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
             // Electrostatic solver:
             // For each species: deposit charge and add the associated space-charge
             // E and B field to the grid ; this is done at the end of the PIC
@@ -304,6 +305,7 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
+            if (warpx_py_afterEsolve) warpx_py_afterEsolve();
         }
 
         // sync up time
