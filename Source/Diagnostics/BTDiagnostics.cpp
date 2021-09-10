@@ -124,7 +124,7 @@ void BTDiagnostics::DerivedInitData ()
             m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;
         }
-    }  
+    }
 }
 
 void
@@ -609,7 +609,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         // number of cells in z is modified since each buffer multifab always
         // contains a minimum m_buffer_size=256 cells
         int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
-        // Modify the domain indices according to the buffers that are flushed out        
+        // Modify the domain indices according to the buffers that are flushed out
         m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
                                            k_lab - (num_z_cells_in_snapshot-1) );
         m_snapshot_box[i_buffer].setBig( m_moving_window_dir, k_lab);
@@ -797,20 +797,20 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 std::rename(recent_species_Header.c_str(), snapshot_species_Header.c_str());
                 if (BufferSpeciesHeader.m_total_particles == 0) continue;
                 std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());
-                std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());              
+                std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());
             } else {
                 InterleaveSpeciesHeader(recent_species_Header,snapshot_species_Header,
                                         m_output_species_names[i], m_buffer_flush_counter[i_snapshot]);
                 if (BufferSpeciesHeader.m_total_particles == 0) continue;
                 if (m_totalParticles_flushed_already[i_snapshot][i]==0) {
-                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());                    
+                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());
                 } else {
                     InterleaveParticleDataHeader(recent_ParticleHdrFilename,
                                                  snapshot_ParticleHdrFilename);
                 }
-                std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());              
+                std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());
             }
-        }          
+        }
         // Destroying the recently flushed buffer directory since it is already merged.
         amrex::FileSystem::RemoveAll(recent_Buffer_filepath);
 
@@ -906,11 +906,11 @@ BTDiagnostics::InterleaveSpeciesHeader(std::string buffer_species_Header_path,
                                                species_name);
     SnapshotSpeciesHeader.ReadHeader();
     SnapshotSpeciesHeader.AddTotalParticles( BufferSpeciesHeader.m_total_particles);
-    
+
     SnapshotSpeciesHeader.IncrementParticleBoxArraySize();
     const int buffer_finestLevel = BufferSpeciesHeader.m_finestLevel;
     const int buffer_boxId = BufferSpeciesHeader.m_particleBoxArray_size[buffer_finestLevel]-1;
-    SnapshotSpeciesHeader.AppendParticleInfoForNewBox( 
+    SnapshotSpeciesHeader.AppendParticleInfoForNewBox(
                               new_data_index,
                               BufferSpeciesHeader.m_particles_per_box[buffer_finestLevel][buffer_boxId],
                               BufferSpeciesHeader.m_offset_per_box[buffer_finestLevel][buffer_boxId]);
@@ -927,7 +927,7 @@ BTDiagnostics::InterleaveParticleDataHeader(std::string buffer_ParticleHdrFilena
     BTDParticleDataHeaderImpl SnapshotParticleHeader(snapshot_ParticleHdrFilename);
     SnapshotParticleHeader.ReadHeader();
 
-    // Increment BoxArraySize 
+    // Increment BoxArraySize
     SnapshotParticleHeader.IncreaseBoxArraySize( BufferParticleHeader.ba_size() );
     // Append New box in snapshot
     for (int ibox = 0; ibox < BufferParticleHeader.ba_size(); ++ibox) {
@@ -972,7 +972,7 @@ BTDiagnostics::InitializeParticleBuffer ()
                                                        m_particles_buffer[i][isp].get()));
         }
     }
-    
+
 }
 
 void
@@ -1010,7 +1010,7 @@ BTDiagnostics::PrepareParticleDataForOutput()
                         amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                                              num_cells * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
                         amrex::RealBox ParticleRealBox = m_snapshot_domain_lab[i_buffer];
-                        ParticleRealBox.setLo(m_moving_window_dir, new_lo);                         
+                        ParticleRealBox.setLo(m_moving_window_dir, new_lo);
                         amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
                         amrex::Geometry geom;
                         geom.define(ParticleBox, &ParticleRealBox, amrex::CoordSys::cartesian,
@@ -1032,7 +1032,7 @@ BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already.size(); ++isp) {
         m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
-    }     
+    }
 }
 
 void
@@ -1040,7 +1040,7 @@ BTDiagnostics::ResetTotalParticlesInBuffer(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_in_buffer.size(); ++isp) {
         m_totalParticles_in_buffer[i_buffer][isp] = 0;
-    }     
+    }
 }
 
 void

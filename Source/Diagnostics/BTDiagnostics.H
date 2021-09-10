@@ -347,6 +347,6 @@ private:
     void ResetTotalParticlesInBuffer(int i_buffer);
     /** Clear particle data stored in the particle buffer */
     void ClearParticleBuffer(int i_buffer);
-    
+
 };
 #endif // WARPX_BTDIAGNOSTICS_H_

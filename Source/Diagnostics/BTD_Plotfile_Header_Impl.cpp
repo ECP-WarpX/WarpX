@@ -374,7 +374,7 @@ BTDSpeciesHeaderImpl::ReadHeader ()
     HeaderCharPtr[fileLength] = '\0';
 
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
-    
+
     is >> m_file_version;
     is >> m_spacedim;
     is >> m_num_output_real;
@@ -403,7 +403,7 @@ BTDSpeciesHeaderImpl::ReadHeader ()
             is >> m_which_data[lev][i] >> m_particles_per_box[lev][i] >> m_offset_per_box[lev][i];
         }
     }
-    
+
 }
 
 void
@@ -506,7 +506,7 @@ BTDParticleDataHeaderImpl::ReadHeader ()
         m_ba.set(ibox, bx);
     }
     is.ignore(bl_ignore_max, ')');
-    
+
 }
 
 void

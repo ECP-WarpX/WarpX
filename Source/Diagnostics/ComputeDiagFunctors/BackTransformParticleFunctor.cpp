@@ -34,13 +34,13 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
     : m_t_boost(t_boost), m_dt(dt), m_t_lab(t_lab)
 {
     using namespace amrex::literals;
-    
+
     if (tmp_particle_data.size() == 0) return;
     m_get_position = GetParticlePosition(a_pti, a_offset);
-    
+
     auto& attribs = a_pti.GetAttribs();
-    m_wpnew = attribs[PIdx::w].dataPtr(); 
-    m_uxpnew = attribs[PIdx::ux].dataPtr(); 
+    m_wpnew = attribs[PIdx::w].dataPtr();
+    m_uxpnew = attribs[PIdx::ux].dataPtr();
     m_uypnew = attribs[PIdx::uy].dataPtr();
     m_uzpnew = attribs[PIdx::uz].dataPtr();
 
@@ -102,7 +102,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
             // that cross the z-slice
             amrex::Gpu::DeviceVector<int> FlagForPartCopy;
             amrex::Gpu::DeviceVector<int> IndexForPartCopy;
-            
+
             for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
 
                 auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
@@ -122,7 +122,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
 
                 int* const AMREX_RESTRICT Flag = FlagForPartCopy.dataPtr();
                 int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
-                
+
                 auto& ptile_src = particles[index];
                 // Flag particles that need to be copied if they cross the z-slice
                 // setting this to 1 for testing (temporarily)
@@ -135,7 +135,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
                 const int total_partdiag_size = amrex::Scan::ExclusiveSum(np,Flag,IndexLocation);
                 auto& ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
                 auto old_size = ptile_dst.numParticles();
-                ptile_dst.resize(old_size + total_partdiag_size); 
+                ptile_dst.resize(old_size + total_partdiag_size);
                 auto count = amrex::filterParticles(ptile_dst, ptile_src, GetParticleFilter, 0, old_size, np);
                 auto dst_data = ptile_dst.getParticleTileData();
                 amrex::ParallelFor(np,
@@ -144,12 +144,12 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
                    if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, ptile_src, i,
                                                                  old_size + IndexLocation[i]);
                 });
-                total_particles_added += count; 
+                total_particles_added += count;
             }
-        }        
-        amrex::Gpu::synchronize();        
+        }
+        amrex::Gpu::synchronize();
     }
-    totalParticleCounter = pc_dst.TotalNumberOfParticles(); 
+    totalParticleCounter = pc_dst.TotalNumberOfParticles();
 }
 
 

@@ -709,7 +709,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
                currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
            }
-#else          
+#else
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
                     new amrex::ParticleReal[numParticleOnTile],
@@ -780,7 +780,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             getComponentRecord(int_comp_names[i]).resetDataset(dtype_int);
         }
     }
-    
+
     // attributes need to be set only the first time BTD flush is called for a snapshot
     if (isBTD and m_ParticleSetUp!=-1) return;
     std::set< std::string > addedRecords; // add meta-data per record only once
@@ -934,7 +934,7 @@ WarpXOpenPMDPlot::SetupPos (
   }
   currSpecies["charge"][scalar].makeConstant( charge );
   currSpecies["mass"][scalar].makeConstant( mass );
-  
+
   // meta data
   currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
   currSpecies["positionOffset"].setUnitDimension( detail::getUnitDimension("positionOffset") );

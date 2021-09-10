@@ -17,7 +17,7 @@ public:
     ComputeParticleDiagFunctor( ) {}
     //** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeParticleDiagFunctor() = default;
-    
+
     virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                                       amrex::Real old_z_boost,
                                       amrex::Real current_z_boost, amrex::Real t_lab)

@@ -366,7 +366,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                 return random_filter(p, engine) * uniform_filter(p, engine)
                     * parser_filter(p, engine) * geometry_filter(p, engine);
             }, true);
-        } else {         
+        } else {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc);
         }

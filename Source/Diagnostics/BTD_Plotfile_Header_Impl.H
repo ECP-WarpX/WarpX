@@ -291,7 +291,7 @@ public:
     /** Number of real attributes*/
     int m_num_output_real;
     /** Number of integer attributes*/
-    int m_num_output_int;    
+    int m_num_output_int;
     /** The real attribute names*/
     amrex::Vector<std::string> m_real_comp_names;
     /** The real integer names*/
@@ -339,7 +339,7 @@ public:
     /** Size of BoxArray, m_ba*/
     int m_ba_size;
     /** BoxArray for particle output*/
-    amrex::BoxArray m_ba;    
+    amrex::BoxArray m_ba;
     /** string containing path of the particle output of species, species_name.*/
     std::string m_Header_path;
 };
