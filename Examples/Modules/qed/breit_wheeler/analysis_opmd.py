@@ -25,7 +25,7 @@ def main():
     print("Opening openPMD output")
     prefix = sys.argv[1]
     series = io.Series(prefix+"/openpmd_%T.h5", io.Access.read_only)
-    data_set_end = series.iterations[1]
+    data_set_end = series.iterations[2]
 
     # get simulation time
     sim_time = data_set_end.time
