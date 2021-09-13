@@ -153,17 +153,13 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                     // has given away already some area, so we use Sz_red rather than Sz.
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
-                    stop = amrex::Gpu::Atomic::If(&n_borrow,
-                                                  1,
-                                                  amrex::Plus<int>(),
-                        [=] AMREX_GPU_DEVICE (int tmp) noexcept
-                        {
-                            amrex::ignore_unused(tmp);
-                            return (S_red(i, j + j_n, k + k_n) > S_ext
-                                    && (flag_info_face(i, j + j_n, k + k_n) == 1 ||
-                                    flag_info_face(i, j + j_n, k + k_n) == 2)
-                                    && flag_ext_face(i, j, k) && ! stop);
-                        });
+                    if (S_red(i, j + j_n, k + k_n) > S_ext
+                        && (flag_info_face(i, j + j_n, k + k_n) == 1 ||
+                            flag_info_face(i, j + j_n, k + k_n) == 2)
+                        && flag_ext_face(i, j, k) && ! stop) {
+                        n_borrow += 1;
+                        stop = true;
+                    }
                 }
             }
         }
@@ -177,17 +173,13 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                     // has given away already some area, so we use Sz_red rather than Sz.
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
-                    stop = amrex::Gpu::Atomic::If(&n_borrow,
-                                                  1,
-                                                  amrex::Plus<int>(),
-                        [=] AMREX_GPU_DEVICE (int tmp) noexcept
-                        {
-                            amrex::ignore_unused(tmp);
-                            return (S_red(i + i_n, j, k + k_n) > S_ext
-                                    && (flag_info_face(i + i_n, j, k + k_n) == 1 ||
-                                    flag_info_face(i + i_n, j, k + k_n) == 2)
-                                    && flag_ext_face(i, j, k) && ! stop);
-                        });
+                    if (S_red(i + i_n, j, k + k_n) > S_ext
+                        && (flag_info_face(i + i_n, j, k + k_n) == 1 ||
+                            flag_info_face(i + i_n, j, k + k_n) == 2)
+                        && flag_ext_face(i, j, k) && ! stop) {
+                        n_borrow += 1;
+                        stop = true;
+                    }
                 }
             }
         }
@@ -201,17 +193,13 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                     // has given away already some area, so we use Sz_red rather than Sz.
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
-                    stop = amrex::Gpu::Atomic::If(&n_borrow,
-                                                  1,
-                                                   amrex::Plus<int>(),
-                        [=] AMREX_GPU_DEVICE (int tmp) noexcept
-                        {
-                            amrex::ignore_unused(tmp);
-                            return (S_red(i + i_n, j + j_n, k) > S_ext
-                                    && (flag_info_face(i + i_n, j + j_n, k) == 1 ||
-                                    flag_info_face(i + i_n, j + j_n, k) == 2)
-                                    && flag_ext_face(i, j, k) && ! stop);
-                        });
+                    if (S_red(i + i_n, j + j_n, k) > S_ext
+                        && (flag_info_face(i + i_n, j + j_n, k) == 1 ||
+                            flag_info_face(i + i_n, j + j_n, k) == 2)
+                        && flag_ext_face(i, j, k) && ! stop) {
+                        n_borrow += 1;
+                        stop = true;
+                    }
                 }
             }
         }
