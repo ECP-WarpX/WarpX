@@ -123,13 +123,14 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
                 int* const AMREX_RESTRICT Flag = FlagForPartCopy.dataPtr();
                 int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
 
-                auto& ptile_src = particles[index];
+                const auto& ptile_src = particles.at(index);
+                auto src_data = ptile_src.getConstParticleTileData();
                 // Flag particles that need to be copied if they cross the z-slice
                 // setting this to 1 for testing (temporarily)
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE(int i)
                 {
-                    Flag[i] = GetParticleFilter(ptile_src, i);
+                    Flag[i] = GetParticleFilter(src_data, i);
                 });
 
                 const int total_partdiag_size = amrex::Scan::ExclusiveSum(np,Flag,IndexLocation);
@@ -141,7 +142,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE(int i)
                 {
-                   if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, ptile_src, i,
+                   if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, src_data, i,
                                                                  old_size + IndexLocation[i]);
                 });
                 total_particles_added += count;
