@@ -471,7 +471,7 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     warpx.FillBoundaryAux(warpx.getngUpdateAux());
 
     // Update the RealBox used for the geometry filter in particle diags
-    for (int i = 0; i < m_output_species.size(); ++i) {
+    for (int i = 0; i < m_output_species[0].size(); ++i) {
         m_output_species[0][i].m_diag_domain = m_geom_output[0][0].ProbDomain();
     }
 }
