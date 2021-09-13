@@ -54,7 +54,7 @@ git clone https://github.com/AMReX-Codes/amrex.git
 cd amrex && git checkout b15b1cf8d282cbb2c0d0bc0c7b049a79375ea63c && cd -
 # Use QED brach for QED tests
 git clone https://github.com/ECP-WarpX/picsar.git
-cd picsar && git checkout c16b642e3dcf860480dd1dd21cefa3874f395773 && cd -
+cd picsar && git checkout 7ec0d7b58e4ba8f721d985f4153100cb8d57d842 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
