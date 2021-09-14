@@ -579,17 +579,17 @@ WarpX::ReadParameters ()
         }
         if (do_electrostatic != ElectrostaticSolverAlgo::None) {
             // Store the boundary conditions for the field solver
-            field_boundary_value_handler.definePhiBCs();
+            field_boundary_handler.definePhiBCs();
             // Build the handler for the field boundary values
             ParmParse pp_boundary("boundary");
-            pp_boundary.query("potential_lo_x", field_boundary_value_handler.potential_xlo_str);
-            pp_boundary.query("potential_hi_x", field_boundary_value_handler.potential_xhi_str);
-            pp_boundary.query("potential_lo_y", field_boundary_value_handler.potential_ylo_str);
-            pp_boundary.query("potential_hi_y", field_boundary_value_handler.potential_yhi_str);
-            pp_boundary.query("potential_lo_z", field_boundary_value_handler.potential_zlo_str);
-            pp_boundary.query("potential_hi_z", field_boundary_value_handler.potential_zhi_str);
-            pp_warpx.query("eb_potential(t)", field_boundary_value_handler.potential_eb_str);
-            field_boundary_value_handler.buildParsers();
+            pp_boundary.query("potential_lo_x", field_boundary_handler.potential_xlo_str);
+            pp_boundary.query("potential_hi_x", field_boundary_handler.potential_xhi_str);
+            pp_boundary.query("potential_lo_y", field_boundary_handler.potential_ylo_str);
+            pp_boundary.query("potential_hi_y", field_boundary_handler.potential_yhi_str);
+            pp_boundary.query("potential_lo_z", field_boundary_handler.potential_zlo_str);
+            pp_boundary.query("potential_hi_z", field_boundary_handler.potential_zhi_str);
+            pp_warpx.query("eb_potential(t)", field_boundary_handler.potential_eb_str);
+            field_boundary_handler.buildParsers();
         }
 
         queryWithParser(pp_warpx, "const_dt", const_dt);

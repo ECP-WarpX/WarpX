@@ -296,8 +296,8 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     // get the potential at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[1] = field_boundary_value_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_value_handler.potential_zhi(gett_new(0));
+    phi_bc_values_lo[1] = field_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_handler.potential_zhi(gett_new(0));
 
     // set the boundary potential values if needed
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
@@ -314,7 +314,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     }
 
     // Solve the Poisson equation
-    linop.setDomainBC( field_boundary_value_handler.lobc, field_boundary_value_handler.hibc );
+    linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
@@ -348,16 +348,16 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // get the potential at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[0] = field_boundary_value_handler.potential_xlo(gett_new(0));
-    phi_bc_values_hi[0] = field_boundary_value_handler.potential_xhi(gett_new(0));
+    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
+    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
 #if (AMREX_SPACEDIM==2)
-    phi_bc_values_lo[1] = field_boundary_value_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_value_handler.potential_zhi(gett_new(0));
+    phi_bc_values_lo[1] = field_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_handler.potential_zhi(gett_new(0));
 #elif (AMREX_SPACEDIM==3)
-    phi_bc_values_lo[1] = field_boundary_value_handler.potential_ylo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_value_handler.potential_yhi(gett_new(0));
-    phi_bc_values_lo[2] = field_boundary_value_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[2] = field_boundary_value_handler.potential_zhi(gett_new(0));
+    phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
+    phi_bc_values_lo[2] = field_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[2] = field_boundary_handler.potential_zhi(gett_new(0));
 #endif
 
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
@@ -392,11 +392,11 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     linop.setSigma({AMREX_D_DECL(
         1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
-    linop.setEBDirichlet( field_boundary_value_handler.getPhiEB(gett_new(0)) );
+    linop.setEBDirichlet( field_boundary_handler.getPhiEB(gett_new(0)) );
 #endif
 
     // Solve the Poisson equation
-    linop.setDomainBC( field_boundary_value_handler.lobc, field_boundary_value_handler.hibc );
+    linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
 
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
@@ -451,9 +451,9 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
                  Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const
 {
     // check if any dimension has Dirichlet boundary conditions
-    if (!field_boundary_value_handler.has_Dirichlet) return;
+    if (!field_boundary_handler.has_Dirichlet) return;
 
-    auto dirichlet_flag = field_boundary_value_handler.dirichlet_flag;
+    auto dirichlet_flag = field_boundary_handler.dirichlet_flag;
 
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
@@ -701,7 +701,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
     }
 }
 
-void ElectrostaticSolver::BoundaryValueHandler::definePhiBCs ( )
+void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 {
 #ifdef WARPX_DIM_RZ
     lobc[0] = LinOpBCType::Neumann;

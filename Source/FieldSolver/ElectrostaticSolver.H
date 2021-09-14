@@ -42,7 +42,7 @@ struct PhiCalculatorEB {
     }
 };
 
-class BoundaryValueHandler {
+class BoundaryHandler {
 
 public:
 

@@ -618,7 +618,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
-    ElectrostaticSolver::BoundaryValueHandler field_boundary_value_handler;
+    ElectrostaticSolver::BoundaryHandler field_boundary_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
