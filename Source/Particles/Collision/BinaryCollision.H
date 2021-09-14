@@ -7,9 +7,12 @@
 #ifndef WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 #define WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 
+#include "Particles/Collision/BinaryCollisionUtils.H"
 #include "Particles/Collision/CollisionBase.H"
 #include "Particles/Collision/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/ShuffleFisherYates.H"
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/ParticleCreation/SmartUtils.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -40,6 +43,7 @@
 #include <AMReX_ParticleTile.H>
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Scan.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
@@ -51,10 +55,14 @@
 /**
  * \brief This class performs generic binary collisions.
  *
- * \tparam FunctorType the type of the specific binary collision functor that acts on a single cell
+ * \tparam CollisionFunctorType the type of the specific binary collision functor that acts on a
+ *         single cell
+ * \tparam CopyTransformFunctorType the type of the second functor used in the case of
+ *         particle creation
  *
  */
-template <typename FunctorType>
+template <typename CollisionFunctorType,
+          typename CopyTransformFunctorType = NoParticleCreationFunc>
 class BinaryCollision final
     : public CollisionBase
 {
@@ -62,6 +70,7 @@ class BinaryCollision final
     using ParticleType = WarpXParticleContainer::ParticleType;
     using ParticleTileType = WarpXParticleContainer::ParticleTileType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
+    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
     using index_type = ParticleBins::index_type;
 
 public:
@@ -77,12 +86,17 @@ public:
         if(m_species_names.size() != 2)
             amrex::Abort("Binary collision " + collision_name + " must have exactly two species.");
 
-        m_binary_collision_functor = FunctorType(collision_name);
-
         if (m_species_names[0] == m_species_names[1])
             m_isSameSpecies = true;
         else
             m_isSameSpecies = false;
+
+        m_binary_collision_functor = CollisionFunctorType(collision_name);
+
+        amrex::ParmParse pp_collision_name(collision_name);
+        pp_collision_name.queryarr("product_species", m_product_species);
+        m_have_product_species = m_product_species.size() > 0;
+        m_copy_transform_functor = CopyTransformFunctorType();
     }
 
     virtual ~BinaryCollision () = default;
@@ -101,6 +115,40 @@ public:
 
         auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
         auto& species2 = mypc->GetParticleContainerFromName(m_species_names[1]);
+
+        // In case of particle creation, create the necessary vectors
+        const int n_product_species = m_product_species.size();
+        amrex::Vector<WarpXParticleContainer*> product_species_vector;
+        amrex::Vector<SmartCopy> copy_species1;
+        amrex::Vector<SmartCopy> copy_species2;
+        for (int i = 0; i < n_product_species; i++)
+        {
+            auto& product = mypc->GetParticleContainerFromName(m_product_species[i]);
+            product.defineAllParticleTiles();
+            product_species_vector.push_back(&product);
+            SmartCopyFactory copy_factory_species1(species1, product);
+            SmartCopyFactory copy_factory_species2(species2, product);
+            copy_species1.push_back(copy_factory_species1.getSmartCopy());
+            copy_species2.push_back(copy_factory_species2.getSmartCopy());
+        }
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::DeviceVector<SmartCopy> device_copy_species1(n_product_species);
+        amrex::Gpu::DeviceVector<SmartCopy> device_copy_species2(n_product_species);
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, copy_species1.begin(),
+                              copy_species1.end(), device_copy_species1.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, copy_species2.begin(),
+                              copy_species2.end(), device_copy_species2.begin());
+        amrex::Gpu::streamSynchronize();
+        auto copy_species1_data = device_copy_species1.data();
+        auto copy_species2_data = device_copy_species2.data();
+#else
+        auto copy_species1_data = copy_species1.data();
+        auto copy_species2_data = copy_species2.data();
+#endif
+        if (m_have_product_species){
+            species1.defineAllParticleTiles();
+            species2.defineAllParticleTiles();
+        }
 
         // Enable tiling
         amrex::MFItInfo info;
@@ -123,7 +171,8 @@ public:
                 }
                 amrex::Real wt = amrex::second();
 
-                doCollisionsWithinTile( lev, mfi, species1, species2 );
+                doCollisionsWithinTile( lev, mfi, species1, species2, product_species_vector,
+                                         copy_species1_data, copy_species2_data);
 
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
@@ -137,20 +186,64 @@ public:
 
     /** Perform all binary collisions within a tile
      *
-     * @param mfi iterator for multifab
-     * @param species1/2 pointer to species container
+     * \param mfi iterator for multifab
+     * \param species_1 first species container
+     * \param species_2 second species container
+     * \param product_species_vector vector of pointers to product species containers
+     * \param copy_species1 vector of SmartCopy functors used to copy species 1 to product species
+     * \param copy_species2 vector of SmartCopy functors used to copy species 2 to product species
      *
      */
     void doCollisionsWithinTile (
         int const lev, amrex::MFIter const& mfi,
         WarpXParticleContainer& species_1,
-        WarpXParticleContainer& species_2)
+        WarpXParticleContainer& species_2,
+        amrex::Vector<WarpXParticleContainer*> product_species_vector,
+        SmartCopy* copy_species1, SmartCopy* copy_species2)
     {
         using namespace ParticleUtils;
         using namespace amrex::literals;
 
         int const ndt = m_ndt;
-        FunctorType binary_collision_functor = m_binary_collision_functor;
+        CollisionFunctorType binary_collision_functor = m_binary_collision_functor;
+        const bool have_product_species = m_have_product_species;
+
+        // Store product species data in vectors
+        const int n_product_species = m_product_species.size();
+        amrex::Vector<SoaData_type> soa_products;
+        amrex::Vector<GetParticlePosition> get_position_products;
+        amrex::Vector<index_type> products_np;
+        constexpr int getpos_offset = 0;
+        for (int i = 0; i < n_product_species; i++)
+        {
+            ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
+            soa_products.push_back(ptile_product.getParticleTileData());
+            get_position_products.push_back(GetParticlePosition(ptile_product,
+                                                                      getpos_offset));
+            products_np.push_back(ptile_product.numParticles());
+        }
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::DeviceVector<SoaData_type> device_soa_products(n_product_species);
+        amrex::Gpu::DeviceVector<GetParticlePosition> device_get_position_products(n_product_species);
+        amrex::Gpu::DeviceVector<index_type> device_products_np(n_product_species);
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, soa_products.begin(),
+                              soa_products.end(),
+                              device_soa_products.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, get_position_products.begin(),
+                              get_position_products.end(),
+                              device_get_position_products.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_np.begin(),
+                              products_np.end(),
+                              device_products_np.begin());
+        amrex::Gpu::streamSynchronize();
+        auto soa_products_data = device_soa_products.data();
+        auto get_position_products_data = device_get_position_products.data();
+        auto products_np_data = device_products_np.data();
+#else
+        auto soa_products_data = soa_products.data();
+        auto get_position_products_data = get_position_products.data();
+        auto products_np_data = products_np.data();
+#endif
 
         if ( m_isSameSpecies ) // species_1 == species_2
         {
@@ -170,7 +263,6 @@ public:
             index_type const* cell_offsets_1 = bins_1.offsetsPtr();
             amrex::Real q1 = species_1.getCharge();
             amrex::Real m1 = species_1.getMass();
-            constexpr int getpos_offset = 0;
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
@@ -188,6 +280,50 @@ public:
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
+
+            /*
+              The following calculations are only required when creating product particles
+            */
+            const int n_cells_products = have_product_species ? n_cells: 0;
+            amrex::Gpu::DeviceVector<index_type> n_pairs_in_each_cell(n_cells_products);
+            auto p_n_pairs_in_each_cell = n_pairs_in_each_cell.dataPtr();
+
+            // Compute how many pairs in each cell and store in n_pairs_in_each_cell array
+            // For a single species, the number of pair in a cell is half the number of particles
+            // in that cell, rounded up to the next higher integer.
+            amrex::ParallelFor( n_cells_products,
+                [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+                {
+                    const auto n_part_in_cell = cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell];
+                    // Particular case: if there's only 1 particle in a cell, then there's no pair
+                    p_n_pairs_in_each_cell[i_cell] = (n_part_in_cell == 1)? 0: (n_part_in_cell+1)/2;
+                }
+            );
+
+            // Start indices of the pairs in a cell. Will be used for particle creation.
+            amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
+            const auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
+                                                     p_n_pairs_in_each_cell, pair_offsets.data());
+            auto p_pair_offsets = pair_offsets.dataPtr();
+
+            // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
+            amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
+            auto p_mask = mask.dataPtr();
+            // Will be filled with the index of the first particle of a given pair
+            amrex::Gpu::DeviceVector<index_type> pair_indices_1(n_total_pairs);
+            auto p_pair_indices_1 = pair_indices_1.dataPtr();
+            // Will be filled with the index of the second particle of a given pair
+            amrex::Gpu::DeviceVector<index_type> pair_indices_2(n_total_pairs);
+            auto p_pair_indices_2 = pair_indices_2.dataPtr();
+            // How much weight should be given to the produced particles (and removed from the
+            // reacting particles)
+            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight(n_total_pairs);
+            auto p_pair_reaction_weight = pair_reaction_weight.dataPtr();
+            /*
+              End of calculations only required when creating product particles
+            */
+
+
             // Loop over cells
             amrex::ParallelForRNG( n_cells,
                 [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
@@ -197,6 +333,10 @@ public:
                     index_type const cell_start_1 = cell_offsets_1[i_cell];
                     index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
                     index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
+
+                    // Same but for the pairs
+                    index_type const cell_start_pair = have_product_species?
+                                                           p_pair_offsets[i_cell] : 0;
 
                     // Do not collide if there is only one particle in the cell
                     if ( cell_stop_1 - cell_start_1 <= 1 ) return;
@@ -209,14 +349,35 @@ public:
                     auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
                     // Call the function in order to perform collisions
+                    // If there are product species, mask, p_pair_indices_1/2, and
+                    // p_pair_reaction_weight are filled here
                     binary_collision_functor(
                         cell_start_1, cell_half_1,
                         cell_half_1, cell_stop_1,
                         indices_1, indices_1,
                         soa_1, soa_1, get_position_1, get_position_1,
-                        q1, q1, m1, m1, dt*ndt, dV, engine );
+                        q1, q1, m1, m1, dt*ndt, dV,
+                        cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
+                        p_pair_reaction_weight, engine );
                 }
             );
+
+            // Create the new product particles and define their initial values
+            // num_added: how many particles of each product species have been created
+            const amrex::Vector<int> num_added = m_copy_transform_functor(soa_1, soa_1,
+                                                    soa_products_data,
+                                                    get_position_1, get_position_1,
+                                                    get_position_products_data,
+                                                    p_mask, products_np_data,
+                                                    copy_species1, copy_species2,
+                                                    p_pair_indices_1, p_pair_indices_2,
+                                                    p_pair_reaction_weight);
+
+            for (int i = 0; i < n_product_species; i++)
+            {
+                ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
+                setNewParticleIDs(ptile_product, products_np[i], num_added[i]);
+            }
         }
         else // species_1 != species_2
         {
@@ -238,7 +399,6 @@ public:
             index_type const* cell_offsets_1 = bins_1.offsetsPtr();
             amrex::Real q1 = species_1.getCharge();
             amrex::Real m1 = species_1.getMass();
-            constexpr int getpos_offset = 0;
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
             // - Species 2
             const auto soa_2 = ptile_2.getParticleTileData();
@@ -263,6 +423,55 @@ public:
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
+
+            /*
+              The following calculations are only required when creating product particles
+            */
+            const int n_cells_products = have_product_species ? n_cells: 0;
+            amrex::Gpu::DeviceVector<index_type> n_pairs_in_each_cell(n_cells_products);
+            auto p_n_pairs_in_each_cell = n_pairs_in_each_cell.dataPtr();
+
+            // Compute how many pairs in each cell and store in n_pairs_in_each_cell array
+            // For different species, the number of pairs in a cell is the number of particles of
+            // the species that has the most particles in that cell
+            amrex::ParallelFor( n_cells_products,
+                [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+                {
+                    const auto n_part_in_cell_1 = cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell];
+                    const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
+                    // Particular case: no pair if a species has no particle in that cell
+                    if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0)
+                        p_n_pairs_in_each_cell[i_cell] = 0;
+                    else
+                        p_n_pairs_in_each_cell[i_cell] =
+                                                      amrex::max(n_part_in_cell_1,n_part_in_cell_2);
+                }
+            );
+
+            // Start indices of the pairs in a cell. Will be used for particle creation
+            amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
+            auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
+                                                     p_n_pairs_in_each_cell, pair_offsets.data());
+            auto p_pair_offsets = pair_offsets.dataPtr();
+
+            // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
+            amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
+            auto p_mask = mask.dataPtr();
+            // Will be filled with the index of the first particle of a given pair
+            amrex::Gpu::DeviceVector<index_type> pair_indices_1(n_total_pairs);
+            auto p_pair_indices_1 = pair_indices_1.dataPtr();
+            // Will be filled with the index of the second particle of a given pair
+            amrex::Gpu::DeviceVector<index_type> pair_indices_2(n_total_pairs);
+            auto p_pair_indices_2 = pair_indices_2.dataPtr();
+            // How much weight should be given to the produced particles (and removed from the
+            // reacting particles)
+            amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight(n_total_pairs);
+            auto p_pair_reaction_weight = pair_reaction_weight.dataPtr();
+            /*
+              End of calculations only required when creating product particles
+            */
+
+
             // Loop over cells
             amrex::ParallelForRNG( n_cells,
                 [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
@@ -274,6 +483,9 @@ public:
                     // Same for species 2
                     index_type const cell_start_2 = cell_offsets_2[i_cell];
                     index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
+                    // Same but for the pairs
+                    index_type const cell_start_pair = have_product_species?
+                                                           p_pair_offsets[i_cell] : 0;
 
                     // ux from species1 can be accessed like this:
                     // ux_1[ indices_1[i] ], where i is between
@@ -291,13 +503,36 @@ public:
                     auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #endif
                     // Call the function in order to perform collisions
+                    // If there are product species, p_mask, p_pair_indices_1/2, and
+                    // p_pair_reaction_weight are filled here
                     binary_collision_functor(
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                         indices_1, indices_2,
                         soa_1, soa_2, get_position_1, get_position_2,
-                        q1, q2, m1, m2, dt*ndt, dV, engine );
+                        q1, q2, m1, m2, dt*ndt, dV,
+                        cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
+                        p_pair_reaction_weight, engine );
                 }
             );
+
+
+            // Create the new product particles and define their initial values
+            // num_added: how many particles of each product species have been created
+            const amrex::Vector<int> num_added = m_copy_transform_functor(soa_1, soa_2,
+                                                    soa_products_data,
+                                                    get_position_1, get_position_2,
+                                                    get_position_products_data,
+                                                    p_mask, products_np_data,
+                                                    copy_species1, copy_species2,
+                                                    p_pair_indices_1, p_pair_indices_2,
+                                                    p_pair_reaction_weight);
+
+            for (int i = 0; i < n_product_species; i++)
+            {
+                ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
+                setNewParticleIDs(ptile_product, products_np[i], num_added[i]);
+            }
+
         } // end if ( m_isSameSpecies)
 
     }
@@ -305,8 +540,12 @@ public:
 private:
 
     bool m_isSameSpecies;
+    bool m_have_product_species;
+    amrex::Vector<std::string> m_product_species;
     // functor that performs collisions within a cell
-    FunctorType m_binary_collision_functor;
+    CollisionFunctorType m_binary_collision_functor;
+    // functor that creates new particles and initializes their parameters
+    CopyTransformFunctorType m_copy_transform_functor;
 
 };
 
