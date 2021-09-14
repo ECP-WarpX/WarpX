@@ -648,7 +648,7 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
 {
     using namespace amrex;
 
-#if defined(WARPX_DIM_XZ)
+#if (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(yp, noy);
 #endif
 
