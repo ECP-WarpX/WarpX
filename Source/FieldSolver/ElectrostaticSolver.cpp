@@ -34,17 +34,7 @@
 #include <AMReX_LO_BCTYPES.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MLMG.H>
-#ifdef WARPX_DIM_RZ
-#    include <AMReX_MLNodeLaplacian.H>
-#else
-#    include <AMReX_MLNodeTensorLaplacian.H>
-#    ifdef AMREX_USE_EB
-#        include <AMReX_MLEBNodeFDLaplacian.H>
-#    endif
-#endif
 #include <AMReX_MultiFab.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
@@ -303,39 +293,14 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         }
     }
 
-    // Define the boundary conditions
-    Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
-    lobc[0] = LinOpBCType::Neumann;
-    hibc[0] = LinOpBCType::Dirichlet;
-    std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
-    dirichlet_flag[0] = false;
-    Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
-    if ( WarpX::field_boundary_lo[1] == FieldBoundaryType::Periodic
-         && WarpX::field_boundary_hi[1] == FieldBoundaryType::Periodic ) {
-        lobc[1] = LinOpBCType::Periodic;
-        hibc[1] = LinOpBCType::Periodic;
-        dirichlet_flag[1] = false;
-    } else if ( WarpX::field_boundary_lo[1] == FieldBoundaryType::PEC
-         && WarpX::field_boundary_hi[1] == FieldBoundaryType::PEC ) {
-        // Use Dirichlet boundary condition by default.
-        // Ideally, we would often want open boundary conditions here.
-        lobc[1] = LinOpBCType::Dirichlet;
-        hibc[1] = LinOpBCType::Dirichlet;
-
-        // set flag so we know which dimensions to fix the potential for
-        dirichlet_flag[1] = true;
-        // parse the input file for the potential at the current time
-        getPhiBC(1, phi_bc_values_lo[1], phi_bc_values_hi[1]);
-    }
-    else {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-            "Field boundary conditions have to be either periodic or PEC "
-            "when using the electrostatic solver"
-        );
-    }
+    // get the potential at the current time
+    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
+    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
+    phi_bc_values_lo[1] = field_boundary_value_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_value_handler.potential_zhi(gett_new(0));
 
     // set the boundary potential values if needed
-    setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
+    setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
     MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
@@ -349,7 +314,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     }
 
     // Solve the Poisson equation
-    linop.setDomainBC( lobc, hibc );
+    linop.setDomainBC( field_boundary_value_handler.lobc, field_boundary_value_handler.hibc );
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
@@ -380,37 +345,22 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                             int const max_iters,
                             int const verbosity) const
 {
+    // get the potential at the current time
+    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
+    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
+    phi_bc_values_lo[0] = field_boundary_value_handler.potential_xlo(gett_new(0));
+    phi_bc_values_hi[0] = field_boundary_value_handler.potential_xhi(gett_new(0));
+#if (AMREX_SPACEDIM==2)
+    phi_bc_values_lo[1] = field_boundary_value_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_value_handler.potential_zhi(gett_new(0));
+#elif (AMREX_SPACEDIM==3)
+    phi_bc_values_lo[1] = field_boundary_value_handler.potential_ylo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_value_handler.potential_yhi(gett_new(0));
+    phi_bc_values_lo[2] = field_boundary_value_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[2] = field_boundary_value_handler.potential_zhi(gett_new(0));
+#endif
 
-    // Define the boundary conditions
-    Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
-    std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
-    Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo, phi_bc_values_hi;
-    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
-        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
-             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
-            lobc[idim] = LinOpBCType::Periodic;
-            hibc[idim] = LinOpBCType::Periodic;
-            dirichlet_flag[idim] = false;
-        } else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
-             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
-            // Ideally, we would often want open boundary conditions here.
-            lobc[idim] = LinOpBCType::Dirichlet;
-            hibc[idim] = LinOpBCType::Dirichlet;
-
-            // set flag so we know which dimensions to fix the potential for
-            dirichlet_flag[idim] = true;
-            // parse the input file for the potential at the current time
-            getPhiBC(idim, phi_bc_values_lo[idim], phi_bc_values_hi[idim]);
-        }
-        else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                "Field boundary conditions have to be either periodic or PEC "
-                "when using the electrostatic solver"
-            );
-        }
-    }
-
-    setPhiBC(phi, dirichlet_flag, phi_bc_values_lo, phi_bc_values_hi);
+    setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
 #ifndef AMREX_USE_EB
     // Define the linear operator (Poisson operator)
@@ -446,7 +396,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 #endif
 
     // Solve the Poisson equation
-    linop.setDomainBC( lobc, hibc );
+    linop.setDomainBC( field_boundary_value_handler.lobc, field_boundary_value_handler.hibc );
 
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
@@ -496,19 +446,14 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
    \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
 void
-WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                 std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
-                 Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
-                 Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi ) const
+WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
+                 Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
+                 Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const
 {
     // check if any dimension has Dirichlet boundary conditions
-    bool has_Dirichlet = false;
-    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
-        if (dirichlet_flag[idim]) {
-            has_Dirichlet = true;
-        }
-    }
-    if (!has_Dirichlet) return;
+    if (!field_boundary_value_handler.has_Dirichlet) return;
+
+    auto dirichlet_flag = field_boundary_value_handler.dirichlet_flag;
 
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
@@ -552,67 +497,6 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                 }
             } // idim
     }} // lev & MFIter
-}
-
-/* \brief Utility function to parse input file for boundary potentials.
-
-    The input values are parsed to allow math expressions for the potentials
-    that specify time dependence.
-
-   \param[in] idim The dimension for which the potential is queried
-   \param[inout] pot_lo The specified value of `phi` on the lower boundary.
-   \param[inout] pot_hi The specified value of `phi` on the upper boundary.
-*/
-void
-WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) const
-{
-    // set default potentials to zero in order for current tests to pass
-    // but forcing the user to specify a potential might be better
-    std::string potential_lo_str = "0";
-    std::string potential_hi_str = "0";
-
-    // Get the boundary potentials specified in the simulation input file
-    // first as strings and then parse those for possible math expressions
-    ParmParse pp_boundary("boundary");
-
-#ifdef WARPX_DIM_RZ
-    if (idim == 1) {
-        pp_boundary.query("potential_lo_z", potential_lo_str);
-        pp_boundary.query("potential_hi_z", potential_hi_str);
-    }
-    else {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-            "Field boundary condition values can currently only be specified "
-            "for z when using RZ geometry."
-        );
-    }
-#else
-    if (idim == 0) {
-        pp_boundary.query("potential_lo_x", potential_lo_str);
-        pp_boundary.query("potential_hi_x", potential_hi_str);
-    }
-    else if (idim == 1){
-        if (AMREX_SPACEDIM == 2){
-            pp_boundary.query("potential_lo_z", potential_lo_str);
-            pp_boundary.query("potential_hi_z", potential_hi_str);
-        }
-        else {
-            pp_boundary.query("potential_lo_y", potential_lo_str);
-            pp_boundary.query("potential_hi_y", potential_hi_str);
-        }
-    }
-    else {
-        pp_boundary.query("potential_lo_z", potential_lo_str);
-        pp_boundary.query("potential_hi_z", potential_hi_str);
-    }
-#endif
-
-    auto parser_lo = makeParser(potential_lo_str, {"t"});
-    auto parser_lo_exe = parser_lo.compileHost<1>();
-    pot_lo = parser_lo_exe(gett_new(0));
-    auto parser_hi = makeParser(potential_hi_str, {"t"});
-    auto parser_hi_exe = parser_hi.compileHost<1>();
-    pot_hi = parser_hi_exe(gett_new(0));
 }
 
 /* \brief Compute the electric field that corresponds to `phi`, and
@@ -813,6 +697,42 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 }
             );
 #endif
+        }
+    }
+}
+
+void ElectrostaticSolver::BoundaryValueHandler::definePhiBCs ( )
+{
+#ifdef WARPX_DIM_RZ
+    lobc[0] = LinOpBCType::Neumann;
+    hibc[0] = LinOpBCType::Dirichlet;
+    std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
+    dirichlet_flag[0] = false;
+    int dim_start=1;
+#else
+    int dim_start=0;
+#endif
+    for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
+        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
+             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
+            lobc[idim] = LinOpBCType::Periodic;
+            hibc[idim] = LinOpBCType::Periodic;
+            dirichlet_flag[idim] = false;
+        } else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
+             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
+            // Ideally, we would often want open boundary conditions here.
+            lobc[idim] = LinOpBCType::Dirichlet;
+            hibc[idim] = LinOpBCType::Dirichlet;
+
+            // set flag so we know which dimensions to fix the potential for
+            dirichlet_flag[idim] = true;
+            has_Dirichlet = true;
+        }
+        else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "Field boundary conditions have to be either periodic or PEC "
+                "when using the electrostatic solver"
+            );
         }
     }
 }
