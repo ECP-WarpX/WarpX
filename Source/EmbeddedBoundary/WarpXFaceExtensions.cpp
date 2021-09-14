@@ -458,7 +458,8 @@ WarpX::ComputeOneWayExtensions() {
                                 [=] AMREX_GPU_DEVICE (amrex::Real tmp) noexcept
                                 {
                                     return (tmp >= 0 && ( flag_info_face_x(i, j + j_n, k + k_n) == 1
-                                            || flag_info_face_x(i, j + j_n, k + k_n) == 2));
+                                                       || flag_info_face_x(i, j + j_n, k + k_n) == 2)
+                                            && flag_ext_face_x(i, j, k));
                                 });
 
                             if (test_success) {
@@ -560,7 +561,8 @@ WarpX::ComputeOneWayExtensions() {
                                     [=] AMREX_GPU_DEVICE (amrex::Real tmp) noexcept
                                     {
                                         return (tmp >= 0 && ( flag_info_face_y(i + i_n, j, k + k_n) == 1
-                                                || flag_info_face_y(i + i_n, j, k + k_n) == 2));
+                                                           || flag_info_face_y(i + i_n, j, k + k_n) == 2)
+                                                && flag_ext_face_y(i, j, k));
                                     });
 
                                 if (test_success) {
@@ -660,7 +662,8 @@ WarpX::ComputeOneWayExtensions() {
                                     [=] AMREX_GPU_DEVICE (amrex::Real tmp) noexcept
                                     {
                                         return (tmp >= 0 && ( flag_info_face_z(i + i_n, j + j_n, k) == 1
-                                                || flag_info_face_z(i + i_n, j + j_n, k) == 2));
+                                                           || flag_info_face_z(i + i_n, j + j_n, k) == 2)
+                                                         && flag_ext_face_z(i, j, k));
                                     });
 
                                 if (test_success) {
