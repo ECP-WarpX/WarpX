@@ -42,7 +42,7 @@ public:
     void buildParsers ()
     {
         potential_eb_parser = makeParser(potential_eb_str, {"x", "y", "z", "t"});
-    };
+    }
 
     PhiCalculatorEB getPhiEB (amrex::Real t) const noexcept
     {
