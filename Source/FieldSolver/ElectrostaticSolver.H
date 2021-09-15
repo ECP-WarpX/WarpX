@@ -46,6 +46,7 @@ class BoundaryHandler {
 public:
 
     amrex::Array<amrex::LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
+    bool bcs_set = false;
     std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
     bool has_Dirichlet = false;
 
