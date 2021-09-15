@@ -38,9 +38,10 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     const amrex::ParticleReal E_mev = E_kin_star*joule_to_mev;
 
     // Compute Gamow factor, in MeV
+    constexpr auto one_pr = amrex::ParticleReal(1.);
     constexpr auto Z_boron = amrex::ParticleReal(5.);
     constexpr amrex::ParticleReal m_boron = amrex::ParticleReal(10.7319) * PhysConst::m_p;
-    constexpr amrex::ParticleReal m_reduced = m_boron*PhysConst::m_p / (m_boron + PhysConst::m_p);
+    constexpr amrex::ParticleReal m_reduced = m_boron / (one_pr + m_boron/PhysConst::m_p);
     constexpr amrex::ParticleReal gamow_factor = m_reduced / amrex::ParticleReal(2.) *
                         (PhysConst::q_e*PhysConst::q_e * Z_boron /
                            (amrex::ParticleReal(2.)*PhysConst::ep0*PhysConst::hbar)) *
