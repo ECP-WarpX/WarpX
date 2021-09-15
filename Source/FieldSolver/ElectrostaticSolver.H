@@ -26,8 +26,7 @@ namespace ElectrostaticSolver {
 struct PhiCalculatorEB {
 
     amrex::Real t;
-    amrex::Parser potential_eb_parser;
-    amrex::ParserExecutor<4> potential_eb = potential_eb_parser.compile<4>();
+    amrex::ParserExecutor<4> potential_eb;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator() (const amrex::Real x, const amrex::Real z) const noexcept
@@ -78,11 +77,12 @@ public:
         potential_yhi = potential_yhi_parser.compile<1>();
         potential_zlo = potential_zlo_parser.compile<1>();
         potential_zhi = potential_zhi_parser.compile<1>();
-    };
+        potential_eb = potential_eb_parser.compile<4>();
+    }
 
     PhiCalculatorEB getPhiEB (amrex::Real t) const noexcept
     {
-        return PhiCalculatorEB{t, potential_eb_parser};
+        return PhiCalculatorEB{t, potential_eb};
     }
 
     amrex::ParserExecutor<1> potential_xlo;
@@ -91,6 +91,7 @@ public:
     amrex::ParserExecutor<1> potential_yhi;
     amrex::ParserExecutor<1> potential_zlo;
     amrex::ParserExecutor<1> potential_zhi;
+    amrex::ParserExecutor<4> potential_eb;
 
 private:
 
