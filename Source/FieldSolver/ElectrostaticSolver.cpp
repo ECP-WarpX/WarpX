@@ -49,9 +49,6 @@ void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
-    // Store the boundary conditions for the field solver if they haven't been
-    // stored yet
-    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
 
     if (reset_fields) {
         // Reset all E and B fields to 0, before calculating space-charge fields
@@ -88,6 +85,10 @@ void
 WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
     WARPX_PROFILE("WarpX::AddSpaceChargeField");
+
+    // Store the boundary conditions for the field solver if they haven't been
+    // stored yet
+    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -132,6 +133,10 @@ void
 WarpX::AddSpaceChargeFieldLabFrame ()
 {
     WARPX_PROFILE("WarpX::AddSpaceChargeFieldLabFrame");
+
+    // Store the boundary conditions for the field solver if they haven't been
+    // stored yet
+    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
