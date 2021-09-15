@@ -82,7 +82,7 @@ public:
         queryWithParser(pp_collision_name, "fusion_probability_threshold",
                                             m_probability_threshold);
         // default fusion probability target_value
-        m_probability_threshold = 0.002_rt;
+        m_probability_target_value = 0.002_rt;
         queryWithParser(pp_collision_name, "fusion_probability_target_value",
                                             m_probability_target_value);
     }

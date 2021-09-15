@@ -148,8 +148,22 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
         probability_estimate *= fusion_multiplier_eff/fusion_multiplier;
     }
 
-    // Actual fusion probability that is always between zero and one
-    const amrex::ParticleReal probability = one_pr - std::exp(-probability_estimate);
+    // Compute actual fusion probability that is always between zero and one
+    // In principle this is obtained by computing 1 - exp(-probability_estimate)
+    // However, the computation of this quantity can fail numerically when probability_estimate is
+    // too small (e.g. exp(-probability_estimate) returns 1 and the computation returns 0).
+    // In this case, we simply use "probability_estimate" instead of 1 - exp(-probability_estimate)
+    // The threshold exp_threshold at which we switch between the two formulas is determined by the
+    // fact that computing the exponential is only useful if it can resolve the x^2/2 term of its
+    // Taylor expansion, i.e. the square of probability_estimate should be greater than the
+    // machine epsilon.
+#ifdef AMREX_SINGLE_PRECISION_PARTICLES
+    constexpr auto exp_threshold = amrex::ParticleReal(1.e-3);
+#else
+    constexpr auto exp_threshold = amrex::ParticleReal(5.e-8);
+#endif
+    const amrex::ParticleReal probability = (probability_estimate < exp_threshold) ?
+                                    probability_estimate: one_pr - std::exp(-probability_estimate);
 
     // Get a random number
     amrex::ParticleReal random_number = amrex::Random(engine);
