@@ -6,7 +6,7 @@ import sys
 import numpy as np
 # import psutil
 
-from pywarpx import callbacks
+from pywarpx import callbacks, _libwarpx
 
 from mewarpx.mwxrun import mwxrun
 
@@ -160,15 +160,16 @@ class TextDiag(WarpXDiagnostic):
               - ``{memory_usage}`` for memory usage of the current process
                 only.
 
-            install (bool): If False, don't actually install this into Warp.
+            install (bool): If False, don't actually install this into WarpX.
                 Use if you want to call manually for debugging.
-            kwargs: See :class:`metools.diags_store.diag_base.WarpDiagnostic`
+            kwargs: See :class:`mewarpx.mewarpx.diags_store.diag_base.WarpXDiagnostic`
                 for more timing options.
         """
         # In warp we used a specific walltime counter it had
         # (warp.top.steptime). Not sure what issues we'll hit just using time
         # here.
         self.prev_time = time.time()
+        self.start_time = self.prev_time
         self.prev_step = mwxrun.get_it()
         self.defaults_dict = {
             'default': "Step #{step:6d}; {nplive:8d} particles",
@@ -176,7 +177,8 @@ class TextDiag(WarpXDiagnostic):
                           "{npperspecies} "
                           "{wall_time:6.1f} s wall time; "
                           "{step_rate:4.2f} steps/s; "
-                          "{particle_step_rate:4.2f} particle*steps/s"),
+                          "{particle_step_rate:4.2f} particle*steps/s in the last {diag_steps} steps; "
+                          "{particle_step_rate_total:4.2f} particle*steps/s overall"),
             'memdebug': ("{system_memory}\n"
                          "Proc {iproc} usage:\n{memory_usage}"),
         }
@@ -194,21 +196,29 @@ class TextDiag(WarpXDiagnostic):
         if install:
             callbacks.installafterstep(self.text_diag)
 
+        self.particle_steps_total = 0
+        self.previous_particle_steps_total = 0
+
     def text_diag(self):
         """Write requested information to output."""
+
         if self.check_timestep():
             live_parts, parts_per_species_str = self._get_part_nums()
-
             # Loop everything else so run doesn't crash on diag error
             try:
                 wall_time = time.time() - self.prev_time
                 steps = mwxrun.get_it() - self.prev_step
+                # This isn't perfectly accurate, but it's a good approximation
+                self.particle_steps_total += live_parts * steps
                 if wall_time > 0:
+                    particle_step_rate = (self.particle_steps_total - self.previous_particle_steps_total) / wall_time
                     step_rate = steps / wall_time
                 else:
                     step_rate = 0
+                    particle_step_rate = 0
 
-                particle_step_rate = live_parts * step_rate
+                total_elapsed_time = time.time() - self.start_time
+                particle_step_rate_total = self.particle_steps_total / total_elapsed_time
 
                 self.status_dict = {
                     'step': mwxrun.get_it(),
@@ -217,6 +227,8 @@ class TextDiag(WarpXDiagnostic):
                     'wall_time': wall_time,
                     'step_rate': step_rate,
                     'particle_step_rate': particle_step_rate,
+                    "diag_steps": self.diag_steps,
+                    "particle_step_rate_total" : particle_step_rate_total,
                     # TODO: Reimplement when we have new parallel comm hook.
                     # 'iproc': mwxutil.iproc,
                     'iproc': None,
@@ -233,6 +245,7 @@ class TextDiag(WarpXDiagnostic):
                 # Print the string with everything that ended up in the
                 # dictionary.
                 logger.info(self.diag_string.format(**self.status_dict))
+                self.previous_particle_steps_total = self.particle_steps_total
 
             except Exception as err:
                 logger.error(f"Failed to output diag_string {self.diag_string} with error {err}")
@@ -296,3 +309,20 @@ class TextDiag(WarpXDiagnostic):
         #         value = psutil._common.bytes2human(value)
         #     memstr += '%-10s : %7s\n' % (name.capitalize(), value)
         # return memstr
+
+    def print_performance_summary(self):
+        total_time = time.time() - self.start_time
+        total_timesteps = _libwarpx.libwarpx.warpx_getistep(0)
+        steps_per_second = total_timesteps / total_time
+
+        n_procs = _libwarpx.libwarpx.warpx_getNProcs()
+        steps_per_second_per_proc = steps_per_second / n_procs
+
+        particle_steps_per_second = self.particle_steps_total / total_time
+        particle_steps_per_second_per_proc = particle_steps_per_second / n_procs
+        logger.info("### Run Summary ###")
+
+        logger.info(f"steps / second : {steps_per_second:.4f}")
+        logger.info(f"steps / second / proc : {steps_per_second_per_proc:.4f}")
+        logger.info(f"particle * steps / second : {particle_steps_per_second:.4f}")
+        logger.info(f"particle * steps / second / proc : {particle_steps_per_second_per_proc:.4f}")

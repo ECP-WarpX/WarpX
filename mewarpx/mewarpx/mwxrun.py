@@ -26,8 +26,7 @@ import numpy as np
 import logging
 
 from pywarpx import _libwarpx, picmi
-from mewarpx.utils_store import mwxconstants as constants
-from mewarpx.utils_store import parallel_util
+from mewarpx.utils_store import mwxconstants as constants, parallel_util
 from mewarpx.utils_store.util import compute_step
 
 logger = logging.getLogger(__name__)

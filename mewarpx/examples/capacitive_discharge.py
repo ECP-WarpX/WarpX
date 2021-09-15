@@ -149,7 +149,7 @@ mwxrun.init_run()
 # Add ME diagnostic
 ##########################
 
-diag_base.TextDiag(diag_steps=diag_steps, preset_string='perfdebug')
+text_diag = diag_base.TextDiag(diag_steps=diag_steps, preset_string='perfdebug')
 
 rho_array = np.zeros(129)
 def _get_rho_ions():
@@ -165,6 +165,7 @@ def _get_rho_ions():
 ##########################
 if args.steps:
     mwxrun.simulation.step(args.steps)
+    text_diag.print_performance_summary()
 else:
     mwxrun.simulation.step(max_steps - diag_steps)
     callbacks.installafterstep(_get_rho_ions)
