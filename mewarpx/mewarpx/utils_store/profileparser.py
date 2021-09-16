@@ -101,7 +101,7 @@ class FullProfile(object):
         with open(os.path.join(self.write_dir, "profile_data.json"), "w") as data_file:
             data_file.write(json.dumps(self.profile_dicts, indent=4))
 
-        print(f"Finished writing json file as '{self.write_dir}profile_data.json'.")
+        print(f"Finished writing json file as '{self.write_dir}/profile_data.json'.")
 
 def main(stdout_path, write_dir=None):
     print(f"Path to stdout file: {stdout_path}")
