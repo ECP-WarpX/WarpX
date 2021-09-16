@@ -296,6 +296,7 @@ WarpX::Evolve (int numsteps)
         }
 
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
+            if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
             // Electrostatic solver:
             // For each species: deposit charge and add the associated space-charge
             // E and B field to the grid ; this is done at the end of the PIC
@@ -304,6 +305,7 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
+            if (warpx_py_afterEsolve) warpx_py_afterEsolve();
         }
 
         // sync up time
@@ -314,17 +316,6 @@ WarpX::Evolve (int numsteps)
         // warpx_py_afterstep runs with the updated global time. It is included
         // in the evolve timing.
         if (warpx_py_afterstep) warpx_py_afterstep();
-
-        Real evolve_time_end_step = amrex::second();
-        evolve_time += evolve_time_end_step - evolve_time_beg_step;
-
-        if (verbose) {
-            amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
-                        << " DT = " << dt[0] << "\n";
-            amrex::Print()<< "Evolve time = " << evolve_time
-                      << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
-                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
-        }
 
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
@@ -340,6 +331,18 @@ WarpX::Evolve (int numsteps)
             amrex::ParmParse().QueryUnusedInputs();
             this->PrintGlobalWarnings("FIRST STEP"); //Print the warning list right after the first step.
             early_params_checked = true;
+        }
+
+        // create ending time stamp for calculating elapsed time each iteration
+        Real evolve_time_end_step = amrex::second();
+        evolve_time += evolve_time_end_step - evolve_time_beg_step;
+
+        if (verbose) {
+            amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
+                        << " DT = " << dt[0] << "\n";
+            amrex::Print()<< "Evolve time = " << evolve_time
+                      << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
+                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
         }
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
