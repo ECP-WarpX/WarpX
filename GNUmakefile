@@ -11,7 +11,7 @@ WARN_ALL = TRUE
 #DIM     = 2
 DIM = 3
 
-QED	       = TRUE
+QED	       = FALSE
 #QED_TABLE_GEN = TRUE
 
 COMP = gcc
