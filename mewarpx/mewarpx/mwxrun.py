@@ -24,9 +24,11 @@ SETUP order:
 import ctypes
 import numpy as np
 import logging
+import atexit
+import os.path
 
 from pywarpx import _libwarpx, picmi
-from mewarpx.utils_store import mwxconstants as constants, parallel_util
+from mewarpx.utils_store import mwxconstants as constants, parallel_util, profileparser
 from mewarpx.utils_store.util import compute_step
 
 logger = logging.getLogger(__name__)
@@ -368,3 +370,11 @@ class MEWarpXRun(object):
         )
 
 mwxrun = MEWarpXRun()
+
+@atexit.register
+def exit_handler():
+    atexit.unregister(_libwarpx.finalize)
+    _libwarpx.finalize()
+
+    if os.path.isfile("output.txt"):
+        profileparser.main("output.txt")
