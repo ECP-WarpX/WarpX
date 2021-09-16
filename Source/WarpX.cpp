@@ -452,15 +452,18 @@ void
 WarpX::PrintLocalWarnings(const std::string& when)
 {
     WARPX_PROFILE("WarpX::PrintLocalWarnings");
-    amrex::AllPrint() << m_p_warn_manager->print_local_warnings(when);
+    const auto warn_string = m_p_warn_manager->print_local_warnings(when);
+    amrex::AllPrint(amrex::ErrorStream()) << warn_string;
+    amrex::AllPrint() << warn_string;
 }
 
 void
 WarpX::PrintGlobalWarnings(const std::string& when)
 {
     WARPX_PROFILE("WarpX::PrintGlobalWarnings");
-    amrex::Print(amrex::ErrorStream())
-        << m_p_warn_manager->print_global_warnings(when);
+    const auto warn_string = m_p_warn_manager->print_global_warnings(when);
+    amrex::Print(amrex::ErrorStream()) << warn_string;
+    amrex::Print() << warn_string;
 }
 
 void
