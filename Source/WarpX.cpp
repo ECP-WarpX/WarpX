@@ -425,20 +425,18 @@ WarpX::RecordWarning(
 {
     WARPX_PROFILE("WarpX::RecordWarning");
 
-auto msg_priority = Utils::MsgLogger::Priority::high;
-if(priority == WarnPriority::low)
-    msg_priority = Utils::MsgLogger::Priority::low;
-else if(priority == WarnPriority::medium)
-    msg_priority = Utils::MsgLogger::Priority::medium;
+    auto msg_priority = Utils::MsgLogger::Priority::high;
+    if(priority == WarnPriority::low)
+        msg_priority = Utils::MsgLogger::Priority::low;
+    else if(priority == WarnPriority::medium)
+        msg_priority = Utils::MsgLogger::Priority::medium;
 
-// If WARPX_WARN_IMMEDIATELY is defined, WarpX prints an error message immediately
-// every time an error message is recorded.
-#ifdef WARPX_WARN_IMMEDIATELY
-    amrex::Warning(
-        "WARNING: ["
-        + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
-        + "][" + topic + "] " + text);
-#endif
+    if(m_always_warn_immediately){
+        amrex::Warning(
+            "!!!!!! WARNING: ["
+            + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+            + "][" + topic + "] " + text);
+    }
 
 #ifdef AMREX_USE_OMP
     #pragma omp critical
@@ -453,7 +451,6 @@ WarpX::PrintLocalWarnings(const std::string& when)
 {
     WARPX_PROFILE("WarpX::PrintLocalWarnings");
     const auto warn_string = m_p_warn_manager->print_local_warnings(when);
-    amrex::AllPrint(amrex::ErrorStream()) << warn_string;
     amrex::AllPrint() << warn_string;
 }
 
@@ -462,7 +459,6 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 {
     WARPX_PROFILE("WarpX::PrintGlobalWarnings");
     const auto warn_string = m_p_warn_manager->print_global_warnings(when);
-    amrex::Print(amrex::ErrorStream()) << warn_string;
     amrex::Print() << warn_string;
 }
 
@@ -493,6 +489,7 @@ WarpX::ReadParameters ()
         //"Synthetic" warning messages may be injected in the Warning Manager via
         // inputfile for debug&testing purposes.
         m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
+        pp_warpx.query("always_warn_immediately", m_always_warn_immediately);
 
         std::vector<int> numprocs_in;
         queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);

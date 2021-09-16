@@ -999,8 +999,10 @@ private:
 #   endif
 #endif
 
-     // Warning manager: it allows recording and printing error messages
+    // Warning manager: it allows recording and printing error messages
     std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
+    // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
+    bool m_always_warn_immediately = false;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
