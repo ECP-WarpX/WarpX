@@ -72,6 +72,7 @@ WarpX::Evolve (int numsteps)
 
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
+        WARPX_PROFILE("WarpX::Evolve::step");
         Real evolve_time_beg_step = amrex::second();
 
         multi_diags->NewIteration();
@@ -365,6 +366,7 @@ WarpX::Evolve (int numsteps)
 void
 WarpX::OneStep_nosub (Real cur_time)
 {
+    WARPX_PROFILE("WarpX::OneStep_nosub()");
 
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
