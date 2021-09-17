@@ -15,6 +15,49 @@
 #include <memory>
 #include <string>
 
+
+enum MacroparameterInitType { ConstantValue, ParserFunction};
+
+struct GetMacroparameter
+{
+    MacroparameterInitType m_type;
+    amrex::Real m_value;
+    amrex::ParserExecutor<3> m_parser;
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    amrex::Real operator () (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    {
+        using namespace amrex::literals;
+        if (m_type == ConstantValue)
+        {
+            return m_value;        
+        }
+        else if (m_type == ParserFunction)
+        {
+            return m_parser(x,y,z);
+        }
+        else
+        {
+            amrex::Abort("macroparameter init type not valid.");
+            return 0.;
+        }
+        return 0.;
+    }        
+};
+
+struct GetSigmaMacroparameter : GetMacroparameter
+{
+    GetSigmaMacroparameter () noexcept;
+};
+
+struct GetMuMacroparameter : GetMacroparameter
+{
+    GetMuMacroparameter () noexcept;
+};
+
+struct GetEpsilonMacroparameter : GetMacroparameter
+{
+    GetEpsilonMacroparameter () noexcept;
+};
 /**
  * \brief This class contains the macroscopic properties of the medium needed to
  * evaluate macroscopic Maxwell equation.
@@ -63,7 +106,10 @@ public:
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
 
-private:
+     MacroparameterInitType m_sigma_type;
+     MacroparameterInitType m_mu_type;
+     MacroparameterInitType m_epsilon_type;
+
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma = 0.0;
      /** Permittivity, epsilon, of the medium */
@@ -91,6 +137,7 @@ private:
      std::unique_ptr<amrex::Parser> m_sigma_parser;
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
+
 };
 
 /**

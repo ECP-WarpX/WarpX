@@ -22,6 +22,49 @@
 
 using namespace amrex;
 
+GetSigmaMacroparameter::GetSigmaMacroparameter () noexcept
+{
+    auto& warpx = WarpX::GetInstance();
+    auto& macroscopic_properties = warpx.GetMacroscopicProperties();
+    if (macroscopic_properties.m_sigma_s == "constant") {
+        m_type = ConstantValue;
+        m_value = macroscopic_properties.m_sigma;
+    }
+    else if (macroscopic_properties.m_sigma_s == "parse_sigma_function") {
+        m_type = ParserFunction;
+        m_parser = macroscopic_properties.m_sigma_parser->compile<3>();
+    }
+}
+
+GetMuMacroparameter::GetMuMacroparameter () noexcept
+{
+    auto& warpx = WarpX::GetInstance();
+    auto& macroscopic_properties = warpx.GetMacroscopicProperties();
+    if (macroscopic_properties.m_mu_s == "constant") {
+        m_type = ConstantValue;
+        m_value = macroscopic_properties.m_mu;
+    }
+    else if (macroscopic_properties.m_mu_s == "parse_mu_function") {
+        m_type = ParserFunction;
+        m_parser = macroscopic_properties.m_mu_parser->compile<3>();
+    }
+}
+
+GetEpsilonMacroparameter::GetEpsilonMacroparameter () noexcept
+{
+    auto& warpx = WarpX::GetInstance();
+    auto& macroscopic_properties = warpx.GetMacroscopicProperties();
+    if (macroscopic_properties.m_epsilon_s == "constant") {
+        m_type = ConstantValue;
+        m_value = macroscopic_properties.m_epsilon;
+    }
+    else if (macroscopic_properties.m_epsilon_s == "parse_epsilon_function") {
+        m_type = ParserFunction;
+        m_parser = macroscopic_properties.m_epsilon_parser->compile<3>();
+    }
+}
+
+
 MacroscopicProperties::MacroscopicProperties ()
 {
     ReadParameters();

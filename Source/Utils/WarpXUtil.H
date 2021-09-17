@@ -161,6 +161,39 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
     return linear_interp(z0, z1, fxy0, fxy1, z);
 }
 
+/** \brief Compute physical coordinates (x,y,z) that correspond to a given (i,j,k) and
+ *  the corresponding staggering, mf_type.
+ *
+ * \param[in] i    index along x
+ * \param[in] j    index along y
+ * \param[in] k    index along z
+ * \param[in] mf_type GpuArray containing the staggering type to convert (i,j,k) to (x,y,z)
+ * \param[in] domain_lo Physical coordinates of the lowest corner of the simulation domain
+ * \param[in] dx   Cell size of the simulation domain
+ *
+ * \param[out] x   physical coordinate along x
+ * \param[out] y   physical coordinate along y
+ * \param[out] z   physical coordinate along z
+ */
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void getCellCoordinates (int i, int j, int k,
+                         amrex::GpuArray<int, 3> const mf_type,
+                         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const domain_lo,
+                         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const dx,
+                         amrex::Real &x, amrex::Real &y, amrex::Real &z)
+{
+    using namespace amrex::literals;
+    x = domain_lo[0] + i*dx[0] + (1._rt - mf_type[0]) * dx[0]*0.5;
+#if (AMREX_SPACEDIM==2)
+    amrex::ignore_unused(j);
+    y = 0._rt;
+    z = domain_lo[1] + k*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
+#else
+    y = domain_lo[1] + j*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
+    z = domain_lo[2] + k*dx[2] + (1._rt - mf_type[2]) * dx[2]*0.5;
+#endif
+}
+
 }
 
 /**

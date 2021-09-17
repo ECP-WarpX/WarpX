@@ -10,21 +10,26 @@
 
 #include "WarpX.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/WarpXUtil.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include <AMReX_Array.H>
 
 /**
  * \brief Functor that returns the division of the source m_field Array4 value
           by macroparameter, m_parameter value at the respective (i,j,k,ncomp).
  */
+template< typename T_GetMacroparameter>
 struct FieldAccessorMacroscopic
 {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     FieldAccessorMacroscopic ( amrex::Array4<amrex::Real const> const a_field,
-                               amrex::Array4<amrex::Real const> const a_parameter,
+                               T_GetMacroparameter const& a_getParameter,
                                amrex::GpuArray<int,3> const& a_field_stag,
                                amrex::GpuArray<int,3> const& a_parameter_stag,
-                               amrex::GpuArray<int,3> const& a_cr_ratio )
-        : m_field(a_field), m_parameter(a_parameter), m_field_stag(a_field_stag), m_parameter_stag(a_parameter_stag), m_cr_ratio(a_cr_ratio) {}
+                               amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const a_domain_lo,
+                               amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const a_dx )
+        : m_field(a_field), m_getParameter(a_getParameter), m_field_stag(a_field_stag),
+          m_parameter_stag(a_parameter_stag), m_domain_lo(a_domain_lo), m_dx(a_dx) {}
 
     /**
      * \brief return field value at (i,j,k,ncomp) scaled by (1/m_parameters(i,j,k,ncomp))
@@ -43,23 +48,21 @@ struct FieldAccessorMacroscopic
     amrex::Real operator() (int const i, int const j,
                             int const k, int const ncomp) const noexcept
     {
-        // Interpolate the material properties from where it is described to
-        // the location of the field.
-        amrex::Real const parameter_interp = CoarsenIO::Interp( m_parameter, m_parameter_stag,
-                                             m_field_stag, m_cr_ratio, i, j, k, 0);
-        return ( m_field(i, j, k, ncomp)  /  parameter_interp ) ;
+        amrex::Real x, y, z;
+        WarpXUtilAlgo::getCellCoordinates(i, j, k, m_field_stag, m_domain_lo, m_dx, x, y, z);
+        return ( m_field(i, j, k, ncomp)  /  m_getParameter(x, y, z) ) ;
     }
 private:
     /** Array4 of the source field to be scaled and returned by the operator() */
     amrex::Array4<amrex::Real const> const m_field;
-    /** Array4 of the macroscopic parameter used to divide m_field in the operator() */
-    amrex::Array4<amrex::Real const> const m_parameter;
+    T_GetMacroparameter const m_getParameter;
     /**  Staggering of the field multifab, m_field */
     amrex::GpuArray<int,3> const m_field_stag;
     /**  Staggering of the macroparameter multifab, m_parameter_stag */
     amrex::GpuArray<int,3> const m_parameter_stag;
     /**  Coarsening ratio when interpolated macroparameter to location of field */
-    amrex::GpuArray<int,3> const m_cr_ratio;
+    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const m_domain_lo;
+    amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const m_dx;
 };
 
 

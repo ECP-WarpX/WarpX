@@ -95,6 +95,7 @@ public:
     void Evolve (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
+    MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
@@ -1032,7 +1033,6 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
-
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
