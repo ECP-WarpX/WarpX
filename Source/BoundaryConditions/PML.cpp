@@ -376,7 +376,12 @@ SigmaBox::ComputePMLFactorsB (const Real* a_dx, Real dt)
         N[idim] = sigma_star[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -405,7 +410,12 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
         N[idim] = sigma[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
