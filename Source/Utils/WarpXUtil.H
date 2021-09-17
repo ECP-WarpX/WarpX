@@ -175,7 +175,7 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
  * \param[out] y   physical coordinate along y
  * \param[out] z   physical coordinate along z
  */
-AMREX_GPU_HOSE_DEVICE AMREX_FORCE_INLINE
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void getCellCoordinates (int i, int j, int k,
                          amrex::GpuArray<int, 3> const mf_type,
                          amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const domain_lo,
