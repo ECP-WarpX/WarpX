@@ -6,13 +6,11 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef GET_TEMPERATURE_H_
-#define GET_TEMPERATURE_H
+#ifndef TEMPERATURE_INIT_H_
+#define TEMPERATURE_INIT_H_
 
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
-
-enum TemperatureInitType { Constant, Parser };
 
 /* Class that stores and returns a constant temperature */
 struct TemperatureInitConstant
