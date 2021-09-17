@@ -29,7 +29,7 @@ struct GetMacroparameter
         using namespace amrex::literals;
         if (m_type == ConstantValue)
         {
-            return m_value;        
+            return m_value;
         }
         else if (m_type == ParserFunction)
         {
@@ -41,7 +41,7 @@ struct GetMacroparameter
             return 0.;
         }
         return 0.;
-    }        
+    }
 };
 
 struct GetSigmaMacroparameter : GetMacroparameter
