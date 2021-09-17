@@ -1,14 +1,14 @@
 To compile and upload:
 - Create a directory with this structure:
 ├── WarpX
-│   ├── medocker
-│   │   ├── docker_<yourimagefolder>
-│   │   │   └── Dockerfile
-│   │   ├── docker_shared
-│   │   │   ├── make_docker.sh
-│   │   │   ├── README
-│   │   │   └── run_warpx.sh
 │   ├── mewarpx
+│   │   ├── medocker
+│   │   │   ├── docker_<yourimagefolder>
+│   │   │   │   └── Dockerfile
+│   │   │   ├── docker_shared
+│   │   │   │   ├── make_docker.sh
+│   │   │   │   ├── README
+│   │   │   │   └── run_warpx.sh
 ├── warpx-data
 
 - Move into the docker_<yourimagefolder>

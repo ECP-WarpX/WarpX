@@ -1,30 +1,28 @@
 ARG BUILDPLATFORM
 
-ARG WARPXCOMPUTE=OMP
+ARG WARPXCOMPUTE
 
 FROM 167833485543.dkr.ecr.us-west-2.amazonaws.com/simteam/ubuntu-mirror:focal-${BUILDPLATFORM}
 
-ENV WARPXCOMPUTE=${WARPXCOMPUTE}
+ENV WARPXCOMPUTE=${WARPXCOMPUTE:-OMP}
 
 ARG MPI_IMPL=ompi
 
-# The '--login' is the way to get mpich to load happily, which in
-# turn is necessary for a successful warp pinstall (and any mpi command
-# actually) - NOT SURE HOW OPENMPI WORKS WITH THIS.
+# The '--login' seems to help MPI to load happily
 
-COPY WarpX/medocker/docker_shared/ubuntu_prep.sh /root
+COPY WarpX/mewarpx/medocker/docker_shared/ubuntu_prep.sh /root
 RUN bash --login /root/ubuntu_prep.sh
 
-COPY WarpX/medocker/docker_shared/ubuntu_packages.sh /root
+COPY WarpX/mewarpx/medocker/docker_shared/ubuntu_packages.sh /root
 RUN bash --login /root/ubuntu_packages.sh
 
-COPY WarpX/medocker/docker_shared/ubuntu_${MPI_IMPL}.sh /root
+COPY WarpX/mewarpx/medocker/docker_shared/ubuntu_${MPI_IMPL}.sh /root
 RUN bash --login /root/ubuntu_${MPI_IMPL}.sh
 
 # Switch to the new user
 USER me_user
 
-COPY WarpX/medocker/docker_shared/python_packages.sh /root
+COPY WarpX/mewarpx/medocker/docker_shared/python_packages.sh /root
 # create directory so that it's added to $PATH before login
 RUN mkdir -p /home/me_user/.local/bin
 #RUN mkdir -p /root/.local/bin
@@ -33,11 +31,11 @@ RUN bash --login /root/python_packages.sh
 # Copy in files
 COPY --chown=me_user:me_user WarpX /merunset/WarpX
 COPY --chown=me_user:me_user warpx-data /merunset/warpx-data
-COPY --chown=me_user:me_user WarpX/medocker/docker_shared/run_warpx.sh /merunset/run/
+COPY --chown=me_user:me_user WarpX/mewarpx/medocker/docker_shared/run_warpx.sh /merunset/run/
 
 WORKDIR /merunset
 
-COPY WarpX/medocker/docker_shared/build_me_packages.sh /root
+COPY WarpX/mewarpx/medocker/docker_shared/build_me_packages.sh /root
 RUN /bin/bash --login /root/build_me_packages.sh
 
 # This is needed to get around a bug in openmpi that would print copious error messages

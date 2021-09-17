@@ -57,7 +57,7 @@ echo 'export LANG=en_US.UTF-8' >> /etc/profile.d/10-set-locale.sh
 
 echo 'export LLVM_CONFIG=/usr/bin/llvm-config-9' >> /etc/profile.d/11-configure-llvm.sh
 
-if [ ${WARPXCOMPUTE}=CUDA ] ; then
+if [ ${WARPXCOMPUTE} == CUDA ] ; then
     # install cuda toolkit
     wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
     sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600

@@ -1,0 +1,63 @@
+version: 0.2
+
+#env:
+  #variables:
+     # key: "value"
+     # key: "value"
+  #parameter-store:
+     # key: "value"
+     # key: "value"
+  #secrets-manager:
+     # key: secret-id:json-key:version-stage:version-id
+     # key: secret-id:json-key:version-stage:version-id
+  #exported-variables:
+     # - variable
+     # - variable
+  #git-credential-helper: yes
+#batch:
+  #fast-fail: true
+  #build-list:
+  #build-matrix:
+  #build-graph:
+phases:
+  install:
+    commands:
+        #- cd ${CODEBUILD_SRC_DIR_Minerva}
+        #- if git branch -r | grep -q origin/"$CIRCLE_BRANCH"; then git checkout "$CIRCLE_BRANCH"; fi
+        - mkdir ~/.aws/
+  #pre_build:
+    #commands:
+      # - command
+      # - command
+  build:
+    commands:
+       # In my testing this CODEBUILD_WEBHOOK_HEAD_REF gives refs/heads/psdevel
+       # for psdevel branch, so this gives just psdevel
+       # Having this separate command means DOCKER_BRANCHNAME can be set
+       # manually in codebuild to get the same effect.
+       - if [ -z "$DOCKER_BRANCHNAME" ]; then export DOCKER_BRANCHNAME=$(basename ${CODEBUILD_WEBHOOK_HEAD_REF}); fi
+       - cd ${CODEBUILD_SRC_DIR}/mewarpx/medocker/docker_ubuntu2004
+       - bash ../docker_shared/make_docker.sh graviton-autobuild $DOCKER_BRANCHNAME
+      # - command
+  #post_build:
+    #commands:
+      # - command
+      # - command
+#reports:
+  #report-name-or-arn:
+    #files:
+      # - location
+      # - location
+    #base-directory: location
+    #discard-paths: yes
+    #file-format: JunitXml | CucumberJson
+#artifacts:
+  #files:
+    # - location
+    # - location
+  #name: $(date +%Y-%m-%d)
+  #discard-paths: yes
+  #base-directory: location
+#cache:
+  #paths:
+    # - paths

@@ -80,6 +80,7 @@ do
         find . -name "*.dpkl" | while read file; do checkptmove "$file"; done
         find . -name "*.png" | while read file; do checkptmove "$file"; done
         find . -name "*.txt" | while read file; do checkptmove "$file"; done
+        find . -name "*.json" | while read file; do checkptmove "$file"; done
         aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*"
     else
         for d in ./diags_* ; do
