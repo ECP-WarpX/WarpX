@@ -151,10 +151,11 @@ WarpX::Evolve (int numsteps)
         }
 
         // Run multi-physics modules:
-        // ionization, Coulomb collisions, QED Schwinger
+        // ionization, Coulomb collisions, QED
         doFieldIonization();
         mypc->doCollisions( cur_time );
 #ifdef WARPX_QED
+        doQEDEvents();
         mypc->doQEDSchwinger();
 #endif
 
@@ -192,11 +193,6 @@ WarpX::Evolve (int numsteps)
             amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
             amrex::Abort("Unsupported do_subcycling type");
         }
-
-        // Run remaining QED modules
-#ifdef WARPX_QED
-        doQEDEvents();
-#endif
 
         // Resample particles
         // +1 is necessary here because value of step seen by user (first step is 1) is different than
