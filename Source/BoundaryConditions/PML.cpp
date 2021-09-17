@@ -183,7 +183,9 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
+#if (AMREX_SPACEDIM >= 2)
         int jdim = (idim+1) % AMREX_SPACEDIM;
+#endif
 #if (AMREX_SPACEDIM == 3)
         int kdim = (idim+2) % AMREX_SPACEDIM;
 #endif
@@ -197,6 +199,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 direct_faces.push_back(kv.first);
             }
+#if (AMREX_SPACEDIM >= 2)
             else if (amrex::grow(grid_box, jdim, ncell).intersects(box))
             {
                 side_faces.push_back(kv.first);
@@ -226,8 +229,10 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 corners.push_back(kv.first);
             }
+#endif
         }
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : corners)
         {
             const Box& grid_box = grids[gid];
@@ -260,6 +265,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): corners, how did this happen?\n");
             }
         }
+#endif
 
 #if (AMREX_SPACEDIM == 3)
         for (auto gid : side_side_edges)
@@ -301,6 +307,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
         }
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : side_faces)
         {
             const Box& grid_box = grids[gid];
@@ -316,6 +323,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): side_faces, how did this happen?\n");
             }
         }
+#endif
 
         for (auto gid : direct_faces)
         {
@@ -514,6 +522,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif (AMREX_SPACEDIM == 2)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif (AMREX_SPACEDIM == 1)
+        IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
         // Set the number of guard cells to the maximum of each field

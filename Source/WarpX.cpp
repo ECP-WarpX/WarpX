@@ -1938,7 +1938,7 @@ WarpX::CellSize (int lev)
 #elif (AMREX_SPACEDIM == 2)
     return { dx[0], 1.0, dx[1] };
 #else
-    static_assert(AMREX_SPACEDIM != 1, "1D is not supported");
+    return { dx[0], 1.0, 1.0 };
 #endif
 }
 
