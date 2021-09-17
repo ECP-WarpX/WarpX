@@ -1147,6 +1147,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                 pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i, amrex::RandomEngine const& engine) {
                     ParticleType& p = pp[i];
+
+                    // skip particles that are already flagged for removal
+                    if (p.id() < 0) return;
+
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
@@ -1161,7 +1165,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                                                               boundary_conditions, engine);
 
                     if (particle_lost) {
-                        p.id() = -1; //-p.id();
+                        p.id() = -p.id();
                     } else {
                         SetPosition.AsStored(i, x, y, z);
                     }
