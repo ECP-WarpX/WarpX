@@ -27,6 +27,7 @@
 #include <AMReX_Parser.H>
 #include <AMReX_Print.H>
 #include <AMReX_RandomEngine.H>
+#include <AMReX_REAL.H>
 
 #include <algorithm>
 #include <cctype>
@@ -477,6 +478,8 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
 // InjectorMomentum[Constant or Custom or etc.].getMomentum.
 void PlasmaInjector::parseMomentum (ParmParse& pp)
 {
+    using namespace amrex::literals;
+
     // parse momentum information
     std::string mom_dist_s;
     pp.get("momentum_distribution_type", mom_dist_s);
@@ -484,25 +487,31 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                    mom_dist_s.end(),
                    mom_dist_s.begin(),
                    ::tolower);
-    if (mom_dist_s == "constant") {
-        Real ux = 0.;
-        Real uy = 0.;
-        Real uz = 0.;
+    if (mom_dist_s == "at_rest") {
+        constexpr Real ux = 0._rt;
+        constexpr Real uy = 0._rt;
+        constexpr Real uz = 0._rt;
+        // Construct InjectorMomentum with InjectorMomentumConstant.
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux, uy, uz));
+    } else if (mom_dist_s == "constant") {
+        Real ux = 0._rt;
+        Real uy = 0._rt;
+        Real uz = 0._rt;
         queryWithParser(pp, "ux", ux);
         queryWithParser(pp, "uy", uy);
         queryWithParser(pp, "uz", uz);
         // Construct InjectorMomentum with InjectorMomentumConstant.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux,uy, uz));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux, uy, uz));
     } else if (mom_dist_s == "custom") {
         // Construct InjectorMomentum with InjectorMomentumCustom.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumCustom*)nullptr, species_name));
     } else if (mom_dist_s == "gaussian") {
-        Real ux_m = 0.;
-        Real uy_m = 0.;
-        Real uz_m = 0.;
-        Real ux_th = 0.;
-        Real uy_th = 0.;
-        Real uz_th = 0.;
+        Real ux_m = 0._rt;
+        Real uy_m = 0._rt;
+        Real uz_m = 0._rt;
+        Real ux_th = 0._rt;
+        Real uy_th = 0._rt;
+        Real uz_th = 0._rt;
         queryWithParser(pp, "ux_m", ux_m);
         queryWithParser(pp, "uy_m", uy_m);
         queryWithParser(pp, "uz_m", uz_m);
@@ -515,12 +524,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
     } else if (mom_dist_s == "gaussianflux") {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(surface_flux,
             "Error: gaussianflux can only be used with injection_style = NFluxPerCell");
-        Real ux_m = 0.;
-        Real uy_m = 0.;
-        Real uz_m = 0.;
-        Real ux_th = 0.;
-        Real uy_th = 0.;
-        Real uz_th = 0.;
+        Real ux_m = 0._rt;
+        Real uy_m = 0._rt;
+        Real uz_m = 0._rt;
+        Real ux_th = 0._rt;
+        Real uy_th = 0._rt;
+        Real uz_th = 0._rt;
         queryWithParser(pp, "ux_m", ux_m);
         queryWithParser(pp, "uy_m", uy_m);
         queryWithParser(pp, "uz_m", uz_m);
@@ -532,8 +541,8 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
                                              flux_normal_axis, flux_direction));
     } else if (mom_dist_s == "maxwell_boltzmann"){
-        Real beta = 0.;
-        Real theta = 10.;
+        Real beta = 0._rt;
+        Real theta = 10._rt;
         int dir = 0;
         std::string direction = "x";
         queryWithParser(pp, "beta", beta);
@@ -563,8 +572,8 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, theta, beta, dir));
     } else if (mom_dist_s == "maxwell_juttner"){
-        Real beta = 0.;
-        Real theta = 10.;
+        Real beta = 0._rt;
+        Real theta = 10._rt;
         int dir = 0;
         std::string direction = "x";
         queryWithParser(pp, "beta", beta);
@@ -594,7 +603,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumJuttner.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, theta, beta, dir));
     } else if (mom_dist_s == "radial_expansion") {
-        Real u_over_r = 0.;
+        Real u_over_r = 0._rt;
         queryWithParser(pp, "u_over_r", u_over_r);
         // Construct InjectorMomentum with InjectorMomentumRadialExpansion.
         h_inj_mom.reset(new InjectorMomentum

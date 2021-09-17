@@ -32,7 +32,7 @@ ions.zmin =  0.
 ions.zmax =  50.e-6
 ions.profile = constant
 ions.density = 1.
-ions.momentum_distribution_type = constant
+ions.momentum_distribution_type = at_rest
 ions.do_field_ionization = 1
 ions.ionization_initial_level = 2
 ions.ionization_product_species = electrons
@@ -47,7 +47,7 @@ electrons.zmin = 0.
 electrons.zmax =  50.e-6
 electrons.profile = constant
 electrons.density = 2.
-electrons.momentum_distribution_type = constant
+electrons.momentum_distribution_type = at_rest
 electrons.do_continuous_injection=1
 
 lasers.names        = laser1

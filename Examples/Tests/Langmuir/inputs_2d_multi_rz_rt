@@ -79,10 +79,7 @@ ions.zmax = +20.e-6
 
 ions.profile = constant
 ions.density = n0   # number of ions per m^3
-ions.momentum_distribution_type = constant
-ions.ux = 0.
-ions.uy = 0.
-ions.uz = 0.
+ions.momentum_distribution_type = at_rest
 
 # Diagnostics
 diagnostics.diags_names = diag1 diag_parser_filter diag_uniform_filter diag_random_filter

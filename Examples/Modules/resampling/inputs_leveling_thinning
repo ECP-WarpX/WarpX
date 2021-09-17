@@ -22,7 +22,7 @@ resampled_part1.injection_style = NRandomPerCell
 resampled_part1.num_particles_per_cell = 400
 resampled_part1.profile = constant
 resampled_part1.density = 1.
-resampled_part1.momentum_distribution_type = constant
+resampled_part1.momentum_distribution_type = at_rest
 resampled_part1.do_not_deposit = 1
 resampled_part1.do_not_gather = 1
 resampled_part1.do_not_push = 1
@@ -48,7 +48,7 @@ resampled_part2.profile = parse_density_function
 # within the cell as the two random variables. Here, we have a distribution with standard deviation
 # sigma = 1/sqrt(2) and mean 4*sigma.
 resampled_part2.density_function(x,y,z) = 2.*sqrt(2.)+sqrt(-log(x))*cos(2*pi*z)
-resampled_part2.momentum_distribution_type = constant
+resampled_part2.momentum_distribution_type = at_rest
 resampled_part2.do_not_deposit = 1
 resampled_part2.do_not_gather = 1
 resampled_part2.do_not_push = 1
