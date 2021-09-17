@@ -10,6 +10,7 @@
 
 #include <AMReX.H>
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <utility>
@@ -94,7 +95,7 @@ namespace MsgLogger{
     struct MsgWithCounter
     {
         Msg msg      /*! A message*/;
-        int counter  /*! The counter*/;
+        std::int64_t counter  /*! The counter*/;
 
         /**
         * \brief This function returns a byte representation of the struct
@@ -243,7 +244,7 @@ namespace MsgLogger{
         * @param[in] how_many_msgs the number of messages that the current rank has
         * @return a pair containing the ID of the "gather rank" and its number of messages
         */
-        std::pair<int,int> find_gather_rank_and_its_msgs(
+        std::pair<int, int> find_gather_rank_and_its_msgs(
             int how_many_msgs) const;
 
         /**
@@ -258,7 +259,7 @@ namespace MsgLogger{
         */
         std::vector<MsgWithCounterAndRanks>
         compute_msgs_with_counter_and_ranks(
-            const std::map<Msg,int>& my_msg_map,
+            const std::map<Msg,std::int64_t>& my_msg_map,
             const std::vector<char>& all_data,
             const std::vector<int>& displacements,
             const int gather_rank
@@ -284,7 +285,7 @@ namespace MsgLogger{
         int m_io_rank = 0      /*! Rank of the I/O process*/;
         bool m_am_i_io = false /*! Flag to store if the process is responsible for I/O*/;
 
-        std::map<Msg, int> m_messages /*! This stores a map to associate warning messages with the corresponding counters*/;
+        std::map<Msg, std::int64_t> m_messages /*! This stores a map to associate warning messages with the corresponding counters*/;
     };
 }
 }
