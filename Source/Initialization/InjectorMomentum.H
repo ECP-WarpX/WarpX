@@ -10,6 +10,7 @@
 
 #include "CustomMomentumProb.H"
 #include "Utils/WarpXConst.H"
+#include "TemperatureInit.H"
 
 #include <AMReX.H>
 #include <AMReX_Config.H>
@@ -136,18 +137,20 @@ private:
 struct InjectorMomentumBoltzmann
 {
     // Constructor whose inputs are:
-    // the temperature parameter theta,
+    // a pointer to the initial temperature container temperature,
     // boost velocity/c beta,
     // and boost direction dir respectively.
-    InjectorMomentumBoltzmann(amrex::Real t, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), vave(std::sqrt(amrex::Real(2.)*t))
+    InjectorMomentumBoltzmann(TemperatureInit* temperature, amrex::Real b, int d) noexcept
+        : dir(d), beta(b), thetaContainer(temperature)
         {}
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
                  amrex::RandomEngine const& engine) const noexcept
     {
+        // Calculate the value of vave from the local temperature
+        amrex::Real vave = std::sqrt(amrex::Real(2) * thetaContainer->getTemperature(x,y,z));
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
         x1 = amrex::Random(engine);
@@ -200,7 +203,8 @@ struct InjectorMomentumBoltzmann
 
 private:
     int dir;
-    amrex::Real beta, vave;
+    amrex::Real beta;
+    TemperatureInit* thetaContainer;
 };
 
 // struct whose getMomentum returns momentum for 1 particle with relativistc
@@ -212,19 +216,20 @@ struct InjectorMomentumJuttner
     // the temperature parameter theta,
     // boost velocity/c beta,
     // and boost direction dir respectively.
-    InjectorMomentumJuttner(amrex::Real t, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), theta(t)
+    InjectorMomentumJuttner(TemperatureInit* temperature, amrex::Real b, int d) noexcept
+        : dir(d), beta(b), thetaContainer(temperature)
         {}
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
                  amrex::RandomEngine const& engine) const noexcept
     {
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
         amrex::Real x1, x2, gamma;
         amrex::Real u [3];
+        amrex::Real theta = thetaContainer->getTemperature(x,y,z);
         x1 = static_cast<amrex::Real>(0.);
         gamma = static_cast<amrex::Real>(0.);
         u[dir] = static_cast<amrex::Real>(0.);
@@ -287,7 +292,7 @@ struct InjectorMomentumJuttner
 
 private:
     int dir;
-    amrex::Real beta, theta;
+    amrex::Real beta;
 };
 
 /**
@@ -395,16 +400,16 @@ struct InjectorMomentum
     { }
 
     InjectorMomentum (InjectorMomentumBoltzmann* t,
-                       amrex::Real theta, amrex::Real beta, int dir)
+                       TemperatureInit* temperature, amrex::Real beta, int dir)
          : type(Type::boltzmann),
-           object(t, theta, beta, dir)
+           object(t, temperature, beta, dir)
     { }
 
      // This constructor stores a InjectorMomentumJuttner in union object.
      InjectorMomentum (InjectorMomentumJuttner* t,
-                       amrex::Real theta, amrex::Real beta, int dir)
+                       TemperatureInit* temperature, amrex::Real beta, int dir)
          : type(Type::juttner),
-           object(t, theta, beta, dir)
+           object(t, temperature, beta, dir)
     { }
 
     // This constructor stores a InjectorMomentumCustom in union object.
