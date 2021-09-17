@@ -29,8 +29,10 @@ class FlushFormatCheckpoint final : public FlushFormatPlotfile
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
         bool isLastBTDFlush = false) const override final;
 
-    void CheckpointParticles(const std::string& dir,
-                             const amrex::Vector<ParticleDiag>& particle_diags) const;
+    void CheckpointParticles (const std::string& dir,
+                              const amrex::Vector<ParticleDiag>& particle_diags) const;
+
+    void WriteDMaps (const std::string& dir, int nlev) const;
 };
 
 #endif // WARPX_FLUSHFORMATCHECKPOINT_H_

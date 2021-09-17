@@ -854,6 +854,9 @@ private:
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
                          const amrex::DistributionMapping& new_dmap);
 
+    amrex::DistributionMapping
+    GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const;
+
     void InitFromCheckpoint ();
     void PostRestart ();
 

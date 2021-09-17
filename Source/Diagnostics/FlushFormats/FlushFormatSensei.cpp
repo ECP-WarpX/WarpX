@@ -53,25 +53,20 @@ FlushFormatSensei::WriteToFile (
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
-    const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, int /*file_min_digits*/, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
-    bool /*isBTD*/, int /*snapshotID*/,
-    const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/) const
+    const amrex::Vector<ParticleDiag>& particle_diags,
+    int nlev, const std::string prefix, int file_min_digits,
+    bool plot_raw_fields, bool plot_raw_fields_guards,
+    bool plot_raw_rho, bool plot_raw_F, bool isBTD, int snapshotID,
+    const amrex::Geometry& full_BTD_snapshot, bool isLastBTDFlush) const
 {
+    amrex::ignore_unused(
+        geom, particle_diags, nlev, prefix, file_min_digits,
+        plot_raw_fields, plot_raw_fields_guards, plot_raw_rho,
+        plot_raw_F, isBTD, snapshotID, full_BTD_snapshot,
+        isLastBTDFlush);
+
 #ifndef AMREX_USE_SENSEI_INSITU
-    (void)varnames;
-    (void)mf;
-    (void)geom;
-    (void)iteration;
-    (void)time;
-    (void)particle_diags;
-    (void)nlev;
-    (void)prefix;
-    (void)plot_raw_fields;
-    (void)plot_raw_fields_guards;
-    (void)plot_raw_rho;
-    (void)plot_raw_F;
+    amrex::ignore_unused(varnames, mf, iteration, time);
 #else
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
 
@@ -93,9 +88,8 @@ void
 FlushFormatSensei::WriteParticles (
     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
-#ifndef AMREX_USE_SENSEI_INSITU
-    (void)particle_diags;
-#else
+    amrex::ignore_unused(particle_diags);
+#ifdef AMREX_USE_SENSEI_INSITU
     amrex::ErrorStream() << "FlushFormatSensei::WriteParticles : "
         "Not yet implemented." << std::endl;
 
