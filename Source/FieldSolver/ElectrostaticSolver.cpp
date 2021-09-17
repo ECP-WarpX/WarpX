@@ -401,7 +401,12 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     linop.setSigma({AMREX_D_DECL(
         1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
-    linop.setEBDirichlet( field_boundary_handler.getPhiEB(gett_new(0)) );
+    // if the EB potential only depends on time, the potential can be passed
+    // as a float instead of a callable
+    if (field_boundary_handler.phi_EB_only_t) {
+        linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
+    }
+    else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
 #endif
 
     // Solve the Poisson equation

@@ -49,6 +49,7 @@ public:
     bool bcs_set = false;
     std::array<bool,AMREX_SPACEDIM> dirichlet_flag;
     bool has_Dirichlet = false;
+    bool phi_EB_only_t = true;
 
     // set default potentials to zero in order for current tests to pass
     // but forcing the user to specify a potential might be better
@@ -78,7 +79,15 @@ public:
         potential_yhi = potential_yhi_parser.compile<1>();
         potential_zlo = potential_zlo_parser.compile<1>();
         potential_zhi = potential_zhi_parser.compile<1>();
-        potential_eb = potential_eb_parser.compile<4>();
+
+        // check if the EB potential is a function of space
+        std::set<std::string> eb_symbols = potential_eb_parser.symbols();
+        if ((eb_symbols.count("x") != 0) || (eb_symbols.count("y") != 0)
+                || (eb_symbols.count("z") != 0)) {
+            potential_eb = potential_eb_parser.compile<4>();
+            phi_EB_only_t = false;
+        }
+        else potential_eb_t = potential_eb_parser.compile<1>();
     }
 
     PhiCalculatorEB getPhiEB (amrex::Real t) const noexcept
@@ -92,6 +101,7 @@ public:
     amrex::ParserExecutor<1> potential_yhi;
     amrex::ParserExecutor<1> potential_zlo;
     amrex::ParserExecutor<1> potential_zhi;
+    amrex::ParserExecutor<1> potential_eb_t;
     amrex::ParserExecutor<4> potential_eb;
 
 private:
