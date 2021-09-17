@@ -11,6 +11,7 @@ jobs:
     name: GCC Minimal w/o MPI
     runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -35,6 +36,7 @@ jobs:
   build_pyfull:
     name: Clang pywarpx
     runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
