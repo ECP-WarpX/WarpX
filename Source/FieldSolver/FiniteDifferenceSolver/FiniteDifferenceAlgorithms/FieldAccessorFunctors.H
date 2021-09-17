@@ -25,11 +25,10 @@ struct FieldAccessorMacroscopic
     FieldAccessorMacroscopic ( amrex::Array4<amrex::Real const> const a_field,
                                T_GetMacroparameter const& a_getParameter,
                                amrex::GpuArray<int,3> const& a_field_stag,
-                               amrex::GpuArray<int,3> const& a_parameter_stag,
                                amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const a_domain_lo,
                                amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const a_dx )
         : m_field(a_field), m_getParameter(a_getParameter), m_field_stag(a_field_stag),
-          m_parameter_stag(a_parameter_stag), m_domain_lo(a_domain_lo), m_dx(a_dx) {}
+          m_domain_lo(a_domain_lo), m_dx(a_dx) {}
 
     /**
      * \brief return field value at (i,j,k,ncomp) scaled by (1/m_parameters(i,j,k,ncomp))
@@ -58,8 +57,6 @@ private:
     T_GetMacroparameter const m_getParameter;
     /**  Staggering of the field multifab, m_field */
     amrex::GpuArray<int,3> const m_field_stag;
-    /**  Staggering of the macroparameter multifab, m_parameter_stag */
-    amrex::GpuArray<int,3> const m_parameter_stag;
     /**  Coarsening ratio when interpolated macroparameter to location of field */
     amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const m_domain_lo;
     amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const m_dx;

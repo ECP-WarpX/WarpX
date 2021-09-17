@@ -72,25 +72,6 @@ public:
      /** Initialize multifabs storing macroscopic multifabs */
      void InitData ();
 
-     /** return MultiFab, sigma (conductivity) of the medium. */
-     amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
-     /** return MultiFab, epsilon (permittivity) of the medium. */
-     amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
-     /** return MultiFab, mu (permeability) of the medium. */
-     amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
-
-     /** Initializes the Multifabs storing macroscopic properties
-      *  with user-defined functions(x,y,z).
-      */
-     void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                              amrex::ParserExecutor<3> const& macro_parser,
-                                              int lev);
-     /** Gpu Vector with index type of the conductivity multifab */
-     amrex::GpuArray<int, 3> sigma_IndexType;
-     /** Gpu Vector with index type of the permittivity multifab */
-     amrex::GpuArray<int, 3> epsilon_IndexType;
-     /** Gpu Vector with index type of the permeability multifab */
-     amrex::GpuArray<int, 3> mu_IndexType;
      /** Gpu Vector with index type of the Ex multifab */
      amrex::GpuArray<int, 3> Ex_IndexType;
      /** Gpu Vector with index type of the Ey multifab */
@@ -103,8 +84,6 @@ public:
      amrex::GpuArray<int, 3> By_IndexType;
      /** Gpu Vector with index type of the Bz multifab */
      amrex::GpuArray<int, 3> Bz_IndexType;
-     /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
-     amrex::GpuArray<int, 3> macro_cr_ratio;
 
      MacroparameterInitType m_sigma_type;
      MacroparameterInitType m_mu_type;
@@ -116,12 +95,6 @@ public:
      amrex::Real m_epsilon = PhysConst::ep0;
      /** Permeability, mu, of the medium */
      amrex::Real m_mu = PhysConst::mu0;
-     /** Multifab for m_sigma */
-     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
-     /** Multifab for m_epsilon */
-     std::unique_ptr<amrex::MultiFab> m_eps_mf;
-     /** Multifab for m_mu */
-     std::unique_ptr<amrex::MultiFab> m_mu_mf;
      /** Stores initialization type for conductivity : constant or parser */
      std::string m_sigma_s = "constant";
      /** Stores initialization type for permittivity : constant or parser */
