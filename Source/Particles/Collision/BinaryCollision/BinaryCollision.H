@@ -121,6 +121,8 @@ public:
         // In case of particle creation, create the necessary vectors
         const int n_product_species = m_product_species.size();
         amrex::Vector<WarpXParticleContainer*> product_species_vector;
+        amrex::Vector<SmartCopyFactory> copy_factory_species1;
+        amrex::Vector<SmartCopyFactory> copy_factory_species2;
         amrex::Vector<SmartCopy> copy_species1;
         amrex::Vector<SmartCopy> copy_species2;
         for (int i = 0; i < n_product_species; i++)
@@ -128,10 +130,13 @@ public:
             auto& product = mypc->GetParticleContainerFromName(m_product_species[i]);
             product.defineAllParticleTiles();
             product_species_vector.push_back(&product);
-            SmartCopyFactory copy_factory_species1(species1, product);
-            SmartCopyFactory copy_factory_species2(species2, product);
-            copy_species1.push_back(copy_factory_species1.getSmartCopy());
-            copy_species2.push_back(copy_factory_species2.getSmartCopy());
+            // Although the copy factories are not explicitly reused past this point, we need to
+            // store them in vectors so that the data that they own, which is used by the smart
+            // copy functors, does not go out of scope at the end of this for loop.
+            copy_factory_species1.push_back(SmartCopyFactory(species1, product));
+            copy_factory_species2.push_back(SmartCopyFactory(species2, product));
+            copy_species1.push_back(copy_factory_species1[i].getSmartCopy());
+            copy_species2.push_back(copy_factory_species2[i].getSmartCopy());
         }
 #ifdef AMREX_USE_GPU
         amrex::Gpu::DeviceVector<SmartCopy> device_copy_species1(n_product_species);
@@ -212,40 +217,19 @@ public:
 
         // Store product species data in vectors
         const int n_product_species = m_product_species.size();
-        amrex::Vector<SoaData_type> soa_products;
+        amrex::Vector<ParticleTileType*> tile_products;
         amrex::Vector<GetParticlePosition> get_position_products;
         amrex::Vector<index_type> products_np;
         constexpr int getpos_offset = 0;
         for (int i = 0; i < n_product_species; i++)
         {
             ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
-            soa_products.push_back(ptile_product.getParticleTileData());
+            tile_products.push_back(&ptile_product);
             get_position_products.push_back(GetParticlePosition(ptile_product,
                                                                       getpos_offset));
             products_np.push_back(ptile_product.numParticles());
         }
-#ifdef AMREX_USE_GPU
-        amrex::Gpu::DeviceVector<SoaData_type> device_soa_products(n_product_species);
-        amrex::Gpu::DeviceVector<GetParticlePosition> device_get_position_products(n_product_species);
-        amrex::Gpu::DeviceVector<index_type> device_products_np(n_product_species);
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, soa_products.begin(),
-                              soa_products.end(),
-                              device_soa_products.begin());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, get_position_products.begin(),
-                              get_position_products.end(),
-                              device_get_position_products.begin());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_np.begin(),
-                              products_np.end(),
-                              device_products_np.begin());
-        amrex::Gpu::streamSynchronize();
-        auto soa_products_data = device_soa_products.data();
-        auto get_position_products_data = device_get_position_products.data();
-        auto products_np_data = device_products_np.data();
-#else
-        auto soa_products_data = soa_products.data();
-        auto get_position_products_data = get_position_products.data();
-        auto products_np_data = products_np.data();
-#endif
+        auto tile_products_data = tile_products.data();
 
         if ( m_isSameSpecies ) // species_1 == species_2
         {
@@ -263,9 +247,12 @@ public:
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* indices_1 = bins_1.permutationPtr();
             index_type const* cell_offsets_1 = bins_1.offsetsPtr();
-            amrex::Real q1 = species_1.getCharge();
-            amrex::Real m1 = species_1.getMass();
+            amrex::ParticleReal q1 = species_1.getCharge();
+            amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
+            // Needed to access the particle id
+            ParticleType * AMREX_RESTRICT
+                                 particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
@@ -366,19 +353,17 @@ public:
 
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
-            const amrex::Vector<int> num_added = m_copy_transform_functor(soa_1, soa_1,
-                                                    soa_products_data,
-                                                    get_position_1, get_position_1,
-                                                    get_position_products_data,
-                                                    p_mask, products_np_data,
+            const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
+                                                    soa_1, soa_1, tile_products_data,
+                                                    particle_ptr_1, particle_ptr_1, m1, m1,
+                                                    p_mask, products_np,
                                                     copy_species1, copy_species2,
                                                     p_pair_indices_1, p_pair_indices_2,
                                                     p_pair_reaction_weight);
 
             for (int i = 0; i < n_product_species; i++)
             {
-                ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
-                setNewParticleIDs(ptile_product, products_np[i], num_added[i]);
+                setNewParticleIDs(*(tile_products_data[i]), products_np[i], num_added[i]);
             }
         }
         else // species_1 != species_2
@@ -399,16 +384,22 @@ public:
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* indices_1 = bins_1.permutationPtr();
             index_type const* cell_offsets_1 = bins_1.offsetsPtr();
-            amrex::Real q1 = species_1.getCharge();
-            amrex::Real m1 = species_1.getMass();
+            amrex::ParticleReal q1 = species_1.getCharge();
+            amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
+            // Needed to access the particle id
+            ParticleType * AMREX_RESTRICT
+                                 particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
             // - Species 2
             const auto soa_2 = ptile_2.getParticleTileData();
             index_type* indices_2 = bins_2.permutationPtr();
             index_type const* cell_offsets_2 = bins_2.offsetsPtr();
-            amrex::Real q2 = species_2.getCharge();
-            amrex::Real m2 = species_2.getMass();
+            amrex::ParticleReal q2 = species_2.getCharge();
+            amrex::ParticleReal m2 = species_2.getMass();
             auto get_position_2  = GetParticlePosition(ptile_2, getpos_offset);
+            // Needed to access the particle id
+            ParticleType * AMREX_RESTRICT
+                                 particle_ptr_2 = ptile_2.GetArrayOfStructs()().data();
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
@@ -520,19 +511,17 @@ public:
 
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
-            const amrex::Vector<int> num_added = m_copy_transform_functor(soa_1, soa_2,
-                                                    soa_products_data,
-                                                    get_position_1, get_position_2,
-                                                    get_position_products_data,
-                                                    p_mask, products_np_data,
+            const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
+                                                    soa_1, soa_2, tile_products_data,
+                                                    particle_ptr_1, particle_ptr_2, m1, m2,
+                                                    p_mask, products_np,
                                                     copy_species1, copy_species2,
                                                     p_pair_indices_1, p_pair_indices_2,
                                                     p_pair_reaction_weight);
 
             for (int i = 0; i < n_product_species; i++)
             {
-                ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
-                setNewParticleIDs(ptile_product, products_np[i], num_added[i]);
+                setNewParticleIDs(*(tile_products_data[i]), products_np[i], num_added[i]);
             }
 
         } // end if ( m_isSameSpecies)
