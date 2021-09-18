@@ -53,7 +53,7 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
         const Box& tbx = mfi.growntilebox();
 
         // Apply filter
-        DoFilter(tbx, src, dst, 0, dcomp, ncomp);
+        DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -82,7 +82,7 @@ Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
     const auto& dst = dstfab.array();
 
     // Apply filter
-    DoFilter(tbx, src, dst, 0, dcomp, ncomp);
+    DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 }
 
 /* \brief Apply stencil (2D/3D, CPU/GPU)
