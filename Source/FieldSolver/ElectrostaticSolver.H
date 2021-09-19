@@ -87,7 +87,10 @@ public:
             potential_eb = potential_eb_parser.compile<4>();
             phi_EB_only_t = false;
         }
-        else potential_eb_t = potential_eb_parser.compile<1>();
+        else {
+            potential_eb_parser = makeParser(potential_eb_str, {"t"});
+            potential_eb_t = potential_eb_parser.compile<1>();
+        }
     }
 
     PhiCalculatorEB getPhiEB (amrex::Real t) const noexcept
