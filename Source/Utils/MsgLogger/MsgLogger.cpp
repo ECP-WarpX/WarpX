@@ -447,6 +447,11 @@ Logger::compute_msgs_with_counter_and_ranks(
         msgs_with_counter_and_ranks.push_back(el.second);
     }
 
+    // Sort affected ranks lists
+    for(auto& el : msgs_with_counter_and_ranks){
+        std::sort(el.ranks.begin(), el.ranks.end());
+    }
+
     return msgs_with_counter_and_ranks;
 }
 
