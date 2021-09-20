@@ -1,3 +1,10 @@
+/* Copyright 2020 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
@@ -18,11 +25,31 @@
 
 enum MacroparameterInitType { ConstantValue, ParserFunction};
 
+/**
+ * \brief Functor to return macropameter, either constant value, m_value, or
+ *        spatially varying scalar value computed using the parser function, m_parser.
+ */
+
 struct GetMacroparameter
 {
+    /* Type of initialization for macroparameter, constant or parser function */
     MacroparameterInitType m_type;
+    /* Constant value of the macroparameter. */
     amrex::Real m_value;
+    /* Parser funtion of the spatially varying macroparameter*/
     amrex::ParserExecutor<3> m_parser;
+    /**
+     * \brief Functor call. This method returns the value of the macroparameter,
+     *        or property of the medium needed for the macroscopic Maxwell solver,
+     *        at a given location (x,y,z) in the domain.
+     *
+     * @param[in] x x-coordinate of a given location
+     * @param[in] y y-coordinate of a given location
+     * @param[in] z z-coordinate of a given location
+     * @return value of the macroparameter at (x,y,z).
+     *         m_value if init-type is constant
+     *         m_parser(x,y,z) if init-type is parser function
+     */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator () (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
     {
@@ -44,18 +71,30 @@ struct GetMacroparameter
     }
 };
 
+/**
+ * \brief Functor for conductivity, sigma, of the medium.
+ */
 struct GetSigmaMacroparameter : GetMacroparameter
 {
+    /** Constructor to store the type of intialization, m_type, and the value or parser function. */
     GetSigmaMacroparameter () noexcept;
 };
 
+/**
+ * \brief Functor for permeability, mu, of the medium.
+ */
 struct GetMuMacroparameter : GetMacroparameter
 {
+    /** Constructor to store the type of intialization, m_type, and the value or parser function. */
     GetMuMacroparameter () noexcept;
 };
 
+/**
+ * \brief Functor for permittivity, epsilon, of the medium.
+ */
 struct GetEpsilonMacroparameter : GetMacroparameter
 {
+    /** Constructor to store the type of intialization, m_type, and the value or parser function. */
     GetEpsilonMacroparameter () noexcept;
 };
 /**
@@ -84,10 +123,6 @@ public:
      amrex::GpuArray<int, 3> By_IndexType;
      /** Gpu Vector with index type of the Bz multifab */
      amrex::GpuArray<int, 3> Bz_IndexType;
-
-     MacroparameterInitType m_sigma_type;
-     MacroparameterInitType m_mu_type;
-     MacroparameterInitType m_epsilon_type;
 
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma = 0.0;

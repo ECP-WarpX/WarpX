@@ -16,7 +16,8 @@
 
 /**
  * \brief Functor that returns the division of the source m_field Array4 value
-          by macroparameter, m_parameter value at the respective (i,j,k,ncomp).
+          by macroparameter obtained using functor, m_getParameter,
+          at the respective (i,j,k,ncomp).
  */
 template< typename T_GetMacroparameter>
 struct FieldAccessorMacroscopic
@@ -31,17 +32,15 @@ struct FieldAccessorMacroscopic
           m_domain_lo(a_domain_lo), m_dx(a_dx) {}
 
     /**
-     * \brief return field value at (i,j,k,ncomp) scaled by (1/m_parameters(i,j,k,ncomp))
-     *        Note that if the m_parameter has a different staggering than the field, then the
-     *        value is first interpolated to the location of the field and then scaled.
+     * \brief return field value at (i,j,k,ncomp) scaled by (1/m_getParameter(x,y,z))
+     *
      * \param[in] i      index along x of the Array4, m_field and m_parameter.
      * \param[in] j      index along y of the Array4, m_field and m_parameter.
      * \param[in] k      index along z of the Array4, m_field and m_parameter.
      * \param[in] ncomp  index along fourth component of the Array4, containing field-data
-                         to be returned after diving with zero-th component
-                         of m_paramter.
+                         to be returned after dividing by the macroparameter.
      *
-     * \return           m_field/m_paramter at (i,j,k,ncomp)
+     * \return           m_field/m_getParameter(x,y,z) at (i,j,k,ncomp)
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator() (int const i, int const j,
@@ -54,11 +53,13 @@ struct FieldAccessorMacroscopic
 private:
     /** Array4 of the source field to be scaled and returned by the operator() */
     amrex::Array4<amrex::Real const> const m_field;
+    /** Functor object to return the macroparameter at a given position on the grid.*/
     T_GetMacroparameter const m_getParameter;
-    /**  Staggering of the field multifab, m_field */
+    /** Staggering of the field multifab, m_field */
     amrex::GpuArray<int,3> const m_field_stag;
-    /**  Coarsening ratio when interpolated macroparameter to location of field */
+    /** Lower physical coordinates of the simulation domain. */
     amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const m_domain_lo;
+    /** Cell-size array */
     amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const m_dx;
 };
 
