@@ -140,8 +140,8 @@ struct InjectorMomentumBoltzmann
     // a pointer to the initial temperature container temperature,
     // boost velocity/c beta,
     // and boost direction dir respectively.
-    InjectorMomentumBoltzmann(TemperatureInit* temperature, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), thetaContainer(temperature)
+    InjectorMomentumBoltzmann(TemperatureInit& t, amrex::Real b, int d) noexcept
+        : dir(d), beta(b), temperature(t)
         {}
 
     AMREX_GPU_HOST_DEVICE
@@ -150,7 +150,7 @@ struct InjectorMomentumBoltzmann
                  amrex::RandomEngine const& engine) const noexcept
     {
         // Calculate the value of vave from the local temperature
-        amrex::Real vave = std::sqrt(amrex::Real(2) * thetaContainer->getTemperature(x,y,z));
+        amrex::Real vave = std::sqrt(amrex::Real(2) * temperature.getTemperature(x,y,z));
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
         x1 = amrex::Random(engine);
@@ -204,7 +204,7 @@ struct InjectorMomentumBoltzmann
 private:
     int dir;
     amrex::Real beta;
-    TemperatureInit* thetaContainer;
+    TemperatureInit temperature;
 };
 
 // struct whose getMomentum returns momentum for 1 particle with relativistc
@@ -216,8 +216,9 @@ struct InjectorMomentumJuttner
     // the temperature parameter theta,
     // boost velocity/c beta,
     // and boost direction dir respectively.
-    InjectorMomentumJuttner(TemperatureInit* temperature, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), thetaContainer(temperature)
+    InjectorMomentumJuttner(TemperatureInit& t,
+            amrex::Real b, int d) noexcept
+        : dir(d), beta(b), temperature(t)
         {}
 
     AMREX_GPU_HOST_DEVICE
@@ -229,7 +230,7 @@ struct InjectorMomentumJuttner
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
         amrex::Real x1, x2, gamma;
         amrex::Real u [3];
-        amrex::Real theta = thetaContainer->getTemperature(x,y,z);
+        amrex::Real theta = temperature.getTemperature(x,y,z);
         x1 = static_cast<amrex::Real>(0.);
         gamma = static_cast<amrex::Real>(0.);
         u[dir] = static_cast<amrex::Real>(0.);
@@ -293,6 +294,7 @@ struct InjectorMomentumJuttner
 private:
     int dir;
     amrex::Real beta;
+    TemperatureInit temperature;
 };
 
 /**
@@ -400,14 +402,14 @@ struct InjectorMomentum
     { }
 
     InjectorMomentum (InjectorMomentumBoltzmann* t,
-                       TemperatureInit* temperature, amrex::Real beta, int dir)
+                       TemperatureInit& temperature, amrex::Real beta, int dir)
          : type(Type::boltzmann),
            object(t, temperature, beta, dir)
     { }
 
      // This constructor stores a InjectorMomentumJuttner in union object.
      InjectorMomentum (InjectorMomentumJuttner* t,
-                       TemperatureInit* temperature, amrex::Real beta, int dir)
+                       TemperatureInit& temperature, amrex::Real beta, int dir)
          : type(Type::juttner),
            object(t, temperature, beta, dir)
     { }
@@ -558,10 +560,10 @@ private:
                 int a_flux_normal_axis, int a_flux_direction) noexcept
             : gaussianflux(a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction) {}
         Object (InjectorMomentumBoltzmann*,
-                amrex::Real t, amrex::Real b, int dir) noexcept
+                TemperatureInit& t, amrex::Real b, int dir) noexcept
             : boltzmann(t,b,dir) {}
         Object (InjectorMomentumJuttner*,
-                amrex::Real t, amrex::Real b, int dir) noexcept
+                TemperatureInit& t, amrex::Real b, int dir) noexcept
             : juttner(t,b,dir) {}
         Object (InjectorMomentumRadialExpansion*,
                 amrex::Real u_over_r) noexcept

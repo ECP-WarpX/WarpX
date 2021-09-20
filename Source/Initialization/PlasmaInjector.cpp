@@ -541,6 +541,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
             amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
         }
         queryWithParser(pp, "theta", theta);
+        TemperatureInit temperature = TemperatureInit((TemperatureInitConstant*)nullptr, theta);
         pp.query("bulk_vel_dir", direction);
         if(direction[0] == '-'){
             beta = -beta;
@@ -561,7 +562,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
             amrex::Abort(direction.c_str());
         }
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, theta, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, temperature, beta, dir));
     } else if (mom_dist_s == "maxwell_juttner"){
         Real beta = 0.;
         Real theta = 10.;
@@ -572,6 +573,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
             amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
         }
         queryWithParser(pp, "theta", theta);
+        TemperatureInit temperature = TemperatureInit((TemperatureInitConstant*)nullptr, theta);
         pp.query("bulk_vel_dir", direction);
         if(direction[0] == '-'){
             beta = -beta;
@@ -592,7 +594,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
             amrex::Abort(direction.c_str());
         }
         // Construct InjectorMomentum with InjectorMomentumJuttner.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, theta, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, temperature, beta, dir));
     } else if (mom_dist_s == "radial_expansion") {
         Real u_over_r = 0.;
         queryWithParser(pp, "u_over_r", u_over_r);

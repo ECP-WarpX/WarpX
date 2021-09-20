@@ -18,7 +18,7 @@ struct TemperatureInitConstant
     TemperatureInitConstant (amrex::Real a_temperature) noexcept
         : m_temperature(a_temperature) {}
 
-    getTemperature(amrex::Real, amrex::Real, amrex::Real) const noexcept
+    amrex::Real getTemperature(amrex::Real, amrex::Real, amrex::Real) const noexcept
     {
         return m_temperature;
     }
@@ -28,10 +28,10 @@ private:
 
 struct TemperatureInitParser
 {
-    TemperatureInitConstant (amrex::ParserExecutor<3> const& a_temperature_parser) noexcept
+    TemperatureInitParser (amrex::ParserExecutor<3> const& a_temperature_parser) noexcept
         : m_temperature_parser(a_temperature_parser) {}
 
-    getTemperature(amrex::Real x, amrex::Real y, amrex::Real z)
+    amrex::Real getTemperature(amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
     {
         return m_temperature_parser(x, y, z);
     }
@@ -69,17 +69,11 @@ struct TemperatureInit
             default:
             {
                 amrex::Abort("Get initial temperature: unknown type");
-                return (0,0.0);
+                return 0.0;
             }
         }
 
     }
-    // Explicitly prevent the compiler from generating copy constructors
-    // and copy assignment operators.
-    TemperatureInit (TemperatureInit const&) = delete;
-    TemperatureInit (TemperatureInit&&) = delete;
-    void operator= (TemperatureInit const&) = delete;
-    void operator= (TemperatureInit &&) = delete;
 
     void clear ();
 
