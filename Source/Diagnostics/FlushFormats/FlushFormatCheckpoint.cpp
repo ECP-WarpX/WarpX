@@ -111,17 +111,47 @@ FlushFormatCheckpoint::WriteToFile (
 
     CheckpointParticles(checkpointname, particle_diags);
 
+    WriteDMaps(checkpointname, nlev);
+
     VisMF::SetHeaderVersion(current_version);
 
 }
 
 void
-FlushFormatCheckpoint::CheckpointParticles(
+FlushFormatCheckpoint::CheckpointParticles (
     const std::string& dir,
     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         particle_diags[i].getParticleContainer()->Checkpoint(
             dir, particle_diags[i].getSpeciesName());
+    }
+}
+
+void
+FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
+{
+    if (ParallelDescriptor::IOProcessor()) {
+        auto & warpx = WarpX::GetInstance();
+        for (int lev = 0; lev < nlev; ++lev) {
+            std::string DMFileName = dir;
+            if (!DMFileName.empty() && DMFileName[DMFileName.size()-1] != '/') {DMFileName += '/';}
+            DMFileName = amrex::Concatenate(DMFileName + "Level_", lev, 1);
+            DMFileName += "/DM";
+
+            std::ofstream DMFile;
+            DMFile.open(DMFileName.c_str(), std::ios::out|std::ios::trunc);
+
+            if (!DMFile.good()) { amrex::FileOpenFailed(DMFileName); }
+
+            DMFile << ParallelDescriptor::NProcs() << "\n";
+            warpx.DistributionMap(lev).writeOn(DMFile);
+
+            DMFile.flush();
+            DMFile.close();
+            if (!DMFile.good()) {
+                amrex::Abort("FlushFormatCheckpoint::WriteDMaps: problem writing DMFile");
+            }
+        }
     }
 }

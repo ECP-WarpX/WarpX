@@ -64,6 +64,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
@@ -618,7 +619,12 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
 
 #if !(defined WARPX_DIM_RZ)
-    const Real eps = static_cast<Real>(dx[0]*1.e-50);
+    constexpr float small_float_coeff = 1.e-25f;
+    constexpr double small_double_coeff = 1.e-50;
+    constexpr Real small_coeff = std::is_same<Real,float>::value ?
+        static_cast<Real>(small_float_coeff) :
+        static_cast<Real>(small_double_coeff);
+    const auto eps = static_cast<Real>(dx[0]*small_coeff);
 #endif
 #if (AMREX_SPACEDIM == 3)
     Sx = std::min(std::min(dx[0]/(std::abs(m_u_X[0])+eps),

@@ -11,6 +11,7 @@ jobs:
     name: AppleClang
     runs-on: macos-latest
     env: {CXXFLAGS: "-Werror -Wno-error=pass-failed"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -29,12 +30,14 @@ jobs:
       run: |
         cmake -S . -B build_dp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_EB=ON                \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF
         cmake --build build_dp -j 2
 
         cmake -S . -B build_sp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_EB=ON                \
           -DWarpX_LIB=ON               \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \

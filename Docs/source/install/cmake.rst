@@ -79,7 +79,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
-``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support
+``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
 ``WarpX_GPUCLOCK``            **ON**/OFF                                   Add GPU kernel timers (cost function, +4 registers/kernel)
 ``WarpX_IPO``                 ON/**OFF**                                   Compile WarpX with interprocedural optimization (aka LTO)
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library
@@ -159,6 +159,7 @@ An executable WarpX binary with the current compile-time options encoded in its 
 
 Additionally, a `symbolic link <https://en.wikipedia.org/wiki/Symbolic_link>`_ named ``warpx`` can be found in that directory, which points to the last built WarpX executable.
 
+.. _building-cmake-python:
 
 Python Bindings
 ---------------
@@ -177,6 +178,7 @@ Environment Variable          Default & Values                             Descr
 ============================= ============================================ ================================================================
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                ``"2;3;RZ"``                                 Simulation dimensionalities (semicolon-separated list)
+``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
 ``WarpX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
