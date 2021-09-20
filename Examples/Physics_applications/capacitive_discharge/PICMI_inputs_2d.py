@@ -164,13 +164,13 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
 
         # get rho from WarpX
         if self.rho_wrapper is None:
-            self.rho_wrapper = fields.rhoWrapper(0, True)
+            self.rho_wrapper = fields.RhoFPWrapper(0, True)
         self.rho_data = self.rho_wrapper[Ellipsis][:,:,0]
 
         self.solve()
 
         if self.phi_wrapper is None:
-            self.phi_wrapper = fields.phiWrapper(0, True)
+            self.phi_wrapper = fields.PhiFPWrapper(0, True)
         self.phi_wrapper[Ellipsis] = self.phi
 
     def solve(self):

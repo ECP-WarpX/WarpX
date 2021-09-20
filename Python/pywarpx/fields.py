@@ -508,20 +508,6 @@ class _MultiFABWrapper(object):
                     fields[i][sss] = value
 
 
-def rhoWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(direction=None,
-                            get_lovects=_libwarpx.get_mesh_charge_density_fp_lovects,
-                            get_fabs=_libwarpx.get_mesh_charge_density_fp,
-                            get_nodal_flag=_libwarpx.get_Rho_nodal_flag,
-                            level=level, include_ghosts=include_ghosts)
-
-def phiWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(direction=None,
-                            get_lovects=_libwarpx.get_mesh_phi_fp_lovects,
-                            get_fabs=_libwarpx.get_mesh_phi_fp,
-                            get_nodal_flag=_libwarpx.get_Phi_nodal_flag,
-                            level=level, include_ghosts=include_ghosts)
-
 def ExWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=0,
                             get_lovects=_libwarpx.get_mesh_electric_field_lovects,
@@ -734,6 +720,14 @@ def RhoFPWrapper(level=0, include_ghosts=False):
                             get_fabs=_libwarpx.get_mesh_charge_density_fp,
                             get_nodal_flag=_libwarpx.get_Rho_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
+
+def PhiFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_phi_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_phi_fp,
+                            get_nodal_flag=_libwarpx.get_Phi_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def ExCPPMLWrapper(level=1, include_ghosts=False):
     assert level>0, Exception('Coarse patch only available on levels > 0')
     return _MultiFABWrapper(direction=0,
