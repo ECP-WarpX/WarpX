@@ -1,9 +1,6 @@
 name: 🐧 CUDA
 
-on:
-  push:
-  pull_request:
-    types: [review_requested, ready_for_review]
+on: [push, pull_request]
 
 concurrency:
   group: ${{ github.head_ref }}-cuda
