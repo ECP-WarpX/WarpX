@@ -573,11 +573,16 @@ WarpX::ReadParameters ()
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+            // Note that with the relativistic version, these parameters would be
+            // input for each species.
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
             queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-            // Note that with the relativistic version, these parameters would be
-            // input for each species.
+
+            // Build the handler for the field boundary conditions
+            pp_warpx.query("eb_potential(t)", field_boundary_value_handler.potential_eb_str);
+            field_boundary_value_handler.buildParsers();
+            // TODO add the parsers for the domain boundary values as well
         }
 
         queryWithParser(pp_warpx, "const_dt", const_dt);
