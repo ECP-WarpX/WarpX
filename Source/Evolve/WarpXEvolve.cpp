@@ -239,6 +239,7 @@ WarpX::Evolve (int numsteps)
             ++istep[lev];
         }
 
+        cur_time += dt[0];
 
         ShiftGalileanBoundary();
 
