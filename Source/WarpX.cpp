@@ -150,8 +150,6 @@ bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
 
-bool WarpX::allocate_full_rho_phi = false;
-
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
 
@@ -278,12 +276,6 @@ WarpX::WarpX ()
     Bfield_fp.resize(nlevs_max);
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
-
-    if (allocate_full_rho_phi)
-    {
-        full_rho_fp.resize(nlevs_max);
-        full_phi_fp.resize(nlevs_max);
-    }
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
@@ -577,14 +569,18 @@ WarpX::ReadParameters ()
         }
 
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
-        pp_warpx.query("allocate_full_rho_phi", allocate_full_rho_phi);
 
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+            // Note that with the relativistic version, these parameters would be
+            // input for each species.
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
             queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-            // Note that with the relativistic version, these parameters would be
-            // input for each species.
+
+            // Build the handler for the field boundary conditions
+            pp_warpx.query("eb_potential(t)", field_boundary_value_handler.potential_eb_str);
+            field_boundary_value_handler.buildParsers();
+            // TODO add the parsers for the domain boundary values as well
         }
 
         queryWithParser(pp_warpx, "const_dt", const_dt);
@@ -1563,21 +1559,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
         const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_fp"));
-
-        if (allocate_full_rho_phi) {
-            // Also allocate the MultiFab for the full rho grid
-            // get the full domain
-            Box domain_box = Geom(lev).Domain();
-            // make a new BoxArray from the domain Box
-            BoxArray ba_full(domain_box);
-            // make a DistributionMapping from the new BoxArray
-            DistributionMapping dm_full;
-            // force that distribution mapping to only go to the root proc
-            Vector<int> pmap = {0};
-            dm_full.define(pmap);
-            // make a FabArray to hold the rho data
-            full_rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba_full,rho_nodal_flag),dm_full,2*ncomps,ngRho,tag("full_rho_fp"));
-        }
     }
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
@@ -1585,22 +1566,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,phi_nodal_flag),dm,ncomps,ngPhi,tag("phi_fp"));
         phi_fp[lev]->setVal(0.);
-
-        if (allocate_full_rho_phi) {
-            // Also allocate the MultiFab for the full phi grid
-            // get the full domain
-            Box domain_box = Geom(lev).Domain();
-            // make a new BoxArray from the domain Box
-            BoxArray ba_full(domain_box);
-            // make a DistributionMapping from the new BoxArray
-            DistributionMapping dm_full;
-            // force that distribution mapping to only go to the root proc
-            Vector<int> pmap = {0};
-            dm_full.define(pmap);
-            // make a FabArray to hold the phi data
-            full_phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba_full,phi_nodal_flag),dm_full,ncomps,ngPhi,tag("full_phi_fp"));
-            full_phi_fp[lev]->setVal(0.);
-        }
     }
 
     if (do_subcycling == 1 && lev == 0)

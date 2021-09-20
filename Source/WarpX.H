@@ -18,6 +18,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
@@ -46,7 +47,6 @@
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_LayoutData.H>
-#include <AMReX_MultiFab.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
@@ -196,10 +196,6 @@ public:
     static bool use_filter_compensation;
     static bool serialize_ics;
 
-    // Whether or not to allocate multifabs over the full domain for phi and rho
-    // this is used when an external Poisson solver is used
-    static bool allocate_full_rho_phi;
-
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
     static std::string lab_data_directory;
@@ -263,7 +259,6 @@ public:
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
-    amrex::MultiFab * get_pointer_full_phi_fp (int lev) const { return full_phi_fp[lev].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -291,27 +286,6 @@ public:
 
     const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
     const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
-
-    const amrex::MultiFab& getGatheredRho_fp (int lev) {
-        // copy data from the MultiFab with distributed Boxes to the "full" one
-        // with the single Box
-        (*full_rho_fp[lev]).ParallelCopy(getrho_fp(lev));
-        return *full_rho_fp[lev];
-    }
-
-    const amrex::MultiFab& getGatheredPhi_fp (int lev) {
-        // copy data from the MultiFab with distributed Boxes to the "full" one
-        // with the single Box
-        amrex::MultiFab* phi_mf = get_pointer_full_phi_fp(lev);
-        (*phi_mf).ParallelCopy(*get_pointer_phi_fp(lev));
-        return *phi_mf;
-    }
-
-    void setPhiGrid_fp (int lev) {
-        // copy data from single Box multifab into multifab with distributed Boxes
-        (*get_pointer_phi_fp(lev)).ParallelCopy(*full_phi_fp[lev]);
-        return;
-    }
 
     bool DoPML () const {return do_pml;}
 
@@ -644,6 +618,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
+    ElectrostaticSolver::BoundaryValueHandler field_boundary_value_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
@@ -881,6 +856,9 @@ private:
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
                          const amrex::DistributionMapping& new_dmap);
 
+    amrex::DistributionMapping
+    GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const;
+
     void InitFromCheckpoint ();
     void PostRestart ();
 
@@ -999,9 +977,7 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > full_rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > full_phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;

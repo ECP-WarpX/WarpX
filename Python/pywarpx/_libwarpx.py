@@ -191,9 +191,6 @@ libwarpx.warpx_getPhiFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
-libwarpx.warpx_getGatheredChargeDensityFP.restype = _LP_LP_c_real
-libwarpx.warpx_getGatheredPhiFP.restype = _LP_LP_c_real
-libwarpx.warpx_getPointerFullPhiFP.restype = _LP_LP_c_real
 
 libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
