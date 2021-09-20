@@ -67,7 +67,6 @@ class LabFrameDiag {
     std::vector<std::string> m_mesh_field_names_;
 
     int m_file_num;
-    int m_initial_i;
 
     // For back-transformed diagnostics of grid fields, data_buffer_
     // stores a buffer of the fields in the lab frame (in a MultiFab, i.e.

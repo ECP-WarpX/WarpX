@@ -18,6 +18,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
@@ -619,6 +620,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
+    ElectrostaticSolver::BoundaryValueHandler field_boundary_value_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
@@ -855,6 +857,9 @@ private:
 
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
                          const amrex::DistributionMapping& new_dmap);
+
+    amrex::DistributionMapping
+    GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const;
 
     void InitFromCheckpoint ();
     void PostRestart ();

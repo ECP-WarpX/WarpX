@@ -1175,8 +1175,6 @@ LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
    m_current_z_lab = 0.0;
    m_current_z_boost = 0.0;
    updateCurrentZPositions(t_boost, m_inv_gamma_boost_, m_inv_beta_boost_);
-   Real zmin_lab = m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-   m_initial_i = static_cast<int>((m_current_z_lab - zmin_lab) / m_dz_lab_) ;
    m_file_name = Concatenate(WarpX::lab_data_directory + "/snapshots/snapshot",
                            m_file_num, 5);
    createLabFrameDirectories();
@@ -1347,8 +1345,6 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
     m_current_z_lab = 0.0;
     m_current_z_boost = 0.0;
     updateCurrentZPositions(t_boost, m_inv_gamma_boost_, m_inv_beta_boost_);
-    Real zmin_lab = m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-    m_initial_i = static_cast<int>((m_current_z_lab - zmin_lab)/m_dz_lab_);
     m_file_name = Concatenate(WarpX::lab_data_directory+"/slices/slice",m_file_num,5);
     createLabFrameDirectories();
     m_buff_counter_ = 0;

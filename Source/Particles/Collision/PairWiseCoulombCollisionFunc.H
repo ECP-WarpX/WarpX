@@ -72,15 +72,18 @@ public:
         index_type const I2s, index_type const I2e,
         index_type* I1,       index_type* I2,
         SoaData_type soa_1, SoaData_type soa_2,
-        GetParticlePosition get_position_1, GetParticlePosition get_position_2,
+        GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
         amrex::Real const  q1, amrex::Real const  q2,
         amrex::Real const  m1, amrex::Real const  m2,
         amrex::Real const  dt, amrex::Real const dV,
+        index_type const /*cell_start_pair*/, index_type* /*p_mask*/,
+        index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
+        amrex::ParticleReal* /*p_pair_reaction_weight*/,
         amrex::RandomEngine const& engine) const
         {
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,
-                    soa_1, soa_2, get_position_1, get_position_2,
+                    soa_1, soa_2,
                     q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
                     dt, m_CoulombLog, dV, engine );
         }

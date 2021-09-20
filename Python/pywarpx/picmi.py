@@ -84,6 +84,7 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
+        self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
 
         # For the scraper buffer
         self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
@@ -124,7 +125,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_zlo = self.save_particles_at_zlo,
                                              save_particles_at_zhi = self.save_particles_at_zhi,
                                              save_particles_at_eb = self.save_particles_at_eb,
-                                             save_previous_position = self.save_previous_position)
+                                             save_previous_position = self.save_previous_position,
+                                             do_not_deposit = self.do_not_deposit)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -541,7 +543,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     def init(self, kw):
-        assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD'], Exception("Only 'Yee', 'CKC', and 'PSATD' are supported")
+        assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD', 'ECT'], Exception("Only 'Yee', 'CKC', 'PSATD', and 'ECT' are supported")
 
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
 
@@ -766,19 +768,43 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
 
 
 class EmbeddedBoundary(picmistandard.base._ClassWithInit):
-    """Custom class to handle set up of embedded boundaries in WarpX.  If
-    embedded boundary initialization is added to picmistandard this can be
-    changed to inherit that functionality."""
-
+    """
+    Custom class to handle set up of embedded boundaries specific to WarpX.
+    If embedded boundary initialization is added to picmistandard this can be
+    changed to inherit that functionality.
+    - implicit_function: Analytic expression describing the embedded boundary
+    - potential: Analytic expression defining the potential. Can only be specified
+                 when the solver is electrostatic. Optional, defaults to 0.
+     Parameters used in the expressions should be given as additional keyword arguments.
+    """
     def __init__(self, implicit_function, potential=None, **kw):
         self.implicit_function = implicit_function
         self.potential = potential
 
+        # Handle keyword arguments used in expressions
+        self.user_defined_kw = {}
+        for k in list(kw.keys()):
+            if (re.search(r'\b%s\b'%k, implicit_function) or
+                (potential is not None and re.search(r'\b%s\b'%k, potential))):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
         self.handle_init(kw)
 
-    def initialize_inputs(self):
-        pywarpx.warpx.eb_implicit_function = self.implicit_function
-        pywarpx.warpx.__setattr__('eb_potential(t)', self.potential)
+    def initialize_inputs(self, solver):
+
+        # Add the user defined keywords to my_constants
+        # The keywords are mangled if there is a conflicting variable already
+        # defined in my_constants with the same name but different value.
+        self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
+        pywarpx.warpx.eb_implicit_function = expression
+
+        if self.potential is not None:
+            assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
+            expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
+            pywarpx.warpx.__setattr__('eb_potential(t)', expression)
 
 
 class Simulation(picmistandard.PICMI_Simulation):
@@ -850,7 +876,7 @@ class Simulation(picmistandard.PICMI_Simulation):
                 # --- If this was set for any species, use that value.
                 particle_shape = s.particle_shape
 
-        if particle_shape is not None:
+        if particle_shape is not None and (len(self.species) > 0 or len(self.lasers) > 0):
             if isinstance(particle_shape, str):
                 interpolation_order = {'NGP':0, 'linear':1, 'quadratic':2, 'cubic':3}[particle_shape]
             else:
@@ -872,7 +898,7 @@ class Simulation(picmistandard.PICMI_Simulation):
                 collision.initialize_inputs()
 
         if self.embedded_boundary is not None:
-            self.embedded_boundary.initialize_inputs()
+            self.embedded_boundary.initialize_inputs(self.solver)
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
