@@ -177,32 +177,34 @@ PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
 env = os.environ.copy()
 # ... build WarpX libraries with CMake
 #   note: changed default for SHARED, MPI, TESTING and EXAMPLES
-WarpX_COMPUTE = env.pop('WarpX_COMPUTE', 'OMP')
-WarpX_MPI = env.pop('WarpX_MPI', 'OFF')
-WarpX_EB = env.pop('WarpX_EB', 'OFF')
-WarpX_OPENPMD = env.pop('WarpX_OPENPMD', 'OFF')
-WarpX_PRECISION = env.pop('WarpX_PRECISION', 'DOUBLE')
-WarpX_PSATD = env.pop('WarpX_PSATD', 'OFF')
-WarpX_QED = env.pop('WarpX_QED', 'ON')
-WarpX_QED_TABLE_GEN = env.pop('WarpX_QED_TABLE_GEN', 'OFF')
-WarpX_DIMS = env.pop('WarpX_DIMS', '2;3;RZ')
+#   note: we use all-uppercase variable names for environment control to be
+#         consistent across platforms (especially Windows)
+WarpX_COMPUTE = env.pop('WARPX_COMPUTE', 'OMP')
+WarpX_MPI = env.pop('WARPX_MPI', 'OFF')
+WarpX_EB = env.pop('WARPX_EB', 'OFF')
+WarpX_OPENPMD = env.pop('WARPX_OPENPMD', 'OFF')
+WarpX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
+WarpX_PSATD = env.pop('WARPX_PSATD', 'OFF')
+WarpX_QED = env.pop('WARPX_QED', 'ON')
+WarpX_QED_TABLE_GEN = env.pop('WARPX_QED_TABLE_GEN', 'OFF')
+WarpX_DIMS = env.pop('WARPX_DIMS', '2;3;RZ')
 BUILD_PARALLEL = env.pop('BUILD_PARALLEL', '2')
-BUILD_SHARED_LIBS = env.pop('WarpX_BUILD_SHARED_LIBS',
+BUILD_SHARED_LIBS = env.pop('WARPX_BUILD_SHARED_LIBS',
                                    'OFF')
-#BUILD_TESTING = env.pop('WarpX_BUILD_TESTING',
+#BUILD_TESTING = env.pop('WARPX_BUILD_TESTING',
 #                               'OFF')
-#BUILD_EXAMPLES = env.pop('WarpX_BUILD_EXAMPLES',
+#BUILD_EXAMPLES = env.pop('WARPX_BUILD_EXAMPLES',
 #                                'OFF')
 # openPMD-api sub-control
 HDF5_USE_STATIC_LIBRARIES = env.pop('HDF5_USE_STATIC_LIBRARIES', 'OFF')
 ADIOS_USE_STATIC_LIBS = env.pop('ADIOS_USE_STATIC_LIBS', 'OFF')
 # CMake dependency control (developers & package managers)
-WarpX_amrex_src = env.pop('WarpX_amrex_src', '')
-WarpX_amrex_internal = env.pop('WarpX_amrex_internal', 'ON')
-WarpX_openpmd_src = env.pop('WarpX_openpmd_src', '')
-WarpX_openpmd_internal = env.pop('WarpX_openpmd_internal', 'ON')
-WarpX_picsar_src = env.pop('WarpX_picsar_src', '')
-WarpX_picsar_internal = env.pop('WarpX_picsar_internal', 'ON')
+WarpX_amrex_src = env.pop('WARPX_AMREX_SRC', '')
+WarpX_amrex_internal = env.pop('WARPX_AMREX_INTERNAL', 'ON')
+WarpX_openpmd_src = env.pop('WARPX_OPENPMD_SRC', '')
+WarpX_openpmd_internal = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
+WarpX_picsar_src = env.pop('WARPX_PICSAR_SRC', '')
+WarpX_picsar_internal = env.pop('WARPX_PICSAR_INTERNAL', 'ON')
 
 for key in env.keys():
     if key.lower().startswith('warpx'):
