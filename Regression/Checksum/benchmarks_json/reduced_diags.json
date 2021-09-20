@@ -27,12 +27,12 @@
   "photons": {
     "particle_cpu": 16384.0,
     "particle_id": 1342193664.0,
-    "particle_momentum_x": 1.4328434977988592e-18,
-    "particle_momentum_y": 1.4351771291657078e-18,
-    "particle_momentum_z": 1.430939323220736e-18,
-    "particle_position_x": 16387.992590659625,
-    "particle_position_y": 16333.846364327002,
-    "particle_position_z": 16371.683058136738,
+    "particle_momentum_x": 1.432645873397450e-18,
+    "particle_momentum_y": 1.420927243614407e-18,
+    "particle_momentum_z": 1.431438222545384e-18,
+    "particle_position_x": 1.627403140278692e+04,
+    "particle_position_y": 1.637477655695998e+04,
+    "particle_position_z": 1.630835210015618e+04,
     "particle_weight": 800000000000000.0
   },
   "protons": {
