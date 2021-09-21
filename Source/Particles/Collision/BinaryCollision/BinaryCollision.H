@@ -82,7 +82,7 @@ public:
      * @param collision_name the name of the collision
      *
      */
-    BinaryCollision (std::string collision_name, MultiParticleContainer* const mypc)
+    BinaryCollision (std::string collision_name, MultiParticleContainer const * const mypc)
         : CollisionBase(collision_name)
     {
         if(m_species_names.size() != 2)
