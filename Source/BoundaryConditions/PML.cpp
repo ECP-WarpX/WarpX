@@ -980,6 +980,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
 
     // Create temporary MultiFab to copy to and from the PML
     MultiFab tmpregmf(reg.boxArray(), reg.DistributionMap(), ncp, ngr);
+    tmpregmf.setVal(0.0);
 
     // Create the sum of the split fields, in the PML
     MultiFab totpmlmf(pml.boxArray(), pml.DistributionMap(), 1, 0); // Allocate
