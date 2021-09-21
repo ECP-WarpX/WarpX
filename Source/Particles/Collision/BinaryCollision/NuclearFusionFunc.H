@@ -92,7 +92,9 @@ public:
         index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
         amrex::ParticleReal* /*p_pair_reaction_weight*/,
         amrex::RandomEngine const& /*engine*/) const
-        {}
+        {
+            amrex::Abort("Nuclear fusion module not yet implemented");
+        }
 
 private:
     amrex::Real m_fusion_multiplier;
