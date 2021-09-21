@@ -68,8 +68,8 @@ WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
     else  // Update only the valid cells
         n_updated_guards = amrex::IntVect::TheZeroVector();
 
-    src.SumBoundary(0, ncomp, src_ngrow, n_updated_guards, period);
-    amrex::Copy( dst, src, 0, icomp, ncomp, n_updated_guards );
+    dst.setVal(0., icomp, ncomp, n_updated_guards);
+    dst.ParallelAdd(src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
 }
 
 #endif // WARPX_SUM_GUARD_CELLS_H_
