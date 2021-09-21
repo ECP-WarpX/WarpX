@@ -637,6 +637,14 @@ WarpX::ReadParameters ()
         }
 
         pp_warpx.query("do_single_precision_comms", do_single_precision_comms);
+#ifdef AMREX_USE_FLOAT
+        if (do_single_precision_comms) {
+            do_single_precision_comms = 0;
+            amrex::Warning("\nWARNING: Overwrote warpx.do_single_precision_comms"
+                               " to be 0, since WarpX was built in single precision.");
+        }
+#endif
+
         pp_warpx.query("serialize_ics", serialize_ics);
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
