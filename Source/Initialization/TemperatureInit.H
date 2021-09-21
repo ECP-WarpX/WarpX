@@ -75,6 +75,13 @@ struct TemperatureInit
 
     }
 
+    // Explicitly prevent the compiler from generating copy constructors
+    // and copy assignment operators.
+    TemperatureInit (TemperatureInit const&) = delete;
+    TemperatureInit (TemperatureInit&&) = delete;
+    void operator= (TemperatureInit const&) = delete;
+    void operator= (TemperatureInit &&) = delete;
+
     void clear ();
 
 private:
