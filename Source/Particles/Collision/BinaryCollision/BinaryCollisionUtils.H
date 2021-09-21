@@ -19,10 +19,10 @@ enum struct NuclearFusionType { ProtonBoron, Undefined };
 namespace BinaryCollisionUtils{
 
     NuclearFusionType get_nuclear_fusion_type (const std::string collision_name,
-                                            MultiParticleContainer* const mypc);
+                                               MultiParticleContainer const * const mypc);
 
     CollisionType get_collision_type (const std::string collision_name,
-                                    MultiParticleContainer* const mypc);
+                                      MultiParticleContainer const * const mypc);
 
     CollisionType nuclear_fusion_type_to_collision_type (const NuclearFusionType fusion_type);
 }

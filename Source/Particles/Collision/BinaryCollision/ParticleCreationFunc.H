@@ -45,7 +45,7 @@ public:
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      */
-    ParticleCreationFunc (const std::string collision_name, MultiParticleContainer* const mypc);
+    ParticleCreationFunc (const std::string collision_name, MultiParticleContainer const * const mypc);
 
     /**
      * \brief operator() of the ParticleCreationFunc class. Needs to be implemented.
@@ -90,7 +90,7 @@ public:
     NoParticleCreationFunc () = default;
 
     NoParticleCreationFunc (const std::string /*collision_name*/,
-                            MultiParticleContainer* const /*mypc*/) {}
+                            MultiParticleContainer const * const /*mypc*/) {}
 
     AMREX_INLINE
     amrex::Vector<int> operator() (

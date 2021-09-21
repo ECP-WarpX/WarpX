@@ -49,7 +49,7 @@ public:
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      */
-    NuclearFusionFunc (const std::string collision_name, MultiParticleContainer* const mypc)
+    NuclearFusionFunc (const std::string collision_name, MultiParticleContainer const * const mypc)
     {
         using namespace amrex::literals;
 

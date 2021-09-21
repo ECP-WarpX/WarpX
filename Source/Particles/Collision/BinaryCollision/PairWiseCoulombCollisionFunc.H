@@ -42,7 +42,7 @@ public:
      * @param[in] collision_name the name of the collision
      */
     PairWiseCoulombCollisionFunc (const std::string collision_name,
-                                  MultiParticleContainer* const /*mypc*/)
+                                  MultiParticleContainer const * const /*mypc*/)
     {
         using namespace amrex::literals;
         amrex::ParmParse pp_collision_name(collision_name);

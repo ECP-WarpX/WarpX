@@ -18,7 +18,7 @@
 namespace BinaryCollisionUtils{
 
     NuclearFusionType get_nuclear_fusion_type (const std::string collision_name,
-                                            MultiParticleContainer* const mypc)
+                                               MultiParticleContainer const * const mypc)
         {
             amrex::ParmParse pp_collision_name(collision_name);
             amrex::Vector<std::string> species_names;
@@ -41,7 +41,7 @@ namespace BinaryCollisionUtils{
         }
 
     CollisionType get_collision_type (const std::string collision_name,
-                                    MultiParticleContainer* const mypc)
+                                      MultiParticleContainer const * const mypc)
         {
             amrex::ParmParse pp_collision_name(collision_name);
             std::string type;
