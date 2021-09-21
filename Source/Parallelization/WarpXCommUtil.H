@@ -1,11 +1,12 @@
 #ifndef WARPX_COMMUTIL_H_
 #define WARPX_COMMUTIL_H_
 
-#include "AMReX_FabArray.H"
-#include "AMReX_iMultiFab.H"
-#include "AMReX_MultiFab.H"
-#include "AMReX_Periodicity.H"
-#include "AMReX_TypeTraits.H"
+#include <AMReX_FabArray.H>
+#include <AMReX_Gpu.H>
+#include <AMReX_iMultiFab.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Periodicity.H>
+#include <AMReX_TypeTraits.H>
 
 #include "WarpX.H"
 
@@ -18,22 +19,14 @@ template <class FAB1, class FAB2>
 void
 mixedCopy (amrex::FabArray<FAB1>& dst, amrex::FabArray<FAB2> const& src, int srccomp, int dstcomp, int numcomp, const amrex::IntVect& nghost)
 {
-#ifdef _OPENMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-    for (amrex::MFIter mfi(dst,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    auto const& srcma = src.const_arrays();
+    auto const& dstma = dst.arrays();
+    ParallelFor(dst, nghost, numcomp,
+    [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k, int n) noexcept
     {
-        const amrex::Box& bx = mfi.growntilebox(nghost);
-        if (bx.ok())
-        {
-            auto const srcFab = src.array(mfi);
-            auto       dstFab = dst.array(mfi);
-            AMREX_HOST_DEVICE_PARALLEL_FOR_4D_FUSIBLE ( bx, numcomp, i, j, k, n,
-            {
-                dstFab(i,j,k,dstcomp+n) = srcFab(i,j,k,srccomp+n);
-            });
-        }
-    }
+        dstma[box_no](i,j,k,dstcomp+n) = srcma[box_no](i,j,k,srccomp+n);
+    });
+    amrex::Gpu::synchronize();
 }
 
 void ParallelCopy (amrex::MultiFab&            dst,
