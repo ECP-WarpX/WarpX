@@ -13,7 +13,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
-#include "WarpXWrappers.h"
+#include "WarpXWrappers.H"
 #include "WarpX_py.H"
 
 #include <AMReX.H>

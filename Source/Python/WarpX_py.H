@@ -8,7 +8,7 @@
 #ifndef WARPX_PY_H_
 #define WARPX_PY_H_
 
-#include "WarpXWrappers.h"
+#include "WarpXWrappers.H"
 
 
 extern "C" {
