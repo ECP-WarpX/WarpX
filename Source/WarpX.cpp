@@ -2205,7 +2205,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
         setnull = false;
         // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
         for (int ii = i-ng; ii <= i+ng; ++ii) {
-            if ( gmsk(ii,jj,k) == 0 ) setnull = true;
+            if ( gmsk(ii,j,k) == 0 ) setnull = true;
         }
         if ( setnull ) msk(i,j,k) = 0;
         else           msk(i,j,k) = 1;
