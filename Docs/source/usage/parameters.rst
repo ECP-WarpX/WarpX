@@ -192,6 +192,10 @@ Setting up the field mesh
     automatically set so that it is one cell larger than
     ``n_current_deposition_buffer``, on the fine grid.
 
+* ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
+    Perform MPI communications for guard regions in single precision.
+    Only meaningful for ``WarpX_PRECISION=DOUBLE``.
+
 * ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
     in the list will deposit their charge/current directly on the main grid
