@@ -478,10 +478,29 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 void
 WarpX::FillBoundaryB (IntVect ng)
 {
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        FillBoundaryB(lev, ng);
+    // PML exchange
+    if (do_pml) {
+        for (int lev=0; lev<=finest_level; ++lev){
+            if (pml[lev]->ok()) {
+                pml[lev]->ExchangeB(PatchType::coarse,
+                    { Bfield_cp[lev][0].get(), Bfield_cp[lev][1].get(),
+                      Bfield_cp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->ExchangeB(PatchType::fine,
+                    { Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(),
+                      Bfield_fp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->FillBoundaryB(PatchType::coarse);
+                pml[lev]->FillBoundaryB(PatchType::fine);
+            }
+        }
     }
+
+    // Launch asynchronous MPI communications
+    WarpX::FillBoundary_nowait( Bfield_fp, ng, PatchType::fine );
+    WarpX::FillBoundary_nowait( Bfield_cp, ng, PatchType::coarse );
+
+    // Finalize MPI communications
+    WarpX::FillBoundary_finish( Bfield_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Bfield_cp, PatchType::coarse );
 }
 
 void
