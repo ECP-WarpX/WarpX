@@ -577,7 +577,7 @@ WarpX::ReadParameters ()
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
 
             // Build the handler for the field boundary conditions
-            pp_warpx.query("eb_potential(t)", field_boundary_value_handler.potential_eb_str);
+            pp_warpx.query("eb_potential(x,y,z,t)", field_boundary_value_handler.potential_eb_str);
             field_boundary_value_handler.buildParsers();
             // TODO add the parsers for the domain boundary values as well
         }

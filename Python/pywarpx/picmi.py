@@ -804,7 +804,7 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
-            pywarpx.warpx.__setattr__('eb_potential(t)', expression)
+            pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
 
 class Simulation(picmistandard.PICMI_Simulation):
