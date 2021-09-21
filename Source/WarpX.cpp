@@ -29,7 +29,6 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "Python/WarpXWrappers.h"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -585,7 +584,7 @@ WarpX::ReadParameters ()
         pp_boundary.query("potential_hi_y", field_boundary_handler.potential_yhi_str);
         pp_boundary.query("potential_lo_z", field_boundary_handler.potential_zlo_str);
         pp_boundary.query("potential_hi_z", field_boundary_handler.potential_zhi_str);
-        pp_warpx.query("eb_potential(t)", field_boundary_handler.potential_eb_str);
+        pp_warpx.query("eb_potential(x,y,z,t)", field_boundary_value_handler.potential_eb_str);
         field_boundary_handler.buildParsers();
 
         queryWithParser(pp_warpx, "const_dt", const_dt);
