@@ -487,10 +487,29 @@ WarpX::FillBoundaryB (IntVect ng)
 void
 WarpX::FillBoundaryE (IntVect ng)
 {
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        FillBoundaryE(lev, ng);
+    // PML exchange
+    if (do_pml) {
+        for (int lev=0; lev<=finest_level; ++lev){
+            if (pml[lev]->ok()) {
+                pml[lev]->ExchangeE(PatchType::coarse,
+                    { Efield_cp[lev][0].get(), Efield_cp[lev][1].get(),
+                      Efield_cp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->ExchangeE(PatchType::fine,
+                    { Efield_fp[lev][0].get(), Efield_fp[lev][1].get(),
+                      Efield_fp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->FillBoundaryE(PatchType::coarse);
+                pml[lev]->FillBoundaryE(PatchType::fine);
+            }
+        }
     }
+
+    // Launch asynchronous MPI communications
+    WarpX::FillBoundary_nowait( Efield_fp, ng, PatchType::fine );
+    WarpX::FillBoundary_nowait( Efield_cp, ng, PatchType::coarse );
+
+    // Finalize MPI communications
+    WarpX::FillBoundary_finish( Efield_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Efield_cp, PatchType::coarse );
 }
 
 void
