@@ -246,6 +246,23 @@ WarpX::InitFromCheckpoint ()
         VisMF::Read(*Bfield_fp[lev][2],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_fp"));
 
+        if (WarpX::fft_do_time_averaging)
+        {
+            VisMF::Read(*Efield_avg_fp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_avg_fp"));
+            VisMF::Read(*Efield_avg_fp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_avg_fp"));
+            VisMF::Read(*Efield_avg_fp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_avg_fp"));
+
+            VisMF::Read(*Bfield_avg_fp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_avg_fp"));
+            VisMF::Read(*Bfield_avg_fp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_avg_fp"));
+            VisMF::Read(*Bfield_avg_fp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_fp"));
+        }
+
         if (is_synchronized) {
             VisMF::Read(*current_fp[lev][0],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_fp"));
@@ -270,6 +287,23 @@ WarpX::InitFromCheckpoint ()
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_cp"));
             VisMF::Read(*Bfield_cp[lev][2],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_cp"));
+
+            if (WarpX::fft_do_time_averaging)
+            {
+                VisMF::Read(*Efield_avg_cp[lev][0],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_avg_cp"));
+                VisMF::Read(*Efield_avg_cp[lev][1],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_avg_cp"));
+                VisMF::Read(*Efield_avg_cp[lev][2],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_avg_cp"));
+
+                VisMF::Read(*Bfield_avg_cp[lev][0],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_avg_cp"));
+                VisMF::Read(*Bfield_avg_cp[lev][1],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_avg_cp"));
+                VisMF::Read(*Bfield_avg_cp[lev][2],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_cp"));
+            }
 
             if (is_synchronized) {
                 VisMF::Read(*current_cp[lev][0],
