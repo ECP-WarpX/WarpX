@@ -979,15 +979,16 @@ WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
     const auto& period = Geom(glev).periodicity();
     auto& j = (patch_type == PatchType::fine) ? current_fp[lev] : current_cp[lev];
+    const amrex::IntVect ng_depos_J = get_ng_depos_J();
     for (int idim = 0; idim < 3; ++idim) {
         if (use_filter) {
             IntVect ng = j[idim]->nGrowVect();
             ng += bilinear_filter.stencil_length_each_dir-1;
             MultiFab jf(j[idim]->boxArray(), j[idim]->DistributionMap(), j[idim]->nComp(), ng);
             bilinear_filter.ApplyStencil(jf, *j[idim], lev);
-            WarpXSumGuardCells(*(j[idim]), jf, period, 0, (j[idim])->nComp());
+            WarpXSumGuardCells(*(j[idim]), jf, period, ng_depos_J, 0, (j[idim])->nComp());
         } else {
-            WarpXSumGuardCells(*(j[idim]), period, 0, (j[idim])->nComp());
+            WarpXSumGuardCells(*(j[idim]), period, ng_depos_J, 0, (j[idim])->nComp());
         }
     }
 }
@@ -1015,6 +1016,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
         // we don't care about the final state of them.
 
         const auto& period = Geom(lev).periodicity();
+        const amrex::IntVect ng_depos_J = get_ng_depos_J();
         for (int idim = 0; idim < 3; ++idim) {
             MultiFab mf(current_fp[lev][idim]->boxArray(),
                         current_fp[lev][idim]->DistributionMap(), current_fp[lev][idim]->nComp(), 0);
@@ -1036,7 +1038,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 MultiFab::Add(jfb, jfc, 0, 0, current_buf[lev+1][idim]->nComp(), ng);
                 mf.ParallelAdd(jfb, 0, 0, current_buf[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
 
-                WarpXSumGuardCells(*current_cp[lev+1][idim], jfc, period, 0, current_cp[lev+1][idim]->nComp());
+                WarpXSumGuardCells(*current_cp[lev+1][idim], jfc, period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
             else if (use_filter) // but no buffer
             {
@@ -1047,7 +1049,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                             current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
                 bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev);
                 mf.ParallelAdd(jf, 0, 0, current_cp[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
-                WarpXSumGuardCells(*current_cp[lev+1][idim], jf, period, 0, current_cp[lev+1][idim]->nComp());
+                WarpXSumGuardCells(*current_cp[lev+1][idim], jf, period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
             else if (current_buf[lev+1][idim]) // but no filter
             {
@@ -1057,14 +1059,14 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 mf.ParallelAdd(*current_buf[lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
                                current_buf[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
                                period);
-                WarpXSumGuardCells(*(current_cp[lev+1][idim]), period, 0, current_cp[lev+1][idim]->nComp());
+                WarpXSumGuardCells(*(current_cp[lev+1][idim]), period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
             else // no filter, no buffer
             {
                 mf.ParallelAdd(*current_cp[lev+1][idim], 0, 0, current_cp[lev+1][idim]->nComp(),
                                current_cp[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
                                period);
-                WarpXSumGuardCells(*(current_cp[lev+1][idim]), period, 0, current_cp[lev+1][idim]->nComp());
+                WarpXSumGuardCells(*(current_cp[lev+1][idim]), period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
             MultiFab::Add(*current_fp[lev][idim], mf, 0, 0, current_fp[lev+1][idim]->nComp(), 0);
         }
@@ -1096,14 +1098,15 @@ void
 WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
 {
     const auto& period = Geom(glev).periodicity();
+    const amrex::IntVect ng_depos_rho = get_ng_depos_rho();
     if (use_filter) {
         IntVect ng = rho.nGrowVect();
         ng += bilinear_filter.stencil_length_each_dir-1;
         MultiFab rf(rho.boxArray(), rho.DistributionMap(), ncomp, ng);
         bilinear_filter.ApplyStencil(rf, rho, glev, icomp, 0, ncomp);
-        WarpXSumGuardCells(rho, rf, period, icomp, ncomp );
+        WarpXSumGuardCells(rho, rf, period, ng_depos_rho, icomp, ncomp );
     } else {
-        WarpXSumGuardCells(rho, period, icomp, ncomp);
+        WarpXSumGuardCells(rho, period, ng_depos_rho, icomp, ncomp);
     }
 }
 
@@ -1130,6 +1133,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
     if (lev < finest_level){
 
         const auto& period = Geom(lev).periodicity();
+        const amrex::IntVect ng_depos_rho = get_ng_depos_rho();
         MultiFab mf(rho_fp[lev]->boxArray(),
                     rho_fp[lev]->DistributionMap(),
                     ncomp, 0);
@@ -1150,7 +1154,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
 
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);
             mf.ParallelAdd(rhofb, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
-            WarpXSumGuardCells( *rho_cp[lev+1], rhofc, period, icomp, ncomp );
+            WarpXSumGuardCells( *rho_cp[lev+1], rhofc, period, ng_depos_rho, icomp, ncomp );
         }
         else if (use_filter) // but no buffer
         {
@@ -1159,7 +1163,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             MultiFab rf(rho_cp[lev+1]->boxArray(), rho_cp[lev+1]->DistributionMap(), ncomp, ng);
             bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev, icomp, 0, ncomp);
             mf.ParallelAdd(rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
-            WarpXSumGuardCells( *rho_cp[lev+1], rf, period, icomp, ncomp );
+            WarpXSumGuardCells( *rho_cp[lev+1], rf, period, ng_depos_rho, icomp, ncomp );
         }
         else if (charge_buf[lev+1]) // but no filter
         {
@@ -1170,14 +1174,14 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
                            ncomp,
                            charge_buf[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
                            period);
-            WarpXSumGuardCells(*(rho_cp[lev+1]), period, icomp, ncomp);
+            WarpXSumGuardCells(*(rho_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
         else // no filter, no buffer
         {
             mf.ParallelAdd(*rho_cp[lev+1], icomp, 0, ncomp,
                            rho_cp[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
                            period);
-            WarpXSumGuardCells(*(rho_cp[lev+1]), period, icomp, ncomp);
+            WarpXSumGuardCells(*(rho_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
         MultiFab::Add(*rho_fp[lev], mf, 0, icomp, ncomp, 0);
         NodalSyncRho(lev+1, PatchType::coarse, icomp, ncomp);
