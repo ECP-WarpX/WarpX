@@ -433,8 +433,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const auto getPosition = GetParticlePosition(pti);
 
-            const auto getExternalE = GetExternalEField(pti);
-            const auto getExternalB = GetExternalBField(pti);
+            const auto getExternalEB = GetExternalEBField(pti);
 
             const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,m_v_galilean,lev);
 
@@ -504,8 +503,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
-                getExternalE(ip, Exp, Eyp, Ezp);
-                getExternalB(ip, Bxp, Byp, Bzp);
+                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
                 amrex::Real qp = q;
                 if (ion_lev) { qp *= ion_lev[ip]; }
