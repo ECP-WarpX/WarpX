@@ -35,9 +35,9 @@ We use the following modules and environments on the system (``$HOME/warpx_spock
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake
+   module load cmake/3.20.2
    module load craype-accel-amd-gfx908
-   module load rocm/4.1.0
+   module load rocm/4.3.0
 
    # optional: faster builds
    module load ccache
@@ -56,7 +56,7 @@ We use the following modules and environments on the system (``$HOME/warpx_spock
    export AMREX_AMD_ARCH=gfx908
 
    # compiler environment hints
-   export CC=$(which clang)
+   export CC=$ROCM_PATH/llvm/bin/clang
    export CXX=$(which hipcc)
    export LDFLAGS="-L${CRAYLIBS_X86_64} $(CC --cray-print-opts=libs) -lmpi"
    # GPU aware MPI: ${PE_MPICH_GTL_DIR_gfx908} -lmpi_gtl_hsa

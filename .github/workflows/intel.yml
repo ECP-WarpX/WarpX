@@ -12,6 +12,7 @@ jobs:
   build_icc:
     name: oneAPI ICC SP&DP
     runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -63,6 +64,7 @@ jobs:
     name: oneAPI ICX SP
     runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror -Wno-error=pass-failed"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -104,6 +106,7 @@ jobs:
     name: oneAPI DPC++ SP
     runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -123,7 +126,7 @@ jobs:
           -DBUILD_SHARED_LIBS=ON       \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
-          -DWarpX_EB=OFF               \
+          -DWarpX_EB=ON                \
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \

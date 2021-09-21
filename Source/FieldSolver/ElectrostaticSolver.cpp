@@ -6,6 +6,7 @@
  */
 #include "WarpX.H"
 
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -465,12 +466,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     linop.setSigma({AMREX_D_DECL(
         1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
-    // get the EB potential at the current time
-    std::string potential_eb_str = "0";
-    ParmParse pp_embedded_boundary("warpx");
-    pp_embedded_boundary.query("eb_potential(t)", potential_eb_str);
-    auto parser_eb = makeParser(potential_eb_str, {"t"});
-    linop.setEBDirichlet( parser_eb.compile<1>()(gett_new(0)) );
+    linop.setEBDirichlet( field_boundary_value_handler.getPhiEB(gett_new(0)) );
 #endif
 
     // Solve the Poisson equation
