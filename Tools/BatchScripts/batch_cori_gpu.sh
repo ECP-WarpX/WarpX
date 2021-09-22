@@ -17,7 +17,6 @@
 #SBATCH -C gpu
 # 8 V100 GPUs (16 GB) per node
 #SBATCH --gres=gpu:8
-#SBATCH --gpus-per-task=1
 #SBATCH --exclusive
 # one MPI rank per GPU (a quarter-socket)
 #SBATCH --tasks-per-node=8
@@ -48,6 +47,7 @@ export MPICH_MAX_THREAD_SAFETY=multiple
 
 EXE="<path/to/executable>"
 
-srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) \
+srun --cpu_bind=cores --gpus-per-task=1 --gpu-bind=map_gpu:0,1,2,3,4,5,6,7 \
+  -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) \
   ${EXE} <input file> \
   > output.txt
