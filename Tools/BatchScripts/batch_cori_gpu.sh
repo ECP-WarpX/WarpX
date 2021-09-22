@@ -27,8 +27,7 @@
 
 
 # each Cori GPU node has 2 sockets of Intel Xeon Gold 6148 ('Skylake') @ 2.40 GHz
-# each Xeon CPU is divided into 2 bus rings that each have direct L3 access (TODO: double-check)
-export WARPX_NMPI_PER_NODE=4
+export WARPX_NMPI_PER_NODE=8
 
 # each MPI rank per half-socket has 10 physical cores
 #   or 20 logical (virtual) cores
