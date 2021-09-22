@@ -17,6 +17,7 @@
 #SBATCH -C gpu
 # 8 V100 GPUs (16 GB) per node
 #SBATCH --gres=gpu:8
+#SBATCH --gpus-per-task=1
 #SBATCH --exclusive
 # one MPI rank per GPU (a quarter-socket)
 #SBATCH --tasks-per-node=8
