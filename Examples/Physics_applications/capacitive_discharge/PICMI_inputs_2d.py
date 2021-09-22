@@ -79,7 +79,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
     def initialize_inputs(self):
         """Grab geometrical quantities from the grid.
         """
-        self.right_voltage = self.grid.potential_xmax.replace('sin', 'np.sin').replace('pi', 'np.pi')
+        self.right_voltage = self.grid.potential_xmax
 
         # set WarpX boundary potentials to None since we will handle it
         # ourselves in this solver
@@ -176,9 +176,10 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
     def solve(self):
         """The solution step. Includes getting the boundary potentials and
         calculating phi from rho."""
-        t = _libwarpx.libwarpx.warpx_gett_new(0)
-
-        right_voltage = eval(self.right_voltage)
+        right_voltage = eval(
+            self.right_voltage,
+            {'t':_libwarpx.libwarpx.warpx_gett_new(0), 'sin':np.sin, 'pi':np.pi}
+        )
         left_voltage = 0.0
 
         rho = -self.rho_data[
