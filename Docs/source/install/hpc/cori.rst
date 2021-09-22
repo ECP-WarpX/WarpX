@@ -246,6 +246,8 @@ The batch script below can be used to run a WarpX simulation on 2 KNL nodes on
 the supercomputer Cori at NERSC. Replace descriptions between chevrons ``<>``
 by relevant values, for instance ``<job name>`` could be ``laserWakefield``.
 
+Do not forget to first ``source $HOME/knl_warpx.profile`` if you have not done so already for this terminal session.
+
 For PICMI Python runs, the ``<path/to/executable>`` has to read ``python3`` and the ``<input file>`` is the path to your PICMI input script.
 
 .. literalinclude:: ../../../../Tools/BatchScripts/batch_cori.sh
@@ -278,6 +280,8 @@ Haswell
 
 The batch script below can be used to run a WarpX simulation on 1 `Haswell node <https://docs.nersc.gov/systems/cori/>`_ on the supercomputer Cori at NERSC.
 
+Do not forget to first ``source $HOME/haswell_warpx.profile`` if you have not done so already for this terminal session.
+
 .. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_haswell.sh
    :language: bash
 
@@ -299,6 +303,8 @@ regime), the following set of parameters provided good performance:
 
 GPU (V100)
 ^^^^^^^^^^
+
+Do not forget to first ``source $HOME/gpu_warpx.profile`` if you have not done so already for this terminal session.
 
 Due to the limited amount of GPU development nodes, just request a single node with the above defined ``getNode`` function.
 For single-node runs, try to run one grid per GPU.

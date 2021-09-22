@@ -18,10 +18,10 @@
 # 8 V100 GPUs (16 GB) per node
 #SBATCH --gres=gpu:8
 #SBATCH --exclusive
-# one MPI rank per half-socket (see below)
-#SBATCH --tasks-per-node=4
-# request all logical (virtual) cores per half-socket
-#SBATCH --cpus-per-task=20
+# one MPI rank per GPU (a quarter-socket)
+#SBATCH --tasks-per-node=8
+# request all logical (virtual) cores per quarter-socket
+#SBATCH --cpus-per-task=10
 #SBATCH -e WarpX.e%j
 #SBATCH -o WarpX.o%j
 
@@ -31,6 +31,7 @@ export WARPX_NMPI_PER_NODE=8
 
 # each MPI rank per half-socket has 10 physical cores
 #   or 20 logical (virtual) cores
+# we split half-sockets again by 2 to have one MPI rank per GPU
 # over-subscribing each physical core with 2x
 #   hyperthreading leads to often to slight speedup on Intel
 # the settings below make sure threads are close to the
@@ -39,7 +40,7 @@ export WARPX_NMPI_PER_NODE=8
 #   for N>20, also equally over close-by logical cores
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
-export OMP_NUM_THREADS=20
+export OMP_NUM_THREADS=10
 
 # for async_io support: (optional)
 export MPICH_MAX_THREAD_SAFETY=multiple
