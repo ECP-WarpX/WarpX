@@ -907,6 +907,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              tmp_slice_ptr = std::make_unique<MultiFab>(slice_ba,
                              lf_diags->m_data_buffer_->DistributionMap(),
                              ncomp, 0);
+             tmp_slice_ptr->setVal(0.0);
 
              // slice is re-used if the t_lab of a diag is equal to
              // that of the previous diag.
