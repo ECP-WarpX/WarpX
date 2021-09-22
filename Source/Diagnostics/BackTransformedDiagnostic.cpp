@@ -758,6 +758,7 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
                 const int ncomp = lf_diags->m_data_buffer_->nComp();
 
                 MultiFab tmp(buff_ba, buff_dm, ncomp, 0);
+                tmp.setVal(0.0);
 
                 WarpXCommUtil::ParallelCopy(tmp, *lf_diags->m_data_buffer_, 0, 0, ncomp,
                                             IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));

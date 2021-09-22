@@ -71,7 +71,8 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         tmp_slice_ptr = std::make_unique<MultiFab> ( slice_ba, mf_dst.DistributionMap(),
-                                            slice->nComp(), 0 );
+                                                     slice->nComp(), 0 );
+        tmp_slice_ptr->setVal(0.0);
         // Parallel copy the lab-frame data from "slice" MultiFab with
         // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
         // ncomp=10 and dmap of the destination Multifab, which will store the final data

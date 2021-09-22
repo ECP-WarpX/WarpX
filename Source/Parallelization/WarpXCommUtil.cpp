@@ -27,21 +27,21 @@ void ParallelCopy (amrex::MultiFab&            dst,
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > src_tmp(src.boxArray(),
                                                                   src.DistributionMap(),
-                                                                  src.nComp(),
-                                                                  src.nGrowVect());
-        mixedCopy(src_tmp, src, 0, 0, src.nComp(), src.nGrowVect());
+                                                                  num_comp,
+                                                                  src_nghost);
+        mixedCopy(src_tmp, src, 0, 0, num_comp, src_nghost);
 
         amrex::FabArray<amrex::BaseFab<comm_float_type> > dst_tmp(dst.boxArray(),
                                                                   dst.DistributionMap(),
-                                                                  dst.nComp(),
-                                                                  dst.nGrowVect());
+                                                                  num_comp,
+                                                                  dst_nghost);
 
-        mixedCopy(dst_tmp, dst, 0, 0, dst.nComp(), dst.nGrowVect());
+        mixedCopy(dst_tmp, dst, 0, 0, num_comp, dst_nghost);
 
         dst_tmp.ParallelCopy(src_tmp, src_comp, dst_comp, num_comp,
                              src_nghost, dst_nghost, period, op);
 
-        mixedCopy(dst, dst_tmp, 0, 0, dst.nComp(), dst_nghost);
+        mixedCopy(dst, dst_tmp, 0, 0, num_comp, dst_nghost);
     }
     else
     {
