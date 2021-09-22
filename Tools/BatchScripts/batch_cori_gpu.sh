@@ -7,6 +7,7 @@
 # Ref:
 # - https://docs-dev.nersc.gov/cgpu/hardware/
 # - https://docs-dev.nersc.gov/cgpu/access/
+# - https://docs-dev.nersc.gov/cgpu/usage/#controlling-task-and-gpu-binding
 
 # Just increase this number of you need more nodes.
 #SBATCH -N 2
