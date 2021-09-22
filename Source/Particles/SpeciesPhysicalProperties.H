@@ -18,7 +18,7 @@
 #include <string>
 
 enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen, helium, boron,
-                            carbon, nitrogen, oxygen, copper};
+                            boron10, boron11, carbon, nitrogen, oxygen, copper};
 
 namespace species
 {
@@ -43,6 +43,10 @@ namespace species
             return PhysicalSpecies::helium;
         if( species=="boron" )
             return PhysicalSpecies::boron;
+        if( species=="boron10" )
+            return PhysicalSpecies::boron10;
+        if( species=="boron11" )
+            return PhysicalSpecies::boron11;
         if( species=="carbon" )
             return PhysicalSpecies::carbon;
         if( species=="nitrogen" )
@@ -72,6 +76,10 @@ namespace species
         case PhysicalSpecies::helium:
             return PhysConst::q_e * amrex::Real(2.0);
         case PhysicalSpecies::boron:
+            return PhysConst::q_e * amrex::Real(5.0);
+        case PhysicalSpecies::boron10:
+            return PhysConst::q_e * amrex::Real(5.0);
+        case PhysicalSpecies::boron11:
             return PhysConst::q_e * amrex::Real(5.0);
         case PhysicalSpecies::carbon:
             return PhysConst::q_e * amrex::Real(6.0);
@@ -105,6 +113,10 @@ namespace species
             return PhysConst::m_p * amrex::Real(3.97369);
         case PhysicalSpecies::boron:
             return PhysConst::m_p * amrex::Real(10.7319);
+        case PhysicalSpecies::boron10:
+            return PhysConst::m_p * amrex::Real(9.94060);
+        case PhysicalSpecies::boron11:
+            return PhysConst::m_p * amrex::Real(10.9298);
         case PhysicalSpecies::carbon:
             return PhysConst::m_e * amrex::Real(22032.0);
         case PhysicalSpecies::nitrogen:
@@ -137,6 +149,10 @@ namespace species
             return "helium";
         case PhysicalSpecies::boron:
             return "boron";
+        case PhysicalSpecies::boron10:
+            return "boron10";
+        case PhysicalSpecies::boron11:
+            return "boron11";
         case PhysicalSpecies::carbon:
             return "carbon";
         case PhysicalSpecies::nitrogen:
