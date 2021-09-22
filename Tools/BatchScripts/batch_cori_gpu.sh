@@ -12,7 +12,7 @@
 #SBATCH -N 2
 #SBATCH -t 03:00:00
 #SBATCH -J <job name>
-#SBATCH -A <allocation ID>
+#SBATCH -A m1759
 #SBATCH -q regular
 #SBATCH -C gpu
 # 8 V100 GPUs (16 GB) per node
