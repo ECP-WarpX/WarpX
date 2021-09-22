@@ -183,7 +183,7 @@ void SumBoundary (amrex::MultiFab&          mf,
                   amrex::IntVect            ng,
                   const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("WarpXCommUtil::SumBoundary");
 
     if (WarpX::do_single_precision_comms)
     {
