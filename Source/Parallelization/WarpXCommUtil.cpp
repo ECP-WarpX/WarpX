@@ -38,16 +38,10 @@ void ParallelCopy (amrex::MultiFab&            dst,
 
         mixedCopy(dst_tmp, dst, 0, 0, dst.nComp(), dst.nGrowVect());
 
-        amrex::MultiFab orig_dst(dst.boxArray(), dst.DistributionMap(),
-                                 dst.nComp(), dst.nGrowVect());
-        amrex::MultiFab::Copy(orig_dst, dst, 0, 0, dst.nComp(), dst.nGrowVect());
-
         dst_tmp.ParallelCopy(src_tmp, src_comp, dst_comp, num_comp,
                              src_nghost, dst_nghost, period, op);
 
         mixedCopy(dst, dst_tmp, 0, 0, dst.nComp(), dst_nghost);
-
-        amrex::MultiFab::Copy(dst, orig_dst, 0, 0, orig_dst.nComp(), orig_dst.nGrowVect());
     }
     else
     {
@@ -79,16 +73,11 @@ void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
                                                                  mf.nComp(),
                                                                  mf.nGrowVect());
 
-        amrex::MultiFab orig(mf.boxArray(), mf.DistributionMap(), mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(orig, mf, 0, 0, mf.nComp(), mf.nGrowVect());
-
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
         mf_tmp.FillBoundary(period);
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-
-        amrex::MultiFab::Copy(mf, orig, 0, 0, orig.nComp(), orig.nGrowVect());
     }
     else
     {
@@ -109,16 +98,11 @@ void FillBoundary (amrex::MultiFab&          mf,
                                                             mf.nComp(),
                                                             mf.nGrowVect());
 
-        amrex::MultiFab orig(mf.boxArray(), mf.DistributionMap(), mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(orig, mf, 0, 0, mf.nComp(), mf.nGrowVect());
-
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
         mf_tmp.FillBoundary(ng, period);
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-
-        amrex::MultiFab::Copy(mf, orig, 0, 0, orig.nComp(), orig.nGrowVect());
     }
     else
     {
@@ -160,16 +144,11 @@ void SumBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
                                                                  mf.nComp(),
                                                                  mf.nGrowVect());
 
-        amrex::MultiFab orig(mf.boxArray(), mf.DistributionMap(), mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(orig, mf, 0, 0, mf.nComp(), mf.nGrowVect());
-
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
         mf_tmp.SumBoundary(period);
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-
-        amrex::MultiFab::Copy(mf, orig, 0, 0, orig.nComp(), orig.nGrowVect());
     }
     else
     {
@@ -191,17 +170,11 @@ void SumBoundary (amrex::MultiFab&          mf,
                                                                  mf.DistributionMap(),
                                                                  num_comps,
                                                                  ng);
-
-        amrex::MultiFab orig(mf.boxArray(), mf.DistributionMap(), mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(orig, mf, 0, 0, mf.nComp(), mf.nGrowVect());
-
         mixedCopy(mf_tmp, mf, start_comp, 0, num_comps, ng);
 
         mf_tmp.SumBoundary(0, num_comps, ng, period);
 
         mixedCopy(mf, mf_tmp, 0, start_comp, num_comps, ng);
-
-        amrex::MultiFab::Copy(mf, orig, 0, 0, orig.nComp(), orig.nGrowVect());
     }
     else
     {
@@ -223,15 +196,10 @@ void OverrideSync (amrex::MultiFab&          mf,
 
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
-        amrex::MultiFab orig(mf.boxArray(), mf.DistributionMap(), mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(orig, mf, 0, 0, mf.nComp(), mf.nGrowVect());
-
         auto msk = mf.OwnerMask(period);
         amrex::OverrideSync(mf_tmp, *msk, period);
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-
-        amrex::MultiFab::Copy(mf, orig, 0, 0, orig.nComp(), orig.nGrowVect());
     }
     else
     {
