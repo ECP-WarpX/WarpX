@@ -993,53 +993,49 @@ WarpX::ReadParameters ()
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
-#ifdef WARPX_USE_PSATD
-
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-
-            // For momentum-conserving field gathering, read from input the order of
-            // interpolation from the staggered positions to the grid nodes
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving) {
-                queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
-                queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
-                queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
-            }
-
-            // Read order of finite-order centering of currents (nodal to staggered)
-            if (WarpX::do_current_centering) {
-                queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
-                queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
-                queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
-            }
-
-            if (maxLevel() > 0)
-            {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
-                    "High-order centering of fields (order > 2) is not implemented with mesh refinement");
-            }
-
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving)
-            {
-                AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
-                                              device_field_centering_stencil_coeffs_y,
-                                              device_field_centering_stencil_coeffs_z,
-                                              field_centering_nox,
-                                              field_centering_noy,
-                                              field_centering_noz);
-            }
-
-            if (WarpX::do_current_centering)
-            {
-                AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
-                                              device_current_centering_stencil_coeffs_y,
-                                              device_current_centering_stencil_coeffs_z,
-                                              current_centering_nox,
-                                              current_centering_noy,
-                                              current_centering_noz);
-            }
+        // For momentum-conserving field gathering, read from input the order of
+        // interpolation from the staggered positions to the grid nodes
+        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving)
+        {
+            queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
+            queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
+            queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
         }
-#endif
+
+        // Read order of finite-order centering of currents (nodal to staggered)
+        if (WarpX::do_current_centering)
+        {
+            queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
+            queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
+            queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
+        }
+
+        if (maxLevel() > 0)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
+                "High-order centering of fields (order > 2) is not implemented with mesh refinement");
+        }
+
+        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving)
+        {
+            AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
+                                          device_field_centering_stencil_coeffs_y,
+                                          device_field_centering_stencil_coeffs_z,
+                                          field_centering_nox,
+                                          field_centering_noy,
+                                          field_centering_noz);
+        }
+
+        if (WarpX::do_current_centering)
+        {
+            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
+                                          device_current_centering_stencil_coeffs_y,
+                                          device_current_centering_stencil_coeffs_z,
+                                          current_centering_nox,
+                                          current_centering_noy,
+                                          current_centering_noz);
+        }
     }
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -2316,7 +2312,49 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
 #endif
 }
 
-#ifdef WARPX_USE_PSATD
+amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const bool nodal)
+{
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
+
+    const int m = n_order / 2;
+    amrex::Vector<amrex::Real> coefs;
+    coefs.resize(m);
+
+    // There are closed-form formula for these coefficients, but they result in
+    // an overflow when evaluated numerically. One way to avoid the overflow is
+    // to calculate the coefficients by recurrence.
+
+    // Coefficients for nodal (centered) finite-difference approximation
+    if (nodal == true)
+    {
+       // First coefficient
+       coefs[0] = m * 2. / (m+1);
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++)
+       {
+           coefs[n] = - (m-n) * 1. / (m+n+1) * coefs[n-1];
+       }
+    }
+    // Coefficients for staggered finite-difference approximation
+    else
+    {
+       Real prod = 1.;
+       for (int k = 1; k < m+1; k++)
+       {
+           prod *= (m + k) / (4. * k);
+       }
+       // First coefficient
+       coefs[0] = 4 * m * prod * prod;
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++)
+       {
+           coefs[n] = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coefs[n-1];
+       }
+    }
+
+    return coefs;
+}
+
 void WarpX::ReorderFornbergCoefficients (amrex::Vector<amrex::Real>& ordered_coeffs,
                                          amrex::Vector<amrex::Real>& unordered_coeffs,
                                          const int order)
@@ -2386,7 +2424,6 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
 
     amrex::Gpu::synchronize();
 }
-#endif
 
 const iMultiFab*
 WarpX::CurrentBufferMasks (int lev)
