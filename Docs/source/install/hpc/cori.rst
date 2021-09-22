@@ -36,7 +36,7 @@ We use the following modules and environments on the system (``$HOME/knl_warpx.p
 
    module swap craype-haswell craype-mic-knl
    module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.20.5
+   module load cmake/3.21.3
    module load cray-hdf5-parallel/1.10.5.2
    module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
@@ -84,7 +84,7 @@ We use the following modules and environments on the system (``$HOME/haswell_war
 .. code-block:: bash
 
    module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.20.5
+   module load cmake/3.21.3
    module load cray-hdf5-parallel/1.10.5.2
    module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
@@ -135,7 +135,7 @@ We use the following modules and environments on the system (``$HOME/gpu_warpx.p
    module load modules
    module load cgpu
    module load esslurm
-   module load gcc/8.3.0 cuda/11.4.0 cmake/3.20.5
+   module load gcc/8.3.0 cuda/11.4.0 cmake/3.21.3
    module load openmpi
 
    export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
