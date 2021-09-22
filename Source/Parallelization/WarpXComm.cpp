@@ -980,16 +980,28 @@ WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
     const auto& period = Geom(glev).periodicity();
     auto& j = (patch_type == PatchType::fine) ? current_fp[lev] : current_cp[lev];
     for (int idim = 0; idim < 3; ++idim) {
+        IntVect ng = j[idim]->nGrowVect();
+        IntVect ng_depos_J = get_ng_depos_J();
+        if (WarpX::do_current_centering)
+        {
+#if   (AMREX_SPACEDIM == 2)
+            ng_depos_J[0] += WarpX::current_centering_nox / 2;
+            ng_depos_J[1] += WarpX::current_centering_noz / 2;
+#elif (AMREX_SPACEDIM == 3)
+            ng_depos_J[0] += WarpX::current_centering_nox / 2;
+            ng_depos_J[1] += WarpX::current_centering_noy / 2;
+            ng_depos_J[2] += WarpX::current_centering_noz / 2;
+#endif
+        }
         if (use_filter) {
-            IntVect ng = j[idim]->nGrowVect();
-            IntVect ng_depos_J = get_ng_depos_J();
             ng += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
+            ng_depos_J.min(ng);
             MultiFab jf(j[idim]->boxArray(), j[idim]->DistributionMap(), j[idim]->nComp(), ng);
             bilinear_filter.ApplyStencil(jf, *j[idim], lev);
             WarpXSumGuardCells(*(j[idim]), jf, period, ng_depos_J, 0, (j[idim])->nComp());
         } else {
-            IntVect ng_depos_J = get_ng_depos_J();
+            ng_depos_J.min(ng);
             WarpXSumGuardCells(*(j[idim]), period, ng_depos_J, 0, (j[idim])->nComp());
         }
     }
@@ -1022,13 +1034,25 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             MultiFab mf(current_fp[lev][idim]->boxArray(),
                         current_fp[lev][idim]->DistributionMap(), current_fp[lev][idim]->nComp(), 0);
             mf.setVal(0.0);
+            IntVect ng = current_cp[lev+1][idim]->nGrowVect();
+            IntVect ng_depos_J = get_ng_depos_J();
+            if (WarpX::do_current_centering)
+            {
+#if   (AMREX_SPACEDIM == 2)
+                ng_depos_J[0] += WarpX::current_centering_nox / 2;
+                ng_depos_J[1] += WarpX::current_centering_noz / 2;
+#elif (AMREX_SPACEDIM == 3)
+                ng_depos_J[0] += WarpX::current_centering_nox / 2;
+                ng_depos_J[1] += WarpX::current_centering_noy / 2;
+                ng_depos_J[2] += WarpX::current_centering_noz / 2;
+#endif
+            }
             if (use_filter && current_buf[lev+1][idim])
             {
                 // coarse patch of fine level
-                IntVect ng = current_cp[lev+1][idim]->nGrowVect();
-                IntVect ng_depos_J = get_ng_depos_J();
                 ng += bilinear_filter.stencil_length_each_dir-1;
                 ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
+                ng_depos_J.min(ng);
                 MultiFab jfc(current_cp[lev+1][idim]->boxArray(),
                              current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
                 bilinear_filter.ApplyStencil(jfc, *current_cp[lev+1][idim], lev);
@@ -1046,10 +1070,9 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             else if (use_filter) // but no buffer
             {
                 // coarse patch of fine level
-                IntVect ng = current_cp[lev+1][idim]->nGrowVect();
-                IntVect ng_depos_J = get_ng_depos_J();
                 ng += bilinear_filter.stencil_length_each_dir-1;
                 ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
+                ng_depos_J.min(ng);
                 MultiFab jf(current_cp[lev+1][idim]->boxArray(),
                             current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
                 bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev);
@@ -1058,7 +1081,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             }
             else if (current_buf[lev+1][idim]) // but no filter
             {
-                IntVect ng_depos_J = get_ng_depos_J();
+                ng_depos_J.min(ng);
                 MultiFab::Add(*current_buf[lev+1][idim],
                                *current_cp [lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
                                current_cp[lev+1][idim]->nGrowVect());
@@ -1069,7 +1092,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             }
             else // no filter, no buffer
             {
-                IntVect ng_depos_J = get_ng_depos_J();
+                ng_depos_J.min(ng);
                 mf.ParallelAdd(*current_cp[lev+1][idim], 0, 0, current_cp[lev+1][idim]->nComp(),
                                current_cp[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
                                period);
@@ -1105,16 +1128,17 @@ void
 WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
 {
     const auto& period = Geom(glev).periodicity();
+    IntVect ng = rho.nGrowVect();
+    IntVect ng_depos_rho = get_ng_depos_rho();
     if (use_filter) {
-        IntVect ng = rho.nGrowVect();
-        IntVect ng_depos_rho = get_ng_depos_rho();
         ng += bilinear_filter.stencil_length_each_dir-1;
         ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
+        ng_depos_rho.min(ng);
         MultiFab rf(rho.boxArray(), rho.DistributionMap(), ncomp, ng);
         bilinear_filter.ApplyStencil(rf, rho, glev, icomp, 0, ncomp);
         WarpXSumGuardCells(rho, rf, period, ng_depos_rho, icomp, ncomp );
     } else {
-        IntVect ng_depos_rho = get_ng_depos_rho();
+        ng_depos_rho.min(ng);
         WarpXSumGuardCells(rho, period, ng_depos_rho, icomp, ncomp);
     }
 }
@@ -1146,13 +1170,14 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
                     rho_fp[lev]->DistributionMap(),
                     ncomp, 0);
         mf.setVal(0.0);
+        IntVect ng = rho_cp[lev+1]->nGrowVect();
+        IntVect ng_depos_rho = get_ng_depos_rho();
         if (use_filter && charge_buf[lev+1])
         {
             // coarse patch of fine level
-            IntVect ng = rho_cp[lev+1]->nGrowVect();
-            IntVect ng_depos_rho = get_ng_depos_rho();
             ng += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
+            ng_depos_rho.min(ng);
             MultiFab rhofc(rho_cp[lev+1]->boxArray(),
                          rho_cp[lev+1]->DistributionMap(), ncomp, ng);
             bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], lev, icomp, 0, ncomp);
@@ -1168,10 +1193,9 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
         }
         else if (use_filter) // but no buffer
         {
-            IntVect ng = rho_cp[lev+1]->nGrowVect();
-            IntVect ng_depos_rho = get_ng_depos_rho();
             ng += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
+            ng_depos_rho.min(ng);
             MultiFab rf(rho_cp[lev+1]->boxArray(), rho_cp[lev+1]->DistributionMap(), ncomp, ng);
             bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev, icomp, 0, ncomp);
             mf.ParallelAdd(rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
@@ -1179,7 +1203,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
         }
         else if (charge_buf[lev+1]) // but no filter
         {
-            IntVect ng_depos_rho = get_ng_depos_rho();
+            ng_depos_rho.min(ng);
             MultiFab::Add(*charge_buf[lev+1],
                            *rho_cp[lev+1], icomp, icomp, ncomp,
                            rho_cp[lev+1]->nGrowVect());
@@ -1191,7 +1215,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
         }
         else // no filter, no buffer
         {
-            IntVect ng_depos_rho = get_ng_depos_rho();
+            ng_depos_rho.min(ng);
             mf.ParallelAdd(*rho_cp[lev+1], icomp, 0, ncomp,
                            rho_cp[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
                            period);
