@@ -904,6 +904,12 @@ WarpX::ReadParameters ()
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
 
+        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov && do_current_centering)
+        {
+            amrex::Abort("\nCurrent centering (nodal deposition) cannot be used with Esirkepov deposition."
+                         "\nPlease set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
+        }
+
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
