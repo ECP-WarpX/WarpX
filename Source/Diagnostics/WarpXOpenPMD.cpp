@@ -1172,13 +1172,15 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
           // assume fields are scalar unless they match the following match of known vector fields
           std::string field_name = varname;
           std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
+          std::cout << "field_name=" << field_name << std::endl;
           GetMeshCompNames( i, varname, field_name, comp_name );
+          std::cout << "varname=" << varname << " field_name=" << field_name << " comp_name=" << comp_name << std::endl;
 
           auto mesh = meshes[field_name];
           auto mesh_comp = mesh[comp_name];
           if ( first_write_to_iteration )
           {
-             SetupMeshComp( mesh, full_geom, mesh_comp );
+             SetupMeshComp( mesh, full_geom, mesh_comp ); // TODO: handle RZ components
              detail::setOpenPMDUnit( mesh, field_name );
 
              auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order

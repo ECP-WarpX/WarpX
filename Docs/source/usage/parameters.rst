@@ -1858,6 +1858,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
 
+* ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0` for all but openPMD)
+    In RZ, by default we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
+    This option further writes the RZ modes for fields, allowing arbitrary reconstructions (e.g., to 3D or 2D slices at arbitrary positions/angles) in post-processing.
+
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
     When ``<diag_name>.plot_raw_fields = 1``, then the raw (i.e. non-averaged)
