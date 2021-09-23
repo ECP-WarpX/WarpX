@@ -294,16 +294,26 @@ public:
 
     void AddRealComp (const std::string& name, bool comm=true)
     {
-        particle_comps[name] = NumRealComps();
-        particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
-        AddRealComp(comm);
+        auto search = particle_comps.find(name);
+        if (search != particle_comps.end()) {
+            particle_comps[name] = NumRealComps();
+            particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
+            AddRealComp(comm);
+        } else {
+            amrex::Print() << name << " already exists in particle_comps, not adding. \n";
+        }
     }
 
     void AddIntComp (const std::string& name, bool comm=true)
     {
-        particle_icomps[name] = NumIntComps();
-        particle_runtime_icomps[name] = NumIntComps() - 0;
-        AddIntComp(comm);
+        auto search = particle_icomps.find(name);
+        if (search != particle_icomps.end()) {
+            particle_icomps[name] = NumIntComps();
+            particle_runtime_icomps[name] = NumIntComps() - 0;
+            AddIntComp(comm);
+        } else {
+            amrex::Print() << name << " already exists in particle_icomps, not adding. \n";
+        }
     }
 
     int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
