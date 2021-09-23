@@ -1164,7 +1164,7 @@ External fields
     magnetic fields repectively that are applied directly to the particles at every timestep.
     The field values are specified in the lab frame.
     With the default ``none`` style, no field is applied.
-    Possible values are ``constant``, ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``, or 
+    Possible values are ``constant``, ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``, or
     ``repeated_plasma_lens``.
 
     * ``constant``: a constant field is applied, given by the input parameters
@@ -1208,8 +1208,8 @@ External fields
     The applied field is uniform longitudinally (along z) with a hard edge,
     where residence corrections are used for more accurate field calculation. On the time step when a particle enters
     or leaves each lens, the field applied is scaled by the fraction of the time step spent within the lens.
-    The fields are of the form :math:`E_x = \mathrm{strength} \cdot x` and :math:`E_y = \mathrm{strength} \cdot y`, :math`:E_z = 0`, and 
-    :math:`B_x = \mathrm{strength} \cdot y` and :math:`B_y = -\mathrm{strength} \cdot x`, :math`:B_z = 0`.
+    The fields are of the form :math:`E_x = \mathrm{strength} \cdot x`, :math:`E_y = \mathrm{strength} \cdot y`, and :math`:E_z = 0`, and
+    :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math`:B_z = 0`.
 
 .. _running-cpp-parameters-collision:
 
