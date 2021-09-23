@@ -1168,11 +1168,11 @@ External fields
     ``repeated_plasma_lens``.
 
     * ``constant``: a constant field is applied, given by the input parameters
-    ``particles.E_external_particle`` or ``particles.B_external_particle``, which are lists of the field components.
+      ``particles.E_external_particle`` or ``particles.B_external_particle``, which are lists of the field components.
 
-    * ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``: the field is specified as an analytic expression that
-    is a function of space (x,y,z) and time (t), relative to the lab frame.
-    The E-field is specified by the input parameters:
+    * ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``: the field is specified as an analytic
+      expression that is a function of space (x,y,z) and time (t), relative to the lab frame.
+      The E-field is specified by the input parameters:
 
         * ``particles.Ex_external_particle_function(x,y,z,t)``
 
@@ -1180,7 +1180,7 @@ External fields
 
         * ``particles.Ez_external_particle_function(x,y,z,t)``
 
-    The B-field is specified by the input parameters:
+      The B-field is specified by the input parameters:
 
         * ``particles.Bx_external_particle_function(x,y,z,t)``
 
@@ -1188,10 +1188,10 @@ External fields
 
         * ``particles.Bz_external_particle_function(x,y,z,t)``
 
-    Note that the position is defined in cartesian coordinates, as a function of (x,y,z), even for RZ.
+      Note that the position is defined in cartesian coordinates, as a function of (x,y,z), even for RZ.
 
     * ``repeated_plasma_lens``: apply a series of plasma lenses. The properties of the lenses are defined in the
-    lab frame by the input parameters:
+      lab frame by the input parameters:
 
         * ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
 
@@ -1200,16 +1200,17 @@ External fields
         * ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
 
         * ``repeated_plasma_lens_strengths_E``, the electric focusing strength of each lens, an array of floats, when
-        ``particles.E_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+          ``particles.E_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
 
         * ``repeated_plasma_lens_strengths_B``, the magnetic focusing strength of each lens, an array of floats, when
-        ``particles.B_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+          ``particles.B_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
 
-    The applied field is uniform longitudinally (along z) with a hard edge,
-    where residence corrections are used for more accurate field calculation. On the time step when a particle enters
-    or leaves each lens, the field applied is scaled by the fraction of the time step spent within the lens.
-    The fields are of the form :math:`E_x = \mathrm{strength} \cdot x`, :math:`E_y = \mathrm{strength} \cdot y`, and :math`:E_z = 0`, and
-    :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math`:B_z = 0`.
+      The applied field is uniform longitudinally (along z) with a hard edge,
+      where residence corrections are used for more accurate field calculation. On the time step when a particle enters
+      or leaves each lens, the field applied is scaled by the fraction of the time step spent within the lens.
+      The fields are of the form :math:`E_x = \mathrm{strength} \cdot x`, :math:`E_y = \mathrm{strength} \cdot y`,
+      and :math:`E_z = 0`, and
+      :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math:`B_z = 0`.
 
 .. _running-cpp-parameters-collision:
 
