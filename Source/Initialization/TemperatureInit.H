@@ -15,28 +15,10 @@
 /* Class that stores and returns a constant temperature */
 struct TemperatureInitConstant
 {
-    TemperatureInitConstant (amrex::Real a_temperature) noexcept
-        : m_temperature(a_temperature) {}
-
-    amrex::Real getTemperature(amrex::Real, amrex::Real, amrex::Real) const noexcept
-    {
-        return m_temperature;
-    }
-private:
-    amrex::Real m_temperature;
 };
 
 struct TemperatureInitParser
 {
-    TemperatureInitParser (amrex::ParserExecutor<3> const& a_temperature_parser) noexcept
-        : m_temperature_parser(a_temperature_parser) {}
-
-    amrex::Real getTemperature(amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
-    {
-        return m_temperature_parser(x, y, z);
-    }
-private:
-    amrex::ParserExecutor<3> m_temperature_parser;
 };
 
 /*
@@ -47,12 +29,13 @@ private:
  */
 struct TemperatureInit
 {
+    TemperatureInit () {};
     TemperatureInit (TemperatureInitConstant* t, amrex::Real a_temperature) : 
-        type(Type::constant), object(t, a_temperature) {};
+        type(Type::constant), m_temperature(a_temperature) {}
 
     TemperatureInit (TemperatureInitParser* t,
             amrex::ParserExecutor<3> const& a_temperature_parser) :
-        type(Type::parser), object(t, a_temperature_parser) {};
+        type(Type::parser), m_temperature_parser(a_temperature_parser) {}
 
     amrex::Real getTemperature (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
     {
@@ -60,11 +43,11 @@ struct TemperatureInit
         {
             case Type::constant:
             {
-                return object.constant.getTemperature(x,y,z);
+                return m_temperature;
             }
             case Type::parser:
             {
-                return object.parser.getTemperature(x,y,z);
+                return m_temperature_parser(x,y,z);
             }
             default:
             {
@@ -75,28 +58,15 @@ struct TemperatureInit
 
     }
 
-    // Explicitly prevent the compiler from generating copy constructors
-    // and copy assignment operators.
-    TemperatureInit (TemperatureInit const&) = delete;
-    TemperatureInit (TemperatureInit&&) = delete;
-    void operator= (TemperatureInit const&) = delete;
-    void operator= (TemperatureInit &&) = delete;
-
     void clear ();
 
 private:
     enum struct Type {constant, parser};
     Type type;
 
-    union Object {
-        Object (TemperatureInitConstant*, amrex::Real a_temperature) noexcept 
-            : constant(a_temperature) {}
-        Object (TemperatureInitParser*, amrex::ParserExecutor<3> const& a_temperature) noexcept
-            : parser(a_temperature) {}
-        TemperatureInitConstant constant;
-        TemperatureInitParser parser;
-    };
-    Object object;
+    amrex::Real m_temperature;
+    amrex::ParserExecutor<3> m_temperature_parser;
+
 };
 
 // In order for GetTemperature to be trivially copyable, its destructor

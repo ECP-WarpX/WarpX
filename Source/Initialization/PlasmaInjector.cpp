@@ -535,6 +535,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         Real beta = 0.;
         int dir = 0;
         std::string direction = "x";
+        TemperatureInit temperature;
         queryWithParser(pp, "beta", beta);
         if(beta < 0){
             amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
@@ -558,11 +559,13 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
             direction = stringstream.str();
             amrex::Abort(direction.c_str());
         }
+        parseTemperature(pp, temperature);
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, parseTemperature(pp), beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, temperature, beta, dir));
     } else if (mom_dist_s == "maxwell_juttner"){
         Real beta = 0.;
         int dir = 0;
+        TemperatureInit temperature;
         std::string direction = "x";
         queryWithParser(pp, "beta", beta);
         if(beta < 0){
@@ -587,8 +590,9 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
             direction = stringstream.str();
             amrex::Abort(direction.c_str());
         }
+        parseTemperature(pp, temperature);
         // Construct InjectorMomentum with InjectorMomentumJuttner.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, parseTemperature(pp), beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, temperature, beta, dir));
     } else if (mom_dist_s == "radial_expansion") {
         Real u_over_r = 0.;
         queryWithParser(pp, "u_over_r", u_over_r);
@@ -620,28 +624,25 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
     }
 }
 
-std::unique_ptr<TemperatureInit> PlasmaInjector::parseTemperature (ParmParse& pp)
+void PlasmaInjector::parseTemperature (ParmParse& pp, TemperatureInit& temperature)
 {
-    Real theta = 10.;
-    std::unique_ptr<TemperatureInit> temperature;
+    Real theta = 20.;
     std::string temp_dist_s = "constant";
     pp.query("theta_distribution_type", temp_dist_s);
     if (temp_dist_s == "constant") {
         queryWithParser(pp, "theta", theta);
-        temperature = std::make_unique<TemperatureInit>((TemperatureInitConstant*)nullptr, theta);
+        temperature = TemperatureInit((TemperatureInitConstant*)nullptr, theta);
     }
     else if (temp_dist_s == "parser") {
         std::string str_theta_function;
-        Store_parserString(pp, "theta_function(x,y,z)",
-                                           str_theta_function);
-        std::unique_ptr<Parser> theta_parser =
+        Store_parserString(pp, "theta_function(x,y,z)", str_theta_function);
+        theta_parser =
             std::make_unique<Parser>(makeParser(str_theta_function,{"x","y","z"}));
-        temperature = std::make_unique<TemperatureInit>((TemperatureInitParser*)nullptr, theta_parser->compile<3>());
+        temperature = TemperatureInit((TemperatureInitParser*)nullptr, theta_parser->compile<3>());
     }
     else {
         StringParseAbortMessage("Temperature distribution type", temp_dist_s);
     }
-    return temperature;
 }
 
 XDim3 PlasmaInjector::getMomentum (Real x, Real y, Real z) const noexcept

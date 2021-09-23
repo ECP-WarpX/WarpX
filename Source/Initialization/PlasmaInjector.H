@@ -149,10 +149,11 @@ protected:
     std::unique_ptr<amrex::Parser> ux_parser;
     std::unique_ptr<amrex::Parser> uy_parser;
     std::unique_ptr<amrex::Parser> uz_parser;
+    std::unique_ptr<amrex::Parser> theta_parser;
 
     void parseDensity (amrex::ParmParse& pp);
     void parseMomentum (amrex::ParmParse& pp);
-    std::unique_ptr<TemperatureInit> parseTemperature (amrex::ParmParse& pp);
+    void parseTemperature (amrex::ParmParse& pp, TemperatureInit& temperature);
 };
 
 #endif
