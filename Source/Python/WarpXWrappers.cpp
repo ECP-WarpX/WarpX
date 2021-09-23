@@ -13,7 +13,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
-#include "WarpXWrappers.h"
+#include "WarpXWrappers.H"
 #include "WarpX_py.H"
 
 #include <AMReX.H>
@@ -336,6 +336,7 @@ extern "C"
     int* warpx_getJy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,1) );}
     int* warpx_getJz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,2) );}
     int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getrho_fp(0) );}
+    int* warpx_getPhi_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getphi_fp(0) );}
 
 #define WARPX_GET_SCALAR(SCALAR, GETTER) \
     amrex::Real** SCALAR(int lev, \
@@ -356,6 +357,10 @@ extern "C"
 
     WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp)
     WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp)
+
+    WARPX_GET_SCALAR(warpx_getPhiFP, WarpX::GetInstance().getphi_fp)
+
+    WARPX_GET_LOVECTS_SCALAR(warpx_getPhiFPLoVects, WarpX::GetInstance().getphi_fp)
 
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \

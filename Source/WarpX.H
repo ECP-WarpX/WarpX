@@ -288,6 +288,8 @@ public:
 
     const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
     const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
+    const amrex::MultiFab& getEfield_avg_cp (int lev, int direction) {return *Efield_avg_cp[lev][direction];}
+    const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
 

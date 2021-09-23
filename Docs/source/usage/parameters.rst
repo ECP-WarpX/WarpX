@@ -289,10 +289,10 @@ Embedded Boundary Conditions
     the physics simulation area is where the function value is negative ;
     the interior of the embeddded boundary is where the function value is positive.
 
-* ``warpx.eb_potential(t)`` (`string`)
+* ``warpx.eb_potential(x,y,z,t)`` (`string`)
     Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
     the electric potential at the surface of the embedded boundary,
-    as a function of time.
+    as a function of  `x`, `y`, `z` and time.
 
 .. _running-cpp-parameters-parallelization:
 
