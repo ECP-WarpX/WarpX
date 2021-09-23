@@ -21,8 +21,8 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     m_Etype = Unknown;
     m_Btype = Unknown;
 
-    if (mypc.m_E_ext_particle_s == "default") m_Etype = None;
-    if (mypc.m_B_ext_particle_s == "default") m_Btype = None;
+    if (mypc.m_E_ext_particle_s == "none") m_Etype = None;
+    if (mypc.m_B_ext_particle_s == "none") m_Btype = None;
 
     if (mypc.m_E_ext_particle_s == "constant")
     {
