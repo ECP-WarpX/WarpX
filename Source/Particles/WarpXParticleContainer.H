@@ -295,7 +295,7 @@ public:
     void AddRealComp (const std::string& name, bool comm=true)
     {
         auto search = particle_comps.find(name);
-        if (search != particle_comps.end()) {
+        if (search == particle_comps.end()) {
             particle_comps[name] = NumRealComps();
             particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
             AddRealComp(comm);
@@ -307,7 +307,7 @@ public:
     void AddIntComp (const std::string& name, bool comm=true)
     {
         auto search = particle_icomps.find(name);
-        if (search != particle_icomps.end()) {
+        if (search == particle_icomps.end()) {
             particle_icomps[name] = NumIntComps();
             particle_runtime_icomps[name] = NumIntComps() - 0;
             AddIntComp(comm);
