@@ -552,7 +552,8 @@ WarpX::FillBoundary_nowait(
                     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                         ng <= vector_mf[lev][idim]->nGrowVect(),
                         "Error: requested more guard cells than allocated");
-                    vector_mf[lev][idim]->FillBoundary_nowait(0, 1, ng, period);
+                    vector_mf[lev][idim]->FillBoundary_nowait(0,
+                            vector_mf[lev][idim]->nComp(), ng, period);
                 }
             }
         }
