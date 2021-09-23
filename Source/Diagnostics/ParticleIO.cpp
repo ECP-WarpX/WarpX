@@ -30,10 +30,12 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
+#include <algorithm>
 #include <array>
 #include <istream>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <vector>
 
 using namespace amrex;
@@ -126,6 +128,28 @@ MultiParticleContainer::Restart (const std::string& dir)
             real_comp_names.push_back(comp_name);
         }
 
+        for (auto const& comp : pc->getParticleRuntimeComps()) {
+            auto search = std::find(real_comp_names.begin(), real_comp_names.end(), comp.first);
+            if (search == real_comp_names.end()) {
+                std::stringstream ss;
+                ss << "Species " << species_names[i] << "needs runtime real component " << comp.first;
+                ss << ", but it was not found in the checkpoint file. \n";
+                amrex::Abort(ss.str());
+            }
+        }
+
+        for (int j = PIdx::nattribs; j < nr; ++j) {
+            const auto& comp_name = real_comp_names[j];
+            auto current_comp_names = pc->getParticleComps();
+            auto search = current_comp_names.find(comp_name);
+            if (search == current_comp_names.end()) {
+                amrex::Print() << "Runtime real component " << comp_name
+                               << " was found in the checkpoint file, but it has not been added yet. "
+                               << " Adding it now. \n";
+                pc->AddRealComp(comp_name);
+            }
+        }
+
         int ni;
         is >> ni;
 
@@ -136,27 +160,25 @@ MultiParticleContainer::Restart (const std::string& dir)
             int_comp_names.push_back(comp_name);
         }
 
-        int num_runtime_real_in_file = nr - PIdx::nattribs;
-        if (num_runtime_real_in_file < pc->NumRuntimeRealComps()) {
-            amrex::Abort("There are not enough runtime real comps in the given checkpoint to restart.");
-        } else if (num_runtime_real_in_file > pc->NumRuntimeRealComps()) {
-            amrex::Print() << "Warning! There are " << num_runtime_real_in_file <<
-                " runtime real particle components found in the checkpoint file, but only " <<
-                pc->NumRuntimeRealComps() << " are expected. Adding the remainder. \n";
-            for (int j = 0; j < num_runtime_real_in_file; ++j) {
-                pc->AddRealComp(real_comp_names[j + PIdx::nattribs]);
+        for (auto const& comp : pc->getParticleRuntimeiComps()) {
+            auto search = std::find(int_comp_names.begin(), int_comp_names.end(), comp.first);
+            if (search == int_comp_names.end()) {
+                std::stringstream ss;
+                ss << "Species " << species_names[i] << "needs runtime int component " << comp.first;
+                ss << ", but it was not found in the checkpoint file. \n";
+                amrex::Abort(ss.str());
             }
         }
 
-        int num_runtime_int_in_file = ni;  // no compile-time int comps
-        if (num_runtime_int_in_file < pc->NumRuntimeIntComps()) {
-            amrex::Abort("There are not enough runtime int comps in the given checkpoint to restart.");
-        } else if (num_runtime_int_in_file > pc->NumRuntimeIntComps()) {
-            amrex::Print() << "Warning! There are " << num_runtime_int_in_file <<
-                " runtime int particle components found in the checkpoint file, but only " <<
-                pc->NumRuntimeIntComps() << " are expected. Adding the remainder. \n";
-            for (int j = 0; j < num_runtime_int_in_file; ++j) {
-                pc->AddIntComp(int_comp_names[j]);
+        for (int j = 0; j < ni; ++j) {
+            const auto& comp_name = int_comp_names[j];
+            auto current_comp_names = pc->getParticleiComps();
+            auto search = current_comp_names.find(comp_name);
+            if (search == current_comp_names.end()) {
+                amrex::Print() << "Runtime int component " << comp_name
+                               << " was found in the checkpoint file, but it has not been added yet. "
+                               << " Adding it now. \n";
+                pc->AddIntComp(comp_name);
             }
         }
 
