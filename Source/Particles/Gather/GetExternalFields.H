@@ -134,7 +134,7 @@ struct GetExternalEBField
 
             if (m_gamma_boost > 1._rt) {
                 zl = m_gamma_boost*zl + m_uz_boost*m_time;
-                zr = m_gamma_boost*zr + m_uz_boost*m_time;
+                zr = m_gamma_boost*zr + m_uz_boost*(m_time + m_dt);
             }
 
             // This assumes that zl > 0.
@@ -166,11 +166,10 @@ struct GetExternalEBField
 
         if (m_gamma_boost > 1._rt) {
             // Transform the fields to the boosted frame
-            const amrex::Real vz_boost = m_uz_boost/m_gamma_boost;
-            const amrex::Real Ex_boost = m_gamma_boost*(Ex - vz_boost*By);
-            const amrex::Real Ey_boost = m_gamma_boost*(Ey + vz_boost*Bx);
-            const amrex::Real Bx_boost = m_gamma_boost*(Bx + vz_boost*Ey*inv_c2);
-            const amrex::Real By_boost = m_gamma_boost*(By - vz_boost*Ex*inv_c2);
+            const amrex::Real Ex_boost = m_gamma_boost*Ex - m_uz_boost*By;
+            const amrex::Real Ey_boost = m_gamma_boost*Ey + m_uz_boost*Bx;
+            const amrex::Real Bx_boost = m_gamma_boost*Bx + m_uz_boost*Ey*inv_c2;
+            const amrex::Real By_boost = m_gamma_boost*By - m_uz_boost*Ex*inv_c2;
             Ex = Ex_boost;
             Ey = Ey_boost;
             Bx = Bx_boost;
