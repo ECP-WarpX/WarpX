@@ -1100,6 +1100,9 @@ Laser initialization
     ``mirror_z_width < dz/cell_size``, the upper bound of the mirror is increased
     so that it contains at least ``mirror_z_npoints``.
 
+External fields
+--------------------
+
 * ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     magnetic field. The "default" style initializes the
@@ -1156,70 +1159,57 @@ Laser initialization
     the field solver. In particular, do not use any other boundary condition
     than periodic.
 
-* ``particles.B_ext_particle_init_style`` (string) optional (default is "default")
-    This parameter determines the type of initialization for the external
-    magnetic field that is applied directly to the particles at every timestep.
-    The "default" style sets the external B-field (Bx,By,Bz) to (0.0,0.0,0.0).
-    The string can be set to "constant" if a constant external B-field is applied
-    every timestep. If this parameter is set to "constant", then an additional
-    parameter, namely, ``particles.B_external_particle`` must be specified in
-    the input file.
-    To parse a mathematical function for the external B-field, use the option
-    ``parse_B_ext_particle_function``. This option requires additional parameters
-    in the input file, namely,
-    ``particles.Bx_external_particle_function(x,y,z,t)``,
-    ``particles.By_external_particle_function(x,y,z,t)``,
-    ``particles.Bz_external_particle_function(x,y,z,t)`` to apply the external B-field
-    on the particles. Constants required in the mathematical expression can be set
-    using ``my_constants``. For a two-dimensional simulation, it is assumed that
-    the first and second dimensions are `x` and `z`, respectively, and the
-    value of the `By` component is set to zero.
-    Note that the current implementation of the parser for B-field on particles
-    is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
-    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
-    option requires the following parameters, in the lab frame,
-    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
-    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
-    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
-    ``repeated_plasma_lens_strengths_B``, the focusing strength of each lens, an array of floats.
-    The applied field is uniform longitudinally (along z) with a hard edge,
-    where residence corrections are used for more accurate field calculation.
-    The field is of the form :math:`B_x = \mathrm{strength} \cdot y` and :math:`B_y = -\mathrm{strength} \cdot x`, :math`:B_z = 0`.
+* ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
+    These parameters determine the type of the external electric and
+    magnetic fields repectively that are applied directly to the particles at every timestep.
+    The field values are specified in the lab frame.
+    With the default ``none`` style, no field is applied.
+    Possible values are ``constant``, ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``, or 
+    ``repeated_plasma_lens``.
 
-* ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
-    This parameter determines the type of initialization for the external
-    electric field that is applied directly to the particles at every timestep.
-    The "default" style set the external E-field (Ex,Ey,Ez) to (0.0,0.0,0.0).
-    The string can be set to "constant" if a constant external E-field is to be
-    used in the simulation at every timestep. If this parameter is set to "constant",
-    then an additional parameter, namely, ``particles.E_external_particle`` must be
-    specified in the input file.
-    To parse a mathematical function for the external E-field, use the option
-    ``parse_E_ext_particle_function``. This option requires additional
-    parameters in the input file, namely,
-    ``particles.Ex_external_particle_function(x,y,z,t)``,
-    ``particles.Ey_external_particle_function(x,y,z,t)``,
-    ``particles.Ez_external_particle_function(x,y,z,t)`` to apply the external E-field
-    on the particles. Constants required in the mathematical expression can be set
-    using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
-    it is assumed that the first and second dimensions are `x` and `z`, respectively,
-    and the value of the `Ey` component is set to zero.
-    Note that the current implementation of the parser for E-field on particles
-    is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
-    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
-    option requires the following parameters, in the lab frame,
-    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
-    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
-    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
-    ``repeated_plasma_lens_strengths_E``, the focusing strength of each lens, an array of floats.
-    The applied field is uniform longitudinally (along z) with a hard edge,
-    where residence corrections are used for more accurate field calculation.
-    The field is of the form :math:`E_x = \mathrm{strength} \cdot x` and :math:`E_y = \mathrm{strength} \cdot y`, :math:`Ez = 0`.
+    * ``constant``: a constant field is applied, given by the input parameters
+    ``particles.E_external_particle`` or ``particles.B_external_particle``, which are lists of the field components.
 
-* ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
-    Two separate parameters which add an externally applied uniform E-field or
-    B-field to each particle which is then added to the field values gathered
-    from the grid in the PIC cycle.
+    * ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``: the field is specified as an analytic expression that
+    is a function of space (x,y,z) and time (t), relative to the lab frame.
+    The E-field is specified by the input parameters:
+
+        * ``particles.Ex_external_particle_function(x,y,z,t)``
+
+        * ``particles.Ey_external_particle_function(x,y,z,t)``
+
+        * ``particles.Ez_external_particle_function(x,y,z,t)``
+
+    The B-field is specified by the input parameters:
+
+        * ``particles.Bx_external_particle_function(x,y,z,t)``
+
+        * ``particles.By_external_particle_function(x,y,z,t)``
+
+        * ``particles.Bz_external_particle_function(x,y,z,t)``
+
+    Note that the position is defined in cartesian coordinates, as a function of (x,y,z), even for RZ.
+
+    * ``repeated_plasma_lens``: apply a series of plasma lenses. The properties of the lenses are defined in the
+    lab frame by the input parameters:
+
+        * ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
+
+        * ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
+
+        * ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
+
+        * ``repeated_plasma_lens_strengths_E``, the electric focusing strength of each lens, an array of floats, when
+        ``particles.E_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+
+        * ``repeated_plasma_lens_strengths_B``, the magnetic focusing strength of each lens, an array of floats, when
+        ``particles.B_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+
+    The applied field is uniform longitudinally (along z) with a hard edge,
+    where residence corrections are used for more accurate field calculation. On the time step when a particle enters
+    or leaves each lens, the field applied is scaled by the fraction of the time step spent within the lens.
+    The fields are of the form :math:`E_x = \mathrm{strength} \cdot x` and :math:`E_y = \mathrm{strength} \cdot y`, :math`:E_z = 0`, and 
+    :math:`B_x = \mathrm{strength} \cdot y` and :math:`B_y = -\mathrm{strength} \cdot x`, :math`:B_z = 0`.
 
 .. _running-cpp-parameters-collision:
 
