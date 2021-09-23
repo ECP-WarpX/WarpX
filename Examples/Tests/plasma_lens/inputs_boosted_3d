@@ -8,7 +8,7 @@ amr.max_level = 0
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.prob_lo     = -1.0  -1.0   0.0   # physical domain
+geometry.prob_lo     = -1.0  -1.0  -1.0   # physical domain
 geometry.prob_hi     =  1.0   1.0   2.0
 
 boundary.field_lo = pec pec pec
@@ -18,6 +18,8 @@ boundary.particle_hi = absorbing absorbing absorbing
 
 # Algorithms
 algo.particle_shape = 1
+warpx.gamma_boost = 2.
+warpx.boost_direction = z
 
 my_constants.vel_z = 0.5*clight
 
