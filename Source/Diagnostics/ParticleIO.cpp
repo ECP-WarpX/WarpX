@@ -103,7 +103,64 @@ void
 MultiParticleContainer::Restart (const std::string& dir)
 {
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-        allcontainers[i]->Restart(dir, species_names[i]);
+        WarpXParticleContainer* pc = allcontainers[i].get();
+        std::string header_fn = dir + "/" + species_names[i] + "/Header";
+
+        Vector<char> fileCharPtr;
+        ParallelDescriptor::ReadAndBcastFile(header_fn, fileCharPtr);
+        std::string fileCharPtrString(fileCharPtr.dataPtr());
+        std::istringstream is(fileCharPtrString, std::istringstream::in);
+
+        std::string line, word;
+
+        std::getline(is, line); // Version
+        std::getline(is, line); // SpaceDim
+
+        int nr;
+        is >> nr;
+
+        std::vector<std::string> real_comp_names;
+        for (int j = 0; j < nr; ++j) {
+            std::string comp_name;
+            is >> comp_name;
+            real_comp_names.push_back(comp_name);
+        }
+
+        int ni;
+        is >> ni;
+
+        std::vector<std::string> int_comp_names;
+        for (int j = 0; j < ni; ++j) {
+            std::string comp_name;
+            is >> comp_name;
+            int_comp_names.push_back(comp_name);
+        }
+
+        int num_runtime_real_in_file = nr - PIdx::nattribs;
+        if (num_runtime_real_in_file < pc->NumRuntimeRealComps()) {
+            amrex::Abort("There are not enough runtime real comps in the given checkpoint to restart.");
+        } else if (num_runtime_real_in_file > pc->NumRuntimeRealComps()) {
+            amrex::Print() << "Warning! There are " << num_runtime_real_in_file <<
+                " runtime real particle components found in the checkpoint file, but only " <<
+                pc->NumRuntimeRealComps() << " are expected. Adding the remainder. \n";
+            for (int j = 0; j < num_runtime_real_in_file; ++j) {
+                pc->AddRealComp(real_comp_names[j + PIdx::nattribs]);
+            }
+        }
+
+        int num_runtime_int_in_file = ni;  // no compile-time int comps
+        if (num_runtime_int_in_file < pc->NumRuntimeIntComps()) {
+            amrex::Abort("There are not enough runtime int comps in the given checkpoint to restart.");
+        } else if (num_runtime_int_in_file > pc->NumRuntimeIntComps()) {
+            amrex::Print() << "Warning! There are " << num_runtime_int_in_file <<
+                " runtime int particle components found in the checkpoint file, but only " <<
+                pc->NumRuntimeIntComps() << " are expected. Adding the remainder. \n";
+            for (int j = 0; j < num_runtime_int_in_file; ++j) {
+                pc->AddIntComp(int_comp_names[j]);
+            }
+        }
+
+        pc->Restart(dir, species_names[i]);
     }
 }
 
