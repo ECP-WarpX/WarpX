@@ -863,6 +863,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
                 DistributionMapping buff_dm(buff_ba);
                 lf_diags->m_data_buffer_ = std::make_unique<MultiFab>(buff_ba,
                                                 buff_dm, m_ncomp_to_dump, 0);
+                lf_diags->m_data_buffer_->setVal(0.0);
             }
             // ... reset particle buffer particles_buffer_[i]
             if (WarpX::do_back_transformed_particles)

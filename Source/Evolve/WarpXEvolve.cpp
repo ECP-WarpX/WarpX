@@ -405,12 +405,18 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryE(guard_cells.ng_alloc_EB);
         }
         PushPSATD();
-        FillBoundaryE(guard_cells.ng_alloc_EB, true); // true: synchronize nodal points
-        FillBoundaryB(guard_cells.ng_alloc_EB, true); // true: synchronize nodal points
 
         if (use_hybrid_QED) {
+            // The argument `true` below is to synchronize nodal points
+            FillBoundaryE(guard_cells.ng_alloc_EB, true);
+            FillBoundaryB(guard_cells.ng_alloc_EB, true);
             WarpX::Hybrid_QED_Push(dt);
-            FillBoundaryE(guard_cells.ng_alloc_EB);
+            FillBoundaryE(guard_cells.ng_afterPushPSATD);
+        }
+        else {
+            // The argument `true` below is to synchronize nodal points
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, true);
+            FillBoundaryB(guard_cells.ng_afterPushPSATD, true);
         }
 
         if (do_pml) {
