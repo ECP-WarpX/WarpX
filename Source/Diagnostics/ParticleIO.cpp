@@ -105,7 +105,7 @@ MultiParticleContainer::Restart (const std::string& dir)
     // note: all containers is sorted like this
     // - species_names
     // - laser_names
-    // we don't need to read back the (temporary) laser particles
+    // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         allcontainers.at(i)->Restart(dir, species_names.at(i));
     }
@@ -117,7 +117,7 @@ MultiParticleContainer::ReadHeader (std::istream& is)
     // note: all containers is sorted like this
     // - species_names
     // - laser_names
-    // we don't need to read back the (temporary) laser particles
+    // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         allcontainers.at(i)->ReadHeader(is);
     }
@@ -129,7 +129,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
     // note: all containers is sorted like this
     // - species_names
     // - laser_names
-    // we don't need to read back the (temporary) laser particles
+    // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         allcontainers.at(i)->WriteHeader(os);
     }
