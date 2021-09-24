@@ -11,7 +11,7 @@
 
 #include "InjectorDensity.H"
 #include "InjectorMomentum.H"
-#include "TemperatureInit.H"
+#include "TemperatureProperties.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 
 #include "InjectorPosition_fwd.H"
@@ -149,11 +149,11 @@ protected:
     std::unique_ptr<amrex::Parser> ux_parser;
     std::unique_ptr<amrex::Parser> uy_parser;
     std::unique_ptr<amrex::Parser> uz_parser;
-    std::unique_ptr<amrex::Parser> theta_parser;
+
+    std::unique_ptr<TemperatureProperties> h_mom_temp;
 
     void parseDensity (amrex::ParmParse& pp);
     void parseMomentum (amrex::ParmParse& pp);
-    void parseTemperature (amrex::ParmParse& pp, TemperatureInit& temperature);
 };
 
 #endif
