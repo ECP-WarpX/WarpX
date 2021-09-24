@@ -102,7 +102,11 @@ WarpXParticleContainer::WriteHeader (std::ostream& os) const
 void
 MultiParticleContainer::Restart (const std::string& dir)
 {
-    for (unsigned i = 0, n = species_names.size() + lasers_names.size(); i < n; ++i) {
+    // note: all containers is sorted like this
+    // - species_names
+    // - laser_names
+    // we don't need to read back the (temporary) laser particles
+    for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         allcontainers.at(i)->Restart(dir, species_names.at(i));
     }
 }
@@ -110,16 +114,24 @@ MultiParticleContainer::Restart (const std::string& dir)
 void
 MultiParticleContainer::ReadHeader (std::istream& is)
 {
-    for (auto& pc : allcontainers) {
-        pc->ReadHeader(is);
+    // note: all containers is sorted like this
+    // - species_names
+    // - laser_names
+    // we don't need to read back the (temporary) laser particles
+    for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
+        allcontainers.at(i)->ReadHeader(is);
     }
 }
 
 void
 MultiParticleContainer::WriteHeader (std::ostream& os) const
 {
-    for (const auto& pc : allcontainers) {
-        pc->WriteHeader(os);
+    // note: all containers is sorted like this
+    // - species_names
+    // - laser_names
+    // we don't need to read back the (temporary) laser particles
+    for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
+        allcontainers.at(i)->WriteHeader(os);
     }
 }
 
