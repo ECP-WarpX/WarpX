@@ -115,50 +115,50 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            int i = 0;
-            while (lis >> word) {
-                istep[i++] = std::stoi(word);
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < istep.size(); ++i) {
+                lis >> word;
+                istep.at(i) = std::stoi(word);
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            int i = 0;
-            while (lis >> word) {
-                nsubsteps[i++] = std::stoi(word);
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < nsubsteps.size(); ++i) {
+                lis >> word;
+                nsubsteps.at(i) = std::stoi(word);
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            int i = 0;
-            while (lis >> word) {
-                t_new[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < t_new.size(); ++i) {
+                lis >> word;
+                t_new.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            int i = 0;
-            while (lis >> word) {
-                t_old[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < t_old.size(); ++i) {
+                lis >> word;
+                t_old.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            int i = 0;
-            while (lis >> word) {
-                dt[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < dt.size(); ++i) {
+                lis >> word;
+                dt.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -169,29 +169,29 @@ WarpX::InitFromCheckpoint ()
         is >> is_synchronized;
         GotoNextLine(is);
 
-        Real prob_lo[AMREX_SPACEDIM];
+        amrex::Vector<amrex::Real> prob_lo( AMREX_SPACEDIM );
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            int i = 0;
-            while (lis >> word) {
-                prob_lo[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < prob_lo.size(); ++i) {
+                lis >> word;
+                prob_lo.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
-        Real prob_hi[AMREX_SPACEDIM];
+        amrex::Vector<amrex::Real> prob_hi( AMREX_SPACEDIM );
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            int i = 0;
-            while (lis >> word) {
-                prob_hi[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < prob_hi.size(); ++i) {
+                lis >> word;
+                prob_hi.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
-        ResetProbDomain(RealBox(prob_lo,prob_hi));
+        ResetProbDomain(RealBox(prob_lo.data(),prob_hi.data()));
 
         for (int lev = 0; lev < nlevs; ++lev) {
             BoxArray ba;
