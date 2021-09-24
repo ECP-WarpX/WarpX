@@ -102,8 +102,8 @@ WarpXParticleContainer::WriteHeader (std::ostream& os) const
 void
 MultiParticleContainer::Restart (const std::string& dir)
 {
-    for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-        allcontainers[i]->Restart(dir, species_names[i]);
+    for (unsigned i = 0, n = species_names.size() + lasers_names.size(); i < n; ++i) {
+        allcontainers.at(i)->Restart(dir, species_names.at(i));
     }
 }
 
