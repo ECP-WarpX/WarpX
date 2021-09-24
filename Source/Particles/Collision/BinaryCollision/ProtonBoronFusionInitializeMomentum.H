@@ -78,14 +78,24 @@ namespace {
 
         constexpr amrex::ParticleReal m_alpha = PhysConst::m_p * 3.97369_prt;
         constexpr amrex::ParticleReal m_beryllium = PhysConst::m_p * 7.94748_prt;
-        constexpr amrex::ParticleReal ma_sq = m_alpha*m_alpha;
-        constexpr amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
         constexpr amrex::ParticleReal inv_csq = 1._prt / ( c_sq );
         // Rest energy of proton+boron
         const amrex::ParticleReal E_rest_pb = (m1 + m2)*c_sq;
         // Rest energy of alpha+beryllium
         constexpr amrex::ParticleReal E_rest_abe = (m_alpha + m_beryllium)*c_sq;
+
+        // These constexprs underflow in single precision because we use SI units and sometimes the
+        // code won't compile. Nuclear fusion module does not currently work with single precision
+        // anyways so these #ifdef are just here to make sure that the code always compiles with
+        // single precision.
+#ifdef AMREX_SINGLE_PRECISION_PARTICLES
+        const amrex::ParticleReal ma_sq = m_alpha*m_alpha;
+        const amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
+#else
+        constexpr amrex::ParticleReal ma_sq = m_alpha*m_alpha;
+        constexpr amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
+#endif
 
         // Normalized momentum of colliding particles (proton and boron)
         const amrex::ParticleReal u1x = soa_1.m_rdata[PIdx::ux][idx_1];
