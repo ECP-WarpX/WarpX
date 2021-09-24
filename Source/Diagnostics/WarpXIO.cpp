@@ -67,6 +67,7 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
     std::string fileCharPtrString(fileCharPtr.dataPtr());
     std::istringstream DMFile(fileCharPtrString, std::istringstream::in);
     if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
+    DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     int nprocs_in_checkpoint;
     DMFile >> nprocs_in_checkpoint;
@@ -100,6 +101,7 @@ WarpX::InitFromCheckpoint ()
         ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
         std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
+        is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
         std::string line, word;
 
@@ -113,6 +115,7 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
+            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
             int i = 0;
             while (lis >> word) {
                 istep[i++] = std::stoi(word);
@@ -122,6 +125,7 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
+            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
             int i = 0;
             while (lis >> word) {
                 nsubsteps[i++] = std::stoi(word);
@@ -131,6 +135,7 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
+            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
             int i = 0;
             while (lis >> word) {
                 t_new[i++] = static_cast<Real>(std::stod(word));
@@ -140,6 +145,7 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
+            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
             int i = 0;
             while (lis >> word) {
                 t_old[i++] = static_cast<Real>(std::stod(word));
@@ -149,6 +155,7 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
+            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
             int i = 0;
             while (lis >> word) {
                 dt[i++] = static_cast<Real>(std::stod(word));
@@ -166,6 +173,7 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
+            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
             int i = 0;
             while (lis >> word) {
                 prob_lo[i++] = static_cast<Real>(std::stod(word));
@@ -176,6 +184,7 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
+            is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
             int i = 0;
             while (lis >> word) {
                 prob_hi[i++] = static_cast<Real>(std::stod(word));
