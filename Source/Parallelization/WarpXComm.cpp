@@ -476,7 +476,7 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 }
 
 void
-WarpX::FillBoundaryB (IntVect ng)
+WarpX::FillBoundaryB (IntVect ng, bool sync_nodal_points)
 {
     // PML exchange
     if (do_pml) {
@@ -495,16 +495,16 @@ WarpX::FillBoundaryB (IntVect ng)
     }
 
     // Launch asynchronous MPI communications
-    WarpX::FillBoundary_nowait( Bfield_fp, ng, PatchType::fine );
-    WarpX::FillBoundary_nowait( Bfield_cp, ng, PatchType::coarse );
+    WarpX::FillBoundary_nowait( Bfield_fp, ng, PatchType::fine, sync_nodal_points );
+    WarpX::FillBoundary_nowait( Bfield_cp, ng, PatchType::coarse, sync_nodal_points );
 
     // Finalize MPI communications
-    WarpX::FillBoundary_finish( Bfield_fp, PatchType::fine );
-    WarpX::FillBoundary_finish( Bfield_cp, PatchType::coarse );
+    WarpX::FillBoundary_finish( Bfield_fp, PatchType::fine, sync_nodal_points );
+    WarpX::FillBoundary_finish( Bfield_cp, PatchType::coarse, sync_nodal_points );
 }
 
 void
-WarpX::FillBoundaryE (IntVect ng)
+WarpX::FillBoundaryE (IntVect ng, bool sync_nodal_points)
 {
     // PML exchange
     if (do_pml) {
@@ -523,18 +523,18 @@ WarpX::FillBoundaryE (IntVect ng)
     }
 
     // Launch asynchronous MPI communications
-    WarpX::FillBoundary_nowait( Efield_fp, ng, PatchType::fine );
-    WarpX::FillBoundary_nowait( Efield_cp, ng, PatchType::coarse );
+    WarpX::FillBoundary_nowait( Efield_fp, ng, PatchType::fine, sync_nodal_points );
+    WarpX::FillBoundary_nowait( Efield_cp, ng, PatchType::coarse, sync_nodal_points );
 
     // Finalize MPI communications
-    WarpX::FillBoundary_finish( Efield_fp, PatchType::fine );
-    WarpX::FillBoundary_finish( Efield_cp, PatchType::coarse );
+    WarpX::FillBoundary_finish( Efield_fp, PatchType::fine, sync_nodal_points );
+    WarpX::FillBoundary_finish( Efield_cp, PatchType::coarse, sync_nodal_points );
 }
 
 void
 WarpX::FillBoundary_nowait(
     Vector<std::array< std::unique_ptr<MultiFab>, 3 > >& vector_mf,
-    IntVect ng, PatchType patch_type )
+    IntVect ng, PatchType patch_type, bool sync_nodal_points )
 {
     // Loop through levels
     for (int lev = 0; lev <= finest_level; ++lev) {
@@ -555,7 +555,7 @@ WarpX::FillBoundary_nowait(
                     vector_mf[lev][idim]->FillBoundary_nowait(0,
                             vector_mf[lev][idim]->nComp(), ng, period);
                 }
-                vector_mf[lev][idim]->OverrideSync_nowait(period);
+                if (sync_nodal_points) vector_mf[lev][idim]->OverrideSync_nowait(period);
             }
         }
     }
@@ -564,7 +564,7 @@ WarpX::FillBoundary_nowait(
 void
 WarpX::FillBoundary_finish(
     Vector<std::array< std::unique_ptr<MultiFab>, 3 > >& vector_mf,
-    PatchType patch_type )
+    PatchType patch_type, bool sync_nodal_points )
 {
     // Loop through levels
     for (int lev = 0; lev <= finest_level; ++lev) {
@@ -574,7 +574,7 @@ WarpX::FillBoundary_finish(
             for (int idim=0; idim < 3; ++idim) {
                 // Finalize asynchronous MPI communication
                 vector_mf[lev][idim]->FillBoundary_finish();
-                vector_mf[lev][idim]->OverrideSync_finish();
+                if (sync_nodal_points) vector_mf[lev][idim]->OverrideSync_finish();
             }
         }
     }

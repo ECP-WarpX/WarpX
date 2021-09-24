@@ -500,17 +500,17 @@ public:
     void UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src);
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng);
-    void FillBoundaryE   (amrex::IntVect ng);
+    void FillBoundaryB   (amrex::IntVect ng, bool sync_nodal_points=false);
+    void FillBoundaryE   (amrex::IntVect ng, bool sync_nodal_points=false);
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
     void FillBoundary_nowait(
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& vector_mf,
-        amrex::IntVect ng, PatchType patch_type );
+        amrex::IntVect ng, PatchType patch_type, bool sync_nodal_points );
     void FillBoundary_finish(
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& vector_mf,
-        PatchType patch_type );
+        PatchType patch_type, bool sync_nodal_points );
 
     void FillBoundaryF   (amrex::IntVect ng);
     void FillBoundaryG   (amrex::IntVect ng);
