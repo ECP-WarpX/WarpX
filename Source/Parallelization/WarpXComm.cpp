@@ -555,6 +555,7 @@ WarpX::FillBoundary_nowait(
                     vector_mf[lev][idim]->FillBoundary_nowait(0,
                             vector_mf[lev][idim]->nComp(), ng, period);
                 }
+                vector_mf[lev][idim]->OverrideSync_nowait(period);
             }
         }
     }
@@ -573,6 +574,7 @@ WarpX::FillBoundary_finish(
             for (int idim=0; idim < 3; ++idim) {
                 // Finalize asynchronous MPI communication
                 vector_mf[lev][idim]->FillBoundary_finish();
+                vector_mf[lev][idim]->OverrideSync_finish();
             }
         }
     }
