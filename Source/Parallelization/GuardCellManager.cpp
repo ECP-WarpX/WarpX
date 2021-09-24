@@ -47,12 +47,14 @@ guardCellManager::Init (
     const bool safe_guard_cells,
     const int do_electrostatic)
 {
+    constexpr int FGcell[4] = {0,1,1,2}; // Index is nox
+
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
     // (the particles may move by 2*c*dt)
-    int ngx_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngy_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
-    int ngz_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
+    int ngx_tmp = (max_level > 0 && do_subcycling == 1) ? FGcell[nox]+1 : FGcell[nox];
+    int ngy_tmp = (max_level > 0 && do_subcycling == 1) ? FGcell[nox]+1 : FGcell[nox];
+    int ngz_tmp = (max_level > 0 && do_subcycling == 1) ? FGcell[nox]+1 : FGcell[nox];
 
     const bool galilean = (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.);
     const bool comoving = (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.);
@@ -250,7 +252,6 @@ guardCellManager::Init (
         }
     } else {
         // Compute number of cells required for Field Gather
-        int FGcell[4] = {0,1,1,2}; // Index is nox
         IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell[nox],FGcell[nox],FGcell[nox]));
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
         // If NCI filter, add guard cells in the z direction
