@@ -9,7 +9,7 @@
 #ifndef GET_TEMPERATURE_H_
 #define GET_TEMPERATURE_H_
 
-#include <TemperatureProperties.h>
+#include <Initialization/TemperatureProperties.H>
 
 /*
  * Functor to return temperature at a point on the grid, either constant (m_temperature)
@@ -22,7 +22,7 @@ struct GetTemperature
     amrex::Real m_temperature;
     amrex::ParserExecutor<3> m_temperature_parser;
 
-    GetTemperature (InitTemperature const& temp) noexcept
+    GetTemperature (TemperatureProperties const& temp) noexcept
     {
         m_type = temp.m_type;
         if (m_type == ConstantValue) {

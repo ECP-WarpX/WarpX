@@ -8,9 +8,10 @@
 #ifndef INJECTOR_MOMENTUM_H_
 #define INJECTOR_MOMENTUM_H_
 
+#include "GetTemperature.H"
 #include "CustomMomentumProb.H"
+#include "TemperatureProperties.H"
 #include "Utils/WarpXConst.H"
-#include "TemperatureInit.H"
 
 #include <AMReX.H>
 #include <AMReX_Config.H>

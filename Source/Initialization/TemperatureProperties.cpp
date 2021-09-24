@@ -6,7 +6,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include <TemperatureProperties.H>
+#include <Initialization/TemperatureProperties.H>
 
 /* 
  * Construct TemperatureProperties based on the passed parameters.
