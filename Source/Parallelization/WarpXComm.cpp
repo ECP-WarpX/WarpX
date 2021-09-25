@@ -433,12 +433,12 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 
-    for (MFIter mfi(dst); mfi.isValid(); ++mfi)
+    for (MFIter mfi(dst, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         // Loop over full box including ghost cells
         // (input arrays will be padded with zeros beyond ghost cells
         // for out-of-bound accesses due to large-stencil operations)
-        Box bx = mfi.fabbox();
+        Box bx = mfi.growntilebox();
 
         amrex::Array4<amrex::Real const> const& src_arr = src.const_array(mfi);
         amrex::Array4<amrex::Real>       const& dst_arr = dst.array(mfi);
