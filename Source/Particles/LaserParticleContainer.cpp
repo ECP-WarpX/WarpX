@@ -183,6 +183,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         }
     }
 
+    m_original_position = m_position;
+    
     if (do_continuous_injection){
         // If laser antenna initially outside of the box, store its theoretical
         // position in z_antenna_th
@@ -238,7 +240,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
     // should occur.
     // So far, LaserParticleContainer::laser_injection_box contains the
     // outdated full problem domain at t=0.
-
+    
     // Convert updated_position to Real* to use RealBox::contains().
 #if (AMREX_SPACEDIM == 3)
     const Real* p_pos = m_updated_position.dataPtr();
@@ -268,15 +270,16 @@ LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
     if (do_continuous_injection and (WarpX::gamma_boost > 1)){
         // In boosted-frame simulations, the antenna has moved since the last
         // call to this function, and injection position needs to be updated
+        Real t = WarpX::GetInstance().gett_new(0);
 #if ( AMREX_SPACEDIM == 3 )
-        m_updated_position[dir] -= WarpX::beta_boost *
-            WarpX::boost_direction[dir] * PhysConst::c * dt;
+        m_updated_position[dir] = m_original_position[dir] - WarpX::beta_boost *
+            WarpX::boost_direction[dir] * PhysConst::c * t;
 #elif ( AMREX_SPACEDIM == 2 )
         // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
         // This needs to be converted in order to index `boost_direction`
         // which has 3 components, for both 2D and 3D simulations.
-        m_updated_position[2*dir] -= WarpX::beta_boost *
-            WarpX::boost_direction[2*dir] * PhysConst::c * dt;
+        m_updated_position[2*dir] = m_original_position[2*dir] - WarpX::beta_boost *
+            WarpX::boost_direction[2*dir] * PhysConst::c * t;
 #endif
     }
 }
@@ -310,9 +313,18 @@ LaserParticleContainer::InitData (int lev)
     // LaserParticleContainer::position contains the initial position of the
     // laser antenna. In the boosted frame, the antenna is moving.
     // Update its position with updated_position.
-    if (do_continuous_injection){
-        m_position = m_updated_position;
-    }
+    Real t = WarpX::GetInstance().gett_new(0);
+    int dir = WarpX::moving_window_dir;
+#if ( AMREX_SPACEDIM == 3 )
+    m_position[dir] = m_original_position[dir] - WarpX::beta_boost *
+      WarpX::boost_direction[dir] * PhysConst::c * t;
+#elif ( AMREX_SPACEDIM == 2 )
+    // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
+    // This needs to be converted in order to index `boost_direction`
+    // which has 3 components, for both 2D and 3D simulations.
+    m_position[2*dir] = m_original_position[2*dir] - WarpX::beta_boost *
+      WarpX::boost_direction[2*dir] * PhysConst::c * t;
+#endif
 
     auto Transform = [&](int const i, int const j) -> Vector<Real>{
 #if (AMREX_SPACEDIM == 3)

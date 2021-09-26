@@ -109,6 +109,9 @@ MultiParticleContainer::Restart (const std::string& dir)
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         allcontainers.at(i)->Restart(dir, species_names.at(i));
     }
+    for (unsigned i = species_names.size(); i < species_names.size()+lasers_names.size(); ++i) {
+        allcontainers.at(i)->InitData();
+    }
 }
 
 void
