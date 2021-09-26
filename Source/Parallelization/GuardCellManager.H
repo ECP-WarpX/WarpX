@@ -80,6 +80,8 @@ public:
     amrex::IntVect ng_UpdateAux = amrex::IntVect::TheZeroVector();
     // Number of guard cells of all MultiFabs that must exchanged before moving window
     amrex::IntVect ng_MovingWindow = amrex::IntVect::TheZeroVector();
+    // Number of guard cells of E and B that are exchanged immediatly after the main PSATD push
+    amrex::IntVect ng_afterPushPSATD = amrex::IntVect::TheZeroVector();
 
     // Number of guard cells for local deposition of J and rho
     amrex::IntVect ng_depos_J   = amrex::IntVect::TheZeroVector();

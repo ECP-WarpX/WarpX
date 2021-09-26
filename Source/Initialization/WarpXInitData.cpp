@@ -114,11 +114,13 @@ WarpX::InitData ()
     if (restart_chkfile.empty())
     {
         ComputeDt();
+        WarpX::PrintDtDxDyDz();
         InitFromScratch();
     }
     else
     {
         InitFromCheckpoint();
+        WarpX::PrintDtDxDyDz();
         PostRestart();
     }
 

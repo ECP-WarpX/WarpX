@@ -40,6 +40,7 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     HeaderCharPtr[fileLength] = '\0';
 
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
+    is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     is >> m_file_version;
 
@@ -190,6 +191,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     HeaderCharPtr[fileLength] = '\0';
 
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
+    is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     is >> m_vers;
     is >> m_how;
