@@ -49,7 +49,6 @@ void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
-
     if (reset_fields) {
         // Reset all E and B fields to 0, before calculating space-charge fields
         WARPX_PROFILE("WarpX::ComputeSpaceChargeField::reset_fields");
@@ -731,22 +730,70 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
             lobc[idim] = LinOpBCType::Periodic;
             hibc[idim] = LinOpBCType::Periodic;
             dirichlet_flag[idim] = false;
-        } else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC
-             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
-            // Ideally, we would often want open boundary conditions here.
-            lobc[idim] = LinOpBCType::Dirichlet;
-            hibc[idim] = LinOpBCType::Dirichlet;
-
-            // set flag so we know which dimensions to fix the potential for
-            dirichlet_flag[idim] = true;
-            has_Dirichlet = true;
         }
         else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                "Field boundary conditions have to be either periodic or PEC "
-                "when using the electrostatic solver"
-            );
+            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
+                lobc[idim] = LinOpBCType::Dirichlet;
+                // set flag so we know which dimensions to fix the potential for
+                dirichlet_flag[idim] = true;
+                has_Dirichlet = true;
+            }
+            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML ) {
+                lobc[idim] = LinOpBCType::Neumann;
+            }
+            else {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "when using the electrostatic solver"
+                );
+            }
+
+            if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
+                hibc[idim] = LinOpBCType::Dirichlet;
+                // set flag so we know which dimensions to fix the potential for
+                dirichlet_flag[idim] = true;
+                has_Dirichlet = true;
+            }
+            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML ) {
+                hibc[idim] = LinOpBCType::Neumann;
+            }
+            else {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "when using the electrostatic solver"
+                );
+            }
         }
     }
     bcs_set = true;
+}
+
+void ElectrostaticSolver::BoundaryHandler::buildParsers ()
+{
+    potential_xlo_parser = makeParser(potential_xlo_str, {"t"});
+    potential_xhi_parser = makeParser(potential_xhi_str, {"t"});
+    potential_ylo_parser = makeParser(potential_ylo_str, {"t"});
+    potential_yhi_parser = makeParser(potential_yhi_str, {"t"});
+    potential_zlo_parser = makeParser(potential_zlo_str, {"t"});
+    potential_zhi_parser = makeParser(potential_zhi_str, {"t"});
+    potential_eb_parser = makeParser(potential_eb_str, {"x", "y", "z", "t"});
+
+    potential_xlo = potential_xlo_parser.compile<1>();
+    potential_xhi = potential_xhi_parser.compile<1>();
+    potential_ylo = potential_ylo_parser.compile<1>();
+    potential_yhi = potential_yhi_parser.compile<1>();
+    potential_zlo = potential_zlo_parser.compile<1>();
+    potential_zhi = potential_zhi_parser.compile<1>();
+
+    // check if the EB potential is a function of space
+    std::set<std::string> eb_symbols = potential_eb_parser.symbols();
+    if ((eb_symbols.count("x") != 0) || (eb_symbols.count("y") != 0)
+            || (eb_symbols.count("z") != 0)) {
+        potential_eb = potential_eb_parser.compile<4>();
+        phi_EB_only_t = false;
+    }
+    else {
+        potential_eb_parser = makeParser(potential_eb_str, {"t"});
+        potential_eb_t = potential_eb_parser.compile<1>();
+    }
 }

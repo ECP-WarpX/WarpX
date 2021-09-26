@@ -51,6 +51,14 @@ public:
     bool has_Dirichlet = false;
     bool phi_EB_only_t = true;
 
+    void definePhiBCs ();
+    void buildParsers ();
+
+    PhiCalculatorEB getPhiEB (amrex::Real t) const noexcept
+    {
+        return PhiCalculatorEB{t, potential_eb};
+    }
+
     // set default potentials to zero in order for current tests to pass
     // but forcing the user to specify a potential might be better
     std::string potential_xlo_str = "0";
@@ -60,43 +68,6 @@ public:
     std::string potential_zlo_str = "0";
     std::string potential_zhi_str = "0";
     std::string potential_eb_str = "0";
-
-    void definePhiBCs ();
-
-    void buildParsers ()
-    {
-        potential_xlo_parser = makeParser(potential_xlo_str, {"t"});
-        potential_xhi_parser = makeParser(potential_xhi_str, {"t"});
-        potential_ylo_parser = makeParser(potential_ylo_str, {"t"});
-        potential_yhi_parser = makeParser(potential_yhi_str, {"t"});
-        potential_zlo_parser = makeParser(potential_zlo_str, {"t"});
-        potential_zhi_parser = makeParser(potential_zhi_str, {"t"});
-        potential_eb_parser = makeParser(potential_eb_str, {"x", "y", "z", "t"});
-
-        potential_xlo = potential_xlo_parser.compile<1>();
-        potential_xhi = potential_xhi_parser.compile<1>();
-        potential_ylo = potential_ylo_parser.compile<1>();
-        potential_yhi = potential_yhi_parser.compile<1>();
-        potential_zlo = potential_zlo_parser.compile<1>();
-        potential_zhi = potential_zhi_parser.compile<1>();
-
-        // check if the EB potential is a function of space
-        std::set<std::string> eb_symbols = potential_eb_parser.symbols();
-        if ((eb_symbols.count("x") != 0) || (eb_symbols.count("y") != 0)
-                || (eb_symbols.count("z") != 0)) {
-            potential_eb = potential_eb_parser.compile<4>();
-            phi_EB_only_t = false;
-        }
-        else {
-            potential_eb_parser = makeParser(potential_eb_str, {"t"});
-            potential_eb_t = potential_eb_parser.compile<1>();
-        }
-    }
-
-    PhiCalculatorEB getPhiEB (amrex::Real t) const noexcept
-    {
-        return PhiCalculatorEB{t, potential_eb};
-    }
 
     amrex::ParserExecutor<1> potential_xlo;
     amrex::ParserExecutor<1> potential_xhi;
