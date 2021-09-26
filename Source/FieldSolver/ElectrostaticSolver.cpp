@@ -464,9 +464,9 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
                  Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const
 {
     // check if any dimension has Dirichlet boundary conditions
-    if (!field_boundary_handler.has_Dirichlet) return;
+    if (!field_boundary_handler.has_non_periodic) return;
 
-    auto dirichlet_flag = field_boundary_handler.dirichlet_flag;
+    auto periodic_flag = field_boundary_handler.periodic_flag;
 
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
@@ -486,7 +486,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
             // loop over dimensions
             for (int idim=0; idim<AMREX_SPACEDIM; idim++){
                 // check if the boundary in this dimension should be set
-                if (!dirichlet_flag[idim]) continue;
+                if (periodic_flag[idim]) continue;
 
                 // a check can be added below to test if the boundary values
                 // are already correct, in which case the ParallelFor over the
@@ -499,10 +499,14 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
                             IntVect iv(AMREX_D_DECL(i,j,k));
 
                             if (iv[idim] == domain.smallEnd(idim)){
-                                phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                                if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC) {
+                                    phi_arr(i,j,k) = phi_bc_values_lo[idim];
+                                }
                             }
                             if (iv[idim] == domain.bigEnd(idim)) {
-                                phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                                if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
+                                    phi_arr(i,j,k) = phi_bc_values_hi[idim];
+                                }
                             }
 
                         } // loop ijk
@@ -719,7 +723,7 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 #ifdef WARPX_DIM_RZ
     lobc[0] = LinOpBCType::Neumann;
     hibc[0] = LinOpBCType::Dirichlet;
-    dirichlet_flag[0] = false;
+    periodic_flag[0] = false;
     int dim_start=1;
 #else
     int dim_start=0;
@@ -729,16 +733,15 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
              && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
             lobc[idim] = LinOpBCType::Periodic;
             hibc[idim] = LinOpBCType::Periodic;
-            dirichlet_flag[idim] = false;
+            periodic_flag[idim] = true;
         }
         else {
+            periodic_flag[idim] = false;
+            has_non_periodic = true;
             if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
                 lobc[idim] = LinOpBCType::Dirichlet;
-                // set flag so we know which dimensions to fix the potential for
-                dirichlet_flag[idim] = true;
-                has_Dirichlet = true;
             }
-            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML ) {
+            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::None ) {
                 lobc[idim] = LinOpBCType::Neumann;
             }
             else {
@@ -750,11 +753,8 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 
             if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
                 hibc[idim] = LinOpBCType::Dirichlet;
-                // set flag so we know which dimensions to fix the potential for
-                dirichlet_flag[idim] = true;
-                has_Dirichlet = true;
             }
-            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML ) {
+            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::None ) {
                 hibc[idim] = LinOpBCType::Neumann;
             }
             else {
