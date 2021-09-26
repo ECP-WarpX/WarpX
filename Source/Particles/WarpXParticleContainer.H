@@ -277,7 +277,7 @@ public:
      * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
      * are supported
      */
-    void ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions);
+    void ApplyBoundaryConditions ();
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
@@ -368,6 +368,9 @@ protected:
     amrex::Real charge;
     amrex::Real mass;
     PhysicalSpecies physical_species;
+
+    // Controls boundaries for particles exiting the domain
+    ParticleBoundaries m_boundary_conditions;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     bool m_deposit_on_main_grid = false;
