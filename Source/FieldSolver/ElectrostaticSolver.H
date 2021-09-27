@@ -47,7 +47,7 @@ public:
 
     amrex::Array<amrex::LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
     bool bcs_set = false;
-    std::array<bool,AMREX_SPACEDIM> periodic_flag;
+    std::array<bool,AMREX_SPACEDIM*2> dirichlet_flag;
     bool has_non_periodic = false;
     bool phi_EB_only_t = true;
 

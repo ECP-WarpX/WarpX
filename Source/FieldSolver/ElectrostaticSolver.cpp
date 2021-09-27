@@ -466,7 +466,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
     // check if any dimension has Dirichlet boundary conditions
     if (!field_boundary_handler.has_non_periodic) return;
 
-    auto periodic_flag = field_boundary_handler.periodic_flag;
+    auto dirichlet_flag = field_boundary_handler.dirichlet_flag;
 
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
@@ -485,8 +485,8 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
 
             // loop over dimensions
             for (int idim=0; idim<AMREX_SPACEDIM; idim++){
-                // check if the boundary in this dimension should be set
-                if (periodic_flag[idim]) continue;
+                // check if neither boundaries in this dimension should be set
+                if (!(dirichlet_flag[2*idim] || dirichlet_flag[2*idim+1])) continue;
 
                 // a check can be added below to test if the boundary values
                 // are already correct, in which case the ParallelFor over the
@@ -498,15 +498,11 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
 
                             IntVect iv(AMREX_D_DECL(i,j,k));
 
-                            if (iv[idim] == domain.smallEnd(idim)){
-                                if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC) {
-                                    phi_arr(i,j,k) = phi_bc_values_lo[idim];
-                                }
+                            if (dirichlet_flag[2*idim] && iv[idim] == domain.smallEnd(idim)){
+                                phi_arr(i,j,k) = phi_bc_values_lo[idim];
                             }
-                            if (iv[idim] == domain.bigEnd(idim)) {
-                                if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
-                                    phi_arr(i,j,k) = phi_bc_values_hi[idim];
-                                }
+                            if (dirichlet_flag[2*idim+1] && iv[idim] == domain.bigEnd(idim)) {
+                                phi_arr(i,j,k) = phi_bc_values_hi[idim];
                             }
 
                         } // loop ijk
@@ -723,7 +719,8 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 #ifdef WARPX_DIM_RZ
     lobc[0] = LinOpBCType::Neumann;
     hibc[0] = LinOpBCType::Dirichlet;
-    periodic_flag[0] = false;
+    dirichlet_flag[0] = false;
+    dirichlet_flag[1] = false;
     int dim_start=1;
 #else
     int dim_start=0;
@@ -733,16 +730,18 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
              && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
             lobc[idim] = LinOpBCType::Periodic;
             hibc[idim] = LinOpBCType::Periodic;
-            periodic_flag[idim] = true;
+            dirichlet_flag[idim*2] = false;
+            dirichlet_flag[idim*2+1] = false;
         }
         else {
-            periodic_flag[idim] = false;
             has_non_periodic = true;
             if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
                 lobc[idim] = LinOpBCType::Dirichlet;
+                dirichlet_flag[idim*2] = true;
             }
             else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::None ) {
                 lobc[idim] = LinOpBCType::Neumann;
+                dirichlet_flag[idim*2] = false;
             }
             else {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
@@ -753,9 +752,11 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 
             if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
                 hibc[idim] = LinOpBCType::Dirichlet;
+                dirichlet_flag[idim*2+1] = true;
             }
             else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::None ) {
                 hibc[idim] = LinOpBCType::Neumann;
+                dirichlet_flag[idim*2+1] = false;
             }
             else {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
