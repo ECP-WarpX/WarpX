@@ -116,6 +116,7 @@ MultiParticleContainer::Restart (const std::string& dir)
         ParallelDescriptor::ReadAndBcastFile(header_fn, fileCharPtr);
         std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
+        is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
         std::string line, word;
 
