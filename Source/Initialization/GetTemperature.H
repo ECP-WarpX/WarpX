@@ -22,37 +22,9 @@ struct GetTemperature
     amrex::Real m_temperature;
     amrex::ParserExecutor<3> m_temperature_parser;
 
-    GetTemperature (TemperatureProperties const& temp) noexcept
-    {
-        m_type = temp.m_type;
-        if (m_type == ConstantValue) {
-            m_temperature = temp.m_temperature;
-        }
-        else if (m_type == ParserFunction) {
-            m_temperature_parser = temp.m_ptr_temperature_parser->compile<3>();
-        }
-    }
+    GetTemperature (TemperatureProperties const& temp) noexcept;
 
     AMREX_GPU_HOST_DEVICE
-    amrex::Real operator() (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
-    {
-        switch (m_type)
-        {
-            case (ConstantValue):
-            {
-                return m_temperature;
-            }
-            case (ParserFunction):
-            {
-                return m_temperature_parser(x,y,z);
-            }
-            default:
-            {
-                amrex::Abort("Get initial temperature: unknown type");
-                return 0.0;
-            }
-        }
-
-    }
+    amrex::Real operator() (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 };
 #endif

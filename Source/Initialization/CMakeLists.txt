@@ -6,4 +6,5 @@ target_sources(WarpX
     PlasmaInjector.cpp
     WarpXInitData.cpp
     TemperatureProperties.cpp
+    GetTemperature.cpp
 )
