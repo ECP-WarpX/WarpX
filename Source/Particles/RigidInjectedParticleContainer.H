@@ -53,7 +53,6 @@ public:
     virtual void InitData() override;
 
     virtual void RemapParticles();
-    virtual void BoostandRemapParticles();
 
     virtual void Evolve (int lev,
                          const amrex::MultiFab& Ex,
