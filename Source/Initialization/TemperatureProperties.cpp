@@ -6,9 +6,9 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include <Initialization/TemperatureProperties.H>
+#include "TemperatureProperties.H"
 
-/* 
+/*
  * Construct TemperatureProperties based on the passed parameters.
  * If temperature is a constant, store value. If a parser, make and
  * store the parser function

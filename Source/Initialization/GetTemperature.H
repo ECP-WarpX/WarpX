@@ -9,7 +9,7 @@
 #ifndef GET_TEMPERATURE_H_
 #define GET_TEMPERATURE_H_
 
-#include <Initialization/TemperatureProperties.H>
+#include "TemperatureProperties.H"
 
 /*
  * Functor to return temperature at a point on the grid, either constant (m_temperature)

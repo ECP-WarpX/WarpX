@@ -8,8 +8,8 @@
 #ifndef INJECTOR_MOMENTUM_H_
 #define INJECTOR_MOMENTUM_H_
 
-#include "GetTemperature.H"
 #include "CustomMomentumProb.H"
+#include "GetTemperature.H"
 #include "TemperatureProperties.H"
 #include "Utils/WarpXConst.H"
 

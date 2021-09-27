@@ -6,7 +6,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include <Initialization/GetTemperature.H>
+#include "GetTemperature.H"
 
 GetTemperature::GetTemperature (TemperatureProperties const& temp) noexcept {
     m_type = temp.m_type;

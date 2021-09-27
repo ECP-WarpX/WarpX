@@ -9,6 +9,7 @@
  */
 #include "PlasmaInjector.H"
 
+#include "Initialization/GetTemperature.H"
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
