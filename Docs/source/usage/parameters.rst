@@ -695,6 +695,7 @@ Particle initialization
 
 * ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
     Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
+
     * If ``constant``, use a constant temperature, given by the float ``<species_name>.theta``. The default value of ``<species_name>.theta`` is 10.
 
     * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.theta_function(x,y,z)``.
