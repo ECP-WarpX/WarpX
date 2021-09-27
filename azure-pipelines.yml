@@ -87,7 +87,7 @@ jobs:
 #      sudo apt-get install -y libmpich-dev
 #      python3 -m pip install -U pip setuptools wheel --user
 #      python3 -m pip install -U cmake --user
-#      WarpX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
+#      WARPX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
 #  - script: |
 #      python3 -c "from pywarpx import picmi; print(api.variants)"
 #      python3 -m pywarpx --help
@@ -104,7 +104,7 @@ jobs:
       python3 -m pip install -U pip setuptools wheel --user
       python3 -m pip install -U cmake --user
       python3 --version
-      WarpX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      WARPX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
   - script: |
       python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -511,7 +511,7 @@ jobs:
 #      brew update || true
 #      brew install mpich
 #      python3 -m pip install -U pip setuptools wheel cmake --user
-#      WarpX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
+#      WARPX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
 #  - script: |
 #      python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -525,7 +525,7 @@ jobs:
       brew update || true
       brew install openmpi libomp
       python3 -m pip install -U pip --user
-      WarpX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      WARPX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
   - script: |
       python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -537,7 +537,7 @@ jobs:
   steps:
   - script: |
       python3 -m pip install -U pip --user
-      WarpX_COMPUTE=NOACC python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      WARPX_COMPUTE=NOACC python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
   - script: |
       python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -795,7 +795,7 @@ jobs:
   - script: |
       which python
       python -m pip install -U pip --user
-      set WarpX_COMPUTE=NOACC
+      set WARPX_COMPUTE=NOACC
       python -m pip install -v git+https://github.com/ECP-WarpX/WarpX.git@development --user
   - script: |
       python -c "from pywarpx import picmi"
