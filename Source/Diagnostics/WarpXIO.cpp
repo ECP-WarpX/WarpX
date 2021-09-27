@@ -67,6 +67,7 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
     std::string fileCharPtrString(fileCharPtr.dataPtr());
     std::istringstream DMFile(fileCharPtrString, std::istringstream::in);
     if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
+    DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     int nprocs_in_checkpoint;
     DMFile >> nprocs_in_checkpoint;
@@ -100,6 +101,7 @@ WarpX::InitFromCheckpoint ()
         ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
         std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
+        is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
         std::string line, word;
 
@@ -113,45 +115,50 @@ WarpX::InitFromCheckpoint ()
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            int i = 0;
-            while (lis >> word) {
-                istep[i++] = std::stoi(word);
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < istep.size(); ++i) {
+                lis >> word;
+                istep.at(i) = std::stoi(word);
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            int i = 0;
-            while (lis >> word) {
-                nsubsteps[i++] = std::stoi(word);
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < nsubsteps.size(); ++i) {
+                lis >> word;
+                nsubsteps.at(i) = std::stoi(word);
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            int i = 0;
-            while (lis >> word) {
-                t_new[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < t_new.size(); ++i) {
+                lis >> word;
+                t_new.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            int i = 0;
-            while (lis >> word) {
-                t_old[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < t_old.size(); ++i) {
+                lis >> word;
+                t_old.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            int i = 0;
-            while (lis >> word) {
-                dt[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < dt.size(); ++i) {
+                lis >> word;
+                dt.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -162,27 +169,29 @@ WarpX::InitFromCheckpoint ()
         is >> is_synchronized;
         GotoNextLine(is);
 
-        Real prob_lo[AMREX_SPACEDIM];
+        amrex::Vector<amrex::Real> prob_lo( AMREX_SPACEDIM );
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            int i = 0;
-            while (lis >> word) {
-                prob_lo[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < prob_lo.size(); ++i) {
+                lis >> word;
+                prob_lo.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
-        Real prob_hi[AMREX_SPACEDIM];
+        amrex::Vector<amrex::Real> prob_hi( AMREX_SPACEDIM );
         std::getline(is, line);
         {
             std::istringstream lis(line);
-            int i = 0;
-            while (lis >> word) {
-                prob_hi[i++] = static_cast<Real>(std::stod(word));
+            lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+            for (int i = 0; i < prob_hi.size(); ++i) {
+                lis >> word;
+                prob_hi.at(i) = static_cast<Real>(std::stod(word));
             }
         }
 
-        ResetProbDomain(RealBox(prob_lo,prob_hi));
+        ResetProbDomain(RealBox(prob_lo.data(),prob_hi.data()));
 
         for (int lev = 0; lev < nlevs; ++lev) {
             BoxArray ba;
@@ -246,6 +255,23 @@ WarpX::InitFromCheckpoint ()
         VisMF::Read(*Bfield_fp[lev][2],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_fp"));
 
+        if (WarpX::fft_do_time_averaging)
+        {
+            VisMF::Read(*Efield_avg_fp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_avg_fp"));
+            VisMF::Read(*Efield_avg_fp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_avg_fp"));
+            VisMF::Read(*Efield_avg_fp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_avg_fp"));
+
+            VisMF::Read(*Bfield_avg_fp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_avg_fp"));
+            VisMF::Read(*Bfield_avg_fp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_avg_fp"));
+            VisMF::Read(*Bfield_avg_fp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_fp"));
+        }
+
         if (is_synchronized) {
             VisMF::Read(*current_fp[lev][0],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_fp"));
@@ -270,6 +296,23 @@ WarpX::InitFromCheckpoint ()
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_cp"));
             VisMF::Read(*Bfield_cp[lev][2],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_cp"));
+
+            if (WarpX::fft_do_time_averaging)
+            {
+                VisMF::Read(*Efield_avg_cp[lev][0],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ex_avg_cp"));
+                VisMF::Read(*Efield_avg_cp[lev][1],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ey_avg_cp"));
+                VisMF::Read(*Efield_avg_cp[lev][2],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Ez_avg_cp"));
+
+                VisMF::Read(*Bfield_avg_cp[lev][0],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bx_avg_cp"));
+                VisMF::Read(*Bfield_avg_cp[lev][1],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_avg_cp"));
+                VisMF::Read(*Bfield_avg_cp[lev][2],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_cp"));
+            }
 
             if (is_synchronized) {
                 VisMF::Read(*current_cp[lev][0],

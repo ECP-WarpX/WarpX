@@ -126,7 +126,7 @@ from pywarpx import wx
 
 if color == 0:
     # verify that communicator contains correct number of procs (1)
-    assert wx.libwarpx.warpx_getNProcs() == comm_world_size - 2
+    assert wx.libwarpx.warpx_getNProcs() == comm_world_size - 1
     assert wx.libwarpx.warpx_getNProcs() == new_comm_size
 
 else:
