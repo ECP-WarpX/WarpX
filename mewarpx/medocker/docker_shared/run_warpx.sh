@@ -81,13 +81,13 @@ do
         find . -name "*.png" | while read file; do checkptmove "$file"; done
         find . -name "*.txt" | while read file; do checkptmove "$file"; done
         find . -name "*.json" | while read file; do checkptmove "$file"; done
-        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*"
+        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*" --include "*.json"
     else
         for d in ./diags_* ; do
             aws s3 sync $d s3://${BUCKET}/${DIRNAME}/diags/
         done
         aws s3 sync ./diags/ s3://${BUCKET}/${DIRNAME}/diags/
-        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*"
+        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*" --include "*.json"
     fi
 
     # In addition, check if no output to stdout has been made for last TIMEOUT
@@ -128,7 +128,7 @@ for d in ./diags_* ; do
     aws s3 mv --recursive $d s3://${BUCKET}/${DIRNAME}/diags/
 done
 aws s3 mv --recursive ./diags/ s3://${BUCKET}/${DIRNAME}/diags/
-aws s3 mv --recursive ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*"
+aws s3 mv --recursive ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*" --include "*.json"
 
 echo Exit with status $EXITFLAG
 exit $EXITFLAG

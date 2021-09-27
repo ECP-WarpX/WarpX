@@ -376,5 +376,5 @@ def exit_handler():
     atexit.unregister(_libwarpx.finalize)
     _libwarpx.finalize()
 
-    if os.path.isfile("stdout.out"):
+    if os.path.isfile("stdout.out") and mwxrun.me == 0:
         profileparser.main("stdout.out")
