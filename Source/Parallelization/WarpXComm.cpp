@@ -87,7 +87,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*Bfield_aux[0][0]); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*Bfield_aux[0][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Array4<Real> const& bx_aux = Bfield_aux[0][0]->array(mfi);
         Array4<Real> const& by_aux = Bfield_aux[0][1]->array(mfi);
@@ -103,10 +103,10 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real const> const& ey_fp = Emf[0][1]->const_array(mfi);
         Array4<Real const> const& ez_fp = Emf[0][2]->const_array(mfi);
 
-        // Loop over full box including ghost cells
+        // Loop includes ghost cells (`growntilebox`)
         // (input arrays will be padded with zeros beyond ghost cells
         // for out-of-bound accesses due to large-stencil operations)
-        Box bx = mfi.fabbox();
+        Box bx = mfi.growntilebox();
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 
@@ -194,7 +194,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
+            for (MFIter mfi(*Bfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
             {
                 Array4<Real> const& bx_aux = Bfield_aux[lev][0]->array(mfi);
                 Array4<Real> const& by_aux = Bfield_aux[lev][1]->array(mfi);
@@ -209,7 +209,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 Array4<Real const> const& by_c = Btmp[1]->const_array(mfi);
                 Array4<Real const> const& bz_c = Btmp[2]->const_array(mfi);
 
-                const Box& bx = mfi.fabbox();
+                const Box& bx = mfi.growntilebox();
                 amrex::ParallelFor(bx,
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
@@ -433,12 +433,12 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 
-    for (MFIter mfi(dst); mfi.isValid(); ++mfi)
+    for (MFIter mfi(dst, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         // Loop over full box including ghost cells
         // (input arrays will be padded with zeros beyond ghost cells
         // for out-of-bound accesses due to large-stencil operations)
-        Box bx = mfi.fabbox();
+        Box bx = mfi.growntilebox();
 
         amrex::Array4<amrex::Real const> const& src_arr = src.const_array(mfi);
         amrex::Array4<amrex::Real>       const& dst_arr = dst.array(mfi);
