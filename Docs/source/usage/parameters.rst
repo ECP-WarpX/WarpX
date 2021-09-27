@@ -652,8 +652,9 @@ Particle initialization
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
-      temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
+      temperature parameter theta as an input, where theta is kb*T/(m*c^2),
       kb is the Boltzmann constant, c is the speed of light, and m is the mass of the species.
+      Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
       It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
       The plasma will be initialized to move at bulk velocity beta*c in the
       ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
@@ -667,9 +668,9 @@ Particle initialization
       they are not relativistic in the drift frame. This is as opposed to the Maxwell Juttner
       setting, which initializes particles with relativistic momentums in their drifting frame.
 
-    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma. This mode
-      requires a dimensionless temperature parameter ``<species_name>.theta``, where theta is equal
-      to kb*T/(m*c^2), where kb is the Boltzmann constant, and m is the mass of the species. It also
+    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma that takes a dimensionless temperature parameter theta as an input, where theta is kb*T/(m*c^2), kb is the Boltzmann constant, and m is the mass of the species.
+      Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
+      It also
       includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c. The plasma
       will be initialized to move at velocity beta*c in the
       ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
@@ -691,6 +692,12 @@ Particle initialization
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
+
+* ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
+    Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
+    * If ``constant``, use a constant temperature, given by the float ``<species_name>.theta``. The default value of ``<species_name>.theta`` is 10.
+
+    * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.theta_function(x,y,z)``.
 
 * ``<species_name>.zinject_plane`` (`float`)
     Only read if  ``<species_name>`` is in ``particles.rigid_injected_species``.
