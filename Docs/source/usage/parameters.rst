@@ -1101,7 +1101,7 @@ Laser initialization
     so that it contains at least ``mirror_z_npoints``.
 
 External fields
---------------------
+---------------
 
 * ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
