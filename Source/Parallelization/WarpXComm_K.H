@@ -524,8 +524,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 
 /**
  * \brief Arbitrary-order interpolation function used to center a given MultiFab between two grids
- * with different staggerings. With the FDTD solver, this performs simple linear interpolation.
- * With the PSATD solver, this performs arbitrary-order interpolation based on the Fornberg coefficients.
+ * with different staggerings. The arbitrary-order interpolation is based on the Fornberg coefficients.
  * The result is stored in the output array \c dst_arr.
  *
  * \param[in] j index along x of the output array
@@ -542,7 +541,6 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
  * \param[in] stencil_coeffs_y array of ordered Fornberg coefficients for finite-order centering stencil along y
  * \param[in] stencil_coeffs_z array of ordered Fornberg coefficients for finite-order centering stencil along z
  */
-template< bool IS_PSATD = false >
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp (const int j,
                    const int k,
@@ -679,50 +677,32 @@ void warpx_interp (const int j,
 
     amrex::Real res = 0.0_rt;
 
-    if( !IS_PSATD ) // FDTD (linear interpolation)
-    {
-        for (int ll = 0; ll <= nl; ll++)
-        {
-            for (int kk = 0; kk <= nk; kk++)
-            {
-                for (int jj = 0; jj <= nj; jj++)
-                {
-                    res += src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
-                }
-            }
-        }
+    amrex::Real cj = 1.0_rt;
+    amrex::Real ck = 1.0_rt;
+    amrex::Real cl = 1.0_rt;
 
-    }
-
-    else // PSATD (finite-order interpolation)
-    {
-        amrex::Real cj = 1.0_rt;
-        amrex::Real ck = 1.0_rt;
-        amrex::Real cl = 1.0_rt;
-
-        amrex::Real const* scj = stencil_coeffs_x;
+    amrex::Real const* scj = stencil_coeffs_x;
 #if (AMREX_SPACEDIM == 2)
-        amrex::Real const* sck = stencil_coeffs_z;
+    amrex::Real const* sck = stencil_coeffs_z;
 #elif (AMREX_SPACEDIM == 3)
-        amrex::Real const* sck = stencil_coeffs_y;
-        amrex::Real const* scl = stencil_coeffs_z;
+    amrex::Real const* sck = stencil_coeffs_y;
+    amrex::Real const* scl = stencil_coeffs_z;
 #endif
 
-        for (int ll = 0; ll <= nl; ll++)
-        {
+    for (int ll = 0; ll <= nl; ll++)
+    {
 #if (AMREX_SPACEDIM == 3)
-            if (interp_l) cl = scl[ll];
+        if (interp_l) cl = scl[ll];
 #endif
-            for (int kk = 0; kk <= nk; kk++)
+        for (int kk = 0; kk <= nk; kk++)
+        {
+            if (interp_k) ck = sck[kk];
+
+            for (int jj = 0; jj <= nj; jj++)
             {
-                if (interp_k) ck = sck[kk];
+                if (interp_j) cj = scj[jj];
 
-                for (int jj = 0; jj <= nj; jj++)
-                {
-                    if (interp_j) cj = scj[jj];
-
-                    res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
-                }
+                res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
             }
         }
     }
