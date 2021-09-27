@@ -9,6 +9,7 @@ If you are new to this system, please see the following resources:
 
 * `Summit user guide <https://docs.olcf.ornl.gov/systems/summit_user_guide.html>`_
 * Batch system: `LSF <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#running-jobs>`_
+* `Jupyter service <https://jupyter.olcf.ornl.gov>`__
 * `Production directories <https://docs.olcf.ornl.gov/data/storage_overview.html>`_:
 
   * ``$PROJWORK/$proj/``: shared with all members of a project (recommended)
@@ -229,3 +230,47 @@ parameters provided good performance:
 
 * **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
   results in ~49 tiles per OpenMP thread)
+
+.. _building-summit-issues:
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   Sep 16th, 2021 (OLCFHELP-3685):
+   The **Jupyter** service cannot open HDF5 files without hanging, due to a mounting problem.
+
+   `Please apply this work-around <https://github.com/openPMD/openPMD-api/pull/1106>`__ in a Jupyter cell before opening any HDF5 files for read:
+
+   .. code-block:: python3
+
+      import os
+      os.environ['HDF5_USE_FILE_LOCKING'] = "FALSE"
+
+.. warning::
+
+   Aug 27th, 2021 (OLCFHELP-3442):
+   Created simulation files and directories that are created on ``$PROJWORK`` are no longer accessible by your team members, unless you give them access.
+   Setting the proper "user mask" (``umask``) does not yet work to fix this
+
+   Please run those commands after running a simulation to fix this.
+   You can also append this to the end of your job scripts after the ``jsrun`` line:
+
+   .. code-block:: bash
+
+      # cd your-simulation-directory
+      find . -type d -exec chmod g+rwx {} \;
+      find . -type f -exec chmod g+rw {} \;
+
+.. warning::
+
+   Sep 3rd, 2021 (OLCFHELP-3545):
+   The implementation of barriers in IBM's MPI fork is broken and leads to crashes at scale.
+   This is seen with runs using 200 nodes and above.
+
+   Our batch script templates above `apply this work-around <https://github.com/ECP-WarpX/WarpX/pull/2283>`__ *before* the call to ``jsrun``, which avoids the broken routines from IBM and trades them for a OpenMPI implementation of collectives:
+
+   .. code-block:: bash
+
+      export OMPI_MCA_coll_ibm_skip_barrier=true
