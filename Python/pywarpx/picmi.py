@@ -86,6 +86,15 @@ class Species(picmistandard.PICMI_Species):
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
 
+        # For particle reflection
+        self.reflection_model_xlo = kw.pop('warpx_reflection_model_xlo', None)
+        self.reflection_model_xhi = kw.pop('warpx_reflection_model_xhi', None)
+        self.reflection_model_ylo = kw.pop('warpx_reflection_model_ylo', None)
+        self.reflection_model_yhi = kw.pop('warpx_reflection_model_yhi', None)
+        self.reflection_model_zlo = kw.pop('warpx_reflection_model_zlo', None)
+        self.reflection_model_zhi = kw.pop('warpx_reflection_model_zhi', None)
+        # self.reflection_model_eb = kw.pop('warpx_reflection_model_eb', None)
+
         # For the scraper buffer
         self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
         self.save_particles_at_xhi = kw.pop('warpx_save_particles_at_xhi', None)
@@ -127,6 +136,16 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position,
                                              do_not_deposit = self.do_not_deposit)
+
+        # add reflection models
+        self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
+        self.species.add_new_attr("reflection_model_xhi(E)", self.reflection_model_xhi)
+        self.species.add_new_attr("reflection_model_ylo(E)", self.reflection_model_ylo)
+        self.species.add_new_attr("reflection_model_yhi(E)", self.reflection_model_yhi)
+        self.species.add_new_attr("reflection_model_zlo(E)", self.reflection_model_zlo)
+        self.species.add_new_attr("reflection_model_zhi(E)", self.reflection_model_zhi)
+        # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -804,7 +823,7 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
-            pywarpx.warpx.__setattr__('eb_potential(t)', expression)
+            pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
 
 class Simulation(picmistandard.PICMI_Simulation):

@@ -343,7 +343,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                                             2.0_rt / mass1 * PhysConst::q_e
                                                             * (E_coll - scattering_process.m_energy_penalty)
                                                             );
-                                      RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
+                                      ParticleUtils::RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
                                   }
                                   break;
                               }

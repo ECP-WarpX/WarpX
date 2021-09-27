@@ -2,11 +2,17 @@
 
 # Copyright 2021 Modern Electron
 
-# This script simply checks that the PICMI_inputs_2d.py run output
-# diagnostics, which confirms that the PICMI MCC interface works otherwise
-# the run would've crashed.
+# This script checks that the PICMI_inputs_2d.py run more-or-less matches the
+# results from the non-PICMI run. The PICMI run is using an external Poisson
+# solver that directly solves the Poisson equation using matrix inversion
+# rather than the iterative approach from the MLMG solver.
 
-import glob
+import sys
+sys.path.append('../../../../warpx/Regression/Checksum/')
 
-files = sorted(glob.glob('Python_background_mcc_plt*'))[1:]
-assert len(files) > 0
+import checksumAPI
+
+my_check = checksumAPI.evaluate_checksum(
+    'background_mcc', 'Python_background_mcc_plt00050',
+    do_particles=True, rtol=7.5e-2
+)
