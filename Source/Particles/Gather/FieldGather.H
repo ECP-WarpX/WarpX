@@ -68,8 +68,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
-    amrex::ignore_unused(xp);
-    amrex::ignore_unused(yp);
+    amrex::ignore_unused(xp,yp);
 #endif
 
 #ifndef WARPX_DIM_RZ
