@@ -52,6 +52,8 @@ public:
 
     virtual void InitData() override;
 
+  virtual void PostRestart() override final;
+
     virtual void RemapParticles();
     virtual void BoostandRemapParticles();
 
