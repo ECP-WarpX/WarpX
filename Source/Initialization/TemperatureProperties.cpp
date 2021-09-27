@@ -15,7 +15,7 @@
  */
 TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     // Set defaults
-    amrex::Real theta = 20.;
+    amrex::Real theta = 10.;
     std::string temp_dist_s = "constant";
 
     pp.query("theta_distribution_type", temp_dist_s);
