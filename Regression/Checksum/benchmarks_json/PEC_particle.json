@@ -7,12 +7,12 @@
     "particle_momentum_z": 1.4878853257695474e-48,
     "particle_position_x": 3.199800000000243e-05,
     "particle_position_y": 6.591777047777483e-21,
-    "particle_position_z": 8.873588080118934e-36,
+    "particle_position_z": 3.908052788123610e-35,
     "particle_weight": 1.0
   },
   "lev=0": {
     "Bx": 5.6613704793749764e-05,
-    "By": 1.3668526864402908e-16,
+    "By": 1.366940011333133e-16,
     "Bz": 0.00011100031731970013,
     "Ex": 26731.847337630617,
     "Ey": 29057.33399045148,
@@ -29,7 +29,7 @@
     "particle_momentum_z": 8.190436884590936e-50,
     "particle_position_x": 3.199799999999955e-05,
     "particle_position_y": 6.5726706900619935e-06,
-    "particle_position_z": 2.149900391709847e-36,
+    "particle_position_z": 5.895870442605212e-36,
     "particle_weight": 1.0
   }
 }
