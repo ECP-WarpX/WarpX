@@ -289,6 +289,8 @@ LaserParticleContainer::InitData ()
 {
     if (!m_enabled) return;
 
+    m_laser_injection_box= Geom(0).ProbDomain();
+    
     // Call InitData on max level to inject one laser particle per
     // finest cell.
     InitData(maxLevel());
@@ -303,7 +305,7 @@ void
 LaserParticleContainer::InitData (int lev)
 {
     if (!m_enabled) return;
-
+    
     // spacing of laser particles in the laser plane.
     // has to be done after geometry is set up.
     Real S_X, S_Y;
