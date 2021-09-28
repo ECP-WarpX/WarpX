@@ -134,6 +134,13 @@ void Filter::DoFilter (const Box& tbx,
     {
         Real d = 0.0;
 
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
         for         (int iz=0; iz < slen_local.z; ++iz){
             for     (int iy=0; iy < slen_local.y; ++iy){
                 for (int ix=0; ix < slen_local.x; ++ix){
