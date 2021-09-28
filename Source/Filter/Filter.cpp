@@ -1,4 +1,4 @@
-/* Copyright 2019 Andrew Myers, Maxence Thevenet, Weiqun Zhang
+/* Copyright 2019-2021 Andrew Myers, Maxence Thevenet, Weiqun Zhang, Axel Huebl
  *
  *
  * This file is part of WarpX.
@@ -22,16 +22,6 @@
 
 using namespace amrex;
 
-#ifdef AMREX_USE_GPU
-
-/* \brief Apply stencil on MultiFab (GPU version, 2D/3D).
- * \param dstmf Destination MultiFab
- * \param srcmf source MultiFab
- * \param[in] lev mesh refinement level
- * \param scomp first component of srcmf on which the filter is applied
- * \param dcomp first component of dstmf on which the filter is applied
- * \param ncomp Number of components on which the filter is applied.
- */
 void
 Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int scomp, int dcomp, int ncomp)
 {
@@ -64,14 +54,6 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
     }
 }
 
-/* \brief Apply stencil on FArrayBox (GPU version, 2D/3D).
- * \param dstfab Destination FArrayBox
- * \param srcmf source FArrayBox
- * \param tbx Grown box on which srcfab is defined.
- * \param scomp first component of srcfab on which the filter is applied
- * \param dcomp first component of dstfab on which the filter is applied
- * \param ncomp Number of components on which the filter is applied.
- */
 void
 Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
                       const Box& tbx, int scomp, int dcomp, int ncomp)
@@ -85,8 +67,6 @@ Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
     DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 }
 
-/* \brief Apply stencil (2D/3D, GPU)
- */
 void Filter::DoFilter (const Box& tbx,
                        Array4<Real const> const& src,
                        Array4<Real      > const& dst,
@@ -100,7 +80,7 @@ void Filter::DoFilter (const Box& tbx,
     Dim3 slen_local = slen;
 
 #if (AMREX_SPACEDIM == 3)
-    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    AMREX_PARALLEL_FOR_4D( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
 
@@ -130,7 +110,7 @@ void Filter::DoFilter (const Box& tbx,
         dst(i,j,k,dcomp+n) = d;
     });
 #else
-    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    AMREX_PARALLEL_FOR_4D( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
 
@@ -157,119 +137,3 @@ void Filter::DoFilter (const Box& tbx,
     });
 #endif
 }
-
-#else
-
-/* CPU version */
-void
-Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, const int lev, int scomp, int dcomp, int ncomp)
-{
-    WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
-    ncomp = std::min(ncomp, srcmf.nComp());
-
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
-#ifdef AMREX_USE_OMP
-// never runs on GPU since in the else branch of AMREX_USE_GPU
-#pragma omp parallel
-#endif
-    {
-        FArrayBox tmpfab;
-        for (MFIter mfi(dstmf,true); mfi.isValid(); ++mfi){
-
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-            }
-            amrex::Real wt = amrex::second();
-
-            const auto& srcfab = srcmf[mfi];
-            auto& dstfab = dstmf[mfi];
-            const Box& tbx = mfi.growntilebox();
-
-            // Apply filter
-            DoFilter(tbx, srcfab.array(), dstfab.array(), scomp, dcomp, ncomp);
-
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-            {
-                amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
-                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
-            }
-        }
-    }
-}
-
-void
-Filter::ApplyStencil (amrex::FArrayBox& dstfab, const amrex::FArrayBox& srcfab,
-                      const amrex::Box& tbx, int scomp, int dcomp, int ncomp)
-{
-    WARPX_PROFILE("Filter::ApplyStencil(FArrayBox)");
-    ncomp = std::min(ncomp, srcfab.nComp());
-
-    // Apply filter
-    DoFilter(tbx, srcfab.array(), dstfab.array(), scomp, dcomp, ncomp);
-}
-
-/* Apply stencil (2D/3D, CPU)
- */
-void Filter::DoFilter (const Box& tbx,
-                       Array4<Real const> const& src,
-                       Array4<Real      > const& dst,
-                       int scomp, int dcomp, int ncomp)
-{
-    const auto lo = amrex::lbound(tbx);
-    const auto hi = amrex::ubound(tbx);
-    // tmp and dst are of type Array4 (Fortran ordering)
-    amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if (AMREX_SPACEDIM == 3)
-    amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
-#endif
-    amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
-    for (int n = 0; n < ncomp; ++n) {
-        // Pad source array with zeros beyond ghost cells
-        // for out-of-bound accesses due to large-stencil operations
-        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
-        {
-            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
-        };
-
-        // 3 nested loop on 3D stencil
-        for         (int iz=0; iz < slen.z; ++iz){
-            for     (int iy=0; iy < slen.y; ++iy){
-                for (int ix=0; ix < slen.x; ++ix){
-#if (AMREX_SPACEDIM == 3)
-                    Real sss = sx[ix]*sy[iy]*sz[iz];
-#else
-                    Real sss = sx[ix]*sz[iy];
-#endif
-                    // 3 nested loop on 3D array
-                    for         (int k = lo.z; k <= hi.z; ++k) {
-                        for     (int j = lo.y; j <= hi.y; ++j) {
-                            AMREX_PRAGMA_SIMD
-                            for (int i = lo.x; i <= hi.x; ++i) {
-#if (AMREX_SPACEDIM == 3)
-                                dst(i,j,k,dcomp+n) += sss*(src_zeropad(i-ix,j-iy,k-iz,scomp+n)
-                                                          +src_zeropad(i+ix,j-iy,k-iz,scomp+n)
-                                                          +src_zeropad(i-ix,j+iy,k-iz,scomp+n)
-                                                          +src_zeropad(i+ix,j+iy,k-iz,scomp+n)
-                                                          +src_zeropad(i-ix,j-iy,k+iz,scomp+n)
-                                                          +src_zeropad(i+ix,j-iy,k+iz,scomp+n)
-                                                          +src_zeropad(i-ix,j+iy,k+iz,scomp+n)
-                                                          +src_zeropad(i+ix,j+iy,k+iz,scomp+n));
-#else
-                                dst(i,j,k,dcomp+n) += sss*(src_zeropad(i-ix,j-iy,k,scomp+n)
-                                                          +src_zeropad(i+ix,j-iy,k,scomp+n)
-                                                          +src_zeropad(i-ix,j+iy,k,scomp+n)
-                                                          +src_zeropad(i+ix,j+iy,k,scomp+n));
-#endif
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-#endif // #ifdef AMREX_USE_CUDA
