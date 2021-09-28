@@ -19,20 +19,35 @@ class Filter
 public:
     Filter () = default;
 
-    // Apply stencil on MultiFab.
-    // Guard cells are handled inside this function
+    /* Apply stencil on MultiFab (2D/3D).
+     *
+     * \param dstmf Destination MultiFab
+     * \param srcmf source MultiFab
+     * \param[in] lev mesh refinement level
+     * \param scomp first component of srcmf on which the filter is applied
+     * \param dcomp first component of dstmf on which the filter is applied
+     * \param ncomp Number of components on which the filter is applied.
+     */
     void ApplyStencil(amrex::MultiFab& dstmf,
                               const amrex::MultiFab& srcmf, const int lev, int scomp=0,
                               int dcomp=0, int ncomp=10000);
 
-    // Apply stencil on a FabArray.
+    /** Apply stencil on a FArrayBox.
+     *
+     * \param dstfab Destination FArrayBox
+     * \param srcfab source FArrayBox
+     * \param tbx Grown box on which srcfab is defined.
+     * \param scomp first component of srcfab on which the filter is applied
+     * \param dcomp first component of dstfab on which the filter is applied
+     * \param ncomp Number of components on which the filter is applied.
+     */
     void ApplyStencil (amrex::FArrayBox& dstfab,
                        const amrex::FArrayBox& srcfab, const amrex::Box& tbx,
                        int scomp=0, int dcomp=0, int ncomp=10000);
 
     // public for cuda
     void DoFilter(const amrex::Box& tbx,
-                          amrex::Array4<amrex::Real const> const& tmp,
+                          amrex::Array4<amrex::Real const> const& src,
                           amrex::Array4<amrex::Real      > const& dst,
                           int scomp, int dcomp, int ncomp);
 

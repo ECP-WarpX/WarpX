@@ -85,7 +85,7 @@ Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
     DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 }
 
-/* \brief Apply stencil (2D/3D, CPU/GPU)
+/* \brief Apply stencil (2D/3D, GPU)
  */
 void Filter::DoFilter (const Box& tbx,
                        Array4<Real const> const& src,
@@ -160,14 +160,7 @@ void Filter::DoFilter (const Box& tbx,
 
 #else
 
-/* \brief Apply stencil on MultiFab (CPU version, 2D/3D).
- * \param dstmf Destination MultiFab
- * \param srcmf source MultiFab
- * \param[in] lev mesh refinement level
- * \param scomp first component of srcmf on which the filter is applied
- * \param dcomp first component of dstmf on which the filter is applied
- * \param ncomp Number of components on which the filter is applied.
- */
+/* CPU version */
 void
 Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, const int lev, int scomp, int dcomp, int ncomp)
 {
@@ -193,15 +186,9 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
             const auto& srcfab = srcmf[mfi];
             auto& dstfab = dstmf[mfi];
             const Box& tbx = mfi.growntilebox();
-            const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
-            // tmpfab has enough ghost cells for the stencil
-            tmpfab.resize(gbx,ncomp);
-            tmpfab.setVal(0.0, gbx, 0, ncomp);
-            // Copy values in srcfab into tmpfab
-            const Box& ibx = gbx & srcfab.box();
-            tmpfab.copy(srcfab, ibx, scomp, ibx, 0, ncomp);
+
             // Apply filter
-            DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp);
+            DoFilter(tbx, srcfab.array(), dstfab.array(), scomp, dcomp, ncomp);
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
@@ -213,34 +200,21 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
     }
 }
 
-/* \brief Apply stencil on FArrayBox (CPU version, 2D/3D).
- * \param dstfab Destination FArrayBox
- * \param srcmf source FArrayBox
- * \param tbx Grown box on which srcfab is defined.
- * \param scomp first component of srcfab on which the filter is applied
- * \param dcomp first component of dstfab on which the filter is applied
- * \param ncomp Number of components on which the filter is applied.
- */
 void
 Filter::ApplyStencil (amrex::FArrayBox& dstfab, const amrex::FArrayBox& srcfab,
                       const amrex::Box& tbx, int scomp, int dcomp, int ncomp)
 {
     WARPX_PROFILE("Filter::ApplyStencil(FArrayBox)");
     ncomp = std::min(ncomp, srcfab.nComp());
-    FArrayBox tmpfab;
-    const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
-    // tmpfab has enough ghost cells for the stencil
-    tmpfab.resize(gbx,ncomp);
-    tmpfab.setVal(0.0, gbx, 0, ncomp);
-    // Copy values in srcfab into tmpfab
-    const Box& ibx = gbx & srcfab.box();
-    tmpfab.copy(srcfab, ibx, scomp, ibx, 0, ncomp);
+
     // Apply filter
-    DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp);
+    DoFilter(tbx, srcfab.array(), dstfab.array(), scomp, dcomp, ncomp);
 }
 
+/* Apply stencil (2D/3D, CPU)
+ */
 void Filter::DoFilter (const Box& tbx,
-                       Array4<Real const> const& tmp,
+                       Array4<Real const> const& src,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
@@ -253,14 +227,13 @@ void Filter::DoFilter (const Box& tbx,
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
     for (int n = 0; n < ncomp; ++n) {
-        // Set dst value to 0.
-        for         (int k = lo.z; k <= hi.z; ++k) {
-            for     (int j = lo.y; j <= hi.y; ++j) {
-                for (int i = lo.x; i <= hi.x; ++i) {
-                    dst(i,j,k,dcomp+n) = 0.0;
-                }
-            }
-        }
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
         // 3 nested loop on 3D stencil
         for         (int iz=0; iz < slen.z; ++iz){
             for     (int iy=0; iy < slen.y; ++iy){
@@ -276,19 +249,19 @@ void Filter::DoFilter (const Box& tbx,
                             AMREX_PRAGMA_SIMD
                             for (int i = lo.x; i <= hi.x; ++i) {
 #if (AMREX_SPACEDIM == 3)
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k-iz,scomp+n)
-                                                          +tmp(i+ix,j-iy,k-iz,scomp+n)
-                                                          +tmp(i-ix,j+iy,k-iz,scomp+n)
-                                                          +tmp(i+ix,j+iy,k-iz,scomp+n)
-                                                          +tmp(i-ix,j-iy,k+iz,scomp+n)
-                                                          +tmp(i+ix,j-iy,k+iz,scomp+n)
-                                                          +tmp(i-ix,j+iy,k+iz,scomp+n)
-                                                          +tmp(i+ix,j+iy,k+iz,scomp+n));
+                                dst(i,j,k,dcomp+n) += sss*(src_zeropad(i-ix,j-iy,k-iz,scomp+n)
+                                                          +src_zeropad(i+ix,j-iy,k-iz,scomp+n)
+                                                          +src_zeropad(i-ix,j+iy,k-iz,scomp+n)
+                                                          +src_zeropad(i+ix,j+iy,k-iz,scomp+n)
+                                                          +src_zeropad(i-ix,j-iy,k+iz,scomp+n)
+                                                          +src_zeropad(i+ix,j-iy,k+iz,scomp+n)
+                                                          +src_zeropad(i-ix,j+iy,k+iz,scomp+n)
+                                                          +src_zeropad(i+ix,j+iy,k+iz,scomp+n));
 #else
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k,scomp+n)
-                                                          +tmp(i+ix,j-iy,k,scomp+n)
-                                                          +tmp(i-ix,j+iy,k,scomp+n)
-                                                          +tmp(i+ix,j+iy,k,scomp+n));
+                                dst(i,j,k,dcomp+n) += sss*(src_zeropad(i-ix,j-iy,k,scomp+n)
+                                                          +src_zeropad(i+ix,j-iy,k,scomp+n)
+                                                          +src_zeropad(i-ix,j+iy,k,scomp+n)
+                                                          +src_zeropad(i+ix,j+iy,k,scomp+n));
 #endif
                             }
                         }
