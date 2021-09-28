@@ -573,7 +573,6 @@ private:
                 amrex::ParserExecutor<3> const& a_uy_parser,
                 amrex::ParserExecutor<3> const& a_uz_parser) noexcept
             : parser(a_ux_parser, a_uy_parser, a_uz_parser) {}
-        ~Object() {};
         InjectorMomentumConstant constant;
         InjectorMomentumCustom   custom;
         InjectorMomentumGaussian gaussian;
