@@ -358,22 +358,6 @@ MultiParticleContainer::ReadParameters ()
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
 
-        // The boundary conditions are read in in ReadBCParams
-        m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
-#ifdef WARPX_DIM_3D
-        m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
-        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
-#else
-        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
-#endif
-
-        {
-            ParmParse pp_boundary("boundary");
-            bool flag = false;
-            pp_boundary.query("reflect_all_velocities", flag);
-            m_boundary_conditions.Set_reflect_all_velocities(flag);
-        }
-
         ParmParse pp_lasers("lasers");
         pp_lasers.queryarr("names", lasers_names);
 
@@ -614,7 +598,7 @@ void
 MultiParticleContainer::ApplyBoundaryConditions ()
 {
     for (auto& pc : allcontainers) {
-        pc->ApplyBoundaryConditions(m_boundary_conditions);
+        pc->ApplyBoundaryConditions();
     }
 }
 
