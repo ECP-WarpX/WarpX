@@ -74,6 +74,13 @@ void SumBoundary (amrex::MultiFab&          mf,
                   amrex::IntVect            ng,
                   const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());
 
+void SumBoundary (amrex::MultiFab&          mf,
+                  int                       start_comp,
+                  int                       num_comps,
+                  amrex::IntVect            src_ng,
+                  amrex::IntVect            dst_ng,
+                  const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());
+
 void OverrideSync (amrex::MultiFab&          mf,
                    const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());
 }

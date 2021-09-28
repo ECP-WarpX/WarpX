@@ -182,6 +182,33 @@ void SumBoundary (amrex::MultiFab&          mf,
     }
 }
 
+void SumBoundary (amrex::MultiFab&          mf,
+                  int                       start_comp,
+                  int                       num_comps,
+                  amrex::IntVect            src_ng,
+                  amrex::IntVect            dst_ng,
+                  const amrex::Periodicity& period)
+{
+    BL_PROFILE("WarpXCommUtil::SumBoundary");
+
+    if (WarpX::do_single_precision_comms)
+    {
+        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                 mf.DistributionMap(),
+                                                                 num_comps,
+                                                                 mf.nGrowVect());
+        mixedCopy(mf_tmp, mf, start_comp, 0, num_comps, mf.nGrowVect());
+
+        mf_tmp.SumBoundary(0, num_comps, src_ng, dst_ng, period);
+
+        mixedCopy(mf, mf_tmp, 0, start_comp, num_comps, dst_ng);
+    }
+    else
+    {
+        mf.SumBoundary(start_comp, num_comps, src_ng, dst_ng, period);
+    }
+}
+
 void OverrideSync (amrex::MultiFab&          mf,
                    const amrex::Periodicity& period)
 {
