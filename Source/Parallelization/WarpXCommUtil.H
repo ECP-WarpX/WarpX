@@ -24,7 +24,7 @@ mixedCopy (amrex::FabArray<FAB1>& dst, amrex::FabArray<FAB2> const& src, int src
     ParallelFor(dst, nghost, numcomp,
     [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k, int n) noexcept
     {
-        dstma[box_no](i,j,k,dstcomp+n) = srcma[box_no](i,j,k,srccomp+n);
+        dstma[box_no](i,j,k,dstcomp+n) = (typename FAB1::value_type) srcma[box_no](i,j,k,srccomp+n);
     });
     amrex::Gpu::synchronize();
 }
