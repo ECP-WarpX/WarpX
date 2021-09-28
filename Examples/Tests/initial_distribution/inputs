@@ -102,7 +102,7 @@ maxwell_juttner_parser.theta_function(x,y,z)      = "1.0 + heaviside(x,0)"
 # 2 for maxwell-boltzmann with constant temperature
 # 3 for maxwell-juttner with constant temperature
 # 4 for beam
-# 5 for maxwell-boltzmann with parser function temperature
+# 5 for maxwell-juttner with parser function temperature
 warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr h5_neg h5_pos
 
 h1x.type                                 = ParticleHistogram
