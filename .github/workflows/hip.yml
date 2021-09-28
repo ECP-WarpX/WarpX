@@ -82,7 +82,7 @@ jobs:
           -DWarpX_LIB=ON              \
           -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \
-          -DWarpX_PRECISION=SINGLE    \
+          -DWarpX_PRECISION=DOUBLE    \
           -DWarpX_PSATD=ON
         cmake --build build_2d -j 2
 
