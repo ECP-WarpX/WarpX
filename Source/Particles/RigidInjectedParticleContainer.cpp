@@ -79,7 +79,7 @@ void RigidInjectedParticleContainer::InitData()
 
     // Store velocity with which rigid particles move
     vzbeam_ave_boosted = meanParticleVelocity(false)[2];
-    
+
     // Particles added by AddParticles should already be in the boosted frame
     RemapParticles();
 

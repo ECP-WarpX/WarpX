@@ -184,7 +184,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     }
 
     m_original_position = m_position;
-    
+
     if (do_continuous_injection){
         // If laser antenna initially outside of the box, store its theoretical
         // position in z_antenna_th
@@ -240,7 +240,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
     // should occur.
     // So far, LaserParticleContainer::laser_injection_box contains the
     // outdated full problem domain at t=0.
-    
+
     // Convert updated_position to Real* to use RealBox::contains().
 #if (AMREX_SPACEDIM == 3)
     const Real* p_pos = m_updated_position.dataPtr();
@@ -290,7 +290,7 @@ LaserParticleContainer::InitData ()
     if (!m_enabled) return;
 
     m_laser_injection_box= Geom(0).ProbDomain();
-    
+
     // Call InitData on max level to inject one laser particle per
     // finest cell.
     InitData(maxLevel());
@@ -305,7 +305,7 @@ void
 LaserParticleContainer::InitData (int lev)
 {
     if (!m_enabled) return;
-    
+
     // spacing of laser particles in the laser plane.
     // has to be done after geometry is set up.
     Real S_X, S_Y;
