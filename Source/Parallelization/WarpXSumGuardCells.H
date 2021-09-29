@@ -69,7 +69,8 @@ WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
         n_updated_guards = amrex::IntVect::TheZeroVector();
 
     dst.setVal(0., icomp, ncomp, n_updated_guards);
-    WarpXCommUtil::ParallelAdd(dst, src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
+//    WarpXCommUtil::ParallelAdd(dst, src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
+    dst.ParallelAdd(src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
 }
 
 #endif // WARPX_SUM_GUARD_CELLS_H_

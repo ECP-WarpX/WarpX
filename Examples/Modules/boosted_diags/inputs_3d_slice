@@ -122,7 +122,7 @@ btd_openpmd.do_back_transformed_fields = 1
 btd_openpmd.num_snapshots_lab = 4
 btd_openpmd.dz_snapshots_lab = 0.001
 btd_openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-btd_openpmd.format = openpmd
+btd_openpmd.format = plotfile
 btd_openpmd.buffer_size = 32
 
 btd_pltfile.diag_type = BackTransformed
