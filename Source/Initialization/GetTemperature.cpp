@@ -17,24 +17,3 @@ GetTemperature::GetTemperature (TemperatureProperties const& temp) noexcept {
         m_temperature_parser = temp.m_ptr_temperature_parser->compile<3>();
     }
 }
-
-amrex::Real GetTemperature::operator() (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
-{
-    switch (m_type)
-    {
-        case (ConstantValue):
-        {
-            return m_temperature;
-        }
-        case (ParserFunction):
-        {
-            return m_temperature_parser(x,y,z);
-        }
-        default:
-        {
-            amrex::Abort("Get initial temperature: unknown type");
-            return 0.0;
-        }
-    }
-
-}

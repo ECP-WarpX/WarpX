@@ -49,6 +49,24 @@ struct GetTemperature
      *        m_temperature_parser(x,y,z) if m_type is ParserFunction
      */
     AMREX_GPU_HOST_DEVICE
-    amrex::Real operator() (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
+    amrex::Real operator() (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    {
+        switch (m_type)
+        {
+            case (ConstantValue):
+            {
+                return m_temperature;
+            }
+            case (ParserFunction):
+            {
+                return m_temperature_parser(x,y,z);
+            }
+            default:
+            {
+                amrex::Abort("Get initial temperature: unknown type");
+                return 0.0;
+            }
+        }
+    }
 };
 #endif
