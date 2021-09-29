@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+import re
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
