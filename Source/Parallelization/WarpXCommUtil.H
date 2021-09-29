@@ -1,3 +1,9 @@
+/* Copyright 2019 Andrew Myers
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_COMMUTIL_H_
 #define WARPX_COMMUTIL_H_
 

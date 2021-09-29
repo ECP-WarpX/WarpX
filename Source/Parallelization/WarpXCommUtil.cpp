@@ -1,3 +1,9 @@
+/* Copyright 2019 Andrew Myers
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "WarpXCommUtil.H"
 
 #include <AMReX.H>
