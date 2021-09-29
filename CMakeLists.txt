@@ -93,9 +93,6 @@ set_default_build_type("Release")
 # (also know as "link-time optimization" or "whole program optimization")
 option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
 
-# Option to print warning messages as soon as warnings are raised
-option(WARPX_WARN_IMMEDIATELY                   "Print warnings as soon as they are raised (suggested for debugging)" OFF)
-
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
@@ -207,10 +204,6 @@ set_target_properties(${_ALL_TARGETS} PROPERTIES
 # Interprocedural optimization
 if(WarpX_IPO)
     enable_IPO("${_ALL_TARGETS}")
-endif()
-
-if(WarpX_Warn_Immediately)
-    target_compile_definitions(WarpX PUBLIC WARPX_WARN_IMMEDIATELY)
 endif()
 
 # link dependencies
