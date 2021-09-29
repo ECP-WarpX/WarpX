@@ -289,8 +289,6 @@ LaserParticleContainer::InitData ()
 {
     if (!m_enabled) return;
 
-    m_laser_injection_box= Geom(0).ProbDomain();
-
     // Call InitData on max level to inject one laser particle per
     // finest cell.
     InitData(maxLevel());
@@ -620,6 +618,8 @@ void
 LaserParticleContainer::PostRestart ()
 {
     if (!m_enabled) return;
+
+    m_laser_injection_box= Geom(0).ProbDomain();
 
     Real Sx, Sy;
     const int lev = finestLevel();
