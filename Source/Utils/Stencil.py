@@ -4,11 +4,7 @@ based on the measurement of the PSATD stencil extent (that is, the minimum numbe
 guard cells such that the stencil measure is not larger than the error threshold).
 Reference: https://arxiv.org/abs/2106.12919
 
-Example of how to run the script for a 2D case:
-    python Stencil.py --dx 1e-06 --dz 1e-06 --dt 1e-14 --nox 16 --noz 16
-                      --gamma 30 --galilean --path /path/to/output --name this_test
-
-Example of how to run the script for a 3D case:
+Example of how to run the script:
     python Stencil.py --dx 1e-06 --dy 1e-06 --dz 1e-06 --dt 1e-14 --nox 16 --noy 16 --noz 16
                       --gamma 30 --galilean --path /path/to/output --name this_test
 
@@ -119,7 +115,7 @@ def func_cosine(om, w_c, dt):
     coeff = theta_c**2 * np.cos(om * dt)
     return coeff
 
-def compute_stencils(coeff_nodal, coeff_stagg, dim, axis):
+def compute_stencils(coeff_nodal, coeff_stagg, axis):
     """
     Compute nodal and staggered stencils along a given direction.
 
@@ -129,8 +125,6 @@ def compute_stencils(coeff_nodal, coeff_stagg, dim, axis):
         Leading spectral nodal coefficient of the general PSATD equations.
     coeff_stagg : numpy.ndarray
         Leading spectral staggered coefficient of the general PSATD equations.
-    dim : int
-        Number of dimensions.
     axis : int
         Axis or direction.
 
@@ -144,42 +138,28 @@ def compute_stencils(coeff_nodal, coeff_stagg, dim, axis):
     stencil_stagg = np.fft.ifft(coeff_stagg, axis = axis)
 
     # Average results over remaining axes in spectral space
-    if (dim == 2):
-        if (axis == 0):
-              # Averaged over kz
-              stencil_avg_nodal  = np.sum(stencil_nodal, axis = 1)
-              stencil_avg_nodal /= (stencil_nodal.shape[1])
-              stencil_avg_stagg  = np.sum(stencil_stagg, axis = 1)
-              stencil_avg_stagg /= (stencil_stagg.shape[1])
-        elif (axis == 1):
-              # Averaged over kx
-              stencil_avg_nodal  = np.sum(stencil_nodal, axis = 0)
-              stencil_avg_nodal /= (stencil_nodal.shape[0])
-              stencil_avg_stagg  = np.sum(stencil_stagg, axis = 0)
-              stencil_avg_stagg /= (stencil_stagg.shape[0])
-    elif (dim == 3):
-        if (axis == 0):
-              # Averaged over ky and kz
-              stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 1)
-              stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[1])
-              stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 1)
-              stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[1])
-        elif (axis == 1):
-              # Averaged over kx and kz
-              stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 0)
-              stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[0])
-              stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 0)
-              stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[0])
-        elif (axis == 2):
-              # Averaged over kx and ky
-              stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 1), axis = 0)
-              stencil_avg_nodal /= (stencil_nodal.shape[1] * stencil_nodal.shape[0])
-              stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 1), axis = 0)
-              stencil_avg_stagg /= (stencil_stagg.shape[1] * stencil_stagg.shape[0])
+    if (axis == 0):
+          # Averaged over ky and kz
+          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 1)
+          stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[1])
+          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 1)
+          stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[1])
+    elif (axis == 1):
+          # Averaged over kx and kz
+          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 0)
+          stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[0])
+          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 0)
+          stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[0])
+    elif (axis == 2):
+          # Averaged over kx and ky
+          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 1), axis = 0)
+          stencil_avg_nodal /= (stencil_nodal.shape[1] * stencil_nodal.shape[0])
+          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 1), axis = 0)
+          stencil_avg_stagg /= (stencil_stagg.shape[1] * stencil_stagg.shape[0])
 
     return (stencil_avg_nodal, stencil_avg_stagg)
 
-def compute_all(dx, dy, dz, dt, dim, nox, noy, noz, Nx, Ny, Nz, v_gal):
+def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 256):
     """
     Compute nodal and staggered stencils along all directions.
 
@@ -188,67 +168,53 @@ def compute_all(dx, dy, dz, dt, dim, nox, noy, noz, Nx, Ny, Nz, v_gal):
     dx : float
         Cell size along x.
     dy : float
-        Cell size along y (0 in 2D).
+        Cell size along y.
     dz : float
         Cell size along z.
     dt : float
         Time step.
-    dim : int
-        Number of dimensions.
     nox : int
         Spectral order along x.
     noy : int
-        Spectral order along y (0 in 2D).
+        Spectral order along y.
     noz : int
         Spectral order along z.
-    Nx : int
-        Number of mesh points along x.
-    Ny : int
-        Number of mesh points along y (0 in 2D).
-    Nz : int
-        Number of mesh points along z.
     v_gal : float
-        Galilean ublic/nb/default/home?option=ngCLBeneficiaryvelocity.
+        Galilean velocity.
+    Nx : int, optional (default = 256)
+        Number of mesh points along x.
+    Ny : int, optional (default = 256)
+        Number of mesh points along y.
+    Nz : int, optional (default = 256)
+        Number of mesh points along z.
 
     Returns
     -------
     (stencil_nodal, stencil_stagg) : tuple
         Nodal and staggered stencils along all directions.
     """
-
     # k vectors
     kx_arr = 2 * np.pi * np.fft.fftfreq(Nx, dx)
+    ky_arr = 2 * np.pi * np.fft.fftfreq(Ny, dy)
     kz_arr = 2 * np.pi * np.fft.fftfreq(Nz, dz)
-    if (dim == 3):
-        ky_arr = 2 * np.pi * np.fft.fftfreq(Ny, dy)
     
     # Centered modified k vectors
     kx_arr_c = modified_k(kx_arr, dx, nox, False) if (nox != 'inf') else kx_arr
+    ky_arr_c = modified_k(ky_arr, dy, noy, False) if (noy != 'inf') else ky_arr
     kz_arr_c = modified_k(kz_arr, dz, noz, False) if (noz != 'inf') else kz_arr
-    if (dim == 3):
-        ky_arr_c = modified_k(ky_arr, dy, noy, False) if (noy != 'inf') else ky_arr
     
     # Staggered modified k vectors
     kx_arr_s = modified_k(kx_arr, dx, nox, True) if (nox != 'inf') else kx_arr
+    ky_arr_s = modified_k(ky_arr, dy, noy, True) if (noy != 'inf') else ky_arr
     kz_arr_s = modified_k(kz_arr, dz, noz, True) if (noz != 'inf') else kz_arr
-    if (dim == 3):
-        ky_arr_s = modified_k(ky_arr, dy, noy, True) if (noy != 'inf') else ky_arr
     
     # Mesh in k space
-    if (dim == 2):
-        kx_c, kz_c = np.meshgrid(kx_arr_c, kz_arr_c)
-        kx_s, kz_s = np.meshgrid(kx_arr_s, kz_arr_s)
-    elif (dim == 3):
-        kx_c, ky_c, kz_c = np.meshgrid(kx_arr_c, ky_arr_c, kz_arr_c)
-        kx_s, ky_s, kz_s = np.meshgrid(kx_arr_s, ky_arr_s, kz_arr_s)
+    kx_c, ky_c, kz_c = np.meshgrid(kx_arr_c, ky_arr_c, kz_arr_c)
+    kx_s, ky_s, kz_s = np.meshgrid(kx_arr_s, ky_arr_s, kz_arr_s)
     
     # Frequencies
-    if (dim == 2):
-        kk_c = np.sqrt(kx_c**2 + kz_c**2)
-        kk_s = np.sqrt(kx_s**2 + kz_s**2)
-    elif (dim == 3):
-        kk_c = np.sqrt(kx_c**2 + ky_c**2 + kz_c**2)
-        kk_s = np.sqrt(kx_s**2 + ky_s**2 + kz_s**2)
+    kk_c = np.sqrt(kx_c**2 + ky_c**2 + kz_c**2)
+    kk_s = np.sqrt(kx_s**2 + ky_s**2 + kz_s**2)
     om_c = c * kk_c
     om_s = c * kk_s
     w_c = v_gal * kz_c
@@ -258,19 +224,12 @@ def compute_all(dx, dy, dz, dt, dim, nox, noy, noz, Nx, Ny, Nz, v_gal):
     coeff_stagg = func_cosine(om_s, w_c, dt)
     
     # Stencils
-    stencil_x_nodal, stencil_x_stagg = compute_stencils(coeff_nodal, coeff_stagg, dim, axis = 0)
-    if (dim == 2):
-        stencil_z_nodal, stencil_z_stagg = compute_stencils(coeff_nodal, coeff_stagg, dim, axis = 1)
-    elif (dim == 3):
-        stencil_y_nodal, stencil_y_stagg = compute_stencils(coeff_nodal, coeff_stagg, dim, axis = 1)
-        stencil_z_nodal, stencil_z_stagg = compute_stencils(coeff_nodal, coeff_stagg, dim, axis = 2)
+    stencil_x_nodal, stencil_x_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 0)
+    stencil_y_nodal, stencil_y_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 1)
+    stencil_z_nodal, stencil_z_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 2)
 
-    if (dim == 2):
-        stencil_nodal = (stencil_x_nodal, stencil_z_nodal)
-        stencil_stagg = (stencil_x_stagg, stencil_z_stagg)
-    elif (dim == 3):
-        stencil_nodal = (stencil_x_nodal, stencil_y_nodal, stencil_z_nodal)
-        stencil_stagg = (stencil_x_stagg, stencil_y_stagg, stencil_z_stagg)
+    stencil_nodal = (stencil_x_nodal, stencil_y_nodal, stencil_z_nodal)
+    stencil_stagg = (stencil_x_stagg, stencil_y_stagg, stencil_z_stagg)
 
     return (stencil_nodal, stencil_stagg)
 
@@ -339,7 +298,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dx', type = float, required = True,
                         help = 'cell size along x')
-    parser.add_argument('--dy', type = float, required = False, default = 0.,
+    parser.add_argument('--dy', type = float, required = True,
                         help = 'cell size along y')
     parser.add_argument('--dz', type = float, required = True,
                         help = 'cell size along z')
@@ -347,7 +306,7 @@ if __name__ == '__main__':
                         help = 'time step')
     parser.add_argument('--nox', type = int, required = True,
                         help = 'spectral order along x')
-    parser.add_argument('--noy', type = int, required = False, default = 0,
+    parser.add_argument('--noy', type = int, required = True,
                         help = 'spectral order along y')
     parser.add_argument('--noz', type = int, required = True,
                         help = 'spectral order along z')
@@ -365,16 +324,6 @@ if __name__ == '__main__':
     if (args.path[-1] != '/'):
         args.path += '/'
 
-    if (args.dy != 0 and args.noy == 0):
-        sys.exit('You entered --dy, but not --noy. Please enter either both or none.')
-
-    if (args.dy == 0 and args.noy != 0):
-        sys.exit('You entered --noy, but not --dy. Please enter either both or none.')
-
-    # Number of dimensions
-    dim = 2 if (args.dy == 0 and args.noy == 0) else 3
-    zid = dim - 1
-
     # Galilean velocity (default = 0.)
     v_gal = 0.
     if (args.galilean):
@@ -385,112 +334,83 @@ if __name__ == '__main__':
     print('    ---------------')
     print('\n    cell size:')
     print('    - dx = {:g}'.format(args.dx))
-    if (dim == 3):
-        print('    - dy = {:g}'.format(args.dy))
+    print('    - dy = {:g}'.format(args.dy))
     print('    - dz = {:g}'.format(args.dz))
     print('    - dz/dx = {:g}'.format(args.dz / args.dx))
-    if (dim == 3):
-        print('    - dz/dy = {:g}'.format(args.dz / args.dy))
+    print('    - dz/dy = {:g}'.format(args.dz / args.dy))
     print('\n    time step:')
     print('    - dt = {:g}'.format(args.dt))
     print('    - c*dt/dx = {:g}'.format(c * args.dt / args.dx))
-    if (dim == 3):
-        print('    - c*dt/dy = {:g}'.format(c * args.dt / args.dy))
+    print('    - c*dt/dy = {:g}'.format(c * args.dt / args.dy))
     print('    - c*dt/dz = {:g}'.format(c * args.dt / args.dz))
     print('\n    spectral order:')
     print('    - nox = {:d}'.format(args.nox))
-    if (dim == 3):
-        print('    - noy = {:d}'.format(args.noy))
+    print('    - noy = {:d}'.format(args.noy))
     print('    - noz = {:d}'.format(args.noz))
     print('\n    Lorentz boost, Galilean velocity:')
     print('    - gamma = {:g}'.format(args.gamma))
     print('    - v_gal = {:g}'.format(v_gal))
 
-    # Number of grid points (arbitrary mesh)
-    Nx = 256
-    Nz = 256
-    Ny = 256 if (dim == 3) else 0
-
     print('\n >> Compute Stencil')
     print('    ---------------')
 
-    stencil_nodal, stencil_stagg = compute_all(args.dx, args.dy, args.dz, args.dt, dim,
-                                               args.nox, args.noy, args.noz, Nx, Ny, Nz, v_gal)
+    stencil_nodal, stencil_stagg = compute_all(args.dx, args.dy, args.dz, args.dt,
+                                               args.nox, args.noy, args.noz, v_gal)
 
-    stencil_x_nodal = stencil_nodal[0]
-    stencil_z_nodal = stencil_nodal[zid]
-    if (dim == 3):
-        stencil_y_nodal = stencil_nodal[1]
-    
-    stencil_x_stagg = stencil_stagg[0]
-    stencil_z_stagg = stencil_stagg[zid]
-    if (dim == 3):
-        stencil_y_stagg = stencil_stagg[1]
- 
     # Maximum number of cells
     nx = 65
+    ny = 65
     nz = 65
-    if (dim == 3):
-        ny = 65
 
     # Array of cell numbers
     cx = np.arange(nx)
+    cy = np.arange(ny)
     cz = np.arange(nz)
-    if (dim == 3):
-        cy = np.arange(ny)
 
     # Arrays of stencils
-    sx_nodal = abs(stencil_x_nodal[:nx])
-    sx_stagg = abs(stencil_x_stagg[:nx])
-    sz_nodal = abs(stencil_z_nodal[:nz])
-    sz_stagg = abs(stencil_z_stagg[:nz])
-    if (dim == 3):
-        sy_nodal = abs(stencil_y_nodal[:ny])
-        sy_stagg = abs(stencil_y_stagg[:ny])
+    sx_nodal = abs(stencil_nodal[0][:nx])
+    sx_stagg = abs(stencil_stagg[0][:nx])
+    sy_nodal = abs(stencil_nodal[1][:ny])
+    sy_stagg = abs(stencil_stagg[1][:ny])
+    sz_nodal = abs(stencil_nodal[2][:nz])
+    sz_stagg = abs(stencil_stagg[2][:nz])
 
     # Compute minimum number of guard cells for given error threshold
     # (number of guard cells such that the stencil measure is not larger than the error threshold)
 
     # 1) Error threshold
     err_x = 1e-07
+    err_y = 1e-07
     err_z = 1e-07
-    if (dim == 3):
-        err_y = 1e-07
 
     print('\n    error threshold:')
     print('    - err_x = {:g}'.format(err_x))
-    if (dim == 3):
-        print('    - err_y = {:g}'.format(err_y))
+    print('    - err_y = {:g}'.format(err_y))
     print('    - err_z = {:g}'.format(err_z))
 
     # 2) Nodal solver
     gc_nodal_x = compute_guard_cells(err_x, sx_nodal)
+    gc_nodal_y = compute_guard_cells(err_y, sy_nodal)
     gc_nodal_z = compute_guard_cells(err_z, sz_nodal)
-    if (dim == 3):
-        gc_nodal_y = compute_guard_cells(err_y, sy_nodal)
 
     print('\n    nodal solver:')
     print('    - {:d} guard cells along x'.format(gc_nodal_x))
-    if (dim == 3):
-        print('    - {:d} guard cells along y'.format(gc_nodal_y))
+    print('    - {:d} guard cells along y'.format(gc_nodal_y))
     print('    - {:d} guard cells along z'.format(gc_nodal_z))
 
     # 3) Staggered solver
     gc_stagg_x = compute_guard_cells(err_x, sx_stagg)
+    gc_stagg_y = compute_guard_cells(err_y, sy_stagg)
     gc_stagg_z = compute_guard_cells(err_z, sz_stagg)
-    if (dim == 3):
-        gc_stagg_y = compute_guard_cells(err_y, sy_stagg)
 
     print('\n    staggered solver:')
     print('    - {:d} guard cells along x'.format(gc_stagg_x))
-    if (dim == 3):
-        print('    - {:d} guard cells along y'.format(gc_stagg_y))
+    print('    - {:d} guard cells along y'.format(gc_stagg_y))
     print('    - {:d} guard cells along z'.format(gc_stagg_z))
 
     # Plot stencils
     plot_stencil(cx, sx_nodal, sx_stagg, 'x', args.name)
     plot_stencil(cz, sz_nodal, sz_stagg, 'z', args.name)
-    if (dim == 3):
-        plot_stencil(cy, sy_nodal, sy_stagg, 'y', args.name)
+    plot_stencil(cy, sy_nodal, sy_stagg, 'y', args.name)
 
     print('\n >> Path to Figures: \'' + os.path.abspath(args.path) + '\'\n')
