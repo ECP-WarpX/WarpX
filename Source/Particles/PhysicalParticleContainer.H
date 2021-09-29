@@ -163,7 +163,7 @@ public:
                         RealVector& uzp,
                         RealVector& wp );
 
-    virtual void PostRestart () override {}
+    virtual void PostRestart () final {}
 
     void SplitParticles (int lev);
 

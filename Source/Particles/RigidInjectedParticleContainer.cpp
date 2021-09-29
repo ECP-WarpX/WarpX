@@ -77,35 +77,10 @@ void RigidInjectedParticleContainer::InitData()
 
     AddParticles(0); // Note - add on level 0
 
-    // Store velocity with which rigid particles move
-    vzbeam_ave_boosted = meanParticleVelocity(false)[2];
-
     // Particles added by AddParticles should already be in the boosted frame
     RemapParticles();
 
     Redistribute();  // We then redistribute
-}
-
-void
-RigidInjectedParticleContainer::PostRestart()
-{
-    // Call parent class
-    PhysicalParticleContainer::PostRestart();
-
-    // Store velocity with which rigid particles move
-    vzbeam_ave_boosted = meanParticleVelocity(false)[2];
-
-    // Compute the position of the injection plane in the
-    // boosted frame at restart time
-    zinject_plane_levels.resize(finestLevel()+1,0);
-    for (int lev=0; lev<=finestLevel(); lev++){
-        Real t = WarpX::GetInstance().gett_new(0);
-        zinject_plane_levels[lev] = zinject_plane/WarpX::gamma_boost - WarpX::beta_boost*PhysConst::c*t;
-    }
-
-    // The `done_injecting` flag is only here for computational efficiency
-    // We set it to false at restart (`0`), but it will be reset in `Evolve`
-    done_injecting.resize(finestLevel()+1, 0);
 }
 
 void
@@ -128,6 +103,8 @@ RigidInjectedParticleContainer::RemapParticles()
 
         const Real uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
         const Real csqi = 1./(PhysConst::c*PhysConst::c);
+
+        vzbeam_ave_boosted = meanParticleVelocity(false)[2];
 
         for (int lev = 0; lev <= finestLevel(); lev++) {
 
