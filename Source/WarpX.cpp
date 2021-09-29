@@ -29,7 +29,6 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "Python/WarpXWrappers.h"
 #include "Utils/MsgLogger/MsgLogger.H"
 #include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -626,11 +625,16 @@ WarpX::ReadParameters ()
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+            // Note that with the relativistic version, these parameters would be
+            // input for each species.
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
             queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-            // Note that with the relativistic version, these parameters would be
-            // input for each species.
+
+            // Build the handler for the field boundary conditions
+            pp_warpx.query("eb_potential(x,y,z,t)", field_boundary_value_handler.potential_eb_str);
+            field_boundary_value_handler.buildParsers();
+            // TODO add the parsers for the domain boundary values as well
         }
 
         queryWithParser(pp_warpx, "const_dt", const_dt);
@@ -1059,7 +1063,6 @@ WarpX::ReadParameters ()
         }
 
         pp_psatd.query("current_correction", current_correction);
-        pp_psatd.query("v_comoving", m_v_comoving);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
         pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
@@ -1080,6 +1083,28 @@ WarpX::ReadParameters ()
         } else {
             pp_psatd.query("v_galilean", m_v_galilean);
         }
+
+        // Check whether the default comoving velocity should be used
+        bool use_default_v_comoving = false;
+        pp_psatd.query("use_default_v_comoving", use_default_v_comoving);
+        if (use_default_v_comoving)
+        {
+            m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
+        }
+        else
+        {
+            pp_psatd.query("v_comoving", m_v_comoving);
+        }
+
+        // Galilean and comoving algorithms should not be used together
+        if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
+        {
+            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.)
+            {
+                amrex::Abort("Galilean and comoving algorithms should not be used together");
+            }
+        }
+
         // Scale the Galilean/comoving velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
         for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
@@ -1557,6 +1582,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (lev == maxLevel())
     {
         if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
+           || WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC
            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
             m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
             m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));

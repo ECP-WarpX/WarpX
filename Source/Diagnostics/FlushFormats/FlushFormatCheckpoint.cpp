@@ -50,7 +50,7 @@ FlushFormatCheckpoint::WriteToFile (
     // const int nlevels = finestLevel()+1;
     amrex::PreBuildDirectorHierarchy(checkpointname, default_level_prefix, nlev, true);
 
-    WriteWarpXHeader(checkpointname, particle_diags, geom);
+    WriteWarpXHeader(checkpointname, geom);
 
     WriteJobInfo(checkpointname);
 
@@ -68,6 +68,24 @@ FlushFormatCheckpoint::WriteToFile (
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "By_fp"));
         VisMF::Write(warpx.getBfield_fp(lev, 2),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_fp"));
+
+        if (WarpX::fft_do_time_averaging)
+        {
+            VisMF::Write(warpx.getEfield_avg_fp(lev, 0),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ex_avg_fp"));
+            VisMF::Write(warpx.getEfield_avg_fp(lev, 1),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ey_avg_fp"));
+            VisMF::Write(warpx.getEfield_avg_fp(lev, 2),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ez_avg_fp"));
+
+            VisMF::Write(warpx.getBfield_avg_fp(lev, 0),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bx_avg_fp"));
+            VisMF::Write(warpx.getBfield_avg_fp(lev, 1),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "By_avg_fp"));
+            VisMF::Write(warpx.getBfield_avg_fp(lev, 2),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_avg_fp"));
+        }
+
         if (warpx.getis_synchronized()) {
             // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
             VisMF::Write(warpx.getcurrent_fp(lev, 0),
@@ -92,6 +110,24 @@ FlushFormatCheckpoint::WriteToFile (
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "By_cp"));
             VisMF::Write(warpx.getBfield_cp(lev, 2),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_cp"));
+
+            if (WarpX::fft_do_time_averaging)
+            {
+                VisMF::Write(warpx.getEfield_avg_cp(lev, 0),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ex_avg_cp"));
+                VisMF::Write(warpx.getEfield_avg_cp(lev, 1),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ey_avg_cp"));
+                VisMF::Write(warpx.getEfield_avg_cp(lev, 2),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Ez_avg_cp"));
+
+                VisMF::Write(warpx.getBfield_avg_cp(lev, 0),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bx_avg_cp"));
+                VisMF::Write(warpx.getBfield_avg_cp(lev, 1),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "By_avg_cp"));
+                VisMF::Write(warpx.getBfield_avg_cp(lev, 2),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_avg_cp"));
+            }
+
             if (warpx.getis_synchronized()) {
                 // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
                 VisMF::Write(warpx.getcurrent_cp(lev, 0),
@@ -111,17 +147,47 @@ FlushFormatCheckpoint::WriteToFile (
 
     CheckpointParticles(checkpointname, particle_diags);
 
+    WriteDMaps(checkpointname, nlev);
+
     VisMF::SetHeaderVersion(current_version);
 
 }
 
 void
-FlushFormatCheckpoint::CheckpointParticles(
+FlushFormatCheckpoint::CheckpointParticles (
     const std::string& dir,
     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         particle_diags[i].getParticleContainer()->Checkpoint(
             dir, particle_diags[i].getSpeciesName());
+    }
+}
+
+void
+FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
+{
+    if (ParallelDescriptor::IOProcessor()) {
+        auto & warpx = WarpX::GetInstance();
+        for (int lev = 0; lev < nlev; ++lev) {
+            std::string DMFileName = dir;
+            if (!DMFileName.empty() && DMFileName[DMFileName.size()-1] != '/') {DMFileName += '/';}
+            DMFileName = amrex::Concatenate(DMFileName + "Level_", lev, 1);
+            DMFileName += "/DM";
+
+            std::ofstream DMFile;
+            DMFile.open(DMFileName.c_str(), std::ios::out|std::ios::trunc);
+
+            if (!DMFile.good()) { amrex::FileOpenFailed(DMFileName); }
+
+            DMFile << ParallelDescriptor::NProcs() << "\n";
+            warpx.DistributionMap(lev).writeOn(DMFile);
+
+            DMFile.flush();
+            DMFile.close();
+            if (!DMFile.good()) {
+                amrex::Abort("FlushFormatCheckpoint::WriteDMaps: problem writing DMFile");
+            }
+        }
     }
 }

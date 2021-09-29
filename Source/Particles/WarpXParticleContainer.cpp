@@ -104,6 +104,18 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
     local_jz.resize(num_threads);
+
+    // The boundary conditions are read in in ReadBCParams but a child class
+    // can allow these value to be overwritten if different boundary
+    // conditions are desired for a specific species
+    m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
+#ifdef WARPX_DIM_3D
+    m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+    m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
+#else
+    m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+#endif
+    m_boundary_conditions.BuildReflectionModelParsers();
 }
 
 void
@@ -723,6 +735,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                                        const bool interpolate_across_levels,
                                        const int icomp)
 {
+    WARPX_PROFILE("WarpXParticleContainer::DepositCharge");
+
 #ifdef WARPX_DIM_RZ
     (void)do_rz_volume_scaling;
 #endif
@@ -1097,10 +1111,13 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
 }
 
 void
-WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions){
+WarpXParticleContainer::ApplyBoundaryConditions (){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
 
-    if (boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
+    // Periodic boundaries are handled in AMReX code
+    if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
+
+    auto boundary_conditions = m_boundary_conditions.data;
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
@@ -1126,10 +1143,14 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
             amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
 
             // Loop over particles and apply BC to each particle
-            amrex::ParallelFor(
+            amrex::ParallelForRNG(
                 pti.numParticles(),
-                [=] AMREX_GPU_DEVICE (long i) {
+                [=] AMREX_GPU_DEVICE (long i, amrex::RandomEngine const& engine) {
                     ParticleType& p = pp[i];
+
+                    // skip particles that are already flagged for removal
+                    if (p.id() < 0) return;
+
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
@@ -1141,10 +1162,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
-                                                              boundary_conditions);
+                                                              boundary_conditions, engine);
 
                     if (particle_lost) {
-                        p.id() = -1;
+                        p.id() = -p.id();
                     } else {
                         SetPosition.AsStored(i, x, y, z);
                     }

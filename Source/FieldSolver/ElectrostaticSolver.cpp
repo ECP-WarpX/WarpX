@@ -6,6 +6,7 @@
  */
 #include "WarpX.H"
 
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -13,6 +14,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -56,8 +58,10 @@ using namespace amrex;
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
+    WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
     if (reset_fields) {
         // Reset all E and B fields to 0, before calculating space-charge fields
+        WARPX_PROFILE("WarpX::ComputeSpaceChargeField::reset_fields");
         for (int lev = 0; lev <= max_level; lev++) {
             for (int comp=0; comp<3; comp++) {
                 Efield_fp[lev][comp]->setVal(0);
@@ -89,6 +93,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 void
 WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
+    WARPX_PROFILE("WarpX::AddSpaceChargeField");
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -132,6 +137,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 void
 WarpX::AddSpaceChargeFieldLabFrame ()
 {
+    WARPX_PROFILE("WarpX::AddSpaceChargeFieldLabFrame");
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -436,12 +442,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     linop.setSigma({AMREX_D_DECL(
         1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
-    // get the EB potential at the current time
-    std::string potential_eb_str = "0";
-    ParmParse pp_embedded_boundary("warpx");
-    pp_embedded_boundary.query("eb_potential(t)", potential_eb_str);
-    auto parser_eb = makeParser(potential_eb_str, {"t"});
-    linop.setEBDirichlet( parser_eb.compile<1>()(gett_new(0)) );
+    linop.setEBDirichlet( field_boundary_value_handler.getPhiEB(gett_new(0)) );
 #endif
 
     // Solve the Poisson equation

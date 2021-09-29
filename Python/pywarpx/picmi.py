@@ -84,6 +84,16 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
+        self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
+
+        # For particle reflection
+        self.reflection_model_xlo = kw.pop('warpx_reflection_model_xlo', None)
+        self.reflection_model_xhi = kw.pop('warpx_reflection_model_xhi', None)
+        self.reflection_model_ylo = kw.pop('warpx_reflection_model_ylo', None)
+        self.reflection_model_yhi = kw.pop('warpx_reflection_model_yhi', None)
+        self.reflection_model_zlo = kw.pop('warpx_reflection_model_zlo', None)
+        self.reflection_model_zhi = kw.pop('warpx_reflection_model_zhi', None)
+        # self.reflection_model_eb = kw.pop('warpx_reflection_model_eb', None)
 
         # For the scraper buffer
         self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
@@ -124,7 +134,18 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_zlo = self.save_particles_at_zlo,
                                              save_particles_at_zhi = self.save_particles_at_zhi,
                                              save_particles_at_eb = self.save_particles_at_eb,
-                                             save_previous_position = self.save_previous_position)
+                                             save_previous_position = self.save_previous_position,
+                                             do_not_deposit = self.do_not_deposit)
+
+        # add reflection models
+        self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
+        self.species.add_new_attr("reflection_model_xhi(E)", self.reflection_model_xhi)
+        self.species.add_new_attr("reflection_model_ylo(E)", self.reflection_model_ylo)
+        self.species.add_new_attr("reflection_model_yhi(E)", self.reflection_model_yhi)
+        self.species.add_new_attr("reflection_model_zlo(E)", self.reflection_model_zlo)
+        self.species.add_new_attr("reflection_model_zhi(E)", self.reflection_model_zhi)
+        # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -541,7 +562,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     def init(self, kw):
-        assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD'], Exception("Only 'Yee', 'CKC', and 'PSATD' are supported")
+        assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD', 'ECT'], Exception("Only 'Yee', 'CKC', 'PSATD', and 'ECT' are supported")
 
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
 
@@ -766,19 +787,43 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
 
 
 class EmbeddedBoundary(picmistandard.base._ClassWithInit):
-    """Custom class to handle set up of embedded boundaries in WarpX.  If
-    embedded boundary initialization is added to picmistandard this can be
-    changed to inherit that functionality."""
-
+    """
+    Custom class to handle set up of embedded boundaries specific to WarpX.
+    If embedded boundary initialization is added to picmistandard this can be
+    changed to inherit that functionality.
+    - implicit_function: Analytic expression describing the embedded boundary
+    - potential: Analytic expression defining the potential. Can only be specified
+                 when the solver is electrostatic. Optional, defaults to 0.
+     Parameters used in the expressions should be given as additional keyword arguments.
+    """
     def __init__(self, implicit_function, potential=None, **kw):
         self.implicit_function = implicit_function
         self.potential = potential
 
+        # Handle keyword arguments used in expressions
+        self.user_defined_kw = {}
+        for k in list(kw.keys()):
+            if (re.search(r'\b%s\b'%k, implicit_function) or
+                (potential is not None and re.search(r'\b%s\b'%k, potential))):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
         self.handle_init(kw)
 
-    def initialize_inputs(self):
-        pywarpx.warpx.eb_implicit_function = self.implicit_function
-        pywarpx.warpx.__setattr__('eb_potential(t)', self.potential)
+    def initialize_inputs(self, solver):
+
+        # Add the user defined keywords to my_constants
+        # The keywords are mangled if there is a conflicting variable already
+        # defined in my_constants with the same name but different value.
+        self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
+        pywarpx.warpx.eb_implicit_function = expression
+
+        if self.potential is not None:
+            assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
+            expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
+            pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
 
 class Simulation(picmistandard.PICMI_Simulation):
@@ -800,6 +845,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
+        self.amr_restart = kw.pop('warpx_amr_restart', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -849,7 +895,7 @@ class Simulation(picmistandard.PICMI_Simulation):
                 # --- If this was set for any species, use that value.
                 particle_shape = s.particle_shape
 
-        if particle_shape is not None:
+        if particle_shape is not None and (len(self.species) > 0 or len(self.lasers) > 0):
             if isinstance(particle_shape, str):
                 interpolation_order = {'NGP':0, 'linear':1, 'quadratic':2, 'cubic':3}[particle_shape]
             else:
@@ -871,7 +917,7 @@ class Simulation(picmistandard.PICMI_Simulation):
                 collision.initialize_inputs()
 
         if self.embedded_boundary is not None:
-            self.embedded_boundary.initialize_inputs()
+            self.embedded_boundary.initialize_inputs(self.solver)
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
@@ -882,6 +928,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
+
+        if self.amr_restart:
+            pywarpx.amr.restart = self.amr_restart
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
@@ -1009,6 +1058,32 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
 
 
 ElectrostaticFieldDiagnostic = FieldDiagnostic
+
+
+class Checkpoint(picmistandard.base._ClassWithInit):
+
+    def __init__(self, period = 1, write_dir = None, name = None, **kw):
+
+        self.period = period
+        self.write_dir = write_dir
+        self.name = name
+
+        if self.name is None:
+            self.name = 'chkpoint'
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+
+        self.diagnostic.intervals = self.period
+        self.diagnostic.diag_type = 'Full'
+        self.diagnostic.format = 'checkpoint'
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):

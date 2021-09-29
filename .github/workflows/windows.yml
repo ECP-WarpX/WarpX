@@ -10,6 +10,7 @@ jobs:
   build_win_msvc:
     name: MSVC C++17 w/o MPI
     runs-on: windows-latest
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: Build & Install
@@ -20,6 +21,7 @@ jobs:
   build_win_clang:
     name: Clang C++17 w/ OMP w/o MPI
     runs-on: windows-2019
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - uses: seanmiddleditch/gha-setup-ninja@master
@@ -34,6 +36,7 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release    ^
               -DCMAKE_VERBOSE_MAKEFILE=ON   ^
               -DWarpX_COMPUTE=OMP           ^
+              -DWarpX_EB=ON                 ^
               -DWarpX_OPENPMD=ON            ^
               -DWarpX_MPI=OFF
         cmake --build build --config Release --parallel 2
