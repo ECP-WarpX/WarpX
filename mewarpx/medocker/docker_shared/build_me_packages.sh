@@ -13,13 +13,13 @@ popd
 # Build and install warpx
 pushd WarpX
 
-export WarpX_MPI=ON
-export WarpX_DIMS=2
-export WarpX_LIBS=ON
-export WarpX_EB=ON
+export WARPX_MPI=ON
+export WARPX_DIMS=2
+export WARPX_LIBS=ON
+export WARPX_EB=ON
 export BUILD_PARALLEL=8
 export CC=$(which clang)
-export WarpX_COMPUTE=${WARPXCOMPUTE}
+export WARPX_COMPUTE=${WARPXCOMPUTE}
 
 python3 -m pip install -v .
 
