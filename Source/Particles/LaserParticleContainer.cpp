@@ -262,7 +262,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
  * The up-to-date antenna position is stored in updated_position.
  */
 void
-LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
+LaserParticleContainer::UpdateContinuousInjectionPosition (Real /*dt*/)
 {
     if (!m_enabled) return;
 
