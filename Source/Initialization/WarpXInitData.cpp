@@ -114,11 +114,13 @@ WarpX::InitData ()
     if (restart_chkfile.empty())
     {
         ComputeDt();
+        WarpX::PrintDtDxDyDz();
         InitFromScratch();
     }
     else
     {
         InitFromCheckpoint();
+        WarpX::PrintDtDxDyDz();
         PostRestart();
     }
 
@@ -178,11 +180,12 @@ WarpX::InitDiagnostics () {
         const Real* current_lo = geom[0].ProbLo();
         const Real* current_hi = geom[0].ProbHi();
         Real dt_boost = dt[0];
+        Real boosted_moving_window_v = (moving_window_v - beta_boost*PhysConst::c)/(1 - beta_boost*moving_window_v/PhysConst::c);
         // Find the positions of the lab-frame box that corresponds to the boosted-frame box at t=0
         Real zmin_lab = static_cast<Real>(
-            current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
+            (current_lo[moving_window_dir] - boosted_moving_window_v*t_new[0])/( (1.+beta_boost)*gamma_boost ));
         Real zmax_lab = static_cast<Real>(
-            current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
+            (current_hi[moving_window_dir] - boosted_moving_window_v*t_new[0])/( (1.+beta_boost)*gamma_boost ));
         myBFD = std::make_unique<BackTransformedDiagnostic>(
                                                zmin_lab,
                                                zmax_lab,

@@ -232,6 +232,10 @@ guardCellManager::Init (
     ng_alloc_F.max( ng_FieldSolverF );
     ng_alloc_G.max( ng_FieldSolverG );
 
+    if (do_moving_window && maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        ng_afterPushPSATD = ng_alloc_EB;
+    }
+
     if (safe_guard_cells){
         // Run in safe mode: exchange all allocated guard cells at each
         // call of FillBoundary
@@ -240,6 +244,7 @@ guardCellManager::Init (
         ng_FieldSolverG = ng_alloc_G;
         ng_FieldGather = ng_alloc_EB;
         ng_UpdateAux = ng_alloc_EB;
+        ng_afterPushPSATD = ng_alloc_EB;
         if (do_moving_window){
             ng_MovingWindow = ng_alloc_EB;
         }

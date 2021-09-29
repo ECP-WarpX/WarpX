@@ -369,6 +369,9 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
+    /** Print dt and dx,dy,dz */
+    void PrintDtDxDyDz ();
+
     /**
      * \brief
      * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.

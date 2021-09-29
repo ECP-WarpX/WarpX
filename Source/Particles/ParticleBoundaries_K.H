@@ -20,11 +20,23 @@ namespace ApplyParticleBoundaries {
     void
     apply_boundary (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
                     bool& change_sign_ux, bool& particle_lost,
-                    ParticleBoundaryType xmin_bc, ParticleBoundaryType xmax_bc)
+                    ParticleBoundaryType xmin_bc, ParticleBoundaryType xmax_bc,
+                    amrex::Real refl_probability_xmin, amrex::Real refl_probability_xmax,
+                    amrex::RandomEngine const& engine )
     {
         if (x < xmin) {
-            if (xmin_bc == ParticleBoundaryType::Absorbing || xmin_bc == ParticleBoundaryType::Open) {
+            if (xmin_bc == ParticleBoundaryType::Open) {
                 particle_lost = true;
+            }
+            else if (xmin_bc == ParticleBoundaryType::Absorbing) {
+                if (refl_probability_xmin == 0 || amrex::Random(engine) > refl_probability_xmin) {
+                    particle_lost = true;
+                }
+                else
+                {
+                    x = 2*xmin - x;
+                    change_sign_ux = true;
+                }
             }
             else if (xmin_bc == ParticleBoundaryType::Reflecting) {
                 x = 2*xmin - x;
@@ -32,8 +44,18 @@ namespace ApplyParticleBoundaries {
             }
         }
         else if (x > xmax) {
-            if (xmax_bc == ParticleBoundaryType::Absorbing || xmin_bc == ParticleBoundaryType::Open) {
+            if (xmax_bc == ParticleBoundaryType::Open) {
                 particle_lost = true;
+            }
+            else if (xmax_bc == ParticleBoundaryType::Absorbing) {
+                if (refl_probability_xmax == 0 || amrex::Random(engine) > refl_probability_xmax) {
+                    particle_lost = true;
+                }
+                else
+                {
+                    x = 2*xmax - x;
+                    change_sign_ux = true;
+                }
             }
             else if (xmax_bc == ParticleBoundaryType::Reflecting) {
                 x = 2*xmax - x;
@@ -46,7 +68,9 @@ namespace ApplyParticleBoundaries {
      *        For reflecting boundaries, the position of the particle is changed appropriately and
      *        the sign of the velocity is changed (depending on the reflect_all_velocities flag).
      *        For absorbing, a flag is set whether the particle has been lost (it is up to the calling
-     *        code to take appropriate action to remove any lost particles).
+     *        code to take appropriate action to remove any lost particles). Absorbing boundaries can
+     *        be given a reflection coefficient for stochastic reflection of particles, this
+     *        coefficient is zero by default.
      *        Note that periodic boundaries are handled in AMReX code.
      *
      * \param x, xmin, xmax: particle x position, location of x boundary
@@ -65,17 +89,27 @@ namespace ApplyParticleBoundaries {
                       amrex::ParticleReal& z, amrex::Real zmin, amrex::Real zmax,
                       amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                       bool& particle_lost,
-                      ParticleBoundaries const& boundaries)
+                      ParticleBoundaries::ParticleBoundariesData const& boundaries,
+                      amrex::RandomEngine const& engine)
     {
         bool change_sign_ux = false;
         bool change_sign_uy = false;
         bool change_sign_uz = false;
 
-        apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost, boundaries.xmin_bc, boundaries.xmax_bc);
+        apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost,
+                       boundaries.xmin_bc, boundaries.xmax_bc,
+                       boundaries.reflection_model_xlo(-ux), boundaries.reflection_model_xhi(ux),
+                       engine);
 #ifdef WARPX_DIM_3D
-        apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost, boundaries.ymin_bc, boundaries.ymax_bc);
+        apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost,
+                       boundaries.ymin_bc, boundaries.ymax_bc,
+                       boundaries.reflection_model_ylo(-uy), boundaries.reflection_model_yhi(uy),
+                       engine);
 #endif
-        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost, boundaries.zmin_bc, boundaries.zmax_bc);
+        apply_boundary(z, zmin, zmax, change_sign_uz, particle_lost,
+                       boundaries.zmin_bc, boundaries.zmax_bc,
+                       boundaries.reflection_model_zlo(-uz), boundaries.reflection_model_zhi(uz),
+                       engine);
 
         if (boundaries.reflect_all_velocities && (change_sign_ux | change_sign_uy | change_sign_uz)) {
             change_sign_ux = true;

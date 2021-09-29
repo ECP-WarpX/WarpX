@@ -9,6 +9,7 @@ If you are new to this system, please see the following resources:
 
 * `Summit user guide <https://docs.olcf.ornl.gov/systems/summit_user_guide.html>`_
 * Batch system: `LSF <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#running-jobs>`_
+* `Jupyter service <https://jupyter.olcf.ornl.gov>`__
 * `Production directories <https://docs.olcf.ornl.gov/data/storage_overview.html>`_:
 
   * ``$PROJWORK/$proj/``: shared with all members of a project (recommended)
@@ -229,3 +230,62 @@ parameters provided good performance:
 
 * **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
   results in ~49 tiles per OpenMP thread)
+
+.. _building-summit-issues:
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   Sep 16th, 2021 (OLCFHELP-3685):
+   The **Jupyter** service cannot open HDF5 files without hanging, due to a filesystem mounting problem.
+
+   `Please apply this work-around <https://github.com/openPMD/openPMD-api/pull/1106>`__ in a Jupyter cell before opening any HDF5 files for read:
+
+   .. code-block:: python3
+
+      import os
+      os.environ['HDF5_USE_FILE_LOCKING'] = "FALSE"
+
+.. warning::
+
+   Aug 27th, 2021 (OLCFHELP-3442):
+   Created simulation files and directories are no longer accessible by your team members, even if you create them on ``$PROJWORK``.
+   Setting the proper "user mask" (``umask``) does not yet work to fix this.
+
+   Please run those commands *after* running a simulation to fix this.
+   You can also append this to the end of your job scripts *after* the ``jsrun`` line:
+
+   .. code-block:: bash
+
+      # cd your-simulation-directory
+      find . -type d -exec chmod g+rwx {} \;
+      find . -type f -exec chmod g+rw {} \;
+
+.. warning::
+
+   Sep 3rd, 2021 (OLCFHELP-3545):
+   The implementation of barriers in IBM's MPI fork is broken and leads to crashes at scale.
+   This is seen with runs using 200 nodes and above.
+
+   Our batch script templates above `apply this work-around <https://github.com/ECP-WarpX/WarpX/pull/2283>`__ *before* the call to ``jsrun``, which avoids the broken routines from IBM and trades them for an OpenMPI implementation of collectives:
+
+   .. code-block:: bash
+
+      export OMPI_MCA_coll_ibm_skip_barrier=true
+
+.. warning::
+
+   Sep 3rd, 2021 (OLCFHELP-3319):
+   If you are an active developer and compile middleware libraries (e.g., ADIOS2) yourself that use MPI and/or infiniband, be aware of ``libfabric``: IBM forks the open source version of this library and ships a patched version.
+
+   Avoid conflicts with mainline versions of this library in MPI that lead to crashes at runtime by loading alongside the system MPI module:
+
+   .. code-block:: bash
+
+      module load libfabric/1.12.1-sysrdma
+
+   For instance, if you compile large software stacks with Spack, make sure to register ``libfabric`` with that exact version as an external module.
+
+   If you load the documented ADIOS2 module above, this problem does not affect you, since the correct ``libfabric`` version is chosen for this one.
