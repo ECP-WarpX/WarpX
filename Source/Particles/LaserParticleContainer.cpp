@@ -315,16 +315,18 @@ LaserParticleContainer::InitData (int lev)
     // Update its position with updated_position.
     Real t = WarpX::GetInstance().gett_new(0);
     int dir = WarpX::moving_window_dir;
+    if ((WarpX::gamma_boost > 1.0) && (dir > 0)) {
 #if ( AMREX_SPACEDIM == 3 )
-    m_position[dir] = m_original_position[dir] - WarpX::beta_boost *
-      WarpX::boost_direction[dir] * PhysConst::c * t;
+        m_position[dir] = m_original_position[dir] - WarpX::beta_boost *
+            WarpX::boost_direction[dir] * PhysConst::c * t;
 #elif ( AMREX_SPACEDIM == 2 )
-    // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
-    // This needs to be converted in order to index `boost_direction`
-    // which has 3 components, for both 2D and 3D simulations.
-    m_position[2*dir] = m_original_position[2*dir] - WarpX::beta_boost *
-      WarpX::boost_direction[2*dir] * PhysConst::c * t;
+        // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
+        // This needs to be converted in order to index `boost_direction`
+        // which has 3 components, for both 2D and 3D simulations.
+        m_position[2*dir] = m_original_position[2*dir] - WarpX::beta_boost *
+            WarpX::boost_direction[2*dir] * PhysConst::c * t;
 #endif
+    }
 
     auto Transform = [&](int const i, int const j) -> Vector<Real>{
 #if (AMREX_SPACEDIM == 3)
