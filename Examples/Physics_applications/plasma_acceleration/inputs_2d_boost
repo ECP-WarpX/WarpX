@@ -68,8 +68,6 @@ driver.uy_th = 2.
 driver.uz_th = 20000.
 driver.zinject_plane = 0.
 driver.rigid_advance = true
-driver.projected = true
-driver.focused = false
 
 plasma_e.species_type = electron
 plasma_e.injection_style = "NUniformPerCell"
@@ -120,8 +118,6 @@ beam.uy_th = 2.
 beam.uz_th = 200.
 beam.zinject_plane = 0.
 beam.rigid_advance = true
-beam.projected = true
-beam.focused = false
 
 # Diagnostics
 diagnostics.diags_names = diag1

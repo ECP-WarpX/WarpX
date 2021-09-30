@@ -105,8 +105,6 @@ beam.uy_th = 2.
 beam.uz_th = 20.
 beam.zinject_plane = 0.1e-3
 beam.rigid_advance = true
-beam.projected = true
-beam.focused = false
 
 #################################
 ############# LASER #############
