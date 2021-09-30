@@ -15,7 +15,6 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-import sys
 from scipy.constants import c
 
 plt.style.use('tableau-colorblind10')
@@ -41,6 +40,7 @@ def get_Fornberg_coeffs(order, staggered):
     m = order // 2
     coeffs = np.zeros(m+1)
 
+    # Compute Fornberg coefficients by recurrence
     if (staggered):
         prod = 1.
         for k in range(1, m+1):
@@ -158,7 +158,10 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
           stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 1), axis = 0)
           stencil_avg_stagg /= (stencil_stagg.shape[1] * stencil_stagg.shape[0])
 
-    return (stencil_avg_nodal, stencil_avg_stagg)
+    stencils = dict()
+    stencils['nodal'] = abs(stencil_avg_nodal)
+    stencils['stagg'] = abs(stencil_avg_stagg)
+    return stencils
 
 def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 256):
     """
@@ -225,14 +228,12 @@ def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 2
     coeff_stagg = func_cosine(om_s, w_c, dt)
 
     # Stencils
-    stencil_x_nodal, stencil_x_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 0)
-    stencil_y_nodal, stencil_y_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 1)
-    stencil_z_nodal, stencil_z_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 2)
+    stencils = dict()
+    stencils['x'] = compute_stencils(coeff_nodal, coeff_stagg, axis = 0)
+    stencils['y'] = compute_stencils(coeff_nodal, coeff_stagg, axis = 1)
+    stencils['z'] = compute_stencils(coeff_nodal, coeff_stagg, axis = 2)
 
-    stencil_nodal = (stencil_x_nodal, stencil_y_nodal, stencil_z_nodal)
-    stencil_stagg = (stencil_x_stagg, stencil_y_stagg, stencil_z_stagg)
-
-    return (stencil_nodal, stencil_stagg)
+    return stencils
 
 def compute_guard_cells(error, stencil):
     """
@@ -256,7 +257,7 @@ def compute_guard_cells(error, stencil):
     guard_cells = np.argwhere(diff == minv)[0,0]
     return guard_cells
 
-def plot_stencil(cells, stencil_nodal, stencil_stagg, label, name):
+def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     """
     Plot stencil extent for nodal and staggered/hybrid solver, as a function of the number of cells,
     as a function of the number of cells.
@@ -287,82 +288,93 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, name):
     ax.set_ylabel(r'$\Gamma({:s})$'.format(label))
     ax.set_title(r'Stencil extent along ${:s}$'.format(label))
     fig.tight_layout()
-    fig_name = args.path + './figure_stencil_' + label
+    fig_name = path + './figure_stencil_' + label
     if (name):
         fig_name += '_' + name
     fig.savefig(fig_name + '.pdf', dpi = 100)
     fig.savefig(fig_name + '.png', dpi = 100)
 
-if __name__ == '__main__':
+def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
+             ex = 1e-07, ey = 1e-07, ez = 1e-07, path = './', name = ''):
+    """
+    Main function.
 
-    # Parse command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dx', type = float, required = True,
-                        help = 'cell size along x')
-    parser.add_argument('--dy', type = float, required = True,
-                        help = 'cell size along y')
-    parser.add_argument('--dz', type = float, required = True,
-                        help = 'cell size along z')
-    parser.add_argument('--dt', type = float, required = True,
-                        help = 'time step')
-    parser.add_argument('--nox', type = int, required = True,
-                        help = 'spectral order along x')
-    parser.add_argument('--noy', type = int, required = True,
-                        help = 'spectral order along y')
-    parser.add_argument('--noz', type = int, required = True,
-                        help = 'spectral order along z')
-    parser.add_argument('--gamma', type = float, required = False, default = 1.,
-                        help = 'Lorentz factor')
-    parser.add_argument('--galilean', action = 'store_true', default = False,
-                        help = 'add this for Galilean schemes')
-    parser.add_argument('--ex', type = float, required = False, default = 1e-07,
-                        help = 'error threshold along x')
-    parser.add_argument('--ey', type = float, required = False, default = 1e-07,
-                        help = 'error threshold along y')
-    parser.add_argument('--ez', type = float, required = False, default = 1e-07,
-                        help = 'error threshold along z')
-    parser.add_argument('--path', type = str, required = False, default = './',
-                        help = 'path where figures are saved')
-    parser.add_argument('--name', type = str, required = False, default = '',
-                        help = 'common label for figure names')
-    args = parser.parse_args()
+    Parameters
+    ----------
+    dx : float
+        Cell size along x.
+    dy : float
+        Cell size along y.
+    dz : float
+        Cell size along z.
+    dt : float
+        Time step.
+    nox : int
+        Spectral order along x.
+    noy : int
+        Spectral order along y.
+    noz : int
+        Spectral order along z.
+    gamma : float, optional (default = 1.)
+        Lorentz factor.
+    galilean : bool, optional (default = False)
+        Galilean scheme.
+    ex : float, optional (default = 1e-07)
+        Error threshold along x.
+    ey : float, optional (default = 1e-07)
+        Error threshold along y.
+    ez : float, optional (default = 1e-07)
+        Error threshold along z.
+    path : str, optional (default = './')
+        Path where figures are saved.
+    name : str, optional (default = '')
+        Common label for figure names.
 
-    # Add trailing '/' to args.path, if necessary
-    if (args.path[-1] != '/'):
-        args.path += '/'
+    Returns
+    -------
+    stencils : dict
+        Dictionary of nodal and staggered stencils along all directions.
+        Its element of the dictionary is a dictionary itself, containing numpy.ndarray objects.
+        Keys: stencils.keys() = dict_keys(['x', 'y', 'z'])
+              stencils['x'].keys() = dict_keys(['nodal', 'stagg'])
+              stencils['y'].keys() = dict_keys(['nodal', 'stagg'])
+              stencils['z'].keys() = dict_keys(['nodal', 'stagg'])
+    """
+    # Add trailing '/' to path, if necessary
+    if (path[-1] != '/'):
+        path += '/'
 
     # Galilean velocity (default = 0.)
     v_gal = 0.
-    if (args.galilean):
-        v_gal = - np.sqrt(1. - 1./args.gamma**2) * c
+    if (galilean):
+        v_gal = - np.sqrt(1. - 1./gamma**2) * c
 
     # Display some output
     print('\n >> Numerical Setup')
     print('    ---------------')
     print('\n    cell size:')
-    print('    - dx = {:g}'.format(args.dx))
-    print('    - dy = {:g}'.format(args.dy))
-    print('    - dz = {:g}'.format(args.dz))
-    print('    - dz/dx = {:g}'.format(args.dz / args.dx))
-    print('    - dz/dy = {:g}'.format(args.dz / args.dy))
+    print('    - dx = {:g}'.format(dx))
+    print('    - dy = {:g}'.format(dy))
+    print('    - dz = {:g}'.format(dz))
+    print('    - dz/dx = {:g}'.format(dz / dx))
+    print('    - dz/dy = {:g}'.format(dz / dy))
     print('\n    time step:')
-    print('    - dt = {:g}'.format(args.dt))
-    print('    - c*dt/dx = {:g}'.format(c * args.dt / args.dx))
-    print('    - c*dt/dy = {:g}'.format(c * args.dt / args.dy))
-    print('    - c*dt/dz = {:g}'.format(c * args.dt / args.dz))
+    print('    - dt = {:g}'.format(dt))
+    print('    - c*dt/dx = {:g}'.format(c * dt / dx))
+    print('    - c*dt/dy = {:g}'.format(c * dt / dy))
+    print('    - c*dt/dz = {:g}'.format(c * dt / dz))
     print('\n    spectral order:')
-    print('    - nox = {:d}'.format(args.nox))
-    print('    - noy = {:d}'.format(args.noy))
-    print('    - noz = {:d}'.format(args.noz))
+    print('    - nox = {:d}'.format(nox))
+    print('    - noy = {:d}'.format(noy))
+    print('    - noz = {:d}'.format(noz))
     print('\n    Lorentz boost, Galilean velocity:')
-    print('    - gamma = {:g}'.format(args.gamma))
+    print('    - gamma = {:g}'.format(gamma))
     print('    - v_gal = {:g}'.format(v_gal))
 
     print('\n >> Compute Stencil')
     print('    ---------------')
 
-    stencil_nodal, stencil_stagg = compute_all(args.dx, args.dy, args.dz, args.dt,
-                                               args.nox, args.noy, args.noz, v_gal)
+    stencils = compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal)
 
     # Maximum number of cells
     nx = 65
@@ -375,25 +387,25 @@ if __name__ == '__main__':
     cz = np.arange(nz)
 
     # Arrays of stencils
-    sx_nodal = abs(stencil_nodal[0][:nx])
-    sx_stagg = abs(stencil_stagg[0][:nx])
-    sy_nodal = abs(stencil_nodal[1][:ny])
-    sy_stagg = abs(stencil_stagg[1][:ny])
-    sz_nodal = abs(stencil_nodal[2][:nz])
-    sz_stagg = abs(stencil_stagg[2][:nz])
+    stencils['x']['nodal'] = stencils['x']['nodal'][:nx]
+    stencils['x']['stagg'] = stencils['x']['stagg'][:nx]
+    stencils['y']['nodal'] = stencils['y']['nodal'][:ny]
+    stencils['y']['stagg'] = stencils['y']['stagg'][:ny]
+    stencils['z']['nodal'] = stencils['z']['nodal'][:nz]
+    stencils['z']['stagg'] = stencils['z']['stagg'][:nz]
 
     # Compute minimum number of guard cells for given error threshold
     # (number of guard cells such that the stencil measure is not larger than the error threshold)
 
     print('\n    error threshold:')
-    print('    - ex = {:g}'.format(args.ex))
-    print('    - ey = {:g}'.format(args.ey))
-    print('    - ez = {:g}'.format(args.ez))
+    print('    - ex = {:g}'.format(ex))
+    print('    - ey = {:g}'.format(ey))
+    print('    - ez = {:g}'.format(ez))
 
     # 1) Nodal solver
-    gc_nodal_x = compute_guard_cells(args.ex, sx_nodal)
-    gc_nodal_y = compute_guard_cells(args.ey, sy_nodal)
-    gc_nodal_z = compute_guard_cells(args.ez, sz_nodal)
+    gc_nodal_x = compute_guard_cells(ex, stencils['x']['nodal'])
+    gc_nodal_y = compute_guard_cells(ey, stencils['y']['nodal'])
+    gc_nodal_z = compute_guard_cells(ez, stencils['z']['nodal'])
 
     print('\n    nodal solver:')
     print('    - {:d} guard cells along x'.format(gc_nodal_x))
@@ -401,9 +413,9 @@ if __name__ == '__main__':
     print('    - {:d} guard cells along z'.format(gc_nodal_z))
 
     # 2) Staggered solver
-    gc_stagg_x = compute_guard_cells(args.ex, sx_stagg)
-    gc_stagg_y = compute_guard_cells(args.ey, sy_stagg)
-    gc_stagg_z = compute_guard_cells(args.ez, sz_stagg)
+    gc_stagg_x = compute_guard_cells(ex, stencils['x']['stagg'])
+    gc_stagg_y = compute_guard_cells(ey, stencils['y']['stagg'])
+    gc_stagg_z = compute_guard_cells(ez, stencils['z']['stagg'])
 
     print('\n    staggered solver:')
     print('    - {:d} guard cells along x'.format(gc_stagg_x))
@@ -411,8 +423,61 @@ if __name__ == '__main__':
     print('    - {:d} guard cells along z'.format(gc_stagg_z))
 
     # Plot stencils
-    plot_stencil(cx, sx_nodal, sx_stagg, 'x', args.name)
-    plot_stencil(cz, sz_nodal, sz_stagg, 'z', args.name)
-    plot_stencil(cy, sy_nodal, sy_stagg, 'y', args.name)
+    plot_stencil(cx, stencils['x']['nodal'], stencils['x']['stagg'], 'x', path, name)
+    plot_stencil(cy, stencils['y']['nodal'], stencils['y']['stagg'], 'y', path, name)
+    plot_stencil(cz, stencils['z']['nodal'], stencils['z']['stagg'], 'z', path, name)
 
-    print('\n >> Path to Figures: \'' + os.path.abspath(args.path) + '\'\n')
+    print('\n >> Output Summary')
+    print('    --------------')
+
+    print('\n    path to figures: \'' + os.path.abspath(path) + '\'')
+
+    print('\n    stencil arrays:')
+    print('    - sx_nodal')
+    print('    - sx_stagg')
+    print('    - sy_nodal')
+    print('    - sy_stagg')
+    print('    - sz_nodal')
+    print('    - sz_stagg\n')
+
+    return stencils
+
+if __name__ == '__main__':
+
+    # --
+    # User can modify these input parameters
+    # --
+    # Cell size
+    dx = 1e-06
+    dy = 1e-06
+    dz = 2e-06
+    # Time step
+    dt = 1e-14
+    # Spectral order
+    nox = 8
+    noy = 8
+    noz = 16
+    # Lorentz boost
+    gamma = 30.
+    # Galilean flag
+    galilean = True
+    # Error threshold
+    ex = 1e-07
+    ey = 1e-07
+    ez = 1e-07
+    # Output path
+    path = './'
+    # Output name tag
+    name = 'test'
+    # --
+
+    # Run main function
+    stencils = run_main(dx, dy, dz, dt, nox, noy, noz, gamma, galilean, ex, ey, ez, path, name)
+
+    # Make stencil arrays available for inspection
+    sx_nodal = stencils['x']['nodal']
+    sx_stagg = stencils['x']['stagg']
+    sy_nodal = stencils['y']['nodal']
+    sy_stagg = stencils['y']['stagg']
+    sz_nodal = stencils['z']['nodal']
+    sz_stagg = stencils['z']['stagg']
