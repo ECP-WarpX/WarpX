@@ -4,7 +4,7 @@ based on the measurement of the PSATD stencil extent (that is, the minimum numbe
 guard cells such that the stencil measure is not larger than the error threshold).
 Reference: https://arxiv.org/abs/2106.12919
 
-Run the script simply with: python Stencil.py
+Run the script simply with "python Stencil.py" (or with "run Stencil.py" using IPython).
 The user can modify the input parameters set in the main function at the end of the file.
 """
 import argparse
