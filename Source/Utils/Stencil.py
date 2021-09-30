@@ -6,7 +6,8 @@ Reference: https://arxiv.org/abs/2106.12919
 
 Example of how to run the script:
     python Stencil.py --dx 1e-06 --dy 1e-06 --dz 1e-06 --dt 1e-14 --nox 16 --noy 16 --noz 16
-                      --gamma 30 --galilean --path /path/to/output --name this_test
+                      --gamma 30 --galilean --ex 1e-07 --ey 1e-07 --ez 1e-07
+                      --path /path/to/output --name this_test
 
 Some command line arguments are optional. For help, run: python Stencil.py --help
 """
@@ -314,6 +315,12 @@ if __name__ == '__main__':
                         help = 'Lorentz factor')
     parser.add_argument('--galilean', action = 'store_true', default = False,
                         help = 'add this for Galilean schemes')
+    parser.add_argument('--ex', type = float, required = False, default = 1e-07,
+                        help = 'error threshold along x')
+    parser.add_argument('--ey', type = float, required = False, default = 1e-07,
+                        help = 'error threshold along y')
+    parser.add_argument('--ez', type = float, required = False, default = 1e-07,
+                        help = 'error threshold along z')
     parser.add_argument('--path', type = str, required = False, default = './',
                         help = 'path where figures are saved')
     parser.add_argument('--name', type = str, required = False, default = '',
@@ -378,30 +385,25 @@ if __name__ == '__main__':
     # Compute minimum number of guard cells for given error threshold
     # (number of guard cells such that the stencil measure is not larger than the error threshold)
 
-    # 1) Error threshold
-    err_x = 1e-07
-    err_y = 1e-07
-    err_z = 1e-07
-
     print('\n    error threshold:')
-    print('    - err_x = {:g}'.format(err_x))
-    print('    - err_y = {:g}'.format(err_y))
-    print('    - err_z = {:g}'.format(err_z))
+    print('    - ex = {:g}'.format(args.ex))
+    print('    - ey = {:g}'.format(args.ey))
+    print('    - ez = {:g}'.format(args.ez))
 
-    # 2) Nodal solver
-    gc_nodal_x = compute_guard_cells(err_x, sx_nodal)
-    gc_nodal_y = compute_guard_cells(err_y, sy_nodal)
-    gc_nodal_z = compute_guard_cells(err_z, sz_nodal)
+    # 1) Nodal solver
+    gc_nodal_x = compute_guard_cells(args.ex, sx_nodal)
+    gc_nodal_y = compute_guard_cells(args.ey, sy_nodal)
+    gc_nodal_z = compute_guard_cells(args.ez, sz_nodal)
 
     print('\n    nodal solver:')
     print('    - {:d} guard cells along x'.format(gc_nodal_x))
     print('    - {:d} guard cells along y'.format(gc_nodal_y))
     print('    - {:d} guard cells along z'.format(gc_nodal_z))
 
-    # 3) Staggered solver
-    gc_stagg_x = compute_guard_cells(err_x, sx_stagg)
-    gc_stagg_y = compute_guard_cells(err_y, sy_stagg)
-    gc_stagg_z = compute_guard_cells(err_z, sz_stagg)
+    # 2) Staggered solver
+    gc_stagg_x = compute_guard_cells(args.ex, sx_stagg)
+    gc_stagg_y = compute_guard_cells(args.ey, sy_stagg)
+    gc_stagg_z = compute_guard_cells(args.ez, sz_stagg)
 
     print('\n    staggered solver:')
     print('    - {:d} guard cells along x'.format(gc_stagg_x))
