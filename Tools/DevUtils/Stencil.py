@@ -464,11 +464,11 @@ if __name__ == '__main__':
     ez = 1e-07
     # Output path
     path = './'
-    # Output name tag
+    # Output name tag (can be empty: '')
     name = 'test'
     # --
 
-    # Run main function
+    # Run main function (some arguments are optional, see definition of run_main function for help)
     stencils = run_main(dx, dy, dz, dt, nox, noy, noz, gamma, galilean, ex, ey, ez, path, name)
 
     # Make stencil arrays available for inspection
