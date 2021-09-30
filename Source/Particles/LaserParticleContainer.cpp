@@ -260,7 +260,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
  * The up-to-date antenna position is stored in updated_position.
  */
 void
-LaserParticleContainer::UpdateContinuousInjectionPosition (Real /*dt*/)
+LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 {
     if (!m_enabled) return;
 
@@ -310,24 +310,8 @@ LaserParticleContainer::InitData (int lev)
     // LaserParticleContainer::position contains the initial position of the
     // laser antenna. In the boosted frame, the antenna is moving.
     // Update its position with updated_position.
-<<<<<<< HEAD
-    Real t = WarpX::GetInstance().gett_new(0);
-    int dir = WarpX::moving_window_dir;
-    if ((WarpX::gamma_boost > 1.0) && (dir > 0)) {
-#if ( AMREX_SPACEDIM == 3 )
-        m_position[dir] = m_original_position[dir] - WarpX::beta_boost *
-            WarpX::boost_direction[dir] * PhysConst::c * t;
-#elif ( AMREX_SPACEDIM == 2 )
-        // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
-        // This needs to be converted in order to index `boost_direction`
-        // which has 3 components, for both 2D and 3D simulations.
-        m_position[2*dir] = m_original_position[2*dir] - WarpX::beta_boost *
-            WarpX::boost_direction[2*dir] * PhysConst::c * t;
-#endif
-=======
     if (do_continuous_injection){
         m_position = m_updated_position;
->>>>>>> parent of 322634c3 (Initialize lasers when restarting + recalculate z position at each iteration)
     }
 
     auto Transform = [&](int const i, int const j) -> Vector<Real>{
