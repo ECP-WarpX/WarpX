@@ -70,7 +70,6 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
 
 void RigidInjectedParticleContainer::InitData()
 {
-    done_injecting.resize(finestLevel()+1, 0);
     zinject_plane_levels.resize(finestLevel()+1, zinject_plane/WarpX::gamma_boost);
 
     AddParticles(0); // Note - add on level 0
@@ -285,9 +284,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
     const Real* plo = Geom(lev).ProbLo();
     const Real* phi = Geom(lev).ProbHi();
     const int zdir = AMREX_SPACEDIM-1;
-    done_injecting[lev] = ((zinject_plane_levels[lev] < plo[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
+    done_injecting_lev = ((zinject_plane_levels[lev] < plo[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
                            (zinject_plane_levels[lev] > phi[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c <= 0.));
-    done_injecting_lev = done_injecting[lev];
 
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,

@@ -114,7 +114,6 @@ private:
 
     amrex::Real vzbeam_ave_boosted;
 
-    amrex::Vector<int> done_injecting;
     amrex::Vector<amrex::Real> zinject_plane_levels;
 
     // Temporary quantites
