@@ -11,6 +11,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBuffer.H"
 #include "Particles/PhysicalParticleContainer.H"
+#include "Particles/LaserParticleContainer.H"
 #include "Particles/RigidInjectedParticleContainer.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -41,16 +42,24 @@ using namespace amrex;
 void
 LaserParticleContainer::ReadHeader (std::istream& is)
 {
-    is >> m_updated_position;
-    WarpX::GotoNextLine(is);
+    if (do_continuous_injection) {
+        m_updated_position.resize(3);
+        for (int i = 0; i < 3; ++i) {
+            is >> m_updated_position[i];
+            WarpX::GotoNextLine(is);
+        }
+    }
 }
 
 void
 LaserParticleContainer::WriteHeader (std::ostream& os) const
 {
-    os << m_updated_position << "\n";
+    if (do_continuous_injection) {
+        for (int i = 0; i < 3; ++i) {
+            os << m_updated_position[i] << "\n";
+        }
+    }
 }
-
 
 void
 RigidInjectedParticleContainer::ReadHeader (std::istream& is)
@@ -124,7 +133,7 @@ MultiParticleContainer::Restart (const std::string& dir)
 {
     // note: all containers is sorted like this
     // - species_names
-    // - laser_names
+    // - lasers_names
     // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         allcontainers.at(i)->Restart(dir, species_names.at(i));
@@ -139,8 +148,8 @@ MultiParticleContainer::ReadHeader (std::istream& is)
 {
     // note: all containers is sorted like this
     // - species_names
-    // - laser_names
-    for (unsigned i = 0, n = species_names.size()+laser_names.size(); i < n; ++i) {
+    // - lasers_names
+    for (unsigned i = 0, n = species_names.size()+lasers_names.size(); i < n; ++i) {
         allcontainers.at(i)->ReadHeader(is);
     }
 }
@@ -150,8 +159,8 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 {
     // note: all containers is sorted like this
     // - species_names
-    // - laser_names
-    for (unsigned i = 0, n = species_names.size()+laser_names.size(); i < n; ++i) {
+    // - lasers_names
+    for (unsigned i = 0, n = species_names.size()+lasers_names.size(); i < n; ++i) {
         allcontainers.at(i)->WriteHeader(os);
     }
 }
