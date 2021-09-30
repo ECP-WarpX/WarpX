@@ -77,19 +77,19 @@ def modified_k(kx, dx, order, staggered):
     """
     m = order // 2
     coeffs = get_Fornberg_coeffs(order, staggered)
-        
+
     # Array of values for n: from 1 to m
     n = np.arange(1, m+1)
-    
+
     # Array of values of sin (first axis corresponds to k and second axis to n)
     if staggered:
         sin = np.sin(kx[:,np.newaxis] * (n[np.newaxis,:]-0.5) * dx) / ((n[np.newaxis,:]-0.5) * dx)
     else:
         sin = np.sin(kx[:,np.newaxis] * n[np.newaxis,:] * dx) / (n[np.newaxis,:] * dx)
-            
+
     # Modified k
     k_mod = np.tensordot(sin, coeffs[1:], axes=(-1,-1))
-    
+
     return k_mod
 
 def func_cosine(om, w_c, dt):
@@ -198,32 +198,32 @@ def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 2
     kx_arr = 2 * np.pi * np.fft.fftfreq(Nx, dx)
     ky_arr = 2 * np.pi * np.fft.fftfreq(Ny, dy)
     kz_arr = 2 * np.pi * np.fft.fftfreq(Nz, dz)
-    
+
     # Centered modified k vectors
     kx_arr_c = modified_k(kx_arr, dx, nox, False) if (nox != 'inf') else kx_arr
     ky_arr_c = modified_k(ky_arr, dy, noy, False) if (noy != 'inf') else ky_arr
     kz_arr_c = modified_k(kz_arr, dz, noz, False) if (noz != 'inf') else kz_arr
-    
+
     # Staggered modified k vectors
     kx_arr_s = modified_k(kx_arr, dx, nox, True) if (nox != 'inf') else kx_arr
     ky_arr_s = modified_k(ky_arr, dy, noy, True) if (noy != 'inf') else ky_arr
     kz_arr_s = modified_k(kz_arr, dz, noz, True) if (noz != 'inf') else kz_arr
-    
+
     # Mesh in k space
     kx_c, ky_c, kz_c = np.meshgrid(kx_arr_c, ky_arr_c, kz_arr_c)
     kx_s, ky_s, kz_s = np.meshgrid(kx_arr_s, ky_arr_s, kz_arr_s)
-    
+
     # Frequencies
     kk_c = np.sqrt(kx_c**2 + ky_c**2 + kz_c**2)
     kk_s = np.sqrt(kx_s**2 + ky_s**2 + kz_s**2)
     om_c = c * kk_c
     om_s = c * kk_s
     w_c = v_gal * kz_c
-    
+
     # Spectral coefficient
     coeff_nodal = func_cosine(om_c, w_c, dt)
     coeff_stagg = func_cosine(om_s, w_c, dt)
-    
+
     # Stencils
     stencil_x_nodal, stencil_x_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 0)
     stencil_y_nodal, stencil_y_stagg = compute_stencils(coeff_nodal, coeff_stagg, axis = 1)
@@ -335,7 +335,7 @@ if __name__ == '__main__':
     v_gal = 0.
     if (args.galilean):
         v_gal = - np.sqrt(1. - 1./args.gamma**2) * c
-    
+
     # Display some output
     print('\n >> Numerical Setup')
     print('    ---------------')
