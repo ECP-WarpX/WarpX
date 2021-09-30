@@ -621,8 +621,6 @@ LaserParticleContainer::PostRestart ()
 {
     if (!m_enabled) return;
 
-    m_laser_injection_box= Geom(0).ProbDomain();
-
     Real Sx, Sy;
     const int lev = finestLevel();
     ComputeSpacing(lev, Sx, Sy);
