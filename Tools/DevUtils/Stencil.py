@@ -285,7 +285,7 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     ax.set_ylabel(r'$\Gamma({:s})$'.format(label))
     ax.set_title(r'Stencil extent along ${:s}$'.format(label))
     fig.tight_layout()
-    fig_name = path + './figure_stencil_' + label
+    fig_name = path + 'figure_stencil_' + label
     if (name):
         fig_name += '_' + name
     fig.savefig(fig_name + '.pdf', dpi = 100)
