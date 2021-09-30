@@ -110,8 +110,6 @@ private:
 
     // User input quantities
     amrex::Real zinject_plane = 0.;
-    bool projected = true; // When true, particle transverse positions are directly projected (without adjusment)
-    bool focused = false; // When true, particle transverse positions are adjusted to account for distance between zinject and z=0
     bool rigid_advance = true; // When true, particles are advance with vzbar before injection
 
     amrex::Real vzbeam_ave_boosted;

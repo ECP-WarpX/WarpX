@@ -64,8 +64,6 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     ParmParse pp_species_name(species_name);
 
     getWithParser(pp_species_name, "zinject_plane", zinject_plane);
-    pp_species_name.query("projected", projected);
-    pp_species_name.query("focused", focused);
     pp_species_name.query("rigid_advance", rigid_advance);
 
 }
@@ -86,10 +84,6 @@ void RigidInjectedParticleContainer::InitData()
 void
 RigidInjectedParticleContainer::RemapParticles()
 {
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(projected, "ERROR: projected = false is not supported with this particle loading");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!focused, "ERROR: focused = true is not supported with this particle loading");
-
     // For rigid_advance == false, nothing needs to be done
 
     if (rigid_advance) {
