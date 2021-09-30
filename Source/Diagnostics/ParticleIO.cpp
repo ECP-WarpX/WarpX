@@ -41,9 +41,10 @@ using namespace amrex;
 void
 RigidInjectedParticleContainer::ReadHeader (std::istream& is)
 {
-    is >> charge >> mass;
-    WarpX::GotoNextLine(is);
+    // Call parent class
+    WarpXParticleContainer::ReadHeader( is );
 
+    // Read quantities that are specific to rigid-injected species
     int nlevs;
     is >> nlevs;
     WarpX::GotoNextLine(is);
@@ -53,7 +54,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
 
     for (int i = 0; i < nlevs; ++i)
     {
-        int zinject_plane_tmp;
+        amrex::Real zinject_plane_tmp;
         is >> zinject_plane_tmp;
         zinject_plane_levels.push_back(zinject_plane_tmp);
         WarpX::GotoNextLine(is);
@@ -66,13 +67,17 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
         done_injecting.push_back(done_injecting_tmp);
         WarpX::GotoNextLine(is);
     }
+    is >> vzbeam_ave_boosted;
+    WarpX::GotoNextLine(is);
 }
 
 void
 RigidInjectedParticleContainer::WriteHeader (std::ostream& os) const
 {
-    // no need to write species_id
-    os << charge << " " << mass << "\n";
+    // Call parent class
+    WarpXParticleContainer::WriteHeader( os );
+
+    // Write quantities that are specific to the rigid-injected species
     int nlevs = zinject_plane_levels.size();
     os << nlevs << "\n";
     for (int i = 0; i < nlevs; ++i)
@@ -83,6 +88,7 @@ RigidInjectedParticleContainer::WriteHeader (std::ostream& os) const
     {
         os << done_injecting[i] << "\n";
     }
+    os << vzbeam_ave_boosted << "\n";
 }
 
 void
