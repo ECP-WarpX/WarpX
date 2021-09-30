@@ -39,11 +39,26 @@
 using namespace amrex;
 
 void
+LaserParticleContainer::ReadHeader (std::istream& is)
+{
+    is >> m_updated_position;
+    WarpX::GotoNextLine(is);
+}
+
+void
+LaserParticleContainer::WriteHeader (std::ostream& os) const
+{
+    os << m_updated_position << "\n";
+}
+
+
+void
 RigidInjectedParticleContainer::ReadHeader (std::istream& is)
 {
-    is >> charge >> mass;
-    WarpX::GotoNextLine(is);
+    // Call parent class
+    PhysicalParticleContainer::ReadHeader( is );
 
+    // Read quantities that are specific to rigid-injected species
     int nlevs;
     is >> nlevs;
     WarpX::GotoNextLine(is);
@@ -53,7 +68,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
 
     for (int i = 0; i < nlevs; ++i)
     {
-        int zinject_plane_tmp;
+        amrex::Real zinject_plane_tmp;
         is >> zinject_plane_tmp;
         zinject_plane_levels.push_back(zinject_plane_tmp);
         WarpX::GotoNextLine(is);
@@ -66,13 +81,17 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
         done_injecting.push_back(done_injecting_tmp);
         WarpX::GotoNextLine(is);
     }
+    is >> vzbeam_ave_boosted;
+    WarpX::GotoNextLine(is);
 }
 
 void
 RigidInjectedParticleContainer::WriteHeader (std::ostream& os) const
 {
-    // no need to write species_id
-    os << charge << " " << mass << "\n";
+    // Call parent class
+    PhysicalParticleContainer::WriteHeader( os );
+
+    // Write quantities that are specific to the rigid-injected species
     int nlevs = zinject_plane_levels.size();
     os << nlevs << "\n";
     for (int i = 0; i < nlevs; ++i)
@@ -83,17 +102,18 @@ RigidInjectedParticleContainer::WriteHeader (std::ostream& os) const
     {
         os << done_injecting[i] << "\n";
     }
+    os << vzbeam_ave_boosted << "\n";
 }
 
 void
-WarpXParticleContainer::ReadHeader (std::istream& is)
+PhysicalParticleContainer::ReadHeader (std::istream& is)
 {
     is >> charge >> mass;
     WarpX::GotoNextLine(is);
 }
 
 void
-WarpXParticleContainer::WriteHeader (std::ostream& os) const
+PhysicalParticleContainer::WriteHeader (std::ostream& os) const
 {
     // no need to write species_id
     os << charge << " " << mass << "\n";
@@ -120,8 +140,7 @@ MultiParticleContainer::ReadHeader (std::istream& is)
     // note: all containers is sorted like this
     // - species_names
     // - laser_names
-    // we don't need to read back the laser particle charge/mass
-    for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
+    for (unsigned i = 0, n = species_names.size()+laser_names.size(); i < n; ++i) {
         allcontainers.at(i)->ReadHeader(is);
     }
 }
@@ -132,8 +151,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
     // note: all containers is sorted like this
     // - species_names
     // - laser_names
-    // we don't need to read back the laser particle charge/mass
-    for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
+    for (unsigned i = 0, n = species_names.size()+laser_names.size(); i < n; ++i) {
         allcontainers.at(i)->WriteHeader(os);
     }
 }

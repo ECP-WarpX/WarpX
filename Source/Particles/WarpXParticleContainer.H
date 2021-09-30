@@ -262,9 +262,9 @@ public:
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
                         int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
 
-    virtual void ReadHeader (std::istream& is);
+    virtual void ReadHeader (std::istream& is) = 0;
 
-    virtual void WriteHeader (std::ostream& os) const;
+    virtual void WriteHeader (std::ostream& os) const = 0;
 
     virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
 
