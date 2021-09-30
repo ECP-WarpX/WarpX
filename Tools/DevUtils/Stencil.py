@@ -4,12 +4,8 @@ based on the measurement of the PSATD stencil extent (that is, the minimum numbe
 guard cells such that the stencil measure is not larger than the error threshold).
 Reference: https://arxiv.org/abs/2106.12919
 
-Example of how to run the script:
-    python Stencil.py --dx 1e-06 --dy 1e-06 --dz 1e-06 --dt 1e-14 --nox 16 --noy 16 --noz 16
-                      --gamma 30 --galilean --ex 1e-07 --ey 1e-07 --ez 1e-07
-                      --path /path/to/output --name this_test
-
-Some command line arguments are optional. For help, run: python Stencil.py --help
+Run the script simply with: python Stencil.py
+The user can modify the input parameters set in the main function at the end of the file.
 """
 import argparse
 import numpy as np
@@ -161,6 +157,7 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
     stencils = dict()
     stencils['nodal'] = abs(stencil_avg_nodal)
     stencils['stagg'] = abs(stencil_avg_stagg)
+
     return stencils
 
 def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 256):
