@@ -7,6 +7,7 @@
  */
 #include "BackTransformedDiagnostic.H"
 
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -757,8 +758,10 @@ void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
                 const int ncomp = lf_diags->m_data_buffer_->nComp();
 
                 MultiFab tmp(buff_ba, buff_dm, ncomp, 0);
+                tmp.setVal(0.0);
 
-                tmp.ParallelCopy(*lf_diags->m_data_buffer_, 0, 0, ncomp);
+                WarpXCommUtil::ParallelCopy(tmp, *lf_diags->m_data_buffer_, 0, 0, ncomp,
+                                            IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
 
 #ifdef WARPX_USE_HDF5
                 for (int comp = 0; comp < ncomp; ++comp) {
@@ -905,6 +908,7 @@ writeLabFrameData (const MultiFab* cell_centered_data,
              tmp_slice_ptr = std::make_unique<MultiFab>(slice_ba,
                              lf_diags->m_data_buffer_->DistributionMap(),
                              ncomp, 0);
+             tmp_slice_ptr->setVal(0.0);
 
              // slice is re-used if the t_lab of a diag is equal to
              // that of the previous diag.
@@ -912,7 +916,8 @@ writeLabFrameData (const MultiFab* cell_centered_data,
              // which has the dmap of the domain to
              // tmp_slice_ptr which has the dmap of the
              // data_buffer that stores the back-transformed data.
-             tmp_slice_ptr->ParallelCopy(*slice, 0, 0, ncomp);
+             WarpXCommUtil::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, ncomp,
+                                         IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
              lf_diags->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                                map_actual_fields_to_dump);
              tmp_slice_ptr = nullptr;

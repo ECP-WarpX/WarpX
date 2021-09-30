@@ -10,6 +10,7 @@
 
 #include "BoundaryConditions/PML.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -292,7 +293,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
 
     if ( WarpX::safe_guard_cells ) {
         // Fill guard cells.
-        tmpmf.FillBoundary(geom.periodicity());
+        WarpXCommUtil::FillBoundary(tmpmf, geom.periodicity());
     } else {
         IntVect ng_mw = IntVect::TheUnitVector();
         // Enough guard cells in the MW direction
@@ -300,7 +301,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
         // Make sure we don't exceed number of guard cells allocated
         ng_mw = ng_mw.min(ng);
         // Fill guard cells.
-        tmpmf.FillBoundary(ng_mw, geom.periodicity());
+        WarpXCommUtil::FillBoundary(tmpmf, ng_mw, geom.periodicity());
     }
 
     // Make a box that covers the region that the window moved into
