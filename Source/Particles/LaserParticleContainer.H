@@ -84,7 +84,6 @@ protected:
 private:
     // runtime paramters
     amrex::Vector<amrex::Real> m_position; //! Coordinates of one of the point of the antenna
-    amrex::Vector<amrex::Real> m_original_position;
     amrex::Vector<amrex::Real> m_nvec; //! Normal of the plane of the antenna
     amrex::Vector<amrex::Real> m_p_X;// ! Polarization
 
