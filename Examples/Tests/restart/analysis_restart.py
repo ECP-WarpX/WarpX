@@ -11,9 +11,6 @@ tolerance = sys.float_info.epsilon
 print('tolerance = ', tolerance)
 
 filename = sys.argv[1]
-psatd = True if re.search('psatd', filename) else False
-averaged = True if re.search('avg', filename) else False
-
 ds  = yt.load( filename )
 ad  = ds.all_data()
 xb  = ad['beam',     'particle_position_x'].to_ndarray()
@@ -21,11 +18,7 @@ xe  = ad['plasma_e', 'particle_position_x'].to_ndarray()
 zb  = ad['beam',     'particle_position_z'].to_ndarray()
 ze  = ad['plasma_e', 'particle_position_z'].to_ndarray()
 
-filename = 'orig_restart_plt00010'
-if psatd:
-    filename = 'orig_restart_psatd_plt00010'
-if averaged:
-    filename = 'orig_restart_psatd_time_avg_plt00010'
+filename = 'orig_' + filename
 ds  = yt.load( filename )
 ad  = ds.all_data()
 xb0 = ad['beam',     'particle_position_x'].to_ndarray()
