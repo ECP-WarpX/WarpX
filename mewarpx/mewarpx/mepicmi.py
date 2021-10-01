@@ -5,7 +5,7 @@ extended functionality without going through their standards.
 import logging
 import numpy as np
 
-from pywarpx import picmi, _libwarpx
+from pywarpx import picmi, _libwarpx, callbacks
 from mewarpx.mwxrun import mwxrun
 
 # Get module-level logger
@@ -54,6 +54,8 @@ class Species(picmi.Species):
         self.pids_initialized = False
         # Only keys are used; ensures pids are both unique and ordered.
         self.waiting_extra_pids = {}
+        # add a callback to initialize the extra PIDs after sim init
+        callbacks.installafterinit(self.init_pid_dict)
 
     def init_pid_dict(self):
         """Function to build a list of all the extra particle attributes

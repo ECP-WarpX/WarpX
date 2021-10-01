@@ -114,10 +114,6 @@ class MEWarpXRun(object):
         self.me = _libwarpx.libwarpx.warpx_getMyProc()
         self.n_procs = _libwarpx.libwarpx.warpx_getNProcs()
 
-        # loop over all species to build their pid_dict's
-        for species in self.simulation.species:
-            species.init_pid_dict()
-
         # A level is needed for many things like level number. For now I'm
         # statically setting the default level here. I'm not sure of pitfalls
         # or how to handle it more generally yet.
