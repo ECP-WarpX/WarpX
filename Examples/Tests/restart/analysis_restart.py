@@ -17,19 +17,18 @@ benchmark = 'orig_' + filename
 ds_benchmark = yt.load( benchmark )
 ad_benchmark = ds_benchmark.all_data()
 
-species = ['beam', 'plasma_e', 'plasma_p', 'driver', 'driverback']
-coords  = ['x', 'y', 'z']
+all_species = ['beam', 'plasma_e', 'plasma_p', 'driver', 'driverback']
+all_attrs = ['particle_position_x', 'particle_position_y', 'particle_position_z',
+             'particle_momentum_x', 'particle_momentum_y', 'particle_momentum_z']
 
-for s in species:
-    for c in coords:
-        p = 'particle_position_' + c
-        print("species : ", s)
-        print("position: ", p)
-        dr = ad_restart[s, p].to_ndarray()
-        db = ad_benchmark[s, p].to_ndarray()
+for species in all_species:
+    for attr in all_attrs:
+        dr = ad_restart[species, attr].to_ndarray()
+        db = ad_benchmark[species, attr].to_ndarray()
         dr.sort()
         db.sort()
-        assert(np.max(abs(dr-db)) < tolerance)
+        error = np.max(np.abs(dr - db))
+        assert(error < tolerance)
 
 filename = sys.argv[1]
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
