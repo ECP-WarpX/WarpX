@@ -1397,8 +1397,6 @@ class ArbitraryEmitter2D(Emitter):
 
         contours = np.array(skimage.measure.find_contours(inside, 0.17))
 
-        inside = inside.T
-
         # plot assembly object first
         assembly_cmap = colors.LinearSegmentedColormap.from_list('my_cmap',['white','#66c2a5'],256)
         fig, ax = plt.subplots()
@@ -1407,25 +1405,36 @@ class ArbitraryEmitter2D(Emitter):
 
         # plot contours
         for contour in contours:
-            ax.plot(contour[:, 0], contour[:, 1], linewidth=2, color="#fc8d62")
+            ax.plot(contour[:, 1], contour[:, 0], linewidth=2, color="#fc8d62")
 
         # set title and labels
         ax.set_title(f"{self.conductor.name} contour plot")
 
-        x_range = [mwxrun.xmin, mwxrun.xmax]
-        y_range = [mwxrun.zmin, mwxrun.zmax]
-        x_step = (x_range[1] - x_range[0]) / (mwxrun.nx * self.res_fac)
-        y_step = (y_range[1] - y_range[0]) / (mwxrun.nz * self.res_fac)
-        xticks = np.linspace(0, mwxrun.nx * self.res_fac, 5)
-        yticks = np.linspace(0, mwxrun.nz * self.res_fac, 5)
+        x_range = [self.res_fac * mwxrun.zmin / mwxrun.dz, self.res_fac * mwxrun.zmax / mwxrun.dz]
+        y_range = [self.res_fac * mwxrun.xmin / mwxrun.dx, self.res_fac * mwxrun.xmax / mwxrun.dx]
 
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Z (m)")
-        ax.set_xticks(xticks)
-        ax.set_xticklabels(np.round(xticks * x_step, 8), rotation=45)
-        ax.set_yticks(yticks)
-        ax.set_yticklabels(np.round(yticks * y_step, 8))
+        x_step = mwxrun.dz / (self.res_fac)
+        y_step = mwxrun.dx / (self.res_fac)
 
+        minor_xticks = np.linspace(x_range[0], x_range[1], mwxrun.nz)
+        minor_yticks = np.linspace(y_range[0], y_range[1], mwxrun.nx)
+
+        major_xticks = np.linspace(x_range[0], x_range[1], 5)
+        major_yticks = np.linspace(y_range[0], y_range[1], 5)
+
+        ax.set_xlabel("Z (m)")
+        ax.set_ylabel("X (m)")
+
+        ax.set_xticks(major_xticks)
+        ax.set_xticks(minor_xticks, minor=True)
+        ax.set_xticklabels(np.round(major_xticks * x_step, 8), rotation=45)
+        ax.set_yticks(major_yticks)
+        ax.set_yticks(minor_yticks, minor=True)
+        ax.set_yticklabels(np.round(major_yticks * y_step, 8))
+
+
+        ax.grid(b=True, which="minor")
+        ax.set_aspect(mwxrun.dx/mwxrun.dz, adjustable='box')
         fig.tight_layout()
         fig.savefig(f"{self.conductor.name}_contour_plot.png")
 

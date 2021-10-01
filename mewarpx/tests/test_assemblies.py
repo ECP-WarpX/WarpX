@@ -59,7 +59,7 @@ def test_embedded_cylinder():
 
     # Install the embedded boundary
     cylinder = assemblies.Cylinder(
-        center_x=0.0, center_z=0.5, radius=0.3,
+        center_x=0.0, center_z=0.5, radius=0.1,
         V=-2.0, T=300, WF=4.7, name="Cylinder"
     )
 

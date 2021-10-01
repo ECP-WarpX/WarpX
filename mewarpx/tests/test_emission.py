@@ -192,7 +192,7 @@ def test_circle_emitter():
         WF=1.2, name='circle'
     )
 
-    mwxrun.init_grid(0, 0.5, 0, 1, 16, 16)
+    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20)
     solver = picmi.ElectrostaticSolver(
         grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
     )

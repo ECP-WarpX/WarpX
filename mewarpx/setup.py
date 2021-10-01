@@ -5,13 +5,12 @@ import os
 import setuptools
 
 requires = [
-    "numpy",
+    "numpy==1.20", # numba v0.54 requires numpy < 1.21.0
     "scipy",
     "psutil",
     "pandas",
     "yt",
     "numba",
-    "numpy==1.20", # numba v0.54 requires numpy <1.21.0
     "scikit-image",
     "dill"
 ]
