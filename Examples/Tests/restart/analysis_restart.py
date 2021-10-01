@@ -10,36 +10,26 @@ tolerance = sys.float_info.epsilon
 print('tolerance = ', tolerance)
 
 filename = sys.argv[1]
-ds  = yt.load( filename )
-ad  = ds.all_data()
-xb  = ad['beam',     'particle_position_x'].to_ndarray()
-xe  = ad['plasma_e', 'particle_position_x'].to_ndarray()
-zb  = ad['beam',     'particle_position_z'].to_ndarray()
-ze  = ad['plasma_e', 'particle_position_z'].to_ndarray()
+ds_restart = yt.load( filename )
+ad_restart = ds_restart.all_data()
 
-filename = 'orig_' + filename
-ds  = yt.load( filename )
-ad  = ds.all_data()
-xb0 = ad['beam',     'particle_position_x'].to_ndarray()
-xe0 = ad['plasma_e', 'particle_position_x'].to_ndarray()
-zb0 = ad['beam',     'particle_position_z'].to_ndarray()
-ze0 = ad['plasma_e', 'particle_position_z'].to_ndarray()
+benchmark = 'orig_' + filename
+ds_benchmark = yt.load( benchmark )
+ad_benchmark = ds_benchmark.all_data()
 
-xb.sort()
-xb0.sort()
-assert(np.max(abs(xb-xb0))<tolerance)
+species = ['beam', 'plasma_e', 'plasma_p', 'driver', 'driverback']
+coords  = ['x', 'y', 'z']
 
-xe.sort()
-xe0.sort()
-assert(np.max(abs(xe-xe0))<tolerance)
-
-zb.sort()
-zb0.sort()
-assert(np.max(abs(zb-zb0))<tolerance)
-
-ze.sort()
-ze0.sort()
-assert(np.max(abs(ze-ze0))<tolerance)
+for s in species:
+    for c in coords:
+        p = 'particle_position_' + c
+        print("species : ", s)
+        print("position: ", p)
+        dr = ad_restart[s, p].to_ndarray()
+        db = ad_benchmark[s, p].to_ndarray()
+        dr.sort()
+        db.sort()
+        assert(np.max(abs(dr-db)) < tolerance)
 
 filename = sys.argv[1]
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
