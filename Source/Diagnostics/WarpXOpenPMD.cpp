@@ -574,15 +574,27 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // real_flags is 1 or 0, whether quantity is dumped or not.
 
     {
-      DumpToFile(&tmp,
-         particle_diags[i].getSpeciesName(),
-         m_CurrentStep,
-         real_flags,
-         int_flags,
-         real_names, int_names,
-         pc->getCharge(), pc->getMass(),
-         isBTD, totalParticlesFlushedAlready[i]
-      );
+      if (!isBTD) {
+          DumpToFile(&tmp,
+             particle_diags[i].getSpeciesName(),
+             m_CurrentStep,
+             real_flags,
+             int_flags,
+             real_names, int_names,
+             pc->getCharge(), pc->getMass(),
+             isBTD, 0
+          );
+      } else {
+          DumpToFile(&tmp,
+             particle_diags[i].getSpeciesName(),
+             m_CurrentStep,
+             real_flags,
+             int_flags,
+             real_names, int_names,
+             pc->getCharge(), pc->getMass(),
+             isBTD, totalParticlesFlushedAlready[i]
+          );
+      }
     }
 
     // Convert momentum back to WarpX units
