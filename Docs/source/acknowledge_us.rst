@@ -37,4 +37,4 @@ Main WarpX reference
 
     <div id="ref-VayNIM2018">
 
-Vay JL, Huebl A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Jambunathan R. **Modeling of a chain of three plasma accelerator stages with the WarpX electromagnetic PIC code on GPUs**. *Physics of Plasmas*. 2021 Feb 9;28(2):023105. https://doi.org/10.1063/5.0028512
+Vay JL, Huebl A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Jambunathan R, Lehe R, Myers A, Ng C, Rowan M, Shapoval O, Thevenet M, Vincenti H, Yang E, Zaim N, Zhang W, Zhao Y, Zoni E. **Modeling of a chain of three plasma accelerator stages with the WarpX electromagnetic PIC code on GPUs**. *Physics of Plasmas*. 2021 Feb 9;28(2):023105. https://doi.org/10.1063/5.0028512
