@@ -653,13 +653,12 @@ extern "C"
         mypc.Redistribute();
     }
 
-    amrex::Real eval_expression_t ( const char* char_expr, int lev ) {
-        WarpX& warpx = WarpX::GetInstance();
+    amrex::Real eval_expression_t ( const char* char_expr, const amrex::Real t) {
         const std::string expr(char_expr);
 
         auto parser = makeParser(expr, {"t"});
         auto parser_exe = parser.compileHost<1>();
-        return parser_exe(warpx.gett_new(lev));
+        return parser_exe(t);
     }
 
     void warpx_moveParticlesBetweenSpecies(const char* char_src_species_name,

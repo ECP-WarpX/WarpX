@@ -144,7 +144,7 @@ extern "C" {
 
   void mypc_Redistribute ();
 
-  amrex::Real eval_expression_t (const char* char_expr, int lev);
+  amrex::Real eval_expression_t (const char* char_expr, const amrex::Real t);
 
   void warpx_moveParticlesBetweenSpecies(
       const char* char_src_species_name, const char* char_dst_species_name,

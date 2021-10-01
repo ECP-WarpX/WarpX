@@ -321,20 +321,27 @@ class MEWarpXRun(object):
                 raise
         _libwarpx.libwarpx.warpx_setPhiGridFP(self.lev)
 
-    def eval_expression_t(self, expr):
+    def eval_expression_t(self, expr, t=None):
         """Function to evaluate an expression that depends on time, at the
         current simulation time using the WarpX parser.
 
         Arguments:
             expr (str or float): Expression to evaluate.
+            t (float): Optional value of t at which to evaluate the function,
+                if not supplied the current simulation time will be used.
 
         Returns:
             (float) Value of the expression at the current simulation time.
         """
         if isinstance(expr, str):
-            return _libwarpx.libwarpx.eval_expression_t(
-                ctypes.c_char_p(expr.encode('utf-8')), self.lev
-            )
+            if t is not None:
+                return _libwarpx.libwarpx.eval_expression_t(
+                    ctypes.c_char_p(expr.encode('utf-8')), t
+                )
+            else:
+                return _libwarpx.libwarpx.eval_expression_t(
+                    ctypes.c_char_p(expr.encode('utf-8')), self.get_t()
+                )
         else:
             return expr
 
