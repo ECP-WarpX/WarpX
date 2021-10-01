@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import sys
-import re
 import yt
 import numpy as np
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
