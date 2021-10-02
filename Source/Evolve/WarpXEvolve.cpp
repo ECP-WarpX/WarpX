@@ -252,10 +252,11 @@ WarpX::Evolve (int numsteps)
         }
 
 
-        //// sync up time
-        //for (int i = 0; i <= max_level; ++i) {
-        //    t_new[i] = cur_time;
-        //}
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
+        amrex::Print() << " calling BTD \n";
         multi_diags->FilterComputePackFlush( step, false, true );
 
         bool move_j = is_synchronized;
@@ -325,10 +326,10 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
+        //// sync up time
+        //for (int i = 0; i <= max_level; ++i) {
+        //    t_new[i] = cur_time;
+        //}
 
         // warpx_py_afterstep runs with the updated global time. It is included
         // in the evolve timing.
