@@ -339,7 +339,6 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         recursive_symbols.erase(*it);
 
         if (is_input) {
-            amrex::Print() << "##### my_constants: " << *it << "  " << v << "\n";
             parser.setConstant(*it, v);
             it = symbols.erase(it);
             continue;
