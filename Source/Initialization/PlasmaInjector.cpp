@@ -37,8 +37,6 @@
 #include <utility>
 #include <vector>
 
-using namespace amrex;
-
 namespace {
     void StringParseAbortMessage(const std::string& var,
                                  const std::string& name) {
@@ -55,7 +53,7 @@ PlasmaInjector::PlasmaInjector () {}
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     : species_id(ispecies), species_name(name)
 {
-    ParmParse pp_species_name(species_name);
+    amrex::ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
@@ -79,7 +77,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     zmax = std::numeric_limits<amrex::Real>::max();
 
     // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
-    const Geometry& geom = WarpX::GetInstance().Geom(0);
+    const amrex::Geometry& geom = WarpX::GetInstance().Geom(0);
     if( geom.isPeriodic(0) ) {
         xmin = geom.ProbLo(0);
         xmax = geom.ProbHi(0);
@@ -133,9 +131,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     bool mass_is_specified = queryWithParser(pp_species_name, "mass", mass);
 
     if ( charge_is_specified && species_is_specified ){
-        Print() << "WARNING: Both '" << species_name << ".charge' and "
-                << species_name << ".species_type' are specified\n'"
-                << species_name << ".charge' will take precedence.\n";
+        amrex::Print() << "WARNING: Both '" << species_name << ".charge' and "
+                       << species_name << ".species_type' are specified\n'"
+                       << species_name << ".charge' will take precedence.\n";
     }
     if (!charge_is_specified && !species_is_specified && injection_style != "external_file"){
         // external file will throw own assertions below if charge cannot be found
@@ -143,9 +141,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 
     if ( mass_is_specified && species_is_specified ){
-        Print() << "WARNING: Both '" << species_name << ".mass' and "
-                << species_name << ".species_type' are specified\n'"
-                << species_name << ".mass' will take precedence.\n";
+        amrex::Print() << "WARNING: Both '" << species_name << ".mass' and "
+                       << species_name << ".species_type' are specified\n'"
+                       << species_name << ".mass' will take precedence.\n";
     }
     if (!mass_is_specified && !species_is_specified && injection_style != "external_file"){
         // external file will throw own assertions below if mass cannot be found
@@ -291,7 +289,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         h_inj_pos = std::make_unique<InjectorPosition>(
             (InjectorPositionRegular*)nullptr,
             xmin, xmax, ymin, ymax, zmin, zmax,
-            Dim3{num_particles_per_cell_each_dim[0],
+            amrex::Dim3{num_particles_per_cell_each_dim[0],
                 num_particles_per_cell_each_dim[1],
                 num_particles_per_cell_each_dim[2]});
         num_particles_per_cell = num_particles_per_cell_each_dim[0] *
@@ -340,14 +338,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 "'" + ps_name + ".species_type' in your input file!\n");
 
             if (charge_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".charge' and '"
-                        << ps_name << ".injection_file' specify a charge.\n'"
-                        << ps_name << ".charge' will take precedence.\n";
+                amrex::Print() << "WARNING: Both '" << ps_name << ".charge' and '"
+                               << ps_name << ".injection_file' specify a charge.\n'"
+                               << ps_name << ".charge' will take precedence.\n";
             }
             else if (species_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
-                        << ps_name << ".injection_file' specify a charge.\n'"
-                        << ps_name << ".species_type' will take precedence.\n";
+                amrex::Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
+                               << ps_name << ".injection_file' specify a charge.\n'"
+                               << ps_name << ".species_type' will take precedence.\n";
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
@@ -357,14 +355,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 charge = p_q * charge_unit;
             }
             if (mass_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".mass' and '"
-                        << ps_name << ".injection_file' specify a mass.\n'"
-                        << ps_name << ".mass' will take precedence.\n";
+                amrex::Print() << "WARNING: Both '" << ps_name << ".mass' and '"
+                               << ps_name << ".injection_file' specify a mass.\n'"
+                               << ps_name << ".mass' will take precedence.\n";
             }
             else if (species_is_specified) {
-                Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
-                        << ps_name << ".injection_file' specify a mass.\n'"
-                        << ps_name << ".species_type' will take precedence.\n";
+                amrex::Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
+                               << ps_name << ".injection_file' specify a mass.\n'"
+                               << ps_name << ".species_type' will take precedence.\n";
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record
@@ -383,7 +381,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             ParallelDescriptor::Bcast(&mass, 1,
                 ParallelDescriptor::IOProcessorNumber());
 #else
-        Abort("Plasma injection via external_file requires openPMD support: "
+        amrex::Abort("Plasma injection via external_file requires openPMD support: "
                      "Add USE_OPENPMD=TRUE when compiling WarpX.\n");
 #endif  // WARPX_USE_OPENPMD
 
@@ -442,7 +440,7 @@ PlasmaInjector::~PlasmaInjector ()
 // Depending on injection type at runtime, initialize inj_rho
 // so that inj_rho->getDensity calls
 // InjectorPosition[Constant or Custom or etc.].getDensity.
-void PlasmaInjector::parseDensity (ParmParse& pp)
+void PlasmaInjector::parseDensity (amrex::ParmParse& pp)
 {
     // parse density information
     std::string rho_prof_s;
@@ -462,7 +460,8 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
     } else if (rho_prof_s == "parse_density_function") {
         Store_parserString(pp, "density_function(x,y,z)", str_density_function);
         // Construct InjectorDensity with InjectorDensityParser.
-        density_parser = std::make_unique<Parser>(makeParser(str_density_function,{"x","y","z"}));
+        density_parser = std::make_unique<amrex::Parser>(makeParser(
+                                                              str_density_function,{"x","y","z"}));
         h_inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
                                             density_parser->compile<3>()));
     } else {
@@ -478,7 +477,7 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
 // Depending on injection type at runtime, initialize inj_mom
 // so that inj_mom->getMomentum calls
 // InjectorMomentum[Constant or Custom or etc.].getMomentum.
-void PlasmaInjector::parseMomentum (ParmParse& pp)
+void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
 {
     using namespace amrex::literals;
 
@@ -618,9 +617,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         Store_parserString(pp, "momentum_function_uz(x,y,z)",
                                                str_momentum_function_uz);
         // Construct InjectorMomentum with InjectorMomentumParser.
-        ux_parser = std::make_unique<Parser>(makeParser(str_momentum_function_ux,{"x","y","z"}));
-        uy_parser = std::make_unique<Parser>(makeParser(str_momentum_function_uy,{"x","y","z"}));
-        uz_parser = std::make_unique<Parser>(makeParser(str_momentum_function_uz,{"x","y","z"}));
+        ux_parser = std::make_unique<amrex::Parser>(makeParser(str_momentum_function_ux,
+                                                               {"x","y","z"}));
+        uy_parser = std::make_unique<amrex::Parser>(makeParser(str_momentum_function_uy,
+                                                               {"x","y","z"}));
+        uz_parser = std::make_unique<amrex::Parser>(makeParser(str_momentum_function_uz,
+                                                               {"x","y","z"}));
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumParser*)nullptr,
                                              ux_parser->compile<3>(),
                                              uy_parser->compile<3>(),
@@ -635,7 +637,9 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
     }
 }
 
-XDim3 PlasmaInjector::getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+amrex::XDim3 PlasmaInjector::getMomentum (amrex::Real x,
+                                          amrex::Real y,
+                                          amrex::Real z) const noexcept
 {
     return h_inj_mom->getMomentum(x, y, z, amrex::RandomEngine{}); // gamma*beta
 }
