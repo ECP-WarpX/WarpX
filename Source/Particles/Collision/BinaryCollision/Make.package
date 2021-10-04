@@ -1,0 +1,4 @@
+CEXE_sources += BinaryCollisionUtils.cpp
+CEXE_sources += ParticleCreationFunc.cpp
+
+VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles/Collision/BinaryCollision

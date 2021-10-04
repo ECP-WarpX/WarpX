@@ -463,7 +463,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
                  Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
                  Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const
 {
-    // check if any dimension has Dirichlet boundary conditions
+    // check if any dimension has non-periodic boundary conditions
     if (!field_boundary_handler.has_non_periodic) return;
 
     auto dirichlet_flag = field_boundary_handler.dirichlet_flag;
@@ -786,7 +786,7 @@ void ElectrostaticSolver::BoundaryHandler::buildParsers ()
     potential_zlo = potential_zlo_parser.compile<1>();
     potential_zhi = potential_zhi_parser.compile<1>();
 
-    // check if the EB potential is a function of space
+    // check if the EB potential is a function of space or only of time
     std::set<std::string> eb_symbols = potential_eb_parser.symbols();
     if ((eb_symbols.count("x") != 0) || (eb_symbols.count("y") != 0)
             || (eb_symbols.count("z") != 0)) {

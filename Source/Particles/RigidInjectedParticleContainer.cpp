@@ -64,15 +64,12 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     ParmParse pp_species_name(species_name);
 
     getWithParser(pp_species_name, "zinject_plane", zinject_plane);
-    pp_species_name.query("projected", projected);
-    pp_species_name.query("focused", focused);
     pp_species_name.query("rigid_advance", rigid_advance);
 
 }
 
 void RigidInjectedParticleContainer::InitData()
 {
-    done_injecting.resize(finestLevel()+1, 0);
     zinject_plane_levels.resize(finestLevel()+1, zinject_plane/WarpX::gamma_boost);
 
     AddParticles(0); // Note - add on level 0
@@ -86,10 +83,6 @@ void RigidInjectedParticleContainer::InitData()
 void
 RigidInjectedParticleContainer::RemapParticles()
 {
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(projected, "ERROR: projected = false is not supported with this particle loading");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!focused, "ERROR: focused = true is not supported with this particle loading");
-
     // For rigid_advance == false, nothing needs to be done
 
     if (rigid_advance) {
@@ -152,101 +145,6 @@ RigidInjectedParticleContainer::RemapParticles()
                     });
                 }
             }
-        }
-    }
-}
-
-void
-RigidInjectedParticleContainer::BoostandRemapParticles()
-{
-
-    // Boost the particles into the boosted frame and map the particles
-    // to the t=0 in the boosted frame. If using rigid_advance, the z position
-    // is adjusted using vzbar, otherwise using vz[i]
-
-    if (rigid_advance) {
-        // Get the average beam velocity in the boosted frame
-        // This value is saved to advance the particles not injected yet
-        const Real vzbeam_ave_lab = meanParticleVelocity(false)[2];
-        vzbeam_ave_boosted = (vzbeam_ave_lab - WarpX::beta_boost*PhysConst::c)/(1. - vzbeam_ave_lab*WarpX::beta_boost/PhysConst::c);
-    }
-
-    const Real csqi = 1./(PhysConst::c*PhysConst::c);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    {
-        for (WarpXParIter pti(*this, 0); pti.isValid(); ++pti)
-        {
-
-            auto& attribs = pti.GetAttribs();
-            const auto uxp = attribs[PIdx::ux].dataPtr();
-            const auto uyp = attribs[PIdx::uy].dataPtr();
-            const auto uzp = attribs[PIdx::uz].dataPtr();
-
-            const auto GetPosition = GetParticlePosition(pti);
-                  auto SetPosition = SetParticlePosition(pti);
-
-            // Loop over particles
-            const long np = pti.numParticles();
-            const Real lvzbeam_ave_boosted = vzbeam_ave_boosted;
-            const Real gamma_boost = WarpX::gamma_boost;
-            const Real beta_boost = WarpX::beta_boost;
-            const bool lprojected = projected;
-            const bool lfocused = focused;
-            const bool lrigid_advance = rigid_advance;
-            const Real lzinject_plane = zinject_plane;
-            amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long i)
-            {
-                ParticleReal xp, yp, zp;
-                GetPosition(i, xp, yp, zp);
-
-                const Real gamma_lab = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
-
-                const Real vx_lab = uxp[i]/gamma_lab;
-                const Real vy_lab = uyp[i]/gamma_lab;
-                const Real vz_lab = uzp[i]/gamma_lab;
-
-                // t0_lab is the time in the lab frame that the particles reaches z=0
-                // The location and time (z=0, t=0) is a synchronization point between the
-                // lab and boosted frames.
-                const Real t0_lab = -zp/vz_lab;
-
-                if (!lprojected) {
-                    xp += t0_lab*vx_lab;
-                    yp += t0_lab*vy_lab;
-                }
-                if (lfocused) {
-                    // Correct for focusing effect from shift from z=0 to zinject
-                    const Real tfocus = -lzinject_plane*gamma_boost/vz_lab;
-                    xp -= tfocus*vx_lab;
-                    yp -= tfocus*vy_lab;
-                }
-
-                // Time of the particle in the boosted frame given its position in the lab frame at t=0.
-                const Real tpr = -gamma_boost*beta_boost*zp/PhysConst::c;
-
-                // Position of the particle in the boosted frame given its position in the lab frame at t=0.
-                const Real zpr = gamma_boost*zp;
-
-                // Momentum of the particle in the boosted frame (assuming that it is fixed).
-                uzp[i] = gamma_boost*(uzp[i] - beta_boost*PhysConst::c*gamma_lab);
-
-                // Put the particle at the location in the boosted frame at boost frame t=0,
-                if (lrigid_advance) {
-                    // with the particle moving at the average velocity
-                    zp = zpr - lvzbeam_ave_boosted*tpr;
-                }
-                else {
-                    // with the particle moving with its own velocity
-                    const Real gammapr = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
-                    const Real vzpr = uzp[i]/gammapr;
-                    zp = zpr - vzpr*tpr;
-                }
-
-                SetPosition(i, xp, yp, zp);
-            });
         }
     }
 }
@@ -386,9 +284,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
     const Real* plo = Geom(lev).ProbLo();
     const Real* phi = Geom(lev).ProbHi();
     const int zdir = AMREX_SPACEDIM-1;
-    done_injecting[lev] = ((zinject_plane_levels[lev] < plo[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
+    done_injecting_lev = ((zinject_plane_levels[lev] < plo[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
                            (zinject_plane_levels[lev] > phi[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c <= 0.));
-    done_injecting_lev = done_injecting[lev];
 
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,

@@ -263,19 +263,27 @@ def _read_field(raw_file, field_name):
 
     ng = header.nghost
     dom_lo, dom_hi = _combine_boxes(boxes)
-    data = np.zeros(dom_hi - dom_lo + 1)
+    data_shape = dom_hi - dom_lo + 1
+    if header.ncomp > 1:
+        data_shape = np.append(data_shape, header.ncomp)
+    data = np.zeros(data_shape)
 
     for box, fn, offset in zip(boxes, file_names, offsets):
         lo = box[0] - dom_lo
         hi = box[1] - dom_lo
         shape = hi - lo + 1
+        if header.ncomp > 1:
+            shape = np.append(shape, header.ncomp)
         with open(raw_file + fn, "rb") as f:
             f.seek(offset)
             if (header.version == 1):
                 f.readline()  # skip the first line
             arr = np.fromfile(f, 'float64', np.product(shape))
             arr = arr.reshape(shape, order='F')
-            data[tuple(slice(l,h+1) for l, h in zip(lo, hi))] = arr
+            box_shape = [slice(l,h+1) for l, h in zip(lo, hi)]
+            if header.ncomp > 1:
+                box_shape += [slice(None)]
+            data[tuple(box_shape)] = arr
 
     return data
 

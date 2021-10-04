@@ -121,6 +121,8 @@ class CMakeBuild(build_ext):
             cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
         if WARPX_PICSAR_SRC:
             cmake_args.append('-DWarpX_picsar_src=' + WARPX_PICSAR_SRC)
+        if WARPX_CCACHE_PROGRAM is not None:
+            cmake_args.append('-DCCACHE_PROGRAM=' + WARPX_CCACHE_PROGRAM)
 
         if sys.platform == "darwin":
             cmake_args.append('-DCMAKE_INSTALL_RPATH=@loader_path')
@@ -205,6 +207,7 @@ WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
 WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
 WARPX_PICSAR_SRC = env.pop('WARPX_PICSAR_SRC', '')
 WARPX_PICSAR_INTERNAL = env.pop('WARPX_PICSAR_INTERNAL', 'ON')
+WARPX_CCACHE_PROGRAM = env.pop('WARPX_CCACHE_PROGRAM', None)
 
 for key in env.keys():
     if key.lower().startswith('warpx'):
@@ -250,7 +253,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.09',
+    version = '21.10',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
