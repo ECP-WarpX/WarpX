@@ -338,6 +338,11 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
+    /**
+    * \brief This function returns a string containing the name of the species type
+    */
+    std::string getSpeciesTypeName () const {return species::get_name(physical_species);}
+
     amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 
     /**
