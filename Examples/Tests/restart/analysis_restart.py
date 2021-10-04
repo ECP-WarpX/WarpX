@@ -44,7 +44,7 @@ ad_benchmark = ds_benchmark.covering_grid(level = 0,
 
 all_fields = ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'jx', 'jy', 'jz']
 
-tolerance = 1e-5
+tolerance = 1e-12
 print('tolerance (field output) = {:g}'.format(tolerance))
 print()
 for field in all_fields:
