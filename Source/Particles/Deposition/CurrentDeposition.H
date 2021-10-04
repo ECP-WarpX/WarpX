@@ -399,7 +399,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
     Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
     Real constexpr one_third = 1.0_rt / 3.0_rt;
-    Real constexpr one_sixth = 1.0_rt / 3.0_rt;
+    Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
 #if defined(WARPX_USE_GPUCLOCK)
