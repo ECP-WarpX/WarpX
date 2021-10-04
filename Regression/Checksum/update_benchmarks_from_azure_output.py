@@ -19,6 +19,9 @@ for line in f:
     if (line.find(test_name_str)!= -1):
         current_test = line[test_name_first_char:test_name_last_char]
     line_noprefix = line[first_char:]
+    # Here we parse lines that read, for example,
+    # "Plotfile : [lev=0,jx] 1.012345678901234e+16"
+    # and we set key1 = "lev=0", key2 = "jx", value = 1.012345678901234e+16
     if (line_noprefix.startswith(plotfile_str)):
         key1 = re.search('\[(.*),', line_noprefix).group(1)
         key2 = re.search(',(.*)\]', line_noprefix).group(1)
