@@ -156,8 +156,6 @@ beam.uy_th = 0.
 beam.uz_th = 39.138943248532286
 beam.zinject_plane = 0.02
 beam.rigid_advance = true
-beam.projected = true
-beam.focused = false
 beam.do_back_transformed_diagnostics=1
 
 #################################

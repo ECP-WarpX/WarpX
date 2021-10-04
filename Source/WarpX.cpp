@@ -577,7 +577,7 @@ WarpX::ReadParameters ()
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
 
             // Build the handler for the field boundary conditions
-            pp_warpx.query("eb_potential(t)", field_boundary_value_handler.potential_eb_str);
+            pp_warpx.query("eb_potential(x,y,z,t)", field_boundary_value_handler.potential_eb_str);
             field_boundary_value_handler.buildParsers();
             // TODO add the parsers for the domain boundary values as well
         }
@@ -1008,7 +1008,6 @@ WarpX::ReadParameters ()
         }
 
         pp_psatd.query("current_correction", current_correction);
-        pp_psatd.query("v_comoving", m_v_comoving);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
         pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
@@ -1029,6 +1028,28 @@ WarpX::ReadParameters ()
         } else {
             pp_psatd.query("v_galilean", m_v_galilean);
         }
+
+        // Check whether the default comoving velocity should be used
+        bool use_default_v_comoving = false;
+        pp_psatd.query("use_default_v_comoving", use_default_v_comoving);
+        if (use_default_v_comoving)
+        {
+            m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
+        }
+        else
+        {
+            pp_psatd.query("v_comoving", m_v_comoving);
+        }
+
+        // Galilean and comoving algorithms should not be used together
+        if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
+        {
+            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.)
+            {
+                amrex::Abort("Galilean and comoving algorithms should not be used together");
+            }
+        }
+
         // Scale the Galilean/comoving velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
         for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;

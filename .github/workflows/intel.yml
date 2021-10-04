@@ -63,7 +63,8 @@ jobs:
   build_icpx:
     name: oneAPI ICX SP
     runs-on: ubuntu-20.04
-    env: {CXXFLAGS: "-Werror -Wno-error=pass-failed"}
+    # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
+    env: {CXXFLAGS: "-Werror -Wno-error=pass-failed -Wno-tautological-constant-compare"}
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
@@ -105,7 +106,8 @@ jobs:
   build_dpcc:
     name: oneAPI DPC++ SP
     runs-on: ubuntu-20.04
-    env: {CXXFLAGS: "-Werror"}
+    # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
+    env: {CXXFLAGS: "-Werror -Wno-tautological-constant-compare"}
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
@@ -127,11 +129,14 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
           -DWarpX_EB=ON                \
-          -DWarpX_LIB=ON               \
+          -DWarpX_LIB=OFF              \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
+     # TODO: re-enable -DWarpX_LIB=ON as soon as "dpcpp -fPIC" segfaults are
+     #       fixed
+
 
      # Skip this as it will copy the binary artifacts and we are tight on disk space
      #   python3 -m pip install --upgrade pip

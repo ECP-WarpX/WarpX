@@ -69,8 +69,6 @@ driver.uy_th = 4.
 driver.uz_th = 20.
 driver.zinject_plane = 2e-3
 driver.rigid_advance = true
-driver.projected = true
-driver.focused = false
 driver.initialize_self_fields = 0
 driver.do_symmetrize = 1
 
