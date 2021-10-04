@@ -376,6 +376,8 @@ parseStringtoInt(std::string str, std::string name)
     return ival;
 }
 
+// overloads for float/double instead if amrex::Real to allow makeParser()
+// to query for my_constants as double even in single precision mode
 int
 queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
 {
