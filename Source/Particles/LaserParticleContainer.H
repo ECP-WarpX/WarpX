@@ -45,6 +45,10 @@ public:
 
     virtual void InitData () final;
 
+    virtual void ReadHeader (std::istream& is) final;
+
+    virtual void WriteHeader (std::ostream& os) const final;
+
     virtual void Evolve (int lev,
                          const amrex::MultiFab&, const amrex::MultiFab&, const amrex::MultiFab&,
                          const amrex::MultiFab&, const amrex::MultiFab&, const amrex::MultiFab&,

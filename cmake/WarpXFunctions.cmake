@@ -286,7 +286,7 @@ function(get_source_version NAME SOURCE_DIR)
         execute_process(COMMAND git describe --abbrev=12 --dirty --always --tags
             WORKING_DIRECTORY ${SOURCE_DIR}
             OUTPUT_VARIABLE _tmp)
-        string( STRIP ${_tmp} _tmp)
+        string( STRIP "${_tmp}" _tmp)
     endif()
 
     # Is there a CMake project version?

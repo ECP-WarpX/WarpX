@@ -190,7 +190,7 @@ amrex::Parser makeParser (std::string const& parse_function, amrex::Vector<std::
  * \param str The string to be parsed
  * \return representation as real
  */
-amrex::Real parseStringtoReal(std::string str);
+double parseStringtoReal(std::string str);
 
 /** Parse a string and return an int
  *
@@ -227,7 +227,8 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
  * \param[in] start_ix start index in the list of inputs values (optional with arrays)
  * \param[in] num_val number of input values to use (optional with arrays)
  */
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                         const int start_ix, const int num_val);
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
@@ -248,7 +249,8 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
  * \param[in] start_ix start index in the list of inputs values (optional with arrays)
  * \param[in] num_val number of input values to use (optional with arrays)
  */
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                        const int start_ix, const int num_val);
