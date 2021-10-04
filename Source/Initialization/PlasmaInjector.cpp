@@ -488,15 +488,15 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                    mom_dist_s.begin(),
                    ::tolower);
     if (mom_dist_s == "at_rest") {
-        constexpr Real ux = 0._rt;
-        constexpr Real uy = 0._rt;
-        constexpr Real uz = 0._rt;
+        constexpr amrex::Real ux = 0._rt;
+        constexpr amrex::Real uy = 0._rt;
+        constexpr amrex::Real uz = 0._rt;
         // Construct InjectorMomentum with InjectorMomentumConstant.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux, uy, uz));
     } else if (mom_dist_s == "constant") {
-        Real ux = 0._rt;
-        Real uy = 0._rt;
-        Real uz = 0._rt;
+        amrex::Real ux = 0._rt;
+        amrex::Real uy = 0._rt;
+        amrex::Real uz = 0._rt;
         queryWithParser(pp, "ux", ux);
         queryWithParser(pp, "uy", uy);
         queryWithParser(pp, "uz", uz);
@@ -506,12 +506,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumCustom.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumCustom*)nullptr, species_name));
     } else if (mom_dist_s == "gaussian") {
-        Real ux_m = 0._rt;
-        Real uy_m = 0._rt;
-        Real uz_m = 0._rt;
-        Real ux_th = 0._rt;
-        Real uy_th = 0._rt;
-        Real uz_th = 0._rt;
+        amrex::Real ux_m = 0._rt;
+        amrex::Real uy_m = 0._rt;
+        amrex::Real uz_m = 0._rt;
+        amrex::Real ux_th = 0._rt;
+        amrex::Real uy_th = 0._rt;
+        amrex::Real uz_th = 0._rt;
         queryWithParser(pp, "ux_m", ux_m);
         queryWithParser(pp, "uy_m", uy_m);
         queryWithParser(pp, "uz_m", uz_m);
@@ -524,12 +524,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
     } else if (mom_dist_s == "gaussianflux") {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(surface_flux,
             "Error: gaussianflux can only be used with injection_style = NFluxPerCell");
-        Real ux_m = 0._rt;
-        Real uy_m = 0._rt;
-        Real uz_m = 0._rt;
-        Real ux_th = 0._rt;
-        Real uy_th = 0._rt;
-        Real uz_th = 0._rt;
+        amrex::Real ux_m = 0._rt;
+        amrex::Real uy_m = 0._rt;
+        amrex::Real uz_m = 0._rt;
+        amrex::Real ux_th = 0._rt;
+        amrex::Real uy_th = 0._rt;
+        amrex::Real uz_th = 0._rt;
         queryWithParser(pp, "ux_m", ux_m);
         queryWithParser(pp, "uy_m", uy_m);
         queryWithParser(pp, "uz_m", uz_m);
@@ -541,8 +541,8 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
                                              flux_normal_axis, flux_direction));
     } else if (mom_dist_s == "maxwell_boltzmann"){
-        Real beta = 0._rt;
-        Real theta = 10._rt;
+        amrex::Real beta = 0._rt;
+        amrex::Real theta = 10._rt;
         int dir = 0;
         std::string direction = "x";
         queryWithParser(pp, "beta", beta);
@@ -572,8 +572,8 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, theta, beta, dir));
     } else if (mom_dist_s == "maxwell_juttner"){
-        Real beta = 0._rt;
-        Real theta = 10._rt;
+        amrex::Real beta = 0._rt;
+        amrex::Real theta = 10._rt;
         int dir = 0;
         std::string direction = "x";
         queryWithParser(pp, "beta", beta);
@@ -603,7 +603,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumJuttner.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, theta, beta, dir));
     } else if (mom_dist_s == "radial_expansion") {
-        Real u_over_r = 0._rt;
+        amrex::Real u_over_r = 0._rt;
         queryWithParser(pp, "u_over_r", u_over_r);
         // Construct InjectorMomentum with InjectorMomentumRadialExpansion.
         h_inj_mom.reset(new InjectorMomentum
