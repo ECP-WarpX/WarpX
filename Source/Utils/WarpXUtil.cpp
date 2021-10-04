@@ -331,6 +331,8 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
       };
 
     for (auto it = symbols.begin(); it != symbols.end(); ) {
+        // Always parsing in double precision avoids potential overflows that may occur when parsing
+        // user's expressions because of the limited range of exponentials in single precision
         double v;
 
         WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
@@ -376,8 +378,10 @@ parseStringtoInt(std::string str, std::string name)
     return ival;
 }
 
-// overloads for float/double instead of amrex::Real to allow makeParser()
-// to query for my_constants as double even in single precision mode
+// Overloads for float/double instead of amrex::Real to allow makeParser() to query for
+// my_constants as double even in single precision mode
+// Always parsing in double precision avoids potential overflows that may occur when parsing user's
+// expressions because of the limited range of exponentials in single precision
 int
 queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
 {
