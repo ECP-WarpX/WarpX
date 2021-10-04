@@ -47,8 +47,6 @@ beam.uy_th = 100.
 beam.uz_th =   0.
 beam.zinject_plane = 20.e-6
 beam.rigid_advance = true
-beam.projected = true
-beam.focused = false
 
 # Diagnostics
 diagnostics.diags_names = diag1 btd_openpmd btd_pltfile

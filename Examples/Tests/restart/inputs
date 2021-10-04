@@ -45,7 +45,7 @@ warpx.boost_direction = z
 #################################
 particles.species_names = driver plasma_e plasma_p beam driverback
 particles.use_fdtd_nci_corr = 1
-#particles.rigid_injected_species = driver beam
+particles.rigid_injected_species = driver beam
 
 driver.charge = -q_e
 driver.mass = 1.e10
@@ -65,10 +65,8 @@ driver.uz_m = 200000.
 driver.ux_th = 2.
 driver.uy_th = 2.
 driver.uz_th = 20000.
-#driver.zinject_plane = 0.
-#driver.rigid_advance = true
-#driver.projected = true
-#driver.focused = false
+driver.zinject_plane = 0.
+driver.rigid_advance = true
 
 driverback.charge = q_e
 driverback.mass = 1.e10
@@ -144,10 +142,8 @@ beam.uz_m = 2000.
 beam.ux_th = 2.
 beam.uy_th = 2.
 beam.uz_th = 200.
-#beam.zinject_plane = .8e-3
-#beam.rigid_advance = true
-#beam.projected = true
-#beam.focused = false
+beam.zinject_plane = .8e-3
+beam.rigid_advance = true
 
 # Diagnostics
 diagnostics.diags_names = diag1 chk
