@@ -351,7 +351,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
-                ParticleReal const p_q = ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>().get()[0];
+                amrex::ParticleReal const p_q =
+                    ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
                 double const charge_unit = ps["charge"][openPMD::RecordComponent::SCALAR].unitSI();
                 charge = p_q * charge_unit;
             }
@@ -367,7 +368,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record
-                ParticleReal const p_m = ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>().get()[0];
+                amrex::ParticleReal const p_m =
+                    ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
                 double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
                 mass = p_m * mass_unit;
             }
@@ -633,12 +635,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
     }
 }
 
-XDim3 PlasmaInjector::getMomentum (Real x, Real y, Real z) const noexcept
+XDim3 PlasmaInjector::getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
 {
     return h_inj_mom->getMomentum(x, y, z, amrex::RandomEngine{}); // gamma*beta
 }
 
-bool PlasmaInjector::insideBounds (Real x, Real y, Real z) const noexcept
+bool PlasmaInjector::insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
 {
     return (x < xmax and x >= xmin and
             y < ymax and y >= ymin and
