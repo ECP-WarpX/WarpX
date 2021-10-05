@@ -77,6 +77,39 @@ class FullProfile(object):
             n_calls = int(values[-5])
             name = "_".join(values[0:-5])
 
+            # find the corresponding exclusive time
+            if section == "incl":
+                profile_index = None
+                found = False
+                # This could be made more efficient, but there aren't
+                # many functions listed in the tiny profiler so making this
+                # more efficient would only make this script less readable
+                for i in range(len(self.function_profiles)):
+                    profile = self.function_profiles[i]
+                    if profile["frame"]["name"] == name:
+                        found = True
+                        profile_index = i
+
+                if found:
+                    matching_n_calls = self.function_profiles[profile_index]["metrics"]["n_calls"]
+
+                    if matching_n_calls != n_calls:
+                        print(f"\nWARNING: mismatch of n_calls! {n_calls} {matching_n_calls} for {name}\n")
+
+                    metrics = self.function_profiles[profile_index]["metrics"]
+
+                    metrics["incl_min"] = min_time
+                    metrics["incl_avg"] = avg
+                    metrics["incl_max"] = max_time
+                    metrics["incl_max_percent"] = max_percent
+
+                    count = count + 1
+                    self.function_profiles[profile_index]["metrics"] = metrics
+                    continue
+
+                else:
+                    print(f"Did not find inclusive function match for exclusive function {name}, adding it...")
+
             dict = {
                 "frame" : {"name" : name},
                 "metrics" : {
