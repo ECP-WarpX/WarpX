@@ -252,11 +252,11 @@ WarpX::Evolve (int numsteps)
         }
 
 
-        //// sync up time
-        //for (int i = 0; i <= max_level; ++i) {
-        //    t_new[i] = cur_time;
-        //}
-        //multi_diags->FilterComputePackFlush( step, false, true );
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
+        multi_diags->FilterComputePackFlush( step, false, true );
 
         bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
@@ -324,12 +324,6 @@ WarpX::Evolve (int numsteps)
                 warpx_py_afterEsolve();
             }
         }
-
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
-        multi_diags->FilterComputePackFlush( step, false, true );
 
         // warpx_py_afterstep runs with the updated global time. It is included
         // in the evolve timing.
