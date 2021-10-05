@@ -230,7 +230,7 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   WarpX_MPI=ON WarpX_OPENPMD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
+   WARPX_MPI=ON WARPX_OPENPMD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
 
 .. _running-cpp-cori:
 
