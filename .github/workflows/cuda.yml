@@ -84,7 +84,9 @@ jobs:
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
         cmake --build build -j 2
 
-        python3 -m pip install --upgrade pip setuptools wheel
-        export WARPX_MPI=ON
-        PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel .
-        python3 -m pip install *.whl
+        # mpi4py compile issue:
+        #   https://github.com/mpi4py/mpi4py/issues/114
+        #python3 -m pip install --upgrade pip setuptools wheel
+        #export WARPX_MPI=ON
+        #PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel .
+        #python3 -m pip install *.whl
