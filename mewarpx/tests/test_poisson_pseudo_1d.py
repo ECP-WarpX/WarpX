@@ -86,4 +86,4 @@ def test_superLU_solver():
         testing_util.test_dir, 'direct_solver', 'reference_data.npy'
     ))
 
-    assert np.allclose(data, ref_data, rtol=0.007)
+    assert np.allclose(data, ref_data, rtol=0.001)

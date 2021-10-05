@@ -270,7 +270,7 @@ class MEWarpXRun(object):
 
         return npart_dict
 
-    def get_gathered_rho_grid(self, species_name=None, include_ghosts=True):
+    def get_gathered_rho_grid(self, species_name=None, include_ghosts=False):
         """Get the full rho on the grid on the root processor.
 
         Arguments:
@@ -280,10 +280,7 @@ class MEWarpXRun(object):
             include_ghosts (bool): Whether or not to include ghost cells.
 
         Returns:
-            A list with only 1 element - a numpy array with rho on the full
-            domain. In place of the numpy array, a reference to an unpopulated
-            multifab object is returned on processors other than root.
-
+            A numpy array with rho on the full domain.
         """
 
         if species_name is not None:
@@ -295,13 +292,14 @@ class MEWarpXRun(object):
         else:
             return self.rho_wrapper_no_ghosts[Ellipsis]
 
-    def get_gathered_phi_grid(self, include_ghosts=True):
-        """Get the full phi on the grid on the root processor.
+    def get_gathered_phi_grid(self, include_ghosts=False):
+        """Get the full phi on the grid.
+
+        Arguments:
+            include_ghosts (bool): Whether or not to include ghost cells.
 
         Returns:
-            A list with only 1 element - a numpy array with phi on the full
-            domain. In place of the numpy array, a reference to an unpopulated
-            multifab object is returned on processors other than root.
+            A numpy array with phi on the full domain.
         """
         if include_ghosts:
             return self.phi_wrapper_ghosts[Ellipsis]
@@ -309,7 +307,11 @@ class MEWarpXRun(object):
             return self.phi_wrapper_no_ghosts[Ellipsis]
 
     def set_phi_grid(self, phi_data):
-        """Sets phi segments on the grid to input phi data"""
+        """Sets phi on the grid to input phi data.
+
+        Arguments:
+            phi_data (numpy array): Phi values on the grid.
+        """
         self.phi_wrapper_ghosts[Ellipsis] = phi_data
 
     def eval_expression_t(self, expr, t=None):

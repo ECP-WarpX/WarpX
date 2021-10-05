@@ -66,8 +66,6 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
         if not np.isclose(self.dx, self.dz):
             raise RuntimeError('Direct solver requires dx = dz.')
 
-        self.nxguardrho = 2
-        self.nzguardrho = 2
         self.nxguardphi = 1
         self.nzguardphi = 1
 
@@ -145,9 +143,7 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
         left_voltage = self.left_voltage()
         right_voltage = self.right_voltage()
 
-        rho = -self.rho_data[
-            self.nxguardrho:-self.nxguardrho, self.nzguardrho:-self.nzguardrho
-        ] / constants.ep0
+        rho = -self.rho_data / constants.ep0
 
         # Construct b vector
         nx, nz = np.shape(rho)
