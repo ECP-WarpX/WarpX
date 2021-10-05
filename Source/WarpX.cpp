@@ -2334,11 +2334,11 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     if (nodal == true)
     {
        // First coefficient
-       coeffs[0] = m * 2. / (m+1);
+       coeffs.at(0) = m * 2. / (m+1);
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {
-           coeffs[n] = - (m-n) * 1. / (m+n+1) * coeffs[n-1];
+           coeffs.at(n) = - (m-n) * 1. / (m+n+1) * coeffs.at(n-1);
        }
     }
     // Coefficients for staggered finite-difference approximation
@@ -2350,11 +2350,11 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
            prod *= (m + k) / (4. * k);
        }
        // First coefficient
-       coeffs[0] = 4 * m * prod * prod;
+       coeffs.at(0) = 4 * m * prod * prod;
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {
-           coeffs[n] = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coeffs[n-1];
+           coeffs.at(n) = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coeffs.at(n-1);
        }
     }
 
