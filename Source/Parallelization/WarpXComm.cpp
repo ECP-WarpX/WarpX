@@ -1307,68 +1307,24 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
     }
 }
 
-void WarpX::NodalSyncE ()
+void WarpX::NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
+                       amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp)
 {
     if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
 
-    for (int lev = 0; lev <= finest_level; lev++) {
-        NodalSyncE(lev);
-    }
-}
-
-void WarpX::NodalSyncE (int lev)
-{
-    NodalSyncE(lev, PatchType::fine);
-    if (lev > 0) NodalSyncE(lev, PatchType::coarse);
-}
-
-void WarpX::NodalSyncE (int lev, PatchType patch_type)
-{
-    if (patch_type == PatchType::fine)
+    for (int lev = 0; lev <= WarpX::finest_level; lev++)
     {
-        const auto& period = Geom(lev).periodicity();
-        Efield_fp[lev][0]->OverrideSync(period);
-        Efield_fp[lev][1]->OverrideSync(period);
-        Efield_fp[lev][2]->OverrideSync(period);
-    }
-    else if (patch_type == PatchType::coarse)
-    {
-        const auto& cperiod = Geom(lev-1).periodicity();
-        Efield_cp[lev][0]->OverrideSync(cperiod);
-        Efield_cp[lev][1]->OverrideSync(cperiod);
-        Efield_cp[lev][2]->OverrideSync(cperiod);
-    }
-}
+        const amrex::Periodicity& period = Geom(lev).periodicity();
+        mf_fp[lev][0]->OverrideSync(period);
+        mf_fp[lev][1]->OverrideSync(period);
+        mf_fp[lev][2]->OverrideSync(period);
 
-void WarpX::NodalSyncB ()
-{
-    if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
-
-    for (int lev = 0; lev <= finest_level; lev++) {
-        NodalSyncB(lev);
-    }
-}
-
-void WarpX::NodalSyncB (int lev)
-{
-    NodalSyncB(lev, PatchType::fine);
-    if (lev > 0) NodalSyncB(lev, PatchType::coarse);
-}
-
-void WarpX::NodalSyncB (int lev, PatchType patch_type)
-{
-    if (patch_type == PatchType::fine)
-    {
-        const auto& period = Geom(lev).periodicity();
-        Bfield_fp[lev][0]->OverrideSync(period);
-        Bfield_fp[lev][1]->OverrideSync(period);
-        Bfield_fp[lev][2]->OverrideSync(period);
-    }
-    else if (patch_type == PatchType::coarse)
-    {
-        const auto& cperiod = Geom(lev-1).periodicity();
-        Bfield_cp[lev][0]->OverrideSync(cperiod);
-        Bfield_cp[lev][1]->OverrideSync(cperiod);
-        Bfield_cp[lev][2]->OverrideSync(cperiod);
+        if (lev > 0)
+        {
+            const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
+            mf_cp[lev][0]->OverrideSync(cperiod);
+            mf_cp[lev][1]->OverrideSync(cperiod);
+            mf_cp[lev][2]->OverrideSync(cperiod);
+        }
     }
 }
