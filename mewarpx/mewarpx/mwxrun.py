@@ -89,7 +89,7 @@ class MEWarpXRun(object):
             raise ValueError("No CFL_factor passed into init_timestep when DT is not defined!")
 
         vmax = np.sqrt(
-               2*np.e/constants.m_e * max(0.0, abs(V_anode), abs(V_grid))
+               2*constants.e/constants.m_e * max(0.0, abs(V_anode), abs(V_grid))
         )
 
         if self.geom_str == 'XZ' or self.geom_str == 'RZ':
