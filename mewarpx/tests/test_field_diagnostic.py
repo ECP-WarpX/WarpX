@@ -6,6 +6,7 @@ Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 
 import pytest
 import os.path
+import glob
 
 from mewarpx.utils_store import util as mwxutil
 
@@ -52,7 +53,6 @@ def test_field_diag(plot_on_diag_steps):
     VOLTAGE = 450.0
     NX = 8
     NZ = 128
-    NUMBER_PER_CELL_EACH_DIM = [16, 32]
     DT = 1.0 / (400 * FREQ)
     DIAG_STEPS = 2
     DIAG_DATA_LIST = ['rho_electrons', 'rho_he_ions', 'phi']
@@ -70,6 +70,7 @@ def test_field_diag(plot_on_diag_steps):
         T_INERT=300.0,  # K
         PLASMA_DENSITY=2.56e14,  # m^-3
         T_ELEC=30000.0,  # K
+        SEED_NPPC=16*32,
         NX=NX,
         NZ=NZ,
         # This gives equal spacing in x & z
@@ -77,11 +78,10 @@ def test_field_diag(plot_on_diag_steps):
         DT=DT,
         TOTAL_TIMESTEPS=STEPS,
         DIAG_STEPS=DIAG_STEPS,
-        NUMBER_PARTICLES_PER_CELL=NUMBER_PER_CELL_EACH_DIM,
         FIELD_DIAG_DATA_LIST=DIAG_DATA_LIST,
-        FIELD_DIAG_PLOT_SPECIES=DIAG_SPECIES_LIST,
-        FIELD_DIAG_PLOT_ON_DIAG_STEPS=plot_on_diag_steps,
-        FIELD_DIAG_PLOT_DATA_LIST=['rho', 'phi'],
+        FIELD_DIAG_SPECIES_LIST=DIAG_SPECIES_LIST,
+        FIELD_DIAG_PLOT=plot_on_diag_steps,
+        FIELD_DIAG_INSTALL_WARPX=post_processing,
         FIELD_DIAG_PLOT_AFTER_RUN=post_processing
     )
 
@@ -90,6 +90,7 @@ def test_field_diag(plot_on_diag_steps):
         init_scraper=False,
         init_injectors=False,
         init_inert_gas=True,
+        init_neutral_plasma=True,
         init_field_diag=True,
         init_simcontrol=True,
         init_warpx=True,
@@ -101,13 +102,11 @@ def test_field_diag(plot_on_diag_steps):
     # verify that the plot images were created.
     if plot_on_diag_steps:
         print("Verifying that all plots were created...", flush=True)
-        for i in range(1,6):
-            assert os.path.isfile("phi_after_diag_step_" + str(i) + ".png")
-            assert os.path.isfile("rho_after_diag_step_" + str(i) + ".png")
-            if DIAG_SPECIES_LIST is None:
-                DIAG_SPECIES_LIST = [species.name for species in mwxrun.simulation.species]
-            for species in DIAG_SPECIES_LIST:
-                assert os.path.isfile("rho_" + species + "_after_diag_step_" + str(i) + ".png")
+        assert len(glob.glob(f"diags/fields/Electrostatic_potential_*.npy")) == 5
+        assert len(glob.glob(f"diags/fields/Electrostatic_potential_*.png")) == 5
+        for species in [species.name for species in mwxrun.simulation.species]:
+            assert len(glob.glob(f"diags/fields/{species}_charge_density_*.npy")) == 5
+            assert len(glob.glob(f"diags/fields/{species}_charge_density_*.png")) == 5
 
         print("All plots exist!", flush=True)
 
@@ -116,9 +115,9 @@ def test_field_diag(plot_on_diag_steps):
         print("Verifying that all plots were created...", flush=True)
         for i in range(0, STEPS - 1, DIAG_STEPS):
             for param in DIAG_DATA_LIST:
-                assert os.path.isfile("diags/fields/" + param + "_" + f"{i:05d}.png"), param + "_" + f"{i:06d}.png doesn't exist"
+                assert os.path.isfile(
+                    "diags/fields/" + param + "_" + f"{i:05d}.png"
+                ), param + "_" + f"{i:06d}.png doesn't exist"
+
+
         print("All plots exist!", flush=True)
-
-
-if __name__ == '__main__':
-    test_field_diag(True)

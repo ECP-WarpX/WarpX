@@ -28,6 +28,14 @@ mewarpx.utils\_store.parallel\_util module
    :undoc-members:
    :show-inheritance:
 
+mewarpx.utils\_store.plotting module
+------------------------------------
+
+.. automodule:: mewarpx.utils_store.plotting
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 mewarpx.utils\_store.testing\_util module
 -----------------------------------------
 

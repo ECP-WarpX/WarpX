@@ -137,12 +137,10 @@ class DiodeRun_V1(object):
     # The data list for field diagnostics
     FIELD_DIAG_DATA_LIST = None
     # Species' rho values to be plotted on each diagnostic step.
-    FIELD_DIAG_PLOT_SPECIES = None
+    FIELD_DIAG_SPECIES_LIST = None
     # Whether or not to plot parameters on each diagnostic step.
-    FIELD_DIAG_PLOT_ON_DIAG_STEPS = False
-    # If FIELD_DIAG_PLOT_ON_DIAG_STEPS is True, what parameters to plot. Current
-    # accepted values are 'rho' and 'phi'
-    FIELD_DIAG_PLOT_DATA_LIST = None
+    FIELD_DIAG_PLOT = False
+    FIELD_DIAG_INSTALL_WARPX = False
     # Whether or not to plot the parameters in FIELD_DIAG_DATA_LIST after
     # the simulation is complete using yt files generated during the run at
     # diagnostic steps.
@@ -580,14 +578,15 @@ class DiodeRun_V1(object):
         logger.info("### Init Diode FieldDiag ###")
 
         self.field_diag = field_diagnostic.FieldDiagnostic(
+            diag_steps=self.DIAG_STEPS,
+            write_dir='diags/fields',
+            plot=self.FIELD_DIAG_PLOT,
+            min_dim=2.0, save_pdf=False,
+            install_field_diagnostic=self.FIELD_DIAG_INSTALL_WARPX,
             name='fields',
             grid=mwxrun.grid,
-            diag_steps=self.DIAG_STEPS,
-            diag_data_list=self.FIELD_DIAG_DATA_LIST,
-            write_dir='diags/fields',
-            plot_on_diag_step=self.FIELD_DIAG_PLOT_ON_DIAG_STEPS,
-            plot_species_list=self.FIELD_DIAG_PLOT_SPECIES,
-            plot_data_list=self.FIELD_DIAG_PLOT_DATA_LIST,
+            data_list=self.FIELD_DIAG_DATA_LIST,
+            species_list=self.FIELD_DIAG_SPECIES_LIST,
             post_processing=self.FIELD_DIAG_PLOT_AFTER_RUN
         )
 

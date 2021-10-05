@@ -61,8 +61,8 @@ TOTAL_TIME = 1280 / FREQ
 DIAG_INTERVAL = 32 / FREQ
 
 # --- Number of time steps
-max_steps = int(TOTAL_TIME / DT)
-diag_steps = int(DIAG_INTERVAL / DT)
+MAX_STEPS = int(TOTAL_TIME / DT)
+DIAG_STEPS = int(DIAG_INTERVAL / DT)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--steps', help='set the number of simulation steps manually', type=int)
@@ -72,9 +72,12 @@ sys.argv = sys.argv[:1]+left
 print('Setting up simulation with')
 print(f'  dt = {DT:3e} s')
 if args.steps:
-    print(f' Total time = {DT*args.steps:3e} ({args.steps} timesteps)')
+    max_steps = args.steps
+    diag_steps = max_steps // 5
 else:
-    print(f' Total time = {TOTAL_TIME:3e} s ({max_steps} timesteps)')
+    max_steps = MAX_STEPS
+    diag_steps = DIAG_STEPS
+print(f' Total time = {DT*max_steps:3e} ({max_steps} timesteps)')
 
 ##########################
 # physics components
@@ -132,11 +135,8 @@ mcc = mcc_wrapper.MCC(
 ##########################
 
 field_diag = FieldDiagnostic(
-    diag_steps=diag_steps,
-    diag_data_list=['rho_electrons', 'rho_he_ions', 'phi'],
-    grid=mwxrun.grid,
-    name='diags',
-    write_dir='diags/'
+    diag_steps=diag_steps, barrier_slices=[xmax/2.0],
+    save_pdf=False, style='roelof', min_dim=2.0
 )
 
 ##########################
@@ -157,7 +157,7 @@ def _get_rho_ions():
     rho_data = mwxrun.get_gathered_rho_grid('he_ions', False)
     if mwxrun.me == 0:
         rho_array += (
-            np.mean(rho_data[:,:,0], axis=0) / constants.q_e / diag_steps
+            np.mean(rho_data[:,:,0], axis=0) / constants.q_e / DIAG_STEPS
         )
 
 ##########################
@@ -167,9 +167,9 @@ if args.steps:
     mwxrun.simulation.step(args.steps)
     text_diag.print_performance_summary()
 else:
-    mwxrun.simulation.step(max_steps - diag_steps)
+    mwxrun.simulation.step(MAX_STEPS - DIAG_STEPS)
     callbacks.installafterstep(_get_rho_ions)
-    mwxrun.simulation.step(diag_steps)
+    mwxrun.simulation.step(DIAG_STEPS)
 
     ##########################
     # collect diagnostics

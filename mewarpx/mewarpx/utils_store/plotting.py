@@ -71,7 +71,7 @@ class ArrayPlot(object):
             },
             'rho': {
                 'titlestr': 'Electron density',
-                'titleunits': 'cm${}^{-3}$',
+                'titleunits': '|e|/cm$^{3}$',
                 'linthresh': None,
                 '_linthreshmin': 1,
                 '_linthreshper': 5,
@@ -107,7 +107,7 @@ class ArrayPlot(object):
         'roelof': {
             'labelsize': 'medium',
             'legendsize': 'medium',
-            'titlesize': 'large',
+            'titlesize': 'medium',
             'default_ticks': True,
             'templates': {
                 'barrier': {'zeroinitial': False},
@@ -402,8 +402,6 @@ class ArrayPlot(object):
                                linewidth=1, color="blue", arrowstyle='->',
                                arrowsize=1.5)
 
-        plt.savefig(self.params["plot_name"] + ".png")
-
     def _gen_plot_contours(self):
         """Generate the list of contours."""
         if self.params['scale'] == 'linear':
@@ -555,3 +553,44 @@ def get_2D_field_slice(data, xaxis, yaxis, slicevec=None, slicepos=None):
     if xaxis < yaxis:
         return dslice.T
     return dslice
+
+def get_figsize_from_warpx(max_dim=16.0, min_dim=0.0):
+    """Set up figure dimensions for outputs based on WARP aspect ratio.
+
+    Arguments:
+        max_dim (float, inches): Maximum size in either dimension.
+        min_dim (float, inches): Minimum size in either dimension. If supplied,
+            this takes precedence over the aspect ratio when the two conflict.
+
+    Returns:
+        figsize (tuple (xwidth, ywidth)): Figure size with given aspect ratio
+    """
+    if mwxrun.geom_str == 'RZ':
+        aspect_ratio = mwxrun.xmax / (mwxrun.zmax - mwxrun.zmin)
+    elif mwxrun.geom_str == 'XZ':
+        aspect_ratio = (mwxrun.xmax - mwxrun.xmin) / (mwxrun.zmax - mwxrun.zmin)
+    else:
+        aspect_ratio = 1.0
+    return get_figsize(aspect_ratio, max_dim, min_dim)
+
+def get_figsize(aspect_ratio, max_dim=16.0, min_dim=0.0):
+    """Return tuple based on aspect ratio and desired size.
+
+    Arguments:
+        aspect_ratio (float): (ymax - ymin)/(xmax - xmin)
+        max_dim (float, inches): Maximum size in either dimension.
+        min_dim (float, inches): Minimum size in either dimension. If supplied,
+            this takes precedence over the aspect ratio when the two conflict.
+
+    Returns:
+        figsize (tuple (xwidth, ywidth)): Figure size with given aspect ratio
+    """
+    if not (aspect_ratio > 0.0):
+        raise ValueError(f"Bad aspect ratio {aspect_ratio}")
+    if aspect_ratio > 1:
+        y = max_dim
+        x = max(y / aspect_ratio, min_dim)
+    else:
+        x = max_dim
+        y = max(x * aspect_ratio, min_dim)
+    return (x, y)

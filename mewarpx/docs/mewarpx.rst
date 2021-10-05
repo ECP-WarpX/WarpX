@@ -54,14 +54,6 @@ mewarpx.mwxrun module
    :undoc-members:
    :show-inheritance:
 
-mewarpx.plotting module
------------------------
-
-.. automodule:: mewarpx.plotting
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 mewarpx.poisson\_pseudo\_1d module
 ----------------------------------
 

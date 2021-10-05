@@ -68,6 +68,7 @@ def test_capacitive_discharge_multigrid(caplog, name):
         TOTAL_TIMESTEPS=10,
         DIAG_STEPS=DIAG_STEPS,
         DIAG_INTERVAL=DIAG_INTERVAL,
+        FIELD_DIAG_INSTALL_WARPX=True,
         FIELD_DIAG_DATA_LIST=['rho_electrons', 'rho_he_ions', 'phi'],
     )
     # Only the functions we change from defaults are listed here

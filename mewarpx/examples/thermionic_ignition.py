@@ -39,17 +39,18 @@ zmin = 0.0
 xmax = D_CA / nz * nx
 zmax = D_CA
 
-TOTAL_TIME = 1e-11 # s
-DIAG_INTERVAL = 1.0e-9
 DT = 0.5e-12 # s
-
-max_steps = int(TOTAL_TIME / DT)
-diag_steps = int(DIAG_INTERVAL / DT)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--steps', help='set the number of simulation steps manually', type=int)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
+
+max_steps = args.steps
+diag_steps = max_steps // 5
+
+TOTAL_TIME = max_steps * DT # s
+DIAG_INTERVAL = diag_steps * DT # s
 
 print('Setting up simulation with')
 print(f'  dt = {DT:3e} s')
@@ -97,11 +98,8 @@ mcc_wrapper = MCC(
 ##################################
 
 field_diag = FieldDiagnostic(
-    diag_steps=diag_steps,
-    diag_data_list=['rho_electrons', 'rho_ar_ions', 'phi', 'J'],
-    grid=mwxrun.grid,
-    name='diags',
-    write_dir='diags/'
+    diag_steps=diag_steps, barrier_slices=[xmax/2.0],
+    save_pdf=False, style='roelof', min_dim=2.0
 )
 
 ######################################
