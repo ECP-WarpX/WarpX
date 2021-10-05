@@ -363,15 +363,6 @@ extern "C"
 
     WARPX_GET_LOVECTS_SCALAR(warpx_getPhiFPLoVects, WarpX::GetInstance().getphi_fp)
 
-    WARPX_GET_SCALAR(warpx_getGatheredChargeDensityFP, WarpX::GetInstance().getGatheredRho_fp)
-    WARPX_GET_SCALAR(warpx_getGatheredPhiFP, WarpX::GetInstance().getGatheredPhi_fp)
-    WARPX_GET_SCALAR(warpx_getPointerFullPhiFP, *WarpX::GetInstance().get_pointer_full_phi_fp)
-
-    void warpx_setPhiGridFP(int lev) {
-        WarpX::GetInstance().setPhiGrid_fp(lev);
-        return;
-    }
-
     void warpx_depositRhoSpecies ( const char* char_species_name ) {
         // Call the same function used in ElectrostaticSolver.cpp to
         // deposit charge density from a specific species on the grid
@@ -381,7 +372,7 @@ extern "C"
         WarpX& warpx = WarpX::GetInstance();
         const auto & mypc = warpx.GetPartContainer();
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
-        warpx.DepositChargeDensity(myspc, true, true, false);
+        warpx.DepositChargeDensity(myspc, true, true);
         warpx.ChargeDensityGridProcessing();
         return;
     }

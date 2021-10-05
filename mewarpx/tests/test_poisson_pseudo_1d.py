@@ -77,15 +77,13 @@ def test_superLU_solver():
     # Check phi results against reference data from MLMG solver           #
     #######################################################################
 
-    data = np.mean(mwxrun.get_gathered_phi_grid()[0], axis=0)
+    phi_data = mwxrun.get_gathered_phi_grid(include_ghosts=False)
+    data = np.mean(phi_data, axis=0)
     # uncomment to generate reference data
     # np.save('reference_data.npy', data)
-
-    # the MLMG solver has the last data point set to 0
-    data[-1] = 0
 
     ref_data = np.load(os.path.join(
         testing_util.test_dir, 'direct_solver', 'reference_data.npy'
     ))
 
-    assert np.allclose(data, ref_data, rtol=0.002)
+    assert np.allclose(data, ref_data, rtol=0.007)

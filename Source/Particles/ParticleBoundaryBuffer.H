@@ -19,12 +19,6 @@ class ParticleBoundaryBuffer
 {
 public:
     ParticleBoundaryBuffer ();
-    int getSpeciesIndexFromName ( const std::string name ) const {
-        auto it = std::find(m_species_names.begin(), m_species_names.end(), name);
-        WarpXUtilMsg::AlwaysAssert(it != m_species_names.end(),
-                                   "ERROR: Unknown species name: " + name);
-        return std::distance(m_species_names.begin(), it);
-    }
 
     int numSpecies() const { return getSpeciesNames().size(); }
 

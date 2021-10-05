@@ -27,7 +27,7 @@ import logging
 import atexit
 import os.path
 
-from pywarpx import _libwarpx, picmi
+from pywarpx import _libwarpx, picmi, fields
 from mewarpx.utils_store import mwxconstants as constants, parallel_util, profileparser
 from mewarpx.utils_store.util import compute_step
 
@@ -118,6 +118,11 @@ class MEWarpXRun(object):
         # statically setting the default level here. I'm not sure of pitfalls
         # or how to handle it more generally yet.
         self.lev = _libwarpx.libwarpx.warpx_finestLevel()
+
+        self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
+        self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
+        self.rho_wrapper_no_ghosts = fields.RhoFPWrapper(self.lev, False)
+        self.phi_wrapper_no_ghosts = fields.PhiFPWrapper(self.lev, False)
 
         self.initialized = True
 
@@ -285,10 +290,10 @@ class MEWarpXRun(object):
             _libwarpx.libwarpx.warpx_depositRhoSpecies(
                 ctypes.c_char_p(species_name.encode('utf-8'))
             )
-        return _libwarpx._get_mesh_field_list(
-            _libwarpx.libwarpx.warpx_getGatheredChargeDensityFP,
-            self.lev, None, include_ghosts
-        )
+        if include_ghosts:
+            return self.rho_wrapper_ghosts[Ellipsis]
+        else:
+            return self.rho_wrapper_no_ghosts[Ellipsis]
 
     def get_gathered_phi_grid(self, include_ghosts=True):
         """Get the full phi on the grid on the root processor.
@@ -298,28 +303,14 @@ class MEWarpXRun(object):
             domain. In place of the numpy array, a reference to an unpopulated
             multifab object is returned on processors other than root.
         """
-        return _libwarpx._get_mesh_field_list(
-            _libwarpx.libwarpx.warpx_getGatheredPhiFP,
-            self.lev, None, include_ghosts
-        )
+        if include_ghosts:
+            return self.phi_wrapper_ghosts[Ellipsis]
+        else:
+            return self.phi_wrapper_no_ghosts[Ellipsis]
 
     def set_phi_grid(self, phi_data):
         """Sets phi segments on the grid to input phi data"""
-        # only proc 0 has the gathered phi grid so only it should set
-        # the phi grid
-        if self.me == 0:
-            # get phi multifab from warpx
-            phi_ptr = _libwarpx._get_mesh_field_list(
-                _libwarpx.libwarpx.warpx_getPointerFullPhiFP,
-                self.lev, None, True
-            )
-            try:
-                phi_ptr[0][:] = phi_data
-            except ValueError as e:
-                if 'could not broadcast input array from shape' in str(e):
-                    logger.error("Phi data must be the same shape as the phi multifab")
-                raise
-        _libwarpx.libwarpx.warpx_setPhiGridFP(self.lev)
+        self.phi_wrapper_ghosts[Ellipsis] = phi_data
 
     def eval_expression_t(self, expr, t=None):
         """Function to evaluate an expression that depends on time, at the

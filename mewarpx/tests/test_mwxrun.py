@@ -94,7 +94,7 @@ def test_capacitive_discharge_multigrid(caplog, name):
     # dump so we only look at the interior here
     rho_data = np.mean(mwxrun.get_gathered_rho_grid(
         species_name='he_ions', include_ghosts=False
-    )[0][:,1:,0], axis=0)[2:-2]
+    )[:,1:,0], axis=0)[2:-2]
 
     ds = yt.load( "diags/fields/fields00010" )
     grid_data = ds.covering_grid(

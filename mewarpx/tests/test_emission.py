@@ -76,7 +76,7 @@ def test_thermionic_emission():
 
     mwxrun.simulation.step(max_steps)
 
-    net_rho_grid = np.array(mwxrun.get_gathered_rho_grid(include_ghosts=False)[0][:, :, 0])
+    net_rho_grid = mwxrun.get_gathered_rho_grid(include_ghosts=False)[:, :, 0]
     ref_path = os.path.join(testing_util.test_dir,
                             "thermionic_emission",
                             "thermionic_emission.npy")
@@ -155,7 +155,7 @@ def test_thermionic_emission_with_Schottky():
 
     mwxrun.simulation.step(max_steps)
 
-    net_rho_grid = np.array(mwxrun.get_gathered_rho_grid()[0][:, :, 0])
+    net_rho_grid = mwxrun.get_gathered_rho_grid(include_ghosts=False)[:, :, 0]
     # np.save('thermionic_emission_Schottky.npy', net_rho_grid)
     ref_path = os.path.join(testing_util.test_dir,
                             "thermionic_emission",

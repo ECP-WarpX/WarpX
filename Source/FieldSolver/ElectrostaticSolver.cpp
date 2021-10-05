@@ -47,26 +47,24 @@ using namespace amrex;
 
 void
 WarpX::DepositChargeDensity (WarpXParticleContainer& species, const bool local,
-                             const bool reset, const bool do_rz_volume_scaling)
+                             const bool reset)
 {
     // deposit charge density on the grid and write to rho_fp. If reset is true
     // the values in rho_fp will be overwritten, if false the charge density
     // from the current species will be added to rho_fp.
-    species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling);
+    species.DepositCharge(rho_fp, local, reset, false, false);
 }
 
 void
 WarpX::ChargeDensityGridProcessing ()
 {
     WARPX_PROFILE("WarpX::ChargeDensityGridProcessing");
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyFilterandSumBoundaryRho (lev, lev, *rho_fp[lev], 0, 1);
-    }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
     }
 #endif
+    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
 }
 
 void

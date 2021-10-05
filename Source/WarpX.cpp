@@ -149,8 +149,6 @@ bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
 
-bool WarpX::allocate_full_rho_phi = false;
-
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
 
@@ -271,9 +269,7 @@ WarpX::WarpX ()
     F_fp.resize(nlevs_max);
     G_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
-    full_rho_fp.resize(nlevs_max);
     phi_fp.resize(nlevs_max);
-    full_phi_fp.resize(nlevs_max);
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
@@ -437,7 +433,6 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp_warpx("warpx");
-        pp_warpx.query("allocate_full_rho_phi", allocate_full_rho_phi);
 
         std::vector<int> numprocs_in;
         queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
@@ -1334,9 +1329,7 @@ WarpX::ClearLevel (int lev)
     F_fp  [lev].reset();
     G_fp  [lev].reset();
     rho_fp[lev].reset();
-    full_rho_fp[lev].reset();
     phi_fp[lev].reset();
-    full_phi_fp[lev].reset();
     F_cp  [lev].reset();
     G_cp  [lev].reset();
     rho_cp[lev].reset();
@@ -1591,21 +1584,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
         const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_fp"));
-
-        if (allocate_full_rho_phi) {
-            // Also allocate the MultiFab for the full rho grid
-            // get the full domain
-            Box domain_box = Geom(lev).Domain();
-            // make a new BoxArray from the domain Box
-            BoxArray ba_full(domain_box);
-            // make a DistributionMapping from the new BoxArray
-            DistributionMapping dm_full;
-            // force that distribution mapping to only go to the root proc
-            Vector<int> pmap = {0};
-            dm_full.define(pmap);
-            // make a FabArray to hold the rho data
-            full_rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba_full,rho_nodal_flag),dm_full,2*ncomps,ngRho,tag("full_rho_fp"));
-        }
     }
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
@@ -1613,22 +1591,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,phi_nodal_flag),dm,ncomps,ngPhi,tag("phi_fp"));
         phi_fp[lev]->setVal(0.);
-
-        if (allocate_full_rho_phi) {
-            // Also allocate the MultiFab for the full phi grid
-            // get the full domain
-            Box domain_box = Geom(lev).Domain();
-            // make a new BoxArray from the domain Box
-            BoxArray ba_full(domain_box);
-            // make a DistributionMapping from the new BoxArray
-            DistributionMapping dm_full;
-            // force that distribution mapping to only go to the root proc
-            Vector<int> pmap = {0};
-            dm_full.define(pmap);
-            // make a FabArray to hold the phi data
-            full_phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba_full,phi_nodal_flag),dm_full,ncomps,ngPhi,tag("full_phi_fp"));
-            full_phi_fp[lev]->setVal(0.);
-        }
     }
 
     if (do_subcycling == 1 && lev == 0)

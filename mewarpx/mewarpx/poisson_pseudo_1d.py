@@ -28,7 +28,6 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
             grid=grid, method=kwargs.pop('method', 'Multigrid'),
             required_precision=1, **kwargs
         )
-        mwxrun.simulation.allocate_full_rho_phi = True
 
     def initialize_inputs(self):
         """Grab geometrical quantities from the grid. The boundary potentials
@@ -133,11 +132,9 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
             return
 
         # get rho from WarpX
-        self.rho_data = mwxrun.get_gathered_rho_grid()
-        # run superLU solver only on the root processor
-        if mwxrun.me == 0:
-            self.rho_data = self.rho_data[0][:,:,0]
-            self.solve()
+        self.rho_data = mwxrun.get_gathered_rho_grid()[:,:,0]
+        # run superLU solver to get phi
+        self.solve()
         # write phi to WarpX
         mwxrun.set_phi_grid(self.phi)
 

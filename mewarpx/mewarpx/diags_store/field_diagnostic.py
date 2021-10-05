@@ -97,8 +97,6 @@ class FieldDiagnostic(WarpXDiagnostic):
                 if param == 'rho':
                     data = mwxrun.get_gathered_rho_grid(include_ghosts=False)
                     if mwxrun.me == 0:
-                        data = np.array(data[0])
-
                         fig, ax = plt.subplots(1, 1, figsize=(14, 14))
                         plotting.ArrayPlot(
                             array=data[:, :, 0],
@@ -109,8 +107,6 @@ class FieldDiagnostic(WarpXDiagnostic):
                     for species in self.plot_species_list:
                         data = mwxrun.get_gathered_rho_grid(include_ghosts=False, species_name=species)
                         if mwxrun.me == 0:
-                            data = np.array(data[0])
-
                             fig, ax = plt.subplots(1, 1, figsize=(14, 14))
                             plotting.ArrayPlot(
                                 array=data[:, :, 0],
@@ -121,8 +117,6 @@ class FieldDiagnostic(WarpXDiagnostic):
                 elif param == 'phi':
                     data = mwxrun.get_gathered_phi_grid(include_ghosts=False)
                     if mwxrun.me == 0:
-                        data = np.array(data[0])
-
                         fig, ax = plt.subplots(1, 1, figsize=(14, 14))
                         plotting.ArrayPlot(
                             array=data,

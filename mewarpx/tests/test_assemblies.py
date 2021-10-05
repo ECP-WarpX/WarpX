@@ -79,7 +79,7 @@ def test_embedded_cylinder():
     # Check phi results against reference data                            #
     #######################################################################
 
-    phi = mwxrun.get_gathered_phi_grid()[0]
+    phi = mwxrun.get_gathered_phi_grid(include_ghosts=False)
     # np.save('embedded_cylinder_phi.npy', phi)
     ref_phi = np.load(os.path.join(
         testing_util.test_dir, 'embedded_boundary', 'embedded_cylinder_phi.npy'
@@ -157,8 +157,8 @@ def test_embedded_rectangle():
     # Check phi results against reference data                            #
     #######################################################################
 
-    phi = mwxrun.get_gathered_phi_grid()[0]
-
+    phi = mwxrun.get_gathered_phi_grid(include_ghosts=False)
+    # np.save('embedded_rectangle_phi.npy', phi)
     ref_phi = np.load(os.path.join(
         testing_util.test_dir, 'embedded_boundary', 'embedded_rectangle_phi.npy'
     ))

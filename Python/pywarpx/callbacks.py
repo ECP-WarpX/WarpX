@@ -505,3 +505,4 @@ def isinstalledappliedfields(f):
     "Checks if the function is called when which applies fields"
     raise Exception('applied fields call back not implemented yet')
     return _appliedfields.isinstalledfuncinlist(f)
+

@@ -292,8 +292,6 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
-        if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
-
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
             if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
             // Electrostatic solver:

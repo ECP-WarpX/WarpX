@@ -157,7 +157,7 @@ def _get_rho_ions():
     rho_data = mwxrun.get_gathered_rho_grid('he_ions', False)
     if mwxrun.me == 0:
         rho_array += (
-            np.mean(rho_data[0][:,:,0], axis=0) / constants.q_e / diag_steps
+            np.mean(rho_data[:,:,0], axis=0) / constants.q_e / diag_steps
         )
 
 ##########################
