@@ -310,7 +310,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         queryWithParser(pp_species_name, "z_shift",z_shift);
 
 #ifdef WARPX_USE_OPENPMD
-        if (ParallelDescriptor::IOProcessor()) {
+        if (amrex::ParallelDescriptor::IOProcessor()) {
             m_openpmd_input_series = std::make_unique<openPMD::Series>(
                 str_injection_file, openPMD::Access::READ_ONLY);
 
@@ -375,11 +375,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 
         // Broadcast charge and mass to non-IO processors
         if (!charge_is_specified && !species_is_specified)
-            ParallelDescriptor::Bcast(&charge, 1,
-                ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::Bcast(&charge, 1,
+                amrex::ParallelDescriptor::IOProcessorNumber());
         if (!mass_is_specified && !species_is_specified)
-            ParallelDescriptor::Bcast(&mass, 1,
-                ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::Bcast(&mass, 1,
+                amrex::ParallelDescriptor::IOProcessorNumber());
 #else
         amrex::Abort("Plasma injection via external_file requires openPMD support: "
                      "Add USE_OPENPMD=TRUE when compiling WarpX.\n");
