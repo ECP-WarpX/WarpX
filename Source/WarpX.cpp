@@ -2323,8 +2323,8 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
 
     const int m = n_order / 2;
-    amrex::Vector<amrex::Real> coefs;
-    coefs.resize(m);
+    amrex::Vector<amrex::Real> coeffs;
+    coeffs.resize(m);
 
     // There are closed-form formula for these coefficients, but they result in
     // an overflow when evaluated numerically. One way to avoid the overflow is
@@ -2334,11 +2334,11 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     if (nodal == true)
     {
        // First coefficient
-       coefs[0] = m * 2. / (m+1);
+       coeffs[0] = m * 2. / (m+1);
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {
-           coefs[n] = - (m-n) * 1. / (m+n+1) * coefs[n-1];
+           coeffs[n] = - (m-n) * 1. / (m+n+1) * coeffs[n-1];
        }
     }
     // Coefficients for staggered finite-difference approximation
@@ -2350,15 +2350,15 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
            prod *= (m + k) / (4. * k);
        }
        // First coefficient
-       coefs[0] = 4 * m * prod * prod;
+       coeffs[0] = 4 * m * prod * prod;
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {
-           coefs[n] = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coefs[n-1];
+           coeffs[n] = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coeffs[n-1];
        }
     }
 
-    return coefs;
+    return coeffs;
 }
 
 void WarpX::ReorderFornbergCoefficients (amrex::Vector<amrex::Real>& ordered_coeffs,
