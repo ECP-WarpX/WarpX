@@ -174,6 +174,10 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
         p_mask[pair_index] = true;
         p_pair_reaction_weight[pair_index] = w_min/fusion_multiplier_eff;
     }
+    else
+    {
+        p_mask[pair_index] = false;
+    }
 
 }
 
