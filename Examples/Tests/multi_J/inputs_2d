@@ -73,8 +73,6 @@ driver.uy_th = 0.
 driver.uz_th = 0.
 driver.zinject_plane = 2e-3
 driver.rigid_advance = true
-driver.projected = true
-driver.focused = false
 driver.initialize_self_fields = 0
 driver.do_symmetrize = 1
 
@@ -98,8 +96,6 @@ driver_back.uy_th = 0.
 driver_back.uz_th = 0.
 driver_back.zinject_plane = 2e-3
 driver_back.rigid_advance = true
-driver_back.projected = true
-driver_back.focused = false
 driver_back.initialize_self_fields = 0
 driver_back.do_symmetrize = 1
 driver_back.do_backward_propagation = true
