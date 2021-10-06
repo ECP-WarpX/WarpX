@@ -782,34 +782,10 @@ private:
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
     /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs
+     * \brief Synchronize the nodal points of a given field MultiFab (all mesh refinement levels)
      */
-    void NodalSyncE ();
-
-    /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level
-     */
-    void NodalSyncE (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level and patch
-     */
-    void NodalSyncE (int lev, PatchType patch_type);
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs
-     */
-    void NodalSyncB ();
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level
-     */
-    void NodalSyncB (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level and patch
-     */
-    void NodalSyncB (int lev, PatchType patch_type);
+    void NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
+                    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp);
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
