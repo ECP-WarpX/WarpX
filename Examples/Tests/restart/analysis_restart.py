@@ -8,15 +8,17 @@ import checksumAPI
 
 # Load output data generated after restart
 filename = sys.argv[1]
-ds_restart = yt.load( filename )
+ds_restart = yt.load(filename)
 ad_restart = ds_restart.covering_grid(level = 0,
-        left_edge = ds_restart.domain_left_edge, dims = ds_restart.domain_dimensions)
+                                      left_edge = ds_restart.domain_left_edge,
+                                      dims = ds_restart.domain_dimensions)
 
 # Load output data generated from initial run
 benchmark = 'orig_' + filename
-ds_benchmark = yt.load( benchmark )
+ds_benchmark = yt.load(benchmark)
 ad_benchmark = ds_benchmark.covering_grid(level = 0,
-        left_edge = ds_benchmark.domain_left_edge, dims = ds_benchmark.domain_dimensions)
+                                          left_edge = ds_benchmark.domain_left_edge,
+                                          dims = ds_benchmark.domain_dimensions)
 
 # Loop over all fields (all particle species, all particle attributes, all grid fields)
 # and compare output data generated from initial run with output data generated after restart
