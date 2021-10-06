@@ -22,18 +22,6 @@ jobs:
     matrix:
       cartesian2d:
         WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
-      cartesian3d:
-        WARPX_CI_REGULAR_CARTESIAN_3D: 'TRUE'
-      python:
-        WARPX_CI_PYTHON_MAIN: 'TRUE'
-      single_precision:
-        WARPX_CI_SINGLE_PRECISION: 'TRUE'
-      rz_or_nompi:
-        WARPX_CI_RZ_OR_NOMPI: 'TRUE'
-      qed:
-        WARPX_CI_QED: 'TRUE'
-      embedded_boundary:
-        WARPX_CI_EB: 'TRUE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 90
@@ -42,9 +30,10 @@ jobs:
   - script: |
       cat /proc/cpuinfo | grep "model name" | sort -u
       sudo apt-get update
-      sudo apt-get install -y ccache gcc gfortran g++ openmpi-bin libopenmpi-dev \
-        libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
-        python3 python3-pip python3-setuptools libblas-dev liblapack-dev
+      sudo apt-get install -y ccache curl gcc gfortran g++ git openmpi-bin \
+        libopenmpi-dev libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev \
+        pkg-config make python3 python3-pip python3-setuptools libblas-dev \
+        liblapack-dev
       sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
       sudo update-alternatives --set python /usr/bin/python3
       python -m pip install --upgrade pip
@@ -68,5 +57,10 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: |
-      ./run_test.sh
+      td=$(date +"%Y-%m-%d")
+      ./run_test.sh ionization_boost || cd test_dir/rt-WarpX/WarpX-tests/${td}/ionization_boost
+      cd test_dir/rt-WarpX/WarpX-tests/${td}/ionization_boost || echo ok
+
+      ls
+      cat Backtrace*
     displayName: 'Build & test'
