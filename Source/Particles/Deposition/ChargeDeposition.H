@@ -19,18 +19,18 @@
 #include <AMReX.H>
 
 /* \brief Charge Deposition for thread thread_num
- * \param GetPosition : A functor for returning the particle position.
- * \param wp           : Pointer to array of particle weights.
- * \param ion_lev      : Pointer to array of particle ionization level. This is
-                         required to have the charge of each macroparticle
-                         since q is a scalar. For non-ionizable species,
-                         ion_lev is a null pointer.
- * \param rho_fab      : FArrayBox of charge density, either full array or tile.
- * \param np_to_depose : Number of particles for which current is deposited.
- * \param dx           : 3D cell size
- * \param xyzmin       : Physical lower bounds of domain.
- * \param lo           : Index lower bounds of domain.
- * \param q            : species charge.
+ * \param GetPosition   : A functor for returning the particle position.
+ * \param wp            : Pointer to array of particle weights.
+ * \param ion_lev       : Pointer to array of particle ionization level. This is
+                          required to have the charge of each macroparticle
+                          since q is a scalar. For non-ionizable species,
+                          ion_lev is a null pointer.
+ * \param rho_fab       : FArrayBox of charge density, either full array or tile.
+ * \param np_to_deposit : Number of particles for which charge is deposited.
+ * \param dx            : 3D cell size
+ * \param xyzmin        : Physical lower bounds of domain.
+ * \param lo            : Index lower bounds of domain.
+ * \param q             : species charge.
  * \param n_rz_azimuthal_modes: Number of azimuthal modes when using RZ geometry.
  * \param cost: Pointer to (load balancing) cost corresponding to box where present particles deposit current.
  * \param load_balance_costs_update_algo: Selected method for updating load balance costs.
@@ -40,7 +40,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                                const amrex::ParticleReal * const wp,
                                const int * const ion_lev,
                                amrex::FArrayBox& rho_fab,
-                               const long np_to_depose,
+                               const long np_to_deposit,
                                const std::array<amrex::Real,3>& dx,
                                const std::array<amrex::Real, 3> xyzmin,
                                const amrex::Dim3 lo,
@@ -74,7 +74,8 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     const amrex::Real zmin = xyzmin[2];
 
     amrex::Array4<amrex::Real> const& rho_arr = rho_fab.array();
-    amrex::IntVect const rho_type = rho_fab.box().type();
+    auto rho_box = rho_fab.box();
+    amrex::IntVect const rho_type = rho_box.type();
 
     constexpr int zdir = (AMREX_SPACEDIM - 1);
     constexpr int NODE = amrex::IndexType::NODE;
@@ -88,9 +89,50 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         *cost_real = 0.;
     }
 #endif
-    amrex::ParallelFor(
-        np_to_depose,
-        [=] AMREX_GPU_DEVICE (long ip) {
+
+#if defined(AMREX_USE_GPU)
+    const int threads_per_block = 128;
+    const int nblocks = (std::max(np_to_deposit, rho_box.numPts()) + threads_per_block - 1) / threads_per_block;
+    std::size_t shared_mem_bytes = rho_box.numPts()*sizeof(amrex::Real);
+
+    const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
+
+    if (shared_mem_bytes > max_shared_mem_bytes) {
+      std::cout << "Tile size for charge deposition of " << shared_mem_bytes
+                << " bytes would not fit in GPU's shared memory of " << max_shared_mem_bytes << " bytes";
+      amrex::Abort("Tile size too big for GPU shared memory charge deposition");
+    }
+#endif
+
+#if defined(AMREX_USE_GPU)
+    amrex::launch(
+                  nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
+                  [=] AMREX_GPU_DEVICE () noexcept
+#else // defined(AMREX_USE_GPU)
+    amrex::ParallelFor(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip) noexcept
+#endif
+      {
+#if defined(AMREX_USE_GPU)
+        long ip = threadIdx.x + (long)blockIdx.x*blockDim.x;
+
+        Gpu::SharedMemory<amrex::Real> gsm;
+        amrex::Real* const shared = gsm.dataPtr();
+
+        auto rho_tmp = amrex::Array4<amrex::Real>(rho_arr);
+
+        rho_tmp.p = shared;
+
+        // Zero-initialize the temporary array in shared memory
+        volatile amrex::Real* vs = shared;
+        for (int i = threadIdx.x; i < rho_box.numPts(); i += blockDim.x)
+          vs[i] = 0.0;
+        __syncthreads();
+#else
+        auto rho_tmp = rho_arr;
+#endif // defined(AMREX_USE_GPU)
+
+        if (ip < np_to_deposit) {
+
 #if defined(WARPX_USE_GPUCLOCK)
             KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
@@ -156,19 +198,19 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                 k = compute_shape_factor(sz, z - 0.5_rt);
             }
 
-            // Deposit charge into rho_arr
+            // Deposit charge into rho_tmp
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
                     amrex::Gpu::Atomic::AddNoRet(
-                        &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 0),
+                        &rho_tmp(lo.x+i+ix, lo.y+k+iz, 0, 0),
                         sx[ix]*sz[iz]*wq);
 #if (defined WARPX_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
-                        amrex::Gpu::Atomic::AddNoRet( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
-                        amrex::Gpu::Atomic::AddNoRet( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
+                        amrex::Gpu::Atomic::AddNoRet( &rho_tmp(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
+                        amrex::Gpu::Atomic::AddNoRet( &rho_tmp(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
                         xy = xy*xy0;
                     }
 #endif
@@ -179,14 +221,24 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
                         amrex::Gpu::Atomic::AddNoRet(
-                            &rho_arr(lo.x+i+ix, lo.y+j+iy, lo.z+k+iz),
+                            &rho_tmp(lo.x+i+ix, lo.y+j+iy, lo.z+k+iz),
                             sx[ix]*sy[iy]*sz[iz]*wq);
                     }
                 }
             }
 #endif
         }
-        );
+
+#if defined(AMREX_USE_GPU)
+        __syncthreads();
+
+        for (int i = threadIdx.x; i < rho_box.numPts(); i += blockDim.x) {
+          amrex::Real r = vs[i];
+          amrex::Gpu::Atomic::AddNoRet(rho_arr.dataPtr()+i, r);
+        }
+#endif // defined(AMREX_USE_GPU)
+      }
+      );
 #if defined(WARPX_USE_GPUCLOCK)
         if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
             amrex::Gpu::streamSynchronize();
