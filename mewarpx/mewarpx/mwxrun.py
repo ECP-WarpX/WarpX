@@ -28,7 +28,7 @@ import atexit
 import os.path
 
 from pywarpx import _libwarpx, picmi, fields
-from mewarpx.utils_store import mwxconstants as constants, parallel_util, profileparser
+from mewarpx.utils_store import mwxconstants as constants, parallel_util, profileparser, init_restart_util
 from mewarpx.utils_store.util import compute_step
 
 logger = logging.getLogger(__name__)
@@ -103,28 +103,48 @@ class MEWarpXRun(object):
         return self.dt
 
 
-    def init_run(self):
+    def init_run(self, restart=None, checkpoint_dir="diags",
+                 checkpoint_prefix=init_restart_util.default_checkpoint_name,
+                additional_steps=None):
         if self.initialized:
             raise RuntimeError(
                 "Attempted to initialize the mwxrun class multiple times.")
+        try:
+            if restart != False:
+                force_restart = bool(restart)
+                restart = init_restart_util.run_restart(
+                    checkpoint_dir, checkpoint_prefix,
+                    force_restart, additional_steps
+                )
 
-        self.simulation.initialize_inputs()
-        self.simulation.initialize_warpx()
+            self.simulation.initialize_inputs()
+            self.simulation.initialize_warpx()
 
-        self.me = _libwarpx.libwarpx.warpx_getMyProc()
-        self.n_procs = _libwarpx.libwarpx.warpx_getNProcs()
+            self.me = _libwarpx.libwarpx.warpx_getMyProc()
+            self.n_procs = _libwarpx.libwarpx.warpx_getNProcs()
 
-        # A level is needed for many things like level number. For now I'm
-        # statically setting the default level here. I'm not sure of pitfalls
-        # or how to handle it more generally yet.
-        self.lev = _libwarpx.libwarpx.warpx_finestLevel()
+            # A level is needed for many things like level number. For now I'm
+            # statically setting the default level here. I'm not sure of pitfalls
+            # or how to handle it more generally yet.
+            self.lev = _libwarpx.libwarpx.warpx_finestLevel()
 
-        self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
-        self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
-        self.rho_wrapper_no_ghosts = fields.RhoFPWrapper(self.lev, False)
-        self.phi_wrapper_no_ghosts = fields.PhiFPWrapper(self.lev, False)
+            self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
+            self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
+            self.rho_wrapper_no_ghosts = fields.RhoFPWrapper(self.lev, False)
+            self.phi_wrapper_no_ghosts = fields.PhiFPWrapper(self.lev, False)
 
-        self.initialized = True
+            self.initialized = True
+
+        except RuntimeError:
+            if restart:
+                logger.error(
+                    "init_restart_util returned success for restarting from"
+                    f"a checkpoint starting with {checkpoint_prefix} "
+                    "but there was an error initializing WarpX!"
+                )
+            else:
+                logger.error("There was an error initializing the run!")
+            raise
 
     def _set_geom_str(self):
         """Set the geom_str variable corresponding to the geometry used.

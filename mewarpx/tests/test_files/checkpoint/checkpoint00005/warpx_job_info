@@ -1,0 +1,87 @@
+==============================================================================
+ WarpX Job Information
+==============================================================================
+number of MPI processes: 1
+number of threads:       1
+
+
+==============================================================================
+ Build Information
+==============================================================================
+build date:    2021-10-01 12:17:36.139423
+build machine: Linux penning 5.11.0-37-generic #41~20.04.2-Ubuntu SMP Fri Sep 24 09:06:38 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux
+build dir:     /home/mkieburtz/Documents/WarpX
+AMReX dir:     ../amrex
+
+COMP:          gcc
+COMP version:  9.3.0
+
+C++ compiler:  mpicxx
+C++ flags:      -Werror=return-type -g -O3 -Wall -Wextra -Wpedantic -Wnull-dereference -Wfloat-conversion -Wshadow -Woverloaded-virtual -std=c++14  -fopenmp -pthread -fPIC -DWARPX_QED  -DAMREX_TINY_PROFILING -DBL_USE_MPI -DAMREX_USE_MPI -DAMREX_MPI_THREAD_MULTIPLE -DBL_USE_OMP -DAMREX_USE_OMP -DBL_NO_FORT -DAMREX_GIT_VERSION="21.10" -DBL_SPACEDIM=2 -DAMREX_SPACEDIM=2 -DBL_FORT_USE_UNDERSCORE -DAMREX_FORT_USE_UNDERSCORE -DBL_Linux -DAMREX_Linux -DAMREX_PARTICLES -DNDEBUG -DOMPI_SKIP_MPICXX -DWARPX_DIM_XZ -DAMREX_PARTICLES -DWARPX_GIT_VERSION="21.09-219-g1a110b3c3afe-dirty" -DPICSAR_GIT_VERSION="c16b642e3dcf" -DPICSAR_NO_ASSUMED_ALIGNMENT -DWARPX -DWARPX_USE_GPUCLOCK -Itmp_build_dir/s/2d.gnu.TPROF.MTMPI.OMP.Lib.QED.GPUCLOCK.EXE -I. -I./Source -I./Source/Particles/Filter -I../amrex/Src/Base -I../amrex/Src/Base/Parser -I../amrex/Src/Particle -I../amrex/Src/Boundary -I../amrex/Src/AmrCore -I../amrex/Src/LinearSolvers/MLMG -I../picsar/multi_physics/QED/include -I../amrex/Tools/C_scripts 
+
+Fortran comp:  mpif90
+Fortran flags:  -g -O3 -ffree-line-length-none -fno-range-check -fno-second-underscore -fimplicit-none -fPIC -DWARPX_QED
+
+Link flags:    -fopenmp -Xlinker -rpath -Xlinker '/home/mkieburtz/Documents/WarpX'  -L. 
+Libraries:      -pthread -I/usr/lib/x86_64-linux-gnu/openmpi/lib -L/usr/lib/x86_64-linux-gnu/openmpi/lib -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi -lmpi_cxx -lmpi 
+
+WarpX  git describe: 21.09-219-g1a110b3c-dirty
+AMReX  git describe: 21.10
+PICSAR git describe: c16b642e
+
+
+==============================================================================
+ Grid Information
+==============================================================================
+ level: 0
+   number of boxes = 16
+   maximum zones   = 64 64 
+
+ Boundary conditions
+   -x: interior
+   +x: interior
+   -y: interior
+   +y: interior
+
+
+==============================================================================
+ Inputs File Parameters
+==============================================================================
+warpx.verbose = 0
+warpx.const_dt = 7.5e-10
+warpx.allocate_full_rho_phi = 1
+warpx.do_electrostatic = labframe
+warpx.self_fields_required_precision = 1e-06
+warpx.self_fields_max_iters = 10000
+warpx.self_fields_verbosity = 0
+amr.n_cell = 64 64
+amr.max_grid_size = 16
+amr.max_level = 0
+geometry.coord_sys = 0
+geometry.prob_lo = -0.0335 -0.0
+geometry.prob_hi = 0.0335 0.067
+boundary.field_lo = periodic pec
+boundary.field_hi = periodic pec
+boundary.particle_lo = periodic absorbing
+boundary.particle_hi = periodic absorbing
+algo.particle_shape = 1
+particles.species_names = electrons
+electrons.mass = m_e
+electrons.charge = -q_e
+electrons.initialize_self_fields = 0
+electrons.save_particles_at_zlo = 1
+electrons.save_particles_at_zhi = 1
+diagnostics.diags_names = fields chkpoint
+fields.diag_type = Full
+fields.format = plotfile
+fields.intervals = 2
+fields.fields_to_plot = phi
+fields.file_prefix = diags/fields/fields
+chkpoint.intervals = 5
+chkpoint.diag_type = Full
+chkpoint.format = checkpoint
+amrex.abort_on_out_of_gpu_memory = 1
+geometry.is_periodic = 1 0
+vismf.usesingleread = 1
+vismf.usesinglewrite = 1
+particles.particles_nfiles = 1024
