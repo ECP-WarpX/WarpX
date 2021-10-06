@@ -90,7 +90,19 @@ public:
     /**
      * \brief operator() of the NuclearFusionFunc class. Performs nuclear fusions at the cell level
      * using the algorithm described in Higginson et al., Journal of Computational Physics 388,
-     * 439-453 (2019).
+     * 439-453 (2019). Note that this function does not yet create the product particles, but
+     * instead fills an array p_mask that stores which collisions result in a fusion event.
+     *
+     * Also note that there are three main differences between this implementation and the
+     * algorithm described in Higginson's paper:
+     * - 1) The transformation from the lab frame to the center of mass frame is nonrelativistic
+     * in Higginson's paper. Here, we implement a relativistic generalization.
+     * - 2) The behaviour when the estimated fusion probability is greater than one is not
+     * specified in Higginson's paper. Here, we provide an implementation using two runtime
+     * dependent parameters (fusion probability threshold and fusion probability target value). See
+     * documentation for more details.
+     * - 3) Here, we divide the weight of a particle by the number of times it is paired with other
+     * particles. This was not explicitly specified in Higginson's paper.
      *
      * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
      * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
@@ -99,12 +111,16 @@ public:
      * @param[in] m1 and m2 are masses.
      * @param[in] dt is the time step length between two collision calls.
      * @param[in] dV is the volume of the corresponding cell.
-     * @param[in] cell_start_pair is the start index of the pairs in that cell
+     * @param[in] cell_start_pair is the start index of the pairs in that cell.
      * @param[out] p_mask is a mask that will be set to true if a fusion event occurs for a given
-     * pair
+     * pair. It is only needed here to store information that will be used later on when actually
+     * creating the product particles.
      * @param[out] p_pair_indices_1 and p_pair_indices_2 are arrays that store the indices of the
-     * particles of a given pair
-     * @param[out] p_pair_reaction_weight stores the weight of the product particles
+     * particles of a given pair. They are only needed here to store information that will be used
+     * later on when actually creating the product particles.
+     * @param[out] p_pair_reaction_weight stores the weight of the product particles. It is only
+     * needed here to store information that will be used later on when actually creating the
+     * product particles.
      * @param[in] engine the random engine.
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
