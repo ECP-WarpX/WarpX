@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
 
@@ -408,6 +408,7 @@ It can be used in all input parameters that consist of one or more integers or f
 Integer input expecting boolean, 0 or 1, are not parsed.
 Note that when multiple values are expected, the expressions are space delimited.
 For integer input values, the expressions are evaluated as real numbers and the final result rounded to the nearest integer.
+See `this section <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parser>`_ of the AMReX documentation for a complete list of functions supported by the math parser.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
