@@ -53,8 +53,7 @@ def test_create_checkpoints():
 
     checkpoint = CheckPointDiagnostic(CHECKPOINT_PERIOD, CHECKPOINT_NAME)
 
-    mwxrun.simulation.initialize_inputs()
-    mwxrun.simulation.initialize_warpx()
+    mwxrun.init_run(restart=False)
 
     # Run the main WARP loop
     mwxrun.simulation.step(MAX_STEPS)
