@@ -246,7 +246,6 @@ WarpX::Evolve (int numsteps)
         bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
-
         int num_moved = MoveWindow(step+1, move_j);
 
         mypc->ContinuousFluxInjection(dt[0]);
@@ -292,6 +291,7 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
+#if !(defined WARPX_DIM_1D_Z)
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
             if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
             // Electrostatic solver:
@@ -304,6 +304,7 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
             if (warpx_py_afterEsolve) warpx_py_afterEsolve();
         }
+#endif
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {

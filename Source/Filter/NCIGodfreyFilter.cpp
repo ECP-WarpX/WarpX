@@ -21,6 +21,7 @@
 #include <vector>
 
 using namespace amrex;
+#if (AMREX_SPACEDIM != 1) //1D not implemented
 
 NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdtodz, bool nodal_gather){
     // Store parameters into class data members
@@ -129,3 +130,4 @@ void NCIGodfreyFilter::ComputeStencils(){
 
     Gpu::synchronize();
 }
+#endif //1D

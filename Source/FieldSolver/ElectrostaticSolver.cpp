@@ -55,6 +55,7 @@
 
 using namespace amrex;
 
+#if !(defined WARPX_DIM_1D_Z)
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
@@ -816,3 +817,4 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
         }
     }
 }
+#endif //1D

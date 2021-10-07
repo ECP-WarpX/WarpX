@@ -1334,7 +1334,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
 #if   (AMREX_SPACEDIM == 1)
-    amrex::RealVect dx = {WarpX::CellSize(lev)[2]};
+    amrex::RealVect dx({WarpX::CellSize(lev)[2]});
 #elif   (AMREX_SPACEDIM == 2)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
 #elif (AMREX_SPACEDIM == 3)

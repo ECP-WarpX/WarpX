@@ -68,7 +68,7 @@
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
-
+#if !(defined WARPX_DIM_1D_Z) // not implemented for 1D yet
 namespace
 {
     Vector<Real> CrossProduct (const Vector<Real>& a, const Vector<Real>& b)
@@ -797,3 +797,4 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
         }
         );
 }
+#endif //1D

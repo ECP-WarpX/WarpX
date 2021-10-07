@@ -219,6 +219,8 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
             amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0., };
 #elif (AMREX_SPACEDIM == 2)
             amrex::Array<amrex::Real,3> galilean_shift = { 0., std::numeric_limits<Real>::quiet_NaN(),  0., } ;
+#elif (AMREX_SPACEDIM == 1)
+            amrex::Array<amrex::Real,3> galilean_shift = {std::numeric_limits<Real>::quiet_NaN(), std::numeric_limits<Real>::quiet_NaN(),  0., } ;
 #endif
         const amrex::Real zmin_box = WarpX::LowerCorner(bx, galilean_shift, lev)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev)[2];

@@ -69,12 +69,17 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
     for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
         amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
+#if AMREX_SPACEDIM == 1
+        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[0][ispecies]);
+        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[1][ispecies]);
+#elif AMREX_SPACEDIM == 2
         pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
         pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
-#if AMREX_SPACEDIM == 2
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[2][ispecies]);
         pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[3][ispecies]);
 #else
+        pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
+        pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
         pp_species.query("save_particles_at_ylo", m_do_boundary_buffer[2][ispecies]);
         pp_species.query("save_particles_at_yhi", m_do_boundary_buffer[3][ispecies]);
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[4][ispecies]);

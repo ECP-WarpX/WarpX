@@ -59,6 +59,16 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     //    12,13: emittance x,z
     //       14: charge
     m_data.resize(15, 0.0_rt);
+#elif (defined WARPX_DIM_1D_Z)
+    //       0 : mean z
+    //   1,2,3 : mean px,py,pz
+    //       4 : gamma
+    //       5 : rms z
+    //   6,7,8 : rms px,py,pz
+    //       9 : rms gamma
+    //      10 : emittance z
+    //      11 : charge
+    m_data.resize(12, 0.0_rt);
 #endif
 
     if (ParallelDescriptor::IOProcessor())
@@ -111,6 +121,23 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             ofs << "[" << c++ << "]emittance_x(m)";   ofs << m_sep;
             ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
             ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
+#elif (defined WARPX_DIM_1D_Z)
+            int c = 0;
+            ofs << "#";
+            ofs << "[" << c++ << "]step()";           ofs << m_sep;
+            ofs << "[" << c++ << "]time(s)";          ofs << m_sep;
+            ofs << "[" << c++ << "]z_mean(m)";        ofs << m_sep;
+            ofs << "[" << c++ << "]px_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]py_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]pz_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_mean()";     ofs << m_sep;
+            ofs << "[" << c++ << "]z_rms(m)";         ofs << m_sep;
+            ofs << "[" << c++ << "]px_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]py_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]pz_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_rms()";      ofs << m_sep;
+            ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
 #endif
             // close file
             ofs.close();
@@ -142,6 +169,8 @@ void BeamRelevant::ComputeDiags (int step)
     int const index_z = 2;
 #elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
     int const index_z = 1;
+#elif (defined WARPX_DIM_1D_Z)
+    int const index_z = 0;
 #endif
 
     // loop over species
@@ -175,6 +204,7 @@ void BeamRelevant::ComputeDiags (int step)
             return;
         }
 
+#if !(defined WARPX_DIM_1D_Z)
 #if (defined WARPX_DIM_RZ)
         // x mean
         Real x_mean = ReduceSum( myspc,
@@ -186,6 +216,7 @@ void BeamRelevant::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         { return p.pos(0) * p.rdata(PIdx::w); });
 #endif
+#endif //Not needed in 1D
 
 #if (defined WARPX_DIM_3D)
         // y mean
@@ -231,7 +262,9 @@ void BeamRelevant::ComputeDiags (int step)
         });
 
         // reduced sum over mpi ranks
+#if !(defined WARPX_DIM_1D_Z)
         ParallelDescriptor::ReduceRealSum(x_mean);  x_mean  /= w_sum;
+#endif
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum(y_mean);  y_mean  /= w_sum;
 #endif
@@ -241,6 +274,7 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum(uz_mean); uz_mean /= w_sum;
         ParallelDescriptor::ReduceRealSum(gm_mean); gm_mean /= w_sum;
 
+#if !(defined WARPX_DIM_1D_Z)
 #if (defined WARPX_DIM_RZ)
         // x mean square
         Real x_ms = ReduceSum( myspc,
@@ -258,6 +292,7 @@ void BeamRelevant::ComputeDiags (int step)
             Real const a = (p.pos(0)-x_mean) * (p.pos(0)-x_mean);
             return a * p.rdata(PIdx::w);
         });
+#endif
 #endif
 
 #if (defined WARPX_DIM_3D)
@@ -327,6 +362,7 @@ void BeamRelevant::ComputeDiags (int step)
             return a * p.rdata(PIdx::w);
         });
 
+#if !(defined WARPX_DIM_1D_Z)
 #if (defined WARPX_DIM_RZ)
         // x times ux
         Real xux = ReduceSum( myspc,
@@ -344,6 +380,7 @@ void BeamRelevant::ComputeDiags (int step)
             Real const a = (p.pos(0)-x_mean) * (p.rdata(PIdx::ux)-ux_mean);
             return a * p.rdata(PIdx::w);
         });
+#endif
 #endif
 
 #if (defined WARPX_DIM_3D)
@@ -382,9 +419,11 @@ void BeamRelevant::ComputeDiags (int step)
         });
 
         // reduced sum over mpi ranks
+#if !(defined WARPX_DIM_1D_Z)
         ParallelDescriptor::ReduceRealSum
             ( x_ms, ParallelDescriptor::IOProcessorNumber());
         x_ms /= w_sum;
+#endif
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
             ( y_ms, ParallelDescriptor::IOProcessorNumber());
@@ -405,9 +444,11 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
             (gm_ms, ParallelDescriptor::IOProcessorNumber());
         gm_ms /= w_sum;
+#if !(defined WARPX_DIM_1D_Z)
         ParallelDescriptor::ReduceRealSum
             (   xux, ParallelDescriptor::IOProcessorNumber());
         xux /= w_sum;
+#endif
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
             (   yuy, ParallelDescriptor::IOProcessorNumber());
@@ -455,6 +496,19 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[12] = std::sqrt(x_ms*ux_ms-xux*xux) / PhysConst::c;
         m_data[13] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
         m_data[14] = charge;
+#elif (defined WARPX_DIM_1D_Z)
+        m_data[0]  = z_mean;
+        m_data[1]  = ux_mean * m;
+        m_data[2]  = uy_mean * m;
+        m_data[3]  = uz_mean * m;
+        m_data[4]  = gm_mean;
+        m_data[5]  = std::sqrt(z_ms);
+        m_data[6]  = std::sqrt(ux_ms) * m;
+        m_data[7]  = std::sqrt(uy_ms) * m;
+        m_data[8] = std::sqrt(uz_ms) * m;
+        m_data[9] = std::sqrt(gm_ms);
+        m_data[10] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
+        m_data[11] = charge;
 #endif
     }
     // end loop over species

@@ -71,12 +71,13 @@ struct CartesianYeeAlgorithm {
         amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
+        using namespace amrex;
+#if (defined WARPX_DIM_1D_Z)
+        amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
+        return 0._rt; // 1D Cartesian: derivative along x is 0
+#else
         amrex::Real const inv_dx = coefs_x[0];
         return inv_dx*( F(i+1,j,k,ncomp) - F(i,j,k,ncomp) );
-#if defined WARPX_DIM_1D_Z
-        amrex::ignore_unused(F, coefs_x, n_coefs_x,
-            i, j, k, ncomp);
-        return 0._rt; // 1D Cartesian: derivative along x is 0
 #endif
     }
 
@@ -89,12 +90,13 @@ struct CartesianYeeAlgorithm {
         amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
+        using namespace amrex;
+#if (defined WARPX_DIM_1D_Z)
+        amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
+        return 0._rt; // 1D Cartesian: derivative along x is 0
+#else
         amrex::Real const inv_dx = coefs_x[0];
         return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
-#if defined WARPX_DIM_1D_Z
-        amrex::ignore_unused(F, coefs_x, n_coefs_x,
-            i, j, k, ncomp);
-        return 0._rt; // 1D Cartesian: derivative along x is 0
 #endif
     }
 
@@ -111,14 +113,10 @@ struct CartesianYeeAlgorithm {
         Real const inv_dy = coefs_y[0];
         amrex::ignore_unused(n_coefs_y);
         return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
-#elif (defined WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
-        return 0._rt; // 2D Cartesian: derivative along y is 0
-#elif (defined WARPX_DIM_1D_Z)
-        amrex::ignore_unused(F, coefs_y, n_coefs_y,
-            i, j, k, ncomp);
-        return 0._rt; // 1D Cartesian: derivative along y is 0
+        return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
 #else
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -139,14 +137,10 @@ struct CartesianYeeAlgorithm {
         Real const inv_dy = coefs_y[0];
         amrex::ignore_unused(n_coefs_y);
         return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
-        return 0._rt; // 2D Cartesian: derivative along y is 0
-#elif (defined WARPX_DIM_1D_Z)
-        amrex::ignore_unused(F, coefs_y, n_coefs_y,
-            i, j, k, ncomp);
-        return 0._rt; // 1D Cartesian: derivative along y is 0
+        return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
 #else
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -167,6 +161,8 @@ struct CartesianYeeAlgorithm {
         return inv_dz*( F(i,j,k+1,ncomp) - F(i,j,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         return inv_dz*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
+#elif (defined WARPX_DIM_1D_Z)
+        return inv_dz*( F(i+1,j,k,ncomp) - F(i,j,k,ncomp) );
 #endif
     }
 

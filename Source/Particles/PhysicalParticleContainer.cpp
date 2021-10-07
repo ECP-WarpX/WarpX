@@ -145,7 +145,7 @@ namespace
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = lo_corner[1] + (iv[1]+r.y)*dx[1];
         pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
-#else
+#elif (AMREX_SPACEDIM == 2)
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = 0.0_rt;
 #if   defined WARPX_DIM_XZ
@@ -154,6 +154,10 @@ namespace
         // Note that for RZ, r.y will be theta
         pos.z = lo_corner[1] + (iv[1]+r.z)*dx[1];
 #endif
+#else
+        pos.x = 0.0_rt;
+        pos.y = 0.0_rt;
+        pos.z = lo_corner[0] + (iv[0]+r.x)*dx[0];
 #endif
         return pos;
     }
@@ -185,7 +189,9 @@ namespace
         ) noexcept
     {
         p.pos(0) = 0._rt;
+#if (AMREX_SPACEDIM > 1)
         p.pos(1) = 0._rt;
+#endif
 #if (AMREX_SPACEDIM == 3)
         p.pos(2) = 0._rt;
 #endif
@@ -282,7 +288,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // If old particle positions should be saved add the needed components
     pp_species_name.query("save_previous_position", m_save_previous_position);
     if (m_save_previous_position) {
+#if (AMREX_SPACEDIM > 1)
         AddRealComp("prev_x");
+#endif
 #if (AMREX_SPACEDIM == 3)
         AddRealComp("prev_y");
 #endif
@@ -425,6 +433,11 @@ PhysicalParticleContainer::AddGaussianBeam (
             const Real x = distx(mt);
             constexpr Real y = 0._prt;
             const Real z = distz(mt);
+#elif (defined WARPX_DIM_1D_Z)
+            const Real weight = q_tot/(npart*charge*x_rms*y_rms);
+            constexpr Real x = 0._prt;
+            constexpr Real y = 0._prt;
+            const Real z = distz(mt);
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) < x_cut * x_rms     &&
@@ -496,15 +509,17 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
         auto const npart = ps["position"]["x"].getExtent()[0];
+#   ifndef (WARPX_DIM_1D_Z)
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
+#   endif
         std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
         double const position_unit_z = ps["position"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
-#   ifndef WARPX_DIM_XZ
+#   ifndef (WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
 #   endif
@@ -535,7 +550,11 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
+#   if !(defined WARPX_DIM_1D_Z)
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+#   else
+            ParticleReal const x = 0.0_prt;
+#   endif
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
@@ -825,8 +844,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pcounts[index] = num_ppc;
                 }
             }
-#if (AMREX_SPACEDIM != 3)
+#if (AMREX_SPACEDIM == 2)
             amrex::ignore_unused(k);
+#endif
+#if (AMREX_SPACEDIM == 1)
+            amrex::ignore_unused(j,k);
 #endif
         });
 
@@ -940,9 +962,20 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                                                    );
                     continue;
                 }
-#else
+#elif (AMREX_SPACEDIM == 2)
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
+                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
+                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                                   );
+                    continue;
+                }
+#else
+                amrex::ignore_unused(j,k);
+                if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
@@ -1096,6 +1129,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
                 p.pos(0) = xb;
                 p.pos(1) = pos.z;
+#else
+                p.pos(0) = pos.z;
 #endif
             }
         });
@@ -1273,8 +1308,10 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
                     pcounts[index] = num_ppc_int;
                 }
             }
-#if (AMREX_SPACEDIM != 3)
+#if (AMREX_SPACEDIM == 2)
             amrex::ignore_unused(k);
+#elif (AMREX_SPACEDIM == 1)
+            amrex::ignore_unused(j,k);
 #endif
         });
 
@@ -1388,9 +1425,15 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
                     p.id() = -1;
                     continue;
                 }
-#else
+#elif (AMREX_SPACEDIM == 2)
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
+                    p.id() = -1;
+                    continue;
+                }
+#else
+                amrex::ignore_unused(j,k);
+                if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
                     p.id() = -1;
                     continue;
                 }
@@ -1477,6 +1520,8 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 #endif
                 p.pos(0) = xb;
                 p.pos(1) = pos.z;
+#else
+                p.pos(0) = pos.z;
 #endif
             }
         });
@@ -1754,7 +1799,9 @@ PhysicalParticleContainer::applyNCIFilter (
     const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
     const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
 
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    const Box& tbox = amrex::grow(box,{static_cast<int>(WarpX::noz)});
+#elif (AMREX_SPACEDIM == 2)
     const Box& tbox = amrex::grow(box,{static_cast<int>(WarpX::nox),
                 static_cast<int>(WarpX::noz)});
 #else
@@ -1822,7 +1869,13 @@ PhysicalParticleContainer::SplitParticles (int lev)
     long np_split;
     if(split_type==0)
     {
-        np_split = (AMREX_SPACEDIM == 3) ? 8 : 4;
+        if (AMREX_SPACEDIM == 3){
+           np_split = 8;
+        } else if (AMREX_SPACEDIM == 2){
+           np_split = 4;
+        } else {
+           np_split = 2;
+        }
     } else {
         np_split = 2*AMREX_SPACEDIM;
     }
@@ -1862,7 +1915,20 @@ PhysicalParticleContainer::SplitParticles (int lev)
                 // If particle is tagged, split it and put the
                 // split particles in local arrays psplit_x etc.
                 np_split_to_add += np_split;
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+                // Split particle in two along z axis
+                // 2 particles in 1d, split_type doesn't matter? Discuss with Remi
+                for (int ishift = -1; ishift < 2; ishift +=2 ){
+                    // Add one particle with offset in z
+                    psplit_x.push_back( xp );
+                    psplit_y.push_back( yp );
+                    psplit_z.push_back( zp + ishift*split_offset[2] );
+                    psplit_ux.push_back( uxp[i] );
+                    psplit_uy.push_back( uyp[i] );
+                    psplit_uz.push_back( uzp[i] );
+                    psplit_w.push_back( wp[i]/np_split );
+                }
+#elif (AMREX_SPACEDIM==2)
                 if (split_type==0){
                     // Split particle in two along each diagonals
                     // 4 particles in 2d
@@ -2119,7 +2185,9 @@ PhysicalParticleContainer::GetParticleSlice (
     WARPX_PROFILE("PhysicalParticleContainer::GetParticleSlice()");
 
     // Assume that the boost in the positive z direction.
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    AMREX_ALWAYS_ASSERT(direction == 0);
+#elif (AMREX_SPACEDIM == 2)
     AMREX_ALWAYS_ASSERT(direction == 1);
 #else
     AMREX_ALWAYS_ASSERT(direction == 2);
@@ -2414,7 +2482,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* y_old = nullptr;
     ParticleReal* z_old = nullptr;
     if (save_previous_position) {
+#if (AMREX_SPACEDIM > 1)
         x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
+#else
+    amrex::ignore_unused(x_old);
+#endif
 #if (AMREX_SPACEDIM == 3)
         y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
 #else
@@ -2451,7 +2523,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         getPosition(ip, xp, yp, zp);
 
         if (save_previous_position) {
+#if (AMREX_SPACEDIM > 1)
             x_old[ip] = xp;
+#endif
 #if (AMREX_SPACEDIM == 3)
             y_old[ip] = yp;
 #endif

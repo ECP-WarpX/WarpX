@@ -99,7 +99,9 @@ void FieldEnergy::ComputeDiags (int step)
 
         // get cell size
         Geometry const & geom = warpx.Geom(lev);
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+        auto dV = geom.CellSize(0);
+#elif (AMREX_SPACEDIM == 2)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);

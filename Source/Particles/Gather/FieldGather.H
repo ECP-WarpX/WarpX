@@ -97,6 +97,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
     // --- Compute shape factors
 
+    Compute_shape_factor< depos_order > const compute_shape_factor;
+    Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
+
 #if (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
     // x direction
     // Get particle position
@@ -120,8 +123,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int j_cell = 0;
     int j_node_v = 0;
     int j_cell_v = 0;
-    Compute_shape_factor< depos_order > const compute_shape_factor;
-    Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
     if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
         j_node = compute_shape_factor(sx_node, x);
     }
