@@ -1503,14 +1503,6 @@ Numerics and algorithms
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
 
-* ``psatd.fftw_plan_measure`` (`0` or `1`)
-    Defines whether the parameters of FFTW plans will be initialized by
-    measuring and optimizing performance (``FFTW_MEASURE`` mode; activated by default here).
-    If ``psatd.fftw_plan_measure`` is set to ``0``, then the best parameters of FFTW
-    plans will simply be estimated (``FFTW_ESTIMATE`` mode).
-    See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
-    for more information.
-
 * ``psatd.current_correction`` (`0` or `1`; default: `0`)
     If true, a current correction scheme in Fourier space is applied in order to guarantee charge conservation.
 
