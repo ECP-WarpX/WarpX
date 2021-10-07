@@ -979,7 +979,6 @@ WarpX::ReadParameters ()
     {
         ParmParse pp_psatd("psatd");
         pp_psatd.query("periodic_single_box_fft", fft_periodic_single_box);
-        pp_psatd.query("fftw_plan_measure", fftw_plan_measure);
 
         std::string nox_str;
         std::string noy_str;

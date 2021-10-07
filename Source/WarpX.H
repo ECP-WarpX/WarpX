@@ -1283,11 +1283,7 @@ private:
      * \brief Set averaged E,B fields to zero before new iteration
      */
     void PSATDEraseAverageFields ();
-#endif
 
-    int fftw_plan_measure = 1; // used with PSATD
-
-#ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_cp;
