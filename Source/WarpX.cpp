@@ -29,7 +29,6 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "Python/WarpXWrappers.h"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -571,12 +570,22 @@ WarpX::ReadParameters ()
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+            // Note that with the relativistic version, these parameters would be
+            // input for each species.
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
             queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
-            // Note that with the relativistic version, these parameters would be
-            // input for each species.
         }
+        // Parse the input file for domain boundary potentials
+        ParmParse pp_boundary("boundary");
+        pp_boundary.query("potential_lo_x", field_boundary_handler.potential_xlo_str);
+        pp_boundary.query("potential_hi_x", field_boundary_handler.potential_xhi_str);
+        pp_boundary.query("potential_lo_y", field_boundary_handler.potential_ylo_str);
+        pp_boundary.query("potential_hi_y", field_boundary_handler.potential_yhi_str);
+        pp_boundary.query("potential_lo_z", field_boundary_handler.potential_zlo_str);
+        pp_boundary.query("potential_hi_z", field_boundary_handler.potential_zhi_str);
+        pp_warpx.query("eb_potential(x,y,z,t)", field_boundary_handler.potential_eb_str);
+        field_boundary_handler.buildParsers();
 
         queryWithParser(pp_warpx, "const_dt", const_dt);
 
@@ -1004,7 +1013,6 @@ WarpX::ReadParameters ()
         }
 
         pp_psatd.query("current_correction", current_correction);
-        pp_psatd.query("v_comoving", m_v_comoving);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
         pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
@@ -1025,6 +1033,28 @@ WarpX::ReadParameters ()
         } else {
             pp_psatd.query("v_galilean", m_v_galilean);
         }
+
+        // Check whether the default comoving velocity should be used
+        bool use_default_v_comoving = false;
+        pp_psatd.query("use_default_v_comoving", use_default_v_comoving);
+        if (use_default_v_comoving)
+        {
+            m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
+        }
+        else
+        {
+            pp_psatd.query("v_comoving", m_v_comoving);
+        }
+
+        // Galilean and comoving algorithms should not be used together
+        if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
+        {
+            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.)
+            {
+                amrex::Abort("Galilean and comoving algorithms should not be used together");
+            }
+        }
+
         // Scale the Galilean/comoving velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
         for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;

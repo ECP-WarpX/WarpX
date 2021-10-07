@@ -127,7 +127,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     }
 
     // Setup particle collisions
-    collisionhandler = std::make_unique<CollisionHandler>();
+    collisionhandler = std::make_unique<CollisionHandler>(this);
 
 }
 
@@ -356,22 +356,6 @@ MultiParticleContainer::ReadParameters ()
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
-
-        // The boundary conditions are read in in ReadBCParams
-        m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
-#ifdef WARPX_DIM_3D
-        m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
-        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
-#else
-        m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
-#endif
-
-        {
-            ParmParse pp_boundary("boundary");
-            bool flag = false;
-            pp_boundary.query("reflect_all_velocities", flag);
-            m_boundary_conditions.Set_reflect_all_velocities(flag);
-        }
 
         ParmParse pp_lasers("lasers");
         pp_lasers.queryarr("names", lasers_names);
@@ -613,7 +597,7 @@ void
 MultiParticleContainer::ApplyBoundaryConditions ()
 {
     for (auto& pc : allcontainers) {
-        pc->ApplyBoundaryConditions(m_boundary_conditions);
+        pc->ApplyBoundaryConditions();
     }
 }
 
@@ -850,13 +834,14 @@ MultiParticleContainer::mapSpeciesProduct ()
 int
 MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
+    auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
     bool found = 0;
     // Loop over species
-    for (int i=0; i < static_cast<int>(species_names.size()); i++){
+    for (int i=0; i < static_cast<int>(species_and_lasers_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
-        if (species_names[i] == product_str){
+        if (species_and_lasers_names[i] == product_str){
             found = 1;
             i_product = i;
         }

@@ -1,8 +1,16 @@
 # --- Input file for MCC testing. There is already a test of the MCC
-# --- functionality so this just tests the PICMI interface
+# --- functionality. This tests the PICMI interface for the MCC and
+# --- provides an example of how an external Poisson solver can be
+# --- used for the field solve step.
+
+# _libwarpx requires the geometry be set before importing
+from pywarpx import geometry
+geometry.coord_sys = 0
+geometry.prob_lo = [0, 0]
 
 import numpy as np
-from pywarpx import picmi
+from scipy.sparse import csc_matrix, linalg as sla
+from pywarpx import picmi, callbacks, _libwarpx, fields
 
 constants = picmi.constants
 
@@ -31,12 +39,12 @@ DT = 1.0 / (400 * FREQ)
 ##########################
 
 # --- Number of time steps
-max_steps = 10
-diagnostic_intervals = "::5"
+max_steps = 50
+diagnostic_intervals = "::50"
 
 # --- Grid
 nx = 128
-ny = 16
+ny = 8
 
 xmin = 0.0
 ymin = 0.0
@@ -44,6 +52,162 @@ xmax = D_CA
 ymax = D_CA / nx * ny
 
 number_per_cell_each_dim = [32, 16]
+
+#############################
+# specialized Poisson solver
+# using superLU decomposition
+#############################
+
+class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
+
+    def __init__(self, grid, **kwargs):
+        """Direct solver for the Poisson equation using superLU. This solver is
+        useful for pseudo 1D cases i.e. diode simulations with small x extent.
+
+        Arguments:
+            grid (picmi.Cartesian2DGrid): Instance of the grid on which the
+            solver will be installed.
+        """
+        super(PoissonSolverPseudo1D, self).__init__(
+            grid=grid, method=kwargs.pop('method', 'Multigrid'),
+            required_precision=1, **kwargs
+        )
+        self.rho_wrapper = None
+        self.phi_wrapper = None
+        self.time_sum = 0.0
+
+    def initialize_inputs(self):
+        """Grab geometrical quantities from the grid.
+        """
+        self.right_voltage = self.grid.potential_xmax
+
+        # set WarpX boundary potentials to None since we will handle it
+        # ourselves in this solver
+        self.grid.potential_xmin = None
+        self.grid.potential_xmax = None
+        self.grid.potential_ymin = None
+        self.grid.potential_ymax = None
+        self.grid.potential_zmin = None
+        self.grid.potential_zmax = None
+
+        super(PoissonSolverPseudo1D, self).initialize_inputs()
+
+        self.nx = self.grid.nx
+        self.nz = self.grid.ny
+        self.dx = (self.grid.xmax - self.grid.xmin) / self.nx
+        self.dz = (self.grid.ymax - self.grid.ymin) / self.nz
+
+        if not np.isclose(self.dx, self.dz):
+            raise RuntimeError('Direct solver requires dx = dz.')
+
+        self.nxguardrho = 2
+        self.nzguardrho = 2
+        self.nxguardphi = 1
+        self.nzguardphi = 1
+
+        self.phi = np.zeros(
+            (self.nx + 1 + 2*self.nxguardphi,
+            self.nz + 1 + 2*self.nzguardphi)
+        )
+
+        self.decompose_matrix()
+
+        callbacks.installpoissonsolver(self._run_solve)
+
+    def decompose_matrix(self):
+        """Function to build the superLU object used to solve the linear
+        system."""
+        self.nxsolve = self.nx + 1
+        self.nzsolve = self.nz + 3
+
+        # Set up the computation matrix in order to solve A*phi = rho
+        A = np.zeros(
+            (self.nzsolve*self.nxsolve, self.nzsolve*self.nxsolve)
+        )
+        kk = 0
+        for ii in range(self.nxsolve):
+            for jj in range(self.nzsolve):
+                temp = np.zeros((self.nxsolve, self.nzsolve))
+
+                if ii == 0 or ii == self.nxsolve - 1:
+                    temp[ii, jj] = 1.
+                elif ii == 1:
+                    temp[ii, jj] = -2.0
+                    temp[ii-1, jj] = 1.0
+                    temp[ii+1, jj] = 1.0
+                elif ii == self.nxsolve - 2:
+                    temp[ii, jj] = -2.0
+                    temp[ii+1, jj] = 1.0
+                    temp[ii-1, jj] = 1.0
+                elif jj == 0:
+                    temp[ii, jj] = 1.0
+                    temp[ii, -3] = -1.0
+                elif jj == self.nzsolve - 1:
+                    temp[ii, jj] = 1.0
+                    temp[ii, 2] = -1.0
+                else:
+                    temp[ii, jj] = -4.0
+                    temp[ii, jj+1] = 1.0
+                    temp[ii, jj-1] = 1.0
+                    temp[ii-1, jj] = 1.0
+                    temp[ii+1, jj] = 1.0
+
+                A[kk] = temp.flatten()
+                kk += 1
+
+        A = csc_matrix(A, dtype=np.float32)
+        self.lu = sla.splu(A)
+
+    def _run_solve(self):
+        """Function run on every step to perform the required steps to solve
+        Poisson's equation."""
+
+        # get rho from WarpX
+        if self.rho_wrapper is None:
+            self.rho_wrapper = fields.RhoFPWrapper(0, True)
+        self.rho_data = self.rho_wrapper[Ellipsis][:,:,0]
+
+        self.solve()
+
+        if self.phi_wrapper is None:
+            self.phi_wrapper = fields.PhiFPWrapper(0, True)
+        self.phi_wrapper[Ellipsis] = self.phi
+
+    def solve(self):
+        """The solution step. Includes getting the boundary potentials and
+        calculating phi from rho."""
+        right_voltage = eval(
+            self.right_voltage,
+            {'t':_libwarpx.libwarpx.warpx_gett_new(0), 'sin':np.sin, 'pi':np.pi}
+        )
+        left_voltage = 0.0
+
+        rho = -self.rho_data[
+            self.nxguardrho:-self.nxguardrho, self.nzguardrho:-self.nzguardrho
+        ] / constants.ep0
+
+        # Construct b vector
+        nx, nz = np.shape(rho)
+        source = np.zeros((nx, nz+2), dtype=np.float32)
+        source[:,1:-1] = rho * self.dx**2
+
+        source[0] = left_voltage
+        source[-1] = right_voltage
+
+        # Construct b vector
+        b = source.flatten()
+
+        flat_phi = self.lu.solve(b)
+        self.phi[self.nxguardphi:-self.nxguardphi] = (
+            flat_phi.reshape(np.shape(source))
+        )
+
+        self.phi[:self.nxguardphi] = left_voltage
+        self.phi[-self.nxguardphi:] = right_voltage
+
+        # the electrostatic solver in WarpX keeps the ghost cell values as 0
+        self.phi[:,:self.nzguardphi] = 0
+        self.phi[:,-self.nzguardphi:] = 0
 
 ##########################
 # physics components
@@ -136,14 +300,13 @@ grid = picmi.Cartesian2DGrid(
     bc_ymax = 'periodic',
     warpx_potential_hi_x = "%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
     lower_boundary_conditions_particles=['absorbing', 'periodic'],
-    upper_boundary_conditions_particles=['absorbing', 'periodic'],
-    moving_window_velocity = None,
-    warpx_max_grid_size = nx//4
+    upper_boundary_conditions_particles=['absorbing', 'periodic']
 )
 
-solver = picmi.ElectrostaticSolver(
-    grid=grid, method='Multigrid', required_precision=1e-6
-)
+# solver = picmi.ElectrostaticSolver(
+#    grid=grid, method='Multigrid', required_precision=1e-6
+# )
+solver = PoissonSolverPseudo1D(grid=grid)
 
 ##########################
 # diagnostics
@@ -153,7 +316,7 @@ field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = diagnostic_intervals,
-    data_list = ['rho_electrons', 'rho_he_ions', 'phi'],
+    data_list = ['rho_electrons', 'rho_he_ions'],
     write_dir = '.',
     warpx_file_prefix = 'Python_background_mcc_plt'
 )

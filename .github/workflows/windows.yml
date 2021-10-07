@@ -3,13 +3,14 @@ name: 🪟 Windows
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.head_ref }}-windows
+  group: ${{ github.ref }}-${{ github.head_ref }}-windows
   cancel-in-progress: true
 
 jobs:
   build_win_msvc:
     name: MSVC C++17 w/o MPI
     runs-on: windows-latest
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: Build & Install
@@ -20,6 +21,7 @@ jobs:
   build_win_clang:
     name: Clang C++17 w/ OMP w/o MPI
     runs-on: windows-2019
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - uses: seanmiddleditch/gha-setup-ninja@master

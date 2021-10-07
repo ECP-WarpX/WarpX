@@ -31,7 +31,6 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpXWrappers.h"
 #include "Utils/IonizationEnergiesTable.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -291,6 +290,20 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
       amrex::Abort("Saving previous particle positions not yet implemented in RZ");
 #endif
     }
+
+    // Read reflection models for absorbing boundaries; defaults to a zero
+    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
+    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
+    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_model_ylo_str);
+    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_model_yhi_str);
+    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_model_zlo_str);
+    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_model_zhi_str);
+    m_boundary_conditions.BuildReflectionModelParsers();
+
+    ParmParse pp_boundary("boundary");
+    bool flag = false;
+    pp_boundary.query("reflect_all_velocities", flag);
+    m_boundary_conditions.Set_reflect_all_velocities(flag);
 
     // Get Galilean velocity
     ParmParse pp_psatd("psatd");
