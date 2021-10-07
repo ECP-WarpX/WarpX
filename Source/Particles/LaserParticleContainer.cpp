@@ -97,7 +97,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     getArrWithParser(pp_laser_name, "direction", m_nvec);
     getArrWithParser(pp_laser_name, "polarization", m_p_X);
 
-    pp_laser_name.query("pusher_algo", m_pusher_algo);
     getWithParser(pp_laser_name, "wavelength", m_wavelength);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_wavelength > 0, "The laser wavelength must be >0.");
