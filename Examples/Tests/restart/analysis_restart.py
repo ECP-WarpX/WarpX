@@ -9,6 +9,7 @@ import checksumAPI
 # Load output data generated after restart
 filename = sys.argv[1]
 ds_restart = yt.load(filename)
+ds_restart.force_periodicity()
 ad_restart = ds_restart.covering_grid(level = 0,
                                       left_edge = ds_restart.domain_left_edge,
                                       dims = ds_restart.domain_dimensions)
@@ -16,6 +17,7 @@ ad_restart = ds_restart.covering_grid(level = 0,
 # Load output data generated from initial run
 benchmark = 'orig_' + filename
 ds_benchmark = yt.load(benchmark)
+ds_benchmark.force_periodicity()
 ad_benchmark = ds_benchmark.covering_grid(level = 0,
                                           left_edge = ds_benchmark.domain_left_edge,
                                           dims = ds_benchmark.domain_dimensions)
