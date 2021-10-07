@@ -156,7 +156,7 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   runNode WarpX_MPI=ON WarpX_COMPUTE=CUDA WarpX_PSATD=ON WarpX_OPENPMD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
+   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON WARPX_OPENPMD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
 
 
 .. _running-cpp-summit:
