@@ -1066,6 +1066,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
 
         self.period = period
         self.write_dir = write_dir
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.name = name
 
         if self.name is None:
@@ -1085,6 +1086,10 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = 'checkpoint'
 
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
     def init(self, kw):
