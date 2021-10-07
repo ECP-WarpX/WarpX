@@ -2,7 +2,6 @@
 # then performs checkpoint / restart and compares the result
 # to the original simulation.
 
-from mpi4py import MPI
 from pywarpx import picmi
 import numpy as np
 import sys
