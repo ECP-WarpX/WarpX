@@ -1943,7 +1943,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/<diag_name>`)
     Root for output file names. Supports sub-directories.
 
-* ``<diag_name>.file_min_digits`` (`int`) optional (default `5`)
+* ``<diag_name>.file_min_digits`` (`int`) optional (default `6`)
     The minimum number of digits used for the iteration number appended to the diagnostic file names.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
