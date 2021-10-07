@@ -8,9 +8,9 @@
 #ifndef NUCLEAR_FUSION_FUNC_H_
 #define NUCLEAR_FUSION_FUNC_H_
 
-#include "BinaryCollisionUtils.H"
 #include "SingleNuclearFusionEvent.H"
 
+#include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
