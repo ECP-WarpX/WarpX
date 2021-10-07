@@ -17,6 +17,7 @@ and checks that they end up in the correct place (or are deleted).
 import sys
 import yt
 import numpy as np
+import os
 from scipy.constants import m_e, c
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -101,5 +102,5 @@ assert (np.all(vz == +vz0)), 'Periodic particle velocity not correct'
 assert (np.all(np.abs((xx - xxa)/xx) < 1.e-15)), 'Reflecting particle position not correct'
 assert (np.all(np.abs((zz - zza)/zz) < 1.e-15)), 'Periodic particle position not correct'
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
