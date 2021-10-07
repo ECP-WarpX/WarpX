@@ -98,6 +98,7 @@ public:
     void Evolve (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
+    MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -1028,7 +1029,6 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
-
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
