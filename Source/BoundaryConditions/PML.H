@@ -147,17 +147,13 @@ public:
     void PushPSATD (const int lev);
 #endif
 
-    void ExchangeB (const std::array<amrex::MultiFab*,3>& B_fp,
-                    const std::array<amrex::MultiFab*,3>& B_cp, int do_pml_in_domain);
-    void ExchangeE (const std::array<amrex::MultiFab*,3>& E_fp,
-                    const std::array<amrex::MultiFab*,3>& E_cp, int do_pml_in_domain);
     void CopyJtoPMLs (const std::array<amrex::MultiFab*,3>& j_fp,
                     const std::array<amrex::MultiFab*,3>& j_cp);
 
-    void ExchangeB (PatchType patch_type,
-                    const std::array<amrex::MultiFab*,3>& Bp, int do_pml_in_domain);
-    void ExchangeE (PatchType patch_type,
-                    const std::array<amrex::MultiFab*,3>& Ep, int do_pml_in_domain);
+    void Exchange (const std::array<amrex::MultiFab*,3>& mf_pml,
+                   const std::array<amrex::MultiFab*,3>& mf,
+                   const amrex::Geometry& geom,
+                   const int do_pml_in_domain);
 
     void CopyJtoPMLs (PatchType patch_type,
                     const std::array<amrex::MultiFab*,3>& jp);
@@ -187,14 +183,14 @@ public:
 
     ~PML () = default;
 
+    const amrex::Geometry* m_geom;
+    const amrex::Geometry* m_cgeom;
+
 private:
     bool m_ok;
 
     bool m_dive_cleaning;
     bool m_divb_cleaning;
-
-    const amrex::Geometry* m_geom;
-    const amrex::Geometry* m_cgeom;
 
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_E_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_fp;
