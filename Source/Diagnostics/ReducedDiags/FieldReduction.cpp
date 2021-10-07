@@ -36,7 +36,7 @@ FieldReduction::FieldReduction (std::string rd_name)
     // read number of levels
     int nLevel = 0;
     amrex::ParmParse pp_amr("amr");
-    pp_amr.query("max_level", nLevel);
+    queryWithParser(pp_amr, "max_level", nLevel);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(nLevel == 0,
         "FieldReduction reduced diagnostics does not work with mesh refinement.");
 

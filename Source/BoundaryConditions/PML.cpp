@@ -506,9 +506,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
 
         ParmParse pp_psatd("psatd");
-        pp_psatd.query("nx_guard", ngFFt_x);
-        pp_psatd.query("ny_guard", ngFFt_y);
-        pp_psatd.query("nz_guard", ngFFt_z);
+        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);

@@ -205,7 +205,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     // so that inj_pos->getPositionUnitBox calls
     // InjectorPosition[Random or Regular].getPositionUnitBox.
     else if (injection_style == "nrandompercell") {
-        pp_species_name.query("num_particles_per_cell", num_particles_per_cell);
+        queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
@@ -229,7 +229,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
 #endif
-        pp_species_name.get("surface_flux_pos", surface_flux_pos);
+        getWithParser(pp_species_name, "surface_flux_pos", surface_flux_pos);
         std::string flux_normal_axis_string;
         pp_species_name.get("flux_normal_axis", flux_normal_axis_string);
         flux_normal_axis = -1;
@@ -275,7 +275,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
         num_particles_per_cell_each_dim.assign(3, 1);
-        pp_species_name.getarr("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim);
+        getArrWithParser(pp_species_name, "num_particles_per_cell_each_dim",
+                                           num_particles_per_cell_each_dim);
 #if WARPX_DIM_XZ
         num_particles_per_cell_each_dim[2] = 1;
 #endif

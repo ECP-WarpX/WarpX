@@ -343,7 +343,7 @@ public:
     */
     std::string getSpeciesTypeName () const {return species::get_name(physical_species);}
 
-    amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
+    amrex::Vector<amrex::Real> get_v_galilean () {return m_v_galilean;}
 
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
@@ -362,7 +362,7 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;

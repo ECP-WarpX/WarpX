@@ -48,7 +48,7 @@ Diagnostics::BaseReadParameters ()
     amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
-    pp_diag_name.query("file_min_digits", m_file_min_digits);
+    queryWithParser(pp_diag_name, "file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
@@ -124,7 +124,7 @@ Diagnostics::BaseReadParameters ()
     // Initialize cr_ratio with default value of 1 for each dimension.
     amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
-    bool cr_specified = pp_diag_name.queryarr("coarsening_ratio", cr_ratio);
+    bool cr_specified = queryArrWithParser(pp_diag_name, "coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
     if (cr_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];

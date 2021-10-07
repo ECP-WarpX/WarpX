@@ -394,7 +394,7 @@ void ParticleExtrema::ComputeDiags (int step)
             const int nox = WarpX::nox;
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
             const amrex::IntVect ngE = warpx.getngE();
-            const amrex::Array<amrex::Real,3> v_galilean = myspc.get_v_galilean();
+            amrex::Vector<amrex::Real> v_galilean = myspc.get_v_galilean();
             const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
 
             // loop over refinement levels

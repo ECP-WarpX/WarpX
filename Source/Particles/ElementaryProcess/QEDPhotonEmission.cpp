@@ -27,7 +27,7 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
                              amrex::FArrayBox const& bxfab,
                              amrex::FArrayBox const& byfab,
                              amrex::FArrayBox const& bzfab,
-                             amrex::Array<amrex::Real,3> v_galilean,
+                             amrex::Vector<amrex::Real> v_galilean,
                              int a_offset)
 :m_opt_depth_functor{opt_depth_functor},
  m_opt_depth_runtime_comp{opt_depth_runtime_comp},

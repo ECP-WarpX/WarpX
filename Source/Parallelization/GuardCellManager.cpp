@@ -42,8 +42,8 @@ guardCellManager::Init (
     const int nci_corr_stencil,
     const int maxwell_solver_id,
     const int max_level,
-    const amrex::Array<amrex::Real,3> v_galilean,
-    const amrex::Array<amrex::Real,3> v_comoving,
+    const amrex::Vector<amrex::Real> v_galilean,
+    const amrex::Vector<amrex::Real> v_comoving,
     const bool safe_guard_cells,
     const int do_electrostatic)
 {
@@ -164,9 +164,9 @@ guardCellManager::Init (
         int ngFFt_z = (do_nodal || galilean) ? noz_fft : noz_fft / 2;
 
         ParmParse pp_psatd("psatd");
-        pp_psatd.query("nx_guard", ngFFt_x);
-        pp_psatd.query("ny_guard", ngFFt_y);
-        pp_psatd.query("nz_guard", ngFFt_z);
+        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);

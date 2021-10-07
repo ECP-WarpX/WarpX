@@ -26,7 +26,7 @@ PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
                              amrex::FArrayBox const& bxfab,
                              amrex::FArrayBox const& byfab,
                              amrex::FArrayBox const& bzfab,
-                             amrex::Array<amrex::Real,3> v_galilean,
+                             amrex::Vector<amrex::Real> v_galilean,
                              int a_offset)
 : m_generate_functor(generate_functor)
 {

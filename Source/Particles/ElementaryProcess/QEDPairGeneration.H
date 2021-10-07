@@ -94,7 +94,7 @@ public:
                                 amrex::FArrayBox const& bxfab,
                                 amrex::FArrayBox const& byfab,
                                 amrex::FArrayBox const& bzfab,
-                                amrex::Array<amrex::Real,3> v_galilean,
+                                amrex::Vector<amrex::Real> v_galilean,
                                 int a_offset = 0);
 
     /**

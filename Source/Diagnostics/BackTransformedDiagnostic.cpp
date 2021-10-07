@@ -598,7 +598,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
     ParmParse pp_warpx("warpx");
     bool do_user_fields;
     do_user_fields = pp_warpx.queryarr("back_transformed_diag_fields", user_fields_to_dump);
-    if (pp_warpx.query("buffer_size", m_num_buffer_)) {
+    if (queryWithParser(pp_warpx, "buffer_size", m_num_buffer_)) {
         if (m_max_box_size_ < m_num_buffer_) m_max_box_size_ = m_num_buffer_;
     }
     // If user specifies fields to dump, overwrite ncomp_to_dump,

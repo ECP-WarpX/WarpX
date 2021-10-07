@@ -60,7 +60,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    pp_rd_name.get("bin_number",m_bin_num);
+    getWithParser(pp_rd_name, "bin_number",m_bin_num);
     getWithParser(pp_rd_name, "bin_max",   m_bin_max);
     getWithParser(pp_rd_name, "bin_min",   m_bin_min);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;

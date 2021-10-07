@@ -41,7 +41,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
     // read number of levels
     int nLevel = 0;
     amrex::ParmParse pp_amr("amr");
-    pp_amr.query("max_level", nLevel);
+    queryWithParser(pp_amr, "max_level", nLevel);
     nLevel += 1;
     m_rho_functors.resize(nLevel);
 
