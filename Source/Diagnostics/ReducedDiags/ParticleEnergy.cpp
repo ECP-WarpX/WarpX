@@ -159,8 +159,14 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real ux = p.rdata(PIdx::ux);
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*(std::sqrt(us*m2*c2 + m2*c4) - m*c2), w};
+
+                    //the kinetic energy must be always computed in
+                    //double precision to avoid numerical errors
+                    const auto us = static_cast<double>(ux*ux + uy*uy + uz*uz);
+                    const auto ee = static_cast<amrex::Real>(
+                        std::sqrt(us*m2*c2 + m2*c4) - m*c2);
+
+                    return {w*ee, w};
                 },
                 reduce_ops);
 
