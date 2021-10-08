@@ -161,7 +161,7 @@ void ParticleEnergy::ComputeDiags (int step)
                     //The following calculation must be in double precision to avoid
                     //numerical issues in single precision
                     const auto us = static_cast<double>(ux*ux + uy*uy + uz*uz);
-                    const auto kk = std:::static_cast<amrex::Real>(
+                    const auto kk = std::static_cast<amrex::Real>(
                         (std::sqrt(us/c2 + 1.0) - 1.0)
                     );
 
