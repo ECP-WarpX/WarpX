@@ -99,8 +99,13 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
     if (shared_mem_bytes > max_shared_mem_bytes) {
       std::cout << "Tile size for charge deposition of " << shared_mem_bytes
-                << " bytes would not fit in GPU's shared memory of " << max_shared_mem_bytes << " bytes";
+                << " bytes would not fit in GPU's shared memory of " << max_shared_mem_bytes << " bytes" << std::endl;
+#if 1
+      std::cout << "Falling back to direct global memory access" << std::endl;
+      shared_mem_bytes = 0;
+#else
       amrex::Abort("Tile size too big for GPU shared memory charge deposition");
+#endif
     }
 #endif
 
@@ -120,13 +125,15 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
         auto rho_tmp = amrex::Array4<amrex::Real>(rho_arr);
 
-        rho_tmp.p = shared;
+        if (shared_mem_bytes > 0) {
+          rho_tmp.p = shared;
 
-        // Zero-initialize the temporary array in shared memory
-        volatile amrex::Real* vs = shared;
-        for (int i = threadIdx.x; i < rho_box.numPts(); i += blockDim.x)
-          vs[i] = 0.0;
-        __syncthreads();
+          // Zero-initialize the temporary array in shared memory
+          volatile amrex::Real* vs = shared;
+          for (int i = threadIdx.x; i < rho_box.numPts(); i += blockDim.x)
+            vs[i] = 0.0;
+          __syncthreads();
+        }
 #else
         auto rho_tmp = rho_arr;
 #endif // defined(AMREX_USE_GPU)
@@ -230,11 +237,14 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         }
 
 #if defined(AMREX_USE_GPU)
-        __syncthreads();
+        if (shared_mem_bytes > 0) {
+          __syncthreads();
+          volatile amrex::Real* vs = shared;
 
-        for (int i = threadIdx.x; i < rho_box.numPts(); i += blockDim.x) {
-          amrex::Real r = vs[i];
-          amrex::Gpu::Atomic::AddNoRet(rho_arr.dataPtr()+i, r);
+          for (int i = threadIdx.x; i < rho_box.numPts(); i += blockDim.x) {
+            amrex::Real r = vs[i];
+            amrex::Gpu::Atomic::AddNoRet(rho_arr.dataPtr()+i, r);
+          }
         }
 #endif // defined(AMREX_USE_GPU)
       }
