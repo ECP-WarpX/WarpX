@@ -271,7 +271,7 @@ def do_analysis(single_precision = False):
     #--------------------------------------------------------------------------------------------------
 
     error = dict()
-    tolerance = 1e-4 if single_precision else 1e-12
+    tolerance = 5e-3 if single_precision else 1e-12
     field_energy_tolerance = 0.3
 
     # The comparison of field energies requires a large tolerance,
