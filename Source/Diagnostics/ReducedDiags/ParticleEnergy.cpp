@@ -102,7 +102,6 @@ void ParticleEnergy::ComputeDiags (int step)
 
     // Some useful constants
     amrex::Real c2 = PhysConst::c * PhysConst::c;
-    amrex::Real c4 = c2 * c2;
 
     // Some useful offsets to fill m_data below
     int offset_total_species, offset_mean_species, offset_mean_all;
