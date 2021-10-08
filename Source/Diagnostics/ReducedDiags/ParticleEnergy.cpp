@@ -117,7 +117,6 @@ void ParticleEnergy::ComputeDiags (int step)
 
         // Get mass (used only for particles other than photons, see below)
         amrex::Real m = myspc.getMass();
-        amrex::Real m2 = m * m;
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
