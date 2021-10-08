@@ -7,10 +7,11 @@
 #ifndef WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 #define WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 
-#include "Particles/Collision/BinaryCollisionUtils.H"
+#include "Particles/Collision/BinaryCollision/NuclearFusionFunc.H"
+#include "Particles/Collision/BinaryCollision/PairWiseCoulombCollisionFunc.H"
+#include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
+#include "Particles/Collision/BinaryCollision/ShuffleFisherYates.H"
 #include "Particles/Collision/CollisionBase.H"
-#include "Particles/Collision/PairWiseCoulombCollisionFunc.H"
-#include "Particles/Collision/ShuffleFisherYates.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/ParticleCreation/SmartUtils.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -31,6 +32,7 @@
 #include <AMReX_Extension.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuContainers.H>
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuLaunch.H>
@@ -80,7 +82,7 @@ public:
      * @param collision_name the name of the collision
      *
      */
-    BinaryCollision (std::string collision_name)
+    BinaryCollision (std::string collision_name, MultiParticleContainer const * const mypc)
         : CollisionBase(collision_name)
     {
         if(m_species_names.size() != 2)
@@ -91,12 +93,12 @@ public:
         else
             m_isSameSpecies = false;
 
-        m_binary_collision_functor = CollisionFunctorType(collision_name);
+        m_binary_collision_functor = CollisionFunctorType(collision_name, mypc, m_isSameSpecies);
 
         amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);
         m_have_product_species = m_product_species.size() > 0;
-        m_copy_transform_functor = CopyTransformFunctorType();
+        m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
     }
 
     virtual ~BinaryCollision () = default;

@@ -82,8 +82,6 @@ beam.uy_th                      = 1.0
 beam.uz_th                      = 1.0
 beam.zinject_plane              = 0.0
 beam.rigid_advance              = true
-beam.projected                  = true
-beam.focused                    = false
 
 #################################
 ########## DIAGNOSTIC ###########

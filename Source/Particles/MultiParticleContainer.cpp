@@ -127,7 +127,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     }
 
     // Setup particle collisions
-    collisionhandler = std::make_unique<CollisionHandler>();
+    collisionhandler = std::make_unique<CollisionHandler>(this);
 
 }
 
@@ -834,13 +834,14 @@ MultiParticleContainer::mapSpeciesProduct ()
 int
 MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
+    auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
     bool found = 0;
     // Loop over species
-    for (int i=0; i < static_cast<int>(species_names.size()); i++){
+    for (int i=0; i < static_cast<int>(species_and_lasers_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
-        if (species_names[i] == product_str){
+        if (species_and_lasers_names[i] == product_str){
             found = 1;
             i_product = i;
         }

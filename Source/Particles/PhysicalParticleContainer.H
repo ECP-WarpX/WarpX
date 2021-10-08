@@ -67,6 +67,10 @@ public:
 
     virtual void InitData () override;
 
+    virtual void ReadHeader (std::istream& is) override;
+
+    virtual void WriteHeader (std::ostream& os) const override;
+
     void InitIonizationModule ();
 
     /**

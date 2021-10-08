@@ -331,7 +331,9 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
       };
 
     for (auto it = symbols.begin(); it != symbols.end(); ) {
-        Real v;
+        // Always parsing in double precision avoids potential overflows that may occur when parsing
+        // user's expressions because of the limited range of exponentials in single precision
+        double v;
 
         WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
         recursive_symbols.insert(*it);
@@ -359,12 +361,12 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     return parser;
 }
 
-amrex::Real
+double
 parseStringtoReal(std::string str)
 {
     auto parser = makeParser(str, {});
     auto exe = parser.compileHost<0>();
-    amrex::Real result = exe();
+    double result = exe();
     return result;
 }
 
@@ -376,8 +378,12 @@ parseStringtoInt(std::string str, std::string name)
     return ival;
 }
 
+// Overloads for float/double instead of amrex::Real to allow makeParser() to query for
+// my_constants as double even in single precision mode
+// Always parsing in double precision avoids potential overflows that may occur when parsing user's
+// expressions because of the limited range of exponentials in single precision
 int
-queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
 {
     // call amrex::ParmParse::query, check if the user specified str.
     std::string tmp_str;
@@ -394,7 +400,33 @@ queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Re
 }
 
 void
-getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
+{
+    // If so, create a parser object and apply it to the value provided by the user.
+    std::string str_val;
+    Store_parserString(a_pp, str, str_val);
+    val = parseStringtoReal(str_val);
+}
+
+int
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::string tmp_str;
+    int is_specified = a_pp.query(str, tmp_str);
+    if (is_specified)
+    {
+        // If so, create a parser object and apply it to the value provided by the user.
+        std::string str_val;
+        Store_parserString(a_pp, str, str_val);
+        val = parseStringtoReal(str_val);
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+void
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val)
 {
     // If so, create a parser object and apply it to the value provided by the user.
     std::string str_val;

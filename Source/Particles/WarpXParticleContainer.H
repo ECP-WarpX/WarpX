@@ -262,9 +262,9 @@ public:
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
                         int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
 
-    virtual void ReadHeader (std::istream& is);
+    virtual void ReadHeader (std::istream& is) = 0;
 
-    virtual void WriteHeader (std::ostream& os) const;
+    virtual void WriteHeader (std::ostream& os) const = 0;
 
     virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
 
@@ -337,6 +337,11 @@ public:
     */
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
+
+    /**
+    * \brief This function returns a string containing the name of the species type
+    */
+    std::string getSpeciesTypeName () const {return species::get_name(physical_species);}
 
     amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 

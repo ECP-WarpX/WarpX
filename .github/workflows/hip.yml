@@ -3,7 +3,7 @@ name: 🐧 HIP
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.head_ref }}-hip
+  group: ${{ github.ref }}-${{ github.head_ref }}-hip
   cancel-in-progress: true
 
 jobs:
@@ -44,7 +44,7 @@ jobs:
           -DWarpX_PSATD=ON
         cmake --build build_sp -j 2
 
-        export WarpX_MPI=OFF
+        export WARPX_MPI=OFF
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
         python3 -m pip install *.whl
 
@@ -86,6 +86,6 @@ jobs:
           -DWarpX_PSATD=ON
         cmake --build build_2d -j 2
 
-        export WarpX_MPI=OFF
+        export WARPX_MPI=OFF
         PYWARPX_LIB_DIR=$PWD/build_2d/lib python3 -m pip wheel .
         python3 -m pip install *.whl

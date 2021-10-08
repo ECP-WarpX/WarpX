@@ -41,7 +41,9 @@ public:
      *
      * @param[in] collision_name the name of the collision
      */
-    PairWiseCoulombCollisionFunc (const std::string collision_name)
+    PairWiseCoulombCollisionFunc (const std::string collision_name,
+                                  MultiParticleContainer const * const /*mypc*/,
+                                  const bool /*isSameSpecies*/)
     {
         using namespace amrex::literals;
         amrex::ParmParse pp_collision_name(collision_name);
@@ -57,10 +59,7 @@ public:
      * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
      * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
      * @param[in] I1 and I2 are the index arrays. They determine all elements that will be used.
-     * @param[in,out] u1 and u2 are the velocity arrays (u=v*gamma),
-     *                they could be either different or the same,
-     *                their lengths are not needed,
-     * @param[in] w1 and w2 are arrays of weights.
+     * @param[in, out] soa_1 and soa_2 contain the struct of array data of the two species.
      * @param[in] q1 and q2 are charges. m1 and m2 are masses.
      * @param[in] dt is the time step length between two collision calls.
      * @param[in] dV is the volume of the corresponding cell.

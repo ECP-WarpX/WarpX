@@ -148,20 +148,19 @@ AverageAndPackScalarField (MultiFab& mf_avg,
                            const DistributionMapping& dm,
                            const int dcomp, const IntVect ngrow )
 {
+    const MultiFab *scalar_total = &scalar_field;
 
 #ifdef WARPX_DIM_RZ
-    MultiFab *scalar_total;
+    MultiFab tmp;
     if (scalar_field.nComp() > 1) {
         // With the RZ solver, there are more than one component, so the total
         // fields needs to be constructed in temporary a MultiFab.
-        scalar_total = new MultiFab(scalar_field.boxArray(), dm, 1, scalar_field.nGrowVect());
-        ConstructTotalRZScalarField(*scalar_total, scalar_field);
-    } else {
-        scalar_total = new MultiFab(scalar_field, amrex::make_alias, 0, 1);
+        tmp.define(scalar_field.boxArray(), dm, 1, scalar_field.nGrowVect());
+        ConstructTotalRZScalarField(tmp, scalar_field);
+        scalar_total = &tmp;
     }
 #else
     amrex::ignore_unused(dm);
-    const MultiFab *scalar_total = &scalar_field;
 #endif
 
     // Check the type of staggering of the 3-component `vector_field`

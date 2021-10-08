@@ -3,7 +3,7 @@ name: 🐧 OpenMP
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.head_ref }}-ubuntu
+  group: ${{ github.ref }}-${{ github.head_ref }}-ubuntu
   cancel-in-progress: true
 
 jobs:
@@ -45,10 +45,10 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
-        export WarpX_MPI=ON
-        export WarpX_OPENPMD=ON
-        export WarpX_PSATD=ON
-        export WarpX_QED_TABLE_GEN=ON
+        export WARPX_MPI=ON
+        export WARPX_OPENPMD=ON
+        export WARPX_PSATD=ON
+        export WARPX_QED_TABLE_GEN=ON
         export CC=$(which clang)
         export CXX=$(which clang++)
         export CXXFLAGS="-Werror -Wno-error=pass-failed"

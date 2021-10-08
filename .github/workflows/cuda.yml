@@ -3,7 +3,7 @@ name: 🐧 CUDA
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.head_ref }}-cuda
+  group: ${{ github.ref }}-${{ github.head_ref }}-cuda
   cancel-in-progress: true
 
 jobs:
@@ -44,6 +44,52 @@ jobs:
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
-        export WarpX_MPI=ON
+        export WARPX_MPI=ON
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        python3 -m pip install *.whl
+
+  build_nvhpc21-9-nvcc:
+    name: NVHPC@21.9 NVCC/NVC++ Release [tests]
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      run: .github/workflows/dependencies/nvhpc.sh
+    - name: Build & Install
+      run: |
+        source /etc/profile.d/modules.sh
+        module load /opt/nvidia/hpc_sdk/modulefiles/nvhpc/21.9
+        which nvcc || echo "nvcc not in PATH!"
+        which nvc++ || echo "nvc++ not in PATH!"
+        which nvc || echo "nvc not in PATH!"
+        nvcc --version
+        nvc++ --version
+        nvc --version
+        cmake --version
+
+        export CC=$(which nvc)
+        export CXX=$(which nvc++)
+        export CUDACXX=$(which nvcc)
+        export CUDAHOSTCXX=${CXX}
+
+        cmake -S . -B build            \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_COMPUTE=CUDA         \
+          -DWarpX_EB=ON                \
+          -DWarpX_LIB=ON               \
+          -DAMReX_CUDA_ARCH=8.0        \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_PSATD=ON             \
+          -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
+          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+        cmake --build build -j 2
+
+        # work-around for mpi4py 3.1.1 build system issue with using
+        # a GNU-built Python executable with non-GNU Python modules
+        #   https://github.com/mpi4py/mpi4py/issues/114
+        export CFLAGS="-noswitcherror"
+
+        python3 -m pip install --upgrade pip setuptools wheel
+        export WARPX_MPI=ON
+        PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel .
         python3 -m pip install *.whl
