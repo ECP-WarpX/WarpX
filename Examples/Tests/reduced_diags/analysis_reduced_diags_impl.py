@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright 2019-2020 Yinjian Zhao
+# Copyright 2019-2021 Luca Fedeli, Yinjian Zhao
 #
 # This file is part of WarpX.
 #
@@ -271,7 +271,7 @@ def do_analysis(single_precision = False):
     #--------------------------------------------------------------------------------------------------
 
     error = dict()
-    tolerance = 1e-6 if single_precision else 1e-12
+    tolerance = 1e-5 if single_precision else 1e-12
     field_energy_tolerance = 0.3
 
     # The comparison of field energies requires a large tolerance,
