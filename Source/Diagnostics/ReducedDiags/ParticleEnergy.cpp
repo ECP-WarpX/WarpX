@@ -140,7 +140,7 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
                     const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*me_c*std::sqrt(us), w};
+                    return {me_c*std::sqrt(us)*w, w};
                 },
                 reduce_ops);
 
@@ -157,8 +157,15 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real ux = p.rdata(PIdx::ux);
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*m*c2*(std::sqrt(us/c2 + 1.0_rt) - 1.0_rt), w};
+
+                    //The following calculation must be in double precision to avoid
+                    //numerical issues in single precision
+                    const auto us = static_cast<double>(ux*ux + uy*uy + uz*uz);
+                    const auto kk = std:::static_cast<amrex::Real>(
+                        (std::sqrt(us/c2 + 1.0) - 1.0)
+                    );
+
+                    return {m*c2*kk*w, w};
                 },
                 reduce_ops);
 
