@@ -158,12 +158,12 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real ux = p.rdata(PIdx::ux);
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    const auto gamma = std::sqrt(1.0_rt + us*inv_c2);
+                    const amrex::Real u2 = (ux*ux + uy*uy + uz*uz)*inv_c2;
+                    const auto gamma = std::sqrt(1.0_rt + u2);
 
                     const auto kk = (gamma > PhysConst::gamma_relativistic_threshold)?
                         (gamma-1.0_rt):
-                        (us*0.5_rt - us*us/8.0_rt + us*us*us/16.0_rt); //third order Taylor expansion
+                        (u2*0.5_rt - u2*u2/8.0_rt + u2*u2*u2/16.0_rt); //third order Taylor expansion
 
                     return {w*m*c2*kk, w};
                 },
