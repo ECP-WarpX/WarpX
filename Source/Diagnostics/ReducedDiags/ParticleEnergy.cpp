@@ -101,7 +101,8 @@ void ParticleEnergy::ComputeDiags (int step)
     const int nSpecies = mypc.nSpecies();
 
     // Some useful constants
-    amrex::Real c2 = PhysConst::c * PhysConst::c;
+    constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
+    constexpr amrex::Real inv_c2 = 1.0_rt/c2;
 
     // Some useful offsets to fill m_data below
     int offset_total_species, offset_mean_species, offset_mean_all;
@@ -157,13 +158,12 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real ux = p.rdata(PIdx::ux);
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
+                    const amrex::Real u2 = (ux*ux + uy*uy + uz*uz)*inv_c2;
+                    const auto gamma = std::sqrt(1.0_rt + u2);
 
-                    //The following calculation must be in double precision to avoid
-                    //numerical issues in single precision
-                    const auto us = static_cast<double>(ux*ux + uy*uy + uz*uz);
-                    const auto kk = static_cast<amrex::Real>(
-                        (std::sqrt(us/c2 + 1.0) - 1.0)
-                    );
+                    const auto kk = (gamma > PhysConst::gamma_relativistic_threshold)?
+                        (gamma-1.0_rt):
+                        (u2*0.5_rt - u2*u2/8.0_rt + u2*u2*u2/16.0_rt); //third order Taylor expansion
 
                     return {w*m*c2*kk, w};
                 },
