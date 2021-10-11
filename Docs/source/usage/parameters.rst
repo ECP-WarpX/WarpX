@@ -788,7 +788,8 @@ Particle initialization
     this species.
 
 * ``warpx.serialize_ics`` (`0 or 1`)
-    Whether or not to use OpenMP threading for particle initialization.
+    Serialize the initial conditions for reproducible testing.
+    Mainly whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
