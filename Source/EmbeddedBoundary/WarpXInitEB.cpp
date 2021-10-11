@@ -177,7 +177,12 @@ WarpX::ComputeFaceAreas () {
 
     auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
+#ifdef WARPX_DIM_XZ
+    //In 2D the volume frac is actually the area frac.
+    auto const &area_frac = eb_fact.getVolFrac();
+#else
     auto const &area_frac = eb_fact.getAreaFrac();
+#endif
 
 #ifdef WARPX_DIM_XZ
     m_face_areas[maxLevel()][0]->setVal(0.);
@@ -206,8 +211,7 @@ WarpX::ComputeFaceAreas () {
                 });
             } else {
 #ifdef WARPX_DIM_XZ
-                int idim_amrex = 0;
-                auto const &face = area_frac[idim_amrex]->const_array(mfi);
+                auto const &face = area_frac.const_array(mfi);
 #else
                 auto const &face = area_frac[idim]->const_array(mfi);
 #endif
