@@ -416,9 +416,13 @@ WarpX::PushPSATD ()
         PSATDForwardTransformRho(0,0); // rho old
         PSATDForwardTransformRho(1,1); // rho new
     }
+    if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
+    if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
     PSATDPushSpectralFields();
     PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
+    if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
+    if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
 
     // Evolve the fields in the PML boxes
     for (int lev = 0; lev <= finest_level; ++lev)

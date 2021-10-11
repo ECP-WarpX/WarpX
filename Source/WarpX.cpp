@@ -681,15 +681,6 @@ WarpX::ReadParameters ()
             amrex::Abort("Multi-J algorithm not implemented with PMLs");
         }
 
-        // div(E) cleaning not implemented for PSATD solver
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-        {
-            if (do_multi_J == 0 && do_dive_cleaning == 1)
-            {
-                amrex::Abort("warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
-            }
-        }
-
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
