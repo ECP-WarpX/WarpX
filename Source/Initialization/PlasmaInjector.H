@@ -129,7 +129,7 @@ protected:
 
     amrex::Real mass, charge;
 
-    PhysicalSpecies physical_species;
+    PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
     amrex::Real density;
 

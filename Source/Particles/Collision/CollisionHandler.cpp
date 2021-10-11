@@ -6,15 +6,17 @@
  */
 #include "CollisionHandler.H"
 
-#include "BinaryCollision.H"
-#include "PairWiseCoulombCollisionFunc.H"
 #include "BackgroundMCCCollision.H"
+#include "Particles/Collision/BinaryCollision/BinaryCollision.H"
+#include "Particles/Collision/BinaryCollision/NuclearFusionFunc.H"
+#include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
+#include "Particles/Collision/BinaryCollision/PairWiseCoulombCollisionFunc.H"
 
 #include <AMReX_ParmParse.H>
 
 #include <vector>
 
-CollisionHandler::CollisionHandler()
+CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
 {
 
     // Read in collision input
@@ -36,10 +38,16 @@ CollisionHandler::CollisionHandler()
 
         if (type == "pairwisecoulomb") {
             allcollisions[i] =
-               std::make_unique<BinaryCollision<PairWiseCoulombCollisionFunc>>(collision_names[i]);
+               std::make_unique<BinaryCollision<PairWiseCoulombCollisionFunc>>(
+                                                                        collision_names[i], mypc);
         }
         else if (type == "background_mcc") {
             allcollisions[i] = std::make_unique<BackgroundMCCCollision>(collision_names[i]);
+        }
+        else if (type == "nuclearfusion") {
+            allcollisions[i] =
+               std::make_unique<BinaryCollision<NuclearFusionFunc, ParticleCreationFunc>>(
+                                                                        collision_names[i], mypc);
         }
         else{
             amrex::Abort("Unknown collision type.");

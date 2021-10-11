@@ -85,16 +85,16 @@ class CMakeBuild(build_ext):
             '-DWarpX_APP:BOOL=OFF',
             '-DWarpX_LIB:BOOL=ON',
             ## variants
-            '-DWarpX_COMPUTE=' + WarpX_COMPUTE,
-            '-DWarpX_MPI:BOOL=' + WarpX_MPI,
-            '-DWarpX_EB:BOOL=' + WarpX_EB,
-            '-DWarpX_OPENPMD:BOOL=' + WarpX_OPENPMD,
-            '-DWarpX_PRECISION=' + WarpX_PRECISION,
-            '-DWarpX_PSATD:BOOL=' + WarpX_PSATD,
-            '-DWarpX_QED:BOOL=' + WarpX_QED,
-            '-DWarpX_QED_TABLE_GEN:BOOL=' + WarpX_QED_TABLE_GEN,
+            '-DWarpX_COMPUTE=' + WARPX_COMPUTE,
+            '-DWarpX_MPI:BOOL=' + WARPX_MPI,
+            '-DWarpX_EB:BOOL=' + WARPX_EB,
+            '-DWarpX_OPENPMD:BOOL=' + WARPX_OPENPMD,
+            '-DWarpX_PRECISION=' + WARPX_PRECISION,
+            '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
+            '-DWarpX_QED:BOOL=' + WARPX_QED,
+            '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
             ## dependency control (developers & package managers)
-            '-DWarpX_amrex_internal=' + WarpX_amrex_internal,
+            '-DWarpX_amrex_internal=' + WARPX_AMREX_INTERNAL,
             #        see PICSAR and openPMD below
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
@@ -106,21 +106,23 @@ class CMakeBuild(build_ext):
             # Windows: has no RPath concept, all `.dll`s must be in %PATH%
             #          or same dir as calling executable
         ]
-        if WarpX_QED.upper() in ['1', 'ON', 'TRUE', 'YES']:
-            cmake_args.append('-DWarpX_picsar_internal=' + WarpX_picsar_internal)
-        if WarpX_OPENPMD.upper() in ['1', 'ON', 'TRUE', 'YES']:
+        if WARPX_QED.upper() in ['1', 'ON', 'TRUE', 'YES']:
+            cmake_args.append('-DWarpX_picsar_internal=' + WARPX_PICSAR_INTERNAL)
+        if WARPX_OPENPMD.upper() in ['1', 'ON', 'TRUE', 'YES']:
             cmake_args += [
                 '-DHDF5_USE_STATIC_LIBRARIES:BOOL=' + HDF5_USE_STATIC_LIBRARIES,
                 '-DADIOS_USE_STATIC_LIBS:BOOL=' + ADIOS_USE_STATIC_LIBS,
-                '-DWarpX_openpmd_internal=' + WarpX_openpmd_internal,
+                '-DWarpX_openpmd_internal=' + WARPX_OPENPMD_INTERNAL,
             ]
         # further dependency control (developers & package managers)
-        if WarpX_amrex_src:
-            cmake_args.append('-DWarpX_amrex_src=' + WarpX_amrex_src)
-        if WarpX_openpmd_src:
-            cmake_args.append('-DWarpX_openpmd_src=' + WarpX_openpmd_src)
-        if WarpX_picsar_src:
-            cmake_args.append('-DWarpX_picsar_src=' + WarpX_picsar_src)
+        if WARPX_AMREX_SRC:
+            cmake_args.append('-DWarpX_amrex_src=' + WARPX_AMREX_SRC)
+        if WARPX_OPENPMD_SRC:
+            cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
+        if WARPX_PICSAR_SRC:
+            cmake_args.append('-DWarpX_picsar_src=' + WARPX_PICSAR_SRC)
+        if WARPX_CCACHE_PROGRAM is not None:
+            cmake_args.append('-DCCACHE_PROGRAM=' + WARPX_CCACHE_PROGRAM)
 
         if sys.platform == "darwin":
             cmake_args.append('-DCMAKE_INSTALL_RPATH=@loader_path')
@@ -177,32 +179,35 @@ PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
 env = os.environ.copy()
 # ... build WarpX libraries with CMake
 #   note: changed default for SHARED, MPI, TESTING and EXAMPLES
-WarpX_COMPUTE = env.pop('WarpX_COMPUTE', 'OMP')
-WarpX_MPI = env.pop('WarpX_MPI', 'OFF')
-WarpX_EB = env.pop('WarpX_EB', 'OFF')
-WarpX_OPENPMD = env.pop('WarpX_OPENPMD', 'OFF')
-WarpX_PRECISION = env.pop('WarpX_PRECISION', 'DOUBLE')
-WarpX_PSATD = env.pop('WarpX_PSATD', 'OFF')
-WarpX_QED = env.pop('WarpX_QED', 'ON')
-WarpX_QED_TABLE_GEN = env.pop('WarpX_QED_TABLE_GEN', 'OFF')
-WarpX_DIMS = env.pop('WarpX_DIMS', '2;3;RZ')
+#   note: we use all-uppercase variable names for environment control to be
+#         consistent across platforms (especially Windows)
+WARPX_COMPUTE = env.pop('WARPX_COMPUTE', 'OMP')
+WARPX_MPI = env.pop('WARPX_MPI', 'OFF')
+WARPX_EB = env.pop('WARPX_EB', 'OFF')
+WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'OFF')
+WARPX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
+WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
+WARPX_QED = env.pop('WARPX_QED', 'ON')
+WARPX_QED_TABLE_GEN = env.pop('WARPX_QED_TABLE_GEN', 'OFF')
+WARPX_DIMS = env.pop('WARPX_DIMS', '2;3;RZ')
 BUILD_PARALLEL = env.pop('BUILD_PARALLEL', '2')
-BUILD_SHARED_LIBS = env.pop('WarpX_BUILD_SHARED_LIBS',
+BUILD_SHARED_LIBS = env.pop('WARPX_BUILD_SHARED_LIBS',
                                    'OFF')
-#BUILD_TESTING = env.pop('WarpX_BUILD_TESTING',
+#BUILD_TESTING = env.pop('WARPX_BUILD_TESTING',
 #                               'OFF')
-#BUILD_EXAMPLES = env.pop('WarpX_BUILD_EXAMPLES',
+#BUILD_EXAMPLES = env.pop('WARPX_BUILD_EXAMPLES',
 #                                'OFF')
 # openPMD-api sub-control
 HDF5_USE_STATIC_LIBRARIES = env.pop('HDF5_USE_STATIC_LIBRARIES', 'OFF')
 ADIOS_USE_STATIC_LIBS = env.pop('ADIOS_USE_STATIC_LIBS', 'OFF')
 # CMake dependency control (developers & package managers)
-WarpX_amrex_src = env.pop('WarpX_amrex_src', '')
-WarpX_amrex_internal = env.pop('WarpX_amrex_internal', 'ON')
-WarpX_openpmd_src = env.pop('WarpX_openpmd_src', '')
-WarpX_openpmd_internal = env.pop('WarpX_openpmd_internal', 'ON')
-WarpX_picsar_src = env.pop('WarpX_picsar_src', '')
-WarpX_picsar_internal = env.pop('WarpX_picsar_internal', 'ON')
+WARPX_AMREX_SRC = env.pop('WARPX_AMREX_SRC', '')
+WARPX_AMREX_INTERNAL = env.pop('WARPX_AMREX_INTERNAL', 'ON')
+WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
+WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
+WARPX_PICSAR_SRC = env.pop('WARPX_PICSAR_SRC', '')
+WARPX_PICSAR_INTERNAL = env.pop('WARPX_PICSAR_INTERNAL', 'ON')
+WARPX_CCACHE_PROGRAM = env.pop('WARPX_CCACHE_PROGRAM', None)
 
 for key in env.keys():
     if key.lower().startswith('warpx'):
@@ -210,16 +215,16 @@ for key in env.keys():
 
 
 # https://cmake.org/cmake/help/v3.0/command/if.html
-if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
-    WarpX_MPI = "ON"
+if WARPX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
+    WARPX_MPI = "ON"
 else:
-    WarpX_MPI = "OFF"
+    WARPX_MPI = "OFF"
 
 # Include embedded boundary functionality
-if WarpX_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
-    WarpX_EB = "ON"
+if WARPX_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
+    WARPX_EB = "ON"
 else:
-    WarpX_EB = "OFF"
+    WARPX_EB = "OFF"
 
 
 # for CMake
@@ -232,7 +237,7 @@ if PYWARPX_LIB_DIR:
 # CMake: build WarpX libraries ourselves
 else:
     cmdclass = dict(build_ext=CMakeBuild)
-    for dim in [x.lower() for x in WarpX_DIMS.split(';')]:
+    for dim in [x.lower() for x in WARPX_DIMS.split(';')]:
         name = dim if dim == "rz" else dim + "d"
         cxx_modules.append(CMakeExtension("warpx_" + name))
 
@@ -240,7 +245,7 @@ else:
 install_requires = []
 with open('./requirements.txt') as f:
     install_requires = [line.strip('\n') for line in f.readlines()]
-    if WarpX_MPI == "ON":
+    if WARPX_MPI == "ON":
         install_requires.append('mpi4py>=2.1.0')
 
 # keyword reference:
@@ -248,7 +253,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.08',
+    version = '21.10',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

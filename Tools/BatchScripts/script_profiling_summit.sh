@@ -16,9 +16,13 @@
 # make output group-readable by default
 umask 0027
 
-module load pgi
-module load cuda/9.1.85
-module list
+# fix problems with collectives since RHEL8 update: OLCFHELP-3545
+# disable all the IBM optimized barriers and drop back to HCOLL or OMPI's barrier implementations
+export OMPI_MCA_coll_ibm_skip_barrier=true
+
+#module load pgi
+#module load cuda/9.1.85
+#module list
 set -x
 
 omp=1

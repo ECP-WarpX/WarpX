@@ -19,6 +19,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
@@ -98,6 +99,7 @@ public:
     void Evolve (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
+    MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -194,7 +196,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool serialize_ics;
+    static bool serialize_ics; //! Serialize the initial conditions
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -286,6 +288,8 @@ public:
 
     const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
     const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
+    const amrex::MultiFab& getEfield_avg_cp (int lev, int direction) {return *Efield_avg_cp[lev][direction];}
+    const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
 
@@ -332,13 +336,16 @@ public:
     amrex::Vector<amrex::Real> mirror_z_width;
     amrex::Vector<int> mirror_z_npoints;
 
-    /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
+    /// object with all reduced diagnostics, similar to MultiParticleContainer for species.
     MultiReducedDiags* reduced_diags;
 
     void applyMirrors(amrex::Real time);
 
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
+
+    /** Print dt and dx,dy,dz */
+    void PrintDtDxDyDz ();
 
     /**
      * \brief
@@ -622,6 +629,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
+    ElectrostaticSolver::BoundaryHandler field_boundary_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
@@ -645,12 +653,8 @@ public:
                        int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
-                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
-                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi
-                   ) const;
-    void getPhiBC (const int idim, amrex::Real &pot_lo,
-                   amrex::Real &pot_hi) const;
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
@@ -781,34 +785,10 @@ private:
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
     /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs
+     * \brief Synchronize the nodal points of a given field MultiFab (all mesh refinement levels)
      */
-    void NodalSyncE ();
-
-    /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level
-     */
-    void NodalSyncE (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level and patch
-     */
-    void NodalSyncE (int lev, PatchType patch_type);
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs
-     */
-    void NodalSyncB ();
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level
-     */
-    void NodalSyncB (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level and patch
-     */
-    void NodalSyncB (int lev, PatchType patch_type);
+    void NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
+                    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp);
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
@@ -858,6 +838,9 @@ private:
 
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
                          const amrex::DistributionMapping& new_dmap);
+
+    amrex::DistributionMapping
+    GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const;
 
     void InitFromCheckpoint ();
     void PostRestart ();
@@ -1054,7 +1037,6 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
-
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
@@ -1309,11 +1291,7 @@ private:
      * \brief Set averaged E,B fields to zero before new iteration
      */
     void PSATDEraseAverageFields ();
-#endif
 
-    int fftw_plan_measure = 1; // used with PSATD
-
-#ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_cp;

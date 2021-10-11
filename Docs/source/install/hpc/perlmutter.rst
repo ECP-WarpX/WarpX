@@ -39,13 +39,10 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake
+   module load cmake/git-20210830  # 3.22-dev
    module swap PrgEnv-nvidia PrgEnv-gnu
    module swap gcc gcc/9.3.0
    module load cuda
-
-   # newer CMake (3.22+) for HPE/Cray FindMPI.cmake improvement
-   export PATH=$HOME/sw/cmake-3.22.0-dev/bin:$PATH
 
    # optional: just an additional text editor
    # module load nano  # TODO: request from support
@@ -82,15 +79,7 @@ We recommend to store the above lines in a file, such as ``$HOME/perlmutter_warp
 
    source $HOME/perlmutter_warpx.profile
 
-Furthermore, until Perlmutter provides a CMake 3.22.0+ module, we need to execute once:
-
-.. code-block:: bash
-
-   git clone https://gitlab.kitware.com/cmake/cmake.git $HOME/src/cmake
-   cmake -S $HOME/src/cmake -B $HOME/src/cmake/build -DCMAKE_INSTALL_PREFIX=$HOME/sw/cmake-3.22.0-dev
-   cmake --build $HOME/src/cmake/build --target install -j 32
-
-And install ADIOS2:
+And since Perlmutter does not yet provide a module for it, install ADIOS2:
 
 .. code-block:: bash
 

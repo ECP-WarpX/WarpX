@@ -51,26 +51,9 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
         const auto& src = srcmf.array(mfi);
         const auto& dst = dstmf.array(mfi);
         const Box& tbx = mfi.growntilebox();
-        const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
-
-        // tmpfab has enough ghost cells for the stencil
-        FArrayBox tmp_fab(gbx,ncomp);
-        Elixir tmp_eli = tmp_fab.elixir();  // Prevent the tmp data from being deleted too early
-        auto const& tmp = tmp_fab.array();
-
-        // Copy values in srcfab into tmpfab
-        const Box& ibx = gbx & srcmf[mfi].box();
-        AMREX_PARALLEL_FOR_4D ( gbx, ncomp, i, j, k, n,
-        {
-            if (ibx.contains(IntVect(AMREX_D_DECL(i,j,k)))) {
-                tmp(i,j,k,n) = src(i,j,k,n+scomp);
-            } else {
-                tmp(i,j,k,n) = 0.0;
-            }
-        });
 
         // Apply filter
-        DoFilter(tbx, tmp, dst, 0, dcomp, ncomp);
+        DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -97,32 +80,15 @@ Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
     ncomp = std::min(ncomp, srcfab.nComp());
     const auto& src = srcfab.array();
     const auto& dst = dstfab.array();
-    const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
-
-    // tmpfab has enough ghost cells for the stencil
-    FArrayBox tmp_fab(gbx,ncomp);
-    Elixir tmp_eli = tmp_fab.elixir();  // Prevent the tmp data from being deleted too early
-    auto const& tmp = tmp_fab.array();
-
-    // Copy values in srcfab into tmpfab
-    const Box& ibx = gbx & srcfab.box();
-    AMREX_PARALLEL_FOR_4D ( gbx, ncomp, i, j, k, n,
-        {
-            if (ibx.contains(IntVect(AMREX_D_DECL(i,j,k)))) {
-                tmp(i,j,k,n) = src(i,j,k,n+scomp);
-            } else {
-                tmp(i,j,k,n) = 0.0;
-            }
-        });
 
     // Apply filter
-    DoFilter(tbx, tmp, dst, 0, dcomp, ncomp);
+    DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 }
 
 /* \brief Apply stencil (2D/3D, CPU/GPU)
  */
 void Filter::DoFilter (const Box& tbx,
-                       Array4<Real const> const& tmp,
+                       Array4<Real const> const& src,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
@@ -132,23 +98,31 @@ void Filter::DoFilter (const Box& tbx,
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
     Dim3 slen_local = slen;
+
 #if (AMREX_SPACEDIM == 3)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
 
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
         for         (int iz=0; iz < slen_local.z; ++iz){
             for     (int iy=0; iy < slen_local.y; ++iy){
                 for (int ix=0; ix < slen_local.x; ++ix){
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-                    d += sss*( tmp(i-ix,j-iy,k-iz,scomp+n)
-                              +tmp(i+ix,j-iy,k-iz,scomp+n)
-                              +tmp(i-ix,j+iy,k-iz,scomp+n)
-                              +tmp(i+ix,j+iy,k-iz,scomp+n)
-                              +tmp(i-ix,j-iy,k+iz,scomp+n)
-                              +tmp(i+ix,j-iy,k+iz,scomp+n)
-                              +tmp(i-ix,j+iy,k+iz,scomp+n)
-                              +tmp(i+ix,j+iy,k+iz,scomp+n));
+                    d += sss*( src_zeropad(i-ix,j-iy,k-iz,scomp+n)
+                              +src_zeropad(i+ix,j-iy,k-iz,scomp+n)
+                              +src_zeropad(i-ix,j+iy,k-iz,scomp+n)
+                              +src_zeropad(i+ix,j+iy,k-iz,scomp+n)
+                              +src_zeropad(i-ix,j-iy,k+iz,scomp+n)
+                              +src_zeropad(i+ix,j-iy,k+iz,scomp+n)
+                              +src_zeropad(i-ix,j+iy,k+iz,scomp+n)
+                              +src_zeropad(i+ix,j+iy,k+iz,scomp+n));
                 }
             }
         }
@@ -160,14 +134,21 @@ void Filter::DoFilter (const Box& tbx,
     {
         Real d = 0.0;
 
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
         for         (int iz=0; iz < slen_local.z; ++iz){
             for     (int iy=0; iy < slen_local.y; ++iy){
                 for (int ix=0; ix < slen_local.x; ++ix){
                     Real sss = sx[ix]*sz[iy];
-                    d += sss*( tmp(i-ix,j-iy,k,scomp+n)
-                              +tmp(i+ix,j-iy,k,scomp+n)
-                              +tmp(i-ix,j+iy,k,scomp+n)
-                              +tmp(i+ix,j+iy,k,scomp+n));
+                    d += sss*( src_zeropad(i-ix,j-iy,k,scomp+n)
+                              +src_zeropad(i+ix,j-iy,k,scomp+n)
+                              +src_zeropad(i-ix,j+iy,k,scomp+n)
+                              +src_zeropad(i+ix,j+iy,k,scomp+n));
                 }
             }
         }

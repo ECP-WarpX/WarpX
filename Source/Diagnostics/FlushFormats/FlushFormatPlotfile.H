@@ -39,13 +39,11 @@ public:
     /** Write general info of the run into the plotfile */
     void WriteJobInfo(const std::string& dir) const;
     /** Write WarpX-specific plotfile header */
-    void WriteWarpXHeader(const std::string& name, const amrex::Vector<ParticleDiag>& particle_diags, amrex::Vector<amrex::Geometry>& geom) const;
+    void WriteWarpXHeader(const std::string& name, amrex::Vector<amrex::Geometry>& geom) const;
     void WriteAllRawFields (const bool plot_raw_fields, const int nlevels,
                             const std::string& plotfilename,
                             const bool plot_raw_fields_guards,
                             const bool plot_raw_rho, bool plot_raw_F) const;
-    void WriteHeaderParticle(std::ostream& os,
-                             const amrex::Vector<ParticleDiag>& particle_diags) const;
     /** \brief Write particles data to file.
      * \param[in] filename name of output directory
      * \param[in] particle_diags Each element of this vector handles output of 1 species.

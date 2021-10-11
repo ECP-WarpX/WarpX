@@ -76,16 +76,20 @@ WarpX::ComputeDt ()
     if (do_electrostatic != ElectrostaticSolverAlgo::None) {
         dt[0] = const_dt;
     }
+}
 
+void
+WarpX::PrintDtDxDyDz ()
+{
     for (int lev=0; lev <= max_level; lev++) {
         const amrex::Real* dx_lev = geom[lev].CellSize();
-        amrex::Print()<<"Level "<<lev<<": dt = "<<dt[lev]
-               <<" ; dx = "<<dx_lev[0]
+        amrex::Print() << "Level " << lev << ": dt = " << dt[lev]
+                       << " ; dx = " << dx_lev[0]
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-               <<" ; dz = "<<dx_lev[1]<<'\n';
+                       << " ; dz = " << dx_lev[1] << '\n';
 #elif (defined WARPX_DIM_3D)
-               <<" ; dy = "<<dx_lev[1]
-               <<" ; dz = "<<dx_lev[2]<<'\n';
+                       << " ; dy = " << dx_lev[1]
+                       << " ; dz = " << dx_lev[2] << '\n';
 #endif
     }
 }

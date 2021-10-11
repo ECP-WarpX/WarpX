@@ -8,7 +8,10 @@
 #define WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_
 
 #include "MCCProcess.H"
+
+#include "Utils/ParticleUtils.H"
 #include "Utils/WarpXConst.H"
+
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 
@@ -17,49 +20,6 @@
  * This file contains the implementation of the scattering processes available
  * in the MCC handling.
  */
-
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
-                       amrex::RandomEngine const& engine )
-{
-    using std::sqrt;
-    using std::cos;
-    using std::sin;
-    using namespace amrex::literals;
-
-    // generate random unit vector in 3 dimensions
-    // https://mathworld.wolfram.com/SpherePointPicking.html
-    amrex::Real const theta = amrex::Random(engine) * 2.0_rt * MathConst::pi;
-    z = 2.0_rt * amrex::Random(engine) - 1.0_rt;
-    amrex::Real const xy = sqrt(1_rt - z*z);
-    x = xy * cos(theta);
-    y = xy * sin(theta);
-}
-
-
-/** \brief Function to perform scattering of a particle that results in a
- * random velocity vector with given magnitude. This is used in excitation and
- * ionization events.
- *
- * @param[in/out] ux, uy, uz colliding particle's velocity
- * @param[in] vp velocity magnitude of the colliding particle after collision.
- */
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void RandomizeVelocity ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
-                         amrex::ParticleReal& uz,
-                         const amrex::ParticleReal vp,
-                         amrex::RandomEngine const& engine )
-{
-    amrex::Real x, y, z;
-    // generate random unit vector for the new velocity direction
-    getRandomVector(x, y, z, engine);
-
-    // scale new vector to have the desired magnitude
-    ux = x * vp;
-    uy = y * vp;
-    uz = z * vp;
-}
-
 
 /** \brief Function to perform elastic scattering of a particle in the lab
  * frame. The particle velocities transformed to the COM frame where a hard
@@ -85,7 +45,7 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 
     // istropically scatter the particle
     amrex::Real const mag = sqrt(ux*ux + uy*uy + uz*uz);
-    RandomizeVelocity(ux, uy, uz, mag, engine);
+    ParticleUtils::RandomizeVelocity(ux, uy, uz, mag, engine);
 
     // transform back to lab frame
     ux += uCOM_x;
@@ -290,8 +250,8 @@ public:
         );
 
         // isotropically scatter electrons
-        RandomizeVelocity(ux, uy, uz, vp, engine);
-        RandomizeVelocity(e_ux, e_uy, e_uz, vp, engine);
+        ParticleUtils::RandomizeVelocity(ux, uy, uz, vp, engine);
+        ParticleUtils::RandomizeVelocity(e_ux, e_uy, e_uz, vp, engine);
 
         // get velocities for the ion from a Maxwellian distribution
         i_ux = m_ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);

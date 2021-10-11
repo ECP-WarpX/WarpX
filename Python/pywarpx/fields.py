@@ -441,7 +441,7 @@ class _MultiFABWrapper(object):
         """Sets slices of a decomposed 2D array.
         """
         ix = index[0]
-        iz = index[2]
+        iz = index[1]
 
         lovects, ngrow = self._getlovects()
         hivects, ngrow = self._gethivects()
@@ -461,7 +461,7 @@ class _MultiFABWrapper(object):
             ic = None
 
         nx = hivects[0,:].max() - ngrow[0]
-        nz = hivects[2,:].max() - ngrow[1]
+        nz = hivects[1,:].max() - ngrow[1]
 
         # --- Add extra dimensions so that the input has the same number of
         # --- dimensions as array.
@@ -480,7 +480,7 @@ class _MultiFABWrapper(object):
             ixstop = ix + 1
         if isinstance(iz, slice):
             izstart = max(iz.start or -ngrow[1], -ngrow[1])
-            izstop = min(iz.stop or nz + 1 + ngrow[1], nz + self.overlaps[2] + ngrow[1])
+            izstop = min(iz.stop or nz + 1 + ngrow[1], nz + self.overlaps[1] + ngrow[1])
         else:
             izstart = iz
             izstop = iz + 1
@@ -490,13 +490,13 @@ class _MultiFABWrapper(object):
             # --- The ix1, 2 etc are relative to global indexing
             ix1 = max(ixstart, lovects[0,i])
             ix2 = min(ixstop, lovects[0,i] + fields[i].shape[0])
-            iz1 = max(izstart, lovects[2,i])
-            iz2 = min(izstop, lovects[2,i] + fields[i].shape[2])
+            iz1 = max(izstart, lovects[1,i])
+            iz2 = min(izstop, lovects[1,i] + fields[i].shape[1])
 
             if ix1 < ix2 and iz1 < iz2:
 
                 sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
-                       slice(iz1 - lovects[2,i], iz2 - lovects[2,i]))
+                       slice(iz1 - lovects[1,i], iz2 - lovects[1,i]))
                 if ic is not None:
                     sss = tuple(list(sss) + [ic])
 
@@ -720,6 +720,14 @@ def RhoFPWrapper(level=0, include_ghosts=False):
                             get_fabs=_libwarpx.get_mesh_charge_density_fp,
                             get_nodal_flag=_libwarpx.get_Rho_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
+
+def PhiFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_phi_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_phi_fp,
+                            get_nodal_flag=_libwarpx.get_Phi_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def ExCPPMLWrapper(level=1, include_ghosts=False):
     assert level>0, Exception('Coarse patch only available on levels > 0')
     return _MultiFABWrapper(direction=0,

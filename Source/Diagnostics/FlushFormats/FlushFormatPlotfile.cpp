@@ -87,7 +87,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteJobInfo(filename);
 
-    WriteWarpXHeader(filename, particle_diags, geom);
+    WriteWarpXHeader(filename, geom);
 
     VisMF::SetHeaderVersion(current_version);
 }
@@ -217,7 +217,6 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 void
 FlushFormatPlotfile::WriteWarpXHeader(
     const std::string& name,
-    const amrex::Vector<ParticleDiag>& particle_diags,
     amrex::Vector<amrex::Geometry>& geom) const
 {
     auto & warpx = WarpX::GetInstance();
@@ -285,23 +284,13 @@ FlushFormatPlotfile::WriteWarpXHeader(
             HeaderFile << '\n';
         }
 
-        WriteHeaderParticle(HeaderFile, particle_diags);
+        warpx.GetPartContainer().WriteHeader(HeaderFile);
 
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
 
         HeaderFile << warpx.time_of_last_gal_shift << "\n";
-    }
-}
-
-void
-FlushFormatPlotfile::WriteHeaderParticle(
-    std::ostream& os, const amrex::Vector<ParticleDiag>& particle_diags) const
-{
-    for (const auto& particle_diag : particle_diags)
-    {
-        particle_diag.getParticleContainer()->WriteHeader(os);
     }
 }
 

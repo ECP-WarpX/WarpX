@@ -36,7 +36,7 @@ We use the following modules and environments on the system (``$HOME/knl_warpx.p
 
    module swap craype-haswell craype-mic-knl
    module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.20.5
+   module load cmake/3.21.3
    module load cray-hdf5-parallel/1.10.5.2
    module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
@@ -84,7 +84,7 @@ We use the following modules and environments on the system (``$HOME/haswell_war
 .. code-block:: bash
 
    module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.20.5
+   module load cmake/3.21.3
    module load cray-hdf5-parallel/1.10.5.2
    module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
@@ -135,7 +135,7 @@ We use the following modules and environments on the system (``$HOME/gpu_warpx.p
    module load modules
    module load cgpu
    module load esslurm
-   module load gcc/8.3.0 cuda/11.4.0 cmake/3.20.5
+   module load gcc/8.3.0 cuda/11.4.0 cmake/3.21.3
    module load openmpi
 
    export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
@@ -222,7 +222,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3
    cmake --build build -j 16
 
-The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake>` apply as usual:
+The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake-python>` apply as usual:
 
 .. code-block:: bash
 
@@ -230,7 +230,7 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   WarpX_MPI=ON WarpX_OPENPMD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
+   WARPX_MPI=ON WARPX_OPENPMD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
 
 .. _running-cpp-cori:
 
@@ -245,6 +245,8 @@ KNL
 The batch script below can be used to run a WarpX simulation on 2 KNL nodes on
 the supercomputer Cori at NERSC. Replace descriptions between chevrons ``<>``
 by relevant values, for instance ``<job name>`` could be ``laserWakefield``.
+
+Do not forget to first ``source $HOME/knl_warpx.profile`` if you have not done so already for this terminal session.
 
 For PICMI Python runs, the ``<path/to/executable>`` has to read ``python3`` and the ``<input file>`` is the path to your PICMI input script.
 
@@ -278,6 +280,8 @@ Haswell
 
 The batch script below can be used to run a WarpX simulation on 1 `Haswell node <https://docs.nersc.gov/systems/cori/>`_ on the supercomputer Cori at NERSC.
 
+Do not forget to first ``source $HOME/haswell_warpx.profile`` if you have not done so already for this terminal session.
+
 .. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_haswell.sh
    :language: bash
 
@@ -297,8 +301,15 @@ regime), the following set of parameters provided good performance:
 
 * **4 MPI ranks per Haswell node** (2 MPI ranks per `Intel Xeon E5-2698 v3 <https://ark.intel.com/content/www/us/en/ark/products/81060/intel-xeon-processor-e5-2698-v3-40m-cache-2-30-ghz.html>`_), with ``OMP_NUM_THREADS=16`` (which uses `2x hyperthreading <https://docs.nersc.gov/jobs/affinity/>`_)
 
-GPU
-^^^
+GPU (V100)
+^^^^^^^^^^
+
+Do not forget to first ``source $HOME/gpu_warpx.profile`` if you have not done so already for this terminal session.
 
 Due to the limited amount of GPU development nodes, just request a single node with the above defined ``getNode`` function.
 For single-node runs, try to run one grid per GPU.
+
+A multi-node batch script template can be found below:
+
+.. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_gpu.sh
+   :language: bash
