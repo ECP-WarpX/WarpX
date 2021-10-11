@@ -1,4 +1,4 @@
-/* Copyright 2019 Andrew Myers
+/* Copyright 2021 Andrew Myers
  *
  * This file is part of WarpX.
  *
