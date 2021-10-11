@@ -31,10 +31,12 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
+#include <algorithm>
 #include <array>
 #include <istream>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <vector>
 
 using namespace amrex;
@@ -123,7 +125,85 @@ MultiParticleContainer::Restart (const std::string& dir)
     // - lasers_names
     // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-        allcontainers.at(i)->Restart(dir, species_names.at(i));
+        WarpXParticleContainer* pc = allcontainers.at(i).get();
+        std::string header_fn = dir + "/" + species_names[i] + "/Header";
+
+        Vector<char> fileCharPtr;
+        ParallelDescriptor::ReadAndBcastFile(header_fn, fileCharPtr);
+        std::string fileCharPtrString(fileCharPtr.dataPtr());
+        std::istringstream is(fileCharPtrString, std::istringstream::in);
+        is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
+        std::string line, word;
+
+        std::getline(is, line); // Version
+        std::getline(is, line); // SpaceDim
+
+        int nr;
+        is >> nr;
+
+        std::vector<std::string> real_comp_names;
+        for (int j = 0; j < nr; ++j) {
+            std::string comp_name;
+            is >> comp_name;
+            real_comp_names.push_back(comp_name);
+        }
+
+        for (auto const& comp : pc->getParticleRuntimeComps()) {
+            auto search = std::find(real_comp_names.begin(), real_comp_names.end(), comp.first);
+            if (search == real_comp_names.end()) {
+                std::stringstream ss;
+                ss << "Species " << species_names[i] << "needs runtime real component " << comp.first;
+                ss << ", but it was not found in the checkpoint file. \n";
+                amrex::Abort(ss.str());
+            }
+        }
+
+        for (int j = PIdx::nattribs; j < nr; ++j) {
+            const auto& comp_name = real_comp_names[j];
+            auto current_comp_names = pc->getParticleComps();
+            auto search = current_comp_names.find(comp_name);
+            if (search == current_comp_names.end()) {
+                amrex::Print() << "Runtime real component " << comp_name
+                               << " was found in the checkpoint file, but it has not been added yet. "
+                               << " Adding it now. \n";
+                pc->AddRealComp(comp_name);
+            }
+        }
+
+        int ni;
+        is >> ni;
+
+        std::vector<std::string> int_comp_names;
+        for (int j = 0; j < ni; ++j) {
+            std::string comp_name;
+            is >> comp_name;
+            int_comp_names.push_back(comp_name);
+        }
+
+        for (auto const& comp : pc->getParticleRuntimeiComps()) {
+            auto search = std::find(int_comp_names.begin(), int_comp_names.end(), comp.first);
+            if (search == int_comp_names.end()) {
+                std::stringstream ss;
+                ss << "Species " << species_names[i] << "needs runtime int component " << comp.first;
+                ss << ", but it was not found in the checkpoint file. \n";
+                amrex::Abort(ss.str());
+            }
+        }
+
+        for (int j = 0; j < ni; ++j) {
+            const auto& comp_name = int_comp_names[j];
+            auto current_comp_names = pc->getParticleiComps();
+            auto search = current_comp_names.find(comp_name);
+            if (search == current_comp_names.end()) {
+                amrex::Print() << "Runtime int component " << comp_name
+                               << " was found in the checkpoint file, but it has not been added yet. "
+                               << " Adding it now. \n";
+                pc->AddIntComp(comp_name);
+            }
+        }
+
+        pc->Restart(dir, species_names.at(i));
     }
     for (unsigned i = species_names.size(); i < species_names.size()+lasers_names.size(); ++i) {
         allcontainers.at(i)->Restart(dir, lasers_names.at(i-species_names.size()));

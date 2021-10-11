@@ -164,6 +164,7 @@ laser1.wavelength = 5.e-6         # The wavelength of the laser (in meters)
 diagnostics.diags_names = diag1 chk
 diag1.intervals = 5
 diag1.diag_type = Full
+diag1.fields_to_plot = Bx By Bz Ex Ey Ez jx jy jz rho
 chk.intervals = 5
 chk.diag_type = Full
 chk.format = checkpoint
