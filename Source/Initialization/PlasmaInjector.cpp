@@ -274,11 +274,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     } else if (injection_style == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
-        num_particles_per_cell_each_dim.assign(3, 1);
-        getArrWithParser(pp_species_name, "num_particles_per_cell_each_dim",
-                                           num_particles_per_cell_each_dim);
 #if WARPX_DIM_XZ
-        num_particles_per_cell_each_dim[2] = 1;
+        constexpr int num_required_ppc_each_dim = 2;
+#else
+        constexpr int num_required_ppc_each_dim = 3;
+#endif
+        getArrWithParser(pp_species_name, "num_particles_per_cell_each_dim",
+                         num_particles_per_cell_each_dim, 0, num_required_ppc_each_dim);
+#if WARPX_DIM_XZ
+        num_particles_per_cell_each_dim.push_back(1);
 #endif
 #if WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
