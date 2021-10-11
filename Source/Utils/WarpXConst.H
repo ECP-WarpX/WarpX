@@ -47,7 +47,7 @@ namespace PhysConst
     // This marks the gamma threshold to switch between the full relativistic expression
     // for particle kinetic energy and a Taylor expansion. It is used in the reduced diagnostics.
     static constexpr auto gamma_relativistic_threshold =
-        static_cast<amrex::Real>(1.001);
+        static_cast<amrex::Real>(1.005);
 
     static constexpr auto kb   = static_cast<amrex::Real>( 1.380649e-23 );  // Boltzmann's constant, J/K (exact)
 }
