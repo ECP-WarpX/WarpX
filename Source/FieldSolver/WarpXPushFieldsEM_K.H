@@ -13,36 +13,48 @@
 #include <AMReX.H>
 
 /*
- * \brief Set a tilebox so that it only covers the lower/upper half of the guard cells.
+ * \brief Return a tilebox that only covers the outer half of the guard cells.
  *
- * \param[in,out] tb tilebox to be modified
+ * \param[in,out] input_tb tilebox to be modified
  * \param[in] dir direction where the tilebox smallEnd/bigEnd is modified
  * \param[in] n_domain number of cells in the whole simulation domain
  * \param[in] tb_smallEnd smallEnd of the tilebox
  * \param[in] tb_bigEnd bigEnd of the tilebox
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void constrain_tilebox_to_guards(
-    amrex::Box& tb,
+amrex::Box constrain_tilebox_to_guards(
+    const amrex::Box& input_tb,
     const int dir,
+    const int iside,
     const int n_domain,
     const int tb_smallEnd,
     const int tb_bigEnd)
 {
     using namespace amrex;
 
+    amrex::Box contrained_tb = input_tb;
+
     const int n_tile = tb_bigEnd;
 
-    if (tb_smallEnd < 0)
+    // If the input_tb does not overlap either the lower or upper guard,
+    // an empty box is returned.
+
+    if (iside == 0)
     {
+        // Lower guard
         const int n_guard = -tb_smallEnd;
-        tb.setBig(dir, 0 - n_guard/2 - 1);
+        const int upper_bound = (tb_smallEnd < 0 ? -n_guard/2 : tb_smallEnd);
+        contrained_tb.setBig(dir, upper_bound - 1);
     }
-    else if (n_tile > n_domain)
+    else if (iside == 1)
     {
+        // Upper guard
         const int n_guard = n_tile - n_domain;
-        tb.setSmall(dir, n_domain + n_guard/2 + 1);
+        const int lower_bound = (n_tile > n_domain ? n_domain + n_guard/2 : n_tile);
+        contrained_tb.setSmall(dir, lower_bound + 1);
     }
+
+    return contrained_tb;
 }
 
 /*
@@ -79,7 +91,7 @@ void damp_field_in_guards(
 
     const int n_tile = tb_bigEnd;
 
-    if (tb_smallEnd < 0)
+    if (idx < 0)
     {
         // Apply damping factor in guards cells below the lower end of the domain
         const int n_guard = -tb_smallEnd;
@@ -92,7 +104,7 @@ void damp_field_in_guards(
 
         mf_arr(i,j,k,icomp) *= damp_factor;
     }
-    else if (n_tile > n_domain)
+    else if (idx > n_domain)
     {
         // Apply damping factor in guards cells above the upper end of the domain
         const int n_guard = n_tile - n_domain;
