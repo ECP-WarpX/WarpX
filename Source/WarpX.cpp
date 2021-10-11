@@ -261,7 +261,7 @@ WarpX::WarpX ()
     multi_diags = std::make_unique<MultiDiagnostics>();
 
     /** create object for reduced diagnostics */
-    reduced_diags = new MultiReducedDiags();
+    reduced_diags = std::make_unique<MultiReducedDiags>();
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
@@ -406,8 +406,6 @@ WarpX::~WarpX ()
     for (int lev = 0; lev < nlevs_max; ++lev) {
         ClearLevel(lev);
     }
-
-    delete reduced_diags;
 }
 
 void
@@ -979,7 +977,6 @@ WarpX::ReadParameters ()
     {
         ParmParse pp_psatd("psatd");
         pp_psatd.query("periodic_single_box_fft", fft_periodic_single_box);
-        pp_psatd.query("fftw_plan_measure", fftw_plan_measure);
 
         std::string nox_str;
         std::string noy_str;

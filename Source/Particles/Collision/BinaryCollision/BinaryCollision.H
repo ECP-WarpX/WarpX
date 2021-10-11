@@ -93,7 +93,7 @@ public:
         else
             m_isSameSpecies = false;
 
-        m_binary_collision_functor = CollisionFunctorType(collision_name, mypc);
+        m_binary_collision_functor = CollisionFunctorType(collision_name, mypc, m_isSameSpecies);
 
         amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);

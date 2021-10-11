@@ -98,6 +98,7 @@ public:
     void Evolve (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
+    MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -194,7 +195,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool serialize_ics;
+    static bool serialize_ics; //! Serialize the initial conditions
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -335,7 +336,7 @@ public:
     amrex::Vector<int> mirror_z_npoints;
 
     /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
-    MultiReducedDiags* reduced_diags;
+    std::unique_ptr<MultiReducedDiags> reduced_diags;
 
     void applyMirrors(amrex::Real time);
 
@@ -1032,7 +1033,6 @@ private:
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
 
-
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
@@ -1286,11 +1286,7 @@ private:
      * \brief Set averaged E,B fields to zero before new iteration
      */
     void PSATDEraseAverageFields ();
-#endif
 
-    int fftw_plan_measure = 1; // used with PSATD
-
-#ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_cp;

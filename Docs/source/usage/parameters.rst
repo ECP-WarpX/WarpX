@@ -226,7 +226,7 @@ Domain Boundary Conditions
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
 If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
-    * ``none``: No boundary condition is applied to the fields. This option must be used for the RZ-solver at `r=0`.
+    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`. If the electrostatic solver is used, a Neumann boundary condition (with gradient equal to 0) will be applied on the specified boundary.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
@@ -788,7 +788,8 @@ Particle initialization
     this species.
 
 * ``warpx.serialize_ics`` (`0 or 1`)
-    Whether or not to use OpenMP threading for particle initialization.
+    Serialize the initial conditions for reproducible testing.
+    Mainly whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -1502,14 +1503,6 @@ Numerics and algorithms
     In this case, using `psatd.periodic_single_box_fft` is equivalent to using a global FFT over the whole domain.
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
-
-* ``psatd.fftw_plan_measure`` (`0` or `1`)
-    Defines whether the parameters of FFTW plans will be initialized by
-    measuring and optimizing performance (``FFTW_MEASURE`` mode; activated by default here).
-    If ``psatd.fftw_plan_measure`` is set to ``0``, then the best parameters of FFTW
-    plans will simply be estimated (``FFTW_ESTIMATE`` mode).
-    See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
-    for more information.
 
 * ``psatd.current_correction`` (`0` or `1`; default: `0`)
     If true, a current correction scheme in Fourier space is applied in order to guarantee charge conservation.

@@ -109,7 +109,6 @@ WarpX::InitEB ()
 
 void
 WarpX::ComputeEdgeLengths () {
-    return;
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
 
@@ -157,7 +156,6 @@ WarpX::ComputeEdgeLengths () {
 
 void
 WarpX::ComputeFaceAreas () {
-    return;
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeFaceAreas");
 
