@@ -163,7 +163,8 @@ void ParticleEnergy::ComputeDiags (int step)
 
                     const auto kk = (gamma > PhysConst::gamma_relativistic_threshold)?
                         (gamma-1.0_rt):
-                        (u2*0.5_rt - u2*u2/8.0_rt + u2*u2*u2/16.0_rt); //third order Taylor expansion
+                        (u2*0.5_rt - u2*u2*(1.0_rt/8.0_rt) + u2*u2*u2*(1.0_rt/16.0_rt)-
+                            u2*u2*u2*u2*(5.0_rt/128.0_rt) + (7.0_rt/256_rt)*u2*u2*u2*u2*u2); //Taylor expansion
 
                     return {w*m*c2*kk, w};
                 },
