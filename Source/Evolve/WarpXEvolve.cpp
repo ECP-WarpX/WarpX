@@ -366,7 +366,6 @@ WarpX::Evolve (int numsteps)
 
         // End loop on time steps
     }
-    amrex::Print() << " last timestep flush \n";
     multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
 
     if (do_back_transformed_diagnostics) {

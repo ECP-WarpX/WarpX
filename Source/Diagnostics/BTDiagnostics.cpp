@@ -73,8 +73,9 @@ void BTDiagnostics::DerivedInitData ()
     m_buffer_box.resize(m_num_buffers);
     // allocate vector of m_current_z_lab
     m_current_z_lab.resize(m_num_buffers);
-    // allocate vector of m_num_buffers
+    // allocate vector of current_z_boost
     m_current_z_boost.resize(m_num_buffers);
+    // allocate vector of old_z_boost positions
     m_old_z_boost.resize(m_num_buffers);
     // allocate vector of m_buff_counter to counter number of slices filled in the buffer
     m_buffer_counter.resize(m_num_buffers);
@@ -211,7 +212,8 @@ bool
 BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
-    // computed and packed every timstep, except at initialization when step == -1.
+    // computed and packed every timstep, except at initialization when step == -1, or when
+    // force_flush is set to true.
     if (step < 0 ) {
         return false;
     } else {
@@ -773,6 +775,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                         snapshot_FabFilename.c_str());
         }
         for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
+            // species filename of recently flushed buffer
             std::string recent_species_prefix = recent_Buffer_filepath+"/"+m_output_species_names[i];
             std::string recent_species_Header = recent_species_prefix + "/Header";
             std::string recent_ParticleHdrFilename = recent_species_prefix + "/Level_0/Particle_H";
@@ -790,12 +793,13 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 
 
             if (m_buffer_flush_counter[i_snapshot] == 0) {
-                // copy WarpXHeader and warpx_job_file for the first flush
                 BufferSpeciesHeader.set_DataIndex(0,0,m_buffer_flush_counter[i_snapshot]);
                 BufferSpeciesHeader.WriteHeader();
 
+                // copy Header file for the species
                 std::rename(recent_species_Header.c_str(), snapshot_species_Header.c_str());
                 if (BufferSpeciesHeader.m_total_particles == 0) continue;
+                // if finite number of particles in the output, copy ParticleHdr and Data file
                 std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());
                 std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());
             } else {
