@@ -28,7 +28,7 @@
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_kin_star)
 {
-    // If kinetic energy is 0, return a 0 corss section and avoid later division by 0.
+    // If kinetic energy is 0, return a 0 cross section and avoid later division by 0.
     if (E_kin_star == amrex::ParticleReal(0.)) {return amrex::ParticleReal(0.);}
 
     // Fits use energy in keV and MeV
@@ -38,8 +38,8 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     const amrex::ParticleReal E_mev = E_kin_star*joule_to_mev;
 
     // Compute Gamow factor, in MeV
-    constexpr auto one_pr = amrex::ParticleReal(1.);
-    constexpr auto Z_boron = amrex::ParticleReal(5.);
+    constexpr auto one_pr = 1._prt;
+    constexpr auto Z_boron = 5._prt;
     constexpr amrex::ParticleReal m_boron = amrex::ParticleReal(10.7319) * PhysConst::m_p;
     constexpr amrex::ParticleReal m_reduced = m_boron / (one_pr + m_boron/PhysConst::m_p);
     constexpr amrex::ParticleReal gamow_factor = m_reduced / amrex::ParticleReal(2.) *
