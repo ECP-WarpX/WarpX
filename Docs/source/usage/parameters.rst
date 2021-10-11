@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
 
@@ -412,6 +412,7 @@ It can be used in all input parameters that consist of one or more integers or f
 Integer input expecting boolean, 0 or 1, are not parsed.
 Note that when multiple values are expected, the expressions are space delimited.
 For integer input values, the expressions are evaluated as real numbers and the final result rounded to the nearest integer.
+See `this section <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parser>`_ of the AMReX documentation for a complete list of functions supported by the math parser.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
@@ -487,7 +488,8 @@ Particle initialization
     Tiling should be on when using OpenMP and off when using GPUs.
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
-    Type of physical species, ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"``.
+    Type of physical species.
+    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"`` and ``"copper"``.
     Either this or both ``mass`` and ``charge`` have to be specified.
 
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
@@ -790,7 +792,8 @@ Particle initialization
     this species.
 
 * ``warpx.serialize_ics`` (`0 or 1`)
-    Whether or not to use OpenMP threading for particle initialization.
+    Serialize the initial conditions for reproducible testing.
+    Mainly whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -1504,14 +1507,6 @@ Numerics and algorithms
     In this case, using `psatd.periodic_single_box_fft` is equivalent to using a global FFT over the whole domain.
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
-
-* ``psatd.fftw_plan_measure`` (`0` or `1`)
-    Defines whether the parameters of FFTW plans will be initialized by
-    measuring and optimizing performance (``FFTW_MEASURE`` mode; activated by default here).
-    If ``psatd.fftw_plan_measure`` is set to ``0``, then the best parameters of FFTW
-    plans will simply be estimated (``FFTW_ESTIMATE`` mode).
-    See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
-    for more information.
 
 * ``psatd.current_correction`` (`0` or `1`; default: `0`)
     If true, a current correction scheme in Fourier space is applied in order to guarantee charge conservation.
