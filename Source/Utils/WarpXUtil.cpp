@@ -540,8 +540,8 @@ void CheckGriddingForRZSpectral ()
 
     ParmParse pp_amr("amr");
 
-    pp_amr.query("max_level",max_level);
-    pp_amr.queryarr("n_cell", n_cell, 0, AMREX_SPACEDIM);
+    pp_amr.get("max_level",max_level);
+    pp_amr.getarr("n_cell", n_cell, 0, AMREX_SPACEDIM);
 
     Vector<int> blocking_factor_x(max_level+1);
     Vector<int> max_grid_size_x(max_level+1);
