@@ -314,7 +314,7 @@ Diagnostics::ComputeAndPack ()
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
-            for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
+            for (int icomp=0, n=m_all_field_functors[lev].size(); icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
@@ -344,7 +344,6 @@ void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
-
     MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {
