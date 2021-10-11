@@ -195,7 +195,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool serialize_ics;
+    static bool serialize_ics; //! Serialize the initial conditions
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
