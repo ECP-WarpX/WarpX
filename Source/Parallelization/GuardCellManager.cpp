@@ -17,6 +17,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Config.H>
 #include <AMReX_INT.H>

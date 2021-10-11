@@ -10,6 +10,7 @@
 
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
@@ -224,17 +225,20 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored, either a scalar or vector
- * \param[in] start_ix start index in the list of inputs values (optional with arrays, default 0)
- * \param[in] num_val number of input values to use (optional with arrays, default -1 for reading
- *                    all input values)
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
+ * amrex::ParmParse::FIRST for starting with the first input value)
+ * \param[in] num_val number of input values to use (optional with arrays, default is
+ * amrex::ParmParse::LAST for reading until the last input value)
  */
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                        const int start_ix = 0, const int num_val = -1);
+                        const int start_ix = amrex::ParmParse::FIRST,
+                        const int num_val = amrex::ParmParse::LAST);
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                        const int start_ix = 0, const int num_val = -1);
+                        const int start_ix = amrex::ParmParse::FIRST,
+                        const int num_val = amrex::ParmParse::LAST);
 
 /**
  * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
@@ -247,17 +251,20 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored
- * \param[in] start_ix start index in the list of inputs values (optional with arrays, default 0)
- * \param[in] num_val number of input values to use (optional with arrays, default -1 for reading
- *                    all input values)
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
+ * amrex::ParmParse::FIRST for starting with the first input value)
+ * \param[in] num_val number of input values to use (optional with arrays, default is
+ * amrex::ParmParse::LAST for reading until the last input value)
  */
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                       const int start_ix = 0, const int num_val = -1);
+                       const int start_ix = amrex::ParmParse::FIRST,
+                       const int num_val = amrex::ParmParse::LAST);
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                       const int start_ix = 0, const int num_val = -1);
+                       const int start_ix = amrex::ParmParse::FIRST,
+                       const int num_val = amrex::ParmParse::LAST);
 
 namespace WarpXUtilMsg{
 

@@ -35,7 +35,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     const int norder_z,
     const bool nodal,
     const amrex::IntVect& fill_guards,
-    const amrex::Array<amrex::Real,3>& v_galilean,
+    const amrex::Vector<amrex::Real>& v_galilean,
     const amrex::Real dt,
     const bool update_with_rho,
     const bool time_averaging,

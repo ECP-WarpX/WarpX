@@ -51,7 +51,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
     // read number of levels
     int nLevel = 0;
     ParmParse pp_amr("amr");
-    queryWithParser(pp_amr, "max_level", nLevel);
+    pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
     constexpr int noutputs = 8;  // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|

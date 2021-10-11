@@ -161,7 +161,7 @@ void ConvertLabParamsToBoost()
     AMREX_ALWAYS_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
 
 
-    queryWithParser(pp_amr, "max_level", max_level);
+    pp_amr.query("max_level", max_level);
     if (max_level > 0){
       getArrWithParser(pp_warpx, "fine_tag_lo", fine_tag_lo);
       getArrWithParser(pp_warpx, "fine_tag_hi", fine_tag_hi);
@@ -540,8 +540,8 @@ void CheckGriddingForRZSpectral ()
 
     ParmParse pp_amr("amr");
 
-    getWithParser(pp_amr, "max_level",max_level);
-    getArrWithParser(pp_amr, "n_cell", n_cell, 0, AMREX_SPACEDIM);
+    pp_amr.query("max_level",max_level);
+    pp_amr.queryarr("n_cell", n_cell, 0, AMREX_SPACEDIM);
 
     Vector<int> blocking_factor_x(max_level+1);
     Vector<int> max_grid_size_x(max_level+1);
@@ -573,8 +573,8 @@ void CheckGriddingForRZSpectral ()
     // Get the longitudinal blocking factor in case it was set by the user.
     // If not set, use the default value of 8.
     Vector<int> bf;
-    queryArrWithParser(pp_amr, "blocking_factor", bf);
-    queryArrWithParser(pp_amr, "blocking_factor_y", bf);
+    pp_amr.queryarr("blocking_factor", bf);
+    pp_amr.queryarr("blocking_factor_y", bf);
     bf.resize(std::max(static_cast<int>(bf.size()),1),8);
 
     // Modify the default or any user input, making sure that the blocking factor
@@ -588,8 +588,8 @@ void CheckGriddingForRZSpectral ()
     // Get the longitudinal max grid size in case it was set by the user.
     // If not set, use the default value of 128.
     Vector<int> mg;
-    queryArrWithParser(pp_amr, "max_grid_size", mg);
-    queryArrWithParser(pp_amr, "max_grid_size_y", mg);
+    pp_amr.queryarr("max_grid_size", mg);
+    pp_amr.queryarr("max_grid_size_y", mg);
     mg.resize(std::max(static_cast<int>(mg.size()),1),128);
 
     // Modify the default or any user input, making sure that the max grid size

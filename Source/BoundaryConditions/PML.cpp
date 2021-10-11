@@ -599,8 +599,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
         // Get the cell-centered box, with guard cells
         BoxArray realspace_ba = ba; // Copy box
-        Array<Real,3> const v_galilean_zero = {0., 0., 0.};
-        Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
@@ -707,8 +707,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
             // Get the cell-centered box, with guard cells
             BoxArray realspace_cba = cba; // Copy box
-            Array<Real,3> const v_galilean_zero = {0., 0., 0.};
-            Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
