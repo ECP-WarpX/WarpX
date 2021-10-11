@@ -28,50 +28,51 @@
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_kin_star)
 {
+    using amrex::literals;
+
     // If kinetic energy is 0, return a 0 cross section and avoid later division by 0.
-    if (E_kin_star == amrex::ParticleReal(0.)) {return amrex::ParticleReal(0.);}
+    if (E_kin_star == 0._prt) {return 0._prt;}
 
     // Fits use energy in keV and MeV
-    constexpr amrex::ParticleReal joule_to_kev = amrex::ParticleReal(1.e-3)/PhysConst::q_e;
-    constexpr amrex::ParticleReal joule_to_mev = amrex::ParticleReal(1.e-6)/PhysConst::q_e;
+    constexpr amrex::ParticleReal joule_to_kev = 1.e-3_prt/PhysConst::q_e;
+    constexpr amrex::ParticleReal joule_to_mev = 1.e-6_prt/PhysConst::q_e;
     const amrex::ParticleReal E_kev = E_kin_star*joule_to_kev;
     const amrex::ParticleReal E_mev = E_kin_star*joule_to_mev;
 
     // Compute Gamow factor, in MeV
     constexpr auto one_pr = 1._prt;
     constexpr auto Z_boron = 5._prt;
-    constexpr amrex::ParticleReal m_boron = amrex::ParticleReal(10.7319) * PhysConst::m_p;
+    constexpr amrex::ParticleReal m_boron = 10.7319_prt * PhysConst::m_p;
     constexpr amrex::ParticleReal m_reduced = m_boron / (one_pr + m_boron/PhysConst::m_p);
-    constexpr amrex::ParticleReal gamow_factor = m_reduced / amrex::ParticleReal(2.) *
+    constexpr amrex::ParticleReal gamow_factor = m_reduced / 2._prt *
                         (PhysConst::q_e*PhysConst::q_e * Z_boron /
-                           (amrex::ParticleReal(2.)*PhysConst::ep0*PhysConst::hbar)) *
+                           (2._prt*PhysConst::ep0*PhysConst::hbar)) *
                         (PhysConst::q_e*PhysConst::q_e * Z_boron /
-                           (amrex::ParticleReal(2.)*PhysConst::ep0*PhysConst::hbar)) *
+                           (2._prt*PhysConst::ep0*PhysConst::hbar)) *
                         joule_to_mev;
 
     // Compute astrophysical factor, in MeV barn, using the fits
-    constexpr auto E_lim1 = amrex::ParticleReal(400.); // Limits between the different fit regions
-    constexpr auto E_lim2 = amrex::ParticleReal(642.);
+    constexpr auto E_lim1 = 400._prt; // Limits between the different fit regions
+    constexpr auto E_lim2 = 642._prt;
     amrex::ParticleReal astrophysical_factor;
     if (E_kev < E_lim1)
     {
-        constexpr auto C0 = amrex::ParticleReal(197.);
-        constexpr auto C1 = amrex::ParticleReal(0.24);
-        constexpr auto C2 = amrex::ParticleReal(2.31e-4);
-        constexpr auto AL = amrex::ParticleReal(1.82e4);
-        constexpr auto EL = amrex::ParticleReal(148.);
-        constexpr auto dEL_sq = amrex::ParticleReal(2.35*2.35);
+        constexpr auto C0 = 197._prt;
+        constexpr auto C1 = 0.24_prt;
+        constexpr auto C2 = 2.31e-4_prt;
+        constexpr auto AL = 1.82e4_prt;
+        constexpr auto EL = 148._prt;
+        constexpr auto dEL_sq = 2.35_prt*2.35_prt;
         astrophysical_factor = C0 + C1*E_kev + C2*E_kev*E_kev +
                                                AL/((E_kev - EL)*(E_kev - EL) + dEL_sq);
     }
     else if (E_kev < E_lim2)
     {
-        constexpr auto D0 = amrex::ParticleReal(330.);
-        constexpr auto D1 = amrex::ParticleReal(66.1);
-        constexpr auto D2 = amrex::ParticleReal(-20.3);
-        constexpr auto D5 = amrex::ParticleReal(-1.58);
-        const amrex::ParticleReal E_norm = (E_kev-amrex::ParticleReal(400.))
-                                                            /amrex::ParticleReal(100.);
+        constexpr auto D0 = 330._prt;
+        constexpr auto D1 = 66.1_prt;
+        constexpr auto D2 = -20.3_prt;
+        constexpr auto D5 = -1.58_prt;
+        const amrex::ParticleReal E_norm = (E_kev-400._prt) * 1.e-2_prt;
         astrophysical_factor = D0 + D1*E_norm + D2*E_norm*E_norm + D5*std::pow(E_norm,5);
     }
     else
