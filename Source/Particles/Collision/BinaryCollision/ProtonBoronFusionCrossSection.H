@@ -15,29 +15,27 @@
 #include <cmath>
 
 /**
- * \brief Computes the total proton-boron fusion cross section using the analytical fits given in
- * W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000). The result is returned in SI units
- * (square meters).
+ * \brief Computes the total proton-boron fusion cross section in the range 0 < E < 3.5 MeV using
+ * the analytical fits given in W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000). The
+ * result is returned in barn.
  * For the record, note that there is a typo in equation (1) of this paper: the total cross section
- * should read S(E)/E*exp(-sqrt(E_G/G)) instead of S(E)/E*exp(sqrt(E_G/G)) (minus sign in the
+ * should read S(E)/E*exp(-sqrt(E_G/E)) instead of S(E)/E*exp(sqrt(E_G/E)) (minus sign in the
  * exponential).
  *
- * @param[in] E_kin_star the kinetic energy of the proton-boron pair in its center of mass frame,
- * in SI units.
+ * @param[in] E_kev the kinetic energy of the proton-boron pair in its center of mass frame, in
+ * keV.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_kin_star)
+amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleReal& E_kev)
 {
     using namespace amrex::literals;
 
     // If kinetic energy is 0, return a 0 cross section and avoid later division by 0.
-    if (E_kin_star == 0._prt) {return 0._prt;}
+    if (E_kev == 0._prt) {return 0._prt;}
 
-    // Fits use energy in keV and MeV
-    constexpr amrex::ParticleReal joule_to_kev = 1.e-3_prt/PhysConst::q_e;
+    // Fits also use energy in MeV
+    const amrex::ParticleReal E_mev = E_kev*1.e-3_prt;
     constexpr amrex::ParticleReal joule_to_mev = 1.e-6_prt/PhysConst::q_e;
-    const amrex::ParticleReal E_kev = E_kin_star*joule_to_kev;
-    const amrex::ParticleReal E_mev = E_kin_star*joule_to_mev;
 
     // Compute Gamow factor, in MeV
     constexpr auto one_pr = 1._prt;
@@ -97,13 +95,58 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     }
 
     // Compute cross section, in barn
-    const amrex::ParticleReal cross_section_b = astrophysical_factor/E_mev*
-                                                std::exp(-std::sqrt(gamow_factor/E_mev));
-
-    // Convert cross section to SI units: barn to square meter
-    constexpr auto barn_to_sqm = amrex::ParticleReal(1.e-28);
-    return cross_section_b*barn_to_sqm;
+    return astrophysical_factor/E_mev*std::exp(-std::sqrt(gamow_factor/E_mev));
 }
 
+/**
+ * \brief Computes the total proton-boron fusion cross section in the range E > 3.5 MeV using a
+ * simple power law fit of the data presented in Buck et al., Nuclear Physics A, 398(2), 189-202
+ * (1983) (data can also be found in the EXFOR database). The result is returned in barn.
+ *
+ * @param[in] E_kev the kinetic energy of the proton-boron pair in its center of mass frame, in
+ * keV.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+amrex::ParticleReal ProtonBoronFusionCrossSectionBuck (const amrex::ParticleReal& E_kev)
+{
+    using namespace amrex::literals;
+
+    constexpr amrex::ParticleReal E_start_fit = 3500._prt; // Fit starts at 3.5 MeV
+    // cross section at E = E_start_fit, in barn
+    constexpr amrex::ParticleReal cross_section_start_fit = 0.2168440845211521_prt;
+    constexpr amrex::ParticleReal slope_fit = -2.661840717596765;
+
+    // Compute fitted value
+    return cross_section_start_fit*std::pow(E_kev/E_start_fit, slope_fit);
+}
+
+/**
+ * \brief Computes the total proton-boron fusion cross section. When E_kin_star < 3.5 MeV, we use
+ * the analytical fits given in W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000). When
+ * E_kin_star > 3.5 MeV, we use a simple power law fit of the data presented in Buck et al.,
+ * Nuclear Physics A, 398(2), 189-202 (1983). Both fits return the same value for
+ * E_kin_star = 3.5 MeV. The result is returned in SI units (square meters).
+ *
+ * @param[in] E_kin_star the kinetic energy of the proton-boron pair in its center of mass frame,
+ * in SI units.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_kin_star)
+{
+    using namespace amrex::literals;
+
+    // Fits use energy in keV
+    constexpr amrex::ParticleReal joule_to_kev = 1.e-3_prt/PhysConst::q_e;
+    const amrex::ParticleReal E_kev = E_kin_star*joule_to_kev;
+    constexpr amrex::ParticleReal E_threshold = 3500._prt;
+
+    const amrex::ParticleReal cross_section_b = (E_kev <= E_threshold) ?
+                                                ProtonBoronFusionCrossSectionNevins(E_kev) :
+                                                ProtonBoronFusionCrossSectionBuck(E_kev);
+
+    // Convert cross section to SI units: barn to square meter
+    constexpr auto barn_to_sqm = 1.e-28_prt;
+    return cross_section_b*barn_to_sqm;
+}
 
 #endif // PROTON_BORON_FUSION_CROSS_SECTION_H
