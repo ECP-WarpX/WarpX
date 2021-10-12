@@ -88,6 +88,15 @@ Overall simulation parameters
     This solver can fail to reach the default precision within a reasonable time.
     This only applies when warpx.do_electrostatic = labframe.
 
+* ``warpx.self_fields_absolute_tolerance`` (`float`, default: 0.0)
+    The absolute tolerance with which the space-charge fields should be
+    calculated. More specifically, the acceptable residual with which the
+    solution can be considered converged. In general this should be left as the
+    default, but in cases where the simulation state changes very little between
+    steps it can occur that the initial guess for the MLMG solver is so close
+    to the converged value that is fails to improve that solution sufficiently
+    to reach the ``self_fields_required_precision`` value.
+
 * ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
     fields calculation. In case if MLMG converges but fails to reach the desired
@@ -595,6 +604,15 @@ Particle initialization
     For highly-relativistic beams, this solver can fail to reach the default
     precision within a reasonable time ; in that case, users can set a
     relaxed precision requirement through ``self_fields_required_precision``.
+
+* ``<species_name>.self_fields_absolute_tolerance`` (`float`, default: 0.0)
+    The absolute tolerance with which the space-charge fields should be
+    calculated. More specifically, the acceptable residual with which the
+    solution can be considered converged. In general this should be left as the
+    default, but in cases where the simulation state changes very little between
+    steps it can occur that the initial guess for the MLMG solver is so close
+    to the converged value that is fails to improve that solution sufficiently
+    to reach the ``self_fields_required_precision`` value.
 
 * ``<species_name>.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for initial space-charge
