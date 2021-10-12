@@ -116,7 +116,7 @@ public:
         // Compute offset array and allocate memory for the produced species
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
         const auto total = amrex::Scan::ExclusiveSum(n_total_pairs, p_mask, offsets.data());
-        const auto p_offsets = offsets.dataPtr();
+        const index_type* AMREX_RESTRICT p_offsets = offsets.dataPtr();
         amrex::Vector<int> num_added_vec(m_num_product_species);
         for (int i = 0; i < m_num_product_species; i++)
         {
@@ -149,11 +149,11 @@ public:
                               products_np.end(),
                               device_products_np.begin());
         amrex::Gpu::streamSynchronize();
-        auto soa_products_data = device_soa_products.data();
-        auto products_np_data = device_products_np.data();
+        SoaData_type* AMREX_RESTRICT soa_products_data = device_soa_products.data();
+        const index_type* AMREX_RESTRICT products_np_data = device_products_np.data();
 #else
-        auto soa_products_data = soa_products.data();
-        auto products_np_data = products_np.data();
+        SoaData_type* AMREX_RESTRICT soa_products_data = soa_products.data();
+        const index_type* AMREX_RESTRICT products_np_data = products_np.data();
 #endif
 
         const int t_num_product_species = m_num_product_species;
