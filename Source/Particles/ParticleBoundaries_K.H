@@ -58,7 +58,10 @@ namespace ApplyParticleBoundaries {
     */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void
-    apply_boundaries (amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
+    apply_boundaries (
+#ifndef WARPX_DIM_1D_Z
+		      amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
+#endif
 #ifdef WARPX_DIM_3D
                       amrex::ParticleReal& y, amrex::Real ymin, amrex::Real ymax,
 #endif
@@ -71,7 +74,9 @@ namespace ApplyParticleBoundaries {
         bool change_sign_uy = false;
         bool change_sign_uz = false;
 
+#ifndef WARPX_DIM_1D_Z
         apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost, boundaries.xmin_bc, boundaries.xmax_bc);
+#endif
 #ifdef WARPX_DIM_3D
         apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost, boundaries.ymin_bc, boundaries.ymax_bc);
 #endif

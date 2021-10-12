@@ -91,13 +91,12 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
                 int jhi = (j < extra[1]) ? jlo+(sz[1]+1)-1 : jlo+sz[1]-1;
                 jlo += domlo[1];
                 jhi += domlo[1];
-#else
+#endif
                 for (int i = 0; i < numprocs[0]; ++i) {
                     int ilo = (i < extra[0]) ? i*(sz[0]+1) : (i*sz[0]+extra[0]);
                     int ihi = (i < extra[0]) ? ilo+(sz[0]+1)-1 : ilo+sz[0]-1;
                     ilo += domlo[0];
                     ihi += domlo[0];
-#endif
                     bl.push_back(Box(IntVect(AMREX_D_DECL(ilo,jlo,klo)),
                                      IntVect(AMREX_D_DECL(ihi,jhi,khi))));
         AMREX_D_TERM(},},})

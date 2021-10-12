@@ -1117,7 +1117,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
         {
             auto GetPosition = GetParticlePosition(pti);
             auto SetPosition = SetParticlePosition(pti);
-#ifndef WARPX_DIM_3D
+#ifndef WARPX_DIM_1D_Z
             const Real xmin = Geom(lev).ProbLo(0);
             const Real xmax = Geom(lev).ProbHi(0);
 #endif
@@ -1147,7 +1147,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
 
                     bool particle_lost = false;
                     ApplyParticleBoundaries::apply_boundaries(
-#ifndef WARPX_DIM_3D
+#ifndef WARPX_DIM_1D_Z
                                                               x, xmin, xmax,
 #endif
 #ifdef WARPX_DIM_3D

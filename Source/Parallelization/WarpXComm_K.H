@@ -83,6 +83,10 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
 
+    int kg = amrex::coarsen(k,2);
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
+
 #if (AMREX_SPACEDIM == 1)
 
     // interp from coarse nodal to fine nodal
@@ -97,10 +101,6 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     Real bf = Bxf_zeropad(j,0,0);
 
 #elif (AMREX_SPACEDIM == 2)
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Bxg(jg  ,kg  ,0)
@@ -172,6 +172,10 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
 
+    int kg = amrex::coarsen(k,2);
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
+
 #if (AMREX_SPACEDIM == 1)
 
     // interp from coarse nodal to fine nodal
@@ -186,10 +190,6 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     Real bf = 0.5_rt*(Byf_zeropad(j-1,0,0) + Byf_zeropad(j,0,0));
 
 #elif (AMREX_SPACEDIM == 2)
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Byg(jg  ,kg  ,0)
@@ -263,6 +263,10 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
 
+    int kg = amrex::coarsen(k,2);
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
+
 #if (AMREX_SPACEDIM == 1)
 
     // interp from coarse nodal to fine nodal
@@ -277,10 +281,6 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Real bf = 0.5_rt*(Bzf_zeropad(j-1,0,0) + Bzf_zeropad(j,0,0));
 
 #elif (AMREX_SPACEDIM == 2)
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Bzg(jg  ,kg  ,0)
@@ -353,6 +353,10 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
 
+    int kg = amrex::coarsen(k,2);
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
+
 #if (AMREX_SPACEDIM == 1)
 
     // interp from coarse nodal to fine nodal
@@ -367,10 +371,6 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     Real ef = 0.5_rt*(Exf_zeropad(j-1,0,0) + Exf_zeropad(j,0,0));
 
 #elif (AMREX_SPACEDIM == 2)
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Exg(jg  ,kg  ,0)
@@ -442,6 +442,12 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
 
+    int kg = amrex::coarsen(k,2);
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
+
+
+
 #if (AMREX_SPACEDIM == 1)
 
     // interp from coarse nodal to fine nodal
@@ -456,11 +462,6 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
     Real ef = Eyf_zeropad(j,0,0);
 
 #elif (AMREX_SPACEDIM == 2)
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Eyg(jg  ,kg  ,0)
@@ -531,6 +532,10 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real owx = 1.0_rt-wx;
 
+    int kg = amrex::coarsen(k,2);
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
+
 #if (AMREX_SPACEDIM == 1)
 
     // interp from coarse nodal to fine nodal
@@ -545,10 +550,6 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Real ef = Ezf_zeropad(j,0,0);
 
 #elif (AMREX_SPACEDIM == 2)
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Ezg(jg  ,kg  ,0)

@@ -1,0 +1,85 @@
+==============================================================================
+ WarpX Job Information
+==============================================================================
+number of MPI processes: 1
+number of threads:       8
+
+
+==============================================================================
+ Build Information
+==============================================================================
+build date:    2021-09-16 10:52:40.426215
+build machine: Linux kraken 5.8.0-55-generic #62~20.04.1-Ubuntu SMP Wed Jun 2 08:55:04 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux
+build dir:     /home/prabhatkumar/warpx_directory/WarpX
+AMReX dir:     ../amrex
+
+COMP:          gcc
+COMP version:  9.3.0
+
+C++ compiler:  mpicxx
+C++ flags:      -Werror=return-type -g -O3 -Wall -Wextra -Wpedantic -Wnull-dereference -Wfloat-conversion -Wshadow -Woverloaded-virtual -std=c++14  -fopenmp -pthread  -DWARPX_QED  -DAMREX_TINY_PROFILING -DBL_USE_MPI -DAMREX_USE_MPI -DAMREX_MPI_THREAD_MULTIPLE -DBL_USE_OMP -DAMREX_USE_OMP -DBL_NO_FORT -DAMREX_GIT_VERSION="21.09-28-g69b69c2b281c" -DBL_SPACEDIM=2 -DAMREX_SPACEDIM=2 -DBL_FORT_USE_UNDERSCORE -DAMREX_FORT_USE_UNDERSCORE -DBL_Linux -DAMREX_Linux -DAMREX_PARTICLES -DNDEBUG -DOMPI_SKIP_MPICXX -DWARPX_DIM_XZ -DAMREX_PARTICLES -DWARPX_GIT_VERSION="19.06-4248-g299ef55b92ab-dirty" -DPICSAR_GIT_VERSION="a78be127f66a" -DPICSAR_NO_ASSUMED_ALIGNMENT -DWARPX -DWARPX_USE_GPUCLOCK -Itmp_build_dir/s/2d.gnu.TPROF.MTMPI.OMP.QED.GPUCLOCK.EXE -I. -I./Source -I./Source/Particles/Filter -I../amrex/Src/Base -I../amrex/Src/Base/Parser -I../amrex/Src/Particle -I../amrex/Src/Boundary -I../amrex/Src/AmrCore -I../amrex/Src/LinearSolvers/MLMG -I../picsar/multi_physics/QED/include -I../amrex/Tools/C_scripts 
+
+Fortran comp:  mpif90
+Fortran flags:  -g -O3 -ffree-line-length-none -fno-range-check -fno-second-underscore -fimplicit-none  -DWARPX_QED
+
+Link flags:    -Xlinker -rpath -Xlinker '/home/prabhatkumar/warpx_directory/WarpX'  -L. 
+Libraries:      -pthread -I/usr/lib/x86_64-linux-gnu/openmpi/lib -L/usr/lib/x86_64-linux-gnu/openmpi/lib -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi -lmpi_cxx -lmpi 
+
+WarpX  git describe: 19.06-4248-g299ef55b-dirty
+AMReX  git describe: 21.09-28-g69b69c2b2
+PICSAR git describe: a78be127
+
+
+==============================================================================
+ Grid Information
+==============================================================================
+ level: 0
+   number of boxes = 4
+   maximum zones   = 128 512 
+
+ Boundary conditions
+   -x: interior
+   +x: interior
+   -y: interior
+   +y: interior
+
+
+==============================================================================
+ Inputs File Parameters
+==============================================================================
+max_step = 300
+amr.max_grid_size = 128
+amr.max_level = 0
+geometry.coord_sys = 0
+geometry.prob_lo = -30.e-6 -120.e-6
+geometry.prob_hi = 30.e-6 120.e-6
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
+warpx.verbose = 1
+warpx.cfl = 1.0
+warpx.use_filter = 0
+warpx.do_moving_window = 0
+algo.particle_shape = 1
+lasers.names = laser1
+laser1.profile = Gaussian
+laser1.position = 0. 0. 0.e-6
+laser1.direction = 1. 0. 1.
+laser1.polarization = -1. 1. 1.
+laser1.e_max = 1.e1
+laser1.profile_waist = 5.e-6
+laser1.profile_duration = 15.e-15
+laser1.profile_t_peak = 30.e-15
+laser1.profile_focal_distance = 1.e-6
+laser1.wavelength = 2.e-6
+diagnostics.diags_names = diag1
+diag1.intervals = 50
+diag1.diag_type = Full
+amrex.abort_on_out_of_gpu_memory = 1
+geometry.prob_lo = -3.0000000000000001e-05 -0.00012
+geometry.prob_hi = 3.0000000000000001e-05 0.00012
+amr.n_cell = 128 512
+amr.max_grid_size = 128
+geometry.is_periodic = 0 0
+vismf.usesingleread = 1
+vismf.usesinglewrite = 1
+particles.particles_nfiles = 1024
