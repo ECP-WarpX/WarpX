@@ -170,8 +170,10 @@ void ConvertLabParamsToBoost()
 
 #if (AMREX_SPACEDIM == 3)
     Vector<int> dim_map {0, 1, 2};
-#else
+#elif (AMREX_SPACEDIM == 2)
     Vector<int> dim_map {0, 2};
+#else
+    Vector<int> dim_map {2};
 #endif
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
@@ -228,8 +230,10 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         // Get box lower index in the z direction
 #if (AMREX_SPACEDIM==3)
         const int lo_ind = bx.loVect()[2];
-#else
+#elif (AMREX_SPACEDIM==2)
         const int lo_ind = bx.loVect()[1];
+#else
+        const int lo_ind = bx.loVect()[0];
 #endif
         // Check if box intersect with [zmin, zmax]
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
@@ -239,8 +243,10 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept{
 #if (AMREX_SPACEDIM==3)
                     const Real z_gridpoint = zmin_box+(k-lo_ind)*dz;
-#else
+#elif (AMREX_SPACEDIM==2)
                     const Real z_gridpoint = zmin_box+(j-lo_ind)*dz;
+#else
+                    const Real z_gridpoint = zmin_box+(i-lo_ind)*dz;
 #endif
                     if ( (z_gridpoint >= zmin) && (z_gridpoint < zmax) ) {
                         arr(i,j,k) = 0.;

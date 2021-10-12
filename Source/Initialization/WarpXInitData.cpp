@@ -84,18 +84,20 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
             int khi = (k < extra[2]) ? klo+(sz[2]+1)-1 : klo+sz[2]-1;
             klo += domlo[2];
             khi += domlo[2];
-#elif (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
+#endif
+#if (AMREX_SPACEDIM > 1)
             for (int j = 0; j < numprocs[1]; ++j) {
                 int jlo = (j < extra[1]) ? j*(sz[1]+1) : (j*sz[1]+extra[1]);
                 int jhi = (j < extra[1]) ? jlo+(sz[1]+1)-1 : jlo+sz[1]-1;
                 jlo += domlo[1];
                 jhi += domlo[1];
-#endif
+#else
                 for (int i = 0; i < numprocs[0]; ++i) {
                     int ilo = (i < extra[0]) ? i*(sz[0]+1) : (i*sz[0]+extra[0]);
                     int ihi = (i < extra[0]) ? ilo+(sz[0]+1)-1 : ilo+sz[0]-1;
                     ilo += domlo[0];
                     ihi += domlo[0];
+#endif
                     bl.push_back(Box(IntVect(AMREX_D_DECL(ilo,jlo,klo)),
                                      IntVect(AMREX_D_DECL(ihi,jhi,khi))));
         AMREX_D_TERM(},},})

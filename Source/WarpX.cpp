@@ -1868,8 +1868,6 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
     RealVect dx_vect(dx[0], dx[1], dx[2]);
 #elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
-#elif (AMREX_SPACEDIM == 1)
-    RealVect dx_vect(dx[2]);
 #endif
 
     amrex::Real solver_dt = dt[lev];

@@ -1117,8 +1117,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
         {
             auto GetPosition = GetParticlePosition(pti);
             auto SetPosition = SetParticlePosition(pti);
+#ifndef WARPX_DIM_3D
             const Real xmin = Geom(lev).ProbLo(0);
             const Real xmax = Geom(lev).ProbHi(0);
+#endif
 #ifdef WARPX_DIM_3D
             const Real ymin = Geom(lev).ProbLo(1);
             const Real ymax = Geom(lev).ProbHi(1);
@@ -1144,7 +1146,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
                     bool particle_lost = false;
-                    ApplyParticleBoundaries::apply_boundaries(x, xmin, xmax,
+                    ApplyParticleBoundaries::apply_boundaries(
+#ifndef WARPX_DIM_3D
+                                                              x, xmin, xmax,
+#endif
 #ifdef WARPX_DIM_3D
                                                               y, ymin, ymax,
 #endif
