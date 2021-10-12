@@ -15,8 +15,10 @@
 
 #include <limits>
 #include <map>
+#include <string>
 
-enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen, carbon, nitrogen, oxygen, copper};
+enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen, helium, boron,
+                            carbon, nitrogen, oxygen, copper};
 
 namespace species
 {
@@ -33,6 +35,14 @@ namespace species
             return PhysicalSpecies::photon;
         if( species=="hydrogen" )
             return PhysicalSpecies::hydrogen;
+        if( species=="proton" )
+            return PhysicalSpecies::hydrogen;
+        if( species=="helium" )
+            return PhysicalSpecies::helium;
+        if( species=="alpha" )
+            return PhysicalSpecies::helium;
+        if( species=="boron" )
+            return PhysicalSpecies::boron;
         if( species=="carbon" )
             return PhysicalSpecies::carbon;
         if( species=="nitrogen" )
@@ -59,6 +69,10 @@ namespace species
             return 0.;
         case PhysicalSpecies::hydrogen:
             return PhysConst::q_e;
+        case PhysicalSpecies::helium:
+            return PhysConst::q_e * amrex::Real(2.0);
+        case PhysicalSpecies::boron:
+            return PhysConst::q_e * amrex::Real(5.0);
         case PhysicalSpecies::carbon:
             return PhysConst::q_e * amrex::Real(6.0);
         case PhysicalSpecies::nitrogen:
@@ -87,6 +101,10 @@ namespace species
             return 0.;
         case PhysicalSpecies::hydrogen:
             return PhysConst::m_p;
+        case PhysicalSpecies::helium:
+            return PhysConst::m_p * amrex::Real(3.97369);
+        case PhysicalSpecies::boron:
+            return PhysConst::m_p * amrex::Real(10.7319);
         case PhysicalSpecies::carbon:
             return PhysConst::m_e * amrex::Real(22032.0);
         case PhysicalSpecies::nitrogen:
@@ -98,6 +116,38 @@ namespace species
         default:
             amrex::Abort("unknown PhysicalSpecies");
             return 0.;
+        }
+    }
+
+    AMREX_FORCE_INLINE
+    std::string get_name (PhysicalSpecies ps)
+    {
+        switch(ps) {
+        case PhysicalSpecies::unspecified:
+            return "unspecified";
+        case PhysicalSpecies::electron:
+            return "electron";
+        case PhysicalSpecies::positron:
+            return "positron";
+        case PhysicalSpecies::photon:
+            return "photon";
+        case PhysicalSpecies::hydrogen:
+            return "hydrogen";
+        case PhysicalSpecies::helium:
+            return "helium";
+        case PhysicalSpecies::boron:
+            return "boron";
+        case PhysicalSpecies::carbon:
+            return "carbon";
+        case PhysicalSpecies::nitrogen:
+            return "nitrogen";
+        case PhysicalSpecies::oxygen:
+            return "oxygen";
+        case PhysicalSpecies::copper:
+            return "copper";
+        default:
+            amrex::Abort("unknown PhysicalSpecies");
+            return "";
         }
     }
 }

@@ -262,9 +262,9 @@ public:
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
                         int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
 
-    virtual void ReadHeader (std::istream& is);
+    virtual void ReadHeader (std::istream& is) = 0;
 
-    virtual void WriteHeader (std::ostream& os) const;
+    virtual void WriteHeader (std::ostream& os) const = 0;
 
     virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
 
@@ -294,16 +294,26 @@ public:
 
     void AddRealComp (const std::string& name, bool comm=true)
     {
-        particle_comps[name] = NumRealComps();
-        particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
-        AddRealComp(comm);
+        auto search = particle_comps.find(name);
+        if (search == particle_comps.end()) {
+            particle_comps[name] = NumRealComps();
+            particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
+            AddRealComp(comm);
+        } else {
+            amrex::Print() << name << " already exists in particle_comps, not adding. \n";
+        }
     }
 
     void AddIntComp (const std::string& name, bool comm=true)
     {
-        particle_icomps[name] = NumIntComps();
-        particle_runtime_icomps[name] = NumIntComps() - 0;
-        AddIntComp(comm);
+        auto search = particle_icomps.find(name);
+        if (search == particle_icomps.end()) {
+            particle_icomps[name] = NumIntComps();
+            particle_runtime_icomps[name] = NumIntComps() - 0;
+            AddIntComp(comm);
+        } else {
+            amrex::Print() << name << " already exists in particle_icomps, not adding. \n";
+        }
     }
 
     int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
@@ -338,7 +348,12 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
-    amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
+    /**
+    * \brief This function returns a string containing the name of the species type
+    */
+    std::string getSpeciesTypeName () const {return species::get_name(physical_species);}
+
+    amrex::Vector<amrex::Real> get_v_galilean () {return m_v_galilean;}
 
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
@@ -357,7 +372,7 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;

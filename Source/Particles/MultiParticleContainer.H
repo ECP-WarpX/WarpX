@@ -278,6 +278,14 @@ public:
 
     std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
+    std::vector<std::string> GetLasersNames() const { return lasers_names; }
+
+    std::vector<std::string> GetSpeciesAndLasersNames() const {
+        std::vector<std::string> tmp = species_names;
+        tmp.insert(tmp.end(), lasers_names.begin(), lasers_names.end());
+        return tmp;
+    }
+
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
 
     void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);

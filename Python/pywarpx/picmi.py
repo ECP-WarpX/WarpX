@@ -568,7 +568,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         if self.method == 'PSATD':
             self.psatd_periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
-            self.psatd_fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
@@ -582,7 +581,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         if self.method == 'PSATD':
             pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft
-            pywarpx.psatd.fftw_plan_measure = self.psatd_fftw_plan_measure
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
@@ -1066,6 +1064,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
 
         self.period = period
         self.write_dir = write_dir
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.name = name
 
         if self.name is None:
@@ -1085,6 +1084,10 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = 'checkpoint'
 
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
     def init(self, kw):

@@ -3,7 +3,7 @@ name: 🐧 Intel
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.head_ref }}-intel
+  group: ${{ github.ref }}-${{ github.head_ref }}-intel
   cancel-in-progress: true
 
 jobs:
