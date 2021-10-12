@@ -43,10 +43,10 @@ public:
                       const std::array<amrex::MultiFab*,3>& B_fp,
                       amrex::Real dt);
 
-    std::array<amrex::MultiFab*,3> GetE_fp ();
-    std::array<amrex::MultiFab*,3> GetB_fp ();
-    std::array<amrex::MultiFab*,3> GetE_cp ();
-    std::array<amrex::MultiFab*,3> GetB_cp ();
+    std::array<amrex::MultiFab*,2> GetE_fp ();
+    std::array<amrex::MultiFab*,2> GetB_fp ();
+    std::array<amrex::MultiFab*,2> GetE_cp ();
+    std::array<amrex::MultiFab*,2> GetB_cp ();
 
 #ifdef WARPX_USE_PSATD
     void PushPSATD (const int lev);
@@ -73,9 +73,6 @@ private:
     // Only contains Er and Et, and Br and Bt
     std::array<std::unique_ptr<amrex::MultiFab>,2> pml_E_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,2> pml_B_fp;
-
-    std::array<std::unique_ptr<amrex::MultiFab>,2> pml_E_cp;
-    std::array<std::unique_ptr<amrex::MultiFab>,2> pml_B_cp;
 
 #ifdef WARPX_USE_PSATD
     void PushPMLPSATDSinglePatchRZ ( const int lev,

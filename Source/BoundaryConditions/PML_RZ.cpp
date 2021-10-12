@@ -141,16 +141,16 @@ PML_RZ::ApplyDamping(const std::array<amrex::MultiFab*,3>& E_fp,
     }
 }
 
-std::array<MultiFab*,3>
+std::array<MultiFab*,2>
 PML_RZ::GetE_fp ()
 {
-    return {pml_E_fp[0].get(), pml_E_fp[1].get(), pml_E_fp[2].get()};
+    return {pml_E_fp[0].get(), pml_E_fp[1].get()};
 }
 
-std::array<MultiFab*,3>
+std::array<MultiFab*,2>
 PML_RZ::GetB_fp ()
 {
-    return {pml_B_fp[0].get(), pml_B_fp[1].get(), pml_B_fp[2].get()};
+    return {pml_B_fp[0].get(), pml_B_fp[1].get()};
 }
 
 void

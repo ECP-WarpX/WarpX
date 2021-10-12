@@ -180,9 +180,9 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir);
             }
 #ifdef WARPX_DIM_RZ
-            if (pml_rz[lev]) {
-                const std::array<MultiFab*, 3>& pml_rz_B = pml_rz[lev]->GetB_fp();
-                const std::array<MultiFab*, 3>& pml_rz_E = pml_rz[lev]->GetE_fp();
+            if (pml_rz[lev] && dim < 2) {
+                const std::array<MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
+                const std::array<MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
                 shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir);
                 shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir);
             }
