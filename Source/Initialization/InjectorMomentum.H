@@ -147,11 +147,11 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+    getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
                  amrex::RandomEngine const& engine) const noexcept
     {
         // Calculate the value of vave from the local temperature
-        amrex::Real vave = std::sqrt(amrex::Real(2) * temperature(x,y,z));
+        amrex::Real const vave = std::sqrt(amrex::Real(2) * temperature(x,y,z));
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
         x1 = amrex::Random(engine);
@@ -223,14 +223,14 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+    getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
                  amrex::RandomEngine const& engine) const noexcept
     {
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
         amrex::Real x1, x2, gamma;
         amrex::Real u [3];
-        amrex::Real theta = temperature(x,y,z);
+        amrex::Real const theta = temperature(x,y,z);
         x1 = static_cast<amrex::Real>(0.);
         gamma = static_cast<amrex::Real>(0.);
         u[dir] = static_cast<amrex::Real>(0.);
