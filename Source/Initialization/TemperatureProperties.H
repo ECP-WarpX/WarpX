@@ -16,7 +16,7 @@
 #include <AMReX_REAL.H>
 
 /* Type of temperature initialization. Used by TemperatureProperties and GetTemperature. */
-enum TemperatureInitType {ConstantValue, ParserFunction};
+enum TemperatureInitType {TempConstantValue, TempParserFunction};
 
 /**
  * \brief Struct to store temperature properties, for use in momentum initialization.
@@ -38,9 +38,9 @@ struct TemperatureProperties
     /* Type of temperature initialization */
     TemperatureInitType m_type;
 
-    /* Constant temperature value, if m_type == ConstantValue */
+    /* Constant temperature value, if m_type == TempConstantValue */
     amrex::Real m_temperature;
-    /* Storage of the parser function, if m_type == ParserFunction */
+    /* Storage of the parser function, if m_type == TempParserFunction */
     std::unique_ptr<amrex::Parser> m_ptr_temperature_parser;
 };
 

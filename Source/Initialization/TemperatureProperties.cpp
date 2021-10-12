@@ -21,7 +21,7 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     pp.query("theta_distribution_type", temp_dist_s);
     if (temp_dist_s == "constant") {
         queryWithParser(pp, "theta", theta);
-        m_type = ConstantValue;
+        m_type = TempConstantValue;
         m_temperature = theta;
     }
     else if (temp_dist_s == "parser") {
@@ -29,7 +29,7 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
         Store_parserString(pp, "theta_function(x,y,z)", str_theta_function);
         m_ptr_temperature_parser =
             std::make_unique<amrex::Parser>(makeParser(str_theta_function,{"x","y","z"}));
-        m_type = ParserFunction;
+        m_type = TempParserFunction;
     }
     else {
         std::stringstream stringstream;

@@ -24,9 +24,9 @@ struct GetTemperature
     /* Type of temperature initialization */
     TemperatureInitType m_type;
 
-    /* Constant temperature value, if m_type == ConstantValue */
+    /* Constant temperature value, if m_type == TempConstantValue */
     amrex::Real m_temperature;
-    /* Temperature parser function, if m_type == ParserFunction */
+    /* Temperature parser function, if m_type == TempParserFunction */
     amrex::ParserExecutor<3> m_temperature_parser;
 
     /**
@@ -45,19 +45,19 @@ struct GetTemperature
      * \param[in] z: z-cooridnate of given location
      *
      *\return value of temperature at (x,y,z).
-     *        m_temperature if m_type is ConstantValue
-     *        m_temperature_parser(x,y,z) if m_type is ParserFunction
+     *        m_temperature if m_type is TempConstantValue
+     *        m_temperature_parser(x,y,z) if m_type is TempParserFunction
      */
     AMREX_GPU_HOST_DEVICE
     amrex::Real operator() (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
     {
         switch (m_type)
         {
-            case (ConstantValue):
+            case (TempConstantValue):
             {
                 return m_temperature;
             }
-            case (ParserFunction):
+            case (TempParserFunction):
             {
                 return m_temperature_parser(x,y,z);
             }
