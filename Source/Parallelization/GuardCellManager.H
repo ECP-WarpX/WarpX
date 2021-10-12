@@ -53,7 +53,9 @@ public:
         const amrex::Vector<amrex::Real> v_galilean,
         const amrex::Vector<amrex::Real> v_comoving,
         const bool safe_guard_cells,
-        const int do_electrostatic);
+        const int do_electrostatic,
+        const int do_multi_J,
+        const bool fft_do_time_averaging);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();
