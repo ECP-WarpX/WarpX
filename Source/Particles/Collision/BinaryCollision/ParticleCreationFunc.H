@@ -21,6 +21,7 @@
 #include <AMReX_GpuAtomic.H>
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_INT.H>
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
@@ -195,26 +196,14 @@ public:
 
                 // If the colliding particle weight decreases to zero, remove particle by
                 // setting its id to -1
-                // To do this atomically, we need to reinterpret the uint64_t variable that stores
-                // the id as unsigned long long (type accepted by cuda atomic exchange operation)
-                static_assert(sizeof(unsigned long long) == sizeof(uint64_t),
-                              "BinaryCollision module relies on the assumption that unsigned"
-                              "long long has a width of 64 bits");
-                constexpr auto minus_one = ((uint64_t(1) & 0x00FFFFFF) |
-                                                (uint64_t(0) << 63)) | (uint64_t(1) << 24);
-                const unsigned long long* minus_one_ptr =
-                                        reinterpret_cast<const unsigned long long*>(&minus_one);
+                constexpr amrex::Long minus_one_long = -1;
                 if (w1[p_pair_indices_1[i]] <= amrex::ParticleReal(0.))
                 {
-                    unsigned long long* id_ptr = reinterpret_cast<unsigned long long*>(
-                                                &particle_ptr_1[p_pair_indices_1[i]].id().m_idata);
-                    amrex::Gpu::Atomic::Exch(id_ptr, *minus_one_ptr);
+                    particle_ptr_1[p_pair_indices_1[i]].atomicSetID(minus_one_long);
                 }
                 if (w2[p_pair_indices_2[i]] <= amrex::ParticleReal(0.))
                 {
-                    unsigned long long* id_ptr = reinterpret_cast<unsigned long long*>(
-                                                &particle_ptr_2[p_pair_indices_2[i]].id().m_idata);
-                    amrex::Gpu::Atomic::Exch(id_ptr, *minus_one_ptr);
+                    particle_ptr_2[p_pair_indices_2[i]].atomicSetID(minus_one_long);
                 }
 
                 // Initialize the product particles' momentum, using a function depending on the
