@@ -67,17 +67,25 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::ignore_unused(yp);
 #endif
 
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(xp,yp);
+#endif
+
 #ifndef WARPX_DIM_RZ
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
+#if (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
     const amrex::Real dxi = 1.0_rt/dx[0];
+#endif
     const amrex::Real dzi = 1.0_rt/dx[2];
 #if (AMREX_SPACEDIM == 3)
     const amrex::Real dyi = 1.0_rt/dx[1];
 #endif
 
+#if (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
     const amrex::Real xmin = xyzmin[0];
+#endif
 #if (AMREX_SPACEDIM == 3)
     const amrex::Real ymin = xyzmin[1];
 #endif
@@ -88,6 +96,11 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     constexpr int CELL = amrex::IndexType::CELL;
 
     // --- Compute shape factors
+
+    Compute_shape_factor< depos_order > const compute_shape_factor;
+    Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
+
+#if (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
     // x direction
     // Get particle position
 #ifdef WARPX_DIM_RZ
@@ -110,8 +123,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int j_cell = 0;
     int j_node_v = 0;
     int j_cell_v = 0;
-    Compute_shape_factor< depos_order > const compute_shape_factor;
-    Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
     if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
         j_node = compute_shape_factor(sx_node, x);
     }
@@ -136,6 +147,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int const j_bx = ((bx_type[0] == NODE) ? j_node   : j_cell  );
     int const j_by = ((by_type[0] == NODE) ? j_node_v : j_cell_v);
     int const j_bz = ((bz_type[0] == NODE) ? j_node_v : j_cell_v);
+#endif
 
 #if (AMREX_SPACEDIM == 3)
     // y direction
@@ -214,7 +226,33 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // AMREX_SPACEDIM nested loops because the deposition
     // order can differ for each component of each field
     // when galerkin_interpolation is set to 1
-#if (AMREX_SPACEDIM == 2)
+
+#if (AMREX_SPACEDIM == 1)
+    // Gather field on particle Eyp from field on grid ey_arr
+    // Gather field on particle Exp from field on grid ex_arr
+    // Gather field on particle Bzp from field on grid bz_arr
+    for (int iz=0; iz<=depos_order; iz++){
+        Eyp += sz_ey[iz]*
+            ey_arr(lo.x+l_ey+iz, 0, 0, 0);
+        Exp += sz_ex[iz]*
+            ex_arr(lo.x+l_ex+iz, 0, 0, 0);
+        Bzp += sz_bz[iz]*
+            bz_arr(lo.x+l_bz+iz, 0, 0, 0);
+    }
+
+    // Gather field on particle Byp from field on grid by_arr
+    // Gather field on particle Ezp from field on grid ez_arr
+    // Gather field on particle Bxp from field on grid bx_arr
+    for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
+        Ezp += sz_ez[iz]*
+            ez_arr(lo.x+l_ez+iz, 0, 0, 0);
+        Bxp += sz_bx[iz]*
+            bx_arr(lo.x+l_bx+iz, 0, 0, 0);
+        Byp += sz_by[iz]*
+            by_arr(lo.x+l_by+iz, 0, 0, 0);
+    }
+
+#elif (AMREX_SPACEDIM == 2)
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){

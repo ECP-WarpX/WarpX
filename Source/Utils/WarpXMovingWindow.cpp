@@ -62,6 +62,11 @@ WarpX::UpdatePlasmaInjectionPosition (Real a_dt)
             // This needs to be converted in order to index `boost_direction`
             // which has 3 components, for both 2D and 3D simulations.
             WarpX::boost_direction[2*dir] * PhysConst::c * a_dt;
+#elif ( AMREX_SPACEDIM == 1 )
+            // In 1D, dir=0 corresponds to z
+            // This needs to be converted in order to index `boost_direction`
+            // which has 3 components, for 1D, 2D, and 3D simulations.
+            WarpX::boost_direction[2+dir] * PhysConst::c * a_dt; // 1D : Check with Remi
 #endif
     }
 }
@@ -416,6 +421,11 @@ WarpX::ShiftGalileanBoundary ()
             m_v_galilean[0]* time_shift,
             std::numeric_limits<Real>::quiet_NaN(),
             m_v_galilean[2]*time_shift };
+#elif (AMREX_SPACEDIM == 1)
+        m_galilean_shift = {
+            std::numeric_limits<Real>::quiet_NaN(),
+            std::numeric_limits<Real>::quiet_NaN(),
+            m_v_galilean[2]*time_shift };
 #endif
 
 #if (AMREX_SPACEDIM == 3)
@@ -429,8 +439,13 @@ WarpX::ShiftGalileanBoundary ()
         new_hi[0] = current_hi[0] + m_galilean_shift[0];
         new_lo[1] = current_lo[1] + m_galilean_shift[2];
         new_hi[1] = current_hi[1] + m_galilean_shift[2];
-      }
-    #endif
+    }
+#elif (AMREX_SPACEDIM == 1)
+    {
+        new_lo[0] = current_lo[0] + m_galilean_shift[2];
+        new_hi[0] = current_hi[0] + m_galilean_shift[2];
+    }
+#endif
     time_of_last_gal_shift = cur_time;
 
     ResetProbDomain(RealBox(new_lo, new_hi));

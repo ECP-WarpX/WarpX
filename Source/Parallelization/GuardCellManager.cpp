@@ -106,6 +106,9 @@ guardCellManager::Init (
 #elif (AMREX_SPACEDIM == 2)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+#elif (AMREX_SPACEDIM == 1)
+    ng_alloc_EB = IntVect(ngz);
+    ng_alloc_J = IntVect(ngJz);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
@@ -172,6 +175,8 @@ guardCellManager::Init (
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif (AMREX_SPACEDIM == 2)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif (AMREX_SPACEDIM == 1)
+        IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:

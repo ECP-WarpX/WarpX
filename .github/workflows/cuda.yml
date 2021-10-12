@@ -1,6 +1,9 @@
 name: 🐧 CUDA
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+    types: [review_requested, ready_for_review]
 
 concurrency:
   group: ${{ github.head_ref }}-cuda
@@ -15,6 +18,7 @@ jobs:
     name: NVCC 11.0.2 SP
     runs-on: ubuntu-18.04
     env: {CXXFLAGS: "-Werror"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies

@@ -11,6 +11,7 @@ jobs:
     name: HIP SP
     runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies

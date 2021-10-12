@@ -267,7 +267,9 @@ public:
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_XZ
+#if defined WARPX_DIM_1D_Z
+            auto dV = geom.CellSize(0);
+#elif defined WARPX_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
@@ -410,7 +412,9 @@ public:
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_XZ
+#if defined WARPX_DIM_1D_Z
+            auto dV = geom.CellSize(0);
+#elif defined WARPX_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box

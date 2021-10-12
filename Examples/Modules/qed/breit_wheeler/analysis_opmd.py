@@ -25,10 +25,13 @@ def main():
     print("Opening openPMD output")
     prefix = sys.argv[1]
     series = io.Series(prefix+"/openpmd_%T.h5", io.Access.read_only)
-    data_set_end = series.iterations[1]
+    data_set_end = series.iterations[2]
 
     # get simulation time
     sim_time = data_set_end.time
+    # no particles can be created on the first timestep so we have 2 timesteps in the test case,
+    # with only the second one resulting in particle creation
+    dt = sim_time/2.
 
     # get particle data
     particle_data = {}
@@ -59,7 +62,7 @@ def main():
 
         particle_data[spec_name] = data
 
-    ac.check(sim_time, particle_data)
+    ac.check(dt, particle_data)
 
     #test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
     #checksumAPI.evaluate_checksum(test_name, filename_end)

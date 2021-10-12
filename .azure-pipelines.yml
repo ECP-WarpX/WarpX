@@ -5,6 +5,7 @@ pool:
 
 pr:
   autoCancel: true
+  drafts: false
 
 jobs:
 - job:

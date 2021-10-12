@@ -11,6 +11,7 @@ jobs:
     name: AppleClang
     runs-on: macos-latest
     env: {CXXFLAGS: "-Werror -Wno-error=pass-failed"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies

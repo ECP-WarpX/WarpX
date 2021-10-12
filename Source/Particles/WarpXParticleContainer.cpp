@@ -199,6 +199,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(0) = x[i];
 #endif
         p.pos(1) = z[i];
+#else //AMREX_SPACEDIM == 1
+        amrex::ignore_unused(x,y);
+        p.pos(0) = z[i];
 #endif
 
         pinned_tile.push_back(p);
@@ -312,7 +315,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // deposit part of its current in a neighboring box. However, this should catch particles
     // traveling many cells away, for example with algorithms that allow for large time steps.
 
-#if   (AMREX_SPACEDIM == 2)
+#if   (AMREX_SPACEDIM == 1)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2));
+#elif   (AMREX_SPACEDIM == 2)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2),
                                                        static_cast<int>(WarpX::noz/2));
 #elif (AMREX_SPACEDIM == 3)
@@ -595,7 +600,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // are not trivial, this check might be too strict and we might need to relax it, as currently
     // done for the current deposition.
 
-#if   (AMREX_SPACEDIM == 2)
+#if   (AMREX_SPACEDIM == 1)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2+1));
+#elif   (AMREX_SPACEDIM == 2)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
                                                        static_cast<int>(WarpX::noz/2+1));
 #elif (AMREX_SPACEDIM == 3)
@@ -1110,8 +1117,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
         {
             auto GetPosition = GetParticlePosition(pti);
             auto SetPosition = SetParticlePosition(pti);
+#ifndef WARPX_DIM_3D
             const Real xmin = Geom(lev).ProbLo(0);
             const Real xmax = Geom(lev).ProbHi(0);
+#endif
 #ifdef WARPX_DIM_3D
             const Real ymin = Geom(lev).ProbLo(1);
             const Real ymax = Geom(lev).ProbHi(1);
@@ -1137,7 +1146,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_co
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
                     bool particle_lost = false;
-                    ApplyParticleBoundaries::apply_boundaries(x, xmin, xmax,
+                    ApplyParticleBoundaries::apply_boundaries(
+#ifndef WARPX_DIM_3D
+                                                              x, xmin, xmax,
+#endif
 #ifdef WARPX_DIM_3D
                                                               y, ymin, ymax,
 #endif
