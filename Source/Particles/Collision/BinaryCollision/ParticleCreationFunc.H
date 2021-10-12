@@ -98,13 +98,13 @@ public:
     amrex::Vector<int> operator() (
                     const index_type& n_total_pairs,
                     const SoaData_type soa_1, const SoaData_type soa_2,
-                    ParticleTileType** tile_products,
-                    ParticleType* particle_ptr_1, ParticleType* particle_ptr_2,
+                    ParticleTileType** AMREX_RESTRICT tile_products,
+                    ParticleType* AMREX_RESTRICT particle_ptr_1, ParticleType*  AMREX_RESTRICT particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
-                    const index_type* p_mask, const amrex::Vector<index_type>& products_np,
-                    const SmartCopy* copy_species1, const SmartCopy* copy_species2,
-                    const index_type* p_pair_indices_1, const index_type* p_pair_indices_2,
-                    const amrex::ParticleReal* p_pair_reaction_weight
+                    const index_type* AMREX_RESTRICT p_mask, const amrex::Vector<index_type>& products_np,
+                    const SmartCopy* AMREX_RESTRICT copy_species1, const SmartCopy* AMREX_RESTRICT copy_species2,
+                    const index_type* AMREX_RESTRICT p_pair_indices_1, const index_type* AMREX_RESTRICT p_pair_indices_2,
+                    const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight
                     ) const
     {
         if (n_total_pairs == 0) return amrex::Vector<int>(m_num_product_species, 0);
@@ -153,7 +153,7 @@ public:
 #endif
 
         const int t_num_product_species = m_num_product_species;
-        const int* p_num_products_device = m_num_products_device.data();
+        const int* AMREX_RESTRICT p_num_products_device = m_num_products_device.data();
         const CollisionType t_collision_type = m_collision_type;
 
         amrex::ParallelForRNG(n_total_pairs,

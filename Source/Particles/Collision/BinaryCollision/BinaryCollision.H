@@ -245,8 +245,8 @@ public:
             int const n_cells = bins_1.numBins();
             // - Species 1
             const auto soa_1 = ptile_1.getParticleTileData();
-            index_type* indices_1 = bins_1.permutationPtr();
-            index_type const* cell_offsets_1 = bins_1.offsetsPtr();
+            index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
+            index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             amrex::ParticleReal q1 = species_1.getCharge();
             amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
@@ -382,8 +382,8 @@ public:
             int const n_cells = bins_1.numBins();
             // - Species 1
             const auto soa_1 = ptile_1.getParticleTileData();
-            index_type* indices_1 = bins_1.permutationPtr();
-            index_type const* cell_offsets_1 = bins_1.offsetsPtr();
+            index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
+            index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             amrex::ParticleReal q1 = species_1.getCharge();
             amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
@@ -392,8 +392,8 @@ public:
                                  particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
             // - Species 2
             const auto soa_2 = ptile_2.getParticleTileData();
-            index_type* indices_2 = bins_2.permutationPtr();
-            index_type const* cell_offsets_2 = bins_2.offsetsPtr();
+            index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
+            index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
             amrex::ParticleReal q2 = species_2.getCharge();
             amrex::ParticleReal m2 = species_2.getMass();
             auto get_position_2  = GetParticlePosition(ptile_2, getpos_offset);
