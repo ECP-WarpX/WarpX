@@ -275,7 +275,7 @@ public:
             */
             const int n_cells_products = have_product_species ? n_cells: 0;
             amrex::Gpu::DeviceVector<index_type> n_pairs_in_each_cell(n_cells_products);
-            auto p_n_pairs_in_each_cell = n_pairs_in_each_cell.dataPtr();
+            auto AMREX_RESTRICT p_n_pairs_in_each_cell = n_pairs_in_each_cell.dataPtr();
 
             // Compute how many pairs in each cell and store in n_pairs_in_each_cell array
             // For a single species, the number of pair in a cell is half the number of particles
@@ -293,21 +293,21 @@ public:
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
             const auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
                                                      p_n_pairs_in_each_cell, pair_offsets.data());
-            auto p_pair_offsets = pair_offsets.dataPtr();
+            auto AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
-            auto p_mask = mask.dataPtr();
+            auto AMREX_RESTRICT p_mask = mask.dataPtr();
             // Will be filled with the index of the first particle of a given pair
             amrex::Gpu::DeviceVector<index_type> pair_indices_1(n_total_pairs);
-            auto p_pair_indices_1 = pair_indices_1.dataPtr();
+            auto AMREX_RESTRICT p_pair_indices_1 = pair_indices_1.dataPtr();
             // Will be filled with the index of the second particle of a given pair
             amrex::Gpu::DeviceVector<index_type> pair_indices_2(n_total_pairs);
-            auto p_pair_indices_2 = pair_indices_2.dataPtr();
+            auto AMREX_RESTRICT p_pair_indices_2 = pair_indices_2.dataPtr();
             // How much weight should be given to the produced particles (and removed from the
             // reacting particles)
             amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight(n_total_pairs);
-            auto p_pair_reaction_weight = pair_reaction_weight.dataPtr();
+            auto AMREX_RESTRICT p_pair_reaction_weight = pair_reaction_weight.dataPtr();
             /*
               End of calculations only required when creating product particles
             */
@@ -422,7 +422,7 @@ public:
             */
             const int n_cells_products = have_product_species ? n_cells: 0;
             amrex::Gpu::DeviceVector<index_type> n_pairs_in_each_cell(n_cells_products);
-            auto p_n_pairs_in_each_cell = n_pairs_in_each_cell.dataPtr();
+            auto AMREX_RESTRICT p_n_pairs_in_each_cell = n_pairs_in_each_cell.dataPtr();
 
             // Compute how many pairs in each cell and store in n_pairs_in_each_cell array
             // For different species, the number of pairs in a cell is the number of particles of
@@ -445,21 +445,21 @@ public:
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
             auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
                                                      p_n_pairs_in_each_cell, pair_offsets.data());
-            auto p_pair_offsets = pair_offsets.dataPtr();
+            auto AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
-            auto p_mask = mask.dataPtr();
+            auto AMREX_RESTRICT p_mask = mask.dataPtr();
             // Will be filled with the index of the first particle of a given pair
             amrex::Gpu::DeviceVector<index_type> pair_indices_1(n_total_pairs);
-            auto p_pair_indices_1 = pair_indices_1.dataPtr();
+            auto AMREX_RESTRICT p_pair_indices_1 = pair_indices_1.dataPtr();
             // Will be filled with the index of the second particle of a given pair
             amrex::Gpu::DeviceVector<index_type> pair_indices_2(n_total_pairs);
-            auto p_pair_indices_2 = pair_indices_2.dataPtr();
+            auto AMREX_RESTRICT p_pair_indices_2 = pair_indices_2.dataPtr();
             // How much weight should be given to the produced particles (and removed from the
             // reacting particles)
             amrex::Gpu::DeviceVector<amrex::ParticleReal> pair_reaction_weight(n_total_pairs);
-            auto p_pair_reaction_weight = pair_reaction_weight.dataPtr();
+            auto AMREX_RESTRICT p_pair_reaction_weight = pair_reaction_weight.dataPtr();
             /*
               End of calculations only required when creating product particles
             */
