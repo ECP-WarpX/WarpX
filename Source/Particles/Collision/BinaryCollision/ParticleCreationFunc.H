@@ -99,11 +99,14 @@ public:
                     const index_type& n_total_pairs,
                     const SoaData_type soa_1, const SoaData_type soa_2,
                     ParticleTileType** AMREX_RESTRICT tile_products,
-                    ParticleType* AMREX_RESTRICT particle_ptr_1, ParticleType*  AMREX_RESTRICT particle_ptr_2,
+                    ParticleType* particle_ptr_1, ParticleType*  particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
-                    const index_type* AMREX_RESTRICT p_mask, const amrex::Vector<index_type>& products_np,
-                    const SmartCopy* AMREX_RESTRICT copy_species1, const SmartCopy* AMREX_RESTRICT copy_species2,
-                    const index_type* AMREX_RESTRICT p_pair_indices_1, const index_type* AMREX_RESTRICT p_pair_indices_2,
+                    const index_type* AMREX_RESTRICT p_mask,
+                    const amrex::Vector<index_type>& products_np,
+                    const SmartCopy* AMREX_RESTRICT copy_species1,
+                    const SmartCopy* AMREX_RESTRICT copy_species2,
+                    const index_type* AMREX_RESTRICT p_pair_indices_1,
+                    const index_type* AMREX_RESTRICT p_pair_indices_2,
                     const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight
                     ) const
     {
