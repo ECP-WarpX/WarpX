@@ -233,7 +233,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_continuous_injection", do_continuous_injection);
     pp_species_name.query("initialize_self_fields", initialize_self_fields);
     queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
-    pp_species_name.query("self_fields_max_iters", self_fields_max_iters);
+    queryWithParser(pp_species_name, "self_fields_max_iters", self_fields_max_iters);
     pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
@@ -312,7 +312,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     if (use_default_v_galilean) {
         m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (WarpX::gamma_boost * WarpX::gamma_boost));
     } else {
-        pp_psatd.query("v_galilean", m_v_galilean);
+        queryArrWithParser(pp_psatd, "v_galilean", m_v_galilean, 0, 3);
     }
     // Scale the Galilean velocity by the speed of light
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
@@ -2521,7 +2521,7 @@ PhysicalParticleContainer::InitIonizationModule ()
             "charge != q_e for ionizable species: overriding user value and setting charge = q_e.");
         charge = PhysConst::q_e;
     }
-    pp_species_name.query("ionization_initial_level", ionization_initial_level);
+    queryWithParser(pp_species_name, "ionization_initial_level", ionization_initial_level);
     pp_species_name.get("ionization_product_species", ionization_product_name);
     pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level
