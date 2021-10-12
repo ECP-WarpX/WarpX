@@ -50,8 +50,8 @@ public:
         const int nci_corr_stencil,
         const int maxwell_solver_id,
         const int max_level,
-        const amrex::Array<amrex::Real,3> v_galilean,
-        const amrex::Array<amrex::Real,3> v_comoving,
+        const amrex::Vector<amrex::Real> v_galilean,
+        const amrex::Vector<amrex::Real> v_comoving,
         const bool safe_guard_cells,
         const int do_electrostatic);
 
