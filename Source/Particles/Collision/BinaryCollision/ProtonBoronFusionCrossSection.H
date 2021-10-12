@@ -28,7 +28,7 @@
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_kin_star)
 {
-    using amrex::literals;
+    using namespace amrex::literals;
 
     // If kinetic energy is 0, return a 0 cross section and avoid later division by 0.
     if (E_kin_star == 0._prt) {return 0._prt;}
@@ -77,19 +77,19 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     }
     else
     {
-        constexpr auto A0 = amrex::ParticleReal(2.57e6);
-        constexpr auto A1 = amrex::ParticleReal(5.67e5);
-        constexpr auto A2 = amrex::ParticleReal(1.34e5);
-        constexpr auto A3 = amrex::ParticleReal(5.68e5);
-        constexpr auto E0 = amrex::ParticleReal(581.3);
-        constexpr auto E1 = amrex::ParticleReal(1083.);
-        constexpr auto E2 = amrex::ParticleReal(2405.);
-        constexpr auto E3 = amrex::ParticleReal(3344.);
-        constexpr auto dE0_sq = amrex::ParticleReal(85.7*85.7);
-        constexpr auto dE1_sq = amrex::ParticleReal(234.*234.);
-        constexpr auto dE2_sq = amrex::ParticleReal(138.*138.);
-        constexpr auto dE3_sq = amrex::ParticleReal(309.*309.);
-        constexpr auto B = amrex::ParticleReal(4.38);
+        constexpr auto A0 = 2.57e6_prt;
+        constexpr auto A1 = 5.67e5_prt;
+        constexpr auto A2 = 1.34e5_prt;
+        constexpr auto A3 = 5.68e5_prt;
+        constexpr auto E0 = 581.3_prt;
+        constexpr auto E1 = 1083._prt;
+        constexpr auto E2 = 2405._prt;
+        constexpr auto E3 = 3344._prt;
+        constexpr auto dE0_sq = 85.7_prt*85.7_prt;
+        constexpr auto dE1_sq = 234._prt*234._prt;
+        constexpr auto dE2_sq = 138._prt*138._prt;
+        constexpr auto dE3_sq = 309._prt*309._prt;
+        constexpr auto B = 4.38_prt;
         astrophysical_factor =  A0 / ((E_kev-E0)*(E_kev-E0) + dE0_sq) +
                                 A1 / ((E_kev-E1)*(E_kev-E1) + dE1_sq) +
                                 A2 / ((E_kev-E2)*(E_kev-E2) + dE2_sq) +
