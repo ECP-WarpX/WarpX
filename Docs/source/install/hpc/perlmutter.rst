@@ -122,6 +122,6 @@ To run a simulation, copy the lines above to a file ``batch_perlmutter.sh`` and 
 
 .. code-block:: bash
 
-   bsub batch_perlmutter.sh
+   sbatch batch_perlmutter.sh
 
 to submit the job.
