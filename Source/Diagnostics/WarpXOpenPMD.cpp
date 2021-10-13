@@ -567,6 +567,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           }, true);
       } else if (isBTD) {
           PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+          tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
+          tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
+          tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
           tmp.copyParticles(*pinned_pc);
       }
 
@@ -664,9 +667,13 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   // define positions & offsets
   //
   const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
+  m_ParticleSetUp = 1;
+  if (counter.GetTotalNumParticles() > 0 and ParticleFlushOffset == 0) {
+      // This will trigger meta-data flush for particles
+      m_ParticleSetUp = -1;
+  }
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
   SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
-  m_ParticleSetUp = 1;
   // open files from all processors, in case some will not contribute below
   m_Series->flush();
   for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
