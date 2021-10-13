@@ -803,7 +803,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_cp[lev]) pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryF(patch_type);
@@ -832,7 +832,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_fp[lev]) pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
@@ -847,7 +847,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_cp[lev]) pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
