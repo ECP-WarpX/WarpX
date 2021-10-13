@@ -10,6 +10,7 @@
  */
 #include "WarpX.H"
 
+#include "BoundaryConditions/PML.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -583,6 +584,20 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
             PSATDBackwardTransformEBavg();
         }
+
+        // Evolve the fields in the PML boxes
+        for (int lev = 0; lev <= finest_level; ++lev)
+        {
+            if (do_pml && pml[lev]->ok())
+            {
+                pml[lev]->PushPSATD(lev);
+            }
+            ApplyEfieldBoundary(lev, PatchType::fine);
+            if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
+            ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
+            if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
+        }
+
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
         if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
