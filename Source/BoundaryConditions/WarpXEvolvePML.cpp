@@ -60,15 +60,17 @@ WarpX::DampPML (int lev, PatchType patch_type)
     WARPX_PROFILE("WarpX::DampPML()");
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(patch_type);
-    pml_rz[lev]->ApplyDamping({ Efield_fp[lev][0].get(), Efield_fp[lev][1].get(), Efield_fp[lev][2].get() },
-                              { Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get() },
-                              dt[lev]);
-#else
-    DampPML_Cartesian (lev, patch_type);
+    if (pml_rz[lev]) {
+        pml_rz[lev]->ApplyDamping({ Efield_fp[lev][0].get(), Efield_fp[lev][1].get(), Efield_fp[lev][2].get() },
+                                  { Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get() },
+                                  dt[lev]);
+    }
 #endif
+    if (pml[lev]) {
+        DampPML_Cartesian (lev, patch_type);
+    }
 }
 
-#ifndef WARPX_DIM_RZ
 void
 WarpX::DampPML_Cartesian (int lev, PatchType patch_type)
 {
@@ -205,7 +207,6 @@ WarpX::DampPML_Cartesian (int lev, PatchType patch_type)
         }
     }
 }
-#endif  // not defined WARPX_DIM_RZ
 
 void
 WarpX::DampJPML ()
