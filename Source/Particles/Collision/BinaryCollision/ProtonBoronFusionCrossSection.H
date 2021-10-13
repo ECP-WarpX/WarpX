@@ -16,14 +16,14 @@
 
 /**
  * \brief Computes the total proton-boron fusion cross section in the range 0 < E < 3.5 MeV using
- * the analytical fits given in W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000). The
- * result is returned in barn.
+ * the analytical fits given in W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000).
  * For the record, note that there is a typo in equation (1) of this paper: the total cross section
  * should read S(E)/E*exp(-sqrt(E_G/E)) instead of S(E)/E*exp(sqrt(E_G/E)) (minus sign in the
  * exponential).
  *
  * @param[in] E_keV the kinetic energy of the proton-boron pair in its center of mass frame, in
  * keV.
+ * @return The total cross section in barn.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleReal& E_keV)
@@ -101,10 +101,11 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleRe
 /**
  * \brief Computes the total proton-boron fusion cross section in the range E > 3.5 MeV using a
  * simple power law fit of the data presented in Buck et al., Nuclear Physics A, 398(2), 189-202
- * (1983) (data can also be found in the EXFOR database). The result is returned in barn.
+ * (1983) (data can also be found in the EXFOR database).
  *
  * @param[in] E_keV the kinetic energy of the proton-boron pair in its center of mass frame, in
  * keV.
+ * @return The total cross section in barn.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::ParticleReal ProtonBoronFusionCrossSectionBuck (const amrex::ParticleReal& E_keV)
@@ -125,10 +126,11 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionBuck (const amrex::ParticleReal
  * the analytical fits given in W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000). When
  * E_kin_star > 3.5 MeV, we use a simple power law fit of the data presented in Buck et al.,
  * Nuclear Physics A, 398(2), 189-202 (1983). Both fits return the same value for
- * E_kin_star = 3.5 MeV. The result is returned in SI units (square meters).
+ * E_kin_star = 3.5 MeV.
  *
  * @param[in] E_kin_star the kinetic energy of the proton-boron pair in its center of mass frame,
  * in SI units.
+ * @return The total cross section in SI units (square meters).
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_kin_star)
