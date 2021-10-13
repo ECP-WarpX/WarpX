@@ -27,21 +27,19 @@ public:
     FieldProbe(std::string rd_name);
 
     /**
-     * This function computes the value of Ex, Ey, Ez, |E|, Bx, By, Bz and |B| at a given point
+     * This function computes the value of Ex, Ey, Ez, Bx, By, Bz and at a given point
      *
      * @param[in] step current time step
      */
     virtual void ComputeDiags(int step) override final;
 
-    static constexpr int noutputs = 8; // probing Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
+    static constexpr int noutputs = 8; // probing Ex,Ey,Ez,Bx,By,Bz
     static constexpr int index_Ex = 0;
     static constexpr int index_Ey = 1;
     static constexpr int index_Ez = 2;
-    static constexpr int index_absE = 3;
-    static constexpr int index_Bx = 4;
-    static constexpr int index_By = 5;
-    static constexpr int index_Bz = 6;
-    static constexpr int index_absB = 7;
+    static constexpr int index_Bx = 3;
+    static constexpr int index_By = 4;
+    static constexpr int index_Bz = 5;
 
 private:
 #if (AMREX_SPACEDIM == 2)

@@ -80,15 +80,11 @@ FieldProbe::FieldProbe (std::string rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_|E|_lev" + std::to_string(lev) + " (V/m)";
-                ofs << m_sep;
                 ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
                 ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
                 ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + " (T)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_|B|_lev" + std::to_string(lev) + " (T)";
             }
             ofs << std::endl;
             // close file
@@ -126,8 +122,8 @@ void FieldProbe::ComputeDiags (int step)
                                      y_probe >= prob_lo[1] and y_probe <= prob_hi[1] and
                                      z_probe >= prob_lo[2] and z_probe <= prob_hi[2];
 #endif
-        amrex::Real fp_Ex = 0._rt, fp_Ey = 0._rt, fp_Ez = 0._rt, fp_E = 0._rt;
-        amrex::Real fp_Bx = 0._rt, fp_By = 0._rt, fp_Bz = 0._rt, fp_B = 0._rt;
+        amrex::Real fp_Ex = 0._rt, fp_Ey = 0._rt, fp_Ez = 0._rt;
+        amrex::Real fp_Bx = 0._rt, fp_By = 0._rt, fp_Bz = 0._rt;
 
         if( probe_in_domain ) {
             const auto cell_size = gm.CellSizeArray();
@@ -200,11 +196,9 @@ void FieldProbe::ComputeDiags (int step)
                     fp_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
                     fp_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
                     fp_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
-                    fp_E = Ex_interp * Ex_interp + Ey_interp * Ey_interp + Ez_interp * Ez_interp;
                     fp_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
                     fp_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
                     fp_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
-                    fp_B = Bx_interp * Bx_interp + By_interp * By_interp + Bz_interp * Bz_interp;
 
                     probe_proc = amrex::ParallelDescriptor::MyProc();
                 }
@@ -229,10 +223,6 @@ void FieldProbe::ComputeDiags (int step)
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
                                                     index_Ez);
-                    amrex::ParallelDescriptor::Send(&fp_E,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_absE);
                     amrex::ParallelDescriptor::Send(&fp_Bx,
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
@@ -245,21 +235,15 @@ void FieldProbe::ComputeDiags (int step)
                                                     1,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
                                                     index_Bz);
-                    amrex::ParallelDescriptor::Send(&fp_B,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_absB);
                 }
                 if (amrex::ParallelDescriptor::MyProc()
                     == amrex::ParallelDescriptor::IOProcessorNumber()) {
                     amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, index_Ex);
                     amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, index_Ey);
                     amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, index_Ez);
-                    amrex::ParallelDescriptor::Recv(&fp_E, 1, probe_proc, index_absE);
                     amrex::ParallelDescriptor::Recv(&fp_Bx, 1, probe_proc, index_Bx);
                     amrex::ParallelDescriptor::Recv(&fp_By, 1, probe_proc, index_By);
                     amrex::ParallelDescriptor::Recv(&fp_Bz, 1, probe_proc, index_Bz);
-                    amrex::ParallelDescriptor::Recv(&fp_B, 1, probe_proc, index_absB);
                 }
             }
         }
@@ -268,11 +252,9 @@ void FieldProbe::ComputeDiags (int step)
         m_data[lev * noutputs + index_Ex] = fp_Ex;
         m_data[lev * noutputs + index_Ey] = fp_Ey;
         m_data[lev * noutputs + index_Ez] = fp_Ez;
-        m_data[lev * noutputs + index_absE] = std::sqrt(fp_E);
         m_data[lev * noutputs + index_Bx] = fp_Bx;
         m_data[lev * noutputs + index_By] = fp_By;
         m_data[lev * noutputs + index_Bz] = fp_Bz;
-        m_data[lev * noutputs + index_absB] = std::sqrt(fp_B);
     }
     // end loop over refinement levels
 
