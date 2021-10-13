@@ -254,25 +254,31 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sx(i, j, k) <= 0) return;
 
+#ifndef WARPX_DIM_XZ
                 Rhox(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
                     Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k)) / Sx(i, j, k);
-
+#endif
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sy(i, j, k) <= 0) return;
 
+#ifdef WARPX_DIM_XZ
+                Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
+                    Ex(i, j + 1, k) * lx(i, j + 1, k) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
+#else
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
-
+#endif
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sz(i, j, k) <= 0) return;
 
+#ifndef WARPX_DIM_XZ
                 Rhoz(i, j, k) =  (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
                     Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
-
+#endif
             }
         );
 
@@ -357,9 +363,15 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j + vec(0);
                         kp = k + vec(1);
                     }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+#else
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
+#endif
                     }else{
                         ip = i + vec(0);
                         jp = j + vec(1);
@@ -381,9 +393,15 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j + vec(0);
                         kp = k + vec(1);
                     }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+#else
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
+#endif
                     }else{
                         ip = i + vec(0);
                         jp = j + vec(1);
