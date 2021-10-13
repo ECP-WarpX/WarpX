@@ -1,29 +1,28 @@
 stop_time = 1.3342563807926085e-08
-amr.n_cell = 16 16
+amr.n_cell = 32 32
 amr.max_grid_size = 128
 amr.max_level = 0
 
 geometry.coord_sys   = 0
 geometry.prob_lo     = -0.8 -0.8
 geometry.prob_hi     =  0.8  0.8
-warpx.const_dt = 1e-6
 warpx.cfl = 1
 
 boundary.field_lo = pec pec
 boundary.field_hi = pec pec
 
-eb2.geom_type = box
-eb2.box_lo = -0.5 -0.5
-eb2.box_hi = 0.5 0.5
-eb2.box_has_fluid_inside = true
+my_constants.xmin = -0.5
+my_constants.zmin = -0.5
+my_constants.xmax = 0.5
+my_constants.zmax = 0.5
 # Alternatively one could use parser to build EB
 # Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.
-# warpx.eb_implicit_function = "max(max(x-0.5,-0.5-x), max(z-0.5,-0.5-z))"
+warpx.eb_implicit_function = "max(max(x+xmin,-(x+xmax)), max(z+zmin,-(z+zmax)))"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 
-my_constants.m = 1
-my_constants.p = 0
+my_constants.m = 0
+my_constants.p = 1
 my_constants.Lx = 1
 my_constants.Ly = 1
 my_constants.Lz = 1
