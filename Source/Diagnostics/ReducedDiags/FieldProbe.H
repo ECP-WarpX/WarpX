@@ -33,7 +33,7 @@ public:
      */
     virtual void ComputeDiags(int step) override final;
 
-    static constexpr int noutputs = 8; // probing Ex,Ey,Ez,Bx,By,Bz
+    static constexpr int noutputs = 6; // probing Ex,Ey,Ez,Bx,By,Bz
     static constexpr int index_Ex = 0;
     static constexpr int index_Ey = 1;
     static constexpr int index_Ez = 2;

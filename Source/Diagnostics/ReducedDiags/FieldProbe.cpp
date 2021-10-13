@@ -122,8 +122,8 @@ void FieldProbe::ComputeDiags (int step)
                                      y_probe >= prob_lo[1] and y_probe <= prob_hi[1] and
                                      z_probe >= prob_lo[2] and z_probe <= prob_hi[2];
 #endif
-        amrex::Real fp_Ex = 0._rt, fp_Ey = 0._rt, fp_Ez = 0._rt;
-        amrex::Real fp_Bx = 0._rt, fp_By = 0._rt, fp_Bz = 0._rt;
+
+        amrex::Vector<amrex::Real> fp_values(noutputs);
 
         if( probe_in_domain ) {
             const auto cell_size = gm.CellSizeArray();
@@ -193,12 +193,12 @@ void FieldProbe::ComputeDiags (int step)
                                    WarpX::n_rz_azimuthal_modes, interp_order, false);
 
                     // Either save the interpolated fields or the raw fields depending on the raw_fields flag
-                    fp_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
-                    fp_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
-                    fp_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
-                    fp_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
-                    fp_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
-                    fp_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
+                    fp_values[index_Ex] = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
+                    fp_values[index_Ey] = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
+                    fp_values[index_Ez] = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
+                    fp_values[index_Bx] = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
+                    fp_values[index_By] = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
+                    fp_values[index_Bz] = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
 
                     probe_proc = amrex::ParallelDescriptor::MyProc();
                 }
@@ -211,55 +211,30 @@ void FieldProbe::ComputeDiags (int step)
 
             if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
                 if (amrex::ParallelDescriptor::MyProc() == probe_proc) {
-                    amrex::ParallelDescriptor::Send(&fp_Ex,
-                                                    1,
+                    amrex::ParallelDescriptor::Send(fp_values.dataPtr(),
+                                                    noutputs,
                                                     amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Ex);
-                    amrex::ParallelDescriptor::Send(&fp_Ey,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Ey);
-                    amrex::ParallelDescriptor::Send(&fp_Ez,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Ez);
-                    amrex::ParallelDescriptor::Send(&fp_Bx,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Bx);
-                    amrex::ParallelDescriptor::Send(&fp_By,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_By);
-                    amrex::ParallelDescriptor::Send(&fp_Bz,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Bz);
+                                                    0);
                 }
                 if (amrex::ParallelDescriptor::MyProc()
                     == amrex::ParallelDescriptor::IOProcessorNumber()) {
-                    amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, index_Ex);
-                    amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, index_Ey);
-                    amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, index_Ez);
-                    amrex::ParallelDescriptor::Recv(&fp_Bx, 1, probe_proc, index_Bx);
-                    amrex::ParallelDescriptor::Recv(&fp_By, 1, probe_proc, index_By);
-                    amrex::ParallelDescriptor::Recv(&fp_Bz, 1, probe_proc, index_Bz);
+                    amrex::ParallelDescriptor::Recv(fp_values.dataPtr(), noutputs, probe_proc, 0);
                 }
             }
         }
 
         // Fill output array
-        m_data[lev * noutputs + index_Ex] = fp_Ex;
-        m_data[lev * noutputs + index_Ey] = fp_Ey;
-        m_data[lev * noutputs + index_Ez] = fp_Ez;
-        m_data[lev * noutputs + index_Bx] = fp_Bx;
-        m_data[lev * noutputs + index_By] = fp_By;
-        m_data[lev * noutputs + index_Bz] = fp_Bz;
+        m_data[lev * noutputs + index_Ex] = fp_values[index_Ex];
+        m_data[lev * noutputs + index_Ey] = fp_values[index_Ey];
+        m_data[lev * noutputs + index_Ez] = fp_values[index_Ez];
+        m_data[lev * noutputs + index_Bx] = fp_values[index_Bx];
+        m_data[lev * noutputs + index_By] = fp_values[index_By];
+        m_data[lev * noutputs + index_Bz] = fp_values[index_Bz];
     }
     // end loop over refinement levels
 
     /* m_data now contains up-to-date values for:
-     *  [probe(Ex),probe(Ey),probe(Ez),probe(|E|),
-     *   probe(Bx),probe(By),probe(Bz),probe(|B|)] */
+     *  [probe(Ex),probe(Ey),probe(Ez),
+     *   probe(Bx),probe(By),probe(Bz)] */
 }
 // end void FieldProbe::ComputeDiags
