@@ -20,6 +20,10 @@ from scipy.constants import epsilon_0 as eps0
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
+# gamma threshold to switch between the relativistic expression of
+# the kinetic energy and its Taylor expansion.
+gamma_relativistic_threshold = 1.005
+
 fn = sys.argv[1]
 
 ds = yt.load(fn)
@@ -40,7 +44,12 @@ w  = ad['electrons', 'particle_weight'].to_ndarray()
 p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
-values_yt['electrons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_e**2 * c**4) - m_e * c**2) * w)
+e_u2 = p2/(m_e**2 * c**2)
+e_gamma = np.sqrt(1 + e_u2)
+e_energy =  (m_e * c**2)*np.where(e_gamma > gamma_relativistic_threshold,
+    e_gamma-1,
+    (e_u2)/2 - (e_u2**2)/8 + (e_u2**3)/16 - (e_u2**4)*(5/128) + (e_u2**5)*(7/256))
+values_yt['electrons: particle energy'] = np.sum(e_energy * w)
 values_yt['electrons: particle momentum in x'] = np.sum(px * w)
 values_yt['electrons: particle momentum in y'] = np.sum(py * w)
 values_yt['electrons: particle momentum in z'] = np.sum(pz * w)
@@ -54,8 +63,13 @@ pz = ad['protons', 'particle_momentum_z'].to_ndarray()
 w  = ad['protons', 'particle_weight'].to_ndarray()
 p2 = px**2 + py**2 + pz**2
 
-# Accumulate particle energy, store number of particles and sum of weights
-values_yt['protons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_p**2 * c**4) - m_p * c**2) * w)
+# Accumulate particle energy, store number of particles and sum of
+p_u2 = p2/(m_p**2 * c**2)
+p_gamma = np.sqrt(1 + p_u2)
+p_energy =  (m_p * c**2)*np.where(p_gamma > gamma_relativistic_threshold,
+    p_gamma-1,
+    (p_u2)/2 - (p_u2**2)/8 + (p_u2**3)/16 - (p_u2**4)*(5/128) + (p_u2**5)*(7/256))
+values_yt['protons: particle energy'] = np.sum(p_energy * w)
 values_yt['protons: particle momentum in x'] = np.sum(px * w)
 values_yt['protons: particle momentum in y'] = np.sum(py * w)
 values_yt['protons: particle momentum in z'] = np.sum(pz * w)
