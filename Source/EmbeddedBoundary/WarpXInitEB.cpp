@@ -309,6 +309,10 @@ WarpX::MarkCells(){
 #ifdef WARPX_DIM_3D
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #elif WARPX_DIM_XZ
+    m_flag_info_face[maxLevel()][0]->setVal(0.);
+    m_flag_info_face[maxLevel()][2]->setVal(0.);
+    m_flag_ext_face[maxLevel()][0]->setVal(0.);
+    m_flag_ext_face[maxLevel()][2]->setVal(0.);
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
     for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #endif
