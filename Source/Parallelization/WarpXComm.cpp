@@ -786,42 +786,34 @@ WarpX::FillBoundaryF (int lev, IntVect ng)
 void
 WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
 {
-    if (patch_type == PatchType::fine && F_fp[lev])
+    if (patch_type == PatchType::fine)
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            pml[lev]->ExchangeF(patch_type, F_fp[lev].get(),
-                                do_pml_in_domain);
+            if (F_fp[lev]) pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryF(patch_type);
         }
 
-        const auto& period = Geom(lev).periodicity();
-        if ( safe_guard_cells ) {
-            F_fp[lev]->FillBoundary(period);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= F_fp[lev]->nGrowVect(),
-                "Error: in FillBoundaryF, requested more guard cells than allocated");
-            F_fp[lev]->FillBoundary(ng, period);
+        if (F_fp[lev])
+        {
+            const amrex::Periodicity& period = Geom(lev).periodicity();
+            const amrex::IntVect& nghost = (safe_guard_cells) ? F_fp[lev]->nGrowVect() : ng;
+            F_fp[lev]->FillBoundary(nghost, period);
         }
     }
-    else if (patch_type == PatchType::coarse && F_cp[lev])
+    else if (patch_type == PatchType::coarse)
     {
         if (do_pml && pml[lev]->ok())
         {
-        pml[lev]->ExchangeF(patch_type, F_cp[lev].get(),
-                            do_pml_in_domain);
-        pml[lev]->FillBoundaryF(patch_type);
+            if (F_cp[lev]) pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain);
+            pml[lev]->FillBoundaryF(patch_type);
         }
 
-        const auto& cperiod = Geom(lev-1).periodicity();
-        if ( safe_guard_cells ) {
-            F_cp[lev]->FillBoundary(cperiod);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= F_cp[lev]->nGrowVect(),
-                "Error: in FillBoundaryF, requested more guard cells than allocated");
-            F_cp[lev]->FillBoundary(ng, cperiod);
+        if (F_cp[lev])
+        {
+            const amrex::Periodicity& period = Geom(lev-1).periodicity();
+            const amrex::IntVect& nghost = (safe_guard_cells) ? F_cp[lev]->nGrowVect() : ng;
+            F_cp[lev]->FillBoundary(nghost, period);
         }
     }
 }
@@ -838,48 +830,34 @@ void WarpX::FillBoundaryG (int lev, IntVect ng)
 
 void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
 {
-    if (patch_type == PatchType::fine && G_fp[lev])
+    if (patch_type == PatchType::fine)
     {
         if (do_pml && pml[lev]->ok())
         {
-            pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
+            if (G_fp[lev]) pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
         }
 
-        const auto& period = Geom(lev).periodicity();
-
-        if (safe_guard_cells)
+        if (G_fp[lev])
         {
-            G_fp[lev]->FillBoundary(period);
-        }
-        else
-        {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ng <= G_fp[lev]->nGrowVect(),
-                "Error: in FillBoundaryG, requested more guard cells than allocated");
-
-            G_fp[lev]->FillBoundary(ng, period);
+            const amrex::Periodicity& period = Geom(lev).periodicity();
+            const amrex::IntVect& nghost = (safe_guard_cells) ? G_fp[lev]->nGrowVect() : ng;
+            G_fp[lev]->FillBoundary(nghost, period);
         }
     }
-    else if (patch_type == PatchType::coarse && G_cp[lev])
+    else if (patch_type == PatchType::coarse)
     {
         if (do_pml && pml[lev]->ok())
         {
-            pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
+            if (G_cp[lev]) pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
         }
 
-        const auto& cperiod = Geom(lev-1).periodicity();
-
-        if (safe_guard_cells)
+        if (G_cp[lev])
         {
-            G_cp[lev]->FillBoundary(cperiod);
-        }
-        else
-        {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ng <= G_cp[lev]->nGrowVect(),
-                "Error: in FillBoundaryG, requested more guard cells than allocated");
-
-            G_cp[lev]->FillBoundary(ng, cperiod);
+            const amrex::Periodicity& period = Geom(lev-1).periodicity();
+            const amrex::IntVect& nghost = (safe_guard_cells) ? G_cp[lev]->nGrowVect() : ng;
+            G_cp[lev]->FillBoundary(nghost, period);
         }
     }
 }

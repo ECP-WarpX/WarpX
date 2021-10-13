@@ -21,7 +21,7 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                                   const SpectralFieldIndex& spectral_index,
                                   int const n_rz_azimuthal_modes, int const norder_z,
                                   bool const nodal,
-                                  const amrex::Array<amrex::Real,3>& v_galilean,
+                                  const amrex::Vector<amrex::Real>& v_galilean,
                                   amrex::Real const dt_step,
                                   bool const update_with_rho);
         // Redefine functions from base class
@@ -65,7 +65,7 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         bool coefficients_initialized;
         // Note that dt and v_galilean are saved to use in InitializeSpectralCoefficients
         amrex::Real const m_dt;
-        amrex::Array<amrex::Real,3> m_v_galilean;
+        amrex::Vector<amrex::Real> m_v_galilean;
         bool m_update_with_rho;
 
         SpectralRealCoefficients C_coef, S_ck_coef;

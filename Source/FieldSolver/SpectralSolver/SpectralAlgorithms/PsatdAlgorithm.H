@@ -54,7 +54,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const int norder_z,
             const bool nodal,
             const amrex::IntVect& fill_guards,
-            const amrex::Array<amrex::Real,3>& v_galilean,
+            const amrex::Vector<amrex::Real>& v_galilean,
             const amrex::Real dt,
             const bool update_with_rho,
             const bool time_averaging,
@@ -162,7 +162,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         KVectorComponent modified_kz_vec_centered;
 
         // Other member variables
-        amrex::Array<amrex::Real,3> m_v_galilean;
+        amrex::Vector<amrex::Real> m_v_galilean;
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
