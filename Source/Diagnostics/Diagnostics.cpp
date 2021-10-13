@@ -87,6 +87,10 @@ Diagnostics::BaseReadParameters ()
             m_varnames.end());
     }
 
+    if (WarpXUtilStr::is_in(m_varnames, "none")){
+        m_varnames.clear();
+    }
+
     // Read user-defined physical extents for the output and store in m_lo and m_hi.
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
