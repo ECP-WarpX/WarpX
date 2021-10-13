@@ -29,18 +29,18 @@ struct synchronizeOnDestruct {
     }
 };
 
-#define WARPX_PROFILE(fname) doDeviceSynchronize<1>(); BL_PROFILE(fname); synchronizeOnDestruct<1> SYNC_SCOPE{}
+#define WARPX_PROFILE(fname) doDeviceSynchronize<1>(); BL_PROFILE(fname); synchronizeOnDestruct<1> BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__){}
 #define WARPX_PROFILE_VAR(fname, vname) doDeviceSynchronize<1>(); BL_PROFILE_VAR(fname, vname); synchronizeOnDestruct<1> SYNC_V_##vname{}
 #define WARPX_PROFILE_VAR_NS(fname, vname) BL_PROFILE_VAR_NS(fname, vname); synchronizeOnDestruct<1> SYNC_V_##vname{}
 #define WARPX_PROFILE_VAR_START(vname) doDeviceSynchronize<1>(); BL_PROFILE_VAR_START(vname)
 #define WARPX_PROFILE_VAR_STOP(vname) doDeviceSynchronize<1>(); BL_PROFILE_VAR_STOP(vname)
-#define WARPX_PROFILE_REGION(rname) doDeviceSynchronize<1>(); BL_PROFILE_REGION(rname); synchronizeOnDestruct<1> SYNC_R{}
+#define WARPX_PROFILE_REGION(rname) doDeviceSynchronize<1>(); BL_PROFILE_REGION(rname); synchronizeOnDestruct<1> BL_PROFILE_PASTE(SYNC_R_, __COUNTER__){}
 
-#define WARPX_DETAIL_PROFILE(fname) doDeviceSynchronize<2>(); BL_PROFILE(fname); synchronizeOnDestruct<2> SYNC_SCOPE{}
+#define WARPX_DETAIL_PROFILE(fname) doDeviceSynchronize<2>(); BL_PROFILE(fname); synchronizeOnDestruct<2> BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__){}
 #define WARPX_DETAIL_PROFILE_VAR(fname, vname) doDeviceSynchronize<2>(); BL_PROFILE_VAR(fname, vname); synchronizeOnDestruct<2> SYNC_V_##vname{}
 #define WARPX_DETAIL_PROFILE_VAR_NS(fname, vname) BL_PROFILE_VAR_NS(fname, vname); synchronizeOnDestruct<2> SYNC_V_##vname{}
 #define WARPX_DETAIL_PROFILE_VAR_START(vname) doDeviceSynchronize<2>(); BL_PROFILE_VAR_START(vname)
 #define WARPX_DETAIL_PROFILE_VAR_STOP(vname) doDeviceSynchronize<2>(); BL_PROFILE_VAR_STOP(vname)
-#define WARPX_DETAIL_PROFILE_REGION(rname) doDeviceSynchronize<2>(); BL_PROFILE_REGION(rname); synchronizeOnDestruct<2> SYNC_R{}
+#define WARPX_DETAIL_PROFILE_REGION(rname) doDeviceSynchronize<2>(); BL_PROFILE_REGION(rname); synchronizeOnDestruct<2> BL_PROFILE_PASTE(SYNC_R_, __COUNTER__){}
 
 #endif // WARPX_PROFILERWRAPPER_H_
