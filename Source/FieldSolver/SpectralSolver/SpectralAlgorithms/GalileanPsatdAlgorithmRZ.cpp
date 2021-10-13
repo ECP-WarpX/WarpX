@@ -20,7 +20,7 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
                                                     const SpectralFieldIndex& spectral_index,
                                                     int const n_rz_azimuthal_modes, int const norder_z,
                                                     bool const nodal,
-                                                    const amrex::Array<amrex::Real,3>& v_galilean,
+                                                    const amrex::Vector<amrex::Real>& v_galilean,
                                                     amrex::Real const dt,
                                                     bool const update_with_rho)
      // Initialize members of base class

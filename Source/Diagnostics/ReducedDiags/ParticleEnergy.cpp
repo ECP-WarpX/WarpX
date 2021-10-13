@@ -101,8 +101,8 @@ void ParticleEnergy::ComputeDiags (int step)
     const int nSpecies = mypc.nSpecies();
 
     // Some useful constants
-    amrex::Real c2 = PhysConst::c * PhysConst::c;
-    amrex::Real c4 = c2 * c2;
+    constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
+    constexpr amrex::Real inv_c2 = 1.0_rt/c2;
 
     // Some useful offsets to fill m_data below
     int offset_total_species, offset_mean_species, offset_mean_all;
@@ -117,7 +117,6 @@ void ParticleEnergy::ComputeDiags (int step)
 
         // Get mass (used only for particles other than photons, see below)
         amrex::Real m = myspc.getMass();
-        amrex::Real m2 = m * m;
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
@@ -159,8 +158,15 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real ux = p.rdata(PIdx::ux);
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*(std::sqrt(us*m2*c2 + m2*c4) - m*c2), w};
+                    const amrex::Real u2 = (ux*ux + uy*uy + uz*uz)*inv_c2;
+                    const auto gamma = std::sqrt(1.0_rt + u2);
+
+                    const auto kk = (gamma > PhysConst::gamma_relativistic_threshold)?
+                        (gamma-1.0_rt):
+                        (u2*0.5_rt - u2*u2*(1.0_rt/8.0_rt) + u2*u2*u2*(1.0_rt/16.0_rt)-
+                            u2*u2*u2*u2*(5.0_rt/128.0_rt) + (7.0_rt/256_rt)*u2*u2*u2*u2*u2); //Taylor expansion
+
+                    return {w*m*c2*kk, w};
                 },
                 reduce_ops);
 
