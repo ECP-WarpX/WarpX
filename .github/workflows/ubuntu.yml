@@ -3,7 +3,7 @@ name: 🐧 OpenMP
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.head_ref }}-ubuntu
+  group: ${{ github.ref }}-${{ github.head_ref }}-ubuntu
   cancel-in-progress: true
 
 jobs:
@@ -11,6 +11,7 @@ jobs:
     name: GCC Minimal w/o MPI
     runs-on: ubuntu-20.04
     env: {CXXFLAGS: "-Werror"}
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -35,6 +36,7 @@ jobs:
   build_pyfull:
     name: Clang pywarpx
     runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -43,10 +45,10 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
-        export WarpX_MPI=ON
-        export WarpX_OPENPMD=ON
-        export WarpX_PSATD=ON
-        export WarpX_QED_TABLE_GEN=ON
+        export WARPX_MPI=ON
+        export WARPX_OPENPMD=ON
+        export WARPX_PSATD=ON
+        export WARPX_QED_TABLE_GEN=ON
         export CC=$(which clang)
         export CXX=$(which clang++)
         export CXXFLAGS="-Werror -Wno-error=pass-failed"

@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
 
@@ -226,7 +226,7 @@ Domain Boundary Conditions
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
 If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
-    * ``none``: No boundary condition is applied to the fields. This option must be used for the RZ-solver at `r=0`.
+    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`. If the electrostatic solver is used, a Neumann boundary condition (with gradient equal to 0) will be applied on the specified boundary.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
@@ -285,10 +285,10 @@ Embedded Boundary Conditions
     the physics simulation area is where the function value is negative ;
     the interior of the embeddded boundary is where the function value is positive.
 
-* ``warpx.eb_potential(t)`` (`string`)
+* ``warpx.eb_potential(x,y,z,t)`` (`string`)
     Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
     the electric potential at the surface of the embedded boundary,
-    as a function of time.
+    as a function of  `x`, `y`, `z` and time.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -408,6 +408,7 @@ It can be used in all input parameters that consist of one or more integers or f
 Integer input expecting boolean, 0 or 1, are not parsed.
 Note that when multiple values are expected, the expressions are space delimited.
 For integer input values, the expressions are evaluated as real numbers and the final result rounded to the nearest integer.
+See `this section <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parser>`_ of the AMReX documentation for a complete list of functions supported by the math parser.
 
 WarpX constants
 ^^^^^^^^^^^^^^^
@@ -483,7 +484,8 @@ Particle initialization
     Tiling should be on when using OpenMP and off when using GPUs.
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
-    Type of physical species, ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"``.
+    Type of physical species.
+    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"`` and ``"copper"``.
     Either this or both ``mass`` and ``charge`` have to be specified.
 
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
@@ -786,7 +788,8 @@ Particle initialization
     this species.
 
 * ``warpx.serialize_ics`` (`0 or 1`)
-    Whether or not to use OpenMP threading for particle initialization.
+    Serialize the initial conditions for reproducible testing.
+    Mainly whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -1492,14 +1495,6 @@ Numerics and algorithms
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
 
-* ``psatd.fftw_plan_measure`` (`0` or `1`)
-    Defines whether the parameters of FFTW plans will be initialized by
-    measuring and optimizing performance (``FFTW_MEASURE`` mode; activated by default here).
-    If ``psatd.fftw_plan_measure`` is set to ``0``, then the best parameters of FFTW
-    plans will simply be estimated (``FFTW_ESTIMATE`` mode).
-    See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
-    for more information.
-
 * ``psatd.current_correction`` (`0` or `1`; default: `0`)
     If true, a current correction scheme in Fourier space is applied in order to guarantee charge conservation.
 
@@ -2016,6 +2011,33 @@ Reduced Diagnostics
 
         Note that the fields are averaged on the cell centers before their maximum values are
         computed.
+
+    * ``FieldProbe``
+        This type computes the value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors at a point in the domain.
+        The point where the fields are measured is specified through the input parameters
+        ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
+        ``<reduced_diags_name>.z_probe``.
+
+        The output columns are
+        the value of the :math:`E_x` field,
+        the value of the :math:`E_y` field,
+        the value of the :math:`E_z` field,
+        the value of the norm :math:`|E|` of the electric field,
+        the value of the :math:`B_x` field,
+        the value of the :math:`B_y` field,
+        the value of the :math:`B_z` field and
+        the value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
+
+        Note: the norms are always interpolated to the measurement point before they are written
+        to file. The electromagnetic field components are interpolated to the measurement point
+        by default, but can they be saved as non-averaged by setting
+        ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
+        containing the measurement point are saved.
+        The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
+        otherwise it is set to ``1``.
+
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as

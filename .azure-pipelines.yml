@@ -1,10 +1,11 @@
 # -*- mode: yaml -*-
 
 pool:
-  vmImage: 'ubuntu-18.04'
+  vmImage: 'ubuntu-20.04'
 
 pr:
   autoCancel: true
+  drafts: false
 
 jobs:
 - job:
@@ -40,16 +41,19 @@ jobs:
   steps:
   - script: |
       cat /proc/cpuinfo | grep "model name" | sort -u
-      sudo apt-get update
-      sudo apt-get install -y ccache gcc gfortran g++ openmpi-bin libopenmpi-dev \
+      sudo apt update
+      sudo apt install -y ccache gcc gfortran g++ openmpi-bin libopenmpi-dev \
         libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
-        python3 python3-pip python3-setuptools libblas-dev liblapack-dev
+        python3 python3-pip python3-venv python3-setuptools libblas-dev liblapack-dev
       sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
       sudo update-alternatives --set python /usr/bin/python3
       python -m pip install --upgrade pip
       python -m pip install --upgrade wheel
-      python -m pip install --upgrade cmake matplotlib mpi4py numpy scipy yt
-      export CEI_CMAKE="$HOME/.local/bin/cmake"
+      python -m pip install --upgrade pipx
+      python -m pipx install cmake
+      python -m pipx ensurepath
+      export PATH="$HOME/.local/bin:$PATH"
+      python -m pip install --upgrade matplotlib mpi4py numpy scipy yt
       export CEI_SUDO="sudo"
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
       sudo chmod a+x /usr/local/bin/cmake-easyinstall

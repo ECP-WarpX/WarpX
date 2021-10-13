@@ -64,7 +64,7 @@ namespace
       Creates the HDF5 file in truncate mode and closes it.
       Should be run only by the root process.
     */
-    void output_create(const std::string& file_path) {
+    void output_create (const std::string& file_path) {
         WARPX_PROFILE("output_create");
         hid_t file = H5Fcreate(file_path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         if (file < 0) {
@@ -77,7 +77,7 @@ namespace
       Writes a single string attribute to the given group.
       Should only be called by the root process.
     */
-    void write_string_attribute(hid_t& group, const std::string& key, const std::string& val)
+    void write_string_attribute (hid_t& group, const std::string& key, const std::string& val)
     {
         hid_t str_type     = H5Tcopy(H5T_C_S1);
         hid_t scalar_space = H5Screate(H5S_SCALAR);
@@ -97,7 +97,7 @@ namespace
       Writes a single double attribute to the given group.
       Should only be called by the root process.
     */
-    void write_double_attribute(hid_t& group, const std::string& key, const double val)
+    void write_double_attribute (hid_t& group, const std::string& key, const double val)
     {
         hid_t scalar_space = H5Screate(H5S_SCALAR);
 
@@ -113,8 +113,8 @@ namespace
       Opens the output file and writes all of metadata attributes.
       Should be run only by the root process.
     */
-    void output_write_metadata(const std::string& file_path,
-                               const int istep, const Real time, const Real dt)
+    void output_write_metadata (const std::string& file_path,
+                                const int istep, const Real time, const Real dt)
     {
         WARPX_PROFILE("output_write_metadata");
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -149,8 +149,8 @@ namespace
       "/native_fields/(field_name)".
       Should be run only by the root rank.
     */
-    void output_create_field(const std::string& file_path, const std::string& field_path,
-                             const unsigned nx, const unsigned ny, const unsigned nz)
+    void output_create_field (const std::string& file_path, const std::string& field_path,
+                              const unsigned nx, const unsigned ny, const unsigned nz)
     {
         WARPX_PROFILE("output_create_field");
 
@@ -184,7 +184,7 @@ namespace
       Creates a group associated with a single particle species.
       Should be run by all processes collectively.
     */
-    void output_create_species_group(const std::string& file_path, const std::string& species_name)
+    void output_create_species_group (const std::string& file_path, const std::string& species_name)
     {
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -209,8 +209,8 @@ namespace
       Resize an extendible dataset, suitable for storing particle data.
       Should be run only by the root rank.
     */
-    long output_resize_particle_field(const std::string& file_path, const std::string& field_path,
-                                      const long num_to_add)
+    long output_resize_particle_field (const std::string& file_path, const std::string& field_path,
+                                       const long num_to_add)
     {
         WARPX_PROFILE("output_resize_particle_field");
 
@@ -248,8 +248,8 @@ namespace
       Writes to a dataset that has been extended to the proper size. Suitable for writing particle data.
       Should be run on all ranks collectively.
     */
-    void output_write_particle_field(const std::string& file_path, const std::string& field_path,
-                                     const Real* data_ptr, const long count, const long index)
+    void output_write_particle_field (const std::string& file_path, const std::string& field_path,
+                                      const Real* data_ptr, const long count, const long index)
     {
         WARPX_PROFILE("output_write_particle_field");
 
@@ -329,7 +329,7 @@ namespace
       Creates an extendible dataset, suitable for storing particle data.
       Should be run on all ranks collectively.
     */
-    void output_create_particle_field(const std::string& file_path, const std::string& field_path)
+    void output_create_particle_field (const std::string& file_path, const std::string& field_path)
     {
         WARPX_PROFILE("output_create_particle_field");
 
@@ -376,10 +376,10 @@ namespace
       Write the only component in the multifab to the dataset given by field_name.
       Uses hdf5-parallel.
     */
-    void output_write_field(const std::string& file_path,
-                            const std::string& field_path,
-                            const MultiFab& mf, const int comp,
-                            const int lo_x, const int lo_y, const int lo_z)
+    void output_write_field (const std::string& file_path,
+                             const std::string& field_path,
+                             const MultiFab& mf, const int comp,
+                             const int lo_x, const int lo_y, const int lo_z)
     {
 
         WARPX_PROFILE("output_write_field");
@@ -494,8 +494,8 @@ namespace
 }
 #endif
 
-bool compare_tlab_uptr(const std::unique_ptr<LabFrameDiag>&a,
-                       const std::unique_ptr<LabFrameDiag>&b)
+bool compare_tlab_uptr (const std::unique_ptr<LabFrameDiag>&a,
+                        const std::unique_ptr<LabFrameDiag>&b)
 {
     return a->m_t_lab < b->m_t_lab;
 }
@@ -503,7 +503,7 @@ bool compare_tlab_uptr(const std::unique_ptr<LabFrameDiag>&a,
 namespace
 {
 void
-LorentzTransformZ(MultiFab& data, Real gamma_boost, Real beta_boost)
+LorentzTransformZ (MultiFab& data, Real gamma_boost, Real beta_boost)
 {
     // Loop over tiles/boxes and in-place convert each slice from boosted
     // frame to back-transformed lab frame.
@@ -553,13 +553,13 @@ LorentzTransformZ(MultiFab& data, Real gamma_boost, Real beta_boost)
 }
 
 BackTransformedDiagnostic::
-BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
-                       Real dt_snapshots_lab, int N_snapshots,
-                       Real dt_slice_snapshots_lab, int N_slice_snapshots,
-                       Real gamma_boost, Real t_boost, Real dt_boost,
-                       int boost_direction, const Geometry& geom,
-                       amrex::RealBox& slice_realbox,
-                       amrex::Real particle_slice_width_lab)
+BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
+                           Real dt_snapshots_lab, int N_snapshots,
+                           Real dt_slice_snapshots_lab, int N_slice_snapshots,
+                           Real gamma_boost, Real t_boost, Real dt_boost,
+                           int boost_direction, const Geometry& geom,
+                           amrex::RealBox& slice_realbox,
+                           amrex::Real particle_slice_width_lab)
     : m_gamma_boost_(gamma_boost),
       m_dt_snapshots_lab_(dt_snapshots_lab),
       m_dt_boost_(dt_boost),
@@ -598,7 +598,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     ParmParse pp_warpx("warpx");
     bool do_user_fields;
     do_user_fields = pp_warpx.queryarr("back_transformed_diag_fields", user_fields_to_dump);
-    if (pp_warpx.query("buffer_size", m_num_buffer_)) {
+    if (queryWithParser(pp_warpx, "buffer_size", m_num_buffer_)) {
         if (m_max_box_size_ < m_num_buffer_) m_max_box_size_ = m_num_buffer_;
     }
     // If user specifies fields to dump, overwrite ncomp_to_dump,
@@ -722,7 +722,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     AMREX_ALWAYS_ASSERT(m_max_box_size_ >= m_num_buffer_);
 }
 
-void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
+void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
 {
     WARPX_PROFILE("BackTransformedDiagnostic::Flush");
 
@@ -810,9 +810,9 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
 
 void
 BackTransformedDiagnostic::
-writeLabFrameData(const MultiFab* cell_centered_data,
-                  const MultiParticleContainer& mypc,
-                  const Geometry& geom, const Real t_boost, const Real dt) {
+writeLabFrameData (const MultiFab* cell_centered_data,
+                   const MultiParticleContainer& mypc,
+                   const Geometry& geom, const Real t_boost, const Real dt) {
 
     WARPX_PROFILE("BackTransformedDiagnostic::writeLabFrameData");
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
@@ -863,6 +863,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
                 DistributionMapping buff_dm(buff_ba);
                 lf_diags->m_data_buffer_ = std::make_unique<MultiFab>(buff_ba,
                                                 buff_dm, m_ncomp_to_dump, 0);
+                lf_diags->m_data_buffer_->setVal(0.0);
             }
             // ... reset particle buffer particles_buffer_[i]
             if (WarpX::do_back_transformed_particles)
@@ -993,8 +994,8 @@ writeLabFrameData(const MultiFab* cell_centered_data,
 #ifdef WARPX_USE_HDF5
 void
 BackTransformedDiagnostic::
-writeParticleDataHDF5(const WarpXParticleContainer::DiagnosticParticleData& pdata,
-                      const std::string& name, const std::string& species_name)
+writeParticleDataHDF5 (const WarpXParticleContainer::DiagnosticParticleData& pdata,
+                       const std::string& name, const std::string& species_name)
 {
     auto np = pdata.GetRealData(DiagIdx::w).size();
 
@@ -1041,8 +1042,8 @@ writeParticleDataHDF5(const WarpXParticleContainer::DiagnosticParticleData& pdat
 
 void
 BackTransformedDiagnostic::
-writeParticleData(const WarpXParticleContainer::DiagnosticParticleData& pdata,
-                  const std::string& name, const int i_lab)
+writeParticleData (const WarpXParticleContainer::DiagnosticParticleData& pdata,
+                   const std::string& name, const int i_lab)
 {
     WARPX_PROFILE("BackTransformedDiagnostic::writeParticleData");
 
@@ -1151,12 +1152,12 @@ writeMetaData ()
 }
 
 LabFrameSnapShot::
-LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
-                 Real inv_beta_boost_in, Real dz_lab_in, RealBox prob_domain_lab,
-                 IntVect prob_ncells_lab, int ncomp_to_dump,
-                 std::vector<std::string> mesh_field_names,
-                 amrex::RealBox diag_domain_lab, Box diag_box, int file_num_in,
-                 const int max_box_size, const int num_buffer)
+LabFrameSnapShot (Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
+                  Real inv_beta_boost_in, Real dz_lab_in, RealBox prob_domain_lab,
+                  IntVect prob_ncells_lab, int ncomp_to_dump,
+                  std::vector<std::string> mesh_field_names,
+                  amrex::RealBox diag_domain_lab, Box diag_box, int file_num_in,
+                  const int max_box_size, const int num_buffer)
 {
    m_t_lab = t_lab_in;
    m_dz_lab_ = dz_lab_in;
@@ -1172,8 +1173,6 @@ LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
    m_current_z_lab = 0.0;
    m_current_z_boost = 0.0;
    updateCurrentZPositions(t_boost, m_inv_gamma_boost_, m_inv_beta_boost_);
-   Real zmin_lab = m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-   m_initial_i = static_cast<int>((m_current_z_lab - zmin_lab) / m_dz_lab_) ;
    m_file_name = Concatenate(WarpX::lab_data_directory + "/snapshots/snapshot",
                            m_file_num, 5);
    createLabFrameDirectories();
@@ -1344,8 +1343,6 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
     m_current_z_lab = 0.0;
     m_current_z_boost = 0.0;
     updateCurrentZPositions(t_boost, m_inv_gamma_boost_, m_inv_beta_boost_);
-    Real zmin_lab = m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-    m_initial_i = static_cast<int>((m_current_z_lab - zmin_lab)/m_dz_lab_);
     m_file_name = Concatenate(WarpX::lab_data_directory+"/slices/slice",m_file_num,5);
     createLabFrameDirectories();
     m_buff_counter_ = 0;

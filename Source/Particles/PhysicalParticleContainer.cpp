@@ -31,7 +31,6 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpXWrappers.h"
 #include "Utils/IonizationEnergiesTable.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -107,6 +106,8 @@ using namespace amrex;
 
 namespace
 {
+    using ParticleType = WarpXParticleContainer::ParticleType;
+
     // Since the user provides the density distribution
     // at t_lab=0 and in the lab-frame coordinates,
     // we need to find the lab-frame position of this
@@ -155,6 +156,53 @@ namespace
 #endif
         return pos;
     }
+
+    /**
+     * \brief This function is called in AddPlasma when we want a particle to be removed at the
+     * next call to redistribute. It initializes all the particle properties to zero (to be safe
+     * and avoid any possible undefined behavior before the next call to redistribute) and sets
+     * the particle id to -1 so that it can be effectively deleted.
+     *
+     * \param p particle aos data
+     * \param pa particle soa data
+     * \param ip index for soa data
+     * \param do_field_ionization whether species has ionization
+     * \param pi ionization level data
+     * \param has_quantum_sync whether species has quantum synchrotron
+     * \param p_optical_depth_QSR quantum synchrotron optical depth data
+     * \param has_breit_wheeler whether species has Breit-Wheeler
+     * \param p_optical_depth_BW Breit-Wheeler optical depth data
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void ZeroInitializeAndSetNegativeID (
+        ParticleType& p, const GpuArray<ParticleReal*,PIdx::nattribs>& pa, long& ip,
+        const bool& do_field_ionization, int* pi
+#ifdef WARPX_QED
+        ,const bool& has_quantum_sync, amrex::ParticleReal* p_optical_depth_QSR
+        ,const bool& has_breit_wheeler, amrex::ParticleReal* p_optical_depth_BW
+#endif
+        ) noexcept
+    {
+        p.pos(0) = 0._rt;
+        p.pos(1) = 0._rt;
+#if (AMREX_SPACEDIM == 3)
+        p.pos(2) = 0._rt;
+#endif
+        pa[PIdx::w ][ip] = 0._rt;
+        pa[PIdx::ux][ip] = 0._rt;
+        pa[PIdx::uy][ip] = 0._rt;
+        pa[PIdx::uz][ip] = 0._rt;
+#ifdef WARPX_DIM_RZ
+        pa[PIdx::theta][ip] = 0._rt;
+#endif
+        if (do_field_ionization) {pi[ip] = 0;}
+#ifdef WARPX_QED
+        if (has_quantum_sync) {p_optical_depth_QSR[ip] = 0._rt;}
+        if (has_breit_wheeler) {p_optical_depth_BW[ip] = 0._rt;}
+#endif
+
+        p.id() = -1;
+    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int ispecies,
@@ -185,7 +233,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_continuous_injection", do_continuous_injection);
     pp_species_name.query("initialize_self_fields", initialize_self_fields);
     queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
-    pp_species_name.query("self_fields_max_iters", self_fields_max_iters);
+    queryWithParser(pp_species_name, "self_fields_max_iters", self_fields_max_iters);
     pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
@@ -243,6 +291,20 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
     }
 
+    // Read reflection models for absorbing boundaries; defaults to a zero
+    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
+    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
+    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_model_ylo_str);
+    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_model_yhi_str);
+    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_model_zlo_str);
+    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_model_zhi_str);
+    m_boundary_conditions.BuildReflectionModelParsers();
+
+    ParmParse pp_boundary("boundary");
+    bool flag = false;
+    pp_boundary.query("reflect_all_velocities", flag);
+    m_boundary_conditions.Set_reflect_all_velocities(flag);
+
     // Get Galilean velocity
     ParmParse pp_psatd("psatd");
     bool use_default_v_galilean = false;
@@ -250,7 +312,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     if (use_default_v_galilean) {
         m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (WarpX::gamma_boost * WarpX::gamma_boost));
     } else {
-        pp_psatd.query("v_galilean", m_v_galilean);
+        queryArrWithParser(pp_psatd, "v_galilean", m_v_galilean, 0, 3);
     }
     // Scale the Galilean velocity by the speed of light
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
@@ -883,13 +945,23 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
 #if (AMREX_SPACEDIM == 3)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
-                    p.id() = -1;
+                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
+                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                                   );
                     continue;
                 }
 #else
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
-                    p.id() = -1;
+                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
+                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                                   );
                     continue;
                 }
 #endif
@@ -926,7 +998,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     const Real z0 = applyBallisticCorrection(pos, inj_mom, gamma_boost,
                                                              beta_boost, t);
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
-                        p.id() = -1;
+                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
+                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                                   );
                         continue;
                     }
 
@@ -935,7 +1012,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
-                        p.id() = -1;
+                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
+                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                                   );
                         continue;
                     }
                     // Cut density if above threshold
@@ -948,14 +1030,24 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // If the particle is not within the lab-frame zmin, zmax, etc.
                     // go to the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
-                        p.id() = -1;
+                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
+                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                                   );
                         continue;
                     }
                     // call `getDensity` with lab-frame parameters
                     dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
-                        p.id() = -1;
+                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                                   ,loc_has_quantum_sync, p_optical_depth_QSR
+                                                   ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                                   );
                         continue;
                     }
                     // Cut density if above threshold
@@ -2423,7 +2515,7 @@ PhysicalParticleContainer::InitIonizationModule ()
             "charge != q_e for ionizable species: overriding user value and setting charge = q_e.");
         charge = PhysConst::q_e;
     }
-    pp_species_name.query("ionization_initial_level", ionization_initial_level);
+    queryWithParser(pp_species_name, "ionization_initial_level", ionization_initial_level);
     pp_species_name.get("ionization_product_species", ionization_product_name);
     pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level

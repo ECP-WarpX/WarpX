@@ -23,7 +23,7 @@
 class CollisionHandler
 {
 public:
-    CollisionHandler ();
+    CollisionHandler (MultiParticleContainer const * const mypc);
 
     /* Perform all of the collisions */
     void doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc);

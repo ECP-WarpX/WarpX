@@ -186,6 +186,8 @@ libwarpx.warpx_getChargeDensityCP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
 libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
+libwarpx.warpx_getPhiFP.restype = _LP_LP_c_real
+libwarpx.warpx_getPhiFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
@@ -200,6 +202,7 @@ libwarpx.warpx_getJx_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getJy_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getJz_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getPhi_nodal_flag.restype = _LP_c_int
 
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
@@ -1350,6 +1353,8 @@ def get_mesh_current_density_fp_pml(level, direction, include_ghosts=True):
         return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
+
+
 def get_mesh_charge_density_cp(level, include_ghosts=True):
     '''
 
@@ -1400,6 +1405,31 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
     '''
 
     return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
+
+
+def get_mesh_phi_fp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh electrostatic
+    potential data on each grid for this process. This version returns the
+    potential on the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+    return _get_mesh_field_list(libwarpx.warpx_getPhiFP, level, None, include_ghosts)
 
 
 def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
@@ -1806,8 +1836,8 @@ def get_mesh_charge_density_cp_lovects(level, include_ghosts=True):
 def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
     '''
 
-    This returns a list of the lo vectors of the arrays containing the mesh electric field
-    data on each grid for this process.
+    This returns a list of the lo vectors of the arrays containing the mesh
+    charge density data on each grid for this process.
 
     Parameters
     ----------
@@ -1822,6 +1852,27 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
 
     '''
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityFPLoVects)
+
+
+def get_mesh_phi_fp_lovects(level, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh
+    electrostatic potential data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getPhiFPLoVects)
 
 
 def _get_nodal_flag(getdatafunc):
@@ -1904,3 +1955,9 @@ def get_Rho_nodal_flag():
     This returns a 1d array of the nodal flags for Rho along each direction. A 1 means node centered, and 0 cell centered.
     '''
     return _get_nodal_flag(libwarpx.warpx_getRho_nodal_flag)
+
+def get_Phi_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Phi along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getPhi_nodal_flag)

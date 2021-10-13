@@ -17,6 +17,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Config.H>
 #include <AMReX_INT.H>
@@ -42,10 +43,12 @@ guardCellManager::Init (
     const int nci_corr_stencil,
     const int maxwell_solver_id,
     const int max_level,
-    const amrex::Array<amrex::Real,3> v_galilean,
-    const amrex::Array<amrex::Real,3> v_comoving,
+    const amrex::Vector<amrex::Real> v_galilean,
+    const amrex::Vector<amrex::Real> v_comoving,
     const bool safe_guard_cells,
-    const int do_electrostatic)
+    const int do_electrostatic,
+    const int do_multi_J,
+    const bool fft_do_time_averaging)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -121,8 +124,22 @@ guardCellManager::Init (
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
-            ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt / dx[i]));
-            ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt / dx[i] * 0.5_rt));
+            amrex::Real dt_Rho = dt;
+            amrex::Real dt_J = 0.5_rt*dt;
+            if (do_multi_J) {
+                // With multi_J + time averaging, particles can move during 2*dt per PIC cycle.
+                if (fft_do_time_averaging){
+                    dt_Rho = 2._rt*dt;
+                    dt_J = 2._rt*dt;
+                }
+                // With multi_J but without time averaging, particles can move during dt per PIC
+                // cycle for the current deposition as well.
+                else {
+                    dt_J = dt;
+                }
+            }
+            ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt_Rho / dx[i]));
+            ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt_J / dx[i]));
         }
     }
 
@@ -164,9 +181,9 @@ guardCellManager::Init (
         int ngFFt_z = (do_nodal || galilean) ? noz_fft : noz_fft / 2;
 
         ParmParse pp_psatd("psatd");
-        pp_psatd.query("nx_guard", ngFFt_x);
-        pp_psatd.query("ny_guard", ngFFt_y);
-        pp_psatd.query("nz_guard", ngFFt_z);
+        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
@@ -232,6 +249,10 @@ guardCellManager::Init (
     ng_alloc_F.max( ng_FieldSolverF );
     ng_alloc_G.max( ng_FieldSolverG );
 
+    if (do_moving_window && maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        ng_afterPushPSATD = ng_alloc_EB;
+    }
+
     if (safe_guard_cells){
         // Run in safe mode: exchange all allocated guard cells at each
         // call of FillBoundary
@@ -240,6 +261,7 @@ guardCellManager::Init (
         ng_FieldSolverG = ng_alloc_G;
         ng_FieldGather = ng_alloc_EB;
         ng_UpdateAux = ng_alloc_EB;
+        ng_afterPushPSATD = ng_alloc_EB;
         if (do_moving_window){
             ng_MovingWindow = ng_alloc_EB;
         }

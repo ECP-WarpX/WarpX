@@ -58,8 +58,9 @@ solver = picmi.ElectrostaticSolver(
 )
 
 embedded_boundary = picmi.EmbeddedBoundary(
-    implicit_function="-(x**2+y**2+z**2-0.3**2)",
-    potential=V_embedded_boundary
+    implicit_function="-(x**2+y**2+z**2-radius**2)",
+    potential=V_embedded_boundary,
+    radius = 0.3
 )
 
 ##########################
