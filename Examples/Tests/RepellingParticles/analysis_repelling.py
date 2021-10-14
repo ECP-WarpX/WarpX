@@ -72,6 +72,7 @@ assert np.allclose( beta1, beta_th, atol=0.05 )
 assert np.allclose( beta1, beta_th, atol=0.05  )
 
 # Run checksum regression test
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 test_name = last_filename[:-9]
 checksumAPI.evaluate_checksum(test_name, last_filename)
