@@ -36,7 +36,7 @@ electron1.single_particle_weight = 5.e12
 electron1.initialize_self_fields = 1
 
 electron2.charge = q_e
-electron2.mass = m_e    # Very heavy ; should not move
+electron2.mass = m_e
 electron2.injection_style = "singleparticle"
 electron2.single_particle_pos = 16e-6 0. 0.
 electron2.single_particle_vel = -0.2 0. 0.
