@@ -50,4 +50,4 @@ algo.particle_shape = 3
 diagnostics.diags_names = diag1
 diag1.intervals = 20
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez divE rho
+diag1.fields_to_plot = Bx By Bz Ex Ey Ez jx jy jz divE rho F

@@ -69,7 +69,7 @@ plt.savefig('Comparison.png')
 
 # Check that the results are close to the theory
 assert np.allclose( beta1, beta_th, atol=0.05 )
-assert np.allclose( beta1, beta_th, atol=0.05  )
+assert np.allclose( beta2, beta_th, atol=0.05  )
 
 # Run checksum regression test
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
