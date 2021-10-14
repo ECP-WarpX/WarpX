@@ -22,7 +22,6 @@
 #include <AMReX_Config.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
-#include <AMReX_FileSystem.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
@@ -48,6 +47,42 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
+#   ifdef _WIN32
+    /** Replace all occurrences of a string
+     *
+     * Same as openPMD::auxiliary::replace_all (not public in <=0.14.2)
+     *
+     * @param[in] s input string
+     * @param[in] target string to be replaced
+     * @param[in] replacement string to be replaced with
+     * @return modified value of s
+     */
+    inline std::string
+    replace_all(std::string s,
+                std::string const& target,
+                std::string const& replacement)
+    {
+        std::string::size_type pos = 0;
+        auto tsize = target.size();
+        assert(tsize > 0);
+        auto rsize = replacement.size();
+        while (true)
+        {
+            pos = s.find(target, pos);
+            if (pos == std::string::npos)
+                break;
+            s.replace(pos, tsize, replacement);
+            // Allow replacing recursively, but only if
+            // the next replaced substring overlaps with
+            // some parts of the original word.
+            // This avoids loops.
+            pos += rsize - std::min(tsize - 1, rsize);
+        }
+        s.shrink_to_fit();
+        return s;
+    }
+#   endif
+
     /** \brief Convert a snake_case string to a camelCase one.
      *
      *  WarpX uses snake_case internally for some component
@@ -331,7 +366,12 @@ WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
 std::string
 WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 {
-  filepath.append(amrex::FileSystem::DirectorySeparator());
+  filepath.append("/");
+  // transform paths for Windows
+#ifdef _WIN32
+  filepath = detail::replace_all(filepath, "/", "\\");
+#endif
+
   std::string filename = "openpmd";
   //
   // OpenPMD supports timestepped names
@@ -386,7 +426,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
             std::string filepath = m_dirPrefix;
             std::string const filename = GetFileName(filepath);
 
-            std::ofstream pv_helper_file(m_dirPrefix + amrex::FileSystem::DirectorySeparator() + "paraview.pmd");
+            std::ofstream pv_helper_file(m_dirPrefix + "/paraview.pmd");
             pv_helper_file << filename << std::endl;
             pv_helper_file.close();
         }
