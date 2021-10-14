@@ -120,7 +120,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho_fp, phi_fp, beta, pc.self_fields_required_precision,
+    computePhi( rho, phi, beta, pc.self_fields_required_precision,
                 pc.self_fields_absolute_tolerance, pc.self_fields_max_iters,
                 pc.self_fields_verbosity );
 
