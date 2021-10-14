@@ -1,0 +1,32 @@
+name: 🐧 In Situ Vis
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-insituvis
+  cancel-in-progress: true
+
+jobs:
+  sensei:
+    name: SENSEI
+    runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
+    env:
+      CXX: clang++
+      CC: clang
+      CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -Wno-error=pass-failed"
+      CMAKE_GENERATOR: Ninja
+      CMAKE_PREFIX_PATH: /root/install/sensei/develop/lib/cmake
+    container:
+      image: ryankrattiger/sensei:fedora33-vtk-mpi-20210616
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure
+      run: |
+        cmake -S . -B build     \
+          -DWarpX_SENSEI=ON     \
+          -DWarpX_COMPUTE=NOACC \
+          -DCMAKE_CXX_STANDARD=14
+    - name: Build
+      run: |
+        cmake --build build -j 2
