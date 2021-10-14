@@ -123,7 +123,7 @@ void FieldProbe::ComputeDiags (int step)
                                      z_probe >= prob_lo[2] and z_probe <= prob_hi[2];
 #endif
 
-        amrex::Vector<amrex::Real> fp_values(noutputs);
+        amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
         if( probe_in_domain ) {
             const auto cell_size = gm.CellSizeArray();
