@@ -9,6 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
 
 #include "ReducedDiags.H"
+#include <AMReX_Vector.H>
 
 #include <string>
 
@@ -42,6 +43,7 @@ public:
     static constexpr int index_Bz = 5;
 
     bool m_probe_in_domain;
+    bool m_probe_in_domain_lev_0 = false;
 
 private:
 #if (AMREX_SPACEDIM == 2)

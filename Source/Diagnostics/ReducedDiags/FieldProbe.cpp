@@ -122,6 +122,7 @@ void FieldProbe::ComputeDiags (int step)
                             y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
                             z_probe >= prob_lo[2] and z_probe < prob_hi[2];
 #endif
+        if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
 
         amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
@@ -241,7 +242,7 @@ void FieldProbe::ComputeDiags (int step)
 
 void FieldProbe::WriteToFile (int step) const
 {
-    if(m_probe_in_domain){
+    if(m_probe_in_domain_lev_0){
         ReducedDiags::WriteToFile (step);
     }
 }
