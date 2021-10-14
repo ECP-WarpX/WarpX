@@ -25,6 +25,7 @@ sudo apt-get install -y --no-install-recommends \
     intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel \
     g++ gfortran    \
     libopenmpi-dev  \
+    ninja-build     \
     openmpi-bin  && \
 sudo apt-get clean
 
