@@ -106,6 +106,9 @@ void FieldProbe::ComputeDiags (int step)
     // get number of level
     const auto nLevel = warpx.finestLevel() + 1;
 
+    // vector where we store the field values
+    amrex::Vector<amrex::Real> fp_values(noutputs, 0);
+
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
@@ -123,8 +126,6 @@ void FieldProbe::ComputeDiags (int step)
                             z_probe >= prob_lo[2] and z_probe < prob_hi[2];
 #endif
         if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
-
-        amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
         if( m_probe_in_domain ) {
             const auto cell_size = gm.CellSizeArray();
