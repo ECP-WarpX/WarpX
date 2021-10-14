@@ -97,8 +97,8 @@ Running
 
 .. _running-cpp-lassen-V100-GPUs:
 
-V100 GPUs
-^^^^^^^^^
+V100 GPUs (16GB)
+^^^^^^^^^^^^^^^^
 
 The batch script below can be used to run a WarpX simulation on 2 nodes on the supercomputer Lassen at LLNL.
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
