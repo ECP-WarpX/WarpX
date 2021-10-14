@@ -41,6 +41,8 @@ public:
     static constexpr int index_By = 4;
     static constexpr int index_Bz = 5;
 
+    bool m_probe_in_domain;
+
 private:
 #if (AMREX_SPACEDIM == 2)
     amrex::Real x_probe, z_probe;
@@ -50,6 +52,8 @@ private:
 
     int interp_order = 1;
     bool raw_fields = false;
+
+    void WriteToFile (int step) const;
 
 };
 

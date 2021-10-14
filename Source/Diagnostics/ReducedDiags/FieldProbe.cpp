@@ -118,14 +118,14 @@ void FieldProbe::ComputeDiags (int step)
         const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
                                      z_probe >= prob_lo[1] and z_probe <= prob_hi[1];
 #else
-        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                                     y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
-                                     z_probe >= prob_lo[2] and z_probe < prob_hi[2];
+        m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
+                            y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
+                            z_probe >= prob_lo[2] and z_probe < prob_hi[2];
 #endif
 
         amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
-        if( probe_in_domain ) {
+        if( m_probe_in_domain ) {
             const auto cell_size = gm.CellSizeArray();
 
             const int i_probe = amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]);
@@ -238,3 +238,10 @@ void FieldProbe::ComputeDiags (int step)
      *   probe(Bx),probe(By),probe(Bz)] */
 }
 // end void FieldProbe::ComputeDiags
+
+void FieldProbe::WriteToFile (int step) const
+{
+    if(m_probe_in_domain){
+        ReducedDiags::WriteToFile (step);
+    }
+}
