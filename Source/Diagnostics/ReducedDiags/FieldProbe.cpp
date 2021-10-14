@@ -118,7 +118,7 @@ void FieldProbe::ComputeDiags (int step)
         const auto prob_hi = gm.ProbHi();
 
 #if (AMREX_SPACEDIM == 2)
-        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
+        m_probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
                                      z_probe >= prob_lo[1] and z_probe <= prob_hi[1];
 #else
         m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
