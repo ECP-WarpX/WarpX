@@ -118,9 +118,9 @@ void FieldProbe::ComputeDiags (int step)
         const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
                                      z_probe >= prob_lo[1] and z_probe <= prob_hi[1];
 #else
-        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
-                                     y_probe >= prob_lo[1] and y_probe <= prob_hi[1] and
-                                     z_probe >= prob_lo[2] and z_probe <= prob_hi[2];
+        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
+                                     y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
+                                     z_probe >= prob_lo[2] and z_probe < prob_hi[2];
 #endif
 
         amrex::Vector<amrex::Real> fp_values(noutputs, 0);
