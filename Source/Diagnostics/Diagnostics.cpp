@@ -20,6 +20,7 @@
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_FileSystem.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
@@ -46,7 +47,7 @@ Diagnostics::BaseReadParameters ()
     auto & warpx = WarpX::GetInstance();
 
     amrex::ParmParse pp_diag_name(m_diag_name);
-    m_file_prefix = "diags/" + m_diag_name;
+    m_file_prefix = "diags" + amrex::FileSystem::DirectorySeparator() + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
     queryWithParser(pp_diag_name, "file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);

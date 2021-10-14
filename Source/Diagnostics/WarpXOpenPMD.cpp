@@ -22,6 +22,7 @@
 #include <AMReX_Config.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
+#include <AMReX_FileSystem.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
@@ -289,7 +290,7 @@ namespace detail
         }
     }
 #endif // WARPX_USE_OPENPMD
-}
+} // namespace detail
 
 #ifdef WARPX_USE_OPENPMD
 WarpXOpenPMDPlot::WarpXOpenPMDPlot (
@@ -330,7 +331,7 @@ WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
 std::string
 WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 {
-  filepath.append("/");
+  filepath.append(amrex::FileSystem::DirectorySeparator());
   std::string filename = "openpmd";
   //
   // OpenPMD supports timestepped names
@@ -385,7 +386,7 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
             std::string filepath = m_dirPrefix;
             std::string const filename = GetFileName(filepath);
 
-            std::ofstream pv_helper_file(m_dirPrefix + "/paraview.pmd");
+            std::ofstream pv_helper_file(m_dirPrefix + amrex::FileSystem::DirectorySeparator() + "paraview.pmd");
             pv_helper_file << filename << std::endl;
             pv_helper_file.close();
         }
