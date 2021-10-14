@@ -55,7 +55,7 @@ private:
     int interp_order = 1;
     bool raw_fields = false;
 
-    void WriteToFile (int step) const;
+    virtual void WriteToFile (int step) const;
 
 };
 
