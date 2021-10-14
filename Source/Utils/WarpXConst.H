@@ -44,6 +44,11 @@ namespace PhysConst
     static constexpr auto xi_c2 = static_cast<amrex::Real>( 1.1728865132395492e-35 ); // This should be usable for single precision, though
     // very close to smallest number possible (1.2e-38)
 
+    // This marks the gamma threshold to switch between the full relativistic expression
+    // for particle kinetic energy and a Taylor expansion. It is used in the reduced diagnostics.
+    static constexpr auto gamma_relativistic_threshold =
+        static_cast<amrex::Real>(1.005);
+
     static constexpr auto kb   = static_cast<amrex::Real>( 1.380649e-23 );  // Boltzmann's constant, J/K (exact)
 }
 
