@@ -13,7 +13,8 @@ jobs:
     if: github.event.pull_request.draft == false
     env:
       CXXFLAGS: "-Werror -Wno-error=pass-failed"
-      CMAKE_GENERATOR: Ninja
+    # For macOS, Ninja is slower than the default:
+    #  CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
