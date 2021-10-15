@@ -58,7 +58,7 @@ beta2 = np.array(beta2)
 # Plot velocities, compare with theory
 w = 5.e12
 re = physical_constants['classical electron radius'][0]
-beta_th = np.sqrt( beta1[1]**2 - 2*w*re*np.log( (x2[1]-x1[1])/(x2-x1) ) )
+beta_th = np.sqrt( beta1[0]**2 - 2*w*re*np.log( (x2[0]-x1[0])/(x2-x1) ) )
 plt.plot( beta1, '+', label='Particle 1' )
 plt.plot( -beta2, 'x', label='Particle 2' )
 plt.plot( beta_th, '*', label='Theory' )
