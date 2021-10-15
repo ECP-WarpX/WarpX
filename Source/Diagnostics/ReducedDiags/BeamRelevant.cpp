@@ -169,30 +169,33 @@ void BeamRelevant::ComputeDiags (int step)
             <ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,
             ParticleReal,ParticleReal,ParticleReal>
             {
-                const ParticleReal ux = p.rdata(PIdx::ux);
-                const ParticleReal uy = p.rdata(PIdx::uy);
-                const ParticleReal uz = p.rdata(PIdx::uz);
-                const ParticleReal us = ux*ux + uy*uy + uz*uz;
-                const ParticleReal pos0 = p.pos(0);
-                const ParticleReal pos1 = p.pos(1);
-                const ParticleReal w = p.rdata(PIdx::w);
+                const ParticleReal p_ux = p.rdata(PIdx::ux);
+                const ParticleReal p_uy = p.rdata(PIdx::uy);
+                const ParticleReal p_uz = p.rdata(PIdx::uz);
+                const ParticleReal p_us = p_ux*p_ux + p_uy*p_uy + p_uz*p_uz;
+                const ParticleReal p_pos0 = p.pos(0);
+                const ParticleReal p_pos1 = p.pos(1);
+                const ParticleReal p_w = p.rdata(PIdx::w);
 
 #if (defined WARPX_DIM_RZ)
-                const ParticleReal theta = p.rdata(PIdx::theta);
-                const ParticleReal x_mean = pos0*std::cos(theta)*w;
-                const ParticleReal y_mean = pos0*std::sin(theta)*w;
+                const ParticleReal p_theta = p.rdata(PIdx::theta);
+                const ParticleReal p_x_mean = p_pos0*std::cos(p_theta)*p_w;
+                const ParticleReal p_y_mean = p_pos0*std::sin(p_theta)*p_w;
 #else
-                const ParticleReal x_mean = pos0*w;
-                const ParticleReal y_mean = pos1*w;
+                const ParticleReal p_x_mean = p_pos0*p_w;
+                const ParticleReal p_y_mean = p_pos1*p_w;
 #endif
-                const ParticleReal z_mean = p.pos(index_z)*w;
+                const ParticleReal p_z_mean = p.pos(index_z)*p_w;
 
-                const ParticleReal ux_mean = ux*w;
-                const ParticleReal uy_mean = uy*w;
-                const ParticleReal uz_mean = uz*w;
-                const ParticleReal gm_mean = std::sqrt(1.0_rt+us*inv_c2)*w;
+                const ParticleReal p_ux_mean = p_ux*p_w;
+                const ParticleReal p_uy_mean = p_uy*p_w;
+                const ParticleReal p_uz_mean = p_uz*p_w;
+                const ParticleReal p_gm_mean = std::sqrt(1.0_rt+p_us*inv_c2)*p_w;
 
-                return {w,x_mean,y_mean,z_mean,ux_mean,uy_mean,uz_mean,gm_mean};
+                return {p_w,
+                        p_x_mean, p_y_mean, p_z_mean,
+                        p_ux_mean, p_uy_mean, p_uz_mean,
+                        p_gm_mean};
             },
             reduce_ops);
 
@@ -211,16 +214,16 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
         ( values_per_rank_1st.data(), values_per_rank_1st.size());
 
-        ParticleReal w       = values_per_rank_1st.at(0);
-        ParticleReal x_mean  = values_per_rank_1st.at(1) /= w;
-        ParticleReal y_mean  = values_per_rank_1st.at(2) /= w;
-        ParticleReal z_mean  = values_per_rank_1st.at(3) /= w;
-        ParticleReal ux_mean = values_per_rank_1st.at(4) /= w;
-        ParticleReal uy_mean = values_per_rank_1st.at(5) /= w;
-        ParticleReal uz_mean = values_per_rank_1st.at(6) /= w;
-        ParticleReal gm_mean = values_per_rank_1st.at(7) /= w;
+        ParticleReal w_sum   = values_per_rank_1st.at(0);
+        ParticleReal x_mean  = values_per_rank_1st.at(1) /= w_sum;
+        ParticleReal y_mean  = values_per_rank_1st.at(2) /= w_sum;
+        ParticleReal z_mean  = values_per_rank_1st.at(3) /= w_sum;
+        ParticleReal ux_mean = values_per_rank_1st.at(4) /= w_sum;
+        ParticleReal uy_mean = values_per_rank_1st.at(5) /= w_sum;
+        ParticleReal uz_mean = values_per_rank_1st.at(6) /= w_sum;
+        ParticleReal gm_mean = values_per_rank_1st.at(7) /= w_sum;
 
-        if (w < std::numeric_limits<Real>::min() )
+        if (w_sum < std::numeric_limits<Real>::min() )
         {
             for (int i = 0; i < static_cast<int>(m_data.size()); ++i){
                 m_data[i] = 0.0_rt;
@@ -239,41 +242,45 @@ void BeamRelevant::ComputeDiags (int step)
             <ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,
             ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal>
             {
-                const ParticleReal ux = p.rdata(PIdx::ux);
-                const ParticleReal uy = p.rdata(PIdx::uy);
-                const ParticleReal uz = p.rdata(PIdx::uz);
-                const ParticleReal us = ux*ux + uy*uy + uz*uz;
-                const ParticleReal gm = std::sqrt(1.0_rt+us*inv_c2);
-                const ParticleReal pos0 = p.pos(0);
-                const ParticleReal pos1 = p.pos(1);
-                const ParticleReal w = p.rdata(PIdx::w);
+                const ParticleReal p_ux = p.rdata(PIdx::ux);
+                const ParticleReal p_uy = p.rdata(PIdx::uy);
+                const ParticleReal p_uz = p.rdata(PIdx::uz);
+                const ParticleReal p_us = p_ux*p_ux + p_uy*p_uy + p_uz*p_uz;
+                const ParticleReal p_gm = std::sqrt(1.0_rt+p_us*inv_c2);
+                const ParticleReal p_pos0 = p.pos(0);
+                const ParticleReal p_pos1 = p.pos(1);
+                const ParticleReal p_w = p.rdata(PIdx::w);
 
 #if (defined WARPX_DIM_RZ)
-                const ParticleReal theta = p.rdata(PIdx::theta);
-                const ParticleReal x = pos0*std::cos(theta);
-                const ParticleReal y = pos0*std::sin(theta);
+                const ParticleReal p_theta = p.rdata(PIdx::theta);
+                const ParticleReal p_x = p_pos0*std::cos(p_theta);
+                const ParticleReal p_y = p_pos0*std::sin(p_theta);
 #else
-                const ParticleReal x = pos0;
-                const ParticleReal y = pos1;
+                const ParticleReal p_x = p_pos0;
+                const ParticleReal p_y = p_pos1;
 #endif
-                const ParticleReal z = p.pos(index_z);
+                const ParticleReal p_z = p.pos(index_z);
 
-                const ParticleReal x_ms = (x-x_mean)*(x-x_mean)*w;
-                const ParticleReal y_ms = (y-y_mean)*(y-y_mean)*w;
-                const ParticleReal z_ms = (z-z_mean)*(z-z_mean)*w;
+                const ParticleReal p_x_ms = (p_x-x_mean)*(p_x-x_mean)*p_w;
+                const ParticleReal p_y_ms = (p_y-y_mean)*(p_y-y_mean)*p_w;
+                const ParticleReal p_z_ms = (p_z-z_mean)*(p_z-z_mean)*p_w;
 
-                const ParticleReal ux_ms = (ux-ux_mean)*(ux-ux_mean)*w;
-                const ParticleReal uy_ms = (uy-uy_mean)*(uy-uy_mean)*w;
-                const ParticleReal uz_ms = (uz-uz_mean)*(uz-uz_mean)*w;
-                const ParticleReal gm_ms = (gm-gm_mean)*(gm-gm_mean)*w;
+                const ParticleReal p_ux_ms = (p_ux-ux_mean)*(p_ux-ux_mean)*p_w;
+                const ParticleReal p_uy_ms = (p_uy-uy_mean)*(p_uy-uy_mean)*p_w;
+                const ParticleReal p_uz_ms = (p_uz-uz_mean)*(p_uz-uz_mean)*p_w;
+                const ParticleReal p_gm_ms = (p_gm-gm_mean)*(p_gm-gm_mean)*p_w;
 
-                const ParticleReal xux = (x-x_mean)*(ux-ux_mean)*w;
-                const ParticleReal yuy = (y-y_mean)*(uy-uy_mean)*w;
-                const ParticleReal zuz = (z-z_mean)*(uz-uz_mean)*w;
+                const ParticleReal p_xux = (p_x-x_mean)*(p_ux-ux_mean)*p_w;
+                const ParticleReal p_yuy = (p_y-y_mean)*(p_uy-uy_mean)*p_w;
+                const ParticleReal p_zuz = (p_z-z_mean)*(p_uz-uz_mean)*p_w;
 
-                const ParticleReal charge = q*w;
+                const ParticleReal p_charge = q*p_w;
 
-                return {x_ms,y_ms,z_ms,ux_ms,uy_ms,uz_ms,gm_ms,xux,yuy,zuz,charge};
+                return {p_x_ms, p_y_ms, p_z_ms,
+                        p_ux_ms, p_uy_ms, p_uz_ms,
+                        p_gm_ms,
+                        p_xux, p_yuy, p_zuz,
+                        p_charge};
             },
             reduce_ops2);
 
@@ -295,16 +302,16 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
         ( values_per_rank_2nd.data(), values_per_rank_2nd.size(), ParallelDescriptor::IOProcessorNumber());
 
-        ParticleReal x_ms   = values_per_rank_2nd.at(0) /= w;
-        ParticleReal y_ms   = values_per_rank_2nd.at(1) /= w;
-        ParticleReal z_ms   = values_per_rank_2nd.at(2) /= w;
-        ParticleReal ux_ms  = values_per_rank_2nd.at(3) /= w;
-        ParticleReal uy_ms  = values_per_rank_2nd.at(4) /= w;
-        ParticleReal uz_ms  = values_per_rank_2nd.at(5) /= w;
-        ParticleReal gm_ms  = values_per_rank_2nd.at(6) /= w;
-        ParticleReal xux    = values_per_rank_2nd.at(7) /= w;
-        ParticleReal yuy    = values_per_rank_2nd.at(8) /= w;
-        ParticleReal zuz    = values_per_rank_2nd.at(9) /= w;
+        ParticleReal x_ms   = values_per_rank_2nd.at(0) /= w_sum;
+        ParticleReal y_ms   = values_per_rank_2nd.at(1) /= w_sum;
+        ParticleReal z_ms   = values_per_rank_2nd.at(2) /= w_sum;
+        ParticleReal ux_ms  = values_per_rank_2nd.at(3) /= w_sum;
+        ParticleReal uy_ms  = values_per_rank_2nd.at(4) /= w_sum;
+        ParticleReal uz_ms  = values_per_rank_2nd.at(5) /= w_sum;
+        ParticleReal gm_ms  = values_per_rank_2nd.at(6) /= w_sum;
+        ParticleReal xux    = values_per_rank_2nd.at(7) /= w_sum;
+        ParticleReal yuy    = values_per_rank_2nd.at(8) /= w_sum;
+        ParticleReal zuz    = values_per_rank_2nd.at(9) /= w_sum;
         ParticleReal charge = values_per_rank_2nd.at(10);
 
         // save data
