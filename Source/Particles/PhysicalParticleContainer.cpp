@@ -157,7 +157,7 @@ namespace
 #else
         pos.x = 0.0_rt;
         pos.y = 0.0_rt;
-        pos.z = lo_corner[0] + (iv[0]+r.x)*dx[0];
+        pos.z = lo_corner[0] + (iv[0]+r.z)*dx[0];
 #endif
         return pos;
     }
@@ -716,6 +716,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         scale_fac = dx[0]*dx[1]*dx[2]/num_ppc;
 #elif AMREX_SPACEDIM==2
         scale_fac = dx[0]*dx[1]/num_ppc;
+#elif AMREX_SPACEDIM==1
+        scale_fac = dx[0]/num_ppc;
 #endif
     }
 

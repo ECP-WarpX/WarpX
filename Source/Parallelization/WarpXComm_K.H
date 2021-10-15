@@ -98,7 +98,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx * Bxc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = Bxf_zeropad(j,0,0);
+    Real bf = 0.5_rt*(Bxf_zeropad(j-1,0,0) + Bxf_zeropad(j,0,0));
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -278,7 +278,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx * Bzc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bzf_zeropad(j-1,0,0) + Bzf_zeropad(j,0,0));
+    Real bf =  Bzf_zeropad(j,0,0);
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -368,7 +368,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx * Exc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf_zeropad(j-1,0,0) + Exf_zeropad(j,0,0));
+    Real ef = Exf_zeropad(j,0,0);
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -547,7 +547,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx * Ezc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = Ezf_zeropad(j,0,0);
+    Real ef = 0.5_rt*(Ezf_zeropad(j-1,0,0) + Ezf_zeropad(j,0,0));
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -724,7 +724,7 @@ void warpx_interp (const int j,
 #endif
 
     // Min and max for interpolation loop along l
-#if   (AMREX_SPACEDIM < 3)
+#if   (AMREX_SPACEDIM <= 2)
     // l = 0 always
     const int lmin = l;
     const int lmax = l;

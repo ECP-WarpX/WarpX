@@ -22,7 +22,10 @@ void interp (int j, int k, int l,
     Real const wy = static_cast<Real>(type[1]) * static_cast<amrex::Real>(k-kg*r_ratio) * rr;
     Real const owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    fine(j,k,l) = owx * crse(jg  ,0,0)
+        +          wx * crse(jg+1,0,0);
+#elif (AMREX_SPACEDIM == 2)
     fine(j,k,l) = owx * owy * crse(jg  ,kg  ,0)
         +         owx *  wy * crse(jg  ,kg+1,0)
         +          wx * owy * crse(jg+1,kg  ,0)

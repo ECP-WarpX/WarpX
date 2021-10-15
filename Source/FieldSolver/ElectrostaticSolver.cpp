@@ -55,7 +55,6 @@
 
 using namespace amrex;
 
-#if !(defined WARPX_DIM_1D_Z)
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
@@ -402,8 +401,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
             dirichlet_flag[idim] = true;
             // parse the input file for the potential at the current time
             getPhiBC(idim, phi_bc_values_lo[idim], phi_bc_values_hi[idim]);
-        }
-        else {
+        } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                 "Field boundary conditions have to be either periodic or PEC "
                 "when using the electrostatic solver"
@@ -419,7 +417,9 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 
     // Set the value of beta
     amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#   if (AMREX_SPACEDIM==2)
+#   if (AMREX_SPACEDIM==1)
+        {{ beta[2] }};  // beta_x and beta_z
+#   elif (AMREX_SPACEDIM==2)
         {{ beta[0], beta[2] }};  // beta_x and beta_z
 #   else
         {{ beta[0], beta[1], beta[2] }};
@@ -464,7 +464,13 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
     {
         for (int lev = 0; lev <= max_level; ++lev) {
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,1>{
+                    get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+#elif (AMREX_SPACEDIM==2)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,2>{
                     get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
@@ -589,8 +595,14 @@ WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) cons
     }
 #else
     if (idim == 0) {
+        if (AMREX_SPACEDIM == 1){
+            pp_boundary.query("potential_lo_z", potential_lo_str);
+            pp_boundary.query("potential_hi_z", potential_hi_str);
+        }
+        else {
         pp_boundary.query("potential_lo_x", potential_lo_str);
         pp_boundary.query("potential_hi_x", potential_hi_str);
+        }
     }
     else if (idim == 1){
         if (AMREX_SPACEDIM == 2){
@@ -645,21 +657,29 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
+#if (AMREX_SPACEDIM > 1)
             const Real inv_dx = 1._rt/dx[0];
+#endif
 #if (AMREX_SPACEDIM == 3)
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#else
+#elif (AMREX_SPACEDIM == 2)
             const Real inv_dz = 1._rt/dx[1];
+#else
+            const Real inv_dz = 1._rt/dx[0];
 #endif
+#if (AMREX_SPACEDIM > 1)
             const Box& tbx  = mfi.tilebox( E[lev][0]->ixType().toIntVect() );
+#endif
 #if (AMREX_SPACEDIM == 3)
             const Box& tby  = mfi.tilebox( E[lev][1]->ixType().toIntVect() );
 #endif
             const Box& tbz  = mfi.tilebox( E[lev][2]->ixType().toIntVect() );
 
             const auto& phi_arr = phi[lev]->array(mfi);
+#if (AMREX_SPACEDIM > 1)
             const auto& Ex_arr = (*E[lev][0])[mfi].array();
+#endif
 #if (AMREX_SPACEDIM == 3)
             const auto& Ey_arr = (*E[lev][1])[mfi].array();
 #endif
@@ -698,7 +718,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
                 }
             );
-#else
+#elif (AMREX_SPACEDIM == 2)
             amrex::ParallelFor( tbx, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
@@ -713,6 +733,14 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j+1,k)-phi_arr(i,j,k) );
                 }
             );
+#else
+            amrex::ParallelFor( tbz,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    Ez_arr(i,j,k) +=
+                        +(beta_y*beta_z-1)*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i,j,k) );
+                }
+            );
+            ignore_unused(beta_x);
 #endif
         }
     }
@@ -747,12 +775,16 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
+#if (AMREX_SPACEDIM > 1)
             const Real inv_dx = 1._rt/dx[0];
+#endif
 #if (AMREX_SPACEDIM == 3)
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#else
+#elif (AMREX_SPACEDIM == 2)
             const Real inv_dz = 1._rt/dx[1];
+#else
+            const Real inv_dz = 1._rt/dx[0];
 #endif
             const Box& tbx  = mfi.tilebox( B[lev][0]->ixType().toIntVect() );
             const Box& tby  = mfi.tilebox( B[lev][1]->ixType().toIntVect() );
@@ -795,7 +827,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k)));
                 }
             );
-#else
+#elif (AMREX_SPACEDIM == 2)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
@@ -813,8 +845,19 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +beta_y*inv_dx*( phi_arr(i+1,j,k)-phi_arr(i,j,k) ));
                 }
             );
+#else
+            amrex::ParallelFor( tbx, tby,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    Bx_arr(i,j,k) += inv_c * (
+                        -beta_y*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i,j,k) ));
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    By_arr(i,j,k) += inv_c * (
+                        +beta_x*inv_dz*(phi_arr(i+1,j,k)-phi_arr(i,j,k)));
+                }
+            );
+            ignore_unused(beta_z,tbz,Bz_arr);
 #endif
         }
     }
 }
-#endif //1D

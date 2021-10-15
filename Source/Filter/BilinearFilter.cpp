@@ -80,9 +80,16 @@ void BilinearFilter::ComputeStencils(){
     stencil_z.resize( 1u + npass_each_dir[1] );
     compute_stencil(stencil_x, npass_each_dir[0]);
     compute_stencil(stencil_z, npass_each_dir[1]);
+#elif (AMREX_SPACEDIM == 1)
+    // npass_each_dir = npass_z
+    stencil_z.resize( 1u + npass_each_dir[0] );
+    compute_stencil(stencil_z, npass_each_dir[0]);
 #endif
     slen = stencil_length_each_dir.dim3();
 #if (AMREX_SPACEDIM == 2)
     slen.z = 1;
+#endif
+#if (AMREX_SPACEDIM == 1)
+    slen.z = 0;
 #endif
 }

@@ -434,7 +434,8 @@ LaserParticleContainer::InitData (int lev)
 #elif (AMREX_SPACEDIM == 2)
     BoxArray plane_ba { Box {IntVect(plane_lo[0],0), IntVect(plane_hi[0],0)} };
 #else
-    BoxArray plane_ba { Box {IntVect(plane_lo[0]), IntVect(plane_hi[0])} }; // 1D Is this correct?
+    BoxArray plane_ba { Box {IntVect(0), IntVect(0)} }; // 1D Is this correct?
+    //BoxArray plane_ba { Box {IntVect(plane_lo[0]), IntVect(plane_hi[0])} }; // 1D Is this correct?
 #endif
 
     amrex::Vector<amrex::Real> particle_x, particle_y, particle_z, particle_w;
@@ -454,7 +455,7 @@ LaserParticleContainer::InitData (int lev)
 #elif (AMREX_SPACEDIM == 2)
                 const Real x[2] = {pos[0], pos[2]};
 #else
-                const Real x[2] = {pos[2]};
+                const Real x[1] = {pos[2]};
 #endif
                 if (m_laser_injection_box.contains(x))
                 {
@@ -490,6 +491,7 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::Real> particle_uy(np, 0.0);
     amrex::Vector<amrex::Real> particle_uz(np, 0.0);
 
+    std::cout << "np = " << np << std::endl;
     if (Verbose()) amrex::Print() << "Adding laser particles\n";
     // Add particles on level 0. They will be redistributed afterwards
     AddNParticles(0,
@@ -614,6 +616,8 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
+            //std::cout<<"Jy in LaserParticleContainer max = " << jy[pti].max(0) << std::endl;//", and jy_min = " << jy.min(0) << std::endl;     
+
             if (rho && ! skip_deposition) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
@@ -676,7 +680,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 #   endif
     Sy = 1.0;
 #else
-    Sx = dx[2]/(std::abs(m_u_X[0] + eps));
+    Sx = 1.0;//dx[2]/(std::abs(m_u_X[0] + eps));
     Sy = 1.0;
 #endif
 }
@@ -686,7 +690,7 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 {
     constexpr Real eps = 0.01_rt;
     constexpr Real fac = 1.0_rt / (2.0_rt * MathConst::pi * PhysConst::mu0 * PhysConst::c * PhysConst::c * eps);
-    m_weight = fac * m_wavelength * Sx * Sy / std::min(Sx,Sy) * m_e_max;
+    m_weight = 100000.0_rt*fac * m_wavelength * Sx * Sy / std::min(Sx,Sy) * m_e_max;
 
     // The mobility is the constant of proportionality between the field to
     // be emitted, and the corresponding velocity that the particles need to have.
@@ -698,11 +702,11 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 
     // If mobility is too high (caused by a small wavelength compared to the grid size),
     // calculated antenna particle velocities may exceed c, which can cause a segfault.
-    constexpr Real warning_tol = 0.1_rt;
-    if (m_wavelength < std::min(Sx,Sy)*warning_tol){
-        amrex::Warning("WARNING: laser wavelength seems to be much smaller than the grid size."
-                       " This may cause a segmentation fault");
-    }
+//    constexpr Real warning_tol = 0.1_rt;
+//    if (m_wavelength < std::min(Sx,Sy)*warning_tol){
+//        amrex::Warning("WARNING: laser wavelength seems to be much smaller than the grid size."
+//                       " This may cause a segmentation fault");
+//    }
 }
 
 void
@@ -807,9 +811,9 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             // Calculate the velocity according to the amplitude of E
             const Real sign_charge = (pwp[i]>0) ? 1 : -1;
             const Real v_over_c = sign_charge * tmp_mobility * amplitude[i];
-            std::cout << "wavelength = " << m_wavelength << std::endl;
-            std::cout << "emax = " << m_e_max << std::endl;
-            std::cout << "sign_charge " << sign_charge << ", tmp_mobility = " << tmp_mobility << " ,amp["<< i <<"] = " << amplitude[i] << std::endl;
+//            std::cout << "wavelength = " << m_wavelength << std::endl;
+//            std::cout << "emax = " << m_e_max << std::endl;
+//            std::cout << "sign_charge " << sign_charge << ", tmp_mobility = " << tmp_mobility << " ,amp["<< i <<"] = " << amplitude[i] << std::endl;
             std::cout << "v_over_c = " << amrex::Math::abs(v_over_c) << std::endl;
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::Math::abs(v_over_c) < amrex::Real(1.),
                             "Error: calculated laser particle velocity greater than c."

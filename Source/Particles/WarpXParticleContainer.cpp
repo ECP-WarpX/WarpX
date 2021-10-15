@@ -505,6 +505,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     }
     WARPX_PROFILE_VAR_STOP(blp_deposit);
 
+    //std::cout << "Jy = " << local_jy[thread_num].array()(489,0,0,0) << std::endl; 
 #ifndef AMREX_USE_GPU
     // CPU, tiling: atomicAdd local_j<xyz> into j<xyz>
     WARPX_PROFILE_VAR_START(blp_accumulate);
@@ -513,6 +514,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
+    //std::cout << "After Jy = " << (*jy)[pti].array()(489,0,0,0) << std::endl; 
 }
 
 void

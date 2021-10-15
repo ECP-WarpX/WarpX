@@ -155,11 +155,9 @@ WarpX::InitData ()
 
     if (restart_chkfile.empty())
     {
-#if !(defined WARPX_DIM_1D_Z) // WarpX::ComputeSpaceChargeField is not implemented in 1D -- part of electrostatic solver
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
         ComputeSpaceChargeField(reset_fields);
-#endif
 
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );

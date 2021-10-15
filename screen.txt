@@ -1,0 +1,3319 @@
+MPI initialized with 1 MPI processes
+MPI initialized with thread support level 1
+OMP initialized with 4 OMP threads
+AMReX (21.09-28-g69b69c2b281c) initialized
+m_p_X = (0, 1, 0)
+m_u_X = (1, 0, 0)
+WarpX (21.09-47-gc632c4a1b7c5-dirty)
+Level 0: dt = 4.38635098e-16 ; dx = 9.375e-07 ; dz = 1.328125e-07
+momentum = momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 00, , 0, 0
+momentum = 0, 0, 00
+, momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = momentum = 00, , 0, 0, 00
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 00, 0
+momentum = 0, 0, 0
+
+momentum = 0, 0, momentum = 00, 0, 
+momentum = 0, 00
+momentum = 0, , 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 00
+momentum = 0, , 00, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, 0momentum = 
+0, 0momentum = 0, , 00
+, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, momentum = 0, 0, 00
+, momentum = 0, 0, 00
+momentum = 
+0momentum = 0, , 00, , 0
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, momentum = 0, 00, , 0
+momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, momentum = 0, 00, , 00
+momentum = 0, 0, 0
+
+momentum = momentum = 0, 00, 0
+momentum = 0, 0, , 0
+momentum = 0, 00, , 00
+
+momentum = 0, momentum = 0, 00, , 0
+momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, momentum = 0, 0, 00, 
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 
+momentum = 00, 0
+, 0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, 0
+momentum = momentum = 0, 00, 0
+momentum = 0, 0, , 0, 00
+
+momentum = 0, 0, momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0, 00
+momentum = 0, , 00, 
+0
+momentum = 0, 0, momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+
+momentum = 0, 0momentum = 0, 0, , 0
+0momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 00
+
+momentum = 0, 0, 0
+momentum = 0, 0, momentum = 00, 0, 
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, 0, , 0
+momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 00
+, momentum = 0, 00, , 00
+
+momentum = 0, momentum = 0, 00, 0
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+
+momentum = 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 00, 0
+momentum = 0, 0, , 0
+momentum = 0, 00
+momentum = 0, , 00, 
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0, 00
+momentum = 0, 0, , 0
+0momentum = 0, 0
+, momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, 0, momentum = 0, 0, 00
+momentum = 0, 
+0, momentum = 0, 00
+, momentum = 0, 0, 00
+momentum = 0, 0
+, 0
+momentum = 0, momentum = 0, 00, , 00
+
+momentum = 0, momentum = 0, 00, , 0
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 0, 00
+momentum = 0, 0, 
+0momentum = 
+0, 0, momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+
+momentum = 0, 0momentum = , 0
+momentum = 0, 00, 0, , 0
+momentum = 0, 0, 00
+
+momentum = 0, momentum = 0, 0, 00
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+, momentum = 0, 0, 0
+0momentum = 0, 0, 
+0momentum = 
+0, 0, momentum = 0, 0, 00
+momentum = 0, 0, 
+0momentum = 
+0, momentum = 0, 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 00
+momentum = 0, , 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, 0, momentum = 0, 00
+momentum = 0, , 0, 0
+momentum = 0, 00
+momentum = 0, , 00, 
+0
+momentum = 0, 0, momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 
+0, momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, , 0, 0
+0momentum = 0, 0
+, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 
+0, momentum = 0, 0, 00
+momentum = 0, 
+0, 0momentum = 0, 
+0, 0
+momentum = 0, 0, 0momentum = 
+0, 0, momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, , 00, 
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00
+, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 00
+
+momentum = 0, momentum = 0, 00, , 0
+momentum = 0, 0, 00
+momentum = 0, 0
+, momentum = 0, 00
+momentum = 0, , 00, 
+0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+
+momentum = 0, momentum = 0, 00, 0
+momentum = 0, 0, , 0
+momentum = 0, 00, 
+momentum = 0, 00
+momentum = 0, , 00
+, momentum = 0, 0, 00
+momentum = 0, 
+0, 0
+momentum = 0, 0, momentum = 0
+momentum = 0, 00, , 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, , 00
+, momentum = 0, 00
+, momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 00, 0, 
+momentum = 0, 00
+momentum = 0, , 0, 0
+0momentum = 0, 0, 
+0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, momentum = 00, 0
+, 0
+momentum = 0, 0, momentum = 0, 00, 
+momentum = 0, 00, 0
+
+momentum = 0, momentum = 0, 00, 0
+momentum = 0, 0, , 0
+0
+momentum = 0, momentum = 0, 00, 0
+momentum = 0, 0, , 0
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, , 00
+momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, momentum = 0, 0, 00
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, momentum = 0, 00, , 0
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, , 00
+momentum = 0, 0, , 0
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 00, 
+momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, 0momentum = 0, 0, , 0
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 00
+, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 
+0momentum = 0, , 0, 0
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, , 0, 0
+0momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 00, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+
+momentum = 0, momentum = 0, 0, 00
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+, momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00, 
+momentum = 0, 00
+, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 00
+momentum = 0, 0, , 0
+momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, momentum = 0, 00, 0
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 
+0, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00
+momentum = 0, , 0, 0
+momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, momentum = 0, 00, 0
+momentum = 0, , 00
+, momentum = 0, 00
+momentum = 0, , 0, 00
+
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00
+, momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 00, 
+momentum = 0, 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, 0momentum = 
+momentum = 0, 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+
+momentum = 0, momentum = 0, 00, , 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+
+momentum = 0, momentum = 0, 0, 00
+momentum = 0, , 00
+, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 00
+, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, momentum = 0, 00, , 0
+momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, 0, , 0
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 0, 0
+, momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0, 0
+momentum = 0, 0, momentum = 0
+momentum = 0, 00, , 0, 0
+momentum = 0, 00
+momentum = 0, , 0, 0
+momentum = 0, 00
+momentum = 0, , 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, momentum = 0, 00
+, momentum = 0, 00, 
+0momentum = 0, 0
+, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00
+momentum = 0, 0, , 0
+momentum = 0, 00
+momentum = 0, 0, 0
+momentum = 0, , 0, 0
+momentum = 0, 00, 
+momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00
+, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0, momentum = 0, 00, 0
+
+momentum = 0, 0, momentum = 0, 00, 0
+momentum = 0, 0
+, 0
+momentum = 0, 0momentum = 0, , 0, 0
+momentum = 0, 00
+momentum = 0, , 0, 0
+momentum = 0, 0, 00
+momentum = 
+0momentum = 0, 0, , 0, 00
+momentum = 0, 0
+, 0
+momentum = 0, momentum = 0, 00, , 00
+momentum = 0, 
+0, 0
+momentum = 0, momentum = 0, 00, 0, 
+momentum = 0, 0, 00
+momentum = 0, 0, 
+0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, momentum = 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 00, , 0
+momentum = 0, 0, 0
+momentum = 0, 0, 00
+momentum = 0, 
+0, momentum = 0, 00, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0, 0
+momentum = 0, 0, 0momentum = 
+0, 0, momentum = 0, 0, 00
+momentum = 0, 0, 0
+momentum = 0, 0, 
+0
+momentum = 0, 0momentum = , 0, 0, 0
+0momentum = 0, 0, 
+0
+momentum = 0, 0, momentum = 0, 00
+, momentum = 0, 00, 0
+momentum = 0, 
+0momentum = 0, , 0, 0
+0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, momentum = 0
+0, 0, 0
+np = 128
+
+Grids Summary:
+  Level 0   8 grids  32768 cells  100 % of domain
+            smallest grid: 64 x 64  biggest grid: 64 x 64
+
+  Writing plotfile diags/diag100000
+
+STEP 1 starts ...
+update_laser_particle :: x = -2.953125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.01219807762, and vz = -0
+update_laser_particle :: x = 2.953125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.01219807762, and vz = 0
+update_laser_particle :: x = 2.953125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.01219807762, and vz = -0
+update_laser_particle :: x = 2.859375e-05, y = 0, z = 9e-06, vx = 0, vy = 0.01045039475, and vz = 0
+update_laser_particle :: x = 2.859375e-05, y = 0, z = 9e-06, vx = -0, vy = -0.01045039475, and vz = -0
+update_laser_particle :: x = 2.765625e-05, y = 0, z = 9e-06, vx = -0, vy = -0.07032876727, and vz = -0
+update_laser_particle :: x = 2.765625e-05, y = 0, z = 9e-06, vx = 0, vy = 0.07032876727, and vz = 0
+update_laser_particle :: x = 2.671875e-05, y = 0, z = 9e-06, vx = -0, vy = -0.2711398319, and vz = -0
+update_laser_particle :: x = 2.671875e-05, y = 0, z = 9e-06, vx = 0, vy = 0.2711398319, and vz = 0
+update_laser_particle :: x = 2.578125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.2678346563, and vz = -0
+update_laser_particle :: x = 2.578125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.2678346563, and vz = 0
+update_laser_particle :: x = 2.484375e-05, y = 0, z = 9e-06, vx = 0, vy = 1.002332303, and vz = 0
+update_laser_particle :: x = 2.484375e-05, y = 0, z = 9e-06, vx = -0, vy = -1.002332303, and vz = -0
+update_laser_particle :: x = 2.390625e-05, y = 0, z = 9e-06, vx = 0, vy = 4.521208092, and vz = 0
+update_laser_particle :: x = 2.390625e-05, y = 0, z = 9e-06, vx = -0, vy = -4.521208092, and vz = -0
+update_laser_particle :: x = 2.296875e-05, y = 0, z = 9e-06, vx = 0, vy = 7.533008772, and vz = 0
+update_laser_particle :: x = 2.296875e-05, y = 0, z = 9e-06, vx = -0, vy = -7.533008772, and vz = -0
+update_laser_particle :: x = 2.203125e-05, y = 0, z = 9e-06, vx = -0, vy = -1.655385572, and vz = -0
+update_laser_particle :: x = 2.203125e-05, y = 0, z = 9e-06, vx = 0, vy = 1.655385572, and vz = 0
+update_laser_particle :: x = 2.109375e-05, y = 0, z = 9e-06, vx = -0, vy = -41.80595379, and vz = -0
+update_laser_particle :: x = 2.109375e-05, y = 0, z = 9e-06, vx = 0, vy = 41.80595379, and vz = 0
+update_laser_particle :: x = 2.015625e-05, y = 0, z = 9e-06, vx = -0, vy = -115.9414865, and vz = -0
+update_laser_particle :: x = 2.015625e-05, y = 0, z = 9e-06, vx = 0, vy = 115.9414865, and vz = 0
+update_laser_particle :: x = 1.921875e-05, y = 0, z = 9e-06, vx = -0, vy = -164.390599, and vz = -0
+update_laser_particle :: x = 1.921875e-05, y = 0, z = 9e-06, vx = 0, vy = 164.390599, and vz = 0
+update_laser_particle :: x = 1.828125e-05, y = 0, z = 9e-06, vx = -0, vy = -24.57349638, and vz = -0
+update_laser_particle :: x = 1.828125e-05, y = 0, z = 9e-06, vx = 0, vy = 24.57349638, and vz = 0
+update_laser_particle :: x = 1.734375e-05, y = 0, z = 9e-06, vx = 0, vy = 533.1507322, and vz = 0
+update_laser_particle :: x = 1.734375e-05, y = 0, z = 9e-06, vx = -0, vy = -533.1507322, and vz = -0
+update_laser_particle :: x = 1.640625e-05, y = 0, z = 9e-06, vx = 0, vy = 1628.155837, and vz = 0
+update_laser_particle :: x = 1.640625e-05, y = 0, z = 9e-06, vx = -0, vy = -1628.155837, and vz = -0
+update_laser_particle :: x = 1.546875e-05, y = 0, z = 9e-06, vx = 0, vy = 2968.790244, and vz = 0
+update_laser_particle :: x = 1.546875e-05, y = 0, z = 9e-06, vx = -0, vy = -2968.790244, and vz = -0
+update_laser_particle :: x = 1.453125e-05, y = 0, z = 9e-06, vx = 0, vy = 3583.767701, and vz = 0
+update_laser_particle :: x = 1.453125e-05, y = 0, z = 9e-06, vx = -0, vy = -3583.767701, and vz = -0
+update_laser_particle :: x = 1.359375e-05, y = 0, z = 9e-06, vx = 0, vy = 1832.335525, and vz = 0
+update_laser_particle :: x = 1.359375e-05, y = 0, z = 9e-06, vx = -0, vy = -1832.335525, and vz = -0
+update_laser_particle :: x = 1.265625e-05, y = 0, z = 9e-06, vx = -0, vy = -4126.07553, and vz = -0
+update_laser_particle :: x = 1.265625e-05, y = 0, z = 9e-06, vx = 0, vy = 4126.07553, and vz = 0
+update_laser_particle :: x = 1.171875e-05, y = 0, z = 9e-06, vx = -0, vy = -15461.6747, and vz = -0
+update_laser_particle :: x = 1.171875e-05, y = 0, z = 9e-06, vx = 0, vy = 15461.6747, and vz = 0
+update_laser_particle :: x = 1.078125e-05, y = 0, z = 9e-06, vx = -0, vy = -31751.12859, and vz = -0
+update_laser_particle :: x = 1.078125e-05, y = 0, z = 9e-06, vx = 0, vy = 31751.12859, and vz = 0
+update_laser_particle :: x = 9.84375e-06, y = 0, z = 9e-06, vx = -0, vy = -50489.22754, and vz = -0
+update_laser_particle :: x = 9.84375e-06, y = 0, z = 9e-06, vx = 0, vy = 50489.22754, and vz = 0
+update_laser_particle :: x = 8.90625e-06, y = 0, z = 9e-06, vx = -0, vy = -67390.37228, and vz = -0
+update_laser_particle :: x = 8.90625e-06, y = 0, z = 9e-06, vx = 0, vy = 67390.37228, and vz = 0
+update_laser_particle :: x = 7.96875e-06, y = 0, z = 9e-06, vx = -0, vy = -77478.80917, and vz = -0
+update_laser_particle :: x = 7.96875e-06, y = 0, z = 9e-06, vx = 0, vy = 77478.80917, and vz = 0
+update_laser_particle :: x = 7.03125e-06, y = 0, z = 9e-06, vx = -0, vy = -76586.55767, and vz = -0
+update_laser_particle :: x = 7.03125e-06, y = 0, z = 9e-06, vx = 0, vy = 76586.55767, and vz = 0
+update_laser_particle :: x = 6.09375e-06, y = 0, z = 9e-06, vx = -0, vy = -62687.81556, and vz = -0
+update_laser_particle :: x = 6.09375e-06, y = 0, z = 9e-06, vx = 0, vy = 62687.81556, and vz = 0
+update_laser_particle :: x = 5.15625e-06, y = 0, z = 9e-06, vx = -0, vy = -36588.89231, and vz = -0
+update_laser_particle :: x = 5.15625e-06, y = 0, z = 9e-06, vx = 0, vy = 36588.89231, and vz = 0
+update_laser_particle :: x = 4.21875e-06, y = 0, z = 9e-06, vx = -0, vy = -1787.999203, and vz = -0
+update_laser_particle :: x = 4.21875e-06, y = 0, z = 9e-06, vx = 0, vy = 1787.999203, and vz = 0
+update_laser_particle :: x = 3.28125e-06, y = 0, z = 9e-06, vx = 0, vy = 36354.03898, and vz = 0
+update_laser_particle :: x = 3.28125e-06, y = 0, z = 9e-06, vx = -0, vy = -36354.03898, and vz = -0
+update_laser_particle :: x = 2.34375e-06, y = 0, z = 9e-06, vx = 0, vy = 71789.5954, and vz = 0
+update_laser_particle :: x = 2.34375e-06, y = 0, z = 9e-06, vx = -0, vy = -71789.5954, and vz = -0
+update_laser_particle :: x = 1.40625e-06, y = 0, z = 9e-06, vx = 0, vy = 98946.64526, and vz = 0
+update_laser_particle :: x = 1.40625e-06, y = 0, z = 9e-06, vx = -0, vy = -98946.64526, and vz = -0
+update_laser_particle :: x = 4.6875e-07, y = 0, z = 9e-06, vx = 0, vy = 113638.3425, and vz = 0
+update_laser_particle :: x = 4.6875e-07, y = 0, z = 9e-06, vx = -0, vy = -113638.3425, and vz = -0
+update_laser_particle :: x = -4.6875e-07, y = 0, z = 9e-06, vx = 0, vy = 113638.3425, and vz = 0
+update_laser_particle :: x = -4.6875e-07, y = 0, z = 9e-06, vx = -0, vy = -113638.3425, and vz = -0
+update_laser_particle :: x = -1.40625e-06, y = 0, z = 9e-06, vx = 0, vy = 98946.64526, and vz = 0
+update_laser_particle :: x = -1.40625e-06, y = 0, z = 9e-06, vx = -0, vy = -98946.64526, and vz = -0
+update_laser_particle :: x = -2.34375e-06, y = 0, z = 9e-06, vx = 0, vy = 71789.5954, and vz = 0
+update_laser_particle :: x = -2.34375e-06, y = 0, z = 9e-06, vx = -0, vy = -71789.5954, and vz = -0
+update_laser_particle :: x = -3.28125e-06, y = 0, z = 9e-06, vx = 0, vy = 36354.03898, and vz = 0
+update_laser_particle :: x = -3.28125e-06, y = 0, z = 9e-06, vx = -0, vy = -36354.03898, and vz = -0
+update_laser_particle :: x = -4.21875e-06, y = 0, z = 9e-06, vx = -0, vy = -1787.999203, and vz = -0
+update_laser_particle :: x = -4.21875e-06, y = 0, z = 9e-06, vx = 0, vy = 1787.999203, and vz = 0
+update_laser_particle :: x = -5.15625e-06, y = 0, z = 9e-06, vx = -0, vy = -36588.89231, and vz = -0
+update_laser_particle :: x = -5.15625e-06, y = 0, z = 9e-06, vx = 0, vy = 36588.89231, and vz = 0
+update_laser_particle :: x = -6.09375e-06, y = 0, z = 9e-06, vx = -0, vy = -62687.81556, and vz = -0
+update_laser_particle :: x = -6.09375e-06, y = 0, z = 9e-06, vx = 0, vy = 62687.81556, and vz = 0
+update_laser_particle :: x = -7.03125e-06, y = 0, z = 9e-06, vx = -0, vy = -76586.55767, and vz = -0
+update_laser_particle :: x = -7.03125e-06, y = 0, z = 9e-06, vx = 0, vy = 76586.55767, and vz = 0
+update_laser_particle :: x = -7.96875e-06, y = 0, z = 9e-06, vx = -0, vy = -77478.80917, and vz = -0
+update_laser_particle :: x = -7.96875e-06, y = 0, z = 9e-06, vx = 0, vy = 77478.80917, and vz = 0
+update_laser_particle :: x = -8.90625e-06, y = 0, z = 9e-06, vx = -0, vy = -67390.37228, and vz = -0
+update_laser_particle :: x = -8.90625e-06, y = 0, z = 9e-06, vx = 0, vy = 67390.37228, and vz = 0
+update_laser_particle :: x = -9.84375e-06, y = 0, z = 9e-06, vx = -0, vy = -50489.22754, and vz = -0
+update_laser_particle :: x = -9.84375e-06, y = 0, z = 9e-06, vx = 0, vy = 50489.22754, and vz = 0
+update_laser_particle :: x = -1.078125e-05, y = 0, z = 9e-06, vx = -0, vy = -31751.12859, and vz = -0
+update_laser_particle :: x = -1.078125e-05, y = 0, z = 9e-06, vx = 0, vy = 31751.12859, and vz = 0
+update_laser_particle :: x = -1.171875e-05, y = 0, z = 9e-06, vx = -0, vy = -15461.6747, and vz = -0
+update_laser_particle :: x = -1.171875e-05, y = 0, z = 9e-06, vx = 0, vy = 15461.6747, and vz = 0
+update_laser_particle :: x = -1.265625e-05, y = 0, z = 9e-06, vx = -0, vy = -4126.07553, and vz = -0
+update_laser_particle :: x = -1.265625e-05, y = 0, z = 9e-06, vx = 0, vy = 4126.07553, and vz = 0
+update_laser_particle :: x = -1.359375e-05, y = 0, z = 9e-06, vx = 0, vy = 1832.335525, and vz = 0
+update_laser_particle :: x = -1.359375e-05, y = 0, z = 9e-06, vx = -0, vy = -1832.335525, and vz = -0
+update_laser_particle :: x = -1.453125e-05, y = 0, z = 9e-06, vx = 0, vy = 3583.767701, and vz = 0
+update_laser_particle :: x = -1.453125e-05, y = 0, z = 9e-06, vx = -0, vy = -3583.767701, and vz = -0
+update_laser_particle :: x = -1.546875e-05, y = 0, z = 9e-06, vx = 0, vy = 2968.790244, and vz = 0
+update_laser_particle :: x = -1.546875e-05, y = 0, z = 9e-06, vx = -0, vy = -2968.790244, and vz = -0
+update_laser_particle :: x = -1.640625e-05, y = 0, z = 9e-06, vx = 0, vy = 1628.155837, and vz = 0
+update_laser_particle :: x = -1.640625e-05, y = 0, z = 9e-06, vx = -0, vy = -1628.155837, and vz = -0
+update_laser_particle :: x = -1.734375e-05, y = 0, z = 9e-06, vx = 0, vy = 533.1507322, and vz = 0
+update_laser_particle :: x = -1.734375e-05, y = 0, z = 9e-06, vx = -0, vy = -533.1507322, and vz = -0
+update_laser_particle :: x = -1.828125e-05, y = 0, z = 9e-06, vx = -0, vy = -24.57349638, and vz = -0
+update_laser_particle :: x = -1.828125e-05, y = 0, z = 9e-06, vx = 0, vy = 24.57349638, and vz = 0
+update_laser_particle :: x = -1.921875e-05, y = 0, z = 9e-06, vx = -0, vy = -164.390599, and vz = -0
+update_laser_particle :: x = -1.921875e-05, y = 0, z = 9e-06, vx = 0, vy = 164.390599, and vz = 0
+update_laser_particle :: x = -2.015625e-05, y = 0, z = 9e-06, vx = -0, vy = -115.9414865, and vz = -0
+update_laser_particle :: x = -2.015625e-05, y = 0, z = 9e-06, vx = 0, vy = 115.9414865, and vz = 0
+update_laser_particle :: x = -2.109375e-05, y = 0, z = 9e-06, vx = -0, vy = -41.80595379, and vz = -0
+update_laser_particle :: x = -2.109375e-05, y = 0, z = 9e-06, vx = 0, vy = 41.80595379, and vz = 0
+update_laser_particle :: x = -2.203125e-05, y = 0, z = 9e-06, vx = -0, vy = -1.655385572, and vz = -0
+update_laser_particle :: x = -2.203125e-05, y = 0, z = 9e-06, vx = 0, vy = 1.655385572, and vz = 0
+update_laser_particle :: x = -2.296875e-05, y = 0, z = 9e-06, vx = 0, vy = 7.533008772, and vz = 0
+update_laser_particle :: x = -2.296875e-05, y = 0, z = 9e-06, vx = -0, vy = -7.533008772, and vz = -0
+update_laser_particle :: x = -2.390625e-05, y = 0, z = 9e-06, vx = 0, vy = 4.521208092, and vz = 0
+update_laser_particle :: x = -2.390625e-05, y = 0, z = 9e-06, vx = -0, vy = -4.521208092, and vz = -0
+update_laser_particle :: x = -2.484375e-05, y = 0, z = 9e-06, vx = 0, vy = 1.002332303, and vz = 0
+update_laser_particle :: x = -2.484375e-05, y = 0, z = 9e-06, vx = -0, vy = -1.002332303, and vz = -0
+update_laser_particle :: x = -2.578125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.2678346563, and vz = -0
+update_laser_particle :: x = -2.578125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.2678346563, and vz = 0
+update_laser_particle :: x = -2.671875e-05, y = 0, z = 9e-06, vx = -0, vy = -0.2711398319, and vz = -0
+update_laser_particle :: x = -2.671875e-05, y = 0, z = 9e-06, vx = 0, vy = 0.2711398319, and vz = 0
+update_laser_particle :: x = -2.765625e-05, y = 0, z = 9e-06, vx = -0, vy = -0.07032876727, and vz = -0
+update_laser_particle :: x = -2.765625e-05, y = 0, z = 9e-06, vx = 0, vy = 0.07032876727, and vz = 0
+update_laser_particle :: x = -2.859375e-05, y = 0, z = 9e-06, vx = 0, vy = 0.01045039475, and vz = 0
+update_laser_particle :: x = -2.859375e-05, y = 0, z = 9e-06, vx = -0, vy = -0.01045039475, and vz = -0
+update_laser_particle :: x = -2.953125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.01219807762, and vz = 0
+Ex(29, 199, 0) = -67.0390897
+Ex(30, 199, 0) = -2041.089589
+Ex(31, 199, 0) = -4753.607823
+Ex(32, 199, 0) = -3652.103236
+Ex(33, 199, 0) = -872.5459131
+Ex(29, 200, 0) = -3340.184557
+Ex(30, 200, 0) = -101710.9997
+Ex(31, 200, 0) = -236883.2411
+Ex(32, 200, 0) = -181994.2214
+Ex(33, 200, 0) = -43481.79542
+Ey(Ex(28, 201, 0) = -1984.221672
+Ex(29, 201, 0) = -28977.26766
+Ex(30, 201, 0) = -448712.8639
+Ex(31, 201, 0) = -1002105.259
+Ex(32, 201, 0) = -762255.8348
+Ex(33, 201, 0) = 0-180066.3401, 487, 0) = 
+Ex(34, 201, 0) = 66.24082569
+Ey(1, 487, 0) = -28.14774931
+Ey(2, 487, 0) = -693.1512054
+Ey(3, 487, 0) = -1859.09083
+Ey(4, 487, 0) = -627.4428975
+Ey(5, 487, 0) = 10469.30731
+Ey(6, 487, 0) = 35907.02474
+Ey(7, 487, 0) = 49794.592111804.053634
+Ex(28, 202, 0) = 
+-39987.24656
+Ex(29, 202, 0) = -336922.0166
+Ex(30, 202, 0) = -1137911.798
+Ex(31, 202, 0) = -1681041.045
+Ex(32, 202, 0) = -1060926.845
+Ex(33, 202, 0) = -185691.1419
+Ex(34, 202, 0) = 35171.68568
+Ex(28, 203, 0) = Ey(8, 487, 0) = -136798.3619
+Ex(29, 203, 0) = -40299.01384-1097573.267
+Ex(30, 203, 0) = 
+-2145205.673
+Ex(31, 203, 0) = Ey(9, 487, 0) = -1799982.884-374848.6855
+Ey(10, 487, 0) = 
+-964356.9528
+Ey(11, 487, 0) = Ex(32, 203, 0) = -1315642.826-755887.2542
+Ex(33, 203, 0) = 
+-25568.61163
+Ex(34, 203, 0) = 114770.3Ey(12, 487, 0) = 
+Ex(35, 203, 0) = 3.773459118
+Ex(28, 204, 0) = -76772.25901-190502.7402
+Ex(29, 204, 0) = 
+-1513879.146
+Ex(30, 204, 0) = -2716448.742
+Ex(31, 204, 0) = Ey(13, 487, 0) = -2160552.822
+Ex(32, 204, 0) = -1026508.5794758056.39
+
+Ey(14, 487, 0) = Ex(33, 204, 0) = 14475409.12
+Ey(15, 487, 0) = 27041470.66
+Ey(16, 487, 0) = 34337715.56
+Ey(17, 487, 0) = -9694.24936421325557.37
+Ex(34, 204, 0) = 
+Ey(18, 487, 0) = 250413.9641-30831238.61
+Ey(19, 487, 0) = 
+-137327032.5
+Ey(20, 487, 0) = Ex(35, 204, 0) = 1080.120375
+Ex(28, 205, 0) = -300255343.9-121461.2719
+Ex(29, 205, 0) = -967076.6814
+Ex(30, 205, 0) = -1927850.81
+
+Ey(21, 487, 0) = Ex(31, 205, 0) = -501482436.2-1840956.633
+Ey(22, 487, 0) = 
+-702122661.9Ex(32, 205, 0) = 
+-479734.8538
+Ex(33, 205, 0) = Ey(23, 487, 0) = 967507.712-850341287.6
+Ey(24, 487, 0) = -895446584.3
+Ey(25, 487, 0) = -803291680.5
+Ey(26, 487, 0) = -567427226.3
+Ey(27, 487, 0) = -212362133.3
+Ey(28, 487, 0) = 
+211498324.8
+Ey(29, 487, 0) = Ex(34, 205, 0) = 638829834.1
+Ey(30, 487, 0) = 697416.31861002567651
+Ey(31, 487, 0) = 
+1245947164
+Ey(32, 487, 0) = Ex(35, 205, 0) = 13314322948894.985165
+Ex(28, 206, 0) = 
+-30576.86802
+Ex(29, 206, 0) = Ey(33, 487, 0) = -280421.0148
+1245947164Ex(30, 206, 0) = 
+-715611.1304Ey(34, 487, 0) = 
+1002567651
+Ey(35, 487, 0) = 638829834.1
+Ey(36, 487, 0) = 211498324.8
+Ey(37, 487, 0) = -212362133.3
+Ey(38, 487, 0) = Ex(31, 206, 0) = -567427226.3-135371.158
+Ex(32, 206, 0) = 2307526.599
+Ex(33, 206, 0) = 
+3402924.886
+Ex(34, 206, 0) = Ey(39, 487, 0) = 1451352.984
+Ex(35, 206, 0) = -803291680.525558.87038
+Ex(28, 207, 0) = 
+Ey(40, 487, 0) = -822.9993186-895446584.3
+Ey(41, 487, 0) = -850341287.6
+Ey(42, 487, 0) = 
+-702122661.9
+Ey(43, 487, 0) = -501482436.2
+Ey(44, 487, 0) = -300255343.9
+Ey(45, 487, 0) = -137327032.5
+Ey(46, 487, 0) = -30831238.61
+Ey(47, 487, 0) = Ex(29, 207, 0) = 21325557.37-144703.4047
+Ex(30, 207, 0) = 
+-828370.504
+Ex(31, 207, 0) = -275100.1291Ey(48, 487, 0) = 
+Ex(32, 207, 0) = 34337715.562927447.165
+
+Ey(49, 487, 0) = Ex(33, 207, 0) = 27041470.664119680.773
+Ex(34, 207, 0) = 1636012.621
+Ex(35, 207, 0) = 
+34389.04362
+Ex(29, 208, 0) = Ey(50, 487, 0) = -279562.3516
+Ex(30, 208, 0) = 14475409.12-1919899.87
+Ex(31, 208, 0) = 
+-3317982.9
+Ex(32, 208, 0) = Ey(51, 487, 0) = -1220287.793
+Ex(33, 208, 0) = 1254244.622
+Ex(34, 208, 0) = 819546.2671
+Ex(35, 208, 0) = 22659.23252
+Ex(29, 209, 0) = -389379.6502
+Ex(30, 209, 0) = -2433998.452
+Ex(31, 209, 0) = -5294914.327
+Ex(32, 209, 0) = -4952826.432
+Ex(33, 209, 0) = -1804933.991
+Ex(34, 209, 0) = -97331.63905
+4758056.39Ex(
+Ey(52, 487, 0) = 35, 209, 0) = 5071.446313
+Ex(28, 210, 0) = -0.192640365
+Ex(29, 210, 0) = -311446.8111
+Ex(30, 210, 0) = -1877338.851
+Ex(31, 210, 0) = -4129584.153
+Ex(32, 210, 0-76772.25901) = 
+Ey(53, 487, 0) = -4212077.111-1315642.826
+Ey(54, 487, 0) = 
+-964356.9528Ex(33, 210, 0) = -1992542.733
+
+Ex(34, 210, 0) = -349176.0079Ey(55, 487, 0) = 
+Ex(35, 210, 0) = -374848.6855-5018.465135
+Ex(28, 211, 0) = 
+-41.19559179
+Ex(29, 211, 0) = Ey(56, 487, 0) = -53736.14658-40299.01384
+
+Ex(30, 211, 0) = Ey(57, 487, 0) = -1539660.84
+Ex(31, 211, 0) = 49794.59211-3710062.699
+Ex(32, 211, 0) = 
+-3180389.073
+Ex(33, 211, 0) = -1129249.345Ey(58, 487, 0) = 
+35907.02474
+Ey(59, 487, 0) = 10469.30731
+Ey(60, 487, 0) = -627.4428975
+Ex(34, 211, 0) = Ey(61, 487, 0) = -181406.5773-1859.09083
+Ey(62, 487, 0) = 
+-693.1512054
+Ey(63, 487, 0) = -28.14774931
+Ey(64, 487, 0) = Ex(35, 211, 0) = 66.24082569
+Ey(0, 488, 0) = -8449.4953731171.336521
+Ey(1, 488, 0) = -497.736651
+Ey(2, 488, 0) = 
+-12256.99276
+Ey(3, 488, 0) = -32874.30314
+Ey(4, 488, 0) = -11095.07276
+Ey(5, 488, 0) = 185128.7611
+Ey(6, 488, 0) = Ex(28, 212, 0) = 634943.9185
+Ey(7, 488, 0) = -244.0780453880517.7723
+Ey(8, 488, 0) = 
+-712607.4618
+Ey(9, 488, 0) = Ex(29, 212, 0) = -6628449.305-58058.40463
+Ex(30, 212, 0) = 
+-2447297.524Ey(10, 488, 0) = 
+Ex(31, 212, 0) = -17052724-5266071.934
+Ey(11, 488, 0) = 
+Ex(32, 212, 0) = -3367656.836-23264512.1
+
+Ey(12, 488, 0) = Ex(33, 212, 0) = -1357563.856-443501.1535
+Ex(34, 212, 0) = 
+41526.2069Ey(13, 488, 0) = 
+84136711.15
+Ey(14, 488, 0) = 255968659.5
+Ey(15, 488, 0) = Ex(35, 212, 0) = 478174325.7-6040.739806
+
+Ex(28, 213, 0) = Ey(16, 488, 0) = -513.0806137607193824.2
+Ey(17, 488, 0) = 377099831
+Ey(18, 488, 0) = 
+-545188792.3
+Ey(19, 488, 0) = Ex(29, 213, 0) = -2428353916
+Ey(20, 488, 0) = -350722.2368-5309415246
+Ey(21, 488, 0) = 
+-8867713919
+Ey(22, 488, 0) = Ex(30, 213, 0) = -1.241563503e+10
+Ey(23, 488, 0) = -2456867.834-1.503658499e+10
+Ey(24, 488, 0) = 
+-1.583418195e+10
+Ey(25, 488, 0) = -1.420460679e+10
+Ex(31, 213, 0) = Ey(26, 488, 0) = -2786178.049-1.003381564e+10
+Ey(27, 488, 0) = 
+-3755199604
+Ey(28, 488, 0) = Ex(32, 213, 0) = 3739924877
+Ey(29, 488, 0) = 659385.84831.129642796e+10
+Ey(30, 488, 0) = 
+1.772840378e+10
+Ey(31, 488, 0) = 2.203208371e+10
+Ey(32, 488, 0) = 2.354371725e+10
+Ey(33, 488, 0) = Ex(33, 213, 0) = 2.203208371e+10
+Ey(34, 488, 0) = 1.772840378e+101598611.005
+Ey(35, 488, 0) = 1.129642796e+10
+
+Ex(34, 213, 0) = Ey(36, 488, 0) = 257949.5815
+Ex(35, 213, 0) = 3739924877-1756.203569
+
+Ex(28, 214, 0) = Ey(37, 488, 0) = -484.2431602
+Ex(29, 214, 0) = -3755199604-375991.4498
+Ex(30, 214, 0) = -469487.868
+
+Ey(38, 488, 0) = Ex(31, 214, 0) = -1.003381564e+10
+Ey(39, 488, 0) = 2794684.735-1.420460679e+10
+Ey(40, 488, 0) = -1.583418195e+10
+
+Ey(41, 488, 0) = -1.503658499e+10
+Ey(42, 488, 0) = -1.241563503e+10
+Ey(43, 488, 0) = -8867713919
+Ey(44, 488, 0) = -5309415246
+Ey(45, 488, 0) = -2428353916
+Ey(46, 488, 0) = Ex(32, 214, 0) = -545188792.35806817.004
+Ex(33, 214, 0) = 
+3228594.653
+Ex(34, 214, 0) = Ey(47, 488, 0) = 310357.576377099831
+Ey(48, 488, 0) = 
+607193824.2
+Ey(49, 488, 0) = Ex(35, 214, 0) = 478174325.7-85.46871826
+Ex(28, 215, 0) = 
+-200.7422807
+Ex(29, 215, 0) = Ey(50, 488, 0) = -122637.7638
+Ex(30, 215, 0) = 255968659.51081858.761
+Ey(51, 488, 0) = 
+84136711.15
+Ey(52, 488, 0) = -1357563.856
+Ey(53, 488, 0) = -23264512.1
+Ey(54, 488, 0) = -17052724
+Ey(55, 488, 0) = -6628449.305
+Ey(56, 488, 0) = Ex(31, 215, 0) = -712607.46184501668.82
+
+Ex(32, 215, 0) = 5400808.3Ey(57, 488, 0) = 
+Ex(33, 215, 0) = 880517.77232236029.549
+Ex(34, 215, 0) = 
+132594.2869
+Ex(28, 216, 0) = Ey(58, 488, 0) = -26.51237728634943.9185
+Ex(29, 216, 0) = 
+Ey(59, 488, 0) = 92265.16906185128.7611
+Ey(60, 488, 0) = 
+-11095.07276
+Ey(61, 488, 0) = -32874.30314
+Ey(62, 488, 0) = -12256.99276
+Ey(63, 488, 0) = Ex(30, 216, 0) = -497.7366511530080.741
+Ex(31, 216, 0) = 3314510.812
+
+Ex(32, 216, 0) = 2319129.538
+Ex(33, 216, 0) = 353564.6848
+Ex(34, 216, 0) = -88843.10073
+Ex(28, 217, 0) = Ey(64, 488, 0) = -0.0077369549361171.336521
+Ey(0, 489, 0) = 2968.781326
+Ey(1, 489, 0) = -1261.525829
+Ey(2, 489, 0) = -31065.65072
+Ey(3, 489, 0) = -83320.7328
+Ey(4, 489, 0) = -28120.73578
+Ey(5, 489, 0) = 469213.4148
+
+Ex(29, 217, 0) = Ey(6, 489, 0) = 223583.03591609281.035
+Ex(30, 217, 0) = 
+1686428.877Ey(7, 489, 0) = 
+2231694.029
+Ey(8, 489, 0) = Ex(31, 217, 0) = -1806121.2022311961.267
+Ex(32, 217, 0) = 251420.3287
+
+Ex(33, 217, 0) = Ey(9, 489, 0) = -805242.863
+Ex(34, 217, 0) = -207547.7577-16799968.39
+
+Ey(10, 489, 0) = Ex(29, 218, 0) = -43220549.91202780.3807
+Ex(30, 218, 0) = 916928.3204
+Ex(31, 218, 0) = 
+380318.6778
+Ex(32, 218, 0) = Ey(11, 489, 0) = -1359556.347-58964480.18
+Ey(12, 489, 0) = -3440779.104
+Ey(13, 489, 0) = 213246571.3
+
+Ex(33, 218, 0) = Ey(14, 489, 0) = 648758886.1-1206257.349
+
+Ex(34, 218, 0) = Ey(15, 489, 0) = -180530.26411211944632
+Ey(16, 489, 0) = 
+1538947736
+Ey(17, 489, 0) = Ex(29, 219, 0) = 955768830.3
+Ey(18, 489, 0) = 57798.92619-1381794452
+Ey(19, 489, 0) = 
+-6154722943
+Ey(20, 489, 0) = Ex(30, 219, 0) = -1.3456844e+10-465866.6947
+Ex(31, 219, 0) = -2081547.953
+
+Ey(21, 489, 0) = Ex(32, 219, 0) = -2.247543982e+10-2616036.647
+Ex(33, 219, 0) = -1139890.846
+
+Ey(22, 489, 0) = Ex(34, 219, 0) = -3.146773346e+10
+Ey(23, 489, 0) = -3.811059583e+10-81736.53046
+Ey(24, 489, 0) = -4.013212501e+10
+
+Ex(29, 220, 0Ey(25, 489, 0) = ) = -3.600192654e+10
+Ey(26, 489, 0) = -2.543095343e+10
+-20850.75177Ey(27, 489, 0) = -9517646092
+Ey(28, 489, 0) = 
+9478931920
+Ey(29, 489, 0) = Ex(30, 220, 0) = 2.863107551e+10
+Ey(30, 489, 0) = -897094.34794.493307699e+10
+Ey(31, 489, 0) = 
+5.584086001e+10
+Ey(32, 489, 0) = 5.967213255e+10
+Ey(33, 489, 0) = 5.584086001e+10
+Ey(34, 489, 0) = 4.493307699e+10
+Ey(35, 489, 0) = Ex(31, 220, 0) = 2.863107551e+10
+Ey(36, 489, 0) = 9478931920
+Ey(37, 489, 0) = -2493847.469-9517646092
+Ey(38, 489, 0) = -2.543095343e+10
+Ey(39, 489, 0) = 
+-3.600192654e+10
+Ey(40, 489, 0) = Ex(32, 220, 0) = -4.013212501e+10
+Ey(41, 489, 0) = -2401626.314-3.811059583e+10
+Ey(42, 489, 0) = -3.146773346e+10
+Ey(43, 489, 0) = -2.247543982e+10
+Ey(44, 489, 0) = 
+-1.3456844e+10
+Ey(45, 489, 0) = -6154722943
+Ey(46, 489, 0) = Ex(33, 220, 0) = -1381794452-805833.8546
+
+Ex(34, 220, 0) = -21811.41328
+Ex(29, 221, 0) = Ey(47, 489, 0) = -13727.69371955768830.3
+Ey(48, 489, 0) = 
+1538947736
+Ey(49, 489, 0) = 1211944632
+Ey(50, 489, 0) = Ex(30, 221, 0) = 648758886.1-412925.4135
+
+Ex(31, 221, 0) = Ey(51, 489, 0) = -1108218.247213246571.3
+Ey(52, 489, 0) = -3440779.104
+Ey(53, 489, 0) = 
+-58964480.18
+Ey(54, 489, 0) = -43220549.91
+Ey(55, 489, 0) = Ex(32, 221, 0) = -16799968.39
+Ey(56, 489, 0) = -1806121.202
+Ey(57, 489, 0) = -1037944.4672231694.029
+Ey(58, 489, 0) = 1609281.035
+Ey(59, 489, 0) = 
+469213.4148
+Ey(60, 489, 0) = -28120.73578
+Ex(33, 221, 0) = Ey(61, 489, 0) = -83320.7328
+Ey(62, 489, 0) = -334297.377-31065.65072
+Ey(63, 489, 0) = -1261.525829
+Ey(64, 489, 0) = 
+2968.781326
+Ey(0, 490, 0) = 2711.236996
+Ey(1, 490, 0) = Ex(34, 221, 0) = -1152.087379-5373.437851
+Ex(29, 222, 0) = 
+Ey(2, 490, 0) = -1792.607645-28370.67884
+Ey(3, 490, 0) = 
+-76092.58765
+Ey(4, 490, 0) = Ex(30, 222, 0) = -25681.23779-57427.25851
+Ex(31, 222, 0) = -158395.7571
+
+Ex(32, 222, 0) = Ey(5, 490, 0) = -152537.1636428508.748
+Ey(6, 490, 0) = 
+1469674.523
+Ey(7, 490, 0) = 2038092.655
+Ey(8, 490, 0) = Ex(33, 222, 0) = -1649438.637-50633.05177
+
+Ey(9, 490, 0) = Ex(34, 222, 0) = -15342556.7-856.9943864
+Ex(30, 223, 0) = 
+-6.791478939
+Ex(31, 223, 0) = Ey(10, 490, 0) = -26.55259606-39471130.08
+Ey(11, 490, 0) = -53849260.88
+Ey(12, 490, 0) = 
+-3142288.561
+Ey(13, 490, 0) = 194747248.1
+Ey(14, 490, 0) = Ex(32, 223, 0) = 592478495.4
+Ey(15, 490, 0) = -33.046981451106807394
+Ey(16, 490, 0) = 
+1405442698Ex(33, 223, 0) = 
+Ey(17, 490, 0) = -13.60209048872855063.2
+Ey(18, 490, 0) = -1261922596
+Ey(19, 490, 0) = -5620795440
+Ey(20, 490, 0) = -1.228945122e+10
+Ey(21, 490, 0) = 
+-2.052567611e+10
+Ey(22, 490, 0) = -2.873788055e+10
+Ey(23, 490, 0) = Ex(34, 223, 0) = -3.48044689e+10-0.3162261518
+
+Ey(24, 490, 0) = -3.665062869e+10
+Ey(25, 490, 0) = -3.287872848e+10
+Ey(26, 490, 0) = -2.322479637e+10
+Ey(27, 490, 0) = -8691982118
+Ey(28, 490, 0) = 8656626433
+Ey(29, 490, 0) = 2.614730511e+10
+Ey(30, 490, 0) = Ey(29, 1994.103509396e+10
+, Ey(31, 490, 0) = 5.099661744e+10
+Ey(32, 490, 0) = 5.449552379e+10
+Ey(33, 490, 0) = 5.099661744e+10
+Ey(34, 490, 0) = 4.103509396e+10
+Ey(35, 490, 0) = 2.614730511e+10
+Ey(36, 490, 0) = 8656626433
+Ey(37, 490, 0) = -8691982118
+Ey(38, 490, 0) = -2.322479637e+10
+Ey(39, 490, 0) = 0-3.287872848e+10
+Ey(40, 490, 0) = ) = -3.665062869e+10
+Ey(41, 490, 0) = -3.48044689e+10
+Ey(42, 490, 0) = -0.2825546779-2.873788055e+10
+Ey(43, 490, 0) = 
+-2.052567611e+10
+Ey(44, 490, 0) = Ey(30, 199, 0) = -1.228945122e+10-49.32053763
+Ey(31, 199, 0) = -201.5510409
+Ey(45, 490, 0) = 
+Ey(32, 199, 0) = -269.5630294
+-5620795440Ey(33, 199, 0) = -130.342313
+Ey(34, 199, 0) = 
+-13.29234167
+Ey(29, 200, 0) = Ey(46, 490, 0) = -15.55347925
+Ey(-126192259630, 200, 0) = 
+-2483.146621Ey(47
+, 490, 0) = Ey(31, 200, 0) = -10107.61596
+Ey(32, 200, 0) = 872855063.2-13490.8564
+Ey(33, 200, 0) = 
+-6513.684023
+Ey(34, 200, 0) = Ey(48, 490, 0) = -662.85043571405442698
+Ey(49, 490, 0) = 1106807394
+Ey(50, 490, 0) = 592478495.4
+
+Ey(28, 201, 0) = Ey(51, 490, 0) = 193.2896126194747248.1
+Ey(29, 201, 0) = 
+Ey(52, 490, 0) = 2229.134732-3142288.561
+Ey(53, 490, 0) = -53849260.88
+Ey(54, 490, 0) = -39471130.08
+Ey(55, 490, 0) = 
+-15342556.7
+Ey(56, 490, 0) = Ey(30, 201, 0) = -1649438.637-42216.14771
+Ey(31, 201, 0) = -129224.1597
+Ey(32, 201, 0) = 
+-109754.8958
+Ey(33, 201, 0) = -9400.351839
+Ey(34, 201, 0) = 16669.86452
+Ey(35, 201, 0) = 1287.487448
+Ey(28, 202, 0) = Ey(57, 490, 0) = 3895.700195
+Ey(29, 202, 0) = 2038092.65582796.42527
+Ey(30, 202, 0) = 
+-64357.63789
+Ey(31, 202, 0) = Ey(58, 490, 0) = -514235.71361469674.523
+Ey(59, 490, 0) = 
+428508.748
+Ey(60, 490, 0) = -25681.23779
+Ey(61, 490, 0) = Ey(32, 202, 0) = -76092.58765-306617.4904
+Ey(33, 202, 0) = 
+301991.972
+Ey(34, 202, 0) = 258190.4005
+Ey(35, 202, 0) = 20558.28875
+Ey(28, 203, 0) = Ey(62, 490, 0) = 13333.52947-28370.67884
+Ey(63, 490, 0) = -1152.087379
+Ey(64, 490, 0) = 2711.236996
+Ey(0, 491, 0) = 
+870.2719679
+Ey(1, 491, 0) = -369.8051304
+Ey(2, 491, 0) = -9106.620536
+Ey(3, 491, 0) = -24424.73532
+Ey(4, 491, 0) = -8243.344787
+Ey(5, 491, 0) = 137545.7594
+Ey(6, 491, 0) = 471746.4911
+Ey(7, 491, 0) = Ey(654201.351129, 203, 
+0) = Ey(8, 491, 0) = 304347.6797
+Ey(30, 203, 0) = -529448.4439
+Ey(9, 491, 0) = -4924762.03
+Ey(117583.256510, 
+491Ey(31, 203, 0) = , -1116590.087
+Ey(32, 203, 0) = 0-823236.4244) = 
+Ey(33, 203, 0) = -12669721.65797739.3214
+
+Ey(34, 203, 0) = 743663.1728
+Ey(35, 203, 0) = 65847.13715
+Ey(36, 203, 0) = 0.5165874692
+Ey(28, 204, 0) = Ey(11, 491, 0) = 18576.86939-17284915.45
+
+Ey(12, 491, 0) = Ey(29, 204, 0) = -1008633.939439181.6491
+Ey(30, 204, 0) = 
+337439.4051
+Ey(31, 204, 0) = Ey(13, 491, 0) = -1526473.61662511344.86
+Ey(14, 491, 0) = 
+190177925.1
+Ey(15, 491, 0) = 355270841.5
+Ey(16, 491, 0) = 451128907
+Ey(32, 204, 0) = Ey(17, 491, 0) = -1664431.87280175172.8
+Ey(18, 491, 0) = 
+-405060812.8
+Ey(19, 491, 0) = Ey(33, 204, 0) = -1804202553640724.0994
+Ey(34, 204, 0) = 
+986853.4005Ey(20, 491, 0) = 
+Ey(35, 204, 0) = -3944754708125154.9454
+Ey(21, 491, 0) = 
+-6588476247
+Ey(22, 491, 0) = -9224487533
+Ey(36, 204, 0) = Ey(23, 491, 0) = 149.2728881-1.117178384e+10
+Ey(24, 491, 0) = 
+-1.176437722e+10
+Ey(25, 491, 0) = Ey(28, 205, 0) = -1.05536461e+1011849.83557
+Ey(29, 205, 0) = 287096.0574
+Ey(30, 205, 0) = 286749.5939
+Ey(31, 205, 0) = 
+-1074062.781
+Ey(32, 205, 0) = Ey(26, 491, 0) = -1125165.244-7454858899
+Ey(27, 491, 0) = 
+-2790013708
+Ey(28, 491, 0) = 2778664991
+Ey(29, 491, 0) = Ey(33, 205, 0) = 8392946361
+Ey(30, 491, 0) = 1056832.7211.31717338e+10
+Ey(31, 491, 0) = 
+Ey(34, 205, 0) = 1.636925385e+10
+Ey(32, 491, 0) = 1399923.58
+Ey(35, 205, 0) = 1.749235748e+10
+Ey(33, 491, 0) = 1.636925385e+10
+Ey(34, 491, 0) = 1.31717338e+10304625.7727
+Ey(35, 491, 0) = 
+8392946361Ey(36, 205, 0) = 
+1134.004583
+Ey(28, 206, 0) = Ey(36, 491, 0) = 2984.417561
+2778664991Ey(29, 206, 0) = 
+71788.71848
+Ey(30, 206, 0) = Ey(37, 491, 0) = 81834.08889
+-2790013708Ey(31, 206, 0) = 
+-313584.4902
+Ey(32, 206, 0) = 634025.2292Ey(38, 491, 0) = 
+Ey(33, 206, 0) = -74548588992815410.864
+Ey(39, 491, 0) = 
+-1.05536461e+10
+Ey(40, 491, 0) = Ey(34, 206, 0) = -1.176437722e+102478173.221
+Ey(35, 206, 0) = 
+626496.0599Ey(41, 491, 0) = 
+-1.117178384e+10Ey(36, 206, 0) = 
+3094.196369
+Ey(28, 207, 0) = Ey(42, 491, 0) = 80.3324925-9224487533
+Ey(43, 491, 0) = 
+-6588476247Ey(29, 207, 0) = 
+-1135.296713
+Ey(30, 207, 0) = Ey(44, 491, 0) = -105663.7177-3944754708
+Ey(45, 491, 0) = 
+-1804202553
+Ey(46, 491, 0) = -405060812.8
+Ey(47, 491, 0) = Ey(31, 207, 0) = 280175172.8
+Ey(48, 491, 0) = -698000.2839451128907
+Ey(49, 491, 0) = 
+355270841.5
+Ey(50, 491, 0) = Ey(32, 207, 0) = 190177925.192394.85388
+Ey(33, 207, 0) = 2568111.258
+
+Ey(51, 491, 0) = Ey(34, 207, 0) = 62511344.86
+Ey(52, 491, 0) = -1008633.939
+Ey(53, 491, 0) = -17284915.45
+Ey(54, 491, 0) = 2591982.086-12669721.65
+Ey(55, 491, 0) = -4924762.03
+Ey(56, 491, 0) = 
+-529448.4439
+Ey(57, 491, 0) = Ey(35, 207, 0) = 654201.3511713818.6626
+Ey(36, 207, 0) = 4000.785791
+Ey(29, 208, 0) = 
+-2573.270905
+Ey(30, 208, 0) = -250475.0587
+Ey(31, 208, 0) = Ey(58, 491, 0) = -1705155.268
+Ey(32, 208, 0) = 471746.4911-2430233.045
+Ey(33, 208, 0) = 
+-336508.2582
+Ey(34, 208, 0) = Ey(59, 491, 0) = 1036566.362
+Ey(35, 208, 0) = 137545.7594402664.2023
+Ey(36, 208, 0) = 
+2569.147003
+Ey(29, 209, 0) = Ey(60, 491, 0) = -6199.770497-8243.344787
+Ey(61, 491, 0) = -24424.73532
+
+Ey(62, 491, 0) = -9106.620536
+Ey(63, 491, 0) = Ey(30, 209, 0) = -369.8051304-555738.2548
+Ey(31, 209, 0) = 
+-2783116.47Ey(64, 491, 0) = 
+870.2719679
+Ey(0, 492, 0) = Ey(32, 209, 0) = 22.72060321
+Ey(1, 492, 0) = -9.654678013
+Ey(2, 492, 0) = -4331566.372-237.7508634
+Ey(3, 492, 0) = 
+-637.6681545
+Ey(4, 492, 0) = Ey(33, 209, 0) = -215.2129138
+-2369993.724Ey(5, 492, 0) = 
+3590.972406
+Ey(6, 492, 0) = 12316.10949
+Ey(7, 492, 0) = Ey(34, 209, 0) = 17079.54509
+Ey(8, 492, 0) = -13822.56175-135014.5626
+
+Ey(35, 209, 0) = Ey(9, 492, 0) = 138237.7735
+Ey(36, 209, 0) = -128573.09911246.998404
+Ey(28, 210, 0) = 
+-0.09101132217
+Ey(29, 210, 0) = 39499.03954
+Ey(30, 210, 0) = -585177.2729
+Ey(10, 492, 0) = Ey(31, 210, 0) = -330774.4348-3095131.893
+Ey(32, 210, 0) = 
+-4608675.539
+Ey(33, 210, 0) = Ey(11, 492, 0) = -2293219.509-451265.4894
+Ey(12, 492, 0) = 
+-26332.88484
+Ey(13, 492, 0) = Ey(34, 210, 0) = 1632013.342
+24124.86951Ey(14, 492, 0) = 
+4965065.329
+Ey(15, 492, 0) = 9275224.436
+Ey(16, 492, 0) = Ey(35, 210, 0) = 11777836.44
+Ey(17, 492, 0) = 7314666.179181307.9299
+
+Ey(36, 210, 0) = Ey(18, 492, 0) = 2183.601663-10575114.84
+
+Ey(19, 492, 0) = Ey(28, 211, 0) = -47103172.15-13.95036524
+Ey(29, 211, 0) = 149662.5504
+Ey(30, 211, 0) = 449613.3421
+Ey(31, 211, 0) = -396213.2056
+Ey(32, 211, 0) = -1687011.677
+Ey(33, 211, 0) = -893993.2081
+Ey(34, 211, 0) = 341544.5967
+Ey(35, 211, 0) = 248018.7365
+Ey(36, 211, 0) = 
+3342.561293
+Ey(28, 212, 0) = Ey(20, 492, 0) = -69.74758152-102987582.9
+
+Ey(21, 492, 0) = -172008475.6
+Ey(22, 492, 0) = Ey(29, 212, 0) = -240828073
+Ey(23, 492, 0) = 150196.4986-291667061.7
+Ey(24, 492, 0) = 
+-307138178.4
+Ey(25, 492, 0) = Ey(30, 212, 0) = -275529046.4
+Ey(26, 492, 0) = -194627538.6
+Ey(27, 492, 0) = 1199852.071-72840211.73
+Ey(28, 492, 0) = 
+72543925.4
+Ey(29, 492, 0) = 219118633.1
+Ey(30, 492, 0) = 343880704.4
+Ey(31, 492, 0) = Ey(31, 212, 0) = 427359877.4
+Ey(32, 492, 0) = 2282248.508456681276.8
+Ey(33, 492, 0) = 427359877.4
+Ey(34, 492, 0) = 
+343880704.4
+Ey(35, 492, 0) = 219118633.1
+Ey(36, 492, 0) = Ey(32, 212, 0) = 72543925.41508782.584
+
+Ey(37, 492, 0) = Ey(33, 212, 0) = -72840211.73370193.7562
+
+Ey(34, 212, 0) = 247830.1326
+Ey(35, 212, 0) = 156145.7443
+Ey(36, 212, 0) = 2389.467638
+Ey(28, 213, 0) = Ey(38, 492, 0) = -129.4887732-194627538.6
+Ey(39, 492, 0) = -275529046.4
+Ey(40, 492, 0) = 
+-307138178.4
+Ey(41, 492, 0) = Ey(29, 213, 0) = -291667061.7
+Ey(42, 492, 0) = 5439.219868-240828073
+Ey(43, 492, 0) = 
+-172008475.6
+Ey(44, 492, 0) = -102987582.9
+Ey(45, 492, 0) = Ey(30, 213, 0) = -47103172.15
+Ey(46, 492, 0) = -10575114.84
+Ey(47, 492, 0) = 7314666.179
+Ey(48, 492, 0) = 11777836.44
+Ey(49, 492, 0) = 534064.49379275224.436
+Ey(50, 492, 0) = 
+4965065.329
+Ey(51, 492, 0) = 1632013.342
+Ey(52, 492, 0) = -26332.88484
+Ey(53, 492, 0) = -451265.4894
+Ey(54, 492, 0) = -330774.4348
+Ey(55, 492, 0) = -128573.0991
+Ey(56, 492, 0) = -13822.56175
+Ey(57, 492, 0) = 17079.54509
+Ey(58, 492, 0) = 12316.10949
+Ey(59, 492, 0) = Ey(31, 213, 0) = 3590.972406
+Ey(60, 492, 0) = 933243.0046-215.2129138
+Ey(61, 492, 0) = 
+-637.6681545
+Ey(62, 492, 0) = Ey(32, 213, 0) = -237.7508634128590.3487
+Ey(63, 492, 0) = 
+-9.654678013
+Ey(64, 492, 0) = Ey(33, 213, 0) = 22.72060321-375381.8044
+
+Ey(34, 213, 0) = -39648.7409
+Ey(35, 213, 0) = 60270.81629
+Ey(36, 213, 0) = 694.6236315
+Ey(28, 214, 0) = -108.4368458
+Ey(29, 214, 0) = -64750.33219
+Ey(30, 214, 0) = -11933.16296
+Ey(31, 214, 0) = -1106835.49
+Ey(32, 214, 0) = -3014316.253
+Ey(33, 214, 0) = -2401305.58
+Ey(34, 214, 0) = -515047.6783
+Ey(35, 214, 0) = 31519.67631
+Ey(36, 214, 0) = 33.804729
+Ey(28, 215, 0) = -38.1919545
+Ey(29, 215, 0) = -18436.49388
+Ey(30, 215, 0) = 172779.6246
+Ey(31, 215, 0) = -1363684.678
+Ey(32, 215, 0) = -4412834.08
+Ey(33, 215, 0) = -3956827.39
+Ey(34, 215, 0) = -1104140.995
+Ey(35, 215, 0) = -5285.080146
+Ey(28, 216, 0) = -3.355668859
+Ey(29, 216, 0) = 28756.20662
+Ey(30, 216, 0) = 316791.0538
+Ey(31, 216, 0) = -1581550.788
+Ey(32, 216, 0) = -5680426.423
+Ey(33, 216, 0) = -5560123.231
+Ey(34, 216, 0) = -1816564.883
+Ey(35, 216, 0) = -67285.79635
+Ey(28, 217, 0) = -1.459203682e-05
+Ey(29, 217, 0) = 52691.39506
+Ey(30, 217, 0) = 462263.2728
+Ey(31, 217, 0) = -1356157.935
+Ey(32, 217, 0) = -5880981.243
+Ey(33, 217, 0) = -6213796.014
+Ey(34, 217, 0) = -2204448.032
+Ey(35, 217, 0) = -105903.4484
+Ey(29, 218, 0) = 47916.2683
+Ey(30, 218, 0) = 510439.8326
+Ey(31, 218, 0) = -130171.2134
+Ey(32, 218, 0) = -2926817.462
+Ey(33, 218, 0) = -3744858.439
+Ey(34, 218, 0) = -1494650.897
+Ey(35, 218, 0) = -83915.14334
+Ey(29, 219, 0) = 18968.46814
+Ey(30, 219, 0) = 254766.4883
+Ey(31, 219, 0) = 762184.8108
+Ey(32, 219, 0) = 631694.9362
+Ey(33, 219, 0) = -132139.8638
+Ey(34, 219, 0) = -270646.9255
+Ey(35, 219, 0) = -33198.91616
+Ey(29, 220, 0) = 1430.236908
+Ey(30, 220, 0) = 52447.46865
+Ey(31, 220, 0) = 805760.0471
+Ey(32, 220, 0) = 1758943.863
+Ey(33, 220, 0) = 1298833.381
+Ey(34, 220, 0) = 290219.4394
+Ey(35, 220, 0) = -4412.893798
+Ey(29, 221, 0) = -502.4031115
+Ey(30, 221, 0) = 14155.8347
+Ey(31, 221, 0) = 396978.7808
+Ey(32, 221, 0) = 933807.8213
+Ey(33, 221, 0) = 736438.2827
+Ey(34, 221, 0) = 185574.6322
+Ey(35, 221, 0) = 623.6279315
+Ey(29, 222, 0) = -65.62771052
+Ey(30, 222, 0) = 3934.856991
+Ey(31, 222, 0) = 70428.76769
+Ey(32, 222, 0) = 158996.8705
+Ey(33, 222, 0) = 122884.6008
+Ey(34, 222, 0) = 30425.60973
+Ey(35, 222, 0) = 109.596408
+Ey(30, 223, 0) = 4.031760889
+Ey(31, 223, 0) = 35.79005197
+Ey(32, 223, 0) = 71.14552056
+Ey(33, 223, 0) = 51.08836918
+Ey(34, 223, 0) = 11.7415801
+Ey(35, 223, 0) = 0.04044040422
+Ez(29, 199, 0) = 2166.680153
+Ez(30, 199, 0) = 377739.3974
+Ez(31, 199, 0) = 1543399.596
+Ez(32, 199, 0) = 2063985.66
+Ez(33, 199, 0) = 997896.7203
+Ez(34, 199, 0) = 101737.9391
+Ez(29, 200, 0) = 106093.1077
+Ez(30, 200, 0) = 18395164.94
+Ez(31, 200, 0) = 75143117.16
+Ez(32, 200, 0) = 100476769.8
+Ez(33, 200, 0) = 48574382.24
+Ez(34, 200, 0) = 4951657.815
+Ez(28, 201, 0) = 93179.03298
+Ez(29, 201, 0) = 3861716.585
+Ez(30, 201, 0) = 88143377.59
+Ez(31, 201, 0) = 317552260.7
+Ez(32, 201, 0) = 411650879.5
+Ez(33, 201, 0) = 205144901.5
+Ez(34, 201, 0) = 27347365.46
+Ez(35, 201, 0) = 675922.8583
+Ez(28, 202, 0) = 1774668.729
+Ez(29, 202, 0) = 51362256.61
+Ez(30, 202, 0) = 330532987.2
+Ez(31, 202, 0) = 921797788.2
+Ez(32, 202, 0) = 1201771224
+Ez(33, 202, 0) = 724494456
+Ez(34, 202, 0) = 173952313.6
+Ez(35, 202, 0) = 10376693.29
+Ez(28, 203, 0) = 4584177.272
+Ez(29, 203, 0) = 125744728
+Ez(30, 203, 0) = 630734784.2
+Ez(31, 203, 0) = 1649548702
+Ez(32, 203, 0) = 2240394475
+Ez(33, 203, 0) = 1479128192
+Ez(34, 203, 0) = 403973187.8
+Ez(35, 203, 0) = 25265218.76
+Ez(36, 203, 0) = 216.2443703
+Ez(28, 204, 0) = 4255712.53
+Ez(29, 204, 0) = 113335056.5
+Ez(30, 204, 0) = 568656083.6
+Ez(31, 204, 0) = 1673719304
+Ez(32, 204, 0) = 2511016624
+Ez(33, 204, 0) = 1776668688
+Ez(34, 204, 0) = 522166293.5
+Ez(35, 204, 0) = 42433305.57
+Ez(36, 204, 0) = 61640.49605
+Ez(28, 205, 0) = 1391672.995
+Ez(29, 205, 0) = 36406783.5
+Ez(30, 205, 0) = 283831718
+Ez(31, 205, 0) = 1358445460
+Ez(32, 205, 0) = 2654695751
+Ez(33, 205, 0) = 2311815018
+Ez(34, 205, 0) = 883244389.9
+Ez(35, 205, 0) = 116875641.1
+Ez(36, 205, 0) = 379369.7559
+Ez(28, 206, 0) = 38648.04106
+Ez(29, 206, 0) = 3480746.43
+Ez(30, 206, 0) = 276082314.3
+Ez(31, 206, 0) = 1857689243
+Ez(32, 206, 0) = 4053854105
+Ez(33, 206, 0) = 3839891848
+Ez(34, 206, 0) = 1589952552
+Ez(35, 206, 0) = 219637607.7
+Ez(36, 206, 0) = 771826.3922
+Ez(29, 207, 0) = 9406481.231
+Ez(30, 207, 0) = 542656519.1
+Ez(31, 207, 0) = 2921471670
+Ez(32, 207, 0) = 5612631245
+Ez(33, 207, 0) = 4789303255
+Ez(34, 207, 0) = 1770421070
+Ez(35, 207, 0) = 206192750.3
+Ez(36, 207, 0) = 665322.5386
+Ez(29, 208, 0) = 22780421.37
+Ez(30, 208, 0) = 864459414.9
+Ez(31, 208, 0) = 3855626109
+Ez(32, 208, 0) = 6327091361
+Ez(33, 208, 0) = 4533162790
+Ez(34, 208, 0) = 1322176383
+Ez(35, 208, 0) = 102392836.1
+Ez(36, 208, 0) = 234997.0252
+Ez(29, 209, 0) = 49653386.9
+Ez(30, 209, 0) = 1267147006
+Ez(31, 209, 0) = 5115143222
+Ez(32, 209, 0) = 7785857944
+Ez(33, 209, 0) = 5131804500
+Ez(34, 209, 0) = 1329131568
+Ez(35, 209, 0) = 85873630.39
+Ez(36, 209, 0) = 338221.1067
+Ez(28, 210, 0) = 88.74933489
+Ez(29, 210, 0) = 90858635.59
+Ez(30, 210, 0) = 1762872799
+Ez(31, 210, 0) = 6712764709
+Ez(32, 210, 0) = 1.002412452e+10
+Ez(33, 210, 0) = 6663886811
+Ez(34, 210, 0) = 1838229958
+Ez(35, 210, 0) = 158701065.1
+Ez(36, 210, 0) = 983856.9568
+Ez(28, 211, 0) = 13546.52254
+Ez(29, 211, 0) = 125030844.9
+Ez(30, 211, 0) = 2084168386
+Ez(31, 211, 0) = 7306821980
+Ez(32, 211, 0) = 1.022880318e+10
+Ez(33, 211, 0) = 6397035831
+Ez(34, 211, 0) = 1665252193
+Ez(35, 211, 0) = 150402481.1
+Ez(36, 211, 0) = 1053832.751
+Ez(28, 212, 0) = 54278.39334
+Ez(29, 212, 0) = 145595614.4
+Ez(30, 212, 0) = 1977868701
+Ez(31, 212, 0) = 6379793437
+Ez(32, 212, 0) = 8292325648
+Ez(33, 212, 0) = 4691621163
+Ez(34, 212, 0) = 1009694860
+Ez(35, 212, 0) = 63338774
+Ez(36, 212, 0) = 405500.4447
+Ez(28, 213, 0) = 71635.63615
+Ez(29, 213, 0) = 130185324.3
+Ez(30, 213, 0) = 1465085619
+Ez(31, 213, 0) = 4819207471
+Ez(32, 213, 0) = 6542347700
+Ez(33, 213, 0) = 3860032531
+Ez(34, 213, 0) = 825055106.4
+Ez(35, 213, 0) = 23155593.92
+Ez(36, 213, 0) = 20858.91846
+Ez(28, 214, 0) = 34178.48651
+Ez(29, 214, 0) = 66196483.57
+Ez(30, 214, 0) = 912714398
+Ez(31, 214, 0) = 3622962292
+Ez(32, 214, 0) = 5526063874
+Ez(33, 214, 0) = 3519851666
+Ez(34, 214, 0) = 786728542
+Ez(35, 214, 0) = 16530550.23
+Ez(28, 215, 0) = 3363.521255
+Ez(29, 215, 0) = 18597944.65
+Ez(30, 215, 0) = 612267001.1
+Ez(31, 215, 0) = 2972539514
+Ez(32, 215, 0) = 4841925181
+Ez(33, 215, 0) = 3133945691
+Ez(34, 215, 0) = 682503013.4
+Ez(35, 215, 0) = 11615409.04
+Ez(28, 216, 0) = 0.05075715288
+Ez(29, 216, 0) = 11475743.66
+Ez(30, 216, 0) = 442752076
+Ez(31, 216, 0) = 2318362465
+Ez(32, 216, 0) = 4019732207
+Ez(33, 216, 0) = 2817399064
+Ez(34, 216, 0) = 704145448.2
+Ez(35, 216, 0) = 19392458.9
+Ez(29, 217, 0) = 11753820.47
+Ez(30, 217, 0) = 289660376.6
+Ez(31, 217, 0) = 1443880586
+Ez(32, 217, 0) = 2597779605
+Ez(33, 217, 0) = 1985968135
+Ez(34, 217, 0) = 576340839.3
+Ez(35, 217, 0) = 22178279.42
+Ez(29, 218, 0) = 6802308.059
+Ez(30, 218, 0) = 177910305.1
+Ez(31, 218, 0) = 811984438.8
+Ez(32, 218, 0) = 1387049069
+Ez(33, 218, 0) = 1027551024
+Ez(34, 218, 0) = 293154920.6
+Ez(35, 218, 0) = 11776523.28
+Ez(29, 219, 0) = 1726019.01
+Ez(30, 219, 0) = 120315300.5
+Ez(31, 219, 0) = 583289508.2
+Ez(32, 219, 0) = 932810427.9
+Ez(33, 219, 0) = 590868634.5
+Ez(34, 219, 0) = 125243629.9
+Ez(35, 219, 0) = 2485196.558
+Ez(29, 220, 0) = 443035.8249
+Ez(30, 220, 0) = 62213826.6
+Ez(31, 220, 0) = 312629489.9
+Ez(32, 220, 0) = 493410098.7
+Ez(33, 220, 0) = 295741364.2
+Ez(34, 220, 0) = 53359474.1
+Ez(35, 220, 0) = 169509.3949
+Ez(29, 221, 0) = 67178.89267
+Ez(30, 221, 0) = 10071317.31
+Ez(31, 221, 0) = 53038152.23
+Ez(32, 221, 0) = 85974075.47
+Ez(33, 221, 0) = 52812279.93
+Ez(34, 221, 0) = 9901429.172
+Ez(35, 221, 0) = 29210.90192
+Ez(30, 222, 0) = 1073.527174
+Ez(31, 222, 0) = 9531.643937
+Ez(32, 222, 0) = 18949.09749
+Ez(33, 222, 0) = 13608.15799
+Ez(34, 222, 0) = 3127.963378
+Ez(35, 222, 0) = 10.78611791
+
+STEP 1 ends. TIME = 4.38635098e-16 DT = 4.38635098e-16
+Evolve time = 0.024118572 s; This step = 0.024118572 s; Avg. per step = 0.024118572 s
+
+STEP 2 starts ...
+update_laser_particle :: x = -2.953125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.009261093476, and vz = -0
+update_laser_particle :: x = 2.953125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.009261093476, and vz = 0
+update_laser_particle :: x = 2.953125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.009261093476, and vz = -0
+update_laser_particle :: x = 2.859375e-05, y = 0, z = 9e-06, vx = 0, vy = 0.03943455805, and vz = 0
+update_laser_particle :: x = 2.859375e-05, y = 0, z = 9e-06, vx = -0, vy = -0.03943455805, and vz = -0
+update_laser_particle :: x = 2.765625e-05, y = 0, z = 9e-06, vx = 0, vy = 0.03066262362, and vz = 0
+update_laser_particle :: x = 2.765625e-05, y = 0, z = 9e-06, vx = -0, vy = -0.03066262362, and vz = -0
+update_laser_particle :: x = 2.671875e-05, y = 0, z = 9e-06, vx = -0, vy = -0.2118259335, and vz = -0
+update_laser_particle :: x = 2.671875e-05, y = 0, z = 9e-06, vx = 0, vy = 0.2118259335, and vz = 0
+update_laser_particle :: x = 2.578125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.8076516348, and vz = -0
+update_laser_particle :: x = 2.578125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.8076516348, and vz = 0
+update_laser_particle :: x = 2.484375e-05, y = 0, z = 9e-06, vx = -0, vy = -0.922660879, and vz = -0
+update_laser_particle :: x = 2.484375e-05, y = 0, z = 9e-06, vx = 0, vy = 0.922660879, and vz = 0
+update_laser_particle :: x = 2.390625e-05, y = 0, z = 9e-06, vx = 0, vy = 2.233722546, and vz = 0
+update_laser_particle :: x = 2.390625e-05, y = 0, z = 9e-06, vx = -0, vy = -2.233722546, and vz = -0
+update_laser_particle :: x = 2.296875e-05, y = 0, z = 9e-06, vx = 0, vy = 11.73410764, and vz = 0
+update_laser_particle :: x = 2.296875e-05, y = 0, z = 9e-06, vx = -0, vy = -11.73410764, and vz = -0
+update_laser_particle :: x = 2.203125e-05, y = 0, z = 9e-06, vx = 0, vy = 22.73159261, and vz = 0
+update_laser_particle :: x = 2.203125e-05, y = 0, z = 9e-06, vx = -0, vy = -22.73159261, and vz = -0
+update_laser_particle :: x = 2.109375e-05, y = 0, z = 9e-06, vx = 0, vy = 9.560512303, and vz = 0
+update_laser_particle :: x = 2.109375e-05, y = 0, z = 9e-06, vx = -0, vy = -9.560512303, and vz = -0
+update_laser_particle :: x = 2.015625e-05, y = 0, z = 9e-06, vx = -0, vy = -75.4965063, and vz = -0
+update_laser_particle :: x = 2.015625e-05, y = 0, z = 9e-06, vx = 0, vy = 75.4965063, and vz = 0
+update_laser_particle :: x = 1.921875e-05, y = 0, z = 9e-06, vx = -0, vy = -263.3168067, and vz = -0
+update_laser_particle :: x = 1.921875e-05, y = 0, z = 9e-06, vx = 0, vy = 263.3168067, and vz = 0
+update_laser_particle :: x = 1.828125e-05, y = 0, z = 9e-06, vx = -0, vy = -475.1933099, and vz = -0
+update_laser_particle :: x = 1.828125e-05, y = 0, z = 9e-06, vx = 0, vy = 475.1933099, and vz = 0
+update_laser_particle :: x = 1.734375e-05, y = 0, z = 9e-06, vx = -0, vy = -418.7962831, and vz = -0
+update_laser_particle :: x = 1.734375e-05, y = 0, z = 9e-06, vx = 0, vy = 418.7962831, and vz = 0
+update_laser_particle :: x = 1.640625e-05, y = 0, z = 9e-06, vx = 0, vy = 413.861259, and vz = 0
+update_laser_particle :: x = 1.640625e-05, y = 0, z = 9e-06, vx = -0, vy = -413.861259, and vz = -0
+update_laser_particle :: x = 1.546875e-05, y = 0, z = 9e-06, vx = 0, vy = 2519.417062, and vz = 0
+update_laser_particle :: x = 1.546875e-05, y = 0, z = 9e-06, vx = -0, vy = -2519.417062, and vz = -0
+update_laser_particle :: x = 1.453125e-05, y = 0, z = 9e-06, vx = 0, vy = 5905.926743, and vz = 0
+update_laser_particle :: x = 1.453125e-05, y = 0, z = 9e-06, vx = -0, vy = -5905.926743, and vz = -0
+update_laser_particle :: x = 1.359375e-05, y = 0, z = 9e-06, vx = 0, vy = 9546.450631, and vz = 0
+update_laser_particle :: x = 1.359375e-05, y = 0, z = 9e-06, vx = -0, vy = -9546.450631, and vz = -0
+update_laser_particle :: x = 1.265625e-05, y = 0, z = 9e-06, vx = 0, vy = 11111.96471, and vz = 0
+update_laser_particle :: x = 1.265625e-05, y = 0, z = 9e-06, vx = -0, vy = -11111.96471, and vz = -0
+update_laser_particle :: x = 1.171875e-05, y = 0, z = 9e-06, vx = 0, vy = 7306.544011, and vz = 0
+update_laser_particle :: x = 1.171875e-05, y = 0, z = 9e-06, vx = -0, vy = -7306.544011, and vz = -0
+update_laser_particle :: x = 1.078125e-05, y = 0, z = 9e-06, vx = -0, vy = -5141.058374, and vz = -0
+update_laser_particle :: x = 1.078125e-05, y = 0, z = 9e-06, vx = 0, vy = 5141.058374, and vz = 0
+update_laser_particle :: x = 9.84375e-06, y = 0, z = 9e-06, vx = -0, vy = -28158.161, and vz = -0
+update_laser_particle :: x = 9.84375e-06, y = 0, z = 9e-06, vx = 0, vy = 28158.161, and vz = 0
+update_laser_particle :: x = 8.90625e-06, y = 0, z = 9e-06, vx = -0, vy = -61267.83508, and vz = -0
+update_laser_particle :: x = 8.90625e-06, y = 0, z = 9e-06, vx = 0, vy = 61267.83508, and vz = 0
+update_laser_particle :: x = 7.96875e-06, y = 0, z = 9e-06, vx = -0, vy = -101325.5064, and vz = -0
+update_laser_particle :: x = 7.96875e-06, y = 0, z = 9e-06, vx = 0, vy = 101325.5064, and vz = 0
+update_laser_particle :: x = 7.03125e-06, y = 0, z = 9e-06, vx = -0, vy = -143243.8833, and vz = -0
+update_laser_particle :: x = 7.03125e-06, y = 0, z = 9e-06, vx = 0, vy = 143243.8833, and vz = 0
+update_laser_particle :: x = 6.09375e-06, y = 0, z = 9e-06, vx = -0, vy = -181445.956, and vz = -0
+update_laser_particle :: x = 6.09375e-06, y = 0, z = 9e-06, vx = 0, vy = 181445.956, and vz = 0
+update_laser_particle :: x = 5.15625e-06, y = 0, z = 9e-06, vx = -0, vy = -211473.7766, and vz = -0
+update_laser_particle :: x = 5.15625e-06, y = 0, z = 9e-06, vx = 0, vy = 211473.7766, and vz = 0
+update_laser_particle :: x = 4.21875e-06, y = 0, z = 9e-06, vx = -0, vy = -231151.7932, and vz = -0
+update_laser_particle :: x = 4.21875e-06, y = 0, z = 9e-06, vx = 0, vy = 231151.7932, and vz = 0
+update_laser_particle :: x = 3.28125e-06, y = 0, z = 9e-06, vx = -0, vy = -240932.7698, and vz = -0
+update_laser_particle :: x = 3.28125e-06, y = 0, z = 9e-06, vx = 0, vy = 240932.7698, and vz = 0
+update_laser_particle :: x = 2.34375e-06, y = 0, z = 9e-06, vx = -0, vy = -243394.7047, and vz = -0
+update_laser_particle :: x = 2.34375e-06, y = 0, z = 9e-06, vx = 0, vy = 243394.7047, and vz = 0
+update_laser_particle :: x = 1.40625e-06, y = 0, z = 9e-06, vx = -0, vy = -242144.9106, and vz = -0
+update_laser_particle :: x = 1.40625e-06, y = 0, z = 9e-06, vx = 0, vy = 242144.9106, and vz = 0
+update_laser_particle :: x = 4.6875e-07, y = 0, z = 9e-06, vx = -0, vy = -240528.3048, and vz = -0
+update_laser_particle :: x = 4.6875e-07, y = 0, z = 9e-06, vx = 0, vy = 240528.3048, and vz = 0
+update_laser_particle :: x = -4.6875e-07, y = 0, z = 9e-06, vx = -0, vy = -240528.3048, and vz = -0
+update_laser_particle :: x = -4.6875e-07, y = 0, z = 9e-06, vx = 0, vy = 240528.3048, and vz = 0
+update_laser_particle :: x = -1.40625e-06, y = 0, z = 9e-06, vx = -0, vy = -242144.9106, and vz = -0
+update_laser_particle :: x = -1.40625e-06, y = 0, z = 9e-06, vx = 0, vy = 242144.9106, and vz = 0
+update_laser_particle :: x = -2.34375e-06, y = 0, z = 9e-06, vx = -0, vy = -243394.7047, and vz = -0
+update_laser_particle :: x = -2.34375e-06, y = 0, z = 9e-06, vx = 0, vy = 243394.7047, and vz = 0
+update_laser_particle :: x = -3.28125e-06, y = 0, z = 9e-06, vx = -0, vy = -240932.7698, and vz = -0
+update_laser_particle :: x = -3.28125e-06, y = 0, z = 9e-06, vx = 0, vy = 240932.7698, and vz = 0
+update_laser_particle :: x = -4.21875e-06, y = 0, z = 9e-06, vx = -0, vy = -231151.7932, and vz = -0
+update_laser_particle :: x = -4.21875e-06, y = 0, z = 9e-06, vx = 0, vy = 231151.7932, and vz = 0
+update_laser_particle :: x = -5.15625e-06, y = 0, z = 9e-06, vx = -0, vy = -211473.7766, and vz = -0
+update_laser_particle :: x = -5.15625e-06, y = 0, z = 9e-06, vx = 0, vy = 211473.7766, and vz = 0
+update_laser_particle :: x = -6.09375e-06, y = 0, z = 9e-06, vx = -0, vy = -181445.956, and vz = -0
+update_laser_particle :: x = -6.09375e-06, y = 0, z = 9e-06, vx = 0, vy = 181445.956, and vz = 0
+update_laser_particle :: x = -7.03125e-06, y = 0, z = 9e-06, vx = -0, vy = -143243.8833, and vz = -0
+update_laser_particle :: x = -7.03125e-06, y = 0, z = 9e-06, vx = 0, vy = 143243.8833, and vz = 0
+update_laser_particle :: x = -7.96875e-06, y = 0, z = 9e-06, vx = -0, vy = -101325.5064, and vz = -0
+update_laser_particle :: x = -7.96875e-06, y = 0, z = 9e-06, vx = 0, vy = 101325.5064, and vz = 0
+update_laser_particle :: x = -8.90625e-06, y = 0, z = 9e-06, vx = -0, vy = -61267.83508, and vz = -0
+update_laser_particle :: x = -8.90625e-06, y = 0, z = 9e-06, vx = 0, vy = 61267.83508, and vz = 0
+update_laser_particle :: x = -9.84375e-06, y = 0, z = 9e-06, vx = -0, vy = -28158.161, and vz = -0
+update_laser_particle :: x = -9.84375e-06, y = 0, z = 9e-06, vx = 0, vy = 28158.161, and vz = 0
+update_laser_particle :: x = -1.078125e-05, y = 0, z = 9e-06, vx = -0, vy = -5141.058374, and vz = -0
+update_laser_particle :: x = -1.078125e-05, y = 0, z = 9e-06, vx = 0, vy = 5141.058374, and vz = 0
+update_laser_particle :: x = -1.171875e-05, y = 0, z = 9e-06, vx = 0, vy = 7306.544011, and vz = 0
+update_laser_particle :: x = -1.171875e-05, y = 0, z = 9e-06, vx = -0, vy = -7306.544011, and vz = -0
+update_laser_particle :: x = -1.265625e-05, y = 0, z = 9e-06, vx = 0, vy = 11111.96471, and vz = 0
+update_laser_particle :: x = -1.265625e-05, y = 0, z = 9e-06, vx = -0, vy = -11111.96471, and vz = -0
+update_laser_particle :: x = -1.359375e-05, y = 0, z = 9e-06, vx = 0, vy = 9546.450631, and vz = 0
+update_laser_particle :: x = -1.359375e-05, y = 0, z = 9e-06, vx = -0, vy = -9546.450631, and vz = -0
+update_laser_particle :: x = -1.453125e-05, y = 0, z = 9e-06, vx = 0, vy = 5905.926743, and vz = 0
+update_laser_particle :: x = -1.453125e-05, y = 0, z = 9e-06, vx = -0, vy = -5905.926743, and vz = -0
+update_laser_particle :: x = -1.546875e-05, y = 0, z = 9e-06, vx = 0, vy = 2519.417062, and vz = 0
+update_laser_particle :: x = -1.546875e-05, y = 0, z = 9e-06, vx = -0, vy = -2519.417062, and vz = -0
+update_laser_particle :: x = -1.640625e-05, y = 0, z = 9e-06, vx = 0, vy = 413.861259, and vz = 0
+update_laser_particle :: x = -1.640625e-05, y = 0, z = 9e-06, vx = -0, vy = -413.861259, and vz = -0
+update_laser_particle :: x = -1.734375e-05, y = 0, z = 9e-06, vx = -0, vy = -418.7962831, and vz = -0
+update_laser_particle :: x = -1.734375e-05, y = 0, z = 9e-06, vx = 0, vy = 418.7962831, and vz = 0
+update_laser_particle :: x = -1.828125e-05, y = 0, z = 9e-06, vx = -0, vy = -475.1933099, and vz = -0
+update_laser_particle :: x = -1.828125e-05, y = 0, z = 9e-06, vx = 0, vy = 475.1933099, and vz = 0
+update_laser_particle :: x = -1.921875e-05, y = 0, z = 9e-06, vx = -0, vy = -263.3168067, and vz = -0
+update_laser_particle :: x = -1.921875e-05, y = 0, z = 9e-06, vx = 0, vy = 263.3168067, and vz = 0
+update_laser_particle :: x = -2.015625e-05, y = 0, z = 9e-06, vx = -0, vy = -75.4965063, and vz = -0
+update_laser_particle :: x = -2.015625e-05, y = 0, z = 9e-06, vx = 0, vy = 75.4965063, and vz = 0
+update_laser_particle :: x = -2.109375e-05, y = 0, z = 9e-06, vx = 0, vy = 9.560512303, and vz = 0
+update_laser_particle :: x = -2.109375e-05, y = 0, z = 9e-06, vx = -0, vy = -9.560512303, and vz = -0
+update_laser_particle :: x = -2.203125e-05, y = 0, z = 9e-06, vx = 0, vy = 22.73159261, and vz = 0
+update_laser_particle :: x = -2.203125e-05, y = 0, z = 9e-06, vx = -0, vy = -22.73159261, and vz = -0
+update_laser_particle :: x = -2.296875e-05, y = 0, z = 9e-06, vx = 0, vy = 11.73410764, and vz = 0
+update_laser_particle :: x = -2.296875e-05, y = 0, z = 9e-06, vx = -0, vy = -11.73410764, and vz = -0
+update_laser_particle :: x = -2.390625e-05, y = 0, z = 9e-06, vx = 0, vy = 2.233722546, and vz = 0
+update_laser_particle :: x = -2.390625e-05, y = 0, z = 9e-06, vx = -0, vy = -2.233722546, and vz = -0
+update_laser_particle :: x = -2.484375e-05, y = 0, z = 9e-06, vx = -0, vy = -0.922660879, and vz = -0
+update_laser_particle :: x = -2.484375e-05, y = 0, z = 9e-06, vx = 0, vy = 0.922660879, and vz = 0
+update_laser_particle :: x = -2.578125e-05, y = 0, z = 9e-06, vx = -0, vy = -0.8076516348, and vz = -0
+update_laser_particle :: x = -2.578125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.8076516348, and vz = 0
+update_laser_particle :: x = -2.671875e-05, y = 0, z = 9e-06, vx = -0, vy = -0.2118259335, and vz = -0
+update_laser_particle :: x = -2.671875e-05, y = 0, z = 9e-06, vx = 0, vy = 0.2118259335, and vz = 0
+update_laser_particle :: x = -2.765625e-05, y = 0, z = 9e-06, vx = 0, vy = 0.03066262362, and vz = 0
+update_laser_particle :: x = -2.765625e-05, y = 0, z = 9e-06, vx = -0, vy = -0.03066262362, and vz = -0
+update_laser_particle :: x = -2.859375e-05, y = 0, z = 9e-06, vx = 0, vy = 0.03943455805, and vz = 0
+update_laser_particle :: x = -2.859375e-05, y = 0, z = 9e-06, vx = -0, vy = -0.03943455805, and vz = -0
+update_laser_particle :: x = -2.953125e-05, y = 0, z = 9e-06, vx = 0, vy = 0.009261093476, and vz = 0
+Ex(29, 198, 0) = -65.72012333
+Ex(30, 198, 0) = -2000.931996
+Ex(31, 198, 0) = -4660.082555
+Ex(32, 198, 0) = -3580.249616
+Ex(33, 198, 0) = -855.3789332
+Ex(28, 199, 0) = -300.9073125
+Ex(29, 199, 0) = -55369.39289
+Ex(30, 199, 0) = -259635.3316
+Ex(31, 199, 0) = -299954.8017
+Ex(32, 199, 0) = -26847.33621
+Ex(33, 199, 0) = 82669.92681
+Ex(34, 199, 0) = 14129.30735
+Ex(28, 200, 0) = -16378.42632
+Ex(29, 200, 0) = -2513153.72
+Ex(30, 200, 0) = -8065625.286
+Ex(31, 200, 0) = -4210658.341
+Ex(32, 200, 0) = 6480159.112
+Ex(33, 200, 0) = 5797290.146
+Ex(34, 200, 0) = 675322.685
+Ey(Ex(027, 201, , 0) = 486, 0) = -12940.65132
+Ex(28, 201, 0) = 64.93756484
+Ey(1, 486, 0) = -545932.5798-27.59395398
+Ex(29, 201, 0) = 
+-9474173.016
+Ex(30, 201, 0) = -24867133.26
+Ex(31, 201, 0) = -10709385.1
+Ex(32, 201, 0) = 20799390.99
+Ey(2, 486, 0) = Ex(33, 201, 0) = -679.5137421
+Ey(3, 486, 0) = 18538130.17-1822.513986
+Ey(4, 486, 0) = -615.098218
+Ey(5, 486, 0) = 
+10263.32801Ex(34, 201, 0) = 
+Ey(6, 486, 0) = 35200.568883049178.041
+
+Ex(35, 201, 0) = Ey(7, 486, 0) = 93871.7837148814.9041
+Ey(8, 486, 0) = 
+-39506.14741
+Ey(9, 486, 0) = -367473.6926
+Ey(10, 486, 0) = Ex(27, 202-945383.6286, 0) = 
+Ey(11, 486, 0) = -233524.3366-1289758.098
+Ey(12, 486, 0) = 
+-75261.79656
+Ey(13, 486, 0) = Ex(28, 202, 0) = 4664443.599-6463060.671
+Ex(29, 202, 0) = -27876837.01
+Ex(30, 202, 0) = -52158362.79
+Ex(31, 202, 0) = -27958111.67
+
+Ey(14, 486, 0) = Ex(32, 202, 0) = 14190611.4436366763.17
+
+Ey(15, 486, 0) = Ex(33, 202, 0) = 26509440.9151562142.77
+Ex(34, 202, 0) = 19095571.24
+Ex(35, 202, 0) = 1347241.202
+Ex(27, 203, 0) = -390182.9551
+Ex(28, 203, 0) = -10075401.11
+Ex(29, 203, 0) = -32464595.1
+Ex(30, 203, 0) = -62242574.05
+Ex(31, 203, 0) = -46894527.43
+Ex(32, 203, 0) = 37061812.16
+Ex(33, 203, 0) = 72507435.09
+Ex(34, 203, 0) = 30082997.77
+Ex(35, 203, 0) = 2068735.196
+Ex(36, 203, 0) = 30.03189567
+Ex(27, 204, 0) = 45616.99734
+Ex(28, 204, 0) = 
+1469279.989
+Ex(29, 204, 0) = Ey(16, 486, 0) = 5221373.28
+Ex(30, 204, 0) = -15518309.13
+Ex(31, 204, 0) = 33662135.2-37521989.26
+Ex(32, 204, 0) = 
+-4715743.575
+Ex(33, 204, 0) = Ey(17, 486, 0) = 25817131.6220905985.85
+Ey(18, 486, 0) = 
+-30224646.74Ex(34, 204, 0) = 
+Ey(19, 486, 0) = 14701828.92-134625179.9
+Ex(35, 204, 0) = 
+2383454.122Ey(20, 486, 0) = 
+-294347944.2Ex(36, 204, 0) = 
+Ey(21, 486, 0) = -491615976.78530.565282
+Ey(22, 486, 0) = -688308688.9
+Ey(23, 486, 0) = -833611174.5
+Ey(24, 486, 0) = -877829043
+
+Ex(27, 205, 0Ey(25, 486, 0) = ) = -787487249
+397756.1884Ey(26, 486, 0) = 
+Ex(28, 205, 0) = 9994782.965
+-556263330.3Ex(29, 205, 0) = 
+26527754.24Ey(27, 486, 0) = 
+Ex(30, 205, 0) = -208183996.2-2824.277617
+Ex(31, 205, 0) = -66388109.98
+
+Ex(32, 205, 0) = -53678278.72
+Ey(28, 486, 0) = Ex(33, 205, 0) = 207337182.726566927.82
+Ex(34, 205, 0) = 
+41059593.56
+Ex(35, 205, 0) = Ey(29, 486, 0) = 10313071.31626261121.3
+Ex(36, 205, 0) = 
+Ey(30, 486, 0) = 44126.05964982842547.3
+Ey(31, 486, 0) = 1221433669
+
+Ey(32, 486, 0) = 1305236914
+Ey(33, 486, 0) = 1221433669
+Ey(34, 486, 0) = Ex(27, 206, 0) = 982842547.3
+Ey(35, 486, 0) = 187907.3392626261121.3
+Ey(36, 486, 0) = 
+207337182.7
+Ey(37, 486, 0) = Ex(28, 206, 0) = -208183996.24173467.918
+Ex(29, 206, 0) = 
+-5276806.045
+Ex(30, 206, 0) = -74343277.45
+Ey(38, 486, 0) = Ex(31, 206, 0) = -556263330.3-128756117
+Ey(39, 486, 0) = 
+Ex(32, 206, 0) = -787487249-18179242.61
+Ex(33, 206, 0) = 
+116781216.7
+Ex(34, 206, 0) = 85474731.44
+Ey(40, 486, 0) = Ex(35, 206, 0) = -877829043
+Ey(41, 486, 0) = 14243982.53
+Ex(36, 206, 0) = -833611174.554504.15536
+Ex(27, 207, 0) = 
+Ey(42, 486, 0) = 5367.418052-688308688.9
+
+Ey(43, 486, 0) = -491615976.7
+Ex(28, 207, 0) = Ey(44, 486, 0) = -887615.0467-294347944.2
+Ey(45, 486, 0) = -134625179.9
+
+Ex(29, 207, 0) = Ey(46, 486, 0) = -36885401.13-30224646.74
+Ey(47, 486, 0) = 20905985.85
+Ey(48, 486, 0) = 33662135.2
+Ey(49, 486, 0) = 26509440.91
+Ey(50, 486, 0) = 
+14190611.44
+Ey(51, 486, 0) = Ex(30, 207, 0) = 4664443.599-113215502.4
+Ex(31, 207, 0) = -71991819.97
+
+Ex(32, 207, 0) = Ey(52, 486, 0) = 85216986.93
+Ex(33, 207, 0) = -75261.79656110828434.9
+Ey(53, 486, 0) = 
+-1289758.098Ex(34, 207, 0) = 
+29045187.62
+Ex(35, 207, 0) = Ey(54, 486, 0) = -1812315.275-945383.6286
+Ex(36, 207, 0) = 
+-14791.19487
+Ey(55, 486, 0) = -367473.6926Ex(28, 208
+, 0) = Ey(56, 486, 0) = -1858941.549-39506.14741
+Ey(57, 486, 0) = 
+48814.9041
+Ey(58, 486, 0) = 35200.56888
+Ey(59, 486, 0) = Ex(29, 208, 0) = 10263.32801-43235413.88
+
+Ey(60, 486, 0) = Ex(30, 208, 0) = -615.098218-87237150.99
+Ex(31, 208, 0) = 27938694.42
+Ex(32, 208, 0) = 
+136891525.3
+Ex(33, 208, 0) = 31856872.45
+Ex(34, 208, 0) = -45479954.09
+Ex(35, 208, 0) = -14304437.71
+Ex(36, 208, 0) = Ey(61, 486, 0) = -59763.36356
+-1822.513986
+Ey(62, 486, 0) = -679.5137421
+Ey(63, 486, 0) = -27.59395398
+Ex(Ey(28, 209, 0) = 64, 486, 0) = 64.93756484
+Ey(0, 487, 0) = 1187.046925
+Ey(1, 487, 0) = -220.845794
+Ey(2, 487, 0) = -11421.0007
+Ey(3, 487, 0) = -3732102.421-32473.96529
+Ex(29, 209, 0) = 
+-52680371.4
+Ex(30, 209, 0) = Ey(4, 487, 0) = -122315709.3
+Ex(31, 209, 0) = -15874.14042-33243376.8
+Ex(32, 209, 0) = 
+117616055.6
+Ex(33, 209, 0) = 84406480.98
+Ex(34, 209, 0) = 4626658.749
+Ex(35, 209, 0) = -2273494.465Ey(5, 487, 0) = 
+Ex(36, 209, 0) = 167982.65814335.70198
+Ey(6, 487, 0) = 
+612295.2487
+Ey(7, 487, 0) = 910425.3286
+Ey(8, 487, 0) = Ex(27, 210, -497874.00430
+Ey(9, 487, 0) = ) = -6117258.238
+-12.32545736Ey(10, 487, 0) = 
+Ex(28, 210, 0) = -16489463.99-5722589.473
+Ex(29, 210, 0) = 
+-63650978.8
+Ex(30, 210, 0) = Ey(11, 487, 0) = -157563299-23778450.19
+Ex(31, 210, 0) = 
+-99136156.66
+Ex(32, 210, 0) = 89183998.42
+Ex(33, 210, 0) = 139294427.4
+Ex(34, 210, 0) = Ey(12, 487, 0) = 60550548.42-5220515.231
+Ey(13, 487, 0) = 74432579.56
+Ey(14, 487, 0) = 
+240658789.1
+Ey(15, 487, 0) = Ex(35, 210, 0) = 464975703.710031044.28
+Ex(36, 210, 0) = 
+89665.54117
+Ex(27, 211, 0) = Ey(16, 487, 0) = -1869.00792615718729.3
+
+Ey(17, 487, 0) = 439097836.4
+Ey(18, 487, 0) = Ex(28, 211, 0) = -393454637.9
+Ey(19, 487, 0) = -4744148.174-2162449963
+Ey(20, 487, 0) = -4937954823
+Ey(21, 487, 0) = -8450516990
+Ey(22, 487, 0) = 
+-1.207008325e+10
+Ey(23, 487, 0) = Ex(29, 211, 0) = -1.492693874e+10
+Ey(24, 487, 0) = -40498995.55-1.614504817e+10
+Ey(25, 487, 0) = 
+-1.510594797e+10
+Ey(26, 487, 0) = -1.164787974e+10
+Ey(27, 487, 0) = Ex(30, 211, 0) = -6134342782-42521837.32
+Ex(31, 211, 0) = 44311837.88
+
+Ex(32, 211, 0) = 56928332.77
+Ey(28, 487, 0) = Ex(33, 211, 0) = 620271026-16312486
+Ex(34, 211, 0) = 
+-23343602.15Ey(29, 487, 0) = 
+7530922215
+Ey(30, 487, 0) = 1.346624191e+10
+Ey(31, 487, 0) = 1.745880387e+10
+Ey(32, 487, 0) = 1.886467588e+10
+Ey(33, 487, 0) = Ex(35, 211, 0) = 1.745880387e+10
+Ey(34, 487, 0) = -1170023.9951.346624191e+10
+Ey(35, 487, 0) = 7530922215
+Ey(36, 487, 0) = 
+620271026
+Ey(37, 487, 0) = Ex(36, 211, 0) = -6134342782
+Ey(38, 487, 0) = 9718.198647-1.164787974e+10
+Ey(39, 487, 0) = -1.510594797e+10
+Ey(40, 487, 0) = -1.614504817e+10
+Ey(41, 487, 0) = -1.492693874e+10
+Ey(42, 487, 0) = 
+-1.207008325e+10
+Ey(43, 487, 0) = Ex(27, 212, -84505169900
+Ey(44, 487, 0) = -4937954823
+) = Ey(45, 487, 0) = -2162449963
+Ey(46, 487, 0) = -5656.819146-393454637.9
+Ey(47, 487, 0) = 
+439097836.4
+Ey(48, 487, 0) = Ex(28, 212, 0) = 615718729.3-2850718.249
+Ex(29, 212, 0) = 
+17222667.18
+Ex(30, 212, 0) = 110856763.5
+Ex(31, 212, 0) = Ey(49, 487, 0) = 135148977
+Ex(32, 212, 0) = 464975703.7-34497692.88
+Ex(33, 212, 0) = -146027198.5
+
+Ex(34, 212, 0) = -79093491.8
+Ex(35, 212, 0) = Ey(50, 487, 0) = -12013968.25
+Ex(36, 212, 0) = 240658789.1-90040.02347
+Ex(27, 213, 0) = 
+Ey(51, 487, 0) = -2410.56405174432579.56
+Ey(52, 487, 0) = -5220515.231
+Ey(53, 487, 0) = -23778450.19
+Ey(54, 487, 0) = -16489463.99
+Ey(55, 487, 0) = -6117258.238
+Ey(56, 487, 0) = -497874.0043
+Ey(57, 487, 0) = 910425.3286
+Ey(58, 487, 0) = 612295.2487
+Ey(59, 487, 0) = 167982.658
+Ey(60, 487, 0) = -15874.14042
+Ey(61, 487, 0) = -32473.96529
+Ey(62, 487, 0) = 
+-11421.0007Ex(28, 213, 0
+) = Ey(63, 487, 0) = 2142112.042
+Ex(29, 213, 0) = -220.84579468922911.32
+Ex(30, 213, 0) = 
+142547662.4Ey(64, 487, 0) = 
+Ex(31, 213, 0) = 1187.04692521274859.68
+
+Ex(32, 213, 0) = -129131318.1Ey(0, 488, 0) = 
+Ex(33, 213, 0) = 3660.631091-89072246.88
+Ey(1, 488, 0) = 
+3458.795818
+Ey(2, 488, 0) = -20615.3907
+Ey(3, 488, 0) = -87861.92946
+Ey(4, 488, 0) = Ex(34, 213, 0) = -116550.8628-19919432.61
+
+Ex(35, 213, 0) = -5537508.594
+Ex(36, 213, 0) = -53418.79729Ey(5, 488, 0) = 
+Ex(27, 214, 0) = 231457.9746
+Ey(6, 488, 0) = 1433223.853
+Ey(7, 488, 0) = 5202.0277263071793.756
+Ex(28, 214, 0) = 
+Ey(8, 488, 0) = 1739118.861
+Ey(9, 488, 0) = 8880775.755-10103593.38
+Ey(10, 488, 0) = -39288200.55
+Ey(11, 488, 0) = -76275960.55
+Ey(12, 488, 0) = 
+-72229218.39Ex(29, 214, 0) = 
+Ey(13, 488, 0) = 67368276.6471388960.26
+Ey(14, 488, 0) = 
+468513954.2
+Ey(15, 488, 0) = Ex(30, 214, 0) = 114757791186068296.86
+Ex(31, 214, 0) = 
+-28737261.11Ey(16, 488, 0) = 
+Ex(32, 214, 0) = -92803602.21904323808
+
+Ey(17, 488, 0) = Ex(33, 214, 0) = 2185376375-39630132.52
+
+Ex(34, 214, 0) = Ey(18, 488, 0) = -4057038.268
+Ex(35, 214, 0) = 1108607894-920549.7663
+Ey(19, 488, 0) = 
+-2311115094
+Ey(20, 488, 0) = -8765075341
+Ey(21, 488, 0) = Ex(36, 214, 0) = -1.823269584e+10
+Ey(22, 488, 0) = -2896.874782-2.974600569e+10
+Ey(23, 488, 0) = 
+-4.148683593e+10
+Ey(24, 488, 0) = Ex(27, 215, 0) = -5.12262208e+10
+Ey(25, 488, 0) = 4279.564921-5.696137069e+10
+Ey(26, 488, 0) = -5.751919046e+10
+Ey(27, 488, 0) = 
+-5.291541855e+10
+Ey(28, 488, 0) = -4.436392278e+10
+Ey(29, 488, 0) = -3.396131417e+10
+Ey(30, 488, 0) = -2.416811559e+10
+Ey(31, 488, 0) = Ex(28, 215, 0) = -1.724057167e+10
+Ey(32, 488, 0) = 6605381.208-1.474514999e+10
+Ey(33, 488, 0) = 
+-1.724057167e+10
+Ey(34, 488, 0) = Ex(29, 215, 0) = -2.416811559e+1034579835.63
+Ex(30, 215, 0) = 48150028.12
+Ex(31, 215, 0) = 
+9178869.789
+Ex(32, 215, 0) = -32800169.22
+Ex(33, 215, 0) = -34516459.98
+Ex(34, 215, 0) = -13391491.9
+Ex(35, 215, 0) = -682776.7964
+Ex(27, 216, 0) = 467.1168777
+Ex(28, 216, 0) = 988287.2591
+Ex(29, 216, 0) = 22442992
+Ex(30, 216, 0) = 69639384.06
+Ex(31, 216, 0) = 31320871.82
+Ex(32, 216, 0) = Ey(35, 488, 0) = -61534519.08
+Ex(33, 216, 0) = -3.396131417e+10-43682551.38
+Ex(34, 216, 0) = 
+2068699.601
+Ex(35, 216, 0) = 1080072.28
+Ex(27, 217, 0) = Ey(36, 488, 0) = 0.007049124643
+Ex(28, 217, 0) = -4.436392278e+10-38671.40073
+Ex(29, 217, 0) = 21468010.61
+Ex(30, 217, 0) = 
+102493753.7
+Ey(37, 488, 0) = Ex(31, 217, 0) = -5.291541855e+1080731392.45
+Ex(32, 217, 0) = 
+-79017866.62
+Ex(33, 217, 0) = Ey(38, 488, 0) = -97440083.93-5.751919046e+10
+Ey(39, 488, 0) = -5.696137069e+10
+Ey(40, 488, 0) = -5.12262208e+10
+Ey(41, 488, 0) = 
+-4.148683593e+10
+Ey(42, 488, 0) = -2.974600569e+10
+Ey(43, 488, 0) = Ex(34, 217, 0) = -1.823269584e+10
+Ey(44, 488, 0) = -18291003.41-8765075341
+Ey(45, 488, 0) = -2311115094
+Ey(46, 488, 0) = 
+1108607894
+Ey(47, 488, 0) = 2185376375
+Ey(48, 488, 0) = 1904323808
+Ey(49, 488, 0) = 1147577911Ex(35, 217, 0) = 
+386893.1761Ey(50, 488, 0) = 
+Ex(28, 218, 0) = 468513954.2687663.2259
+Ex(29, 218, 0) = 
+15136816.03
+Ex(30, 218, 0) = 74234394.81Ey(51, 488, 0) = 
+71388960.26
+Ey(52, 488, 0) = Ex(31, 218, 0) = -72229218.3982546144.88
+Ex(32, 218, 0) = -35814450.13
+Ex(33, 218, 0) = 
+-95332446.46Ey(53, 488, 0) = 
+Ex(34, 218, 0) = -76275960.55-38201683.46
+Ex(35, 218, 0) = 
+-1444590.001
+Ex(28, 219, 0) = Ey(54, 488, 0) = 704992.148-39288200.55
+Ey(55, 488, 0) = 
+-10103593.38
+Ey(56, 488, 0) = 1739118.861
+Ey(57, 488, 0) = 3071793.756
+Ey(58, 488, 0) = 1433223.853
+Ex(29, 219, 0) = Ey(59, 488, 0) = 7617700.185
+231457.9746Ex(30, 219, 0) = 
+25131087.97
+Ex(31, 219, 0) = Ey(60, 488, 0) = 31604789.69
+Ex(32, 219, 0) = -116550.8628-4985347.251
+Ey(61, 488, 0) = 
+-87861.92946
+Ex(33, 219, 0) = -39409633.93
+Ey(62, 488, 0) = Ex(34, 219, 0) = -22328251.11-20615.3907
+
+Ey(63, 488, 0) = Ex(35, 219, 0) = 3458.795818
+Ey(64, 488, 0) = -1290374.1923660.631091
+Ex(28, 220, 0) = 
+Ey(0, 489, 0) = 5543.150367178179.978
+
+Ex(29, 220, 0) = Ey(1, 489, 0) = 8010250.67610353.43797
+Ey(2, 489, 0) = -13168.76381
+
+Ex(30, 220, 0) = Ey(3, 489, 0) = 29042361.42-117868.4294
+Ey(4, 489, 0) = -260024.3708
+Ey(5, 489, 0) = -3647.578303
+
+Ey(6, 489, 0) = Ex(31, 220, 0) = 1608020.925
+Ey(7, 489, 0) = 4978003.932
+20603805.22Ey(8, 489, 0) = 
+6679990.398
+Ey(9, 489, 0) = Ex(32, 220, 0) = -4472979.257-23932932.11
+Ex(33, 220, 0) = -32811609.02
+Ex(34, 220, 0) = 
+-9806763.734
+Ex(35, 220, 0) = -321601.3216
+Ex(28, 221, 0) = Ey(10, 489, 0) = 52198.79787
+Ex(29, 221, 0) = -45204260.027159036.842
+Ex(30, 221, 0) = 27375114.5
+
+Ex(31, 221, 0) = 16510806.81
+Ex(32, 221, 0) = Ey(11, 489, 0) = -26744032.74
+Ex(33, 221, 0) = -119144348.5-29021503.89
+Ey(12, 489, 0) = 
+-178738141.1
+Ey(13, 489, 0) = -87333036.83
+Ey(14, 489, 0) = 371303456
+Ey(15, 489, 0) = Ex(34, 221, 0) = 1383904481-6054425.376
+
+Ey(16, 489, 0) = Ex(35, 221, 0) = 2890516637-19484.57524
+Ex(28, 222, 0) = 
+Ey(17, 489, 0) = 4336506591
+Ey(18, 489, 0) = 9329.7665634548129932
+Ey(19, 489, 0) = 1885234420
+Ey(20, 489, 0) = 
+-5286215716
+Ey(21, 489, 0) = Ex(29, 222, 0) = -1.793648915e+10
+Ey(22, 489, 0) = -3.580470162e+10
+Ey(23, 489, 0) = -5.720522005e+10
+Ey(24, 489, 0) = 1363868.347-7.934679146e+10
+Ey(25, 489, 0) = 
+-9.9078575e+10
+Ey(26, 489, 0) = Ex(30, 222, 0) = -1.137909612e+11
+5208376.95Ey(27, 489, 0) = 
+-1.22141971e+11
+Ey(28, 489, 0) = Ex(31, 222, 0) = -1.243662174e+112544137.871
+Ey(29, 489, 0) = 
+-1.220944785e+11Ex(32, 222, 0) = -6500253.659
+
+Ex(33, 222, 0) = Ey(30, 489, 0) = -6566831.562-1.177817464e+11
+Ey(31, 489, 0) = -1.139460098e+11
+Ey(32, 489, 0) = -1.124411493e+11
+Ey(33, 489, 0) = -1.139460098e+11
+Ey(34, 489, 0) = 
+-1.177817464e+11
+Ey(35, 489, 0) = -1.220944785e+11
+Ex(34, 222, 0) = Ey(36, 489, 0) = -1380333.697
+Ex(35, 222, 0) = -4055.295543-1.243662174e+11
+
+Ey(37, 489, 0) = Ex(29, 223, 0) = -1.22141971e+11-3354.246963
+
+Ex(30, 223, 0) = -110890.0446
+Ex(31, 223, 0) = Ey(38, 489, 0) = -307748.8016
+Ex(32, 223, 0) = -1.137909612e+11-298343.1933
+Ex(33, 223, 0) = 
+-100230.4234
+Ex(34, 223, 0) = -2101.732002
+Ex(35, 223, 0) = -1.497969946
+Ex(30, 224, 0) = Ey(39, 489, 0) = -11.15958401
+Ex(31, 224, 0) = -9.9078575e+10-43.61606414
+Ex(32, 224, 0) = -54.2715829
+Ex(33, 224, 0) = -22.33330942
+Ex(34, 224, 0) = -0.5182066494
+
+Ey(40, 489, 0) = -7.934679146e+10
+Ey(41, 489, 0) = -5.720522005e+10
+Ey(42, 489, 0) = -3.580470162e+10
+Ey(43, 489, 0) = -1.793648915e+10
+Ey(44, 489, 0) = -5286215716
+Ey(45, 489, 0) = 1885234420
+Ey(46, 489, 0) = Ey(29, 198, 04548129932
+) = Ey(47, 489, 0) = 4336506591
+Ey(48, 489, 0) = -0.27699553152890516637
+Ey(49, 489, 0) = 1383904481
+Ey(50, 489, 0) = 
+371303456
+Ey(51, 489, 0) = -87333036.83
+Ey(52, 489, 0) = Ey(30, 198, 0) = -178738141.1
+Ey(53, 489, 0) = -48.35017645-119144348.5
+Ey(54, 489, 0) = 
+-45204260.02
+Ey(55, 489, 0) = Ey(31, 198, 0) = -4472979.257-197.5856076
+Ey(32, 198, 0) = -264.2594882
+Ey(33, 198, 0) = -127.7778819
+
+Ey(56, 489, 0) = Ey(34, 198, 0) = 6679990.398
+Ey(57, 489, 0) = -13.030820344978003.932
+Ey(58, 489, 0) = 1608020.925
+Ey(59, 489, 0) = 
+-3647.578303
+Ey(28, 199, 0) = Ey(60, 489, 0) = -0.00555914643-260024.3708
+Ey(61, 489, 0) = 
+-117868.4294
+Ey(62, 489, 0) = Ey(29, 199, 0) = -13168.76381-15.93527748
+Ey(30, 199, 0) = -2388.942193
+Ey(31, 199, 0) = -9713.475653
+Ey(32, 199, 0) = 
+-12962.39622
+Ey(33, 199, 0) = Ey(63, 489, 0) = -6260.752734
+10353.43797Ey(34, 199, 0) = 
+-639.0812169
+Ey(35, 199, 0) = -0.261521325
+Ey(28, 200, 0) = Ey(64, 489, 0) = 189.1807112
+Ey(29, 200, 0) = 5543.1503672151.390498
+Ey(30, 200, 0) = -39203.39933
+
+Ey(0, 490, 0) = Ey(31, 200, 0) = 5349.803191-117304.2489
+Ey(32, 200, 0) = -94987.66753
+Ey(33, 200, 0) = 
+-3248.938527
+Ey(34, 200, 0) = Ey(1, 490, 0) = 16849.20457
+Ey(35, 200, 0) = 9333.0898021249.115357
+Ey(27, 201, 0) = 3.802893189
+
+Ey(2, 490, 0) = Ey(28, 201, 0) = -15035.06433
+Ey(3, 490, 0) = 3669.621596-115712.8383
+Ey(4, 490, 0) = -240190.5209
+Ey(5, 490, 0) = 42112.0781
+Ey(6, 490, 0) = 
+1624382.277
+Ey(7, 490, 0) = Ey(29, 201, 0) = 4762296.937
+Ey(8, 490, 0) = 78079.762995925573.013
+Ey(9, 490, 0) = -5712018.059
+
+Ey(30, 201, 0) = Ey(10, 490, 0) = -28355.11851-45468653.29
+Ey(11, 490, 0) = -114519172.1
+Ey(12, 490, 0) = -163565692.6
+Ey(13, 490, 0) = -59103932.87
+Ey(14, 490, 0) = 401924731.3
+Ey(15, 490, 0) = 
+1381226175
+Ey(16, 490, 0) = 2788808618
+Ey(17, 490, 0) = Ey(31, 201, 0) = 4052876940-398136.6008
+
+Ey(32, 201, 0) = -220570.435Ey(18, 490, 0) = 
+Ey(33, 201, 0) = 4019749235290584.3895
+Ey(34, 201, 0) = 234956.2538
+Ey(35, 201, 0) = 
+19194.29816
+Ey(36, 201, 0) = 25.33078306
+Ey(27, 202, 0) = Ey(19, 490, 0) = 76.64629017
+Ey(28, 202, 0) = 112560502311198.81407
+Ey(29, 202, 0) = 218987.0784
+
+Ey(30, 202, 0) = 86872.18647
+Ey(31, 202, 0) = Ey(20, 490, 0) = -846049.4887
+Ey(32, 202, 0) = -6130924625-723428.7262
+Ey(33, 202, 0) = 461374.7788
+Ey(34, 202, 0) = 
+511025.7738
+Ey(35, 202, 0) = 51684.01556
+Ey(36, 202, 0) = Ey(21, 490, 0) = 404.9822525-1.855722518e+10
+Ey(22, 490, 0) = -3.574625672e+10
+Ey(23, 490, 0) = -5.593362169e+10
+Ey(24, 490, 0) = -7.635017746e+10
+
+Ey(25, 490, 0) = -9.397020293e+10
+Ey(26, 490, 0) = Ey(27, 203, 0) = -1.063824804e+11
+Ey(27, 490, 0) = 262.331678-1.124678322e+11
+Ey(28, 490, 0) = 
+-1.126593086e+11
+Ey(29, 490, 0) = Ey(28, 203, 0) = -1.087297637e+1118672.50117
+
+Ey(29, 203, 0) = 294441.8907Ey(30, 490, 0) = 
+Ey(30, 203, 0) = -1.032123191e+1170455.03397
+
+Ey(31, 203, 0) = Ey(31, 490, 0) = -1417664.861
+Ey(32, 203, 0) = -9.865291935e+10-1425438.397
+Ey(32, 490, 0) = 
+-9.690754889e+10
+Ey(33, 490, 0) = -9.865291935e+10Ey(33, 203, 0) = 
+Ey(34, 490, 0) = -1.032123191e+11
+Ey(35, 490, 0) = 431585.9862-1.087297637e+11
+Ey(36, 490, 0) = -1.126593086e+11
+Ey(37, 490, 0) = 
+-1.124678322e+11
+Ey(38, 490, 0) = Ey(34, 203, 0) = -1.063824804e+11756036.3503
+Ey(35, 203, 0) = 112541.4661
+
+Ey(36, 203, 0) = Ey(39, 490, 0) = 1441.334609-9.397020293e+10
+
+Ey(40, 490, 0) = Ey(37, 203, 0) = -7.635017746e+100.01016364481
+Ey(27, 204, 0) = 
+365.4922223
+Ey(28, 204, 0) = 28266.62694
+Ey(29, 204, 0) = 455011.1118
+Ey(30, 204, 0) = Ey(41, 490, 0) = 159014.7259
+Ey(31, 204, 0) = -5.593362169e+10-1769405.855
+Ey(32, 204, 0) = 
+-1094904.242
+Ey(33, 204, 0) = Ey(42, 490, 0) = 1963431.53-3.574625672e+10
+Ey(43, 490, 0) = -1.855722518e+10
+Ey(44, 490, 0) = 
+-6130924625
+Ey(45, 490, 0) = 1125605023
+Ey(46, 490, 0) = 4019749235
+Ey(47, 490, 0) = Ey(34, 204, 0) = 40528769401877422.992
+
+Ey(48, 490, 0) = Ey(35, 204, 0) = 2788808618323820.7941
+Ey(36, 204, 0) = 3425.907767
+Ey(37, 204, 0) = 2.936882338
+Ey(27, 205, 0) = 
+233.140614
+Ey(28, 205, 0) = Ey(49, 490, 0) = 33615.133931381226175
+Ey(50, 490, 0) = 
+401924731.3
+Ey(51, 490, 0) = Ey(29, 205, 0) = -59103932.87
+Ey(52, 490, 0) = -163565692.6
+659592.8392Ey(53, 490, 0) = 
+-114519172.1
+Ey(54, 490, 0) = Ey(30, 205, 0) = -45468653.29448416.16
+Ey(55, 490, 0) = -5712018.059
+Ey(56, 490, 0) = 
+5925573.013
+Ey(57, 490, 0) = Ey(31, 205, 0) = 4762296.937-2273438.347
+Ey(32, 205, 0) = -1555440.804
+
+Ey(33, 205, 0) = Ey(58, 490, 0) = 2974879.3721624382.277
+Ey(59, 490, 0) = 
+42112.0781
+Ey(60, 490, 0) = Ey(34, 205, 0) = -240190.52093012511.733
+Ey(35, 205, 0) = 
+586006.074Ey(61, 490, 0) = 
+-115712.8383
+Ey(62, 490, 0) = Ey(36, 205, 0) = -15035.064338193.166515
+Ey(37, 205, 0) = 22.31107118
+Ey(27, 206, 0) = 
+58.71718124
+Ey(28, 206, 0) = Ey(63, 490, 0) = 21939.355939333.089802
+Ey(29, 206, 0) = 495333.5367
+
+Ey(64, 490, 0) = Ey(30, 206, 0) = 5349.803191376018.7437
+Ey(31, 206, 0) = -2476972.228
+Ey(32, 206, 0) = 
+-2708702.694
+Ey(33, 206, 0) = 1870062.909
+Ey(34, 206, 0) = 2912447.574
+Ey(35, 206, 0) = 728581.7583
+Ey(36, 206, 0) = Ey(0, 491, 0) = 15422.59102
+Ey(37, 206, 0) = 3189.34399360.87703387
+Ey(27, 207, 0) = 
+1.580508566
+Ey(28, 207, 0) = Ey(1, 491, 0) = 5766.8573412370.2495
+Ey(2, 491, 0) = -20230.55219
+Ey(3, 491, 0) = 
+-78458.48601
+Ey(4, 491, 0) = -91042.24639
+Ey(29, 207, 0) = Ey(5, 491, 0) = 137366.9067246185.7895
+Ey(6, 491, 0) = 
+1319398.155
+Ey(7, 491, 0) = Ey(30, 207, 0) = 2635263.3985798.045477
+
+Ey(8, 491, 0) = 1006432.805
+Ey(9, 491, 0) = Ey(31, 207, 0) = -10164066.31-1594400.034
+Ey(32, 207, 0) = 
+-1174240.88
+Ey(33, 207, 0) = 2744727.109
+Ey(34, 207, 0) = 3408003.022
+Ey(35, 207, 0) = 976280.6403
+Ey(36, 207, 0) = Ey(10, 491, 0) = 18727.87158
+Ey(37, 207, 0) = -36026577.1278.71380581
+Ey(28, 208, 0) = 
+103.3866845Ey(11, 491, 0) = 
+-65997825.52
+Ey(12, 491, 0) = -54208644.81
+Ey(13, 491, 0) = 86770753.73
+Ey(14, 491, 0) = 450712014.1
+Ey(15, 491, 0) = 1044321414
+Ey(16, 491, 0) = 1658287834
+Ey(29, 208, 0) = Ey(17, 491, 0) = -10822.845951774857092
+Ey(30, 208, 0) = 
+-539357.3495
+Ey(18, 491, 0) = Ey(31, 208, 0) = 605098505.7-2469218.83
+Ey(32, 208, 0) = -1694491.21
+Ey(33, 208, 0) = 3053495.441
+Ey(34, 208, 0) = 3959135.585
+Ey(35, 208, 0) = 
+1166407.623
+Ey(36, 208, 0) = Ey(19, 491, 0) = 14521.52222
+Ey(37, 208, 0) = 50.54690476
+-2690631292Ey(28, 209, 0) = 
+-122.0671412Ey(20, 491, 0) = 
+Ey(29, 209, 0) = -864077836028814.50913
+Ey(30, 209, 0) = 
+-571720.3702
+Ey(31, 209, 0) = -3736776.069Ey(21, 491, 0) = 
+Ey(32, 209, 0) = -1.710150146e+10-5126252.546
+Ey(22, 491, 0) = 
+-2.70779571e+10
+Ey(23, 491, 0) = -3.685182896e+10
+Ey(24, 491, 0) = -4.440769252e+10
+Ey(25, 491, 0) = -4.80154554e+10
+Ey(26, 491, 0) = -4.675781852e+10
+Ey(27, 491, 0) = Ey(33, 209, 0) = -4.082022285e+10-659952.2234
+Ey(34, 209, 0) = 
+2152742.791
+Ey(35, 209, 0) = 831236.6222
+Ey(36, 209, 0) = 8699.565989
+Ey(37, 209, 0) = Ey(28, 491, 0) = 24.53417788
+Ey(27, 210, 0) = -3.146187133e+10-0.001790610124
+Ey(28, 210, 0) = 
+763.5423808
+Ey(29, 210, 0) = 83304.93476Ey(29, 491, 0) = 
+Ey(30, 210, 0) = -139683.2374-2.07035852e+10
+Ey(31, 210, 0) = -2921317.002
+Ey(32, 210, 0) = 
+-5744289.168
+Ey(33, 210, 0) = -3374023.175
+Ey(34, 210, 0) = -499.0766809
+Ey(35, 210, 0) = Ey(30, 491, 0) = 335417.0585
+Ey(36, 210, 0) = -1.084890078e+107132.71577
+Ey(37, 210, 0) = 
+42.96145964
+Ey(27, 211, 0) = -0.2744676666Ey(31, 491, 0) = 
+-3976561709
+Ey(32, 491, 0) = -1516511345
+Ey(33, 491, 0) = -3976561709
+Ey(28, 211, 0) = Ey(34, 491, 0) = 2889.93124-1.084890078e+10
+Ey(35, 491, 0) = -2.07035852e+10
+Ey(36, 491, 0) = 
+-3.146187133e+10
+Ey(37, 491, 0) = Ey(29, 211, 0) = -4.082022285e+1085213.08492
+Ey(30, 211, 0) = 
+-433796.0227
+Ey(31, 211, 0) = -3511717.146
+Ey(32, 211, 0) = -5972308.571
+Ey(38, 491, 0) = Ey(33, 211, 0) = -4.675781852e+10-3297499.231
+Ey(34, 211, 0) = 
+-56827.48123
+Ey(35, 211, 0) = Ey(39, 491, 0) = 272114.13-4.80154554e+10
+Ey(40, 491, 0) = 
+-4.440769252e+10
+Ey(41, 491, 0) = -3.685182896e+10
+Ey(42, 491, 0) = -2.70779571e+10
+Ey(43, 491, 0) = -1.710150146e+10
+Ey(44, 491, 0) = -8640778360
+Ey(45, 491, 0) = Ey(36, 211, 0) = -2690631292
+Ey(46, 491, 0) = 8218.470527605098505.7
+Ey(47, 491, 0) = 
+1774857092
+Ey(48, 491, 0) = Ey(37, 211, 0) = 165828783465.76351104
+Ey(27, 212, 0) = -1.372254821
+
+Ey(28, 212, 0) = Ey(49, 491, 0) = 2869.894111
+Ey(29, 212, 0) = 1044321414175673.9793
+
+Ey(30, 212, 0) = 272723.2759
+Ey(31, 212, 0) = Ey(50, 491, 0) = -2064809.534450712014.1
+Ey(51, 491, 0) = 86770753.73
+
+Ey(52, 491, 0) = -54208644.81
+Ey(53, 491, 0) = -65997825.52
+Ey(54, 491, 0) = Ey(32, 212, 0) = -36026577.12-4630115.353
+
+Ey(55, 491, 0) = Ey(33, 212, 0) = -10164066.31-2453081.036
+
+Ey(56, 491, 0) = Ey(34, 212, 0) = 1006432.805403159.5755
+Ey(35, 212, 0) = 
+398788.8301
+Ey(36, 212, 0) = 7980.48694Ey(57, 491, 0) = 
+2635263.398
+Ey(58, 491, 0) = Ey(37, 212, 0) = 1319398.15547.01178755
+
+Ey(27, 213, 0) = -2.547638059
+Ey(28, 213, 0) = -8.71938093
+Ey(29, 213, 0) = Ey(59, 491, 0) = 237914.2678246185.7895
+Ey(60, 491, 0) = -91042.24639
+Ey(61, 491, 0) = -78458.48601
+Ey(62, 491, 0) = -20230.55219
+Ey(63, 491, 0) = 2370.2495
+Ey(64, 491, 0) = 3189.343993
+Ey(0, 492, 0) = 
+866.4430232
+Ey(1, 492, 0) = Ey(30, 213, 0) = -270.9147211
+Ey(2, 492, 0) = 1847165.027-8723.421147
+Ey(3, 492, 0) = 
+-24028.72126
+Ey(4, 492, 0) = Ey(31, 213, 0) = -9795.2543972517755.348
+Ey(5, 492, 0) = 
+130207.8099
+Ey(6, 492, 0) = Ey(32, 213, 0) = 458981.425
+Ey(7, 492, 0) = 657530.5732
+Ey(8, 492, 0) = -450187.137
+Ey(9, 492, 0) = -75987.80334-4697262.153
+Ey(10, 492, 0) = 
+-12342330.25
+Ey(33, 213, 0) = -1238865.273
+Ey(34, 213, 0) = 18163.46546
+Ey(35, 213, 0) = 277751.9243
+Ey(36, 213, 0) = 5235.415921
+Ey(37, 213, 0) = 13.66643267
+Ey(27, 214, 0) = -2.133450094
+Ey(28, 214, 0) = -1459.70674
+Ey(29, 214, 0) = 55808.36431
+Ey(30, 214, 0) = 1206371.574
+Ey(31, 214, 0) = Ey(11, 1531603.758492, 
+0) = Ey(32, 214, 0) = -1158568.71-17278120.5
+
+Ey(12, 492, 0) = Ey(33, 214, 0) = -2322943.166-2306101.474
+Ey(34, 214, 0) = -694940.8311
+Ey(35, 214, 0) = 
+Ey(13, 492, 0) = 72042.23719
+Ey(36, 214, 0) = 58520729.631949.090746
+Ey(37, 214, 0) = 0.6650940624
+Ey(27, 215, 0) = 
+-0.7514109096
+Ey(28, 215, 0) = -542.0270979
+Ey(29, 215, 0) = Ey(14, 492, 0) = -78161.93127
+Ey(30, 215, 0) = 182912342.185404.4069
+Ey(31, 215, 0) = 
+-2473831.021
+Ey(32, 215, 0) = Ey(15, 492, 0) = -7251641.514346980810.9
+Ey(16, 492, 0) = 449274751.3
+Ey(17, 492, 0) = 298472972.1
+Ey(18, 492, 0) = -348725736.7
+Ey(19, 492, 0) = -1693888021
+Ey(20, 492, 0) = -3775562334
+Ey(21, 492, 0) = 
+-6375594886
+Ey(22, 492, 0) = -9008260756
+Ey(23, 492, 0) = -1.101584758e+10
+Ey(24, 492, 0) = -1.174640021e+10
+Ey(25, 492, 0) = -1.075102563e+10
+Ey(26, 492, 0) = -7929523651
+Ey(27, 492, 0) = -3576508978
+Ey(28, 492, 0) = 1679193081
+Ey(29, 492, 0) = 7012482767
+Ey(30, 492, 0) = 1.157030193e+10
+Ey(31, 492, 0) = 1.462724151e+10
+Ey(32, 492, 0) = 1.570217341e+10
+Ey(33, 492, 0) = 1.462724151e+10
+Ey(34, 492, 0) = 1.157030193e+10
+Ey(35, 492, 0) = 7012482767
+Ey(36, 492, 0) = 1679193081
+Ey(37, 492, 0) = -3576508978
+Ey(38, 492, 0) = -7929523651
+Ey(39, 492, 0) = -1.075102563e+10
+Ey(40, 492, 0) = -1.174640021e+10
+Ey(41, 492, 0) = -1.101584758e+10
+Ey(42, 492, 0) = -9008260756
+Ey(43, 492, 0) = -6375594886
+Ey(44, 492, 0) = -3775562334
+Ey(45, 492, 0) = Ey(33, 215-1693888021, 
+0Ey(46, 492, 0) = ) = -348725736.7
+Ey(47, 492, 0) = 298472972.1-6372610.701
+
+Ey(48, 492, 0) = 449274751.3
+Ey(49, 492, 0) = 346980810.9
+Ey(50, 492, 0) = 182912342.1
+Ey(34, 215, 0) = Ey(51, 492, 0) = -1777865.21658520729.63
+Ey(52, 492, 0) = -2322943.166
+Ey(53, 492, 0) = 
+-17278120.5
+Ey(54, 492, 0) = Ey(35, 215, 0) = -12342330.25-20078.77541
+Ey(36, 215, 0) = -38.82968629
+Ey(27, 216, 0) = 
+-0.06602139698Ey(55, 492, 0) = 
+Ey(28, 216, 0) = -4697262.153494.0246905
+Ey(29, 216, 0) = -6842.864736
+Ey(30, 216, 0) = 449108.1282
+
+Ey(31, 216, 0) = -2557203.275
+Ey(32, 216, 0) = Ey(56, 492, 0) = -8975630.555
+Ey(33, 216, 0) = -450187.137-8526586.303
+Ey(34, 216, 0) = 
+-2646474.39
+Ey(35, 216, 0) = Ey(57, 492, 0) = -83194.10386657530.5732
+Ey(58, 492, 0) = 458981.425
+Ey(59, 492, 0) = 130207.8099
+Ey(60, 492, 0) = -9795.254397
+Ey(61, 492, 0) = -24028.72126
+Ey(62, 492, 0) = -8723.421147
+Ey(63, 492, 0) = -270.9147211
+Ey(64, 492, 0) = 
+866.4430232
+Ey(0, 493, 0) = Ey(36, 216, 0) = 22.27358474-1323.820215
+Ey(27, 217, 0) = 
+-2.870922895e-07
+Ey(28, 217, 0) = 1030.161351
+Ey(1, 493, 0) = Ey(29, 217, 0) = -9.46472621660558.45855
+Ey(30, 217, 0) = 639615.391
+
+Ey(2, 493, 0) = Ey(31, 217, 0) = -233.0732135-2015544.384
+Ey(32, 217, 0) = 
+-8400165.283
+Ey(33, 217, 0) = Ey(3, 493, 0) = -8641136.319-625.1222973
+
+Ey(4, 493, 0) = -210.9786888
+Ey(5, 493, 0) = 3520.321509
+Ey(34, 217, 0) = Ey(6, 493, 0) = 12073.79513-2987975.266
+Ey(7, 493, 0) = 16743.51211
+Ey(8, 493, 0) = 
+-13550.60856
+Ey(9, 493, 0) = Ey(35, 217, 0) = -126043.4766-153456.3586
+Ey(36, 217, 0) = 
+-2083.606549
+Ey(28, 218, 0) = Ey(10, 493, 0) = 942.7327373
+Ey(29, 218, 0) = -324266.584684997.35305
+Ey(30, 218, 0) = 653618.7147
+
+Ey(31, 218, 0) = Ey(11, 493, 0) = -1849063.239
+Ey(32, 218, 0) = -442387.0275-8162610.76
+Ey(33, 218, 0) = -8767320.77
+Ey(34, 218, 0) = 
+-3209421.796
+Ey(35, 218, 0) = -187735.4483Ey(12, 493, 0) = 
+-25814.79622
+Ey(13, 493, 0) = 1599904.154
+Ey(14, 493, 0) = 4867379.722
+Ey(15, 493, 0) = 9092738.231
+Ey(16, 493, 0) = 11546112.37
+Ey(17, 493, 0) = Ey(36, 218, 0) = 7170753.147
+Ey(18, 493, 0) = -1650.99574-10367053.83
+Ey(19, 493, 0) = 
+-46176436.72
+Ey(20, 493, 0) = Ey(28, 219, 0) = -100961344.8373.1967659
+Ey(29, 219, 0) = 81945.95806
+Ey(30, 219, 0) = 820915.9435
+Ey(31, 219, 0) = 
+-200400.9242
+Ey(32, 219, 0) = Ey(21, 493, 0) = -4651262.668
+Ey(33, 219, 0) = -5965922.321-168624280
+
+Ey(22, 493, 0) = Ey(34, 219, 0) = -236089880.3
+Ey(23, 493, 0) = -285928632.8
+Ey(24, 493, 0) = -301095361.8
+Ey(25, 493, 0) = -270108126.4
+Ey(26, 493, 0) = -2395829.854-190798322.3
+Ey(27, 493, 0) = 
+-71407110.69
+Ey(28, 493, 0) = Ey(35, 219, 0) = 71116653.67-142079.2707
+Ey(36, 219, 0) = 
+-653.1749453
+Ey(28, 220, 0) = Ey(29, 493, 0) = 28.13931966214807564.6
+Ey(30, 493, 0) = 
+337114993.7
+Ey(31, 493, 0) = 418951748.5
+Ey(32, 493, 0) = 447696261.6
+Ey(33, 493, 0) = 418951748.5
+Ey(34, 493, 0) = 337114993.7
+Ey(35, 493, 0) = 214807564.6
+Ey(36, 493, 0) = 71116653.67
+Ey(37, 493, 0) = -71407110.69
+Ey(38, 493, 0) = -190798322.3
+Ey(39, 493, 0) = Ey(29, 220, 0) = -270108126.4
+Ey(40, 493, 0) = 36323.07122-301095361.8
+Ey(41, 493, 0) = 
+-285928632.8
+Ey(42, 493, 0) = Ey(30, 220, 0) = -236089880.3478734.2293
+Ey(31, 220, 0) = 1133084.69
+
+Ey(32, 220, 0) = Ey(43, 493, 0) = 475094.2488
+Ey(33, 220, 0) = -168624280-769932.3119
+Ey(44, 493, 0) = 
+-100961344.8
+Ey(45, 493, 0) = -46176436.72
+Ey(46, 493, 0) = -10367053.83
+Ey(47, 493, 0) = 7170753.147
+Ey(48, 493, 0) = Ey(34, 220, 0) = 11546112.37-608825.1249
+
+Ey(35, 220, 0) = -54530.77907
+Ey(36, 220, 0) = -86.82186042
+Ey(28, 221, 0) = Ey(49, 493, 0) = -9.884573437
+Ey(29, 221, 0) = 9092738.2313454.308962
+Ey(30, 221, 0) = 100363.9971
+Ey(31, 221, 0) = 1284097.588
+Ey(32, 221, 0) = 
+2726338.31
+Ey(33, 221, 0) = Ey(50, 493, 0) = 1979007.82
+Ey(34, 221, 0) = 4867379.722434378.3933
+Ey(35, 221, 0) = -5476.631763
+Ey(36, 221, 0) = 12.26962164
+Ey(28, 222
+, 0) = Ey(51, 493, 0) = -1.2911980621599904.154
+Ey(52, 493, 0) = 
+-25814.79622
+Ey(53, 493, 0) = -442387.0275
+Ey(54, 493, 0) = -324266.5846
+Ey(55, 493, 0) = -126043.4766
+Ey(56, 493, 0) = -13550.60856
+Ey(57, 493, 0) = 16743.51211
+Ey(58, 493, 0) = Ey(29, 222, 0) = 12073.79513
+Ey(59, 493, 0) = -849.0515683520.321509
+Ey(60, 493, 0) = 
+-210.9786888
+Ey(61, 493, 0) = Ey(30, 222, 0) = -625.122297325413.43096
+Ey(62, 493, 0) = 
+-233.0732135Ey(31, 222, 0) = 714677.227
+Ey(32, 222, 0) = 1683450.931
+Ey(33, 222, 0) = 1330473.146
+
+Ey(63, 493, 0) = Ey(34, 222, 0) = -9.464726216
+Ey(64, 493, 0) = 22.27358474
+337152.1361
+Ey(35, 222, 0) = 1716.042228
+Ey(36, 222, 0) = 2.156264001
+Ey(29, 223, 0) = -128.3395206
+Ey(30, 223, 0) = 7715.748261
+Ey(31, 223, 0) = 137653.1119
+Ey(32, 223, 0) = 310601.6753
+Ey(33, 223, 0) = 239962.0558
+Ey(34, 223, 0) = 59382.75559
+Ey(35, 223, 0) = 213.3517836
+Ey(36, 223, 0) = 0.000795648228
+Ey(30, 224, 0) = 6.626480133
+Ey(31, 224, 0) = 58.79487045
+Ey(32, 224, 0) = 116.8527187
+Ey(33, 224, 0) = 83.89294327
+Ey(34, 224, 0) = 19.27481162
+Ey(35, 224, 0) = 0.06619671841
+Ez(29, 198, 0) = 9.310350806
+Ez(30, 198, 0) = 274.1550153
+Ez(31, 198, 0) = 376.7129959
+Ez(32, 198, 0) = -152.9763331
+Ez(33, 198, 0) = -386.0233467
+Ez(34, 198, 0) = -121.1786822
+Ez(28, 199, 0) = 42.62853593
+Ez(29, 199, 0) = 9967.86209
+Ez(30, 199, 0) = 406671.5699
+Ez(31, 199, 0) = 1549103.961
+Ez(32, 199, 0) = 2025298.506
+Ez(33, 199, 0) = 982389.5219
+Ez(34, 199, 0) = 111450.2921
+Ez(35, 199, 0) = 2001.651875
+Ez(28, 200, 0) = 2362.905598
+Ez(29, 200, 0) = 469486.4492
+Ez(30, 200, 0) = 19605933.51
+Ez(31, 200, 0) = 76254561.01
+Ez(32, 200, 0) = 101165238.7
+Ez(33, 200, 0) = 49754945.93
+Ez(34, 200, 0) = 5803130.65
+Ez(35, 200, 0) = 97672.36558
+Ez(27, 201, 0) = 1833.258937
+Ez(28, 201, 0) = 170768.0304
+Ez(29, 201, 0) = 5592577.04
+Ez(30, 201, 0) = 109833227.5
+Ez(31, 201, 0) = 391528949.2
+Ez(32, 201, 0) = 508091837.4
+Ez(33, 201, 0) = 255144038.2
+Ez(34, 201, 0) = 35350274.37
+Ez(35, 201, 0) = 1192008.036
+Ez(36, 201, 0) = 13298.50269
+Ez(27, 202, 0) = 34915.87328
+Ez(28, 202, 0) = 2827562.157
+Ez(29, 202, 0) = 59999888.71
+Ez(30, 202, 0) = 426294789.4
+Ez(31, 202, 0) = 1237203820
+Ez(32, 202, 0) = 1603474540
+Ez(33, 202, 0) = 930940681.8
+Ez(34, 202, 0) = 209488959.4
+Ez(35, 202, 0) = 14110701.94
+Ez(36, 202, 0) = 204157.673
+Ez(27, 203, 0) = 90191.79192
+Ez(28, 203, 0) = 8698242.687
+Ez(29, 203, 0) = 185536882.7
+Ez(30, 203, 0) = 974763716
+Ez(31, 203, 0) = 2570413836
+Ez(32, 203, 0) = 3425453055
+Ez(33, 203, 0) = 2204372610
+Ez(34, 203, 0) = 593775379.2
+Ez(35, 203, 0) = 42774308.98
+Ez(36, 203, 0) = 497439.9478
+Ez(37, 203, 0) = 4.254518553
+Ez(27, 204, 0) = 83729.38396
+Ez(28, 204, 0) = 10940654.04
+Ez(29, 204, 0) = 246521152.6
+Ez(30, 204, 0) = 1214097284
+Ez(31, 204, 0) = 3322861560
+Ez(32, 204, 0) = 4728231446
+Ez(33, 204, 0) = 3251429816
+Ez(34, 204, 0) = 943230275.3
+Ez(35, 204, 0) = 76497601.23
+Ez(36, 204, 0) = 895413.0024
+Ez(37, 204, 0) = 1212.751267
+Ez(27, 205, 0) = 27380.59061
+Ez(28, 205, 0) = 6297074.626
+Ez(29, 205, 0) = 153331385.1
+Ez(30, 205, 0) = 866229717.2
+Ez(31, 205, 0) = 3033130342
+Ez(32, 205, 0) = 5132629332
+Ez(33, 205, 0) = 4068900162
+Ez(34, 205, 0) = 1420127837
+Ez(35, 205, 0) = 172617050.3
+Ez(36, 205, 0) = 2729822.927
+Ez(37, 205, 0) = 7463.94305
+Ez(27, 206, 0) = 760.384224
+Ez(28, 206, 0) = 1476280.474
+Ez(29, 206, 0) = 44572744.84
+Ez(30, 206, 0) = 583741848.1
+Ez(31, 206, 0) = 3227738020
+Ez(32, 206, 0) = 6667495308
+Ez(33, 206, 0) = 6122326670
+Ez(34, 206, 0) = 2496938564
+Ez(35, 206, 0) = 360448711.2
+Ez(36, 206, 0) = 5450091.354
+Ez(37, 206, 0) = 15185.36506
+Ez(28, 207, 0) = 221163.3601
+Ez(29, 207, 0) = 23196336.44
+Ez(30, 207, 0) = 856951292.5
+Ez(31, 207, 0) = 4794686396
+Ez(32, 207, 0) = 9614740832
+Ez(33, 207, 0) = 8600945293
+Ez(34, 207, 0) = 3394733989
+Ez(35, 207, 0) = 453279240.8
+Ez(36, 207, 0) = 5473079.968
+Ez(37, 207, 0) = 13089.94579
+Ez(28, 208, 0) = 448195.3691
+Ez(29, 208, 0) = 48438705.5
+Ez(30, 208, 0) = 1452713194
+Ez(31, 208, 0) = 6777231057
+Ez(32, 208, 0) = 1.186610467e+10
+Ez(33, 208, 0) = 9295882007
+Ez(34, 208, 0) = 3129197793
+Ez(35, 208, 0) = 329811358.6
+Ez(36, 208, 0) = 2903902.638
+Ez(37, 208, 0) = 4623.469281
+Ez(28, 209, 0) = 976909.8787
+Ez(29, 209, 0) = 95640745.97
+Ez(30, 209, 0) = 2187169262
+Ez(31, 209, 0) = 8958058147
+Ez(32, 209, 0) = 1.401628988e+10
+Ez(33, 209, 0) = 9640475553
+Ez(34, 209, 0) = 2697707277
+Ez(35, 209, 0) = 210208979.5
+Ez(36, 209, 0) = 2246746.543
+Ez(37, 209, 0) = 6654.360395
+Ez(27, 210, 0) = 1.746106459
+Ez(28, 210, 0) = 1787697.03
+Ez(29, 210, 0) = 171993430.9
+Ez(30, 210, 0) = 3099276977
+Ez(31, 210, 0) = 1.181128227e+10
+Ez(32, 210, 0) = 1.770010591e+10
+Ez(33, 210, 0) = 1.178045804e+10
+Ez(34, 210, 0) = 3233160754
+Ez(35, 210, 0) = 274988408.5
+Ez(36, 210, 0) = 4410178.364
+Ez(37, 210, 0) = 19356.97873
+Ez(27, 211, 0) = 266.5222284
+Ez(28, 211, 0) = 2473072.61
+Ez(29, 211, 0) = 252398210.6
+Ez(30, 211, 0) = 3915982378
+Ez(31, 211, 0) = 1.398731689e+10
+Ez(32, 211, 0) = 2.013575182e+10
+Ez(33, 211, 0) = 1.305303123e+10
+Ez(34, 211, 0) = 3570161219
+Ez(35, 211, 0) = 336561277.2
+Ez(36, 211, 0) = 4960121.488
+Ez(37, 211, 0) = 20733.72354
+Ez(27, 212, 0) = 1067.904941
+Ez(28, 212, 0) = 2930581.77
+Ez(29, 212, 0) = 304153768.9
+Ez(30, 212, 0) = 4114572904
+Ez(31, 212, 0) = 1.363654251e+10
+Ez(32, 212, 0) = 1.840111263e+10
+Ez(33, 212, 0) = 1.107274509e+10
+Ez(34, 212, 0) = 2722543104
+Ez(35, 212, 0) = 230392968.9
+Ez(36, 212, 0) = 2684165.696
+Ez(37, 212, 0) = 7978.053544
+Ez(27, 213, 0) = 1409.401515
+Ez(28, 213, 0) = 2684905.334
+Ez(29, 213, 0) = 299581705.6
+Ez(30, 213, 0) = 3479102072
+Ez(31, 213, 0) = 1.115165882e+10
+Ez(32, 213, 0) = 1.472539401e+10
+Ez(33, 213, 0) = 8529760594
+Ez(34, 213, 0) = 1874045038
+Ez(35, 213, 0) = 101097709.5
+Ez(36, 213, 0) = 874621.2174
+Ez(37, 213, 0) = 410.3905941
+Ez(27, 214, 0) = 672.4475868
+Ez(28, 214, 0) = 1406723.806
+Ez(29, 214, 0) = 211299521.8
+Ez(30, 214, 0) = 2408199479
+Ez(31, 214, 0) = 8410700775
+Ez(32, 214, 0) = 1.197805641e+10
+Ez(33, 214, 0) = 7362509480
+Ez(34, 214, 0) = 1650955877
+Ez(35, 214, 0) = 54453036.8
+Ez(36, 214, 0) = 344996.565
+Ez(27, 215, 0) = 66.17588963
+Ez(28, 215, 0) = 402915.2593
+Ez(29, 215, 0) = 95476190.18
+Ez(30, 215, 0) = 1555580110
+Ez(31, 215, 0) = 6577767157
+Ez(32, 215, 0) = 1.029059372e+10
+Ez(33, 215, 0) = 6635822306
+Ez(34, 215, 0) = 1503297322
+Ez(35, 215, 0) = 41036876.68
+Ez(36, 215, 0) = 228528.3689
+Ez(27, 216, 0) = 0.0009986259911
+Ez(28, 216, 0) = 229019.7354
+Ez(29, 216, 0) = 38073281.11
+Ez(30, 216, 0) = 1081181882
+Ez(31, 216, 0) = 5281500366
+Ez(32, 216, 0) = 8797904860
+Ez(33, 216, 0) = 5930378214
+Ez(34, 216, 0) = 1414351988
+Ez(35, 216, 0) = 44097427.87
+Ez(36, 216, 0) = 381538.6086
+Ez(28, 217, 0) = 231251.5911
+Ez(29, 217, 0) = 28456113.4
+Ez(30, 217, 0) = 747945562.1
+Ez(31, 217, 0) = 3754275092
+Ez(32, 217, 0) = 6571724792
+Ez(33, 217, 0) = 4782749247
+Ez(34, 217, 0) = 1297250943
+Ez(35, 217, 0) = 52108444.5
+Ez(36, 217, 0) = 436348.4752
+Ez(28, 218, 0) = 133832.5978
+Ez(29, 218, 0) = 21747386.53
+Ez(30, 218, 0) = 475288028.5
+Ez(31, 218, 0) = 2246578009
+Ez(32, 218, 0) = 3951747739
+Ez(33, 218, 0) = 2995708040
+Ez(34, 218, 0) = 875823949.3
+Ez(35, 218, 0) = 39191810.91
+Ez(36, 218, 0) = 231698.225
+Ez(28, 219, 0) = 33958.71018
+Ez(29, 219, 0) = 10759044.23
+Ez(30, 219, 0) = 304260899.2
+Ez(31, 219, 0) = 1389361756
+Ez(32, 219, 0) = 2298447786
+Ez(33, 219, 0) = 1608658402
+Ez(34, 219, 0) = 422481425.6
+Ez(35, 219, 0) = 16493761.77
+Ez(36, 219, 0) = 48895.21446
+Ez(28, 220, 0) = 8716.546627
+Ez(29, 220, 0) = 3347217.848
+Ez(30, 220, 0) = 185828814.1
+Ez(31, 220, 0) = 892798683.5
+Ez(32, 220, 0) = 1415451108
+Ez(33, 220, 0) = 882772970.3
+Ez(34, 220, 0) = 181268905.3
+Ez(35, 220, 0) = 3642007.719
+Ez(36, 220, 0) = 3335.02724
+Ez(28, 221, 0) = 1321.71693
+Ez(29, 221, 0) = 702804.6738
+Ez(30, 221, 0) = 72355753.67
+Ez(31, 221, 0) = 362459631.2
+Ez(32, 221, 0) = 573224465.9
+Ez(33, 221, 0) = 345374224.5
+Ez(34, 221, 0) = 63342958.6
+Ez(35, 221, 0) = 388414.185
+Ez(36, 221, 0) = 574.7124143
+Ez(29, 222, 0) = 65369.3223
+Ez(30, 222, 0) = 9779964.254
+Ez(31, 222, 0) = 51520416.46
+Ez(32, 222, 0) = 83529673.8
+Ez(33, 222, 0) = 51319482.37
+Ez(34, 222, 0) = 9624004.067
+Ez(35, 222, 0) = 28374.17836
+Ez(36, 222, 0) = 0.212212409
+Ez(30, 223, 0) = 711.0675452
+Ez(31, 223, 0) = 6311.452725
+Ez(32, 223, 0) = 12545.69451
+Ez(33, 223, 0) = 9008.426805
+Ez(34, 223, 0) = 2070.243264
+Ez(35, 223, 0) = 7.12578593
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+momentum = 0, 0, 0
+STEP 2 ends. TIME = 8.77270196e-16 DT = 4.38635098e-16
+Evolve time = 0.054415784 s; This step = 0.030297212 s; Avg. per step = 0.027207892 s
+  Writing plotfile diags/diag100002
+Total Time                     : 0.461066047
+
+
+TinyProfiler total time across processes [min...avg...max]: 0.4623 ... 0.4623 ... 0.4623
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Excl. Min  Excl. Avg  Excl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+WriteBinaryParticleData()                                       4     0.3707     0.3707     0.3707  80.18%
+WarpX::EvolveE()                                                2    0.02077    0.02077    0.02077   4.49%
+VisMF::Write(FabArray)                                          2   0.009655   0.009655   0.009655   2.09%
+FabArray::ParallelCopy_nowait()                               142   0.007064   0.007064   0.007064   1.53%
+PhysicalParticleContainer::AddPlasma()                          2   0.006168   0.006168   0.006168   1.33%
+CoarsenIO::Coarsen()                                           20   0.004892   0.004892   0.004892   1.06%
+ParticleContainer::BuildRedistributeMask                        6    0.00481    0.00481    0.00481   1.04%
+PML::Exchange                                                  54   0.003469   0.003469   0.003469   0.75%
+FabArray::setVal()                                            130   0.003026   0.003026   0.003026   0.65%
+LaserParticleContainer::Evolve::ParticlePush                    2   0.002504   0.002504   0.002504   0.54%
+MultiFab::Copy()                                               69   0.002311   0.002311   0.002311   0.50%
+FlushFormatPlotfile::WriteToFile()                              2   0.002232   0.002232   0.002232   0.48%
+WarpX::InitData()                                               1   0.001915   0.001915   0.001915   0.41%
+ParticleContainer::RedistributeCPU()                           11   0.001775   0.001775   0.001775   0.38%
+OverrideSync()                                                 26   0.001766   0.001766   0.001766   0.38%
+MultiFab::LinComb()                                            54   0.001724   0.001724   0.001724   0.37%
+main()                                                          1   0.001711   0.001711   0.001711   0.37%
+FabArrayBase::FB::FB()                                         24   0.001562   0.001562   0.001562   0.34%
+Filter::ApplyStencil(MultiFab)                                  8   0.001535   0.001535   0.001535   0.33%
+WriteMultiLevelPlotfile()                                       2   0.001506   0.001506   0.001506   0.33%
+WarpX::EvolveB()                                                4   0.001456   0.001456   0.001456   0.31%
+FillBoundary_nowait()                                         129    0.00122    0.00122    0.00122   0.26%
+FabArrayBase::CPC::define()                                    18   0.001103   0.001103   0.001103   0.24%
+ParticleContainer::WriteParticles()                             4  0.0007413  0.0007413  0.0007413   0.16%
+WarpX::shiftMF()                                               15  0.0006755  0.0006755  0.0006755   0.15%
+OwnerMask()                                                    26  0.0006454  0.0006454  0.0006454   0.14%
+PhysicalParticleContainer::PushP()                              4  0.0004615  0.0004615  0.0004615   0.10%
+WarpXParticleContainer::DepositCurrent::Accumulate              6  0.0003977  0.0003977  0.0003977   0.09%
+PhysicalParticleContainer::ConvertUnits()                       8  0.0003755  0.0003755  0.0003755   0.08%
+Diagnostics::FilterComputePackFlush()                           4  0.0003621  0.0003621  0.0003621   0.08%
+FabArray<FAB>::SumBoundary_nowait()                             8  0.0003077  0.0003077  0.0003077   0.07%
+WarpX::DampPML()                                                2  0.0002704  0.0002704  0.0002704   0.06%
+ParticleContainer::addParticles                                 4  0.0002527  0.0002527  0.0002527   0.05%
+PhysicalParticleContainer::Evolve()                             4  0.0002521  0.0002521  0.0002521   0.05%
+PhysicalParticleContainer::Evolve::GatherAndPush                4  0.0002393  0.0002393  0.0002393   0.05%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition       6  0.0002377  0.0002377  0.0002377   0.05%
+WarpX::OneStep_nosub()                                          2  0.0002129  0.0002129  0.0002129   0.05%
+FabArrayBase::getCPC()                                        142  0.0002114  0.0002114  0.0002114   0.05%
+WarpX::Evolve::step                                             2  0.0002085  0.0002085  0.0002085   0.05%
+FabArray::ParallelCopy()                                      134  0.0002012  0.0002012  0.0002012   0.04%
+WarpX::SyncCurrent()                                            2  0.0001988  0.0001988  0.0001988   0.04%
+WarpXParticleContainer::DepositCharge::Accumulate               6  0.0001455  0.0001455  0.0001455   0.03%
+FabArrayBase::getFB()                                         129  0.0001226  0.0001226  0.0001226   0.03%
+PhysicalParticleContainer::AddParticles()                       3  0.0001128  0.0001128  0.0001128   0.02%
+WarpXParticleContainer::DepositCharge::ChargeDeposition         6  0.0001077  0.0001077  0.0001077   0.02%
+MultiFab::Add()                                                 4  9.138e-05  9.138e-05  9.138e-05   0.02%
+WarpXParticleContainer::ApplyBoundaryConditions()               6   9.04e-05   9.04e-05   9.04e-05   0.02%
+FabArray::ParallelCopy_finish()                               134   6.69e-05   6.69e-05   6.69e-05   0.01%
+FabArray::FillBoundary()                                       75  5.869e-05  5.869e-05  5.869e-05   0.01%
+FillBoundary(Vector)                                           18  5.486e-05  5.486e-05  5.486e-05   0.01%
+LaserParticleContainer::Evolve()                                2  5.438e-05  5.438e-05  5.438e-05   0.01%
+FillBoundary_finish()                                         129  3.894e-05  3.894e-05  3.894e-05   0.01%
+DistributionMapping::LeastUsedCPUs()                            3  1.975e-05  1.975e-05  1.975e-05   0.00%
+DistributionMapping::SFCProcessorMapDoIt()                      3  1.902e-05  1.902e-05  1.902e-05   0.00%
+FabArray<FAB>::SumBoundary()                                    8  1.461e-05  1.461e-05  1.461e-05   0.00%
+ParticleContainer::WritePlotFile()                              4  9.122e-06  9.122e-06  9.122e-06   0.00%
+ParticleContainer::copyParticles                                4  8.835e-06  8.835e-06  8.835e-06   0.00%
+WarpX::UpdateAuxilaryData()                                     6  6.131e-06  6.131e-06  6.131e-06   0.00%
+FabArray<FAB>::SumBoundary_finish()                             8  5.527e-06  5.527e-06  5.527e-06   0.00%
+DistributionMapping::Distribute()                               3  5.396e-06  5.396e-06  5.396e-06   0.00%
+WarpX::Evolve()                                                 1  4.991e-06  4.991e-06  4.991e-06   0.00%
+MultiParticleContainer::doFieldIonization()                     2  4.088e-06  4.088e-06  4.088e-06   0.00%
+ParticleContainer::clearParticles()                             4  3.546e-06  3.546e-06  3.546e-06   0.00%
+BilinearFilter::ComputeStencils()                               1  2.311e-06  2.311e-06  2.311e-06   0.00%
+WarpX::SyncRho()                                                2  2.035e-06  2.035e-06  2.035e-06   0.00%
+MultiParticleContainer::doCollisions()                          2  1.909e-06  1.909e-06  1.909e-06   0.00%
+WarpX::ComputeSpaceChargeField                                  1  1.899e-06  1.899e-06  1.899e-06   0.00%
+----------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------
+Name                                                       NCalls  Incl. Min  Incl. Avg  Incl. Max   Max %
+----------------------------------------------------------------------------------------------------------
+main()                                                          1     0.4622     0.4622     0.4622  99.97%
+Diagnostics::FilterComputePackFlush()                           4     0.3962     0.3962     0.3962  85.71%
+FlushFormatPlotfile::WriteToFile()                              2     0.3855     0.3855     0.3855  83.38%
+ParticleContainer::WritePlotFile()                              4     0.3714     0.3714     0.3714  80.34%
+WriteBinaryParticleData()                                       4     0.3714     0.3714     0.3714  80.34%
+WarpX::Evolve()                                                 1     0.3709     0.3709     0.3709  80.23%
+WarpX::InitData()                                               1    0.08955    0.08955    0.08955  19.37%
+WarpX::Evolve::step                                             2    0.05449    0.05449    0.05449  11.79%
+WarpX::OneStep_nosub()                                          2    0.03992    0.03992    0.03992   8.63%
+WarpX::EvolveE()                                                2    0.02077    0.02077    0.02077   4.49%
+PML::Exchange                                                  54    0.01415    0.01415    0.01415   3.06%
+WriteMultiLevelPlotfile()                                       2    0.01116    0.01116    0.01116   2.41%
+VisMF::Write(FabArray)                                          2   0.009655   0.009655   0.009655   2.09%
+FabArray::ParallelCopy_nowait()                               142   0.008378   0.008378   0.008378   1.81%
+FabArray::ParallelCopy()                                      134   0.008281   0.008281   0.008281   1.79%
+ParticleContainer::RedistributeCPU()                           11   0.006815   0.006815   0.006815   1.47%
+PhysicalParticleContainer::AddPlasma()                          2   0.006168   0.006168   0.006168   1.33%
+PhysicalParticleContainer::AddParticles()                       3   0.005939   0.005939   0.005939   1.28%
+ParticleContainer::BuildRedistributeMask                        6    0.00504    0.00504    0.00504   1.09%
+CoarsenIO::Coarsen()                                           20   0.004892   0.004892   0.004892   1.06%
+OverrideSync()                                                 26   0.004063   0.004063   0.004063   0.88%
+FabArray::setVal()                                            130   0.003026   0.003026   0.003026   0.65%
+FillBoundary_nowait()                                         129   0.002904   0.002904   0.002904   0.63%
+LaserParticleContainer::Evolve()                                2   0.002759   0.002759   0.002759   0.60%
+WarpX::SyncCurrent()                                            2   0.002678   0.002678   0.002678   0.58%
+LaserParticleContainer::Evolve::ParticlePush                    2   0.002504   0.002504   0.002504   0.54%
+MultiFab::Copy()                                               69   0.002311   0.002311   0.002311   0.50%
+WarpX::shiftMF()                                               15   0.002044   0.002044   0.002044   0.44%
+MultiFab::LinComb()                                            54   0.001724   0.001724   0.001724   0.37%
+FabArrayBase::getFB()                                         129   0.001684   0.001684   0.001684   0.36%
+FabArray::FillBoundary()                                       75   0.001674   0.001674   0.001674   0.36%
+FabArrayBase::FB::FB()                                         24   0.001562   0.001562   0.001562   0.34%
+Filter::ApplyStencil(MultiFab)                                  8   0.001535   0.001535   0.001535   0.33%
+WarpX::EvolveB()                                                4   0.001456   0.001456   0.001456   0.31%
+FillBoundary(Vector)                                           18   0.001382   0.001382   0.001382   0.30%
+FabArrayBase::getCPC()                                        142   0.001315   0.001315   0.001315   0.28%
+FabArrayBase::CPC::define()                                    18   0.001103   0.001103   0.001103   0.24%
+PhysicalParticleContainer::Evolve()                             4  0.0009264  0.0009264  0.0009264   0.20%
+FabArray<FAB>::SumBoundary()                                    8  0.0007826  0.0007826  0.0007826   0.17%
+FabArray<FAB>::SumBoundary_nowait()                             8  0.0007624  0.0007624  0.0007624   0.16%
+ParticleContainer::WriteParticles()                             4  0.0007413  0.0007413  0.0007413   0.16%
+OwnerMask()                                                    26  0.0006454  0.0006454  0.0006454   0.14%
+PhysicalParticleContainer::PushP()                              4  0.0004615  0.0004615  0.0004615   0.10%
+WarpXParticleContainer::DepositCurrent::Accumulate              6  0.0003977  0.0003977  0.0003977   0.09%
+PhysicalParticleContainer::ConvertUnits()                       8  0.0003755  0.0003755  0.0003755   0.08%
+WarpX::DampPML()                                                2  0.0002704  0.0002704  0.0002704   0.06%
+ParticleContainer::copyParticles                                4  0.0002651  0.0002651  0.0002651   0.06%
+ParticleContainer::addParticles                                 4  0.0002527  0.0002527  0.0002527   0.05%
+PhysicalParticleContainer::Evolve::GatherAndPush                4  0.0002393  0.0002393  0.0002393   0.05%
+WarpXParticleContainer::DepositCurrent::CurrentDeposition       6  0.0002377  0.0002377  0.0002377   0.05%
+WarpXParticleContainer::DepositCharge::Accumulate               6  0.0001455  0.0001455  0.0001455   0.03%
+WarpXParticleContainer::DepositCharge::ChargeDeposition         6  0.0001077  0.0001077  0.0001077   0.02%
+MultiFab::Add()                                                 4  9.138e-05  9.138e-05  9.138e-05   0.02%
+WarpXParticleContainer::ApplyBoundaryConditions()               6   9.04e-05   9.04e-05   9.04e-05   0.02%
+FabArray::ParallelCopy_finish()                               134   6.69e-05   6.69e-05   6.69e-05   0.01%
+DistributionMapping::SFCProcessorMapDoIt()                      3  4.417e-05  4.417e-05  4.417e-05   0.01%
+FillBoundary_finish()                                         129  3.894e-05  3.894e-05  3.894e-05   0.01%
+DistributionMapping::LeastUsedCPUs()                            3  1.975e-05  1.975e-05  1.975e-05   0.00%
+WarpX::UpdateAuxilaryData()                                     6  6.131e-06  6.131e-06  6.131e-06   0.00%
+FabArray<FAB>::SumBoundary_finish()                             8  5.527e-06  5.527e-06  5.527e-06   0.00%
+DistributionMapping::Distribute()                               3  5.396e-06  5.396e-06  5.396e-06   0.00%
+MultiParticleContainer::doFieldIonization()                     2  4.088e-06  4.088e-06  4.088e-06   0.00%
+ParticleContainer::clearParticles()                             4  3.546e-06  3.546e-06  3.546e-06   0.00%
+WarpX::ComputeSpaceChargeField                                  1  2.812e-06  2.812e-06  2.812e-06   0.00%
+BilinearFilter::ComputeStencils()                               1  2.311e-06  2.311e-06  2.311e-06   0.00%
+WarpX::SyncRho()                                                2  2.035e-06  2.035e-06  2.035e-06   0.00%
+MultiParticleContainer::doCollisions()                          2  1.909e-06  1.909e-06  1.909e-06   0.00%
+----------------------------------------------------------------------------------------------------------
+
+AMReX (21.09-28-g69b69c2b281c) finalized

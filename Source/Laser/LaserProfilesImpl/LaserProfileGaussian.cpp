@@ -126,8 +126,6 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     prefactor = prefactor / diffract_factor;
 #elif (AMREX_SPACEDIM == 2)
     prefactor = prefactor / amrex::sqrt(diffract_factor);
-#elif (AMREX_SPACEDIM == 1)
-    prefactor = prefactor / amrex::sqrt(diffract_factor); //1D Check this
 #endif
 
     // Copy member variables to tmp copies for GPU runs.

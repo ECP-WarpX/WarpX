@@ -976,10 +976,12 @@ WarpX::RestrictCurrentFromFineToCoarsePatch (int lev)
 void
 WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
 {
+    //std::cout<< "WarpxComm :: Jy = " << current_fp[0][1]->max(0) << std::endl;
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
     const auto& period = Geom(glev).periodicity();
     auto& j = (patch_type == PatchType::fine) ? current_fp[lev] : current_cp[lev];
-    for (int idim = 0; idim < 3; ++idim) {
+    //for (int idim = 0; idim < 3; ++idim) {
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if (use_filter) {
             IntVect ng = j[idim]->nGrowVect();
             ng += bilinear_filter.stencil_length_each_dir-1;
@@ -990,6 +992,7 @@ WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
             WarpXSumGuardCells(*(j[idim]), period, 0, (j[idim])->nComp());
         }
     }
+    //std::cout<< "End of WarpxComm :: Jy = " << current_fp[0][1]->max(0) << std::endl;
 }
 
 /* /brief Update the currents of `lev` by adding the currents from particles

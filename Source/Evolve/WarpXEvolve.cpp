@@ -291,7 +291,6 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
-#if !(defined WARPX_DIM_1D_Z)
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
             if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
             // Electrostatic solver:
@@ -304,7 +303,6 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
             if (warpx_py_afterEsolve) warpx_py_afterEsolve();
         }
-#endif
 
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
@@ -373,11 +371,14 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
 
+    //std::cout << "WarpXEvolve:: Jy = " << current_fp[0][1]->max(0) << std::endl;
+
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
+    //std::cout << "WarpXEvolve:: After Sync Current Jy = " << current_fp[0][1]->max(0) << std::endl;
 
     // Apply current correction in Fourier space: for periodic single-box global FFTs
     // without guard cells, apply this after calling SyncCurrent
