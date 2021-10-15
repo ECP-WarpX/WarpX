@@ -195,27 +195,30 @@ void BeamRelevant::ComputeDiags (int step)
                 return {w,x_mean,y_mean,z_mean,ux_mean,uy_mean,uz_mean,gm_mean};
             },
             reduce_ops);
-            
-        ParticleReal w       = amrex::get<0>(r);
-        ParticleReal x_mean  = amrex::get<1>(r);
-        ParticleReal y_mean  = amrex::get<2>(r);
-        ParticleReal z_mean  = amrex::get<3>(r);
-        ParticleReal ux_mean = amrex::get<4>(r);
-        ParticleReal uy_mean = amrex::get<5>(r);
-        ParticleReal uz_mean = amrex::get<6>(r);
-        ParticleReal gm_mean = amrex::get<7>(r);
 
-        // reduced sum over mpi ranks
-        ParallelDescriptor::ReduceRealSum(w);
-        ParallelDescriptor::ReduceRealSum(x_mean);  x_mean  /= w;
-#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
-        ParallelDescriptor::ReduceRealSum(y_mean);  y_mean  /= w;
-#endif
-        ParallelDescriptor::ReduceRealSum(z_mean);  z_mean  /= w;
-        ParallelDescriptor::ReduceRealSum(ux_mean); ux_mean /= w;
-        ParallelDescriptor::ReduceRealSum(uy_mean); uy_mean /= w;
-        ParallelDescriptor::ReduceRealSum(uz_mean); uz_mean /= w;
-        ParallelDescriptor::ReduceRealSum(gm_mean); gm_mean /= w;
+        std::vector<ParticleReal> values_per_rank_1st = {
+            amrex::get<0>(r), // w
+            amrex::get<1>(r), // x_mean
+            amrex::get<2>(r), // y_mean
+            amrex::get<3>(r), // z_mean
+            amrex::get<4>(r), // ux_mean
+            amrex::get<5>(r), // uy_mean
+            amrex::get<6>(r), // uz_mean
+            amrex::get<7>(r), // gm_mean
+        };
+
+        // reduced sum over mpi ranks (allreduce)
+        ParallelDescriptor::ReduceRealSum
+        ( values_per_rank_1st.data(), values_per_rank_1st.size());
+
+        ParticleReal w       = values_per_rank_1st.at(0);
+        ParticleReal x_mean  = values_per_rank_1st.at(1) /= w;
+        ParticleReal y_mean  = values_per_rank_1st.at(2) /= w;
+        ParticleReal z_mean  = values_per_rank_1st.at(3) /= w;
+        ParticleReal ux_mean = values_per_rank_1st.at(4) /= w;
+        ParticleReal uy_mean = values_per_rank_1st.at(5) /= w;
+        ParticleReal uz_mean = values_per_rank_1st.at(6) /= w;
+        ParticleReal gm_mean = values_per_rank_1st.at(7) /= w;
 
         if (w < std::numeric_limits<Real>::min() )
         {
@@ -274,45 +277,35 @@ void BeamRelevant::ComputeDiags (int step)
             },
             reduce_ops2);
 
-        ParticleReal x_ms   = amrex::get<0>(r2);
-        ParticleReal y_ms   = amrex::get<1>(r2);
-        ParticleReal z_ms   = amrex::get<2>(r2);
-        ParticleReal ux_ms  = amrex::get<3>(r2);
-        ParticleReal uy_ms  = amrex::get<4>(r2);
-        ParticleReal uz_ms  = amrex::get<5>(r2);
-        ParticleReal gm_ms  = amrex::get<6>(r2);
-        ParticleReal xux    = amrex::get<7>(r2);
-        ParticleReal yuy    = amrex::get<8>(r2);
-        ParticleReal zuz    = amrex::get<9>(r2);
-        ParticleReal charge = amrex::get<10>(r2);
+        std::vector<ParticleReal> values_per_rank_2nd = {
+            amrex::get<0>(r2), // x_ms
+            amrex::get<1>(r2), // y_ms
+            amrex::get<2>(r2), // z_ms
+            amrex::get<3>(r2), // ux_ms
+            amrex::get<4>(r2), // uy_ms
+            amrex::get<5>(r2), // uz_ms
+            amrex::get<6>(r2), // gm_ms
+            amrex::get<7>(r2), // xux
+            amrex::get<8>(r2), // yuy
+            amrex::get<9>(r2), // zuz
+            amrex::get<10>(r2) // charge
+        };
 
-        // reduced sum over mpi ranks
+        // reduced sum over mpi ranks (reduce to IO rank)
         ParallelDescriptor::ReduceRealSum
-        ( x_ms, ParallelDescriptor::IOProcessorNumber()); x_ms /= w;
-#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
-        ParallelDescriptor::ReduceRealSum
-        ( y_ms, ParallelDescriptor::IOProcessorNumber()); y_ms /= w;
-#endif
-        ParallelDescriptor::ReduceRealSum
-        ( z_ms, ParallelDescriptor::IOProcessorNumber()); z_ms /= w;
-        ParallelDescriptor::ReduceRealSum
-        (ux_ms, ParallelDescriptor::IOProcessorNumber()); ux_ms /= w;
-        ParallelDescriptor::ReduceRealSum
-        (uy_ms, ParallelDescriptor::IOProcessorNumber()); uy_ms /= w;
-        ParallelDescriptor::ReduceRealSum
-        (uz_ms, ParallelDescriptor::IOProcessorNumber()); uz_ms /= w;
-        ParallelDescriptor::ReduceRealSum
-        (gm_ms, ParallelDescriptor::IOProcessorNumber()); gm_ms /= w;
-        ParallelDescriptor::ReduceRealSum
-        (   xux, ParallelDescriptor::IOProcessorNumber()); xux /= w;
-#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
-        ParallelDescriptor::ReduceRealSum
-        (   yuy, ParallelDescriptor::IOProcessorNumber()); yuy /= w;
-#endif
-        ParallelDescriptor::ReduceRealSum
-        (   zuz, ParallelDescriptor::IOProcessorNumber()); zuz /= w;
-        ParallelDescriptor::ReduceRealSum
-        ( charge, ParallelDescriptor::IOProcessorNumber());
+        ( values_per_rank_2nd.data(), values_per_rank_2nd.size(), ParallelDescriptor::IOProcessorNumber());
+
+        ParticleReal x_ms   = values_per_rank_2nd.at(0) /= w;
+        ParticleReal y_ms   = values_per_rank_2nd.at(1) /= w;
+        ParticleReal z_ms   = values_per_rank_2nd.at(2) /= w;
+        ParticleReal ux_ms  = values_per_rank_2nd.at(3) /= w;
+        ParticleReal uy_ms  = values_per_rank_2nd.at(4) /= w;
+        ParticleReal uz_ms  = values_per_rank_2nd.at(5) /= w;
+        ParticleReal gm_ms  = values_per_rank_2nd.at(6) /= w;
+        ParticleReal xux    = values_per_rank_2nd.at(7) /= w;
+        ParticleReal yuy    = values_per_rank_2nd.at(8) /= w;
+        ParticleReal zuz    = values_per_rank_2nd.at(9) /= w;
+        ParticleReal charge = values_per_rank_2nd.at(10);
 
         // save data
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
@@ -350,6 +343,7 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[12] = std::sqrt(x_ms*ux_ms-xux*xux) / PhysConst::c;
         m_data[13] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
         m_data[14] = charge;
+        amrex::ignore_unused(y_mean, y_ms, yuy);
 #endif
     }
     // end loop over species
