@@ -54,7 +54,7 @@ b = -0.083851393560288
 
 last_fn = sys.argv[1]
 # Remove trailing '/' from file name, if necessary
-if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
+last_fn.rstrip('/')
 # Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
 last_it = re.search('\d+', last_fn).group()
 # Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
