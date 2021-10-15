@@ -13,6 +13,8 @@ A table of the summary of most often called and most costly functions is printed
 
 `See the full documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__.
 
+There is a script located `here <https://github.com/AMReX-Codes/amrex/tree/development/Tools/TinyProfileParser>`__ that parses the Tiny Profiler output and generates a JSON file that can be used with `Hatchet <https://hatchet.readthedocs.io/en/latest/>`__ in order to analyze performance.
+
 
 .. _developers-profiling-nsight-systems:
 
