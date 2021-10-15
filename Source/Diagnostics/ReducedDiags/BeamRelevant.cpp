@@ -20,6 +20,7 @@
 #include <AMReX_ParticleReduce.H>
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Tuple.H>
 
 #include <algorithm>
 #include <cmath>
@@ -159,10 +160,14 @@ void BeamRelevant::ComputeDiags (int step)
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops;
-        auto r = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
+        amrex::ReduceOps<ReduceOpSum,ReduceOpSum,ReduceOpSum,ReduceOpSum,ReduceOpSum,
+        ReduceOpSum,ReduceOpSum,ReduceOpSum> reduce_ops;
+        auto r = amrex::ParticleReduce<amrex::ReduceData<ParticleReal,ParticleReal,
+        ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal>>(
             myspc,
-            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple
+            <ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,
+            ParticleReal,ParticleReal,ParticleReal>
             {
                 const ParticleReal ux = p.rdata(PIdx::ux);
                 const ParticleReal uy = p.rdata(PIdx::uy);
@@ -220,9 +225,16 @@ void BeamRelevant::ComputeDiags (int step)
             return;
         }
 
-        auto r2 = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
+        amrex::ReduceOps<ReduceOpSum,ReduceOpSum,ReduceOpSum,ReduceOpSum,ReduceOpSum,
+        ReduceOpSum,ReduceOpSum,ReduceOpSum,ReduceOpSum,ReduceOpSum,ReduceOpSum> reduce_ops2;
+
+        auto r2 = amrex::ParticleReduce<amrex::ReduceData<ParticleReal,ParticleReal,
+        ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,
+        ParticleReal,ParticleReal,ParticleReal>>(
             myspc,
-            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple
+            <ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal,
+            ParticleReal,ParticleReal,ParticleReal,ParticleReal,ParticleReal>
             {
                 const ParticleReal ux = p.rdata(PIdx::ux);
                 const ParticleReal uy = p.rdata(PIdx::uy);
@@ -260,7 +272,7 @@ void BeamRelevant::ComputeDiags (int step)
 
                 return {x_ms,y_ms,z_ms,ux_ms,uy_ms,uz_ms,gm_ms,xux,yuy,zuz,charge};
             },
-            reduce_ops);
+            reduce_ops2);
 
         ParticleReal x_ms   = amrex::get<0>(r2);
         ParticleReal y_ms   = amrex::get<1>(r2);
