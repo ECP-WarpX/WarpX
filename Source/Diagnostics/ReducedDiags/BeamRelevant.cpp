@@ -211,8 +211,8 @@ void BeamRelevant::ComputeDiags (int step)
         };
 
         // reduced sum over mpi ranks (allreduce)
-        ParallelDescriptor::ReduceRealSum
-        ( values_per_rank_1st.data(), values_per_rank_1st.size());
+        amrex::ParallelAllReduce::Sum
+        ( values_per_rank_1st.data(), values_per_rank_1st.size(), ParallelDescriptor::Communicator());
 
         ParticleReal w_sum   = values_per_rank_1st.at(0);
         ParticleReal x_mean  = values_per_rank_1st.at(1) /= w_sum;
