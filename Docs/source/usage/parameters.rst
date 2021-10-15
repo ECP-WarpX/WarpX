@@ -1639,7 +1639,7 @@ Numerics and algorithms
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
-* ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+* ``warpx.do_device_synchronize`` (`int`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
@@ -2020,6 +2020,33 @@ Reduced Diagnostics
 
         Note that the fields are averaged on the cell centers before their maximum values are
         computed.
+
+    * ``FieldProbe``
+        This type computes the value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors at a point in the domain.
+        The point where the fields are measured is specified through the input parameters
+        ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
+        ``<reduced_diags_name>.z_probe``.
+
+        The output columns are
+        the value of the :math:`E_x` field,
+        the value of the :math:`E_y` field,
+        the value of the :math:`E_z` field,
+        the value of the norm :math:`|E|` of the electric field,
+        the value of the :math:`B_x` field,
+        the value of the :math:`B_y` field,
+        the value of the :math:`B_z` field and
+        the value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
+
+        Note: the norms are always interpolated to the measurement point before they are written
+        to file. The electromagnetic field components are interpolated to the measurement point
+        by default, but can they be saved as non-averaged by setting
+        ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
+        containing the measurement point are saved.
+        The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
+        otherwise it is set to ``1``.
+
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as
