@@ -153,21 +153,66 @@ void BeamRelevant::ComputeDiags (int step)
         // get WarpXParticleContainer class object
         auto const & myspc = mypc.GetParticleContainer(i_s);
 
-        // get mass and charge (Real), FIXME actually all here are ParticleReal
-        Real const m = myspc.getMass();
-        Real const q = myspc.getCharge();
+        // get mass and charge
+        ParticleReal const m = myspc.getMass();
+        ParticleReal const q = myspc.getCharge();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        // weight sum
-        Real w_sum = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.rdata(PIdx::w); });
+        amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops;
+        auto r = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
+            {
+                const ParticleReal ux = p.rdata(PIdx::ux);
+                const ParticleReal uy = p.rdata(PIdx::uy);
+                const ParticleReal uz = p.rdata(PIdx::uz);
+                const ParticleReal us = ux*ux + uy*uy + uz*uz;
+                const ParticleReal pos0 = p.pos(0);
+                const ParticleReal pos1 = p.pos(1);
+                const ParticleReal w = p.rdata(PIdx::w);
+
+#if (defined WARPX_DIM_RZ)
+                const ParticleReal theta = p.rdata(PIdx::theta);
+                const ParticleReal x_mean = pos0*std::cos(theta)*w;
+                const ParticleReal y_mean = pos0*std::sin(theta)*w;
+#else
+                const ParticleReal x_mean = pos0*w;
+                const ParticleReal y_mean = pos1*w;
+#endif
+                const ParticleReal z_mean = p.pos(index_z)*w;
+
+                const ParticleReal ux_mean = ux*w;
+                const ParticleReal uy_mean = uy*w;
+                const ParticleReal uz_mean = uz*w;
+                const ParticleReal gm_mean = std::sqrt(1.0_rt+us*inv_c2)*w;
+
+                return {w,x_mean,y_mean,z_mean,ux_mean,uy_mean,uz_mean,gm_mean};
+            },
+            reduce_ops);
+            
+        ParticleReal w       = amrex::get<0>(r);
+        ParticleReal x_mean  = amrex::get<1>(r);
+        ParticleReal y_mean  = amrex::get<2>(r);
+        ParticleReal z_mean  = amrex::get<3>(r);
+        ParticleReal ux_mean = amrex::get<4>(r);
+        ParticleReal uy_mean = amrex::get<5>(r);
+        ParticleReal uz_mean = amrex::get<6>(r);
+        ParticleReal gm_mean = amrex::get<7>(r);
 
         // reduced sum over mpi ranks
-        ParallelDescriptor::ReduceRealSum(w_sum);
+        ParallelDescriptor::ReduceRealSum(w);
+        ParallelDescriptor::ReduceRealSum(x_mean);  x_mean  /= w;
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
+        ParallelDescriptor::ReduceRealSum(y_mean);  y_mean  /= w;
+#endif
+        ParallelDescriptor::ReduceRealSum(z_mean);  z_mean  /= w;
+        ParallelDescriptor::ReduceRealSum(ux_mean); ux_mean /= w;
+        ParallelDescriptor::ReduceRealSum(uy_mean); uy_mean /= w;
+        ParallelDescriptor::ReduceRealSum(uz_mean); uz_mean /= w;
+        ParallelDescriptor::ReduceRealSum(gm_mean); gm_mean /= w;
 
-        if (w_sum < std::numeric_limits<Real>::min() )
+        if (w < std::numeric_limits<Real>::min() )
         {
             for (int i = 0; i < static_cast<int>(m_data.size()); ++i){
                 m_data[i] = 0.0_rt;
@@ -175,249 +220,87 @@ void BeamRelevant::ComputeDiags (int step)
             return;
         }
 
-#if (defined WARPX_DIM_RZ)
-        // x mean
-        Real x_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.pos(0)*std::cos(p.rdata(PIdx::theta)) * p.rdata(PIdx::w); });
-#else
-        // x mean
-        Real x_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.pos(0) * p.rdata(PIdx::w); });
-#endif
-
-#if (defined WARPX_DIM_3D)
-        // y mean
-        Real y_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.pos(1) * p.rdata(PIdx::w); });
-#elif (defined WARPX_DIM_RZ)
-        // y mean
-        Real y_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.pos(0)*std::sin(p.rdata(PIdx::theta)) * p.rdata(PIdx::w); });
-#endif
-
-        // z mean
-        Real z_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.pos(index_z) * p.rdata(PIdx::w); });
-
-        // ux mean
-        Real ux_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.rdata(PIdx::ux) * p.rdata(PIdx::w); });
-
-        // uy mean
-        Real uy_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.rdata(PIdx::uy) * p.rdata(PIdx::w); });
-
-        // uz mean
-        Real uz_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        { return p.rdata(PIdx::uz) * p.rdata(PIdx::w); });
-
-        // gamma mean
-        Real gm_mean = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real ux = p.rdata(PIdx::ux);
-            Real uy = p.rdata(PIdx::uy);
-            Real uz = p.rdata(PIdx::uz);
-            Real us = ux*ux + uy*uy + uz*uz;
-            return std::sqrt(1.0_rt + us*inv_c2) * p.rdata(PIdx::w);
-        });
-
-        // reduced sum over mpi ranks
-        ParallelDescriptor::ReduceRealSum(x_mean);  x_mean  /= w_sum;
-#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
-        ParallelDescriptor::ReduceRealSum(y_mean);  y_mean  /= w_sum;
-#endif
-        ParallelDescriptor::ReduceRealSum(z_mean);  z_mean  /= w_sum;
-        ParallelDescriptor::ReduceRealSum(ux_mean); ux_mean /= w_sum;
-        ParallelDescriptor::ReduceRealSum(uy_mean); uy_mean /= w_sum;
-        ParallelDescriptor::ReduceRealSum(uz_mean); uz_mean /= w_sum;
-        ParallelDescriptor::ReduceRealSum(gm_mean); gm_mean /= w_sum;
+        auto r2 = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
+            {
+                const ParticleReal ux = p.rdata(PIdx::ux);
+                const ParticleReal uy = p.rdata(PIdx::uy);
+                const ParticleReal uz = p.rdata(PIdx::uz);
+                const ParticleReal us = ux*ux + uy*uy + uz*uz;
+                const ParticleReal gm = std::sqrt(1.0_rt+us*inv_c2);
+                const ParticleReal pos0 = p.pos(0);
+                const ParticleReal pos1 = p.pos(1);
+                const ParticleReal w = p.rdata(PIdx::w);
 
 #if (defined WARPX_DIM_RZ)
-        // x mean square
-        Real x_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const x = p.pos(0)*std::cos(p.rdata(PIdx::theta));
-            Real const a = (x-x_mean) * (x-x_mean);
-            return a * p.rdata(PIdx::w);
-        });
+                const ParticleReal theta = p.rdata(PIdx::theta);
+                const ParticleReal x = pos0*std::cos(theta);
+                const ParticleReal y = pos0*std::sin(theta);
 #else
-        // x mean square
-        Real x_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.pos(0)-x_mean) * (p.pos(0)-x_mean);
-            return a * p.rdata(PIdx::w);
-        });
+                const ParticleReal x = pos0;
+                const ParticleReal y = pos1;
 #endif
+                const ParticleReal z = p.pos(index_z);
 
-#if (defined WARPX_DIM_3D)
-        // y mean square
-        Real y_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.pos(1)-y_mean) * (p.pos(1)-y_mean);
-            return a * p.rdata(PIdx::w);
-        });
-#elif (defined WARPX_DIM_RZ)
-        // y mean square
-        Real y_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const y = p.pos(0)*std::sin(p.rdata(PIdx::theta));
-            Real const a = (y-y_mean) * (y-y_mean);
-            return a * p.rdata(PIdx::w);
-        });
-#endif
+                const ParticleReal x_ms = (x-x_mean)*(x-x_mean)*w;
+                const ParticleReal y_ms = (y-y_mean)*(y-y_mean)*w;
+                const ParticleReal z_ms = (z-z_mean)*(z-z_mean)*w;
 
-        // z mean square
-        Real z_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.pos(index_z)-z_mean) * (p.pos(index_z)-z_mean);
-            return a * p.rdata(PIdx::w);
-        });
+                const ParticleReal ux_ms = (ux-ux_mean)*(ux-ux_mean)*w;
+                const ParticleReal uy_ms = (uy-uy_mean)*(uy-uy_mean)*w;
+                const ParticleReal uz_ms = (uz-uz_mean)*(uz-uz_mean)*w;
+                const ParticleReal gm_ms = (gm-gm_mean)*(gm-gm_mean)*w;
 
-        // ux mean square
-        Real ux_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.rdata(PIdx::ux)-ux_mean) *
-                           (p.rdata(PIdx::ux)-ux_mean);
-            return a * p.rdata(PIdx::w);
-        });
+                const ParticleReal xux = (x-x_mean)*(ux-ux_mean)*w;
+                const ParticleReal yuy = (y-y_mean)*(uy-uy_mean)*w;
+                const ParticleReal zuz = (z-z_mean)*(uz-uz_mean)*w;
 
-        // uy mean square
-        Real uy_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.rdata(PIdx::uy)-uy_mean) *
-                           (p.rdata(PIdx::uy)-uy_mean);
-            return a * p.rdata(PIdx::w);
-        });
+                const ParticleReal charge = q*w;
 
-        // uz mean square
-        Real uz_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.rdata(PIdx::uz)-uz_mean) *
-                           (p.rdata(PIdx::uz)-uz_mean);
-            return a * p.rdata(PIdx::w);
-        });
+                return {x_ms,y_ms,z_ms,ux_ms,uy_ms,uz_ms,gm_ms,xux,yuy,zuz,charge};
+            },
+            reduce_ops);
 
-        // gamma mean square
-        Real gm_ms = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const ux = p.rdata(PIdx::ux);
-            Real const uy = p.rdata(PIdx::uy);
-            Real const uz = p.rdata(PIdx::uz);
-            Real const us = ux*ux + uy*uy + uz*uz;
-            Real const gm = std::sqrt(1.0_rt + us*inv_c2);
-            Real const a  = (gm - gm_mean) * (gm - gm_mean);
-            return a * p.rdata(PIdx::w);
-        });
-
-#if (defined WARPX_DIM_RZ)
-        // x times ux
-        Real xux = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const x = p.pos(0)*std::cos(p.rdata(PIdx::theta));
-            Real const a = (x-x_mean) * (p.rdata(PIdx::ux)-ux_mean);
-            return a * p.rdata(PIdx::w);
-        });
-#else
-        // x times ux
-        Real xux = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.pos(0)-x_mean) * (p.rdata(PIdx::ux)-ux_mean);
-            return a * p.rdata(PIdx::w);
-        });
-#endif
-
-#if (defined WARPX_DIM_3D)
-        // y times uy
-        Real yuy = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.pos(1)-y_mean) * (p.rdata(PIdx::uy)-uy_mean);
-            return a * p.rdata(PIdx::w);
-        });
-#elif (defined WARPX_DIM_RZ)
-        // y times uy
-        Real yuy = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const y = p.pos(0)*std::sin(p.rdata(PIdx::theta));
-            Real const a = (y-y_mean) * (p.rdata(PIdx::uy)-uy_mean);
-            return a * p.rdata(PIdx::w);
-        });
-#endif
-
-        // z times uz
-        Real zuz = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const a = (p.pos(index_z)-z_mean) * (p.rdata(PIdx::uz)-uz_mean);
-            return a * p.rdata(PIdx::w);
-        });
-
-        // charge
-        Real charge = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real const w = p.rdata(PIdx::w);
-            return q * w;
-        });
+        ParticleReal x_ms   = amrex::get<0>(r2);
+        ParticleReal y_ms   = amrex::get<1>(r2);
+        ParticleReal z_ms   = amrex::get<2>(r2);
+        ParticleReal ux_ms  = amrex::get<3>(r2);
+        ParticleReal uy_ms  = amrex::get<4>(r2);
+        ParticleReal uz_ms  = amrex::get<5>(r2);
+        ParticleReal gm_ms  = amrex::get<6>(r2);
+        ParticleReal xux    = amrex::get<7>(r2);
+        ParticleReal yuy    = amrex::get<8>(r2);
+        ParticleReal zuz    = amrex::get<9>(r2);
+        ParticleReal charge = amrex::get<10>(r2);
 
         // reduced sum over mpi ranks
         ParallelDescriptor::ReduceRealSum
-            ( x_ms, ParallelDescriptor::IOProcessorNumber());
-        x_ms /= w_sum;
+        ( x_ms, ParallelDescriptor::IOProcessorNumber()); x_ms /= w;
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
-            ( y_ms, ParallelDescriptor::IOProcessorNumber());
-        y_ms /= w_sum;
+        ( y_ms, ParallelDescriptor::IOProcessorNumber()); y_ms /= w;
 #endif
         ParallelDescriptor::ReduceRealSum
-            ( z_ms, ParallelDescriptor::IOProcessorNumber());
-        z_ms /= w_sum;
+        ( z_ms, ParallelDescriptor::IOProcessorNumber()); z_ms /= w;
         ParallelDescriptor::ReduceRealSum
-            (ux_ms, ParallelDescriptor::IOProcessorNumber());
-        ux_ms /= w_sum;
+        (ux_ms, ParallelDescriptor::IOProcessorNumber()); ux_ms /= w;
         ParallelDescriptor::ReduceRealSum
-            (uy_ms, ParallelDescriptor::IOProcessorNumber());
-        uy_ms /= w_sum;
+        (uy_ms, ParallelDescriptor::IOProcessorNumber()); uy_ms /= w;
         ParallelDescriptor::ReduceRealSum
-            (uz_ms, ParallelDescriptor::IOProcessorNumber());
-        uz_ms /= w_sum;
+        (uz_ms, ParallelDescriptor::IOProcessorNumber()); uz_ms /= w;
         ParallelDescriptor::ReduceRealSum
-            (gm_ms, ParallelDescriptor::IOProcessorNumber());
-        gm_ms /= w_sum;
+        (gm_ms, ParallelDescriptor::IOProcessorNumber()); gm_ms /= w;
         ParallelDescriptor::ReduceRealSum
-            (   xux, ParallelDescriptor::IOProcessorNumber());
-        xux /= w_sum;
+        (   xux, ParallelDescriptor::IOProcessorNumber()); xux /= w;
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
-            (   yuy, ParallelDescriptor::IOProcessorNumber());
-        yuy /= w_sum;
+        (   yuy, ParallelDescriptor::IOProcessorNumber()); yuy /= w;
 #endif
         ParallelDescriptor::ReduceRealSum
-            (   zuz, ParallelDescriptor::IOProcessorNumber());
-        zuz /= w_sum;
+        (   zuz, ParallelDescriptor::IOProcessorNumber()); zuz /= w;
         ParallelDescriptor::ReduceRealSum
-            ( charge, ParallelDescriptor::IOProcessorNumber());
+        ( charge, ParallelDescriptor::IOProcessorNumber());
 
         // save data
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
