@@ -14,7 +14,6 @@ sudo apt-get install -y \
   cmake           \
   ca-certificates \
   gnupg           \
-  ninja-build     \
   pkg-config      \
   wget
 

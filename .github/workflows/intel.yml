@@ -13,8 +13,9 @@ jobs:
     name: oneAPI ICC SP&DP
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
-    env:
-      CMAKE_GENERATOR: Ninja
+    # For oneAPI, Ninja is slower than the default:
+    #env:
+    #  CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -54,7 +55,8 @@ jobs:
     # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
     env:
       CXXFLAGS: "-Werror -Wno-error=pass-failed -Wno-tautological-constant-compare"
-      CMAKE_GENERATOR: Ninja
+    # For oneAPI, Ninja is slower than the default:
+    #  CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
@@ -99,7 +101,8 @@ jobs:
     # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
     env:
       CXXFLAGS: "-Werror -Wno-tautological-constant-compare"
-      CMAKE_GENERATOR: Ninja
+    # For oneAPI, Ninja is slower than the default:
+    #  CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
