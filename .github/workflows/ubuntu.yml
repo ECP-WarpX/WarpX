@@ -38,8 +38,9 @@ jobs:
     name: Clang pywarpx
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
-    env:
-      CMAKE_GENERATOR: Ninja
+    # On CI for this test, Ninja is slower than the default:
+    #env:
+    #  CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
