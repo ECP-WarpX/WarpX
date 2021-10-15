@@ -1314,3 +1314,21 @@ void WarpX::NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>
         }
     }
 }
+
+void WarpX::NodalSync (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_fp,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_cp)
+{
+    if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
+
+    for (int lev = 0; lev <= WarpX::finest_level; lev++)
+    {
+        const amrex::Periodicity& period = Geom(lev).periodicity();
+        mf_fp[lev]->OverrideSync(period);
+
+        if (lev > 0)
+        {
+            const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
+            mf_cp[lev]->OverrideSync(cperiod);
+        }
+    }
+}
