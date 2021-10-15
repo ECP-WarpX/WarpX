@@ -80,15 +80,11 @@ FieldProbe::FieldProbe (std::string rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + " (V/m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_|E|_lev" + std::to_string(lev) + " (V/m)";
-                ofs << m_sep;
                 ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
                 ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + " (T)";
                 ofs << m_sep;
                 ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + " (T)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_|B|_lev" + std::to_string(lev) + " (T)";
             }
             ofs << std::endl;
             // close file
@@ -110,6 +106,9 @@ void FieldProbe::ComputeDiags (int step)
     // get number of level
     const auto nLevel = warpx.finestLevel() + 1;
 
+    // vector where we store the field values
+    amrex::Vector<amrex::Real> fp_values(noutputs, 0);
+
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
@@ -119,165 +118,131 @@ void FieldProbe::ComputeDiags (int step)
         const auto prob_hi = gm.ProbHi();
 
 #if (AMREX_SPACEDIM == 2)
-        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
-                                     z_probe >= prob_lo[1] and z_probe <= prob_hi[1];
+        m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
+                            z_probe >= prob_lo[1] and z_probe < prob_hi[1];
 #else
-        const bool probe_in_domain = x_probe >= prob_lo[0] and x_probe <= prob_hi[0] and
-                                     y_probe >= prob_lo[1] and y_probe <= prob_hi[1] and
-                                     z_probe >= prob_lo[2] and z_probe <= prob_hi[2];
+        m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
+                            y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
+                            z_probe >= prob_lo[2] and z_probe < prob_hi[2];
 #endif
-        amrex::Real fp_Ex = 0._rt, fp_Ey = 0._rt, fp_Ez = 0._rt, fp_E = 0._rt;
-        amrex::Real fp_Bx = 0._rt, fp_By = 0._rt, fp_Bz = 0._rt, fp_B = 0._rt;
+        if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
 
-        if( probe_in_domain ) {
-            const auto cell_size = gm.CellSizeArray();
+        if( !m_probe_in_domain ) break;
 
-            const int i_probe = amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]);
+        const auto cell_size = gm.CellSizeArray();
+
+        const int i_probe = amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]);
 #if (AMREX_SPACEDIM == 2)
-            const int j_probe = amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]);
-            const int k_probe = 0;
+        const int j_probe = amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]);
+        const int k_probe = 0;
 #elif(AMREX_SPACEDIM == 3)
-            const int j_probe = amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]);
-            const int k_probe = amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]);
+        const int j_probe = amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]);
+        const int k_probe = amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]);
 #endif
-            // get MultiFab data at lev
-            const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
-            const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
-            const amrex::MultiFab &Ez = warpx.getEfield(lev, 2);
-            const amrex::MultiFab &Bx = warpx.getBfield(lev, 0);
-            const amrex::MultiFab &By = warpx.getBfield(lev, 1);
-            const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
+        // get MultiFab data at lev
+        const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
+        const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
+        const amrex::MultiFab &Ez = warpx.getEfield(lev, 2);
+        const amrex::MultiFab &Bx = warpx.getBfield(lev, 0);
+        const amrex::MultiFab &By = warpx.getBfield(lev, 1);
+        const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
 
-            // Prepare interpolation of field components to probe_position
-            // The arrays below store the index type (staggering) of each MultiFab.
-            amrex::IndexType const Extype = Ex.ixType();
-            amrex::IndexType const Eytype = Ey.ixType();
-            amrex::IndexType const Eztype = Ez.ixType();
-            amrex::IndexType const Bxtype = Bx.ixType();
-            amrex::IndexType const Bytype = By.ixType();
-            amrex::IndexType const Bztype = Bz.ixType();
+        // Prepare interpolation of field components to probe_position
+        // The arrays below store the index type (staggering) of each MultiFab.
+        amrex::IndexType const Extype = Ex.ixType();
+        amrex::IndexType const Eytype = Ey.ixType();
+        amrex::IndexType const Eztype = Ez.ixType();
+        amrex::IndexType const Bxtype = Bx.ixType();
+        amrex::IndexType const Bytype = By.ixType();
+        amrex::IndexType const Bztype = Bz.ixType();
 
-            int probe_proc = -1;
-            // MFIter loop to interpolate fields to probe position
+        int probe_proc = -1;
+        // MFIter loop to interpolate fields to probe position
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-            for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-                const amrex::Box &box = amrex::enclosedCells(mfi.nodaltilebox());
+        for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+            const amrex::Box &box = amrex::enclosedCells(mfi.nodaltilebox());
 
-                if (box.contains(i_probe, j_probe, k_probe)) {
-                    // Make the box cell centered in preparation for the interpolation (and to avoid
-                    // including ghost cells in the calculation)
-                    const auto &arrEx = Ex[mfi].array();
-                    const auto &arrEy = Ey[mfi].array();
-                    const auto &arrEz = Ez[mfi].array();
-                    const auto &arrBx = Bx[mfi].array();
-                    const auto &arrBy = By[mfi].array();
-                    const auto &arrBz = Bz[mfi].array();
+            if (box.contains(i_probe, j_probe, k_probe)) {
+                // Make the box cell centered in preparation for the interpolation (and to avoid
+                // including ghost cells in the calculation)
+                const auto &arrEx = Ex[mfi].array();
+                const auto &arrEy = Ey[mfi].array();
+                const auto &arrEz = Ez[mfi].array();
+                const auto &arrBx = Bx[mfi].array();
+                const auto &arrBy = By[mfi].array();
+                const auto &arrBz = Bz[mfi].array();
 
-                    amrex::Real Ex_interp = 0._rt, Ey_interp = 0._rt, Ez_interp = 0._rt;
-                    amrex::Real Bx_interp = 0._rt, By_interp = 0._rt, Bz_interp = 0._rt;
+                amrex::Real Ex_interp = 0._rt, Ey_interp = 0._rt, Ez_interp = 0._rt;
+                amrex::Real Bx_interp = 0._rt, By_interp = 0._rt, Bz_interp = 0._rt;
 
-                    amrex::Vector<amrex::Real> v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
-                    const auto
-                        &xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box, v_galilean,
-                                                                               lev);
-                    const std::array<Real, 3> &dx = WarpX::CellSize(lev);
-                    const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-                    const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                amrex::Vector<amrex::Real> v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
+                const auto &xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box, v_galilean,
+                                                                                  lev);
+                const std::array<Real, 3> &dx = WarpX::CellSize(lev);
+                const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+                const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
-                    //Interpolating to the probe point
+                //Interpolating to the probe point
 #if (AMREX_SPACEDIM == 2)
-                    constexpr amrex::Real y_probe = 0._rt;
+                constexpr amrex::Real y_probe = 0._rt;
 #endif
-                    doGatherShapeN(x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
-                                   Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
-                                   arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
-                                   dx_arr, xyzmin_arr, amrex::lbound(box),
-                                   WarpX::n_rz_azimuthal_modes, interp_order, false);
+                doGatherShapeN(x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
+                               Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
+                               arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype, dx_arr,
+                               xyzmin_arr, amrex::lbound(box), WarpX::n_rz_azimuthal_modes,
+                               interp_order, false);
 
-                    // Either save the interpolated fields or the raw fields depending on the raw_fields flag
-                    fp_Ex = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
-                    fp_Ey = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
-                    fp_Ez = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
-                    fp_E = Ex_interp * Ex_interp + Ey_interp * Ey_interp + Ez_interp * Ez_interp;
-                    fp_Bx = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
-                    fp_By = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
-                    fp_Bz = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
-                    fp_B = Bx_interp * Bx_interp + By_interp * By_interp + Bz_interp * Bz_interp;
+                // Either save the interpolated fields or the raw fields depending on the raw_fields flag
+                fp_values[index_Ex] = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
+                fp_values[index_Ey] = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
+                fp_values[index_Ez] = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
+                fp_values[index_Bx] = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
+                fp_values[index_By] = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
+                fp_values[index_Bz] = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
 
-                    probe_proc = amrex::ParallelDescriptor::MyProc();
-                }
+                probe_proc = amrex::ParallelDescriptor::MyProc();
             }
+        }
 
-            //All the processors have probe_proc = -1 except the one that contains the point, which
-            //has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
-            //processors the rank of the processor which contains the point
-            amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
+        //All the processors have probe_proc = -1 except the one that contains the point, which
+        //has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
+        //processors the rank of the processor which contains the point
+        amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
-            if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
-                if (amrex::ParallelDescriptor::MyProc() == probe_proc) {
-                    amrex::ParallelDescriptor::Send(&fp_Ex,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Ex);
-                    amrex::ParallelDescriptor::Send(&fp_Ey,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Ey);
-                    amrex::ParallelDescriptor::Send(&fp_Ez,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Ez);
-                    amrex::ParallelDescriptor::Send(&fp_E,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_absE);
-                    amrex::ParallelDescriptor::Send(&fp_Bx,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Bx);
-                    amrex::ParallelDescriptor::Send(&fp_By,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_By);
-                    amrex::ParallelDescriptor::Send(&fp_Bz,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_Bz);
-                    amrex::ParallelDescriptor::Send(&fp_B,
-                                                    1,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    index_absB);
-                }
-                if (amrex::ParallelDescriptor::MyProc()
-                    == amrex::ParallelDescriptor::IOProcessorNumber()) {
-                    amrex::ParallelDescriptor::Recv(&fp_Ex, 1, probe_proc, index_Ex);
-                    amrex::ParallelDescriptor::Recv(&fp_Ey, 1, probe_proc, index_Ey);
-                    amrex::ParallelDescriptor::Recv(&fp_Ez, 1, probe_proc, index_Ez);
-                    amrex::ParallelDescriptor::Recv(&fp_E, 1, probe_proc, index_absE);
-                    amrex::ParallelDescriptor::Recv(&fp_Bx, 1, probe_proc, index_Bx);
-                    amrex::ParallelDescriptor::Recv(&fp_By, 1, probe_proc, index_By);
-                    amrex::ParallelDescriptor::Recv(&fp_Bz, 1, probe_proc, index_Bz);
-                    amrex::ParallelDescriptor::Recv(&fp_B, 1, probe_proc, index_absB);
-                }
+        if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
+            if (amrex::ParallelDescriptor::MyProc() == probe_proc) {
+                amrex::ParallelDescriptor::Send(fp_values.dataPtr(),
+                                                noutputs,
+                                                amrex::ParallelDescriptor::IOProcessorNumber(),
+                                                0);
+            }
+            if (amrex::ParallelDescriptor::MyProc()
+            == amrex::ParallelDescriptor::IOProcessorNumber()) {
+                amrex::ParallelDescriptor::Recv(fp_values.dataPtr(), noutputs, probe_proc, 0);
             }
         }
 
         // Fill output array
-        m_data[lev * noutputs + index_Ex] = fp_Ex;
-        m_data[lev * noutputs + index_Ey] = fp_Ey;
-        m_data[lev * noutputs + index_Ez] = fp_Ez;
-        m_data[lev * noutputs + index_absE] = std::sqrt(fp_E);
-        m_data[lev * noutputs + index_Bx] = fp_Bx;
-        m_data[lev * noutputs + index_By] = fp_By;
-        m_data[lev * noutputs + index_Bz] = fp_Bz;
-        m_data[lev * noutputs + index_absB] = std::sqrt(fp_B);
+        m_data[lev * noutputs + index_Ex] = fp_values[index_Ex];
+        m_data[lev * noutputs + index_Ey] = fp_values[index_Ey];
+        m_data[lev * noutputs + index_Ez] = fp_values[index_Ez];
+        m_data[lev * noutputs + index_Bx] = fp_values[index_Bx];
+        m_data[lev * noutputs + index_By] = fp_values[index_By];
+        m_data[lev * noutputs + index_Bz] = fp_values[index_Bz];
     }
     // end loop over refinement levels
 
     /* m_data now contains up-to-date values for:
-     *  [probe(Ex),probe(Ey),probe(Ez),probe(|E|),
-     *   probe(Bx),probe(By),probe(Bz),probe(|B|)] */
+     *  [probe(Ex),probe(Ey),probe(Ez),
+     *   probe(Bx),probe(By),probe(Bz)] */
 }
 // end void FieldProbe::ComputeDiags
+
+void FieldProbe::WriteToFile (int step) const
+{
+    if(m_probe_in_domain_lev_0){
+        ReducedDiags::WriteToFile (step);
+    }
+}

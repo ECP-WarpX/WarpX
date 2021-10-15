@@ -49,26 +49,26 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    ReducedDiags(std::string rd_name);
+    ReducedDiags (std::string rd_name);
 
     /**
      * Virtual destructor for polymorphism
      */
-    virtual ~ReducedDiags() = default;
+    virtual ~ReducedDiags () = default;
 
     /**
      * function to compute diags
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags(int step) = 0;
+    virtual void ComputeDiags (int step) = 0;
 
     /**
      * write to file function
      *
      * @param[in] step current time step
      */
-    virtual void WriteToFile(int step) const;
+    virtual void WriteToFile (int step) const;
 
     /**
      * This function queries deprecated input parameters and aborts

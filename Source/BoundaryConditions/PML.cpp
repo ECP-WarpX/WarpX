@@ -564,14 +564,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
     if (m_dive_cleaning)
     {
-        pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dm, 3, ngf);
+        const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+        pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, 3, ngf);
         pml_F_fp->setVal(0.0);
     }
 
     if (m_divb_cleaning)
     {
         // TODO Shall we define a separate guard cells parameter ngG?
-        pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()), dm, 3, ngf);
+        const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
+                                                        : amrex::IntVect::TheCellVector();
+        pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, 3, ngf);
         pml_G_fp->setVal(0.0);
     }
 
@@ -664,14 +667,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
         if (m_dive_cleaning)
         {
-            pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()), cdm, 3, ngf);
+            const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+            pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba, F_nodal_flag), cdm, 3, ngf);
             pml_F_cp->setVal(0.0);
         }
 
         if (m_divb_cleaning)
         {
             // TODO Shall we define a separate guard cells parameter ngG?
-            pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()), cdm, 3, ngf);
+            const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
+                                                            : amrex::IntVect::TheCellVector();
+            pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, G_nodal_flag), cdm, 3, ngf);
             pml_G_cp->setVal(0.0);
         }
 
