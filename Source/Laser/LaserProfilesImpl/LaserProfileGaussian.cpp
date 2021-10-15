@@ -68,11 +68,11 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     // Get angle between p_X and stc_direction
     // in 2d, stcs are in the simulation plane
 #if AMREX_SPACEDIM == 3
-    const auto temp = m_params.stc_direction[0]*m_common_params.p_X[0] +
+    auto arg = m_params.stc_direction[0]*m_common_params.p_X[0] +
         m_params.stc_direction[1]*m_common_params.p_X[1] +
         m_params.stc_direction[2]*m_common_params.p_X[2];
-    temp = std::max(-1.0_rt,std::min(1.0_rt, temp)); //limit arg between -1 and 1
-    m_params.theta_stc = std::acos(temp);
+    targmp = std::max(-1.0_rt,std::min(1.0_rt, arg)); //limit arg between -1 and 1
+    m_params.theta_stc = std::acos(arg);
 #else
     m_params.theta_stc = 0.;
 #endif
