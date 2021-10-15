@@ -36,7 +36,7 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
 .. code-block:: bash
 
    # please set your project account
-   export proj=<yourProject>
+   export proj=<yourProject>  # LBNL/AMP: m3906_g
 
    # required dependencies
    module load cmake/git-20210830  # 3.22-dev
@@ -48,19 +48,19 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
    # module load nano  # TODO: request from support
 
    # optional: for openPMD support
-   module load cray-hdf5-parallel/1.12.0.6
+   module load cray-hdf5-parallel/1.12.0.7
    export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
 
    # optional: Python, ...
    # TODO
 
-   # GPU-aware MPI
-   export MPICH_GPU_SUPPORT_ENABLED=1
-
    # optional: an alias to request an interactive node for two hours
    function getNode() {
        salloc -N 1 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 4 -A $proj
    }
+
+   # GPU-aware MPI
+   export MPICH_GPU_SUPPORT_ENABLED=1
 
    # optimize CUDA compilation for A100
    export AMREX_CUDA_ARCH=8.0
@@ -107,8 +107,8 @@ Running
 
 .. _running-cpp-perlmutter-A100-GPUs:
 
-A100 GPUs
-^^^^^^^^^
+A100 GPUs (40 GB)
+^^^^^^^^^^^^^^^^^
 
 The batch script below can be used to run a WarpX simulation on multiple nodes (change ``-N`` accordingly) on the supercomputer Perlmutter at NERSC.
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
@@ -122,6 +122,6 @@ To run a simulation, copy the lines above to a file ``batch_perlmutter.sh`` and 
 
 .. code-block:: bash
 
-   bsub batch_perlmutter.sh
+   sbatch batch_perlmutter.sh
 
 to submit the job.
