@@ -131,13 +131,13 @@ void FieldProbe::ComputeDiags (int step)
 
         const auto cell_size = gm.CellSizeArray();
 
-        const int i_probe = amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]);
+        const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
 #if (AMREX_SPACEDIM == 2)
-        const int j_probe = amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]);
+        const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
         const int k_probe = 0;
 #elif(AMREX_SPACEDIM == 3)
-        const int j_probe = amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]);
-        const int k_probe = amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]);
+        const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
+        const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
 #endif
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
