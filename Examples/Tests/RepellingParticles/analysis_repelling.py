@@ -58,7 +58,7 @@ beta2 = np.array(beta2)
 # Plot velocities, compare with theory
 w = 5.e12
 re = physical_constants['classical electron radius'][0]
-beta_th = np.sqrt( beta1[0]**2 - 2*w*re*np.log( (x2[0]-x1[0])/(x2-x1) ) )
+beta_th = np.sqrt( beta1[1]**2 - 2*w*re*np.log( (x2[1]-x1[1])/(x2-x1) ) )
 plt.plot( beta1, '+', label='Particle 1' )
 plt.plot( -beta2, 'x', label='Particle 2' )
 plt.plot( beta_th, '*', label='Theory' )
@@ -68,8 +68,8 @@ plt.ylabel('Normalized velocity')
 plt.savefig('Comparison.png')
 
 # Check that the results are close to the theory
-assert np.allclose( beta1, beta_th, atol=0.05 )
-assert np.allclose( beta2, beta_th, atol=0.05  )
+assert np.allclose( beta1[1:], beta_th[1:], atol=0.01 )
+assert np.allclose( -beta2[1:], beta_th[1:], atol=0.01  )
 
 # Run checksum regression test
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
