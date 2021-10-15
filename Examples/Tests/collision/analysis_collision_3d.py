@@ -26,6 +26,7 @@
 import glob
 import math
 import os
+import glob
 import re
 import sys
 
@@ -61,12 +62,8 @@ if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
 last_it = re.search('\d+', last_fn).group()
 # Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
 prefix = last_fn[:-len(last_it)]
-# Loop over all files in current directory and save those whose name matches the pattern
-# prefix + arbitrary number ('\d+'), in order to collect all output files in fn_list.
-fn_list = []
-for fn in os.listdir('.'):
-    if re.match(prefix + '\d+', fn):
-        fn_list.append(fn)
+# Collect all output files in fn_list (names match pattern prefix + arbitrary number)
+fn_list = glob.glob(prefix + '*[0-9]')
 
 error = 0.0
 nt = 0
