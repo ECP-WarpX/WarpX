@@ -30,6 +30,9 @@ jobs:
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py
 
+# TODO (needs debugging)
+# --diagformat=openpmd
+
   build_win_clang:
     name: Clang C++17 w/ OMP w/o MPI
     runs-on: windows-2019
@@ -59,3 +62,6 @@ jobs:
         python3 -m pip install . -vv --no-build-isolation
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py
+
+# TODO (needs debugging)
+# --diagformat=openpmd
