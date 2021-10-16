@@ -10,6 +10,7 @@ target_sources(WarpX
     ParticleBoundaryBuffer.cpp
 )
 
+#add_subdirectory(Algorithms)
 add_subdirectory(Collision)
 #add_subdirectory(Deposition)
 add_subdirectory(ElementaryProcess)
