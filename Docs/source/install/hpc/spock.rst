@@ -89,8 +89,8 @@ Running
 
 .. _running-cpp-spock-MI100-GPUs:
 
-MI100 GPUs
-^^^^^^^^^^
+MI100 GPUs (32 GB)
+^^^^^^^^^^^^^^^^^^
 
 After requesting an interactive node with the ``getNode`` alias above, run a simulation like this, here using 4 MPI ranks:
 

@@ -1,6 +1,7 @@
 #include "BackTransformFunctor.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
@@ -70,11 +71,13 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         tmp_slice_ptr = std::make_unique<MultiFab> ( slice_ba, mf_dst.DistributionMap(),
-                                            slice->nComp(), 0 );
+                                                     slice->nComp(), 0 );
+        tmp_slice_ptr->setVal(0.0);
         // Parallel copy the lab-frame data from "slice" MultiFab with
         // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
         // ncomp=10 and dmap of the destination Multifab, which will store the final data
-        tmp_slice_ptr->ParallelCopy( *slice, 0, 0, slice->nComp() );
+        WarpXCommUtil::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, slice->nComp(),
+                                    IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
         // Now we will cherry pick only the user-defined fields from
         // tmp_slice_ptr to dst_mf
         const int k_lab = m_k_index_zlab[i_buffer];

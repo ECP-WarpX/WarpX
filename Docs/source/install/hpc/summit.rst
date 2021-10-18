@@ -166,8 +166,8 @@ Running
 
 .. _running-cpp-summit-V100-GPUs:
 
-V100 GPUs
-^^^^^^^^^
+V100 GPUs (16GB)
+^^^^^^^^^^^^^^^^
 
 The batch script below can be used to run a WarpX simulation on 2 nodes on
 the supercomputer Summit at OLCF. Replace descriptions between chevrons ``<>``
