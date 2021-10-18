@@ -653,7 +653,7 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     amrex::Real buffer_zmax_lab = m_snapshot_domain_lab[i_buffer].hi( m_moving_window_dir );
     if ( ( m_current_z_boost[i_buffer] < boost_domain.lo(m_moving_window_dir) ) or
          ( m_current_z_boost[i_buffer] > boost_domain.hi(m_moving_window_dir) ) or
-         ( m_current_z_lab[i_buffer] < buffer_zmin_lab ) or
+          ( m_current_z_lab[i_buffer] < buffer_zmin_lab ) or
          ( m_current_z_lab[i_buffer] > buffer_zmax_lab ) )
     {
         // the slice is not in the boosted domain or lab-frame domain
@@ -676,6 +676,11 @@ BTDiagnostics::Flush (int i_buffer)
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
+    amrex::Print() << " Particles in buffuer : " << m_totalParticles_in_buffer[i_buffer][0];
+    amrex::Print() << " already flushed : " << m_totalParticles_flushed_already[i_buffer][0];
+    amrex::Print() << " Particles in buffuer : " << m_totalParticles_in_buffer[i_buffer][1];
+    amrex::Print() << " already flushed : " << m_totalParticles_flushed_already[i_buffer][1];
+    amrex::Print() << "\n";
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
