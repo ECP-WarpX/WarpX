@@ -192,9 +192,9 @@ int WarpX::n_current_deposition_buffer = -1;
 int WarpX::do_nodal = false;
 
 #ifdef AMREX_USE_GPU
-bool WarpX::do_device_synchronize_before_profile = true;
+int WarpX::do_device_synchronize = 1;
 #else
-bool WarpX::do_device_synchronize_before_profile = false;
+int WarpX::do_device_synchronize = 0;
 #endif
 
 WarpX* WarpX::m_instance = nullptr;
@@ -267,7 +267,7 @@ WarpX::WarpX ()
     multi_diags = std::make_unique<MultiDiagnostics>();
 
     /** create object for reduced diagnostics */
-    reduced_diags = new MultiReducedDiags();
+    reduced_diags = std::make_unique<MultiReducedDiags>();
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
@@ -412,8 +412,6 @@ WarpX::~WarpX ()
     for (int lev = 0; lev < nlevs_max; ++lev) {
         ClearLevel(lev);
     }
-
-    delete reduced_diags;
 }
 
 void
@@ -531,7 +529,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_multi_J", do_multi_J);
         if (do_multi_J)
         {
-            pp_warpx.get("do_multi_J_n_depositions", do_multi_J_n_depositions);
+            getWithParser(pp_warpx, "do_multi_J_n_depositions", do_multi_J_n_depositions);
         }
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
@@ -544,9 +542,9 @@ WarpX::ReadParameters ()
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
-        pp_warpx.query("do_device_synchronize_before_profile", do_device_synchronize_before_profile);
+        pp_warpx.query("do_device_synchronize", do_device_synchronize);
 
-        // pp.query returns 1 if argument zmax_plasma_to_compute_max_step is
+        // queryWithParser returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
         do_compute_max_step_from_zmax =
             queryWithParser(pp_warpx, "zmax_plasma_to_compute_max_step",
@@ -580,7 +578,7 @@ WarpX::ReadParameters ()
 
             moving_window_x = geom[0].ProbLo(moving_window_dir);
 
-            pp_warpx.get("moving_window_v", moving_window_v);
+            getWithParser(pp_warpx, "moving_window_v", moving_window_v);
             moving_window_v *= PhysConst::c;
         }
 
@@ -684,22 +682,22 @@ WarpX::ReadParameters ()
         }
 #endif
 
-        pp_warpx.query("num_mirrors", num_mirrors);
+        queryWithParser(pp_warpx, "num_mirrors", num_mirrors);
         if (num_mirrors>0){
             mirror_z.resize(num_mirrors);
             getArrWithParser(pp_warpx, "mirror_z", mirror_z, 0, num_mirrors);
             mirror_z_width.resize(num_mirrors);
             getArrWithParser(pp_warpx, "mirror_z_width", mirror_z_width, 0, num_mirrors);
             mirror_z_npoints.resize(num_mirrors);
-            pp_warpx.getarr("mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
+            getArrWithParser(pp_warpx, "mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
         }
 
         pp_warpx.query("serialize_ics", serialize_ics);
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
         pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
-        pp_warpx.query("n_field_gather_buffer", n_field_gather_buffer);
-        pp_warpx.query("n_current_deposition_buffer", n_current_deposition_buffer);
+        queryWithParser(pp_warpx, "n_field_gather_buffer", n_field_gather_buffer);
+        queryWithParser(pp_warpx, "n_current_deposition_buffer", n_current_deposition_buffer);
 
         amrex::Real quantum_xi_tmp;
         int quantum_xi_is_specified = queryWithParser(pp_warpx, "quantum_xi", quantum_xi_tmp);
@@ -970,7 +968,8 @@ WarpX::ReadParameters ()
         sort_intervals = IntervalsParser(sort_intervals_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
-        bool sort_bin_size_is_specified = pp_warpx.queryarr("sort_bin_size", vect_sort_bin_size);
+        bool sort_bin_size_is_specified = queryArrWithParser(pp_warpx, "sort_bin_size",
+                                                            vect_sort_bin_size, 0, AMREX_SPACEDIM);
         if (sort_bin_size_is_specified){
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
@@ -1086,7 +1085,7 @@ WarpX::ReadParameters ()
         if (use_default_v_galilean) {
             m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
         } else {
-            pp_psatd.query("v_galilean", m_v_galilean);
+            queryArrWithParser(pp_psatd, "v_galilean", m_v_galilean, 0, 3);
         }
 
         // Check whether the default comoving velocity should be used
@@ -1098,7 +1097,7 @@ WarpX::ReadParameters ()
         }
         else
         {
-            pp_psatd.query("v_comoving", m_v_comoving);
+            queryArrWithParser(pp_psatd, "v_comoving", m_v_comoving, 0, 3);
         }
 
         // Galilean and comoving algorithms should not be used together
@@ -1441,7 +1440,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::m_v_galilean,
         WarpX::m_v_comoving,
         safe_guard_cells,
-        WarpX::do_electrostatic);
+        WarpX::do_electrostatic,
+        WarpX::do_multi_J,
+        WarpX::fft_do_time_averaging);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
@@ -2069,7 +2070,7 @@ WarpX::UpperCorner(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev)
+WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev)
 {
     amrex::Real cur_time = gett_new(lev);
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);

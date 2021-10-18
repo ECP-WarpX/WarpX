@@ -20,6 +20,10 @@ from scipy.constants import epsilon_0 as eps0
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
+# gamma threshold to switch between the relativistic expression of
+# the kinetic energy and its Taylor expansion.
+gamma_relativistic_threshold = 1.005
+
 fn = sys.argv[1]
 
 ds = yt.load(fn)
@@ -40,7 +44,12 @@ w  = ad['electrons', 'particle_weight'].to_ndarray()
 p2 = px**2 + py**2 + pz**2
 
 # Accumulate particle energy, store number of particles and sum of weights
-values_yt['electrons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_e**2 * c**4) - m_e * c**2) * w)
+e_u2 = p2/(m_e**2 * c**2)
+e_gamma = np.sqrt(1 + e_u2)
+e_energy =  (m_e * c**2)*np.where(e_gamma > gamma_relativistic_threshold,
+    e_gamma-1,
+    (e_u2)/2 - (e_u2**2)/8 + (e_u2**3)/16 - (e_u2**4)*(5/128) + (e_u2**5)*(7/256))
+values_yt['electrons: particle energy'] = np.sum(e_energy * w)
 values_yt['electrons: particle momentum in x'] = np.sum(px * w)
 values_yt['electrons: particle momentum in y'] = np.sum(py * w)
 values_yt['electrons: particle momentum in z'] = np.sum(pz * w)
@@ -54,8 +63,13 @@ pz = ad['protons', 'particle_momentum_z'].to_ndarray()
 w  = ad['protons', 'particle_weight'].to_ndarray()
 p2 = px**2 + py**2 + pz**2
 
-# Accumulate particle energy, store number of particles and sum of weights
-values_yt['protons: particle energy'] = np.sum((np.sqrt(p2 * c**2 + m_p**2 * c**4) - m_p * c**2) * w)
+# Accumulate particle energy, store number of particles and sum of
+p_u2 = p2/(m_p**2 * c**2)
+p_gamma = np.sqrt(1 + p_u2)
+p_energy =  (m_p * c**2)*np.where(p_gamma > gamma_relativistic_threshold,
+    p_gamma-1,
+    (p_u2)/2 - (p_u2**2)/8 + (p_u2**3)/16 - (p_u2**4)*(5/128) + (p_u2**5)*(7/256))
+values_yt['protons: particle energy'] = np.sum(p_energy * w)
 values_yt['protons: particle momentum in x'] = np.sum(px * w)
 values_yt['protons: particle momentum in y'] = np.sum(py * w)
 values_yt['protons: particle momentum in z'] = np.sum(pz * w)
@@ -178,6 +192,13 @@ values_yt['maximum of |By|'] = np.amax(np.abs(By))
 values_yt['maximum of |Bz|'] = np.amax(np.abs(Bz))
 values_yt['maximum of |E|'] = np.amax(np.sqrt(Ex**2 + Ey**2 + Ez**2))
 values_yt['maximum of |B|'] = np.amax(np.sqrt(Bx**2 + By**2 + Bz**2))
+probe_pos = (24, 24, 24)
+values_yt['Ex at probe'] = Ex[probe_pos]
+values_yt['Ey at probe'] = Ey[probe_pos]
+values_yt['Ez at probe'] = Ez[probe_pos]
+values_yt['Bx at probe'] = Bx[probe_pos]
+values_yt['By at probe'] = By[probe_pos]
+values_yt['Bz at probe'] = Bz[probe_pos]
 values_yt['maximum of rho'] = np.amax(rho)
 values_yt['minimum of rho'] = np.amin(rho)
 values_yt['electrons: maximum of |rho|'] = np.amax(np.abs(rho_electrons))
@@ -198,6 +219,7 @@ EPdata = np.genfromtxt('./diags/reducedfiles/EP.txt')  # Particle energy
 PFdata = np.genfromtxt('./diags/reducedfiles/PF.txt')  # Field momentum
 PPdata = np.genfromtxt('./diags/reducedfiles/PP.txt')  # Particle momentum
 MFdata = np.genfromtxt('./diags/reducedfiles/MF.txt')  # Field maximum
+FPdata = np.genfromtxt('./diags/reducedfiles/FP.txt')  # Field probe
 MRdata = np.genfromtxt('./diags/reducedfiles/MR.txt')  # Rho maximum
 NPdata = np.genfromtxt('./diags/reducedfiles/NP.txt')  # Particle number
 FR_Maxdata = np.genfromtxt('./diags/reducedfiles/FR_Max.txt')  # Field Reduction using maximum
@@ -250,6 +272,12 @@ values_rd['maximum of |Bx|'] = MFdata[1][6]
 values_rd['maximum of |By|'] = MFdata[1][7]
 values_rd['maximum of |Bz|'] = MFdata[1][8]
 values_rd['maximum of |B|'] = MFdata[1][9]
+values_rd['Ex at probe'] = FPdata[1][2]
+values_rd['Ey at probe'] = FPdata[1][3]
+values_rd['Ez at probe'] = FPdata[1][4]
+values_rd['Bx at probe'] = FPdata[1][5]
+values_rd['By at probe'] = FPdata[1][6]
+values_rd['Bz at probe'] = FPdata[1][7]
 values_rd['maximum of rho'] = MRdata[1][2]
 values_rd['minimum of rho'] = MRdata[1][3]
 values_rd['electrons: maximum of |rho|'] = MRdata[1][4]

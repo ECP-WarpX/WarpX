@@ -416,6 +416,10 @@ WarpX::OneStep_nosub (Real cur_time)
         else {
             FillBoundaryE(guard_cells.ng_afterPushPSATD);
             FillBoundaryB(guard_cells.ng_afterPushPSATD);
+            if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
+                FillBoundaryF(guard_cells.ng_afterPushPSATD);
+            if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
+                FillBoundaryG(guard_cells.ng_afterPushPSATD);
         }
 
         // Synchronize E and B fields on nodal points
@@ -582,6 +586,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         FillBoundaryB(guard_cells.ng_alloc_EB);
         if (WarpX::do_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
         if (WarpX::do_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
+
+        // Synchronize E and B fields on nodal points
+        NodalSync(Efield_fp, Efield_cp);
+        NodalSync(Bfield_fp, Bfield_cp);
     }
     else
     {

@@ -8,6 +8,7 @@
 # --- This defines the wrapper functions that directly call the underlying compiled routines
 import os
 import sys
+import platform
 import atexit
 import ctypes
 from ctypes.util import find_library as _find_library
@@ -63,7 +64,11 @@ else:
         raise Exception('Undefined coordinate system %d'%_coord_sys)
     del _prob_lo, _coord_sys
 
-_libc = ctypes.CDLL(_find_library('c'))
+if platform.system() == 'Windows':
+    path_libc = _find_library('msvcrt')
+else:
+    path_libc = _find_library('c')
+_libc = ctypes.CDLL(path_libc)
 
 # this is a plain C/C++ shared library, not a Python module
 if os.name == 'nt':

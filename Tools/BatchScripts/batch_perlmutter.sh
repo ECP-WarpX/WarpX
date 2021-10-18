@@ -36,6 +36,9 @@
 #
 # ============
 
+# GPU-aware MPI
+export MPICH_GPU_SUPPORT_ENABLED=1
+
 EXE=./warpx
 #EXE=../WarpX/build/bin/warpx.3d.MPI.CUDA.DP.OPMD.QED
 #EXE=./main3d.gnu.TPROF.MPI.CUDA.ex

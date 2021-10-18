@@ -245,7 +245,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool serialize_ics;
+    static bool serialize_ics; //! Serialize the initial conditions
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -273,7 +273,7 @@ public:
     static int do_multi_J_n_depositions;
     static int J_linear_in_time;
 
-    static bool do_device_synchronize_before_profile;
+    static int do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
@@ -375,10 +375,10 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
     amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
-    amrex::Array<amrex::Real,3> m_v_comoving = {{0.}};
+    amrex::Vector<amrex::Real> m_v_comoving{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -386,7 +386,7 @@ public:
     amrex::Vector<int> mirror_z_npoints;
 
     /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
-    MultiReducedDiags* reduced_diags;
+    std::unique_ptr<MultiReducedDiags> reduced_diags;
 
     void applyMirrors(amrex::Real time);
 
@@ -611,7 +611,7 @@ public:
     /*
       /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
      */
-    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
+    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 
