@@ -81,6 +81,10 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
+    See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
+    for details of the MLMG solver (the default solver used with electrostatic
+    simulations).
+
 * ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
@@ -90,12 +94,13 @@ Overall simulation parameters
 
 * ``warpx.self_fields_absolute_tolerance`` (`float`, default: 0.0)
     The absolute tolerance with which the space-charge fields should be
-    calculated. More specifically, the acceptable residual with which the
-    solution can be considered converged. In general this should be left as the
-    default, but in cases where the simulation state changes very little between
-    steps it can occur that the initial guess for the MLMG solver is so close
-    to the converged value that is fails to improve that solution sufficiently
-    to reach the ``self_fields_required_precision`` value.
+    calculated in units of :math:`V\cdot m`. More specifically, the acceptable
+    residual with which the solution can be considered converged. In general
+    this should be left as the default, but in cases where the simulation state
+    changes very little between steps it can occur that the initial guess for
+    the MLMG solver is so close to the converged value that is fails to improve
+    that solution sufficiently to reach the ``self_fields_required_precision``
+    value.
 
 * ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
@@ -607,12 +612,13 @@ Particle initialization
 
 * ``<species_name>.self_fields_absolute_tolerance`` (`float`, default: 0.0)
     The absolute tolerance with which the space-charge fields should be
-    calculated. More specifically, the acceptable residual with which the
-    solution can be considered converged. In general this should be left as the
-    default, but in cases where the simulation state changes very little between
-    steps it can occur that the initial guess for the MLMG solver is so close
-    to the converged value that is fails to improve that solution sufficiently
-    to reach the ``self_fields_required_precision`` value.
+    calculated in units of :math:`V\cdot m`. More specifically, the acceptable
+    residual with which the solution can be considered converged. In general
+    this should be left as the default, but in cases where the simulation state
+    changes very little between steps it can occur that the initial guess for
+    the MLMG solver is so close to the converged value that is fails to improve
+    that solution sufficiently to reach the ``self_fields_required_precision``
+    value.
 
 * ``<species_name>.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for initial space-charge
