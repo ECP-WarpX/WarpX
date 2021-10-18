@@ -672,6 +672,8 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       // This will trigger meta-data flush for particles
       m_ParticleSetUp = -1;
   }
+  amrex::Print () << " ParticleFlushOffset : " << ParticleFlushOffset << "\n";
+  amrex::Print () << " NewParticleVectorSize : " << NewParticleVectorSize << "\n";
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
   SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
   // open files from all processors, in case some will not contribute below
@@ -681,7 +683,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
       // For BTD, the offset include the number of particles already flushed
       if (isBTD) offset += ParticleFlushOffset;
-
+      amrex::Print() << " offset : " << offset << "\n";
       for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
          auto const numParticleOnTile = pti.numParticles();
          uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
@@ -689,6 +691,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
          // get position and particle ID from aos
          // note: this implementation iterates the AoS 4x...
          // if we flush late as we do now, we can also copy out the data in one go
+         amrex::Print() << " numParticleOnTile : " << numParticleOnTile << "\n";
          const auto& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
          {
            // Save positions
@@ -772,7 +775,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<std::string>& real_comp_names,
                       const amrex::Vector<int>& write_int_comp,
                       const amrex::Vector<std::string>& int_comp_names,
-                      unsigned long long np, bool isBTD = false) const
+                      const unsigned long long &np, bool isBTD) const
 {
     std::string options = "{}";
     if (isBTD) options = "{ \"resizable\": true }";
@@ -867,7 +870,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
   auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
   auto const& soa = pti.GetStructOfArrays();
-
+  amrex::Print() << " save real propo : " << offset << "\n";
   // first we concatinate the AoS into contiguous arrays
   {
     for( auto idx=0; idx<m_NumAoSRealAttributes; idx++ ) {

@@ -217,7 +217,7 @@ private:
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
                const amrex::Vector<std::string>& int_comp_names,
-               unsigned long long np, bool isBTD) const;
+               const unsigned long long &np, bool isBTD = false) const;
 
   /** This function saves the values of the entries for particle properties
    *
