@@ -94,14 +94,10 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // Allocate fields for potential
+    // Reset potential to 0 before the field solve
     const int num_levels = max_level + 1;
-    Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     for (int lev = 0; lev <= max_level; lev++) {
-        BoxArray nba = boxArray(lev);
-        nba.surroundingNodes();
-        phi[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 1);
-        phi[lev]->setVal(0.);
+        phi_fp[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)
@@ -124,11 +120,11 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho_fp, phi, beta, pc.self_fields_required_precision, pc.self_fields_max_iters, pc.self_fields_verbosity );
+    computePhi( rho_fp, phi_fp, beta, pc.self_fields_required_precision, pc.self_fields_max_iters, pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
-    computeE( Efield_fp, phi, beta );
-    computeB( Bfield_fp, phi, beta );
+    computeE( Efield_fp, phi_fp, beta );
+    computeB( Bfield_fp, phi_fp, beta );
 
 }
 
