@@ -312,7 +312,7 @@ For post-processing, most users use Python via OLCFs's `Jupyter service <https:/
 We usually just install our software on-the-fly on Summit.
 When starting up a post-processing session, run this in your first cells:
 
-.. conda-block:: bash
+.. code-block:: bash
 
    # work-around for OLCFHELP-4242
    !jupyter serverextension enable --py --sys-prefix dask_labextension
