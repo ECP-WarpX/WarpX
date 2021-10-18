@@ -1,4 +1,4 @@
-stop_time = 5.303669113650618e-09
+stop_time = 8.019424744948937e-09
 amr.n_cell = 32 32
 amr.max_grid_size = 128
 amr.max_level = 0
@@ -20,7 +20,7 @@ my_constants.zmax = 0.53
 my_constants.pi = 3.141592653589793
 my_constants.theta = pi/8
 
-warpx.eb_implicit_function = "xr=x*cos(-theta)+z*sin(-theta); zr=-x*sin(-theta)+z*cos(-theta); max(max(xr+xmin,-(xr+xmax)), max(zr+zmin,-(zr+zmax)))" #"xr=x*cos(theta)+z*sin(theta); zr=-x*sin(theta)+z*cos(theta); max(max(xr-0.5,-0.5-xr), max(zr-0.5,-0.5-zr))"
+warpx.eb_implicit_function = "xr=x*cos(-theta)+z*sin(-theta); zr=-x*sin(-theta)+z*cos(-theta); max(max(xr+xmin,-(xr+xmax)), max(zr+zmin,-(zr+zmax)))"
 
 my_constants.m = 0
 my_constants.p = 1
@@ -39,7 +39,6 @@ warpx.By_external_grid_function(x,y,z) = mu_0 *
 warpx.Bz_external_grid_function(x,y,z) = 0
 
 diagnostics.diags_names = diag1
-diag1.intervals = 1
+diag1.intervals = 1000
 diag1.diag_type = Full
-diag1.plot_raw_fields = 1
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz
