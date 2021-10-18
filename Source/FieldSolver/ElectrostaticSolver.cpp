@@ -236,7 +236,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
-                   Real const absolute_tolerance,
+                   Real absolute_tolerance,
                    int const max_iters,
                    int const verbosity) const
 {
@@ -324,8 +324,16 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         linop.setSigma( lev, *sigma[lev] );
     }
 
+    amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
+        max_norm_b = std::max(max_norm_b, rho[lev]->norm0());
+    }
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+
+    bool always_use_bnorm = (max_norm_b > 0);
+    if (!always_use_bnorm) {
+        absolute_tolerance = std::max(absolute_tolerance, 1e-6);
     }
 
     // Solve the Poisson equation
@@ -333,6 +341,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
+    mlmg.setAlwaysUseBNorm(always_use_bnorm);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
                 required_precision, absolute_tolerance );
 }
@@ -358,7 +367,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                             amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                             std::array<Real, 3> const beta,
                             Real const required_precision,
-                            Real const absolute_tolerance,
+                            Real absolute_tolerance,
                             int const max_iters,
                             int const verbosity) const
 {
@@ -420,13 +429,22 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // Solve the Poisson equation
     linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
 
+    amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
+        max_norm_b = std::max(max_norm_b, rho[lev]->norm0());
+    }
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+
+    bool always_use_bnorm = (max_norm_b > 0);
+    if (!always_use_bnorm) {
+        absolute_tolerance = std::max(absolute_tolerance, 1e-6);
     }
 
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
+    mlmg.setAlwaysUseBNorm(always_use_bnorm);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
                 required_precision, absolute_tolerance );
 

@@ -83,7 +83,13 @@ Overall simulation parameters
 
     See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
     for details of the MLMG solver (the default solver used with electrostatic
-    simulations).
+    simulations). The default behavior of the code is to check whether there is
+    non-zero charge density in the system and if so force the MLMG solver to
+    use the solution max norm when checking convergence. If there is no charge
+    density, the MLMG solver will switch to using the initial guess max norm
+    error when evaluating convergence and an absolute error tolerance of at
+    least :math:`10^{-6}` :math:`V\cdot m` will be used (the user can still
+    specify a larger value using ``warpx.self_fields_absolute_tolerance``).
 
 * ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
