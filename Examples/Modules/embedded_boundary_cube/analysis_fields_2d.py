@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import yt
-import os, sys
+import sys
 from scipy.constants import mu_0, pi, c
 import numpy as np
 
