@@ -88,7 +88,7 @@ Overall simulation parameters
     use the solution max norm when checking convergence. If there is no charge
     density, the MLMG solver will switch to using the initial guess max norm
     error when evaluating convergence and an absolute error tolerance of at
-    least :math:`10^{-6}` :math:`V\cdot m` will be used (the user can still
+    least :math:`10^{-6}` :math:`\mathrm{V/m}^2` will be used (the user can still
     specify a larger value using ``warpx.self_fields_absolute_tolerance``).
 
 * ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
@@ -100,7 +100,7 @@ Overall simulation parameters
 
 * ``warpx.self_fields_absolute_tolerance`` (`float`, default: 0.0)
     The absolute tolerance with which the space-charge fields should be
-    calculated in units of :math:`V\cdot m`. More specifically, the acceptable
+    calculated in units of :math:`\mathrm{V/m}^2`. More specifically, the acceptable
     residual with which the solution can be considered converged. In general
     this should be left as the default, but in cases where the simulation state
     changes very little between steps it can occur that the initial guess for
@@ -618,7 +618,7 @@ Particle initialization
 
 * ``<species_name>.self_fields_absolute_tolerance`` (`float`, default: 0.0)
     The absolute tolerance with which the space-charge fields should be
-    calculated in units of :math:`V\cdot m`. More specifically, the acceptable
+    calculated in units of :math:`\mathrm{V/m}^2`. More specifically, the acceptable
     residual with which the solution can be considered converged. In general
     this should be left as the default, but in cases where the simulation state
     changes very little between steps it can occur that the initial guess for

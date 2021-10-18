@@ -640,14 +640,14 @@ public:
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
-                       amrex::Real const absolute_tolerance,
+                       amrex::Real absolute_tolerance,
                        int const max_iters,
                        int const verbosity) const;
     void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
-                       amrex::Real const absolute_tolerance,
+                       amrex::Real absolute_tolerance,
                        int const max_iters,
                        int const verbosity) const;
 

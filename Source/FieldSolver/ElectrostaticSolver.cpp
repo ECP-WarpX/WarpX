@@ -327,13 +327,13 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
-        max_norm_b = std::max(max_norm_b, rho[lev]->norm0());
+        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
 
     bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
-        absolute_tolerance = std::max(absolute_tolerance, 1e-6);
+        absolute_tolerance = amrex::max(absolute_tolerance, 1e-6);
     }
 
     // Solve the Poisson equation
@@ -432,13 +432,13 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
-        max_norm_b = std::max(max_norm_b, rho[lev]->norm0());
+        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
 
     bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
-        absolute_tolerance = std::max(absolute_tolerance, 1e-6);
+        absolute_tolerance = amrex::max(absolute_tolerance, 1e-6);
     }
 
     MLMG mlmg(linop);
