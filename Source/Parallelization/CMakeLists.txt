@@ -3,4 +3,5 @@ target_sources(WarpX
     GuardCellManager.cpp
     WarpXComm.cpp
     WarpXRegrid.cpp
+    WarpXCommUtil.cpp
 )
