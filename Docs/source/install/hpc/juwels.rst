@@ -94,6 +94,8 @@ Running
 Queue: gpus (4 x Nvidia V100 GPUs)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The `Juwels GPUs <https://apps.fz-juelich.de/jsc/hps/juwels/configuration.html>`__ are V100 (16GB) and A100 (40GB).
+
 An example submission script reads
 
 .. literalinclude:: ../../../../Tools/BatchScripts/batch_juwels.sh
