@@ -14,6 +14,7 @@ sudo apt-get install -y \
     cmake               \
     gnupg               \
     libopenmpi-dev      \
+    ninja-build         \
     openmpi-bin         \
     pkg-config          \
     wget
