@@ -325,7 +325,7 @@ For post-processing, most users use Python via NERSC's `Jupyter service <https:/
 As a one-time preparatory setup, `create your own Conda environment as described in NERSC docs <https://docs.nersc.gov/services/jupyter/#conda-environments-as-kernels>`__.
 In this manual, we often use this ``conda create`` line over the officially documented one:
 
-.. conda-block:: bash
+.. code-block:: bash
 
    conda create -n myenv -c conda-forge python mamba ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
 
