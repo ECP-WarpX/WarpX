@@ -159,7 +159,7 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
 
     return stencils
 
-def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 256):
+def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, nx = 256, ny = 256, nz = 256):
     """
     Compute nodal and staggered stencils along all directions.
 
@@ -181,11 +181,11 @@ def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 2
         Spectral order along z.
     v_gal : float
         Galilean velocity.
-    Nx : int, optional (default = 256)
+    nx : int, optional (default = 256)
         Number of mesh points along x.
-    Ny : int, optional (default = 256)
+    ny : int, optional (default = 256)
         Number of mesh points along y.
-    Nz : int, optional (default = 256)
+    nz : int, optional (default = 256)
         Number of mesh points along z.
 
     Returns
@@ -194,9 +194,9 @@ def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 2
         Nodal and staggered stencils along all directions.
     """
     # k vectors
-    kx_arr = 2 * np.pi * np.fft.fftfreq(Nx, dx)
-    ky_arr = 2 * np.pi * np.fft.fftfreq(Ny, dy)
-    kz_arr = 2 * np.pi * np.fft.fftfreq(Nz, dz)
+    kx_arr = 2 * np.pi * np.fft.fftfreq(nx, dx)
+    ky_arr = 2 * np.pi * np.fft.fftfreq(ny, dy)
+    kz_arr = 2 * np.pi * np.fft.fftfreq(nz, dz)
 
     # Centered modified k vectors
     kx_arr_c = modified_k(kx_arr, dx, nox, False) if nox != 'inf' else kx_arr
@@ -373,22 +373,22 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
     stencils = compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal)
 
     # Maximum number of cells
-    nx = 65
-    ny = 65
-    nz = 65
+    ncx = 65
+    ncy = 65
+    ncz = 65
 
     # Array of cell numbers
-    cx = np.arange(nx)
-    cy = np.arange(ny)
-    cz = np.arange(nz)
+    cx = np.arange(ncx)
+    cy = np.arange(ncy)
+    cz = np.arange(ncz)
 
     # Arrays of stencils
-    stencils['x']['nodal'] = stencils['x']['nodal'][:nx]
-    stencils['x']['stagg'] = stencils['x']['stagg'][:nx]
-    stencils['y']['nodal'] = stencils['y']['nodal'][:ny]
-    stencils['y']['stagg'] = stencils['y']['stagg'][:ny]
-    stencils['z']['nodal'] = stencils['z']['nodal'][:nz]
-    stencils['z']['stagg'] = stencils['z']['stagg'][:nz]
+    stencils['x']['nodal'] = stencils['x']['nodal'][:ncx]
+    stencils['x']['stagg'] = stencils['x']['stagg'][:ncx]
+    stencils['y']['nodal'] = stencils['y']['nodal'][:ncy]
+    stencils['y']['stagg'] = stencils['y']['stagg'][:ncy]
+    stencils['z']['nodal'] = stencils['z']['nodal'][:ncz]
+    stencils['z']['stagg'] = stencils['z']['stagg'][:ncz]
 
     # Compute minimum number of guard cells for given error threshold
     # (number of guard cells such that the stencil measure is not larger than the error threshold)
