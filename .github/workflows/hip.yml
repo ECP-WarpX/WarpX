@@ -10,7 +10,9 @@ jobs:
   build_hip_3d_sp:
     name: HIP 3D SP
     runs-on: ubuntu-20.04
-    env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"}
+    env:
+      CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"
+      CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
@@ -51,7 +53,9 @@ jobs:
   build_hip_2d_dp:
     name: HIP 2D DP
     runs-on: ubuntu-20.04
-    env: {CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"}
+    env:
+      CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"
+      CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2

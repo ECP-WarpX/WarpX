@@ -192,6 +192,10 @@ Setting up the field mesh
     automatically set so that it is one cell larger than
     ``n_current_deposition_buffer``, on the fine grid.
 
+* ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
+    Perform MPI communications for field guard regions in single precision.
+    Only meaningful for ``WarpX_PRECISION=DOUBLE``.
+
 * ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
     in the list will deposit their charge/current directly on the main grid
@@ -1639,7 +1643,7 @@ Numerics and algorithms
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
-* ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+* ``warpx.do_device_synchronize`` (`int`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 

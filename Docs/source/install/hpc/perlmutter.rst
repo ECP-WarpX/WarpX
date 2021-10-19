@@ -125,3 +125,16 @@ To run a simulation, copy the lines above to a file ``batch_perlmutter.sh`` and 
    sbatch batch_perlmutter.sh
 
 to submit the job.
+
+
+.. _post-processing-perlmutter:
+
+Post-Processing
+---------------
+
+For post-processing, most users use Python via NERSC's `Jupyter service <https://jupyter.nersc.gov>`__ (`Docs <https://docs.nersc.gov/services/jupyter/>`__).
+
+Please follow the same guidance as for :ref:`NERSC Cori post-processing <post-processing-cori>`.
+
+The Perlmutter ``$PSCRATCH`` filesystem is currently not yet available on Jupyter.
+Thus, store or copy your data to Cori's ``$SCRATCH`` or use the Community FileSystem (CFS) for now.

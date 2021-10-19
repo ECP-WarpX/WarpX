@@ -13,25 +13,14 @@ jobs:
     name: oneAPI ICC SP&DP
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
+    # For oneAPI, Ninja is slower than the default:
+    #env:
+    #  CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo apt-get -qqq update
-        sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
-        sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-        sudo apt-get update
-        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-        sudo chmod a+x /usr/local/bin/cmake-easyinstall
-        export CEI_SUDO="sudo"
-        CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.14.2 -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
+        .github/workflows/dependencies/icc.sh
     - name: build WarpX
       run: |
         set +e
@@ -64,7 +53,10 @@ jobs:
     name: oneAPI ICX SP
     runs-on: ubuntu-20.04
     # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
-    env: {CXXFLAGS: "-Werror -Wno-error=pass-failed -Wno-tautological-constant-compare"}
+    env:
+      CXXFLAGS: "-Werror -Wno-error=pass-failed -Wno-tautological-constant-compare"
+    # For oneAPI, Ninja is slower than the default:
+    #  CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
@@ -107,7 +99,10 @@ jobs:
     name: oneAPI DPC++ SP
     runs-on: ubuntu-20.04
     # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
-    env: {CXXFLAGS: "-Werror -Wno-tautological-constant-compare"}
+    env:
+      CXXFLAGS: "-Werror -Wno-tautological-constant-compare"
+    # For oneAPI, Ninja is slower than the default:
+    #  CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
@@ -129,14 +124,11 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
           -DWarpX_EB=ON                \
-          -DWarpX_LIB=OFF              \
+          -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
-     # TODO: re-enable -DWarpX_LIB=ON as soon as "dpcpp -fPIC" segfaults are
-     #       fixed
-
 
      # Skip this as it will copy the binary artifacts and we are tight on disk space
      #   python3 -m pip install --upgrade pip

@@ -163,6 +163,9 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
+    //! perform field communications in single precision
+    static int do_single_precision_comms;
+
     // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
     static amrex::IntVect fill_guards;
 
@@ -223,7 +226,7 @@ public:
     static int do_multi_J_n_depositions;
     static int J_linear_in_time;
 
-    static bool do_device_synchronize_before_profile;
+    static int do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
