@@ -7,6 +7,9 @@ The  ⚠️ warning logger ⚠️ allows grouping the warning messages raised du
 simulation, in order to display them together in a list
 (e.g., right after step 1 and at the end of the simulation).
 
+General description
+-------------------
+
 If no warning messages are raised, the warning list should look as follows:
 
 .. code-block:: sh
@@ -59,11 +62,12 @@ where:
 Entries are sorted first by priority (high priority first), then by topic (alphabetically) and finally by text message (alphabetically).
 
 How to record a warning for later display
------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the code, instead of using ``amrex::Warning`` to immediately print a warning message, the following method should be called:
 
 .. code-block:: cpp
+
    WarpX::GetInstance().RecordWarning(
       "QED",
       "Using default value (2*me*c^2) for photon energy creation threshold",
@@ -74,11 +78,12 @@ In this example, ``QED`` is the topic, ``Using [...]`` is the warning message an
 In case the user wants to also print the warning messages immediately (as before this PR), instead of recording the message for laser use, ~~WarpX can be compiled with `WARPX_WARN_IMMEDIATELY`. This is exposed in the `cmake` file.~~ the runtime parameter ``warpx.always_warn_immediately`` can be set to ``1``.
 
 How to print the warning list
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The warning list can be printed as follows:
 
 .. code-block:: cpp
+
    warpx.PrintGlobalWarnings("THE END");
 
 where the string is a temporal markers which appears in the warning list.
