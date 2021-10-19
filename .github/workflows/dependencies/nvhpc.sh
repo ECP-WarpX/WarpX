@@ -13,6 +13,7 @@ sudo apt-get install -y \
     cmake               \
     environment-modules \
     gnupg               \
+    ninja-build         \
     pkg-config          \
     wget
 
