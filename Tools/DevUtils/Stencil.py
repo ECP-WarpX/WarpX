@@ -283,14 +283,14 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     ax.set_ylabel(r'$\Gamma({:s})$'.format(label))
     ax.set_title(r'Stencil extent along ${:s}$'.format(label))
     fig.tight_layout()
-    fig_name = path + 'figure_stencil_' + label
+    fig_name = os.path.join(path, 'figure_stencil_' + label)
     if name:
         fig_name += '_' + name
     fig.savefig(fig_name + '.pdf', dpi = 100)
     fig.savefig(fig_name + '.png', dpi = 100)
 
 def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
-             ex = 1e-07, ey = 1e-07, ez = 1e-07, path = './', name = ''):
+             ex = 1e-07, ey = 1e-07, ez = 1e-07, path = '.', name = ''):
     """
     Main function.
 
@@ -320,7 +320,7 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
         Error threshold along y.
     ez : float, optional (default = 1e-07)
         Error threshold along z.
-    path : str, optional (default = './')
+    path : str, optional (default = '.')
         Path where figures are saved.
     name : str, optional (default = '')
         Common label for figure names.
@@ -335,10 +335,6 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
               stencils['y'].keys() = dict_keys(['nodal', 'stagg'])
               stencils['z'].keys() = dict_keys(['nodal', 'stagg'])
     """
-    # Add trailing '/' to path, if necessary
-    if path[-1] != '/':
-        path += '/'
-
     # Galilean velocity (default = 0.)
     v_gal = 0.
     if galilean:
@@ -461,7 +457,7 @@ if __name__ == '__main__':
     ey = 1e-07
     ez = 1e-07
     # Output path
-    path = './'
+    path = '.'
     # Output name tag (can be empty: '')
     name = 'test'
     # --
