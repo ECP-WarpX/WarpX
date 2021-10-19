@@ -42,6 +42,7 @@ after the ``FIRSR STEP``).
 Each entry of warning list respects the following format:
 
 .. code-block:: sh
+
    * --> [PRIORITY] [TOPIC] [raised COUNTER]
    *     MULTILINE MESSAGGE
    *     MULTILINE MESSAGGE
