@@ -14,7 +14,6 @@ from scipy.constants import c
 
 plt.style.use('tableau-colorblind10')
 plt.rcParams.update({'font.size': 14})
-cc = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 def get_Fornberg_coeffs(order, staggered):
     """
@@ -273,8 +272,8 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     """
     fig = plt.figure(dpi = 100)
     ax = fig.add_subplot(111)
-    ax.plot(cells, stencil_nodal, '-', color = cc[0], label = r'nodal')
-    ax.plot(cells, stencil_stagg, '-', color = cc[1], label = r'staggered, hybrid')
+    ax.plot(cells, stencil_nodal, '-', label = 'nodal')
+    ax.plot(cells, stencil_stagg, '-', label = 'staggered, hybrid')
     ax.set_yscale('log')
     ax.set_xticks(cells, minor = True)
     ax.grid(which = 'minor', linewidth = 0.2)
