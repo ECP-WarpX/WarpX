@@ -78,12 +78,12 @@ def modified_k(kx, dx, order, staggered):
 
     # Array of values of sin (first axis corresponds to k and second axis to n)
     if staggered:
-        sin = np.sin(kx[:,np.newaxis] * (n[np.newaxis,:]-0.5) * dx) / ((n[np.newaxis,:]-0.5) * dx)
+        sin_kn = np.sin(kx[:,np.newaxis] * (n[np.newaxis,:]-0.5) * dx) / ((n[np.newaxis,:]-0.5) * dx)
     else:
-        sin = np.sin(kx[:,np.newaxis] * n[np.newaxis,:] * dx) / (n[np.newaxis,:] * dx)
+        sin_kn = np.sin(kx[:,np.newaxis] * n[np.newaxis,:] * dx) / (n[np.newaxis,:] * dx)
 
     # Modified k
-    k_mod = np.tensordot(sin, coeffs[1:], axes=(-1,-1))
+    k_mod = np.tensordot(sin_kn, coeffs[1:], axes=(-1,-1))
 
     return k_mod
 
