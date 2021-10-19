@@ -86,8 +86,9 @@ The warning list can be printed as follows:
 
    warpx.PrintGlobalWarnings("THE END");
 
-where the string is a temporal markers which appears in the warning list.
-At the moment this is done right after step one and at the end of the simulation. Doing this triggers several collective calls which allow merging all the warnings recorded by all the MPI ranks.
+where the string is a temporal marker that appears in the warning list.
+At the moment this is done right after step one and at the end of the simulation.
+Calling this method triggers several collective calls that allow merging all the warnings recorded by all the MPI ranks.
 
 Implementation details
 ----------------------
@@ -99,26 +100,26 @@ Warning messages are stored by each rank as a map associating each
 message with a counter.
 A message is defined by its priority, its topic and its text.
 Given two messages, if any of these components differ between the
-two the messages are considered as different.
+two, the messages are considered as different.
 
-How the global warning is list generated
+How the global warning list is generated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to generate the global warning list we follow the strategy outlined below.
 
-1. Each MPI rank has a ``map<Msg, counter>``, associating each message is has ever recorded with a counter, which counts how many times the warning has been raised on that rank.
-2. When ``PrintGlobalWarnings`` is called, the MPI ranks send to the I/O rank the number of different warnings that they have observed. The I/O rank finds the rank having more warnings and broadcasts 📢 this information back to all the others. This rank, referred in the following as *gather rank*. This rank will lead  👑 the generation of the global warning list
+1. Each MPI rank has a ``map<Msg, counter>``, associating each with a counter, which counts how many times the warning has been raised on that rank.
+2. When ``PrintGlobalWarnings`` is called, the MPI ranks send to the I/O rank the number of different warnings that they have observed. The I/O rank finds the rank having more warnings and broadcasts 📢 this information back to all the others. This rank, referred in the following as *gather rank*, will lead  👑 the generation of the global warning list
 3. The *gather rank* serializes its warning messages [📝,📝,📝,📝,📝...] into a byte array 📦 and  broadcasts 📢 this array to all the other ranks.
 4. The other ranks unpack this byte array 📦, obtaining a list of messages [📝,📝,📝,📝,📝...]
 5. For each message seen by the *gather rank* , each rank prepares a vector containing the number of times it has seen that message (i.e., the counter in ``map<Msg, counter>`` if ``Msg`` is in the map): [1️⃣,0️⃣,1️⃣,4️⃣,0️⃣...]
 6. In addition, each rank prepares a vector containing the messages seen only by that rank, associated with the corresponding counter: [(📝,1️⃣), (📝,4️⃣),...]
-7. Each rank appends these two lists and packs them into a byte array [1️⃣,0️⃣,1️⃣,4️⃣,0️⃣...] [(📝,1️⃣), (📝,4️⃣),...] --> 📦
+7. Each rank appends the second list to the first one and packs them into a byte array: [1️⃣,0️⃣,1️⃣,4️⃣,0️⃣...] [(📝,1️⃣), (📝,4️⃣),...] --> 📦
 8. Each rank sends 📨 this byte array to the *gather rank*, which puts them together in a large byte vector [📦,📦,📦,📦,📦...]
-9. The *gather rank* parses the byte array, adding the counters of the other ranks to its counters, adding new messages to the message list and keeping track of which rank has generated which warning 📜
+9. The *gather rank* parses the byte array, adding the counters of the other ranks to its counters, adding new messages to the message list, and keeping track of which rank has generated which warning 📜
 10. If the *gather rank* is also the I/O rank, then we are done  🎉, since the rank has a list of messages, global counters and ranks lists  [(📝,4️⃣,📜 ), (📝,1️⃣,📜 ),... ]
 11. If the *gather rank* is **not** the I/O rank, then it packs the list into a byte array and sends  📨 it to the I/O rank, which unpacks it: *gather rank* [(📝,4️⃣,📜 ), (📝,1️⃣,📜 ),... ] --> 📦 --> 📨 --> 📦 --> [(📝,4️⃣,📜 ), (📝,1️⃣,📜 ),... ] I/O rank
 
-This procedure is described in more details in these `slides https://drive.google.com/file/d/1f7w-iCGWwRk4OR_Hu_hPzWJYvWrfj6U8/view?usp=sharing>`_.
+This procedure is described in more details in these `slides <https://drive.google.com/file/d/1f7w-iCGWwRk4OR_Hu_hPzWJYvWrfj6U8/view?usp=sharing>`_.
 
 How to test the warning logger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
