@@ -1650,7 +1650,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         }
         if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
-            // Extend region that is solved for the PML
+            // Extend region that is solved for to include the guard cells
+            // which is where the PML boundary is applied.
             realspace_ba.growHi(0, pml_ncell);
         }
         AllocLevelSpectralSolverRZ(spectral_solver_fp,
@@ -1793,6 +1794,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             // Define spectral solver
 #ifdef WARPX_DIM_RZ
             c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+            if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
+                // Extend region that is solved for to include the guard cells
+                // which is where the PML boundary is applied.
+                c_realspace_ba.growHi(0, pml_ncell);
+            }
             AllocLevelSpectralSolverRZ(spectral_solver_cp,
                                        lev,
                                        c_realspace_ba,
