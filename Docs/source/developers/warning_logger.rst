@@ -3,7 +3,7 @@
 Warning logger
 ==============
 
-The warning logger allows grouping the warning messages raised during the
+The  ⚠️ warning logger ⚠️ allows grouping the warning messages raised during the
 simulation, in order to display them together in a list
 (e.g., right after step 1 and at the end of the simulation).
 
@@ -54,7 +54,7 @@ where:
 * ``[TOPIC]`` indicates which part of the code is concerned by the warning (e.g., particles, laser, parallelization...)
 * ``MULTILINE MESSAGGE`` is an arbitrary text message. It can span multiple-lines. Text is wrapped automatically.
 * ``COUNTER`` indicates the number of times the warning was raised **across all the MPI ranks**. This means that if we run WarpX with 2048 MPI ranks and each rank raises the same warning once, the displayed message will be ``[raised 2048 times]``. Possible values are ``once``, ``twice``, ``XX times``
-* ``WHICH_RANKS`` can be either ``ALL`` or a sequence of rank IDs. It is the list of the MPI ranks which have raised the warning message. ⚠️**Warning:** At the moment, it cannot happen that only a fraction of ranks raise a warning, but we may foresee that for the future.
+* ``WHICH_RANKS`` can be either ``ALL`` or a sequence of rank IDs. It is the list of the MPI ranks which have raised the warning message.
 
 Entries are sorted first by priority (high priority first), then by topic (alphabetically) and finally by text message (alphabetically).
 
