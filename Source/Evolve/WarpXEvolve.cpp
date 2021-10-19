@@ -10,7 +10,6 @@
  */
 #include "WarpX.H"
 
-#include "BoundaryConditions/PML.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -584,38 +583,16 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
             PSATDBackwardTransformEBavg();
         }
-
-        // Evolve the fields in the PML boxes
-        for (int lev = 0; lev <= finest_level; ++lev)
-        {
-            if (do_pml && pml[lev]->ok())
-            {
-                pml[lev]->PushPSATD(lev);
-            }
-            ApplyEfieldBoundary(lev, PatchType::fine);
-            if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-            ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
-            if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
-        }
-
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
-        if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
-            FillBoundaryF(guard_cells.ng_alloc_F);
-        if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
-            FillBoundaryG(guard_cells.ng_alloc_G);
+        if (WarpX::do_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
+        if (WarpX::do_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
 
         // Synchronize E, B, F, G fields on nodal points
         NodalSync(Efield_fp, Efield_cp);
         NodalSync(Bfield_fp, Bfield_cp);
         if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
         if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
-
-        if (do_pml)
-        {
-            DampPML();
-            NodalSyncPML();
-        }
     }
     else
     {
