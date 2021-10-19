@@ -150,6 +150,8 @@ protected:
     std::unique_ptr<amrex::Parser> uy_parser;
     std::unique_ptr<amrex::Parser> uz_parser;
 
+    // Keep a pointer to TemperatureProperties to ensure the lifetime of the
+    // contained Parser
     std::unique_ptr<TemperatureProperties> h_mom_temp;
 
     void parseDensity (amrex::ParmParse& pp);
