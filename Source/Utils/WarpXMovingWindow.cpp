@@ -286,7 +286,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
     const int nc = mf.nComp();
     const IntVect& ng = mf.nGrowVect();
 
-    AMREX_ALWAYS_ASSERT(ng.min() >= num_shift);
+    AMREX_ALWAYS_ASSERT(ng[dir] >= num_shift);
 
     MultiFab tmpmf(ba, dm, nc, ng);
     MultiFab::Copy(tmpmf, mf, 0, 0, nc, ng);
