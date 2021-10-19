@@ -420,7 +420,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
         }
         BoxArray rba(std::move(bl));
         MultiFab rmf(rba, dm, mf.nComp(), IntVect(0,mf.nGrowVect()[1]), MFInfo().SetAlloc(false));
-    
+
         for (MFIter mfi(mf); mfi.isValid(); ++mfi) {
             rmf.setFab(mfi, FArrayBox(mf[mfi], amrex::make_alias, 0, mf.nComp()));
         }
