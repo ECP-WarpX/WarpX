@@ -289,3 +289,38 @@ Known System Issues
    For instance, if you compile large software stacks with Spack, make sure to register ``libfabric`` with that exact version as an external module.
 
    If you load the documented ADIOS2 module above, this problem does not affect you, since the correct ``libfabric`` version is chosen for this one.
+
+.. warning::
+
+   Oct 12th, 2021 (OLCFHELP-4242):
+   There is currently a problem with the pre-installed Jupyter extensions, which can lead to connection splits at long running analysis sessions.
+
+   Work-around this issue by running in a single Jupyter cell, before starting analysis:
+
+   .. code-block:: bash
+
+      !jupyter serverextension enable --py --sys-prefix dask_labextension
+
+
+.. _post-processing-summit:
+
+Post-Processing
+---------------
+
+For post-processing, most users use Python via OLCFs's `Jupyter service <https://jupyter.olcf.ornl.gov>`__ (`Docs <https://docs.olcf.ornl.gov/services_and_applications/jupyter/index.html>`__).
+
+We usually just install our software on-the-fly on Summit.
+When starting up a post-processing session, run this in your first cells:
+
+.. code-block:: bash
+
+   # work-around for OLCFHELP-4242
+   !jupyter serverextension enable --py --sys-prefix dask_labextension
+
+   # next Jupyter cell: install a faster & better conda package manager
+   !conda install -c conda-forge -y mamba
+
+   # next cell: the software you want
+   !mamba install -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
+
+   # restart notebook

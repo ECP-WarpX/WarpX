@@ -28,6 +28,7 @@ sudo apt-get install -y --no-install-recommends \
     gfortran        \
     libnuma-dev     \
     libopenmpi-dev  \
+    ninja-build     \
     openmpi-bin     \
     rocm-dev        \
     rocfft          \
