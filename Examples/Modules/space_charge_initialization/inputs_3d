@@ -2,6 +2,7 @@ max_step = 1
 amr.n_cell =  64 64 64
 amr.max_grid_size = 32
 amr.max_level = 0
+warpx.use_filter = 0
 
 geometry.coord_sys   = 0                  # 0: Cartesian
 boundary.field_lo = pec pec pec
