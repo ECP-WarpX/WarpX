@@ -36,7 +36,7 @@ def get_Fornberg_coeffs(order, staggered):
     coeffs = np.zeros(m+1)
 
     # Compute Fornberg coefficients by recurrence
-    if (staggered):
+    if staggered:
         prod = 1.
         for k in range(1, m+1):
             prod = prod * (m+k) / (4*k)
@@ -134,19 +134,19 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
     stencil_stagg = np.fft.ifft(coeff_stagg, axis = axis)
 
     # Average results over remaining axes in spectral space
-    if (axis == 0):
+    if axis == 0:
           # Averaged over ky and kz
           stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 1)
           stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[1])
           stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 1)
           stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[1])
-    elif (axis == 1):
+    elif axis == 1:
           # Averaged over kx and kz
           stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 0)
           stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[0])
           stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 0)
           stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[0])
-    elif (axis == 2):
+    elif axis == 2:
           # Averaged over kx and ky
           stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 1), axis = 0)
           stencil_avg_nodal /= (stencil_nodal.shape[1] * stencil_nodal.shape[0])
@@ -199,14 +199,14 @@ def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, Nx = 256, Ny = 256, Nz = 2
     kz_arr = 2 * np.pi * np.fft.fftfreq(Nz, dz)
 
     # Centered modified k vectors
-    kx_arr_c = modified_k(kx_arr, dx, nox, False) if (nox != 'inf') else kx_arr
-    ky_arr_c = modified_k(ky_arr, dy, noy, False) if (noy != 'inf') else ky_arr
-    kz_arr_c = modified_k(kz_arr, dz, noz, False) if (noz != 'inf') else kz_arr
+    kx_arr_c = modified_k(kx_arr, dx, nox, False) if nox != 'inf' else kx_arr
+    ky_arr_c = modified_k(ky_arr, dy, noy, False) if noy != 'inf' else ky_arr
+    kz_arr_c = modified_k(kz_arr, dz, noz, False) if noz != 'inf' else kz_arr
 
     # Staggered modified k vectors
-    kx_arr_s = modified_k(kx_arr, dx, nox, True) if (nox != 'inf') else kx_arr
-    ky_arr_s = modified_k(ky_arr, dy, noy, True) if (noy != 'inf') else ky_arr
-    kz_arr_s = modified_k(kz_arr, dz, noz, True) if (noz != 'inf') else kz_arr
+    kx_arr_s = modified_k(kx_arr, dx, nox, True) if nox != 'inf' else kx_arr
+    ky_arr_s = modified_k(ky_arr, dy, noy, True) if noy != 'inf' else ky_arr
+    kz_arr_s = modified_k(kz_arr, dz, noz, True) if noz != 'inf' else kz_arr
 
     # Mesh in k space
     kx_c, ky_c, kz_c = np.meshgrid(kx_arr_c, ky_arr_c, kz_arr_c)
@@ -285,7 +285,7 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     ax.set_title(r'Stencil extent along ${:s}$'.format(label))
     fig.tight_layout()
     fig_name = path + 'figure_stencil_' + label
-    if (name):
+    if name:
         fig_name += '_' + name
     fig.savefig(fig_name + '.pdf', dpi = 100)
     fig.savefig(fig_name + '.png', dpi = 100)
@@ -337,12 +337,12 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
               stencils['z'].keys() = dict_keys(['nodal', 'stagg'])
     """
     # Add trailing '/' to path, if necessary
-    if (path[-1] != '/'):
+    if path[-1] != '/':
         path += '/'
 
     # Galilean velocity (default = 0.)
     v_gal = 0.
-    if (galilean):
+    if galilean:
         v_gal = - np.sqrt(1. - 1./gamma**2) * c
 
     # Display some output
