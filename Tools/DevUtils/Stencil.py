@@ -7,9 +7,9 @@ Reference: https://arxiv.org/abs/2106.12919
 Run the script simply with "python Stencil.py" (or with "run Stencil.py" using IPython).
 The user can modify the input parameters set in the main function at the end of the file.
 """
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 from scipy.constants import c
 
 plt.style.use('tableau-colorblind10')
