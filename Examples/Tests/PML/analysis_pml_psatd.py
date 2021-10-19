@@ -61,7 +61,7 @@ reflectivity_max = 1e-06
 print("reflectivity     = " + str(reflectivity))
 print("reflectivity_max = " + str(reflectivity_max))
 
-#assert(reflectivity < reflectivity_max)
+assert(reflectivity < reflectivity_max)
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

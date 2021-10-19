@@ -1179,7 +1179,6 @@ PML::CheckPoint (const std::string& dir) const
 {
     if (pml_E_fp[0])
     {
-        std::cout << "Inside if (pml_E_fp[0]) at line 1180." << std::endl;
         VisMF::AsyncWrite(*pml_E_fp[0], dir+"_Ex_fp");
         VisMF::AsyncWrite(*pml_E_fp[1], dir+"_Ey_fp");
         VisMF::AsyncWrite(*pml_E_fp[2], dir+"_Ez_fp");
@@ -1202,10 +1201,8 @@ PML::CheckPoint (const std::string& dir) const
 void
 PML::Restart (const std::string& dir)
 {
-    std::cout << "Outside if (pml_E_fp[0]) at line 1203." << std::endl;
     if (pml_E_fp[0])
     {
-        std::cout << "Inside if (pml_E_fp[0]) at line 1205." << std::endl;
         VisMF::Read(*pml_E_fp[0], dir+"_Ex_fp");
         VisMF::Read(*pml_E_fp[1], dir+"_Ey_fp");
         VisMF::Read(*pml_E_fp[2], dir+"_Ez_fp");
