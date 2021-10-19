@@ -17,6 +17,7 @@ jobs:
       run: |
         cmake -S . -B build               `
               -DCMAKE_BUILD_TYPE=Debug    `
+              -DCMAKE_CXX_STANDARD=17     `
               -DCMAKE_VERBOSE_MAKEFILE=ON `
               -DWarpX_COMPUTE=NOACC       `
               -DWarpX_OPENPMD=ON          `
@@ -29,6 +30,8 @@ jobs:
         python3 -m pip install . -vv --no-build-isolation
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+
+# -DCMAKE_CXX_STANDARD=17 is set due to https://github.com/openPMD/openPMD-api/pull/1121
 
   build_win_clang:
     name: Clang C++17 w/ OMP w/o MPI
@@ -45,6 +48,7 @@ jobs:
               -G "Ninja"      ^
               -DCMAKE_C_COMPILER=clang-cl   ^
               -DCMAKE_CXX_COMPILER=clang-cl ^
+              -DCMAKE_CXX_STANDARD=17       ^
               -DCMAKE_BUILD_TYPE=Release    ^
               -DCMAKE_VERBOSE_MAKEFILE=ON   ^
               -DWarpX_COMPUTE=OMP           ^
@@ -59,3 +63,5 @@ jobs:
         python3 -m pip install . -vv --no-build-isolation
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+
+# -DCMAKE_CXX_STANDARD=17 is set due to https://github.com/openPMD/openPMD-api/pull/1121
