@@ -169,7 +169,7 @@ For instance, the following inputfile
    w1.all_involved = 1
 
    w2.topic    = "Priority Sort Test"
-   w2.msg	    = "Test that priority is correctly sorted"
+   w2.msg        = "Test that priority is correctly sorted"
    w2.priority = "medium"
    w2.all_involved = 1
 
