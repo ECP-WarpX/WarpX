@@ -75,7 +75,7 @@ In the code, instead of using ``amrex::Warning`` to immediately print a warning 
 
 In this example, ``QED`` is the topic, ``Using [...]`` is the warning message and ``WarnPriority::low`` is the priority.
 `RecordWarning` is **not** a collective call and should also be thread-safe (it can be called in OpenMP loops).
-In case the user wants to also print the warning messages immediately (as before this PR), instead of recording the message for laser use, ~~WarpX can be compiled with `WARPX_WARN_IMMEDIATELY`. This is exposed in the `cmake` file.~~ the runtime parameter ``warpx.always_warn_immediately`` can be set to ``1``.
+In case the user wants to also print the warning messages immediately, the runtime parameter ``warpx.always_warn_immediately`` can be set to ``1``.
 
 How to print the warning list
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
