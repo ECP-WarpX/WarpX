@@ -452,7 +452,7 @@ if __name__ == '__main__':
     gamma = 30.
     # Galilean flag
     galilean = True
-    # Error threshold
+    # Error threshold (might need to be smaller in z than (x,y) with Galilean algorithms)
     ex = 1e-07
     ey = 1e-07
     ez = 1e-07
