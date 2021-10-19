@@ -280,7 +280,7 @@ For instance, the following inputfile
    w22.all_involved = 0
    w22.who_involved = 1
 
-would generate the following warning list (if run on 4 MPI ranks):
+should generate the following warning list (if run on 4 MPI ranks):
 
 .. code-block:: sh
 
