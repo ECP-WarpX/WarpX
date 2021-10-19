@@ -292,6 +292,9 @@ public:
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
+#ifdef WARPX_DIM_RZ
+    const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
+#endif
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;

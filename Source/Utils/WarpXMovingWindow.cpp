@@ -401,6 +401,33 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
         })
     }
+
+#ifdef WARPX_DIM_RZ
+    if (WarpX::GetInstance().getPMLRZ()) {
+        // This does the exchange of data in the corner guard cells, the cells that are in the
+        // guard region both radially and longitudinally. These are the PML cells in the overlapping
+        // longitudinal region. FillBoundary normally does not update these cells.
+        // This update is needed so that the cells at the end of the FABs are updated appropriately
+        // with the data shifted from the nieghboring FAB. Without this update, the RZ PML becomes
+        // unstable in with the moving grid.
+        // This code creates a temporary MultiFab using a BoxList the has all of its boxes grown
+        // to include the guard cells, so that the guard cells become effictively valid cells.
+        // The temporary MultiFab is setup to refer to the data of the original Multifab (this can
+        // be done since the shape of the data is all the same, just the indexing is different).
+        BoxList bl;
+        for (int i = 0, N=ba.size(); i < N; ++i) {
+            bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
+        }
+        BoxArray rba(std::move(bl));
+        MultiFab rmf(rba, dm, mf.nComp(), IntVect(0,mf.nGrowVect()[1]), MFInfo().SetAlloc(false));
+    
+        for (MFIter mfi(mf); mfi.isValid(); ++mfi) {
+            rmf.setFab(mfi, FArrayBox(mf[mfi], amrex::make_alias, 0, mf.nComp()));
+        }
+        rmf.FillBoundary(false);
+    }
+#endif
+
 }
 
 void
