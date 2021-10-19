@@ -325,9 +325,10 @@ WarpX::InitFromCheckpoint ()
             }
         }
     }
-
+std::cout << "In WarpXIO.cpp outside if (do_pml)." << std::endl;
     if (do_pml)
     {
+std::cout << "In WarpXIO.cpp inside if (do_pml)." << std::endl;
         InitPML();
         for (int lev = 0; lev < nlevs; ++lev) {
             pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
