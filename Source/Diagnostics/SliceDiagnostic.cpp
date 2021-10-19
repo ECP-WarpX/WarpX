@@ -8,6 +8,7 @@
 #include "SliceDiagnostic.H"
 
 #include "WarpX.H"
+#include "Parallelization/WarpXCommUtil.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -25,6 +26,8 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
+#include <AMReX_PlotFileUtil.H>
+
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
@@ -142,7 +145,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
     // Copy data from domain to slice that has same cell size as that of //
     // the domain mf. src and dst have the same number of ghost cells    //
-    smf->ParallelCopy(mf, 0, 0, ncomp,nghost,nghost);
+    amrex::IntVect nghost_vect(AMREX_D_DECL(nghost, nghost, nghost));
+    WarpXCommUtil::ParallelCopy(*smf, mf, 0, 0, ncomp,nghost_vect,nghost_vect);
 
     // inteprolate if required on refined slice //
     if (interpolate == 1 ) {

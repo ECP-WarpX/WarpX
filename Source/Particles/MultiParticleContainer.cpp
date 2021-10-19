@@ -10,6 +10,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -371,7 +372,8 @@ MultiParticleContainer::ReadParameters ()
 #if (AMREX_SPACEDIM == 2)
             getWithParser(pp_qed_schwinger, "y_size",m_qed_schwinger_y_size);
 #endif
-            pp_qed_schwinger.query("threshold_poisson_gaussian", m_qed_schwinger_threshold_poisson_gaussian);
+            queryWithParser(pp_qed_schwinger, "threshold_poisson_gaussian",
+                                              m_qed_schwinger_threshold_poisson_gaussian);
             queryWithParser(pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
             queryWithParser(pp_qed_schwinger, "xmax", m_qed_schwinger_xmax);
 #if (AMREX_SPACEDIM == 3)
@@ -555,7 +557,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
         }
         if (!local) {
             const Geometry& gm = allcontainers[0]->Geom(lev);
-            rho->SumBoundary(gm.periodicity());
+            WarpXCommUtil::SumBoundary(*rho, gm.periodicity());
         }
         return rho;
     }
@@ -1154,7 +1156,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         getWithParser(pp_qed_qs, "tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        pp_qed_qs.get("tab_dndt_how_many", ctrl.dndt_params.chi_part_how_many);
+        getWithParser(pp_qed_qs, "tab_dndt_how_many", ctrl.dndt_params.chi_part_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -1171,7 +1173,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         getWithParser(pp_qed_qs, "tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        pp_qed_qs.get("tab_em_chi_how_many", ctrl.phot_em_params.chi_part_how_many);
+        getWithParser(pp_qed_qs, "tab_em_chi_how_many", ctrl.phot_em_params.chi_part_how_many);
 
         //The other axis of the table is the ratio between the quantum
         //parameter of the emitted photon and the quantum parameter of the
@@ -1180,7 +1182,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //This parameter is the number of different points to consider for the second
         //axis
-        pp_qed_qs.get("tab_em_frac_how_many", ctrl.phot_em_params.frac_how_many);
+        getWithParser(pp_qed_qs, "tab_em_frac_how_many", ctrl.phot_em_params.frac_how_many);
         //====================
 
         m_shr_p_qs_engine->compute_lookup_tables(ctrl, qs_minimum_chi_part);
@@ -1235,7 +1237,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         getWithParser(pp_qed_bw, "tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        pp_qed_bw.get("tab_dndt_how_many", ctrl.dndt_params.chi_phot_how_many);
+        getWithParser(pp_qed_bw, "tab_dndt_how_many", ctrl.dndt_params.chi_phot_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -1252,12 +1254,12 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         getWithParser(pp_qed_bw, "tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        pp_qed_bw.get("tab_pair_chi_how_many", ctrl.pair_prod_params.chi_phot_how_many);
+        getWithParser(pp_qed_bw, "tab_pair_chi_how_many", ctrl.pair_prod_params.chi_phot_how_many);
 
         //The other axis of the table is the fraction of the initial energy
         //'taken away' by the most energetic particle of the pair.
         //This parameter is the number of different fractions to consider
-        pp_qed_bw.get("tab_pair_frac_how_many", ctrl.pair_prod_params.frac_how_many);
+        getWithParser(pp_qed_bw, "tab_pair_frac_how_many", ctrl.pair_prod_params.frac_how_many);
         //====================
 
         m_shr_p_bw_engine->compute_lookup_tables(ctrl, bw_minimum_chi_part);

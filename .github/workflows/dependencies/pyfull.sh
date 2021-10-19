@@ -23,6 +23,7 @@ sudo apt-get install -y \
     liblapack-dev       \
     libopenmpi-dev      \
     make                \
+    ninja-build         \
     pkg-config          \
     python3             \
     python3-pip         \

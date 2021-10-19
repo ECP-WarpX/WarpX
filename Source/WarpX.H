@@ -213,6 +213,9 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
+    //! perform field communications in single precision
+    static int do_single_precision_comms;
+
     // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
     static amrex::IntVect fill_guards;
 
@@ -245,7 +248,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool serialize_ics;
+    static bool serialize_ics; //! Serialize the initial conditions
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -273,7 +276,7 @@ public:
     static int do_multi_J_n_depositions;
     static int J_linear_in_time;
 
-    static bool do_device_synchronize_before_profile;
+    static int do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
@@ -375,10 +378,10 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
     amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
-    amrex::Array<amrex::Real,3> m_v_comoving = {{0.}};
+    amrex::Vector<amrex::Real> m_v_comoving{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -386,7 +389,7 @@ public:
     amrex::Vector<int> mirror_z_npoints;
 
     /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
-    MultiReducedDiags* reduced_diags;
+    std::unique_ptr<MultiReducedDiags> reduced_diags;
 
     void applyMirrors(amrex::Real time);
 
@@ -611,7 +614,7 @@ public:
     /*
       /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
      */
-    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
+    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -830,10 +833,16 @@ private:
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
     /**
-     * \brief Synchronize the nodal points of a given field MultiFab (all mesh refinement levels)
+     * \brief Synchronize the nodal points of a given vector MultiFab (all mesh refinement levels)
      */
     void NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
                     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp);
+
+    /**
+     * \brief Synchronize the nodal points of a given scalar MultiFab (all mesh refinement levels)
+     */
+    void NodalSync (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_fp,
+                    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_cp);
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
