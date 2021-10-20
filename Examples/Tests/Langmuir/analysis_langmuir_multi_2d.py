@@ -109,8 +109,8 @@ assert( error_rel < tolerance_rel )
 # current correction (psatd.do_current_correction=1) is applied or when
 # Vay current deposition (algo.current_deposition=vay) is used
 if current_correction or vay_deposition:
-    rho  = data[('boxlib','rho')].to_ndarray()
-    divE = data[('boxlib','divE')].to_ndarray()
+    rho  = data[('mesh','rho')].to_ndarray()
+    divE = data[('mesh','divE')].to_ndarray()
     error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
     tolerance = 1.e-9
     print("Check charge conservation:")
