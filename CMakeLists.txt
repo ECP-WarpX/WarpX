@@ -249,8 +249,6 @@ endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties
 if(WarpX_COMPUTE STREQUAL CUDA)
-    #setup_target_for_cuda_compilation(WarpX)
-    #setup_target_for_cuda_compilation(ablastr)
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
         setup_target_for_cuda_compilation(${warpx_tgt})
     endforeach()
