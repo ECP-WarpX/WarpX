@@ -64,11 +64,8 @@ FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
 
 void
 FieldProbeParticleContainer::AddNParticles (int /*lev*/,
-		                    			    int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z)
+		                    			    int np, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z)
 {
-	int ibegin, iend;
-		ibegin = 0;
-		iend = n;
 	auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
 	using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
@@ -76,9 +73,8 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
 	PinnedTile pinned_tile;
 	pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
-	std::size_t np = iend-ibegin;
 
-	for (int i = ibegin; i < iend; ++i)
+	for (int i = 0; i < np; i++)
 	{
 		ParticleType p;
 		p.id() = ParticleType::NextID();
