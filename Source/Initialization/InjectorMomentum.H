@@ -150,8 +150,16 @@ struct InjectorMomentumBoltzmann
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
                  amrex::RandomEngine const& engine) const noexcept
     {
-        // Calculate the value of vave from the local temperature
-        amrex::Real const vave = std::sqrt(amrex::Real(2) * temperature(x,y,z));
+        // Calculate the value of vave from the local temperature and check if it's too
+        // high for Boltzmann
+        amrex::Real const theta = temperature(x,y,z);
+        if (theta > 0.01) {
+            std::stringstream warnstream;
+            warnstream << " Warning: Maxwell-Boltzmann distribution has errors greater than 1%"
+                << " for temperature parameter theta > 0.01. (theta = " << theta << " given).";
+            amrex::Warning(warnstream.str());
+        }
+        amrex::Real const vave = std::sqrt(amrex::Real(2) * theta);
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
         x1 = amrex::Random(engine);
@@ -231,6 +239,14 @@ struct InjectorMomentumJuttner
         amrex::Real x1, x2, gamma;
         amrex::Real u [3];
         amrex::Real const theta = temperature(x,y,z);
+        // Check if temperature is too low to do sampling method. Abort for now,
+        // in future should implement an alternate method e.g. inverse transform
+        if (theta < 0.1) {
+            std::stringstream stringstream;
+            stringstream << "Temperature parameter theta = " << theta <<
+                " is less than minimum 0.1 allowed for Maxwell-Juttner.";
+            amrex::Abort(stringstream.str().c_str());
+        }
         x1 = static_cast<amrex::Real>(0.);
         gamma = static_cast<amrex::Real>(0.);
         u[dir] = static_cast<amrex::Real>(0.);

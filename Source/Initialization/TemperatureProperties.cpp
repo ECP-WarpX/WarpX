@@ -15,12 +15,28 @@
  */
 TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     // Set defaults
-    amrex::Real theta = 10.;
+    amrex::Real theta;
     std::string temp_dist_s = "constant";
+    std::string mom_dist_s;
 
     pp.query("theta_distribution_type", temp_dist_s);
+    pp.query("momentum_distribution_type", mom_dist_s);
     if (temp_dist_s == "constant") {
         queryWithParser(pp, "theta", theta);
+        // Do validation on theta value
+        if (mom_dist_s == "maxwell_boltzmann" && theta > 0.01) {
+            std::stringstream warnstream;
+            warnstream << " Warning: Maxwell-Boltzmann distribution has errors greater than 1%"
+                << " for temperature parameter theta > 0.01. (theta = " << theta << " given).";
+            amrex::Warning(warnstream.str());
+        }
+        else if (mom_dist_s == "maxwell_juttner" && theta < 0.1) {
+            std::stringstream stringstream;
+            stringstream << "Temperature parameter theta = " << theta <<
+                " is less than minimum 0.1 allowed for Maxwell-Juttner.";
+            amrex::Abort(stringstream.str().c_str());
+        }
+
         m_type = TempConstantValue;
         m_temperature = theta;
     }
@@ -34,7 +50,7 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     else {
         std::stringstream stringstream;
         std::string string;
-        stringstream << "Temperature distribution type '" << temp_dist_s << "' not recognized." << std::endl;
+        stringstream << "Temperature distribution type '" << temp_dist_s << "' not recognized.";
         string = stringstream.str();
         amrex::Abort(string.c_str());
     }
