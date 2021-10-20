@@ -6,6 +6,8 @@
  */
 #include "MPIInitHelpers.H"
 
+#include "WarpX.H"
+
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
@@ -16,6 +18,7 @@
 
 #include <string>
 #include <utility>
+#include <sstream>
 
 namespace utils
 {
@@ -47,16 +50,21 @@ namespace utils
         auto const thread_provided = mpi_thread_levels.second;
         auto mtn = amrex::ParallelDescriptor::mpi_level_to_string;
 
-        if( thread_provided < thread_required )
-            amrex::Print() << "WARNING: Provided MPI thread safety level ("
+        std::stringstream ss;
+        if( thread_provided < thread_required ){
+            ss << "WARNING: Provided MPI thread safety level ("
                            << mtn(thread_provided) << ") is LOWER than requested "
                            << mtn(thread_required) << "). This might lead to undefined "
                            << "results in asynchronous operations (e.g. async_io).";
-        if( thread_provided > thread_required )
-            amrex::Print() << "NOTE: Provided MPI thread safety level ("
+            WarpX::GetInstance().RecordWarning("MPI", ss.str(), WarnPriority::high);
+        }
+        if( thread_provided > thread_required ){
+            ss << "NOTE: Provided MPI thread safety level ("
                            << mtn(thread_provided) << ") is stricter than requested "
                            << mtn(thread_required) << "). This might reduce multi-node "
                            << "communication performance.";
+            WarpX::GetInstance().RecordWarning("MPI", ss.str());
+        }
 #else
         amrex::ignore_unused(mpi_thread_levels);
 #endif
