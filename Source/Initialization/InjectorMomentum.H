@@ -154,16 +154,7 @@ struct InjectorMomentumBoltzmann
         // high for Boltzmann or less than zero
         amrex::Real const theta = temperature(x,y,z);
         if (theta < 0) {
-            std::stringstream stringstream;
-            stringstream << "Temperature parameter theta = " << theta <<
-                " is less than zero, which is not allowed";
-            amrex::Abort(stringstream.str().c_str());
-        }
-        else if (theta > 0.01) {
-            std::stringstream warnstream;
-            warnstream << " Warning: Maxwell-Boltzmann distribution has errors greater than 1%"
-                << " for temperature parameter theta > 0.01. (theta = " << theta << " given).";
-            amrex::Warning(warnstream.str());
+            amrex::Abort("Negative temperature parameter theta encountered, which is not allowed");
         }
         amrex::Real const vave = std::sqrt(amrex::Real(2) * theta);
         amrex::Real x1, x2, gamma;
@@ -248,10 +239,7 @@ struct InjectorMomentumJuttner
         // Check if temperature is too low to do sampling method. Abort for now,
         // in future should implement an alternate method e.g. inverse transform
         if (theta < 0.1) {
-            std::stringstream stringstream;
-            stringstream << "Temperature parameter theta = " << theta <<
-                " is less than minimum 0.1 allowed for Maxwell-Juttner.";
-            amrex::Abort(stringstream.str().c_str());
+            amrex::Abort("Temeprature parameter theta is less than minimum 0.1 allowed for Maxwell-Juttner");
         }
         x1 = static_cast<amrex::Real>(0.);
         gamma = static_cast<amrex::Real>(0.);
