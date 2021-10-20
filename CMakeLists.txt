@@ -140,14 +140,12 @@ endif()
 
 # Targets #####################################################################
 #
-if(NOT WarpX_APP AND NOT WarpX_LIB)
-    message(FATAL_ERROR "Need to build at least WarpX app or "
-                        "library/Python bindings")
-endif()
-
 # collect all objects for compilation
 add_library(WarpX OBJECT)
 add_library(ablastr OBJECT)
+
+# ABLASTR library
+set(_BUILDINFO_SRC ablastr)
 set(_ALL_TARGETS WarpX ablastr)
 
 # executable application
