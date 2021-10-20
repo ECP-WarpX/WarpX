@@ -333,7 +333,12 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
 
     bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
-        absolute_tolerance = amrex::max(absolute_tolerance, amrex::Real(1e-6));
+        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        if (verbosity){
+            amrex::Print() << "Max norm of rho is 0; using absolute tolerance of "
+                           <<  absolute_tolerance << " V/m^2 for MLMG solver."
+                           << std::endl;
+        }
     }
 
     // Solve the Poisson equation
@@ -438,7 +443,12 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 
     bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
-        absolute_tolerance = amrex::max(absolute_tolerance, amrex::Real(1e-6));
+        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        if (verbosity){
+            amrex::Print() << "Max norm of rho is 0; using absolute tolerance of "
+                           <<  absolute_tolerance << " V/m^2 for MLMG solver."
+                           << std::endl;
+        }
     }
 
     MLMG mlmg(linop);
