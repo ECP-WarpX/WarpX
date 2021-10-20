@@ -657,6 +657,8 @@ Particle initialization
       temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
       :math:`k_\mathrm{B}` is the Boltzmann constant, :math:`c` is the speed of light, and :math:`m` is the mass of the species.
       Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
+      For values of :math:`\theta > 0.01`, errors due to ignored relativistic terms exceed 1%.
+      The code will give warning when a temperature that exceeds this threshold is encountered.
       It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
       The plasma will be initialized to move at bulk velocity beta*c in the
       ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
@@ -672,6 +674,10 @@ Particle initialization
 
     * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma that takes a dimensionless temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`, :math:`k_\mathrm{B}` is the Boltzmann constant, and :math:`m` is the mass of the species.
       Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
+      The Sobol method used to generate the distribution is very inefficient for :math:`\theta < 0.1`.
+      The code will abort if it encounters a temperature below that threshold.
+      The Maxwell-Boltzmann distribution is recommended for temperatures in the range :math:`0.01 < \theta < 0.1`.
+      Errors due to relativistic effects can be expected to approximately between 1% and 10%.
       It also
       includes the optional parameter ``<species_name>.beta`` where beta is equal to :math:`\frac{v}{c}`. The plasma
       will be initialized to move at velocity :math:`\beta \cdot c` in the
@@ -697,8 +703,9 @@ Particle initialization
 
 * ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
     Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
+    See documentation for these distributions (above) for constraints on values of theta.
 
-    * If ``constant``, use a constant temperature, given by the float ``<species_name>.theta``. The default value of ``<species_name>.theta`` is 10.
+    * If ``constant``, use a constant temperature, given by the required float parameter ``<species_name>.theta``.
 
     * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.theta_function(x,y,z)``.
 
