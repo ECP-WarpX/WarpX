@@ -96,8 +96,8 @@ guardCellManager::Init (
     // the fine grid by a number of cells equal to the ref_ratio in the moving
     // window direction. This may not be necessary for level 0.
     if (do_moving_window) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() == 1,
-            "The number of grow cells for the moving window currently assumes only 2 levels.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
+            "The number of grow cells for the moving window currently assumes 2 levels max.");
         int max_r = ref_ratios[0][moving_window_dir];
 
         ngx = std::max(ngx,max_r);

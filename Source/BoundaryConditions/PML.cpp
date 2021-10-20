@@ -501,7 +501,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
     if (do_moving_window) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
-            "The number of grow cells for the moving window currently assumes only 2 levels.");
+            "The number of grow cells for the moving window currently assumes 2 levels max.");
         int rr = ref_ratio[WarpX::moving_window_dir];
         nge[WarpX::moving_window_dir] = std::max(nge[WarpX::moving_window_dir], rr);
         ngb[WarpX::moving_window_dir] = std::max(ngb[WarpX::moving_window_dir], rr);
