@@ -29,8 +29,11 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "Utils/MsgLogger/MsgLogger.H"
+#include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
 #ifdef AMREX_USE_SENSEI_INSITU
@@ -216,6 +219,9 @@ WarpX::ResetInstance ()
 WarpX::WarpX ()
 {
     m_instance = this;
+
+    m_p_warn_manager = std::make_unique<Utils::WarnManager>();
+
     ReadParameters();
 
     BackwardCompatibility();
@@ -410,6 +416,51 @@ WarpX::~WarpX ()
 }
 
 void
+WarpX::RecordWarning(
+        std::string topic,
+        std::string text,
+        WarnPriority priority)
+{
+    WARPX_PROFILE("WarpX::RecordWarning");
+
+    auto msg_priority = Utils::MsgLogger::Priority::high;
+    if(priority == WarnPriority::low)
+        msg_priority = Utils::MsgLogger::Priority::low;
+    else if(priority == WarnPriority::medium)
+        msg_priority = Utils::MsgLogger::Priority::medium;
+
+    if(m_always_warn_immediately){
+        amrex::Warning(
+            "!!!!!! WARNING: ["
+            + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+            + "][" + topic + "] " + text);
+    }
+
+#ifdef AMREX_USE_OMP
+    #pragma omp critical
+#endif
+    {
+        m_p_warn_manager->record_warning(topic, text, msg_priority);
+    }
+}
+
+void
+WarpX::PrintLocalWarnings(const std::string& when)
+{
+    WARPX_PROFILE("WarpX::PrintLocalWarnings");
+    const auto warn_string = m_p_warn_manager->print_local_warnings(when);
+    amrex::AllPrint() << warn_string;
+}
+
+void
+WarpX::PrintGlobalWarnings(const std::string& when)
+{
+    WARPX_PROFILE("WarpX::PrintGlobalWarnings");
+    const auto warn_string = m_p_warn_manager->print_global_warnings(when);
+    amrex::Print() << warn_string;
+}
+
+void
 WarpX::ReadParameters ()
 {
     {
@@ -432,6 +483,11 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp_warpx("warpx");
+
+        //"Synthetic" warning messages may be injected in the Warning Manager via
+        // inputfile for debug&testing purposes.
+        m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
+        pp_warpx.query("always_warn_immediately", m_always_warn_immediately);
 
         std::vector<int> numprocs_in;
         queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
@@ -620,10 +676,9 @@ WarpX::ReadParameters ()
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             if (use_filter)
             {
-                amrex::Print() << "\nWARNING:"
-                               << "\nFilter currently not working with FDTD solver in RZ geometry:"
-                               << "\nwe recommend setting warpx.use_filter = 0 in the input file.\n"
-                               << std::endl;
+                this->RecordWarning("Filter",
+                    "Filter currently not working with FDTD solver in RZ geometry."
+                    "We recommend setting warpx.use_filter = 0 in the input file.");
             }
         }
 #endif
@@ -904,9 +959,10 @@ WarpX::ReadParameters ()
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
             {
-                amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
-                               " some numerical artifact will be present at the interface between coarse and fine patch."
-                               "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+                this->RecordWarning("Particles",
+                    "When algo.particle_shape > 1,"
+                    "some numerical artifact will be present at the interface between coarse and fine patch."
+                    "We recommend setting algo.particle_shape = 1 in order to avoid this issue");
             }
 
             // default sort interval for particles if species or lasers vector is not empty
@@ -1279,17 +1335,23 @@ WarpX::BackwardCompatibility ()
     ParmParse pp_particles("particles");
     int nspecies;
     if (pp_particles.query("nspecies", nspecies)){
-        amrex::Print()<<"particles.nspecies is ignored. Just use particles.species_names please.\n";
+        this->RecordWarning("Species",
+            "particles.nspecies is ignored. Just use particles.species_names please.",
+            WarnPriority::low);
     }
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
-        amrex::Print()<<"collisions.ncollisions is ignored. Just use particles.collision_names please.\n";
+        this->RecordWarning("Collisions",
+            "collisions.ncollisions is ignored. Just use particles.collision_names please.",
+            WarnPriority::low);
     }
     ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
-        amrex::Print()<<"lasers.nlasers is ignored. Just use lasers.names please.\n";
+        this->RecordWarning("Laser",
+            "lasers.nlasers is ignored. Just use lasers.names please.",
+            WarnPriority::low);
     }
 }
 
