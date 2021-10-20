@@ -29,15 +29,12 @@ ds = yt.load( filename )
 # Check that the field is low enough
 ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Ex_array = ad0['boxlib', 'Ex'].to_ndarray()
-Ey_array = ad0['boxlib', 'Ey'].to_ndarray()
 Ez_array = ad0['boxlib', 'Ez'].to_ndarray()
 max_Ex = np.abs(Ex_array).max()
-max_Ey = np.abs(Ey_array).max()
 max_Ez = np.abs(Ez_array).max()
 print( f'max Ex = {max_Ex}' )
-print( f'max Ey = {max_Ey}' )
 print( f'max Ez = {max_Ez}' )
-max_Efield = max(max_Ex, max_Ey, max_Ez)
+max_Efield = max(max_Ex, max_Ez)
 
 tolerance_abs = 2.
 print('tolerance_abs: ' + str(tolerance_abs))
