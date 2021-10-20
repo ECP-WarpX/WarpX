@@ -95,7 +95,8 @@ guardCellManager::Init (
     // When calling the moving window (with one level of refinement), we shift
     // the fine grid by a number of cells equal to the ref_ratio in the moving
     // window direction. This may not be necessary for level 0.
-    if (do_moving_window) {
+    const int nlevs = ref_ratios.size()+1;
+    if (do_moving_window && (nlevs > 1)) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
         int max_r = ref_ratios[0][moving_window_dir];
