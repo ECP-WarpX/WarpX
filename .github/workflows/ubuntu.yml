@@ -10,8 +10,9 @@ jobs:
   build_cxxminimal:
     name: GCC Minimal w/o MPI
     runs-on: ubuntu-20.04
-    env: {CXXFLAGS: "-Werror"}
     if: github.event.pull_request.draft == false
+    env:
+      CXXFLAGS: "-Werror"
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -37,6 +38,9 @@ jobs:
     name: Clang pywarpx
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
+    # On CI for this test, Ninja is slower than the default:
+    #env:
+    #  CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies

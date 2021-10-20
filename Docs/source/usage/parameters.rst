@@ -192,6 +192,10 @@ Setting up the field mesh
     automatically set so that it is one cell larger than
     ``n_current_deposition_buffer``, on the fine grid.
 
+* ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
+    Perform MPI communications for field guard regions in single precision.
+    Only meaningful for ``WarpX_PRECISION=DOUBLE``.
+
 * ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
     in the list will deposit their charge/current directly on the main grid
@@ -635,30 +639,34 @@ Particle initialization
 * ``<species_name>.momentum_distribution_type`` (`string`)
     Distribution of the normalized momentum (`u=p/mc`) for this species. The options are:
 
-    * ``constant``: constant momentum profile. This requires additional parameters
-      ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
-      momenta in the x, y and z direction respectively.
+    * ``at_rest``: Particles are initialized with zero momentum.
 
-    * ``gaussian``: gaussian momentum distribution in all 3 directions. This requires
+    * ``constant``: constant momentum profile. This can be controlled with the additional parameters
+      ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
+      momenta in the x, y and z direction respectively, which are all ``0.`` by default.
+
+    * ``gaussian``: gaussian momentum distribution in all 3 directions. This can be controlled with the
       additional arguments for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m`` as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
+      These 6 parameters are all ``0.`` by default.
 
     * ``gaussianflux``: Gaussian momentum flux distribution, which is Gaussian in the plane and v*Gaussian normal to the plane.
       It can only be used when ``injection_style = NFluxPerCell``.
-      This requires additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
+      This can be controlled with the additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
       ``<species_name>.flux_direction``, for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
+      ``ux_m``, ``uy_m``, ``uz_m``, ``ux_th``, ``uy_th`` and ``uz_th`` are all ``0.`` by default.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
       temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
-      :math:`k_\mathrm{B}` is the Boltzmann constant, :math:`c` is the speed of light, and :math:`m` is the mass of the species.
+      "math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, :math:`c` is the speed of light, and :math:`m` is the mass of the species.
       Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
       For values of :math:`\theta > 0.01`, errors due to ignored relativistic terms exceed 1%.
-      The code will give warning when a temperature that exceeds this threshold is encountered.
+      The code will give a warning when a temperature that exceeds this threshold is encountered.
       Temperatures less than zero are not allowed.
       It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
       The plasma will be initialized to move at bulk velocity beta*c in the
@@ -668,15 +676,16 @@ Particle initialization
       distributions in each dimension using, the Box Mueller method, and then the distribution is
       transformed to the simulation frame using the flipping method. The flipping method can be
       found in Zenitani 2015 section III. B. (Phys. Plasmas 22, 042116).
+      By default, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Note that though the particles may move at relativistic speeds in the simulation frame,
       they are not relativistic in the drift frame. This is as opposed to the Maxwell Juttner
       setting, which initializes particles with relativistic momentums in their drifting frame.
 
-    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma that takes a dimensionless temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`, :math:`k_\mathrm{B}` is the Boltzmann constant, and :math:`m` is the mass of the species.
+    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma that takes a dimensionless temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
+      :math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, and :math:`m` is the mass of the species.
       Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
-      The Sobol method used to generate the distribution is very inefficient for :math:`\theta < 0.1`.
-      The code will abort if it encounters a temperature below that threshold.
+      The Sobol method used to generate the distribution will not terminate for :math:`\theta \lesssim 0.1`, and the code will abort if it encounters a temperature below that threshold.
       The Maxwell-Boltzmann distribution is recommended for temperatures in the range :math:`0.01 < \theta < 0.1`.
       Errors due to relativistic effects can be expected to approximately between 1% and 10%.
       It also
@@ -687,6 +696,7 @@ Particle initialization
       positive. The MJ distribution will be initialized in the moving frame using the Sobol method,
       and then the distribution will be transformed to the simulation frame using the flipping method.
       Both the Sobol and the flipping method can be found in Zenitani 2015 (Phys. Plasmas 22, 042116).
+      By default, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Please take notice that particles initialized with this setting can be relativistic in two ways.
       In the simulation frame, they can drift with a relativistic speed beta. Then, in the drifting
@@ -695,7 +705,7 @@ Particle initialization
       drifting frame.
 
     * ``radial_expansion``: momentum depends on the radial coordinate linearly. This
-      requires additional parameter ``u_over_r`` which is the slope.
+      can be controlled with additional parameter ``u_over_r`` which is the slope (``0.`` by default).
 
     * ``parse_momentum_function``: the momentum is given by a function in the input
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
@@ -1655,7 +1665,7 @@ Numerics and algorithms
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
-* ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+* ``warpx.do_device_synchronize`` (`int`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 

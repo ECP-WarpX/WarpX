@@ -10,8 +10,11 @@ jobs:
   build_gcc9:
     name: AppleClang
     runs-on: macos-latest
-    env: {CXXFLAGS: "-Werror -Wno-error=pass-failed"}
     if: github.event.pull_request.draft == false
+    env:
+      CXXFLAGS: "-Werror -Wno-error=pass-failed"
+    # For macOS, Ninja is slower than the default:
+    #  CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -21,6 +24,7 @@ jobs:
         brew update
         brew install fftw
         brew install libomp
+        brew install ninja
         brew install open-mpi
         brew install pkg-config
         set -e
