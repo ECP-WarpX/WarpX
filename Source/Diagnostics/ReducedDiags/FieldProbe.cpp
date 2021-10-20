@@ -63,7 +63,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     amrex::ParticleReal ypos[1]{y_probe};
     amrex::ParticleReal zpos[1]{z_probe};
 
-    m_probe.FieldProbeParticleContainer::AddNParticles(0, np, xpos, ypos, zpos);
+    m_probe.AddNParticles(0, np, xpos, ypos, zpos);
 
     pp_rd_name.query("raw_fields", raw_fields);
 

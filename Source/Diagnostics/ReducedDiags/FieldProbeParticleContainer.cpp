@@ -66,6 +66,12 @@ void
 FieldProbeParticleContainer::AddNParticles (int /*lev*/,
 		                    			    int np, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z)
 {
+
+    // have to resize here, not in the constructor because grids have not
+    // been built when constructor was called.
+    reserveData();
+    resizeData();
+
 	auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
 	using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
