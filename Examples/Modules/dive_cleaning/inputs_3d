@@ -28,10 +28,7 @@ beam.y_m = 0.
 beam.z_m = 0.e-6
 beam.npart = 20000
 beam.q_tot = -1.e-20
-beam.momentum_distribution_type = "gaussian"
-beam.ux_m = 0.0
-beam.uy_m = 0.0
-beam.uz_m = 0.0
+beam.momentum_distribution_type = "at_rest"
 
 diagnostics.diags_names = diag1
 diag1.intervals = 8
