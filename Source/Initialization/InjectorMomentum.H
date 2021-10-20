@@ -150,10 +150,16 @@ struct InjectorMomentumBoltzmann
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
                  amrex::RandomEngine const& engine) const noexcept
     {
-        // Calculate the value of vave from the local temperature and check if it's too
-        // high for Boltzmann
+        // Calculate the local temperature and check if it's too
+        // high for Boltzmann or less than zero
         amrex::Real const theta = temperature(x,y,z);
-        if (theta > 0.01) {
+        if (theta < 0) {
+            std::stringstream stringstream;
+            stringstream << "Temperature parameter theta = " << theta <<
+                " is less than zero, which is not allowed";
+            amrex::Abort(stringstream.str().c_str());
+        }
+        else if (theta > 0.01) {
             std::stringstream warnstream;
             warnstream << " Warning: Maxwell-Boltzmann distribution has errors greater than 1%"
                 << " for temperature parameter theta > 0.01. (theta = " << theta << " given).";

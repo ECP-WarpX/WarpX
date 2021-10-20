@@ -659,6 +659,7 @@ Particle initialization
       Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
       For values of :math:`\theta > 0.01`, errors due to ignored relativistic terms exceed 1%.
       The code will give warning when a temperature that exceeds this threshold is encountered.
+      Temperatures less than zero are not allowed.
       It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
       The plasma will be initialized to move at bulk velocity beta*c in the
       ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
@@ -703,7 +704,7 @@ Particle initialization
 
 * ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
     Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
-    See documentation for these distributions (above) for constraints on values of theta.
+    See documentation for these distributions (above) for constraints on values of theta. Temperatures less than zero are not allowed.
 
     * If ``constant``, use a constant temperature, given by the required float parameter ``<species_name>.theta``.
 

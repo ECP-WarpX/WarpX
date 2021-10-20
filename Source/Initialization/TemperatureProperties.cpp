@@ -27,6 +27,12 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
             amrex::Abort(err_str);
         }
         // Do validation on theta value
+        if (theta < 0) {
+            std::stringstream stringstream;
+            stringstream << "Temperature parameter theta = " << theta <<
+                " is less than zero, which is not allowed";
+            amrex::Abort(stringstream.str().c_str());
+        }
         if (mom_dist_s == "maxwell_boltzmann" && theta > 0.01) {
             std::stringstream warnstream;
             warnstream << " Warning: Maxwell-Boltzmann distribution has errors greater than 1%"
