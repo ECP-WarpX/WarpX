@@ -22,7 +22,10 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     pp.query("theta_distribution_type", temp_dist_s);
     pp.query("momentum_distribution_type", mom_dist_s);
     if (temp_dist_s == "constant") {
-        queryWithParser(pp, "theta", theta);
+        if (!queryWithParser(pp, "theta", theta)) {
+            std::string err_str =  "Temperature parameter theta not specified";
+            amrex::Abort(err_str);
+        }
         // Do validation on theta value
         if (mom_dist_s == "maxwell_boltzmann" && theta > 0.01) {
             std::stringstream warnstream;
