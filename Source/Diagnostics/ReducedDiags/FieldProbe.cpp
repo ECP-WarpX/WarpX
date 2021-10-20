@@ -56,7 +56,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     getWithParser(pp_rd_name, "y_probe", y_probe);
 //#endif
     getWithParser(pp_rd_name, "z_probe", z_probe);
-    getWithParser(pp_rd_name, "integrate", field_probe_integrate);
+    pp_rd_name.query(pp_rd_name, "integrate", field_probe_integrate);
 
     //create 1D array for X, Y, and Z of particles
     amrex::ParticleReal xpos[1]{x_probe};
