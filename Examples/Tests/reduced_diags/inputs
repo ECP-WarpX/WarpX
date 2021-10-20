@@ -53,10 +53,7 @@ protons.injection_style = "NUniformPerCell"
 protons.num_particles_per_cell_each_dim = 1 1 1
 protons.profile = constant
 protons.density = 1.e14   # number of protons per m^3
-protons.momentum_distribution_type = gaussian
-protons.ux_th = 0.
-protons.uy_th = 0.
-protons.uz_th = 0.
+protons.momentum_distribution_type = at_rest
 
 photons.species_type = "photon"
 photons.injection_style = "NUniformPerCell"
