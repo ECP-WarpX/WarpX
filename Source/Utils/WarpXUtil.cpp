@@ -393,7 +393,7 @@ queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& va
         // If so, create a parser object and apply it to the value provided by the user.
         std::string str_val;
         Store_parserString(a_pp, str, str_val);
-        val = parseStringtoReal(str_val);
+        val = static_cast<float>(parseStringtoReal(str_val));
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
@@ -405,7 +405,7 @@ getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
     // If so, create a parser object and apply it to the value provided by the user.
     std::string str_val;
     Store_parserString(a_pp, str, str_val);
-    val = parseStringtoReal(str_val);
+    val = static_cast<float>(parseStringtoReal(str_val));
 }
 
 int

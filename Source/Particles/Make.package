@@ -7,6 +7,7 @@ CEXE_sources += LaserParticleContainer.cpp
 CEXE_sources += ParticleBoundaryBuffer.cpp
 CEXE_sources += ParticleBoundaries.cpp
 
+include $(WARPX_HOME)/Source/Particles/Algorithms/Make.package
 include $(WARPX_HOME)/Source/Particles/Pusher/Make.package
 include $(WARPX_HOME)/Source/Particles/Deposition/Make.package
 include $(WARPX_HOME)/Source/Particles/Gather/Make.package
