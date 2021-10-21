@@ -8,6 +8,7 @@
 #include "SliceDiagnostic.H"
 
 #include "WarpX.H"
+#include "Parallelization/WarpXCommUtil.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -25,6 +26,8 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
+#include <AMReX_PlotFileUtil.H>
+
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
@@ -32,6 +35,7 @@
 
 #include <cmath>
 #include <memory>
+#include <sstream>
 
 using namespace amrex;
 
@@ -121,7 +125,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
        }
     }
     if (configuration_dim==1) {
-       amrex::Warning("The slice configuration is 1D and cannot be visualized using yt.");
+       WarpX::GetInstance().RecordWarning("Diagnostics",
+         "The slice configuration is 1D and cannot be visualized using yt.");
     }
 
     // Slice generation with index type inheritance //
@@ -140,7 +145,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
     // Copy data from domain to slice that has same cell size as that of //
     // the domain mf. src and dst have the same number of ghost cells    //
-    smf->ParallelCopy(mf, 0, 0, ncomp,nghost,nghost);
+    amrex::IntVect nghost_vect(AMREX_D_DECL(nghost, nghost, nghost));
+    WarpXCommUtil::ParallelCopy(*smf, mf, 0, 0, ncomp,nghost_vect,nghost_vect);
 
     // inteprolate if required on refined slice //
     if (interpolate == 1 ) {
@@ -274,17 +280,23 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
         // Modify lo if input is out of bounds //
         if ( slice_realbox.lo(idim) < real_box.lo(idim) ) {
             slice_realbox.setLo( idim, real_box.lo(idim));
-            amrex::Print() << " slice lo is out of bounds. " <<
-                              " Modified it in dimension " << idim <<
-                              " to be aligned with the domain box\n";
+            std::stringstream warnMsg;
+            warnMsg << " slice lo is out of bounds. " <<
+                       " Modified it in dimension " << idim <<
+                       " to be aligned with the domain box.";
+            WarpX::GetInstance().RecordWarning("Diagnostics",
+               warnMsg.str(), WarnPriority::low);
         }
 
         // Modify hi if input in out od bounds //
         if ( slice_realbox.hi(idim) > real_box.hi(idim) ) {
             slice_realbox.setHi( idim, real_box.hi(idim));
-            amrex::Print() << " slice hi is out of bounds." <<
-                              " Modified it in dimension " << idim <<
-                              " to be aligned with the domain box\n";
+            std::stringstream warnMsg;
+            warnMsg << " slice hi is out of bounds. " <<
+                       " Modified it in dimension " << idim <<
+                       " to be aligned with the domain box.";
+            WarpX::GetInstance().RecordWarning("Diagnostics",
+               warnMsg.str(), WarnPriority::low);
         }
 
         // Factor to ensure index values computation depending on index type //
@@ -368,11 +380,12 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                 }
 
                 if ( (hi_new - lo_new) == 0 ){
-                    amrex::Print() << " Diagnostic Warning :: ";
-                    amrex::Print() << " Coarsening ratio  ";
-                    amrex::Print() << slice_cr_ratio[idim] << " in dim "<< idim;
-                    amrex::Print() << "is leading to zero cells for slice.";
-                    amrex::Print() << " Thus reducing cr_ratio by half.\n";
+                   std::stringstream warnMsg;
+                   warnMsg << " Coarsening ratio  " << slice_cr_ratio[idim] << " in dim "<< idim <<
+                     "is leading to zero cells for slice." << " Thus reducing cr_ratio by half.\n";
+
+                     WarpX::GetInstance().RecordWarning("Diagnostics",
+                        warnMsg.str());
 
                     slice_cr_ratio[idim] = slice_cr_ratio[idim]/2;
                     modify_cr = true;

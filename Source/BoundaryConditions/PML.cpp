@@ -17,6 +17,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "Parallelization/WarpXCommUtil.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -506,9 +507,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
 
         ParmParse pp_psatd("psatd");
-        pp_psatd.query("nx_guard", ngFFt_x);
-        pp_psatd.query("ny_guard", ngFFt_y);
-        pp_psatd.query("nz_guard", ngFFt_z);
+        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
@@ -564,14 +565,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
     if (m_dive_cleaning)
     {
-        pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dm, 3, ngf);
+        const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+        pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, 3, ngf);
         pml_F_fp->setVal(0.0);
     }
 
     if (m_divb_cleaning)
     {
         // TODO Shall we define a separate guard cells parameter ngG?
-        pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()), dm, 3, ngf);
+        const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
+                                                        : amrex::IntVect::TheCellVector();
+        pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, 3, ngf);
         pml_G_fp->setVal(0.0);
     }
 
@@ -599,8 +603,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
         // Get the cell-centered box, with guard cells
         BoxArray realspace_ba = ba; // Copy box
-        Array<Real,3> const v_galilean_zero = {0., 0., 0.};
-        Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
@@ -664,14 +668,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
         if (m_dive_cleaning)
         {
-            pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()), cdm, 3, ngf);
+            const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+            pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba, F_nodal_flag), cdm, 3, ngf);
             pml_F_cp->setVal(0.0);
         }
 
         if (m_divb_cleaning)
         {
             // TODO Shall we define a separate guard cells parameter ngG?
-            pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()), cdm, 3, ngf);
+            const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
+                                                            : amrex::IntVect::TheCellVector();
+            pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, G_nodal_flag), cdm, 3, ngf);
             pml_G_cp->setVal(0.0);
         }
 
@@ -707,8 +714,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
             // Get the cell-centered box, with guard cells
             BoxArray realspace_cba = cba; // Copy box
-            Array<Real,3> const v_galilean_zero = {0., 0., 0.};
-            Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
@@ -966,6 +973,24 @@ PML::ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain)
     }
 }
 
+void PML::ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain)
+{
+    ExchangeG(PatchType::fine, G_fp, do_pml_in_domain);
+    ExchangeG(PatchType::coarse, G_cp, do_pml_in_domain);
+}
+
+void PML::ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain)
+{
+    if (patch_type == PatchType::fine && pml_G_fp && Gp)
+    {
+        Exchange(*pml_G_fp, *Gp, *m_geom, do_pml_in_domain);
+    }
+    else if (patch_type == PatchType::coarse && pml_G_cp && Gp)
+    {
+        Exchange(*pml_G_cp, *Gp, *m_cgeom, do_pml_in_domain);
+    }
+}
+
 void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
                 int do_pml_in_domain)
@@ -979,6 +1004,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
 
     // Create temporary MultiFab to copy to and from the PML
     MultiFab tmpregmf(reg.boxArray(), reg.DistributionMap(), ncp, ngr);
+    tmpregmf.setVal(0.0);
 
     // Create the sum of the split fields, in the PML
     MultiFab totpmlmf(pml.boxArray(), pml.DistributionMap(), 1, 0); // Allocate
@@ -991,7 +1017,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
     if (do_pml_in_domain){
         // Valid cells of the PML and of the regular grid overlap
         // Copy from valid cells of the PML to valid cells of the regular grid
-        reg.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), IntVect(0), period);
+        WarpXCommUtil::ParallelCopy(reg, totpmlmf, 0, 0, 1, IntVect(0), IntVect(0), period);
     } else {
         // Valid cells of the PML only overlap with guard cells of regular grid
         // (and outermost valid cell of the regular grid, for nodal direction)
@@ -999,7 +1025,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // but avoid updating the outermost valid cell
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
-            tmpregmf.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
+            WarpXCommUtil::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -1032,9 +1058,9 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // Where valid cells of tmpregmf overlap with PML valid cells,
         // copy the PML (this is order to avoid overwriting PML valid cells,
         // in the next `ParallelCopy`)
-        tmpregmf.ParallelCopy(pml,0, 0, ncp, IntVect(0), IntVect(0), period);
+        WarpXCommUtil::ParallelCopy(tmpregmf, pml,0, 0, ncp, IntVect(0), IntVect(0), period);
     }
-    pml.ParallelCopy(tmpregmf, 0, 0, ncp, IntVect(0), ngp, period);
+    WarpXCommUtil::ParallelCopy(pml, tmpregmf, 0, 0, ncp, IntVect(0), ngp, period);
 }
 
 
@@ -1044,7 +1070,7 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
   const IntVect& ngp = pml.nGrowVect();
   const auto& period = geom.periodicity();
 
-  pml.ParallelCopy(reg, 0, 0, 1, IntVect(0), ngp, period);
+  WarpXCommUtil::ParallelCopy(pml, reg, 0, 0, 1, IntVect(0), ngp, period);
 }
 
 void
@@ -1070,13 +1096,13 @@ PML::FillBoundaryE (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get(),pml_E_fp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
     else if (patch_type == PatchType::coarse && pml_E_cp[0] && pml_E_cp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_E_cp[0].get(),pml_E_cp[1].get(),pml_E_cp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
 }
 
@@ -1094,13 +1120,13 @@ PML::FillBoundaryB (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get(),pml_B_fp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
     else if (patch_type == PatchType::coarse && pml_B_cp[0])
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_B_cp[0].get(),pml_B_cp[1].get(),pml_B_cp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
 }
 
@@ -1117,12 +1143,12 @@ PML::FillBoundaryF (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_F_fp && pml_F_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        pml_F_fp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_F_fp, period);
     }
     else if (patch_type == PatchType::coarse && pml_F_cp && pml_F_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        pml_F_cp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_F_cp, period);
     }
 }
 
@@ -1139,12 +1165,12 @@ PML::FillBoundaryG (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        pml_G_fp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_G_fp, period);
     }
     else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        pml_G_cp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_G_cp, period);
     }
 }
 

@@ -53,10 +53,7 @@ protons.injection_style = "NUniformPerCell"
 protons.num_particles_per_cell_each_dim = 1 1 1
 protons.profile = constant
 protons.density = 1.e14   # number of protons per m^3
-protons.momentum_distribution_type = gaussian
-protons.ux_th = 0.
-protons.uy_th = 0.
-protons.uz_th = 0.
+protons.momentum_distribution_type = at_rest
 
 photons.species_type = "photon"
 photons.injection_style = "NUniformPerCell"
@@ -71,7 +68,7 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP NP EF PP PF MF MR FR_Max FR_Min FR_Integral
+warpx.reduced_diags_names = EP NP EF PP PF MF FP MR FR_Max FR_Min FR_Integral
 EP.type = ParticleEnergy
 EP.intervals = 200
 EF.type = FieldEnergy
@@ -82,6 +79,12 @@ PF.type = FieldMomentum
 PF.intervals = 200
 MF.type = FieldMaximum
 MF.intervals = 200
+FP.type = FieldProbe
+FP.intervals = 200
+#The probe is placed at a cell center to match the value in the plotfile
+FP.x_probe = 0.53125
+FP.y_probe = 0.53125
+FP.z_probe = 0.53125
 MR.type = RhoMaximum
 MR.intervals = 200
 NP.type = ParticleNumber

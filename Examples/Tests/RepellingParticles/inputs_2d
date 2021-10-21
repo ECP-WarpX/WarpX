@@ -1,0 +1,53 @@
+max_step = 200
+amr.n_cell = 128 128
+
+amr.blocking_factor = 16
+amr.max_grid_size = 1024
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.prob_lo     = -32.e-6    -32.e-6      # physical domain
+geometry.prob_hi     =  32.e-6     32.e-6
+
+# Boundary condition
+boundary.field_lo = pec pec
+boundary.field_hi = pec pec
+
+# Algorithms
+algo.current_deposition = esirkepov
+algo.field_gathering = momentum-conserving
+algo.charge_deposition = standard
+algo.particle_pusher = vay
+algo.maxwell_solver = yee
+warpx.cfl = 0.9
+warpx.use_filter = 0
+warpx.do_dive_cleaning = 1
+
+# Particle species
+particles.species_names = electron1 electron2
+
+electron1.charge = q_e
+electron1.mass = m_e
+electron1.injection_style = "singleparticle"
+electron1.single_particle_pos = 1.e-6 0. 0.
+electron1.single_particle_vel = 0. 0. 0.
+electron1.single_particle_weight = 5.e12
+electron1.initialize_self_fields = 1
+
+electron2.charge = q_e
+electron2.mass = m_e
+electron2.injection_style = "singleparticle"
+electron2.single_particle_pos = -1.e-6 0. 0.
+electron2.single_particle_vel = 0. 0. 0.
+electron2.single_particle_weight = 5.e12
+electron2.initialize_self_fields = 1
+
+# Order of particle shape factors
+algo.particle_shape = 3
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 20
+diag1.diag_type = Full
+diag1.fields_to_plot = Bx By Bz Ex Ey Ez jx jy jz divE rho F
