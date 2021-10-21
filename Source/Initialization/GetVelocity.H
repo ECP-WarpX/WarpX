@@ -14,10 +14,10 @@
 /**
  * \brief Get velocity at a point on the grid
  *
- * Functor to return velocity at a point on the grid, either constant (m_velocity)
+ * Class to get velocity at a point on the grid, either constant (m_velocity)
  * or a spatially varying value computed using the parser function (m_velocity_parser).
- * It provides the velocity information held by the VelocityProperties instance
- * passed to the constructor.
+ * It also stores the direction of the velocity field. It provides the velocity information
+ * held by the VelocityProperties instance passed to the constructor.
  */
 struct GetVelocity
 {

@@ -50,6 +50,7 @@ VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
 
     pp.query("beta_distribution_type", vel_dist_s);
     if (vel_dist_s == "constant") {
+        std::cerr << "in vel prop constructor constant" << std::endl;
         queryWithParser(pp, "beta", m_velocity);
         m_type = VelConstantValue;
     }
