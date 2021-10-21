@@ -141,6 +141,14 @@ class _MultiFABWrapper(object):
             return self._getitem3d(index)
 
     def _find_start_stop(self, ii, nn, ngrow, d):
+        """Given the input index, calculate the start and stop range of the indices.
+        - ii: index, either a slice object or an integer
+        - nn: the global number of cells along the specified direction
+        - d: the direction, an integer, 0, 1, or 2
+        If ii is a slice, the start and stop values are used directly,
+        unless they are None, then the lower or upper bound is used.
+        An assertion checks if the indices are within the bounds.
+        """
         if isinstance(ii, slice):
             if ii.start is None:
                 iistart = -ngrow[d]
