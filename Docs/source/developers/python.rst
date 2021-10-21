@@ -21,7 +21,7 @@ For a list of all of the available wrappers, see the file ``Python/pywarpx/field
 For each MultiFab, there is a function that will return a wrapper around the data.
 For instance, the function ``ExWrapper`` returns a wrapper around the ``x`` component of the MultiFab vector ``Efield_aux``.
 
-.. code-block:: python 
+.. code-block:: python
 
    from pywarpx import fields
    Ex = fields.ExWrapper()
@@ -34,7 +34,7 @@ Using standard array indexing with square brackets, the data can be accessed usi
 With multiple processors, the result is broadcast to all processors.
 This example will return the ``Bz`` field at all points along ``x`` at the specified ``y`` and ``z`` indices.
 
-.. code-block:: python 
+.. code-block:: python
 
    from pywarpx import fields
    Bz = fields.BzWrapper()
@@ -43,7 +43,7 @@ This example will return the ``Bz`` field at all points along ``x`` at the speci
 The same global indexing can be done to set values. This example will set the values over a range in ``y`` and ``z`` at the
 specified ``x``. The data will be scattered appropriately to the underlying FABs.
 
-.. code-block:: python 
+.. code-block:: python
 
    from pywarpx import fields
    Jy = fields.JyFPWrapper()
