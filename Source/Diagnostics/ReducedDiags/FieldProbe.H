@@ -49,6 +49,7 @@ private:
     int field_probe_integrate = 0;
     int interp_order = 1;
     bool raw_fields = false;
+    amrex::Real vacper = 1.2566371e-6;
 
     virtual void WriteToFile (int step) const override;
 

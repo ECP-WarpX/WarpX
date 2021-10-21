@@ -35,30 +35,51 @@
 using namespace amrex;
 
 // constructor
+
 FieldProbe::FieldProbe (std::string rd_name)
 : ReducedDiags{rd_name}, m_probe(&WarpX::GetInstance())
 {
+
     // RZ coordinate is not working
+
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldProbe reduced diagnostics does not work for RZ coordinate.");
 #endif
 
     // read number of levels
+
     int nLevel = 0;
     amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
+    /**
+     * Obtain input data from parsing inputs file.
+     * For the case of a single particle:
+     *     Define x, y, and z of particle
+     *     Define whether or not to integrate fields
+     * For the case of a line detector:
+     *     Define x, y, and z of end of line point 1
+     *     Define x, y, and z of end of line point 2
+     *     Define resoliton to determine number of particles
+     *     Define whether ot not to integrate fields
+     * For the case of a plane detector:
+     *     Define a vector normal to the detector plane
+     *     Define a vector in the "up" direction of the plane
+     *     Define the size of the plane (width of half square)
+     *     Define resoliton to determine number of particles
+     *     Define whether ot not to integrate fields
+     */
+
     amrex::ParmParse pp_rd_name(rd_name);
     getWithParser(pp_rd_name, "x_probe", x_probe);
-//#if (AMREX_SPACEDIM == 3)
     getWithParser(pp_rd_name, "y_probe", y_probe);
-//#endif
     getWithParser(pp_rd_name, "z_probe", z_probe);
     pp_rd_name.query("integrate", field_probe_integrate);
 
     //create 1D array for X, Y, and Z of particles
+
     amrex::ParticleReal xpos[1]{x_probe};
     amrex::ParticleReal ypos[1]{y_probe};
     amrex::ParticleReal zpos[1]{z_probe};
@@ -66,22 +87,25 @@ FieldProbe::FieldProbe (std::string rd_name)
     m_probe.AddNParticles(0, np, xpos, ypos, zpos);
 
     pp_rd_name.query("raw_fields", raw_fields);
-
     pp_rd_name.query("interp_order", interp_order);
-    //Additional Option HERE! Integrate over values or not
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be lower or equal than algo.particle_shape");
     // resize data array
+
     m_data.resize(noutputs*nLevel, 0.0_rt);
 
     if (ParallelDescriptor::IOProcessor())
     {
         if ( m_IsNotRestart )
         {
+
             // open file
+
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
+
             // write header row
+
             int c = 0;
             ofs << "#";
             ofs << "[" << c++ << "]step()";
@@ -106,29 +130,36 @@ FieldProbe::FieldProbe (std::string rd_name)
 
             }
             ofs << std::endl;
+
             // close file
+
             ofs.close();
         }
     }
-}
-// end constructor
+}//end constructor
 
 // function that computes field values at probe position
+
 void FieldProbe::ComputeDiags (int step)
 {
     // Judge if the diags should be done
+
     if (!m_intervals.contains(step+1)) { return; }
 
     // get a reference to WarpX instance
+
     auto & warpx = WarpX::GetInstance();
 
     // get number of level
+
     const auto nLevel = warpx.finestLevel() + 1;
 
-    // vector where we store the field values
+    // vector to store the field values
+
     amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
-    	// loop over refinement levels
+   	// loop over refinement levels
+
     for (int lev = 0; lev < nLevel; ++lev)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
@@ -136,6 +167,7 @@ void FieldProbe::ComputeDiags (int step)
         const auto prob_hi = gm.ProbHi();
 
         // get MultiFab data at lev
+
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
         const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
         const amrex::MultiFab &Ez = warpx.getEfield(lev, 2);
@@ -143,8 +175,11 @@ void FieldProbe::ComputeDiags (int step)
         const amrex::MultiFab &By = warpx.getBfield(lev, 1);
         const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
 
-        // Prepare interpolation of field components to probe_position
-        // The arrays below store the index type (staggering) of each MultiFab.
+        /**
+         * Prepare interpolation of field components to probe_position
+         * The arrays below store the index type (staggering) of each MultiFab.
+         */
+
         amrex::IndexType const Extype = Ex.ixType();
         amrex::IndexType const Eytype = Ey.ixType();
         amrex::IndexType const Eztype = Ez.ixType();
@@ -152,13 +187,23 @@ void FieldProbe::ComputeDiags (int step)
         amrex::IndexType const Bytype = By.ixType();
         amrex::IndexType const Bztype = Bz.ixType();
 
+        //defined for use in determining which CPU contains the particles
+
         int probe_proc = -1;
 
-	//loop over each particle
+	    //loop over each particle
+
     	using MyParIter = amrex::ParIter<0,0,7,0>;
        	for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti) 
         {
             const auto getPosition = GetParticlePosition(pti);
+
+            /**
+             * Determine if probe exists within simulation boundaries. During 2D simulations,
+             * y values will be set to 0 making it unnecessary to check. Generally, the second
+             * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
+             * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
+             */ 
 
 #if (AMREX_SPACEDIM == 2)
             m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
@@ -173,8 +218,11 @@ void FieldProbe::ComputeDiags (int step)
 
             if( m_probe_in_domain ) 
             {
-	            // Make the box cell centered in preparation for the interpolation (and to avoid
-                // including ghost cells in the calculation)
+	            /**
+                 * Make the box cell centered in preparation for the interpolation (and to avoid
+                 * including ghost cells in the calculation)
+                 */
+
                 const auto &arrEx = Ex[pti].array();
                 const auto &arrEy = Ey[pti].array();
                 const auto &arrEz = Ez[pti].array();
@@ -185,10 +233,9 @@ void FieldProbe::ComputeDiags (int step)
                 amrex::Box box = pti.tilebox();
                 box.grow(Ex.nGrowVect());
 
-                //auto& attribs = pti.GetAttribs();
-                auto& attribs = pti.GetStructOfArrays().GetRealData();
+                //preparing to write data to particle
 
-                //preparing to write to Particle
+                auto& attribs = pti.GetStructOfArrays().GetRealData();
                 ParticleReal* const AMREX_RESTRICT part_Ex = attribs[static_cast<int>(ParticleVal::Ex)].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_Ey = attribs[static_cast<int>(ParticleVal::Ey)].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_Ez = attribs[static_cast<int>(ParticleVal::Ez)].dataPtr();
@@ -205,6 +252,7 @@ void FieldProbe::ComputeDiags (int step)
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
                 //Interpolating to the probe point for each particle
+
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
@@ -215,6 +263,7 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParticleReal S = 0._rt;
 
                     // first gather E and B to the particle positions
+
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
@@ -222,15 +271,23 @@ void FieldProbe::ComputeDiags (int step)
                                    interp_order, false);
 
 	                //Calculate S
+
                     amrex::Real sraw[3]{
 		            Exp * Bzp - Ezp * Byp,
 		            Ezp * Bxp - Exp * Bzp,
 		            Exp * Byp - Eyp * Bxp};
-    	            S = sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+    	            S = (1 / vacper)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+
+                    /**
+                     * Determine whether or not to integrate field data.
+                     * If not integrating, store instantaneous values.
+                     */
 
                     if (field_probe_integrate != 1)
                     {
+
                         //Store Values on Particles
+
                         part_Ex[ip] = Exp; //remember to add lorentz transform
                         part_Ey[ip] = Eyp; //remember to add lorentz transform
                         part_Ez[ip] = Ezp; //remember to add lorentz transform
@@ -251,6 +308,7 @@ void FieldProbe::ComputeDiags (int step)
                     }
 
                     // Fill output array
+
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::Ex)] = part_Ex[ip];
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::Ey)] = part_Ey[ip];
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::Ez)] = part_Ez[ip];
@@ -259,13 +317,18 @@ void FieldProbe::ComputeDiags (int step)
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::Bz)] = part_Bz[ip];
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::S)] = part_S[ip];
                 });// ParallelFor Close  
+
                 probe_proc = amrex::ParallelDescriptor::MyProc();
+
             }
 
 	    }//End MyParIter
-        //All the processors have probe_proc = -1 except the one that contains the point, which
-        //has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
-        //processors the rank of the processor which contains the point
+
+        /**
+         * All the processors have probe_proc = -1 except the one that contains the point, which
+         * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
+         * processors the rank of the processor which contains the point
+         */
 
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
@@ -283,15 +346,17 @@ void FieldProbe::ComputeDiags (int step)
                 amrex::ParallelDescriptor::Recv(fp_values.dataPtr(), noutputs, probe_proc, 0);
             }
         }
-    }
-    // end loop over refinement levels
-}
+    }// end loop over refinement levels
 
-    /* m_data now contains up-to-date values for:
-     *  [probe(Ex),probe(Ey),probe(Ez),
-     *   probe(Bx),probe(By),probe(Bz)] */
+}// end void FieldProbe::ComputeDiags
 
-// end void FieldProbe::ComputeDiags
+/** 
+ * m_data now contains up-to-date values for:
+ *  [probe(Ex),probe(Ey),probe(Ez),
+ *   probe(Bx),probe(By),probe(Bz)]
+ */
+
+//Utilize ReducedDiags output generation funtion
 
 void FieldProbe::WriteToFile (int step) const
 {
