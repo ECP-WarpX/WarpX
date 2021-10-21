@@ -458,11 +458,11 @@ def check_initial_energy1(data, E_com):
         ## Energy of alphas3 (here, fifth macroparticle of each fusion event) in the slice
         energy_alpha3_simulation = energy_alpha_slice[4::6]
 
-        assert(np.all(is_close(energy_alpha1_simulation, energy_alpha1_theory)))
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, 1.e-2))
-        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, 1.e-2))
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, 1.e-2))
-        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, 1.e-2))
+        assert(np.all(is_close(energy_alpha1_simulation, energy_alpha1_theory, rtol=5.e-8)))
+        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-2))
+        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, rtol=1.e-2))
+        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-2))
+        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, rtol=1.e-2))
 
 def check_initial_energy2(data):
     ## In WarpX, the initial momentum of the alphas is computed assuming that the fusion process
@@ -542,15 +542,15 @@ def check_initial_energy2(data):
         ## Energy of alphas3 (here, fifth macroparticle of each fusion event) in the slice
         energy_alpha3_simulation = energy_alpha_slice[4::6]
 
-        assert(is_close(np.amax(energy_alpha1_simulation), max_energy_alpha1, 1.e-2))
-        assert(is_close(np.amin(energy_alpha1_simulation), min_energy_alpha1, 1.e-2))
+        assert(is_close(np.amax(energy_alpha1_simulation), max_energy_alpha1, rtol=1.e-2))
+        assert(is_close(np.amin(energy_alpha1_simulation), min_energy_alpha1, rtol=1.e-2))
         ## Tolerance is quite high below because we don't have a lot of alphas to produce good
         ## statistics and an event like alpha1 emitted exactly in direction of proton & alpha2
         ## emitted exactly in direction opposite to Beryllium is somewhat rare.
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, 1.e-1))
-        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, 1.e-1))
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, 1.e-1))
-        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, 1.e-1))
+        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-1))
+        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, rtol=1.e-1))
+        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-1))
+        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, rtol=1.e-1))
 
 def check_xy_isotropy(data):
     ## Checks that the alpha particles are emitted isotropically in x and y
