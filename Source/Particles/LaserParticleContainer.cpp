@@ -652,17 +652,16 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 {
     // The mobility is the constant of proportionality between the field to
     // be emitted, and the corresponding velocity that the particles need to have.
-    // We set the weight and mobility so that particles do not move by more
-    // than `eps` of the transverse cell size, during a full laser oscillation.
-    // (otherwise this may cause issues in deposition routines)
-    constexpr Real eps = 0.01_rt;
-    constexpr Real fac = 1.0_rt / (2.0_rt * MathConst::pi * PhysConst::mu0 * PhysConst::c * PhysConst::c * eps);
+    // We set the mobility so that the particles do not exceed a fraction
+    // `eps` of the speed of light, at the peak of the laser field.
+    constexpr Real eps = 0.05_rt;
+    m_mobility = eps/m_e_max;
+    m_weight = PhysConst::epsilon_0 / m_mobility;
+    // Multiply by particle spacing
 #if (AMREX_SPACEDIM == 3)
-    m_weight = fac * m_wavelength * Sx * Sy / std::min(Sx,Sy) * m_e_max;
-    m_mobility = (Sx * Sy)/(m_weight * PhysConst::mu0 * PhysConst::c * PhysConst::c);
+    m_weight *= Sx * Sy;
 #elif (AMREX_SPACEDIM == 2)
-    m_weight = fac * m_wavelength * m_e_max;
-    m_mobility = Sx/(m_weight * PhysConst::mu0 * PhysConst::c * PhysConst::c);
+    m_weight *= Sx;
 #endif
 
     // When running in the boosted-frame, the input parameters (and in particular
