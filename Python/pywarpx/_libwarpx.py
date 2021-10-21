@@ -193,6 +193,14 @@ libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
 libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getPhiFP.restype = _LP_LP_c_real
 libwarpx.warpx_getPhiFPLoVects.restype = _LP_c_int
+libwarpx.warpx_getFfieldCP.restype = _LP_LP_c_real
+libwarpx.warpx_getFfieldCPLoVects.restype = _LP_c_int
+libwarpx.warpx_getFfieldFP.restype = _LP_LP_c_real
+libwarpx.warpx_getFfieldFPLoVects.restype = _LP_c_int
+libwarpx.warpx_getGfieldCP.restype = _LP_LP_c_real
+libwarpx.warpx_getGfieldCPLoVects.restype = _LP_c_int
+libwarpx.warpx_getGfieldFP.restype = _LP_LP_c_real
+libwarpx.warpx_getGfieldFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
@@ -208,6 +216,8 @@ libwarpx.warpx_getJy_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getJz_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getPhi_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getF_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getG_nodal_flag.restype = _LP_c_int
 
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
@@ -1437,6 +1447,110 @@ def get_mesh_phi_fp(level, include_ghosts=True):
     return _get_mesh_field_list(libwarpx.warpx_getPhiFP, level, None, include_ghosts)
 
 
+def get_mesh_F_cp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh F field
+    data on each grid for this process. This version returns the F field for
+    the coarse patch on the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getFfieldCP, level, None, include_ghosts)
+
+
+def get_mesh_F_fp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh F field
+    data on each grid for this process. This version returns the F field on
+    the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getFfieldFP, level, None, include_ghosts)
+
+
+def get_mesh_G_cp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh G field
+    data on each grid for this process. This version returns the G field for
+    the coarse patch on the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getGfieldCP, level, None, include_ghosts)
+
+
+def get_mesh_G_fp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh G field
+    data on each grid for this process. This version returns the G field on
+    the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getGfieldFP, level, None, include_ghosts)
+
+
 def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
     assert(0 <= level and level <= libwarpx.warpx_finestLevel())
 
@@ -1880,6 +1994,90 @@ def get_mesh_phi_fp_lovects(level, include_ghosts=True):
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getPhiFPLoVects)
 
 
+def get_mesh_F_field_cp_lovects(level, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh F field
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldCPLoVects)
+
+
+def get_mesh_F_field_fp_lovects(level, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh F field
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldFPLoVects)
+
+
+def get_mesh_G_field_cp_lovects(level, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh G field
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getGfieldCPLoVects)
+
+
+def get_mesh_G_field_fp_lovects(level, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh G field
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getGfieldFPLoVects)
+
+
 def _get_nodal_flag(getdatafunc):
     data = getdatafunc()
     nodal_flag_ref = np.ctypeslib.as_array(data, (dim,))
@@ -1966,3 +2164,15 @@ def get_Phi_nodal_flag():
     This returns a 1d array of the nodal flags for Phi along each direction. A 1 means node centered, and 0 cell centered.
     '''
     return _get_nodal_flag(libwarpx.warpx_getPhi_nodal_flag)
+
+def get_F_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for F along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getF_nodal_flag)
+
+def get_G_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for G along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getG_nodal_flag)
