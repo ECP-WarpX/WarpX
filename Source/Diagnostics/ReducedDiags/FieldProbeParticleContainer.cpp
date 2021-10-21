@@ -56,6 +56,11 @@
 
 using namespace amrex;
 
+/**
+ * FPPC creates a particle container storing positon data, cpu id, particle id and
+ * 7 additional Struct of Array attribes. amr_core is used as per WarpXParticleContainer.
+ */
+
 FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
 	:ParticleContainer<0,0,static_cast<int>(ParticleVal::nattribs)>(amr_core->GetParGDB())
 {
@@ -73,6 +78,12 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
     resizeData();
 
 	auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
+
+    /**
+     * Creates a temporary tile to obtain data from simulation. This data
+     * is then coppied to the permament tile which is stored on the particle
+     * (particle_tile).
+     */
 
 	using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
 	      				amrex::PinnedArenaAllocator>;
@@ -95,18 +106,10 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
 		p.pos(1) = 0;
 		p.pos(2) = z[i];
 #endif
-		pinned_tile.push_back(p);
+        //write position, cpu id, and particle id to particle
+        pinned_tile.push_back(p);
 
-		//Particle Real attributes (SoA) initialized zero
-/*		std::array<amrex::Real, 7> real_attribs;
-		real_attribs[static_cast<int>(ParticleVal::Ex)] = 0;	//Ex
-		real_attribs[static_cast<int>(ParticleVal::Ey)] = 0;	//Ey
-		real_attribs[static_cast<int>(ParticleVal::Ez)] = 0;	//Ez
-		real_attribs[static_cast<int>(ParticleVal::Bx)] = 0;	//Bx
-		real_attribs[static_cast<int>(ParticleVal::By)] = 0;	//By
-		real_attribs[static_cast<int>(ParticleVal::Bz)] = 0;	//Bz
-		real_attribs[static_cast<int>(ParticleVal::S)] = 0;	//S
-*/
+        //write Real attributes (SoA) to particle initialized zero
         DefineAndReturnParticleTile(0, 0, 0);
 
 		pinned_tile.push_back_real(static_cast<int>(ParticleVal::Ex), np, 0.0);
@@ -117,6 +120,13 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
 		pinned_tile.push_back_real(static_cast<int>(ParticleVal::Bz), np, 0.0);
 		pinned_tile.push_back_real(static_cast<int>(ParticleVal::S), np, 0.0);
 	}
+
+    /**
+     * Redistributes particles to their appropriate tiles if the box
+     * structure of the simulation changes to accomodate data more
+     * efficiently.
+     */
+
 	auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
        	particle_tile.resize(new_np);

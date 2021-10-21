@@ -7,6 +7,12 @@
 #include <AMReX_BaseFwd.H>
 #include <AMReX_AmrCoreFwd.H>
 
+/**
+ * This enumerated class is used to index the Particle
+ * values which are being stored as SoA data. Nattribs
+ * is enumerated to give the number of attributes stored.
+ */
+
 enum class ParticleVal : int
 {
 	Ex = 0, Ey, Ez,
@@ -14,6 +20,13 @@ enum class ParticleVal : int
 	S,
 	nattribs
 };
+
+/**
+ * This class defines the FieldProbeParticleContainer
+ * which is branched from the amrex::ParticleContainer.
+ * nattribs tells the particle container to allot 7 SOA values.
+ */
+
 class FieldProbeParticleContainer
 	: public amrex::ParticleContainer<0,0,static_cast<int>(ParticleVal::nattribs)>
 {
