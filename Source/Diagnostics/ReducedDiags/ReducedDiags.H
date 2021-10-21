@@ -57,10 +57,18 @@ public:
     virtual ~ReducedDiags () = default;
 
     /**
+     * function to allocate test particles after environemnt
+     * is constructed.
+     */
+
+    virtual void AllocData();
+
+    /**
      * function to compute diags
      *
      * @param[in] step current time step
      */
+
     virtual void ComputeDiags (int step) = 0;
 
     /**

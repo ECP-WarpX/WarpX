@@ -77,15 +77,6 @@ FieldProbe::FieldProbe (std::string rd_name)
     getWithParser(pp_rd_name, "y_probe", y_probe);
     getWithParser(pp_rd_name, "z_probe", z_probe);
     pp_rd_name.query("integrate", field_probe_integrate);
-
-    //create 1D array for X, Y, and Z of particles
-
-    amrex::ParticleReal xpos[1]{x_probe};
-    amrex::ParticleReal ypos[1]{y_probe};
-    amrex::ParticleReal zpos[1]{z_probe};
-
-    m_probe.AddNParticles(0, np, xpos, ypos, zpos);
-
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
 
@@ -138,6 +129,19 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
 }//end constructor
 
+void FieldProbe::AllocData()
+{
+
+    //create 1D array for X, Y, and Z of particles
+
+    amrex::ParticleReal xpos[1]{x_probe};
+    amrex::ParticleReal ypos[1]{y_probe};
+    amrex::ParticleReal zpos[1]{z_probe};
+
+    //add np partciles on lev 0 to m_probe
+
+    m_probe.AddNParticles(0, np, xpos, ypos, zpos);
+}
 // function that computes field values at probe position
 
 void FieldProbe::ComputeDiags (int step)

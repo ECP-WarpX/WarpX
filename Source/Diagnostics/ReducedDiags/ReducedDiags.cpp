@@ -64,6 +64,14 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 }
 // end constructor
 
+/* Define empty function AllocData() to be overwritten if needed.
+ * Function used to assign test/data particles to environment
+ */
+
+void ReducedDiags::AllocData()
+{
+}
+
 void ReducedDiags::BackwardCompatibility ()
 {
     amrex::ParmParse pp_rd_name(m_rd_name);

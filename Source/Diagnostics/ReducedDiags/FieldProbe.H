@@ -32,6 +32,12 @@ public:
 
     FieldProbe(std::string rd_name);
 
+    /** 
+     * This function assins test/data particles to constructed environemnt
+     */
+
+    virtual void AllocData() override final;
+
     /**
      * This function computes the value of Ex, Ey, Ez, Bx, By, Bz and at a given point
      *
