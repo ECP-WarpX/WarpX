@@ -216,6 +216,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // when galerkin_interpolation is set to 1
 #if (AMREX_SPACEDIM == 2)
     // Gather field on particle Eyp from field on grid ey_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Eyp)
+#endif
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){
             Eyp += sx_ey[ix]*sz_ey[iz]*
@@ -224,6 +227,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
     // Gather field on particle Exp from field on grid ex_arr
     // Gather field on particle Bzp from field on grid bz_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Exp) reduction(+:Bzp)
+#endif
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
             Exp += sx_ex[ix]*sz_ex[iz]*
@@ -234,6 +240,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
     // Gather field on particle Ezp from field on grid ez_arr
     // Gather field on particle Bxp from field on grid bx_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Ezp) reduction(+:Bxp)
+#endif
     for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
         for (int ix=0; ix<=depos_order; ix++){
             Ezp += sx_ez[ix]*sz_ez[iz]*
@@ -243,6 +252,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Byp from field on grid by_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Byp)
+#endif
     for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
         for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
             Byp += sx_by[ix]*sz_by[iz]*
@@ -267,6 +279,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
 
         // Gather field on particle Eyp from field on grid ey_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Eyp)
+#endif
         for (int iz=0; iz<=depos_order; iz++){
             for (int ix=0; ix<=depos_order; ix++){
                 const amrex::Real dEy = (+ ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode-1)*xy.real()
@@ -276,6 +291,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
         // Gather field on particle Exp from field on grid ex_arr
         // Gather field on particle Bzp from field on grid bz_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Exp) reduction(+:Bzp)
+#endif
         for (int iz=0; iz<=depos_order; iz++){
             for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
                 const amrex::Real dEx = (+ ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode-1)*xy.real()
@@ -288,6 +306,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
         // Gather field on particle Ezp from field on grid ez_arr
         // Gather field on particle Bxp from field on grid bx_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Ezp) reduction(+:Bxp)
+#endif
         for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
             for (int ix=0; ix<=depos_order; ix++){
                 const amrex::Real dEz = (+ ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode-1)*xy.real()
@@ -299,6 +320,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
             }
         }
         // Gather field on particle Byp from field on grid by_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Byp)
+#endif
         for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
             for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
                 const amrex::Real dBy = (+ by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode-1)*xy.real()
@@ -320,6 +344,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
 #else // (AMREX_SPACEDIM == 3)
     // Gather field on particle Exp from field on grid ex_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Exp)
+#endif
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
@@ -329,6 +356,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Eyp from field on grid ey_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Eyp)
+#endif
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<=depos_order; ix++){
@@ -338,6 +368,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Ezp from field on grid ez_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Ezp)
+#endif
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<=depos_order; ix++){
@@ -347,6 +380,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Bzp from field on grid bz_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Bzp)
+#endif
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
@@ -356,6 +392,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Byp from field on grid by_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Byp)
+#endif
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
@@ -365,6 +404,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Bxp from field on grid bx_arr
+#ifdef AMREX_USE_OMP
+    #pragma omp simd reduction(+:Bxp)
+#endif
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<=depos_order; ix++){
