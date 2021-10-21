@@ -30,7 +30,7 @@ By default, this wraps the MultiFab for level 0. The ``level`` argument can be s
 By default, the wrapper only includes the valid cells. To include the ghost cells, set the argument ``include_ghosts=True``.
 
 The wrapper provides access to the data via global indexing.
-Using standard array indexing with square brackets, the data can be accessed using indices that are relative to the full domain (across the MultiFab and across processors).
+Using standard array indexing (with exceptions) with square brackets, the data can be accessed using indices that are relative to the full domain (across the MultiFab and across processors).
 With multiple processors, the result is broadcast to all processors.
 This example will return the ``Bz`` field at all points along ``x`` at the specified ``y`` and ``z`` indices.
 
@@ -48,6 +48,11 @@ specified ``x``. The data will be scattered appropriately to the underlying FABs
    from pywarpx import fields
    Jy = fields.JyFPWrapper()
    Jy[5,6:20,8:30] = 7.
+
+The code does error checking to ensure that the specified indices are within the bounds of the global domain.
+Note that negative indices are handled differently than with numpy arrays because of the possibility of having ghost cells.
+With ghost cells, the lower ghost cells are accessed using negative indices (since ``0`` is the index of the lower bound of the
+valid cells). Without ghost cells, a negative index will always raise an out of bounds error since there are no ghost cells.
 
 Under the covers, the wrapper object has a list of numpy arrays that have pointers to the underlying data, one array for each FAB.
 When data is being fetched, it loops over that list to gather the data.
