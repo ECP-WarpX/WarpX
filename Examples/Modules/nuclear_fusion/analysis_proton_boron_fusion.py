@@ -7,7 +7,7 @@
 
 import sys
 import yt
-sys.path.insert(1, '../../../warpx/Regression/Checksum/')
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 import numpy as np
 import scipy.constants as scc
