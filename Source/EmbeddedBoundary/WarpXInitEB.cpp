@@ -93,14 +93,14 @@ WarpX::InitEB ()
         auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
         ParserIF pif(eb_if_parser.compile<3>());
         auto gshop = amrex::EB2::makeShop(pif, eb_if_parser);
-        amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel());
+        amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel()+20);
     } else {
         amrex::ParmParse pp_eb2("eb2");
         if (!pp_eb2.contains("geom_type")) {
             std::string geom_type = "all_regular";
             pp_eb2.add("geom_type", geom_type); // use all_regular by default
         }
-        amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
+        amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel()+20);
     }
 
 #endif
