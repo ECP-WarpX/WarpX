@@ -651,6 +651,22 @@ def RhoCPWrapper(level=1, include_ghosts=False):
                             get_nodal_flag=_libwarpx.get_Rho_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
+def FCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_F_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_F_cp,
+                            get_nodal_flag=_libwarpx.get_F_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def GCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_G_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_G_cp,
+                            get_nodal_flag=_libwarpx.get_G_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def ExFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=0,
                             get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects,
@@ -726,6 +742,20 @@ def PhiFPWrapper(level=0, include_ghosts=False):
                             get_lovects=_libwarpx.get_mesh_phi_fp_lovects,
                             get_fabs=_libwarpx.get_mesh_phi_fp,
                             get_nodal_flag=_libwarpx.get_Phi_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def FFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_F_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_F_field_fp,
+                            get_nodal_flag=_libwarpx.get_F_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def GFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_G_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_G_field_fp,
+                            get_nodal_flag=_libwarpx.get_G_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
 def ExCPPMLWrapper(level=1, include_ghosts=False):
