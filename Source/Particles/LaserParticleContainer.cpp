@@ -662,8 +662,10 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     m_weight *= Sx * Sy;
 #elif (AMREX_SPACEDIM == 2)
     m_weight *= Sx;
+    amrex::ignore_unused(Sy);
+#else
+    amrex::ignore_unused(Sx,Sy);
 #endif
-
     // When running in the boosted-frame, the input parameters (and in particular
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.
