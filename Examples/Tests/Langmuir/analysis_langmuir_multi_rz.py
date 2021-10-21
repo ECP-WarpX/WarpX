@@ -120,7 +120,7 @@ assert( error_rel < tolerance_rel )
 # Check charge conservation (relative L-infinity norm of error) with current correction
 if current_correction:
     divE = data[('mesh','divE')].to_ndarray()
-    rho  = data[('mesh','rho')].to_ndarray() / epsilon_0
+    rho  = data[('boxlib','rho')].to_ndarray() / epsilon_0
     error_rel = np.amax(np.abs(divE - rho)) / max(np.amax(divE), np.amax(rho))
     tolerance = 1.e-9
     print("Check charge conservation:")
