@@ -179,7 +179,6 @@ void FieldProbe::ComputeDiags (int step)
         amrex::IndexType const Bztype = Bz.ixType();
 
         //defined for use in determining which CPU contains the particles
-
         int probe_proc = -1;
 
 	    //loop over each particle
