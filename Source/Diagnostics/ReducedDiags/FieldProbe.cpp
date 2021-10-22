@@ -151,7 +151,7 @@ void FieldProbe::ComputeDiags (int step)
     // vector to store the field values
     amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
-   	// loop over refinement levels
+    // loop over refinement levels
 
     for (int lev = 0; lev < nLevel; ++lev)
     {
