@@ -40,6 +40,6 @@ n_move = 99
 # ref ratio
 rr = 2
 
-np_expected = (n_coarse* + n_fine*rr)*(n_0 + n_move)
+np_expected = (n_coarse + n_fine*rr)*(n_0 + n_move)
 
 assert( np == np_expected )
