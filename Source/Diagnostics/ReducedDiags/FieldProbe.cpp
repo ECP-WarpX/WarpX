@@ -10,6 +10,7 @@
 #include "Particles/Gather/FieldGather.H"
 
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
