@@ -29,7 +29,7 @@ Macro               3D3V         2D3V         1D3V         RZ
 ==================  ===========  ===========  ===========  ===========
 ``AMREX_SPACEDIM``  ``3``        ``2``        ``1``        ``2``
 ``WARPX_DIM_3D``    **defined**  *undefined*  *undefined*  *undefined*
-``WARPX_DIM_1D``    *undefined*  *undefined*  **defined**  *undefined*
+``WARPX_DIM_1D_Z``  *undefined*  *undefined*  **defined**  *undefined*
 ``WARPX_DIM_XZ``    *undefined*  **defined**  *undefined*  *undefined*
 ``WARPX_DIM_RZ``    *undefined*  *undefined*  *undefined*  **defined**
 ==================  ===========  ===========  ===========  ===========
