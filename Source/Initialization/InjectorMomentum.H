@@ -157,9 +157,13 @@ struct InjectorMomentumBoltzmann
         if (theta < 0) {
             amrex::Abort("Negative temperature parameter theta encountered, which is not allowed");
         }
+        // Calculate local velocity and abort if |beta|>=1
+        amrex::Real const beta = velocity(x,y,z);
+        if (beta <= -1 || beta >= 1) {
+            amrex::Abort("beta = v/c magnitude greater than or equal to 1");
+        }
         // Calculate the value of vave from the local temperature
         amrex::Real const vave = std::sqrt(amrex::Real(2) * theta);
-        amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
