@@ -171,7 +171,6 @@ void FieldProbe::ComputeDiags (int step)
          * Prepare interpolation of field components to probe_position
          * The arrays below store the index type (staggering) of each MultiFab.
          */
-
         amrex::IndexType const Extype = Ex.ixType();
         amrex::IndexType const Eytype = Ey.ixType();
         amrex::IndexType const Eztype = Ez.ixType();
