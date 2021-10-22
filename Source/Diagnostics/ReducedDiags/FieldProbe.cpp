@@ -127,7 +127,6 @@ void FieldProbe::InitData()
 {
 
     //create 1D array for X, Y, and Z of particles
-
     amrex::ParticleReal xpos[1]{x_probe};
     amrex::ParticleReal ypos[1]{y_probe};
     amrex::ParticleReal zpos[1]{z_probe};
