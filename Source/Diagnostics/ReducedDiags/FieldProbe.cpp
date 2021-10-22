@@ -285,13 +285,13 @@ void FieldProbe::ComputeDiags (int step)
     	            }
                     else
                     {
-                        part_Ex[ip] = Exp + part_Ex[ip]; //remember to add lorentz transform
-                        part_Ey[ip] = Eyp + part_Ey[ip]; //remember to add lorentz transform
-                        part_Ez[ip] = Ezp + part_Ez[ip]; //remember to add lorentz transform
-                        part_Bx[ip] = Bxp + part_Bx[ip]; //remember to add lorentz transform
-                        part_By[ip] = Byp + part_By[ip]; //remember to add lorentz transform
-                        part_Bz[ip] = Bzp + part_Bz[ip]; //remember to add lorentz transform
-                        part_S[ip] = S + part_S[ip]; //remember to add lorentz transform
+                        part_Ex[ip] += part_Ex[ip]; //remember to add lorentz transform
+                        part_Ey[ip] += part_Ey[ip]; //remember to add lorentz transform
+                        part_Ez[ip] += part_Ez[ip]; //remember to add lorentz transform
+                        part_Bx[ip] += part_Bx[ip]; //remember to add lorentz transform
+                        part_By[ip] += part_By[ip]; //remember to add lorentz transform
+                        part_Bz[ip] += part_Bz[ip]; //remember to add lorentz transform
+                        part_S[ip] += part_S[ip]; //remember to add lorentz transform
                     }
 
                     // Fill output array
@@ -302,6 +302,10 @@ void FieldProbe::ComputeDiags (int step)
                     m_data[0 * noutputs + ParticleVal::By] = part_By[ip];
                     m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip];
                     m_data[0 * noutputs + ParticleVal::S] = part_S[ip];
+
+                    /* m_data now contains up-to-date values for:
+                     *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
+
                 });// ParallelFor Close  
 
                 probe_proc = amrex::ParallelDescriptor::MyProc();
@@ -334,13 +338,6 @@ void FieldProbe::ComputeDiags (int step)
     }// end loop over refinement levels
 
 }// end void FieldProbe::ComputeDiags
-
-/* 
- * m_data now contains up-to-date values for:
- *  [probe(Ex),probe(Ey),probe(Ez),
- *   probe(Bx),probe(By),probe(Bz)]
- */
-
 
 void FieldProbe::WriteToFile (int step) const
 {
