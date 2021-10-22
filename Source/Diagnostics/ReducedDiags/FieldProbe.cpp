@@ -53,8 +53,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
-    /*
-     * Obtain input data from parsing inputs file.
+    /* Obtain input data from parsing inputs file.
      * For the case of a single particle:
      *     Define x, y, and z of particle
      *     Define whether or not to integrate fields
