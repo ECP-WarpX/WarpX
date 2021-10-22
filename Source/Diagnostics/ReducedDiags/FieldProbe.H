@@ -10,6 +10,7 @@
 
 #include "ReducedDiags.H"
 #include "FieldProbeParticleContainer.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Vector.H>
@@ -76,8 +77,11 @@ private:
     bool raw_fields = false;
 
     //vacper is vacuum permeability
-    amrex::Real vacper = 1.2566371e-6;
+    amrex::Real vacper = PhysConst::mu0;
 
+    /**
+     * Built-in function in ReducedDiags to write out test data
+     */
     virtual void WriteToFile (int step) const override;
 
 };
