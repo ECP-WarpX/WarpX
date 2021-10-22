@@ -252,7 +252,6 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParticleReal S = 0._rt;
 
                     // first gather E and B to the particle positions
-
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
