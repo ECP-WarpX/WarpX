@@ -1,4 +1,4 @@
-/* Copyright 2021 Lorenzo Giacomel
+/* Copyright 2021 Lorenzo Giacomel, Tiberius Rheaume, Axel Huebl
  *
  * This file is part of WarpX.
  *
