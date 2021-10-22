@@ -315,7 +315,6 @@ void FieldProbe::ComputeDiags (int step)
          * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
          * processors the rank of the processor which contains the point
          */
-
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
         if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) 
