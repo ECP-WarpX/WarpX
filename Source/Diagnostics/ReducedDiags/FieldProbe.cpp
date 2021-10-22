@@ -132,7 +132,6 @@ void FieldProbe::InitData()
     amrex::ParticleReal zpos[1]{z_probe};
 
     //add np partciles on lev 0 to m_probe
-
     m_probe.AddNParticles(0, np, xpos, ypos, zpos);
 }
 // function that computes field values at probe position
