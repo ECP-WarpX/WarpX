@@ -63,10 +63,6 @@
 
 using namespace amrex;
 
-/*
- * FPPC creates a particle container storing positon data, cpu id, particle id and
- * 7 additional Struct of Array attribes. amr_core is used as per WarpXParticleContainer.
- */
 FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
 	:ParticleContainer<0,0,static_cast<int>(ParticleVal::nattribs)>(amr_core->GetParGDB())
 {
