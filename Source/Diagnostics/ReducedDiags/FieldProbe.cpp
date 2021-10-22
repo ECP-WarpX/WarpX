@@ -181,8 +181,7 @@ void FieldProbe::ComputeDiags (int step)
         //defined for use in determining which CPU contains the particles
         int probe_proc = -1;
 
-	    //loop over each particle
-
+	    // loop over each particle
     	using MyParIter = amrex::ParIter<0,0,7,0>;
        	for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti) 
         {
