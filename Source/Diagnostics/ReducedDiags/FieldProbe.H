@@ -10,7 +10,6 @@
 
 #include "ReducedDiags.H"
 #include "FieldProbeParticleContainer.H"
-#include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Vector.H>
