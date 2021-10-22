@@ -142,7 +142,6 @@ void FieldProbe::ComputeDiags (int step)
     if (!m_intervals.contains(step+1)) { return; }
 
     // get a reference to WarpX instance
-
     auto & warpx = WarpX::GetInstance();
 
     // get number of level
