@@ -42,6 +42,9 @@ public:
 	FieldProbeParticleContainer (amrex::AmrCore* amr_core);
 	virtual ~FieldProbeParticleContainer() {}
 
+    //! amrex iterator for our number of attributes
+    using iterator = amrex::ParIter<0,0,ParticleVal::nattribs,0>;
+
 	//similar to WarpXParticleContainer::AddNParticles but does not include v(x,y,z)
 	void AddNParticles (int lev, int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z); 
 };

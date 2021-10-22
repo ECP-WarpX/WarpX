@@ -182,7 +182,7 @@ void FieldProbe::ComputeDiags (int step)
         int probe_proc = -1;
 
 	    // loop over each particle
-    	using MyParIter = amrex::ParIter<0,0,7,0>;
+    	using MyParIter = FieldProbeParticleContainer::iterator;
        	for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti) 
         {
             const auto getPosition = GetParticlePosition(pti);
