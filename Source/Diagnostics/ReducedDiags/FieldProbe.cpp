@@ -149,7 +149,6 @@ void FieldProbe::ComputeDiags (int step)
     const auto nLevel = warpx.finestLevel() + 1;
 
     // vector to store the field values
-
     amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
    	// loop over refinement levels
