@@ -140,6 +140,32 @@ class _MultiFABWrapper(object):
         elif self.dim == 3:
             return self._getitem3d(index)
 
+    def _find_start_stop(self, ii, nn, ngrow, d):
+        """Given the input index, calculate the start and stop range of the indices.
+        - ii: index, either a slice object or an integer
+        - nn: the global number of cells along the specified direction
+        - ngrow: list of the number of extra cells, i.e. guard cells
+        - d: the direction, an integer, 0, 1, or 2
+        If ii is a slice, the start and stop values are used directly,
+        unless they are None, then the lower or upper bound is used.
+        An assertion checks if the indices are within the bounds.
+        """
+        if isinstance(ii, slice):
+            if ii.start is None:
+                iistart = -ngrow[d]
+            else:
+                iistart = ii.start
+            if ii.stop is None:
+                iistop = nn + self.overlaps[d] + ngrow[d]
+            else:
+                iistop = ii.stop
+        else:
+            iistart = ii
+            iistop = ii + 1
+        assert -ngrow[d] <= iistart <= nn + self.overlaps[d] + ngrow[d], Exception(f'Dimension {d} lower index is out of bounds')
+        assert -ngrow[d] <= iistop <= nn + self.overlaps[d] + ngrow[d], Exception(f'Dimension {d} upper index is out of bounds')
+        return iistart, iistop
+
     def _getitem3d(self, index):
         """Returns slices of a 3D decomposed array,
         """
@@ -174,24 +200,9 @@ class _MultiFABWrapper(object):
             ny = comm_world.allreduce(ny, op=mpi.MAX)
             nz = comm_world.allreduce(nz, op=mpi.MAX)
 
-        if isinstance(ix, slice):
-            ixstart = max(ix.start or -ngrow[0], -ngrow[0])
-            ixstop = min(ix.stop or nx + 1 + ngrow[0], nx + self.overlaps[0] + ngrow[0])
-        else:
-            ixstart = ix
-            ixstop = ix + 1
-        if isinstance(iy, slice):
-            iystart = max(iy.start or -ngrow[1], -ngrow[1])
-            iystop = min(iy.stop or ny + 1 + ngrow[1], ny + self.overlaps[1] + ngrow[1])
-        else:
-            iystart = iy
-            iystop = iy + 1
-        if isinstance(iz, slice):
-            izstart = max(iz.start or -ngrow[2], -ngrow[2])
-            izstop = min(iz.stop or nz + 1 + ngrow[2], nz + self.overlaps[2] + ngrow[2])
-        else:
-            izstart = iz
-            izstop = iz + 1
+        ixstart, ixstop = self._find_start_stop(ix, nx, ngrow, 0)
+        iystart, iystop = self._find_start_stop(iy, ny, ngrow, 1)
+        izstart, izstop = self._find_start_stop(iz, nz, ngrow, 2)
 
         # --- Setup the size of the array to be returned and create it.
         # --- Space is added for multiple components if needed.
@@ -278,18 +289,8 @@ class _MultiFABWrapper(object):
             nx = comm_world.allreduce(nx, op=mpi.MAX)
             nz = comm_world.allreduce(nz, op=mpi.MAX)
 
-        if isinstance(ix, slice):
-            ixstart = max(ix.start or -ngrow[0], -ngrow[0])
-            ixstop = min(ix.stop or nx + 1 + ngrow[0], nx + self.overlaps[0] + ngrow[0])
-        else:
-            ixstart = ix
-            ixstop = ix + 1
-        if isinstance(iz, slice):
-            izstart = max(iz.start or -ngrow[1], -ngrow[1])
-            izstop = min(iz.stop or nz + 1 + ngrow[1], nz + self.overlaps[1] + ngrow[1])
-        else:
-            izstart = iz
-            izstop = iz + 1
+        ixstart, ixstop = self._find_start_stop(ix, nx, ngrow, 0)
+        izstart, izstop = self._find_start_stop(iz, nz, ngrow, 1)
 
         # --- Setup the size of the array to be returned and create it.
         # --- Space is added for multiple components if needed.
