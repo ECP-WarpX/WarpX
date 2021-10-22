@@ -92,7 +92,6 @@ FieldProbe::FieldProbe (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
 
             // write header row
-
             int c = 0;
             ofs << "#";
             ofs << "[" << c++ << "]step()";
