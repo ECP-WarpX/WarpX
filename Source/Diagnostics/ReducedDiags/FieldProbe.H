@@ -20,7 +20,6 @@
  *  This class mainly contains a function that computes the value of each component
  * of the EM field at a given point
  */
-
 class FieldProbe : public ReducedDiags
 {
 public:
@@ -29,13 +28,11 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-
     FieldProbe(std::string rd_name);
 
     /** 
      * This function assins test/data particles to constructed environemnt
      */
-
     virtual void InitData() override final;
 
     /**
@@ -43,19 +40,31 @@ public:
      *
      * @param[in] step current time step
      */
-
     virtual void ComputeDiags(int step) override final;
 
-    /**
+    /*
      * Define constants used throughout FieldProbe
-     * np is number of particles to be used
-     * noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
      */
 
+    /**
+     * np is number of particles to be used
+     */
     static constexpr int np = 1;
+
+    /**
+     *noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
+     */
     static constexpr int noutputs = static_cast<int>(ParticleVal::nattribs);
+
+    /**
+     * this boolean is used to disqualify out of bounds particles
+     */
     bool m_probe_in_domain;
     bool m_probe_in_domain_lev_0 = false;
+
+    /**
+    * initializes particle container m_probe where particles will be stored
+    */
     FieldProbeParticleContainer m_probe;
 
 private:

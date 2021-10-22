@@ -54,7 +54,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
-    /**
+    /*
      * Obtain input data from parsing inputs file.
      * For the case of a single particle:
      *     Define x, y, and z of particle
@@ -179,7 +179,7 @@ void FieldProbe::ComputeDiags (int step)
         const amrex::MultiFab &By = warpx.getBfield(lev, 1);
         const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
 
-        /**
+        /*
          * Prepare interpolation of field components to probe_position
          * The arrays below store the index type (staggering) of each MultiFab.
          */
@@ -202,7 +202,7 @@ void FieldProbe::ComputeDiags (int step)
         {
             const auto getPosition = GetParticlePosition(pti);
 
-            /**
+            /*
              * Determine if probe exists within simulation boundaries. During 2D simulations,
              * y values will be set to 0 making it unnecessary to check. Generally, the second
              * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
@@ -222,7 +222,7 @@ void FieldProbe::ComputeDiags (int step)
 
             if( m_probe_in_domain ) 
             {
-	            /**
+	            /*
                  * Make the box cell centered in preparation for the interpolation (and to avoid
                  * including ghost cells in the calculation)
                  */
@@ -282,7 +282,7 @@ void FieldProbe::ComputeDiags (int step)
 		            Exp * Byp - Eyp * Bxp};
     	            S = (1 / vacper)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
-                    /**
+                    /*
                      * Determine whether or not to integrate field data.
                      * If not integrating, store instantaneous values.
                      */
@@ -328,7 +328,7 @@ void FieldProbe::ComputeDiags (int step)
 
 	    }//End MyParIter
 
-        /**
+        /*
          * All the processors have probe_proc = -1 except the one that contains the point, which
          * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
          * processors the rank of the processor which contains the point
@@ -354,7 +354,7 @@ void FieldProbe::ComputeDiags (int step)
 
 }// end void FieldProbe::ComputeDiags
 
-/** 
+/* 
  * m_data now contains up-to-date values for:
  *  [probe(Ex),probe(Ey),probe(Ez),
  *   probe(Bx),probe(By),probe(Bz)]

@@ -64,10 +64,8 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 }
 // end constructor
 
-/* Define empty function InitData() to be overwritten if needed.
- * Function used to assign test/data particles to environment
- */
-
+// Define empty function InitData() to be overwritten if needed.
+// Function used to assign test/data particles to environment
 void ReducedDiags::InitData()
 {
 }

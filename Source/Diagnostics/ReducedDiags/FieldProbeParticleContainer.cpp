@@ -56,11 +56,10 @@
 
 using namespace amrex;
 
-/**
+/*
  * FPPC creates a particle container storing positon data, cpu id, particle id and
  * 7 additional Struct of Array attribes. amr_core is used as per WarpXParticleContainer.
  */
-
 FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
 	:ParticleContainer<0,0,static_cast<int>(ParticleVal::nattribs)>(amr_core->GetParGDB())
 {
@@ -79,7 +78,7 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
 
 	auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    /**
+    /*
      * Creates a temporary tile to obtain data from simulation. This data
      * is then coppied to the permament tile which is stored on the particle
      * (particle_tile).
@@ -121,7 +120,7 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
 		pinned_tile.push_back_real(static_cast<int>(ParticleVal::S), np, 0.0);
 	}
 
-    /**
+    /*
      * Redistributes particles to their appropriate tiles if the box
      * structure of the simulation changes to accomodate data more
      * efficiently.

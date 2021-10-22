@@ -57,10 +57,9 @@ public:
     virtual ~ReducedDiags () = default;
 
     /**
-     * function to allocate test particles after environemnt
-     * is constructed.
+     * function to initialize data after amr
+     * levels are initialized.
      */
-
     virtual void InitData();
 
     /**
@@ -68,7 +67,6 @@ public:
      *
      * @param[in] step current time step
      */
-
     virtual void ComputeDiags (int step) = 0;
 
     /**
