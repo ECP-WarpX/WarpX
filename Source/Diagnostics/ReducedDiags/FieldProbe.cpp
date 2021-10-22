@@ -308,7 +308,7 @@ void FieldProbe::ComputeDiags (int step)
 
             }
 
-	    }//End MyParIter
+	    } // end particle iterator loop
 
         /*
          * All the processors have probe_proc = -1 except the one that contains the point, which
