@@ -60,7 +60,7 @@ public:
      * function to initialize data after amr
      * levels are initialized.
      */
-    virtual void InitData();
+    virtual void InitData ();
 
     /**
      * function to compute diags
