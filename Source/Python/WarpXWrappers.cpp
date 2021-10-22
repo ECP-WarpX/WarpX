@@ -85,9 +85,10 @@ namespace
     }
     // Copy the nodal flag data and return the copy:
     // the nodal flag data should not be modifiable from Python.
-    int* getFieldNodalFlagData ( const amrex::MultiFab& mf )
+    int* getFieldNodalFlagData ( const amrex::MultiFab* mf )
     {
-        const amrex::IntVect nodal_flag( mf.ixType().toIntVect() );
+        if (mf == nullptr) return nullptr;
+        const amrex::IntVect nodal_flag( mf->ixType().toIntVect() );
         int *nodal_flag_data = (int*) malloc(AMREX_SPACEDIM * sizeof(int));
 
         constexpr int NODE = amrex::IndexType::NODE;
@@ -291,111 +292,123 @@ extern "C"
 #define WARPX_GET_FIELD(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
                         int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
-        auto & mf = GETTER(lev, direction); \
-        return getMultiFabPointers(mf, return_size, ncomps, ngrowvect, shapes); \
+        auto * mf = GETTER(lev, direction); \
+        if (mf != nullptr) { \
+            return getMultiFabPointers(*mf, return_size, ncomps, ngrowvect, shapes); \
+        } else { \
+            return nullptr; \
+        } \
     }
 
 #define WARPX_GET_LOVECTS(FIELD, GETTER) \
     int* FIELD(int lev, int direction, \
                int *return_size, int **ngrowvect) { \
-        auto & mf = GETTER(lev, direction); \
-        return getMultiFabLoVects(mf, return_size, ngrowvect); \
+        auto * mf = GETTER(lev, direction); \
+        if (mf != nullptr) { \
+            return getMultiFabLoVects(*mf, return_size, ngrowvect); \
+        } else { \
+            return nullptr; \
+        } \
     }
 
-    WARPX_GET_FIELD(warpx_getEfield, WarpX::GetInstance().getEfield)
-    WARPX_GET_FIELD(warpx_getEfieldCP, WarpX::GetInstance().getEfield_cp)
-    WARPX_GET_FIELD(warpx_getEfieldFP, WarpX::GetInstance().getEfield_fp)
+    WARPX_GET_FIELD(warpx_getEfield, WarpX::GetInstance().get_pointer_Efield_aux)
+    WARPX_GET_FIELD(warpx_getEfieldCP, WarpX::GetInstance().get_pointer_Efield_cp)
+    WARPX_GET_FIELD(warpx_getEfieldFP, WarpX::GetInstance().get_pointer_Efield_fp)
 
-    WARPX_GET_FIELD(warpx_getBfield, WarpX::GetInstance().getBfield)
-    WARPX_GET_FIELD(warpx_getBfieldCP, WarpX::GetInstance().getBfield_cp)
-    WARPX_GET_FIELD(warpx_getBfieldFP, WarpX::GetInstance().getBfield_fp)
+    WARPX_GET_FIELD(warpx_getBfield, WarpX::GetInstance().get_pointer_Bfield_aux)
+    WARPX_GET_FIELD(warpx_getBfieldCP, WarpX::GetInstance().get_pointer_Bfield_cp)
+    WARPX_GET_FIELD(warpx_getBfieldFP, WarpX::GetInstance().get_pointer_Bfield_fp)
 
-    WARPX_GET_FIELD(warpx_getCurrentDensity, WarpX::GetInstance().getcurrent)
-    WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().getcurrent_cp)
-    WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().getcurrent_fp)
+    WARPX_GET_FIELD(warpx_getCurrentDensity, WarpX::GetInstance().get_pointer_current_fp)
+    WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().get_pointer_current_cp)
+    WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().get_pointer_current_fp)
 
-    WARPX_GET_LOVECTS(warpx_getEfieldLoVects, WarpX::GetInstance().getEfield)
-    WARPX_GET_LOVECTS(warpx_getEfieldCPLoVects, WarpX::GetInstance().getEfield_cp)
-    WARPX_GET_LOVECTS(warpx_getEfieldFPLoVects, WarpX::GetInstance().getEfield_fp)
+    WARPX_GET_LOVECTS(warpx_getEfieldLoVects, WarpX::GetInstance().get_pointer_Efield_aux)
+    WARPX_GET_LOVECTS(warpx_getEfieldCPLoVects, WarpX::GetInstance().get_pointer_Efield_cp)
+    WARPX_GET_LOVECTS(warpx_getEfieldFPLoVects, WarpX::GetInstance().get_pointer_Efield_fp)
 
-    WARPX_GET_LOVECTS(warpx_getBfieldLoVects, WarpX::GetInstance().getBfield)
-    WARPX_GET_LOVECTS(warpx_getBfieldCPLoVects, WarpX::GetInstance().getBfield_cp)
-    WARPX_GET_LOVECTS(warpx_getBfieldFPLoVects, WarpX::GetInstance().getBfield_fp)
+    WARPX_GET_LOVECTS(warpx_getBfieldLoVects, WarpX::GetInstance().get_pointer_Bfield_aux)
+    WARPX_GET_LOVECTS(warpx_getBfieldCPLoVects, WarpX::GetInstance().get_pointer_Bfield_cp)
+    WARPX_GET_LOVECTS(warpx_getBfieldFPLoVects, WarpX::GetInstance().get_pointer_Bfield_fp)
 
-    WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().getcurrent)
-    WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().getcurrent_cp)
-    WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().getcurrent_fp)
+    WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().get_pointer_current_fp)
+    WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().get_pointer_current_cp)
+    WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().get_pointer_current_fp)
 
-    int* warpx_getEx_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,0) );}
-    int* warpx_getEy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,1) );}
-    int* warpx_getEz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,2) );}
-    int* warpx_getBx_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getBfield(0,0) );}
-    int* warpx_getBy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getBfield(0,1) );}
-    int* warpx_getBz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getBfield(0,2) );}
-    int* warpx_getJx_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,0) );}
-    int* warpx_getJy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,1) );}
-    int* warpx_getJz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,2) );}
-    int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getrho_fp(0) );}
-    int* warpx_getPhi_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getphi_fp(0) );}
-    int* warpx_getF_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getF_fp(0) );}
-    int* warpx_getG_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getG_fp(0) );}
+    int* warpx_getEx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,0) );}
+    int* warpx_getEy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,1) );}
+    int* warpx_getEz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,2) );}
+    int* warpx_getBx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Bfield_aux(0,0) );}
+    int* warpx_getBy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Bfield_aux(0,1) );}
+    int* warpx_getBz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Bfield_aux(0,2) );}
+    int* warpx_getJx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,0) );}
+    int* warpx_getJy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,1) );}
+    int* warpx_getJz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,2) );}
+    int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_rho_fp(0) );}
+    int* warpx_getPhi_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_phi_fp(0) );}
+    int* warpx_getF_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_F_fp(0) );}
+    int* warpx_getG_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_G_fp(0) );}
 
 #define WARPX_GET_SCALAR(SCALAR, GETTER) \
     amrex::Real** SCALAR(int lev, \
                          int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
-        auto & mf = GETTER(lev); \
-        return getMultiFabPointers(mf, return_size, ncomps, ngrowvect, shapes); \
+        auto * mf = GETTER(lev); \
+        if (mf != nullptr) { \
+            return getMultiFabPointers(*mf, return_size, ncomps, ngrowvect, shapes); \
+        } else { \
+            return nullptr; \
+        } \
     }
 
 #define WARPX_GET_LOVECTS_SCALAR(SCALAR, GETTER) \
     int* SCALAR(int lev, \
                 int *return_size, int **ngrowvect) { \
-        auto & mf = GETTER(lev); \
-        return getMultiFabLoVects(mf, return_size, ngrowvect); \
+        auto * mf = GETTER(lev); \
+        if (mf != nullptr) { \
+            return getMultiFabLoVects(*mf, return_size, ngrowvect); \
+        } else { \
+            return nullptr; \
+        } \
     }
 
-    WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp)
-    WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().getrho_fp)
+    WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().get_pointer_rho_cp)
+    WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().get_pointer_rho_fp)
 
-    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp)
-    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().get_pointer_rho_cp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().get_pointer_rho_fp)
 
-    WARPX_GET_SCALAR(warpx_getPhiFP, WarpX::GetInstance().getphi_fp)
+    WARPX_GET_SCALAR(warpx_getPhiFP, WarpX::GetInstance().get_pointer_phi_fp)
 
-    WARPX_GET_LOVECTS_SCALAR(warpx_getPhiFPLoVects, WarpX::GetInstance().getphi_fp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getPhiFPLoVects, WarpX::GetInstance().get_pointer_phi_fp)
 
     // F and G
-    WARPX_GET_SCALAR(warpx_getFfieldCP, WarpX::GetInstance().getF_cp)
-    WARPX_GET_SCALAR(warpx_getFfieldFP, WarpX::GetInstance().getF_fp)
-    WARPX_GET_LOVECTS_SCALAR(warpx_getFfieldCPLoVects, WarpX::GetInstance().getF_cp)
-    WARPX_GET_LOVECTS_SCALAR(warpx_getFfieldFPLoVects, WarpX::GetInstance().getF_fp)
-    WARPX_GET_SCALAR(warpx_getGfieldCP, WarpX::GetInstance().getG_cp)
-    WARPX_GET_SCALAR(warpx_getGfieldFP, WarpX::GetInstance().getG_fp)
-    WARPX_GET_LOVECTS_SCALAR(warpx_getGfieldCPLoVects, WarpX::GetInstance().getG_cp)
-    WARPX_GET_LOVECTS_SCALAR(warpx_getGfieldFPLoVects, WarpX::GetInstance().getG_fp)
+    WARPX_GET_SCALAR(warpx_getFfieldCP, WarpX::GetInstance().get_pointer_F_cp)
+    WARPX_GET_SCALAR(warpx_getFfieldFP, WarpX::GetInstance().get_pointer_F_fp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getFfieldCPLoVects, WarpX::GetInstance().get_pointer_F_cp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getFfieldFPLoVects, WarpX::GetInstance().get_pointer_F_fp)
+    WARPX_GET_SCALAR(warpx_getGfieldCP, WarpX::GetInstance().get_pointer_G_cp)
+    WARPX_GET_SCALAR(warpx_getGfieldFP, WarpX::GetInstance().get_pointer_G_fp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getGfieldCPLoVects, WarpX::GetInstance().get_pointer_G_cp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getGfieldFPLoVects, WarpX::GetInstance().get_pointer_G_fp)
 
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
                         int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
         auto * pml = WarpX::GetInstance().GetPML(lev); \
-        if (pml) { \
-            auto & mf = *(pml->GETTER()[direction]); \
-            return getMultiFabPointers(mf, return_size, ncomps, ngrowvect, shapes); \
-        } else { \
-            return nullptr; \
-        } \
+        if (!pml) return nullptr; \
+        auto * mf = (pml->GETTER()[direction]); \
+        if (!mf) return nullptr; \
+        return getMultiFabPointers(*mf, return_size, ncomps, ngrowvect, shapes); \
     }
 
 #define WARPX_GET_LOVECTS_PML(FIELD, GETTER) \
     int* FIELD(int lev, int direction, \
                int *return_size, int **ngrowvect) { \
         auto * pml = WarpX::GetInstance().GetPML(lev); \
-        if (pml) { \
-            auto & mf = *(pml->GETTER()[direction]); \
-            return getMultiFabLoVects(mf, return_size, ngrowvect); \
-        } else { \
-            return nullptr; \
-        } \
+        if (!pml) return nullptr; \
+        auto * mf = (pml->GETTER()[direction]); \
+        if (!mf) return nullptr; \
+        return getMultiFabLoVects(*mf, return_size, ngrowvect); \
     }
 
     WARPX_GET_FIELD_PML(warpx_getEfieldCP_PML, GetE_cp)
