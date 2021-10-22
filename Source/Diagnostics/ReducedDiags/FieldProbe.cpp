@@ -280,7 +280,7 @@ void FieldProbe::ComputeDiags (int step)
 		            Exp * Bzp - Ezp * Byp,
 		            Ezp * Bxp - Exp * Bzp,
 		            Exp * Byp - Eyp * Bxp};
-    	            S = (1 / vacper)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+    	            S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
                      * Determine whether or not to integrate field data.
