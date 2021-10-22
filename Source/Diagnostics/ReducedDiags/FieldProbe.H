@@ -46,7 +46,9 @@ public:
     bool m_probe_in_domain_lev_0 = false;
 
 private:
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    amrex::Real z_probe;
+#elif (AMREX_SPACEDIM == 2)
     amrex::Real x_probe, z_probe;
 #elif (AMREX_SPACEDIM == 3)
     amrex::Real x_probe, y_probe, z_probe;

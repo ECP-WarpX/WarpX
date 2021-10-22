@@ -44,7 +44,9 @@ FieldProbe::FieldProbe (std::string rd_name)
     nLevel += 1;
 
     amrex::ParmParse pp_rd_name(rd_name);
+#if !(AMREX_SPACEDIM == 1)
     getWithParser(pp_rd_name, "x_probe", x_probe);
+#endif
 #if (AMREX_SPACEDIM == 3)
     getWithParser(pp_rd_name, "y_probe", y_probe);
 #endif
@@ -117,7 +119,9 @@ void FieldProbe::ComputeDiags (int step)
         const auto prob_lo = gm.ProbLo();
         const auto prob_hi = gm.ProbHi();
 
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+        m_probe_in_domain = z_probe >= prob_lo[0] and z_probe < prob_hi[0];
+#elif (AMREX_SPACEDIM == 2)
         m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
                             z_probe >= prob_lo[1] and z_probe < prob_hi[1];
 #else
@@ -131,11 +135,16 @@ void FieldProbe::ComputeDiags (int step)
 
         const auto cell_size = gm.CellSizeArray();
 
+#if (AMREX_SPACEDIM == 1)
+        const int i_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[0]) / cell_size[0]));
+        const int j_probe = 0;
+        const int k_probe = 0;
+#elif (AMREX_SPACEDIM == 2)
         const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if (AMREX_SPACEDIM == 2)
         const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
         const int k_probe = 0;
 #elif(AMREX_SPACEDIM == 3)
+        const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
         const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
         const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
 #endif
@@ -185,6 +194,10 @@ void FieldProbe::ComputeDiags (int step)
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
                 //Interpolating to the probe point
+#if (AMREX_SPACEDIM == 1)
+                constexpr amrex::Real x_probe = 0._rt;
+                constexpr amrex::Real y_probe = 0._rt;
+#endif
 #if (AMREX_SPACEDIM == 2)
                 constexpr amrex::Real y_probe = 0._rt;
 #endif
