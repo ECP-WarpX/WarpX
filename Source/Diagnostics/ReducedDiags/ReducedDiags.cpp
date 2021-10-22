@@ -66,7 +66,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
 // Define empty function InitData() to be overwritten if needed.
 // Function used to assign test/data particles to environment
-void ReducedDiags::InitData()
+void ReducedDiags::InitData ()
 {
 }
 
