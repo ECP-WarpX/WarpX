@@ -37,6 +37,8 @@ public:
     /// constructor
     MultiReducedDiags();
 
+    void InitData();//comment
+
     /** Loop over all ReducedDiags and call their ComputeDiags
      *  @param[in] step current iteration time */
     void ComputeDiags(int step);

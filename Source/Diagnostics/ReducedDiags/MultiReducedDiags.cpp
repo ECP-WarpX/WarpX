@@ -80,6 +80,16 @@ MultiReducedDiags::MultiReducedDiags ()
 }
 // end constructor
 
+void MultiReducedDiags::InitData ()
+{
+    // loop over all reduced diags
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
+    {
+        m_multi_rd[i_rd] -> InitData();
+    }
+    // end loop over all reduced diags
+}
+// end void MultiReducedDiags::ComputeDiags
 // call functions to compute diags
 void MultiReducedDiags::ComputeDiags (int step)
 {

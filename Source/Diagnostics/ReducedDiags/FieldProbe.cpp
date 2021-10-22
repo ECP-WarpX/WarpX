@@ -129,7 +129,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
 }//end constructor
 
-void FieldProbe::AllocData()
+void FieldProbe::InitData()
 {
 
     //create 1D array for X, Y, and Z of particles

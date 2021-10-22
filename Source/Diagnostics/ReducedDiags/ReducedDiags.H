@@ -61,7 +61,7 @@ public:
      * is constructed.
      */
 
-    virtual void AllocData();
+    virtual void InitData();
 
     /**
      * function to compute diags
