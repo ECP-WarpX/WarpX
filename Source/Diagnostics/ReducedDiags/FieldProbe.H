@@ -55,7 +55,7 @@ public:
     /**
      *noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
      */
-    static constexpr int noutputs = static_cast<int>(ParticleVal::nattribs);
+    static constexpr int noutputs = ParticleVal::nattribs;
 
     /**
      * this boolean is used to disqualify out of bounds particles

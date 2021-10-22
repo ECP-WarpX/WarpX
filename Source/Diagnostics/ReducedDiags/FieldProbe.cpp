@@ -225,13 +225,13 @@ void FieldProbe::ComputeDiags (int step)
                 //preparing to write data to particle
 
                 auto& attribs = pti.GetStructOfArrays().GetRealData();
-                ParticleReal* const AMREX_RESTRICT part_Ex = attribs[static_cast<int>(ParticleVal::Ex)].dataPtr();
-                ParticleReal* const AMREX_RESTRICT part_Ey = attribs[static_cast<int>(ParticleVal::Ey)].dataPtr();
-                ParticleReal* const AMREX_RESTRICT part_Ez = attribs[static_cast<int>(ParticleVal::Ez)].dataPtr();
-                ParticleReal* const AMREX_RESTRICT part_Bx = attribs[static_cast<int>(ParticleVal::Bx)].dataPtr();
-                ParticleReal* const AMREX_RESTRICT part_By = attribs[static_cast<int>(ParticleVal::By)].dataPtr();
-                ParticleReal* const AMREX_RESTRICT part_Bz = attribs[static_cast<int>(ParticleVal::Bz)].dataPtr();
-                ParticleReal* const AMREX_RESTRICT part_S = attribs[static_cast<int>(ParticleVal::S)].dataPtr();
+                ParticleReal* const AMREX_RESTRICT part_Ex = attribs[ParticleVal::Ex].dataPtr();
+                ParticleReal* const AMREX_RESTRICT part_Ey = attribs[ParticleVal::Ey].dataPtr();
+                ParticleReal* const AMREX_RESTRICT part_Ez = attribs[ParticleVal::Ez].dataPtr();
+                ParticleReal* const AMREX_RESTRICT part_Bx = attribs[ParticleVal::Bx].dataPtr();
+                ParticleReal* const AMREX_RESTRICT part_By = attribs[ParticleVal::By].dataPtr();
+                ParticleReal* const AMREX_RESTRICT part_Bz = attribs[ParticleVal::Bz].dataPtr();
+                ParticleReal* const AMREX_RESTRICT part_S = attribs[ParticleVal::S].dataPtr();
 
                 amrex::Vector<amrex::Real> v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
                 const auto &xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box, v_galilean, lev);
@@ -295,13 +295,13 @@ void FieldProbe::ComputeDiags (int step)
                     }
 
                     // Fill output array
-                    m_data[0 * noutputs + static_cast<int>(ParticleVal::Ex)] = part_Ex[ip];
-                    m_data[0 * noutputs + static_cast<int>(ParticleVal::Ey)] = part_Ey[ip];
-                    m_data[0 * noutputs + static_cast<int>(ParticleVal::Ez)] = part_Ez[ip];
-                    m_data[0 * noutputs + static_cast<int>(ParticleVal::Bx)] = part_Bx[ip];
-                    m_data[0 * noutputs + static_cast<int>(ParticleVal::By)] = part_By[ip];
-                    m_data[0 * noutputs + static_cast<int>(ParticleVal::Bz)] = part_Bz[ip];
-                    m_data[0 * noutputs + static_cast<int>(ParticleVal::S)] = part_S[ip];
+                    m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip];
+                    m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip];
+                    m_data[0 * noutputs + ParticleVal::Ez] = part_Ez[ip];
+                    m_data[0 * noutputs + ParticleVal::Bx] = part_Bx[ip];
+                    m_data[0 * noutputs + ParticleVal::By] = part_By[ip];
+                    m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip];
+                    m_data[0 * noutputs + ParticleVal::S] = part_S[ip];
                 });// ParallelFor Close  
 
                 probe_proc = amrex::ParallelDescriptor::MyProc();

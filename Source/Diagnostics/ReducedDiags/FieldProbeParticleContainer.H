@@ -15,16 +15,19 @@
 #include <AMReX_AmrCoreFwd.H>
 
 /**
- * This enumerated class is used to index the field probe particle
+ * This enumerated struct is used to index the field probe particle
  * values that are being stored as SoA data. Nattribs
  * is enumerated to give the number of attributes stored.
  */
-enum class ParticleVal : int
+struct ParticleVal
 {
-	Ex = 0, Ey, Ez,
-	Bx, By, Bz,
-	S,
-	nattribs
+    enum
+    {
+    	Ex = 0, Ey, Ez,
+    	Bx, By, Bz,
+    	S,
+	    nattribs
+    };
 };
 
 /**
@@ -33,7 +36,7 @@ enum class ParticleVal : int
  * nattribs tells the particle container to allot 7 SOA values.
  */
 class FieldProbeParticleContainer
-	: public amrex::ParticleContainer<0,0,static_cast<int>(ParticleVal::nattribs)>
+	: public amrex::ParticleContainer<0,0,ParticleVal::nattribs>
 {
 public:
 	FieldProbeParticleContainer (amrex::AmrCore* amr_core);
