@@ -259,7 +259,6 @@ void FieldProbe::ComputeDiags (int step)
                                    interp_order, false);
 
 	                //Calculate S
-
                     amrex::Real sraw[3]{
 		            Exp * Bzp - Ezp * Byp,
 		            Ezp * Bxp - Exp * Bzp,
