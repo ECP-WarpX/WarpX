@@ -1,3 +1,10 @@
+/* Copyright 2021 Tiberius Rheaume, Axel Huebl
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #include "FieldProbeParticleContainer.H"
 
 #include "Particles/Deposition/ChargeDeposition.H"
