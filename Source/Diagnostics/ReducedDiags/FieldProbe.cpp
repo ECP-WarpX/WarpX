@@ -118,7 +118,6 @@ FieldProbe::FieldProbe (std::string rd_name)
             ofs << std::endl;
 
             // close file
-
             ofs.close();
         }
     }
