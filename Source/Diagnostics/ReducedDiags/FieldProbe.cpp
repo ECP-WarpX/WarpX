@@ -121,7 +121,7 @@ FieldProbe::FieldProbe (std::string rd_name)
             ofs.close();
         }
     }
-}//end constructor
+} // end constructor
 
 void FieldProbe::InitData()
 {
