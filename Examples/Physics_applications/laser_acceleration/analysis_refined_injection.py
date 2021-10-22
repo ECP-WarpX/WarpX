@@ -9,6 +9,7 @@
 
 # This script tests the "warpx.refine_plasma=1" option by comparing
 # the actual number of electrons at step 200 to the expected value
+import sys
 import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
