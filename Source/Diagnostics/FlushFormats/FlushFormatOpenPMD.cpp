@@ -43,7 +43,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
            ( openPMD::IterationEncoding::groupBased != encoding ) )
       {
         std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
-        amrex::Warning(warnMsg);
+        WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
         encoding = openPMD::IterationEncoding::groupBased;
       }
     }
@@ -92,14 +92,14 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int /*nlev*/,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
+    bool plot_raw_fields_guards,
     bool isBTD, int snapshotID, const amrex::Geometry& full_BTD_snapshot,
     bool isLastBTDFlush) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !plot_raw_fields && !plot_raw_fields_guards && !plot_raw_rho && !plot_raw_F,
+        !plot_raw_fields && !plot_raw_fields_guards,
         "Cannot plot raw data with OpenPMD output format. Use plotfile instead.");
 
     // we output at full steps of the coarsest level

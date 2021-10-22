@@ -57,7 +57,7 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
+    bool plot_raw_fields_guards,
     bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
     bool /*isLastBTDFlush*/) const
 {
@@ -80,14 +80,13 @@ FlushFormatPlotfile::WriteToFile (
                                    rfs
                                    );
 
-    WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards,
-                      plot_raw_rho, plot_raw_F);
+    WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
     WriteParticles(filename, particle_diags);
 
     WriteJobInfo(filename);
 
-    WriteWarpXHeader(filename, particle_diags, geom);
+    WriteWarpXHeader(filename, geom);
 
     VisMF::SetHeaderVersion(current_version);
 }
@@ -217,7 +216,6 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 void
 FlushFormatPlotfile::WriteWarpXHeader(
     const std::string& name,
-    const amrex::Vector<ParticleDiag>& particle_diags,
     amrex::Vector<amrex::Geometry>& geom) const
 {
     auto & warpx = WarpX::GetInstance();
@@ -285,23 +283,13 @@ FlushFormatPlotfile::WriteWarpXHeader(
             HeaderFile << '\n';
         }
 
-        WriteHeaderParticle(HeaderFile, particle_diags);
+        warpx.GetPartContainer().WriteHeader(HeaderFile);
 
         HeaderFile << warpx.getcurrent_injection_position() << "\n";
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
 
         HeaderFile << warpx.time_of_last_gal_shift << "\n";
-    }
-}
-
-void
-FlushFormatPlotfile::WriteHeaderParticle(
-    std::ostream& os, const amrex::Vector<ParticleDiag>& particle_diags) const
-{
-    for (const auto& particle_diag : particle_diags)
-    {
-        particle_diag.getParticleContainer()->WriteHeader(os);
     }
 }
 
@@ -502,7 +490,7 @@ WriteCoarseScalar( const std::string field_name,
 void
 FlushFormatPlotfile::WriteAllRawFields(
     const bool plot_raw_fields, const int nlevels, const std::string& plotfilename,
-    const bool plot_raw_fields_guards, const bool plot_raw_rho, bool plot_raw_F) const
+    const bool plot_raw_fields_guards) const
 {
     if (!plot_raw_fields) return;
     auto & warpx = WarpX::GetInstance();
@@ -531,22 +519,16 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getBfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
-        if (plot_raw_F) {
-            if (warpx.get_pointer_F_fp(lev) == nullptr) {
-                amrex::Warning("The user requested to write raw F data, but F_fp was not allocated");
-            } else {
-                WriteRawMF(warpx.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
-            }
+        if (warpx.get_pointer_F_fp(lev))
+        {
+            WriteRawMF(warpx.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
         }
-        if (plot_raw_rho) {
-            if (warpx.get_pointer_rho_fp(lev) == nullptr) {
-                amrex::Warning("The user requested to write raw rho data, but rho_fp was not allocated");
-            } else {
-                // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
-                // If nComp > 1, this is the upper half of the list of components.
-                MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
-                WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
-            }
+        if (warpx.get_pointer_rho_fp(lev))
+        {
+            // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
+            // If nComp > 1, this is the upper half of the list of components.
+            MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
+            WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.get_pointer_phi_fp(lev) != nullptr) {
             WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
@@ -588,26 +570,16 @@ FlushFormatPlotfile::WriteAllRawFields(
                                warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
                                warpx.get_pointer_current_fp(lev, 0), warpx.get_pointer_current_fp(lev, 1), warpx.get_pointer_current_fp(lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
-            if (plot_raw_F) {
-                if (warpx.get_pointer_F_fp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw F data, but F_fp was not allocated");
-                } else if (warpx.get_pointer_F_cp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw F data, but F_cp was not allocated");
-                } else {
-                    WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
-                        dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
-                }
+            if (warpx.get_pointer_F_fp(lev) && warpx.get_pointer_F_cp(lev))
+            {
+                WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
+                    dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
             }
-            if (plot_raw_rho) {
-                if (warpx.get_pointer_rho_fp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw rho data, but rho_fp was not allocated");
-                } else if (warpx.get_pointer_rho_cp(lev) == nullptr) {
-                    amrex::Warning("The user requested to write raw rho data, but rho_cp was not allocated");
-                } else {
-                    // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
-                    WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
-                        dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 1);
-                }
+            if (warpx.get_pointer_rho_fp(lev) && warpx.get_pointer_rho_cp(lev))
+            {
+                // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
+                WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
+                    dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 1);
             }
         }
     }

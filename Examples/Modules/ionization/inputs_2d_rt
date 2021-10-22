@@ -27,7 +27,7 @@ ions.zmin =  5.e-6
 ions.zmax = 15.e-6
 ions.profile = constant
 ions.density = 1.
-ions.momentum_distribution_type = constant
+ions.momentum_distribution_type = at_rest
 ions.do_field_ionization = 1
 ions.ionization_initial_level = 2
 ions.ionization_product_species = electrons
@@ -41,7 +41,7 @@ electrons.zmin = 1.
 electrons.zmax = 15.e-6
 electrons.profile = constant
 electrons.density = 2.
-electrons.momentum_distribution_type = constant
+electrons.momentum_distribution_type = at_rest
 
 lasers.names        = laser1
 laser1.profile      = Gaussian

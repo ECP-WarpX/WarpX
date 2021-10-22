@@ -250,15 +250,15 @@ WarpX::Evolve (int numsteps)
 
         mypc->ContinuousFluxInjection(dt[0]);
 
-        m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
-
         mypc->ApplyBoundaryConditions();
 
-        // interact with particles with EB walls (if present)
+        // interact the particles with EB walls (if present)
 #ifdef AMREX_USE_EB
         AMREX_ALWAYS_ASSERT(maxLevel() == 0);
         mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
 #endif
+
+        m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic != ElectrostaticSolverAlgo::None )
@@ -325,6 +325,7 @@ WarpX::Evolve (int numsteps)
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
+            this->PrintGlobalWarnings("FIRST STEP"); //Print the warning list right after the first step.
             early_params_checked = true;
         }
 
@@ -407,17 +408,25 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryE(guard_cells.ng_alloc_EB);
         }
         PushPSATD();
-        FillBoundaryE(guard_cells.ng_alloc_EB);
-        FillBoundaryB(guard_cells.ng_alloc_EB);
 
         if (use_hybrid_QED) {
-            WarpX::Hybrid_QED_Push(dt);
             FillBoundaryE(guard_cells.ng_alloc_EB);
+            FillBoundaryB(guard_cells.ng_alloc_EB);
+            WarpX::Hybrid_QED_Push(dt);
+            FillBoundaryE(guard_cells.ng_afterPushPSATD);
+        }
+        else {
+            FillBoundaryE(guard_cells.ng_afterPushPSATD);
+            FillBoundaryB(guard_cells.ng_afterPushPSATD);
+            if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
+                FillBoundaryF(guard_cells.ng_afterPushPSATD);
+            if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
+                FillBoundaryG(guard_cells.ng_afterPushPSATD);
         }
 
         // Synchronize E and B fields on nodal points
-        NodalSyncE();
-        NodalSyncB();
+        NodalSync(Efield_fp, Efield_cp);
+        NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
             DampPML();
@@ -448,8 +457,8 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         // Synchronize E and B fields on nodal points
-        NodalSyncE();
-        NodalSyncB();
+        NodalSync(Efield_fp, Efield_cp);
+        NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
@@ -579,6 +588,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         FillBoundaryB(guard_cells.ng_alloc_EB);
         if (WarpX::do_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
         if (WarpX::do_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
+
+        // Synchronize E, B, F, G fields on nodal points
+        NodalSync(Efield_fp, Efield_cp);
+        NodalSync(Bfield_fp, Bfield_cp);
+        if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
+        if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
     }
     else
     {

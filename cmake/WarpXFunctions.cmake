@@ -237,7 +237,7 @@ function(set_warpx_binary_name)
         add_custom_command(TARGET shared POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
                 $<TARGET_FILE_NAME:shared>
-                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx.${lib_suffix}.${mod_ext}
+                $<TARGET_FILE_DIR:shared>/libwarpx.${lib_suffix}.${mod_ext}
         )
     endif()
 endfunction()
@@ -282,7 +282,7 @@ function(get_source_version NAME SOURCE_DIR)
         execute_process(COMMAND git describe --abbrev=12 --dirty --always --tags
             WORKING_DIRECTORY ${SOURCE_DIR}
             OUTPUT_VARIABLE _tmp)
-        string( STRIP ${_tmp} _tmp)
+        string( STRIP "${_tmp}" _tmp)
     endif()
 
     # Is there a CMake project version?

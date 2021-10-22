@@ -9,6 +9,7 @@
 """Classes following the PICMI standard
 """
 import re
+import os
 import picmistandard
 import numpy as np
 import pywarpx
@@ -86,6 +87,15 @@ class Species(picmistandard.PICMI_Species):
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
 
+        # For particle reflection
+        self.reflection_model_xlo = kw.pop('warpx_reflection_model_xlo', None)
+        self.reflection_model_xhi = kw.pop('warpx_reflection_model_xhi', None)
+        self.reflection_model_ylo = kw.pop('warpx_reflection_model_ylo', None)
+        self.reflection_model_yhi = kw.pop('warpx_reflection_model_yhi', None)
+        self.reflection_model_zlo = kw.pop('warpx_reflection_model_zlo', None)
+        self.reflection_model_zhi = kw.pop('warpx_reflection_model_zhi', None)
+        # self.reflection_model_eb = kw.pop('warpx_reflection_model_eb', None)
+
         # For the scraper buffer
         self.save_particles_at_xlo = kw.pop('warpx_save_particles_at_xlo', None)
         self.save_particles_at_xhi = kw.pop('warpx_save_particles_at_xhi', None)
@@ -127,6 +137,16 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position,
                                              do_not_deposit = self.do_not_deposit)
+
+        # add reflection models
+        self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
+        self.species.add_new_attr("reflection_model_xhi(E)", self.reflection_model_xhi)
+        self.species.add_new_attr("reflection_model_ylo(E)", self.reflection_model_ylo)
+        self.species.add_new_attr("reflection_model_yhi(E)", self.reflection_model_yhi)
+        self.species.add_new_attr("reflection_model_zlo(E)", self.reflection_model_zlo)
+        self.species.add_new_attr("reflection_model_zhi(E)", self.reflection_model_zhi)
+        # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
+
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -549,7 +569,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         if self.method == 'PSATD':
             self.psatd_periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
-            self.psatd_fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
@@ -563,7 +582,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         if self.method == 'PSATD':
             pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft
-            pywarpx.psatd.fftw_plan_measure = self.psatd_fftw_plan_measure
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
@@ -804,7 +822,7 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
-            pywarpx.warpx.__setattr__('eb_potential(t)', expression)
+            pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
 
 class Simulation(picmistandard.PICMI_Simulation):
@@ -1035,7 +1053,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
             file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 
 ElectrostaticFieldDiagnostic = FieldDiagnostic
@@ -1047,6 +1065,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
 
         self.period = period
         self.write_dir = write_dir
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.name = name
 
         if self.name is None:
@@ -1066,6 +1085,10 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = 'checkpoint'
 
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
     def init(self, kw):
@@ -1109,7 +1132,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
             file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
@@ -1261,7 +1284,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
             file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 
 class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):

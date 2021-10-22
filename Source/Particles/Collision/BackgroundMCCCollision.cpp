@@ -25,29 +25,29 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background MCC must have exactly one species.");
 
-    amrex::ParmParse pp(collision_name);
+    amrex::ParmParse pp_collision_name(collision_name);
 
-    pp.query("background_density", m_background_density);
-    pp.query("background_temperature", m_background_temperature);
+    queryWithParser(pp_collision_name, "background_density", m_background_density);
+    queryWithParser(pp_collision_name, "background_temperature", m_background_temperature);
 
     // if the neutral mass is specified use it, but if ionization is
     // included the mass of the secondary species of that interaction
     // will be used. If no neutral mass is specified and ionization is not
     // included the mass of the colliding species will be used
     m_background_mass = -1;
-    pp.query("background_mass", m_background_mass);
+    queryWithParser(pp_collision_name, "background_mass", m_background_mass);
 
     // query for a list of collision processes
     // these could be elastic, excitation, charge_exchange, back, etc.
     amrex::Vector<std::string> scattering_process_names;
-    pp.queryarr("scattering_processes", scattering_process_names);
+    pp_collision_name.queryarr("scattering_processes", scattering_process_names);
 
     // create a vector of MCCProcess objects from each scattering
     // process name
     for (auto scattering_process : scattering_process_names) {
         std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
-        pp.query(kw_cross_section.c_str(), cross_section_file);
+        pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 
         amrex::Real energy = 0.0;
         // if the scattering process is excitation or ionization get the
@@ -55,7 +55,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
             std::string kw_energy = scattering_process + "_energy";
-            pp.get(kw_energy.c_str(), energy);
+            getWithParser(pp_collision_name, kw_energy.c_str(), energy);
         }
 
         MCCProcess process(scattering_process, cross_section_file, energy);
@@ -74,7 +74,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             ionization_flag = true;
 
             std::string secondary_species;
-            pp.get("ionization_species", secondary_species);
+            pp_collision_name.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);
 
             m_ionization_processes.push_back(std::move(process));
@@ -343,7 +343,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                                             2.0_rt / mass1 * PhysConst::q_e
                                                             * (E_coll - scattering_process.m_energy_penalty)
                                                             );
-                                      RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
+                                      ParticleUtils::RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
                                   }
                                   break;
                               }

@@ -97,7 +97,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     getArrWithParser(pp_laser_name, "direction", m_nvec);
     getArrWithParser(pp_laser_name, "polarization", m_p_X);
 
-    pp_laser_name.query("pusher_algo", m_pusher_algo);
     getWithParser(pp_laser_name, "wavelength", m_wavelength);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_wavelength > 0, "The laser wavelength must be >0.");
@@ -117,7 +116,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     pp_laser_name.query("min_particles_per_mode", m_min_particles_per_mode);
 
     if (m_e_max == amrex::Real(0.)){
-        amrex::Print() << m_laser_name << " with zero amplitude disabled.\n";
+        WarpX::GetInstance().RecordWarning("Laser",
+            m_laser_name + " with zero amplitude disabled.",
+            WarnPriority::low);
         m_enabled = false;
         return; // Disable laser if amplitude is 0
     }
@@ -310,7 +311,9 @@ LaserParticleContainer::InitData ()
     InitData(maxLevel());
 
     if(!do_continuous_injection && (TotalNumberOfParticles() == 0)){
-        amrex::Print() << "WARNING: laser antenna is completely out of the simulation box !!!\n";
+        WarpX::GetInstance().RecordWarning("Laser",
+            "The antenna is completely out of the simulation box for laser " + m_laser_name,
+            WarnPriority::high);
         m_enabled = false; // Disable laser if antenna is completely out of the simulation box
     }
 }
@@ -709,7 +712,6 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.
     m_mobility = m_mobility/WarpX::gamma_boost;
-
 }
 
 void

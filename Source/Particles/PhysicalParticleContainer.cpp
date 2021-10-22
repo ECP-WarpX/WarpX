@@ -31,7 +31,6 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpXWrappers.h"
 #include "Utils/IonizationEnergiesTable.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -102,6 +101,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <sstream>
 
 using namespace amrex;
 
@@ -240,7 +240,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_continuous_injection", do_continuous_injection);
     pp_species_name.query("initialize_self_fields", initialize_self_fields);
     queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
-    pp_species_name.query("self_fields_max_iters", self_fields_max_iters);
+    queryWithParser(pp_species_name, "self_fields_max_iters", self_fields_max_iters);
     pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
@@ -300,6 +300,20 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
     }
 
+    // Read reflection models for absorbing boundaries; defaults to a zero
+    pp_species_name.query("reflection_model_xlo(E)", m_boundary_conditions.reflection_model_xlo_str);
+    pp_species_name.query("reflection_model_xhi(E)", m_boundary_conditions.reflection_model_xhi_str);
+    pp_species_name.query("reflection_model_ylo(E)", m_boundary_conditions.reflection_model_ylo_str);
+    pp_species_name.query("reflection_model_yhi(E)", m_boundary_conditions.reflection_model_yhi_str);
+    pp_species_name.query("reflection_model_zlo(E)", m_boundary_conditions.reflection_model_zlo_str);
+    pp_species_name.query("reflection_model_zhi(E)", m_boundary_conditions.reflection_model_zhi_str);
+    m_boundary_conditions.BuildReflectionModelParsers();
+
+    ParmParse pp_boundary("boundary");
+    bool flag = false;
+    pp_boundary.query("reflect_all_velocities", flag);
+    m_boundary_conditions.Set_reflect_all_velocities(flag);
+
     // Get Galilean velocity
     ParmParse pp_psatd("psatd");
     bool use_default_v_galilean = false;
@@ -307,7 +321,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     if (use_default_v_galilean) {
         m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (WarpX::gamma_boost * WarpX::gamma_boost));
     } else {
-        pp_psatd.query("v_galilean", m_v_galilean);
+        queryArrWithParser(pp_psatd, "v_galilean", m_v_galilean, 0, 3);
     }
     // Scale the Galilean velocity by the speed of light
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
@@ -535,9 +549,11 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         if (q_tot != 0.0) {
             weight = std::abs(q_tot) / ( std::abs(charge) * ParticleReal(npart) );
             if (ps.contains("weighting")) {
-                Print() << "WARNING: Both '" << ps_name << ".q_tot' and '"
+                std::stringstream ss;
+                ss << "Both '" << ps_name << ".q_tot' and '"
                         << ps_name << ".injection_file' specify a total charge.\n'"
-                        << ps_name << ".q_tot' will take precedence.\n";
+                        << ps_name << ".q_tot' will take precedence.";
+                WarpX::GetInstance().RecordWarning("Species", ss.str());
             }
         }
         // ED-PIC extension?
@@ -576,7 +592,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
         auto const np = particle_z.size();
         if (np < npart) {
-            Print() << "WARNING: Simulation box doesn't cover all particles\n";
+            WarpX::GetInstance().RecordWarning("Species",
+                "Simulation box doesn't cover all particles",
+                WarnPriority::high);
         }
     } // IO Processor
     auto const np = particle_z.size();
@@ -2580,11 +2598,13 @@ PhysicalParticleContainer::InitIonizationModule ()
     if (!do_field_ionization) return;
     ParmParse pp_species_name(species_name);
     if (charge != PhysConst::q_e){
-        amrex::Warning(
-            "charge != q_e for ionizable species: overriding user value and setting charge = q_e.");
+        WarpX::GetInstance().RecordWarning("Species",
+            "charge != q_e for ionizable species '" +
+            species_name + "':" +
+            "overriding user value and setting charge = q_e.");
         charge = PhysConst::q_e;
     }
-    pp_species_name.query("ionization_initial_level", ionization_initial_level);
+    queryWithParser(pp_species_name, "ionization_initial_level", ionization_initial_level);
     pp_species_name.get("ionization_product_species", ionization_product_name);
     pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level

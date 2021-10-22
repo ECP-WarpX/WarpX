@@ -50,10 +50,12 @@ public:
         const int nci_corr_stencil,
         const int maxwell_solver_id,
         const int max_level,
-        const amrex::Array<amrex::Real,3> v_galilean,
-        const amrex::Array<amrex::Real,3> v_comoving,
+        const amrex::Vector<amrex::Real> v_galilean,
+        const amrex::Vector<amrex::Real> v_comoving,
         const bool safe_guard_cells,
-        const int do_electrostatic);
+        const int do_electrostatic,
+        const int do_multi_J,
+        const bool fft_do_time_averaging);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();
@@ -80,6 +82,8 @@ public:
     amrex::IntVect ng_UpdateAux = amrex::IntVect::TheZeroVector();
     // Number of guard cells of all MultiFabs that must exchanged before moving window
     amrex::IntVect ng_MovingWindow = amrex::IntVect::TheZeroVector();
+    // Number of guard cells of E and B that are exchanged immediatly after the main PSATD push
+    amrex::IntVect ng_afterPushPSATD = amrex::IntVect::TheZeroVector();
 
     // Number of guard cells for local deposition of J and rho
     amrex::IntVect ng_depos_J   = amrex::IntVect::TheZeroVector();

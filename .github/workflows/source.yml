@@ -9,7 +9,7 @@ name: 📜 Source
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.head_ref }}-source
+  group: ${{ github.ref }}-${{ github.head_ref }}-source
   cancel-in-progress: true
 
 jobs:

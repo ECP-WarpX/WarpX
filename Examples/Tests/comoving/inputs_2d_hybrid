@@ -23,7 +23,7 @@ algo.particle_pusher = vay
 # Order of particle shape factors
 algo.particle_shape = 3
 
-psatd.v_comoving = 0. 0. -0.9970370305242862
+psatd.use_default_v_comoving = 1
 
 warpx.cfl = 1.
 
@@ -69,7 +69,7 @@ ions.charge = q_e
 ions.mass = m_p
 ions.injection_style = NUniformPerCell
 ions.num_particles_per_cell_each_dim = 2 2
-ions.momentum_distribution_type = "gaussian"
+ions.momentum_distribution_type = "at_rest"
 ions.xmin = -85.e-6
 ions.xmax =  85.e-6
 ions.zmin = 0.
@@ -99,8 +99,6 @@ beam.uy_th = 2.
 beam.uz_th = 0.
 beam.zinject_plane = 0.5e-3
 beam.rigid_advance = true
-beam.projected = true
-beam.focused = false
 
 lasers.names = laser1
 laser1.profile = Gaussian
