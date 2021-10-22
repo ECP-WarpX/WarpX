@@ -16,7 +16,7 @@
 
 /**
  * This enumerated class is used to index the Particle
- * values which are being stored as SoA data. Nattribs
+ * values that are being stored as SoA data. Nattribs
  * is enumerated to give the number of attributes stored.
  */
 enum class ParticleVal : int
