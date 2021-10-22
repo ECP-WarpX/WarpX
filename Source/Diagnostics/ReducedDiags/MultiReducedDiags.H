@@ -38,7 +38,7 @@ public:
     MultiReducedDiags();
 
     /** Loop over all ReducedDiags and call their InitData
-     *  @param[in] step current iteration time */
+     */
     void InitData ();
 
     /** Loop over all ReducedDiags and call their ComputeDiags
