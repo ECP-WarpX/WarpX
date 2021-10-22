@@ -42,7 +42,6 @@ FieldProbe::FieldProbe (std::string rd_name)
 {
 
     // RZ coordinate is not working
-
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldProbe reduced diagnostics does not work for RZ coordinate.");
