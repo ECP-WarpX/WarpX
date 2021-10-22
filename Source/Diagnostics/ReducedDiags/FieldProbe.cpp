@@ -341,7 +341,6 @@ void FieldProbe::ComputeDiags (int step)
  *   probe(Bx),probe(By),probe(Bz)]
  */
 
-//Utilize ReducedDiags output generation funtion
 
 void FieldProbe::WriteToFile (int step) const
 {
