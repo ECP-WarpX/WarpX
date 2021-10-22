@@ -89,7 +89,6 @@ FieldProbe::FieldProbe (std::string rd_name)
         {
 
             // open file
-
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
 
             // write header row
