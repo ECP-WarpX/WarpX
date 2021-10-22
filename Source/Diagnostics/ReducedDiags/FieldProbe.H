@@ -41,7 +41,7 @@ public:
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) override final;
 
     /*
      * Define constants used throughout FieldProbe
