@@ -160,7 +160,6 @@ void FieldProbe::ComputeDiags (int step)
         const auto prob_hi = gm.ProbHi();
 
         // get MultiFab data at lev
-
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
         const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
         const amrex::MultiFab &Ez = warpx.getEfield(lev, 2);
