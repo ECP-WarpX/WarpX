@@ -43,4 +43,4 @@ public:
 	void AddNParticles (int lev, int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z); 
 };
 
-#endif
+#endif // WARPX_FieldProbeParticleContainer_H_
