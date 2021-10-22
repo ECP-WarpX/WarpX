@@ -48,7 +48,6 @@ FieldProbe::FieldProbe (std::string rd_name)
 #endif
 
     // read number of levels
-
     int nLevel = 0;
     amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
