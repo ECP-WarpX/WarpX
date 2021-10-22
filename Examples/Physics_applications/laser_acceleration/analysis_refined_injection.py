@@ -9,10 +9,13 @@
 
 # This script tests the "warpx.refine_plasma=1" option by comparing
 # the actual number of electrons at step 200 to the expected value
+import os
 import sys
 import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # this will be the name of the plot file
 fn = sys.argv[1]
@@ -43,3 +46,6 @@ rr = 2
 np_expected = (n_coarse + n_fine*rr)*(n_0 + n_move)
 
 assert( np == np_expected )
+
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn)
