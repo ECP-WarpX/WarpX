@@ -69,7 +69,6 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define resoliton to determine number of particles
      *     Define whether ot not to integrate fields
      */
-
     amrex::ParmParse pp_rd_name(rd_name);
     getWithParser(pp_rd_name, "x_probe", x_probe);
     getWithParser(pp_rd_name, "y_probe", y_probe);
