@@ -76,8 +76,6 @@ private:
     int interp_order = 1;
     bool raw_fields = false;
 
-    //vacper is vacuum permeability
-    amrex::Real vacper = PhysConst::mu0;
 
     /**
      * Built-in function in ReducedDiags to write out test data
