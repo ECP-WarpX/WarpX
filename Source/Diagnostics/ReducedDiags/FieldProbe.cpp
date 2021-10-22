@@ -256,7 +256,7 @@ void FieldProbe::ComputeDiags (int step)
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
-                //Interpolating to the probe point for each particle
+                // Interpolating to the probe positions for each particle
 
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
