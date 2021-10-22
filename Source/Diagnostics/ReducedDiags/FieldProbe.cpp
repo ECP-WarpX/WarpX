@@ -295,7 +295,6 @@ void FieldProbe::ComputeDiags (int step)
                     }
 
                     // Fill output array
-
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::Ex)] = part_Ex[ip];
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::Ey)] = part_Ey[ip];
                     m_data[0 * noutputs + static_cast<int>(ParticleVal::Ez)] = part_Ez[ip];
