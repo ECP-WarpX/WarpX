@@ -23,7 +23,7 @@ import read_raw_data
 snapshot = './lab_frame_data/snapshots/snapshot00002'
 header   = './lab_frame_data/snapshots/Header'
 allrd, info = read_raw_data.read_lab_snapshot(snapshot, header)
-F = allrd[('mesh','Ez')]
+F = allrd['Ez']
 print("F.shape ", F.shape)
 F_1D = np.squeeze(F[F.shape[0]//2,F.shape[1]//2,:])
 
