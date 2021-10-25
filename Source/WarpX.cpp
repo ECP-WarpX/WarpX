@@ -1452,7 +1452,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         safe_guard_cells,
         WarpX::do_electrostatic,
         WarpX::do_multi_J,
-        WarpX::fft_do_time_averaging);
+        WarpX::fft_do_time_averaging,
+        this->refRatio());
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
