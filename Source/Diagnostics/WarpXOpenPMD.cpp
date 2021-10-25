@@ -767,7 +767,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<std::string>& real_comp_names,
                       const amrex::Vector<int>& write_int_comp,
                       const amrex::Vector<std::string>& int_comp_names,
-                      const unsigned long long &np, bool isBTD) const
+                      const unsigned long long np, bool const isBTD) const
 {
     std::string options = "{}";
     if (isBTD) options = "{ \"resizable\": true }";
@@ -922,7 +922,7 @@ WarpXOpenPMDPlot::SetupPos (
     const unsigned long long& np,
     amrex::ParticleReal const charge,
     amrex::ParticleReal const mass,
-    bool isBTD)
+    bool const isBTD)
 {
   std::string options = "{}";
   if (isBTD) options = "{ \"resizable\": true }";

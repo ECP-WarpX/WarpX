@@ -203,7 +203,7 @@ private:
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
         amrex::ParticleReal const charge,
-        amrex::ParticleReal const mass, bool isBTD = false);
+        amrex::ParticleReal const mass, bool const isBTD = false);
 
   /** This function sets up the entries for particle properties
    *
@@ -219,7 +219,7 @@ private:
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
                const amrex::Vector<std::string>& int_comp_names,
-               const unsigned long long &np, bool isBTD = false) const;
+               const unsigned long long np, bool const isBTD = false) const;
 
   /** This function saves the values of the entries for particle properties
    *
