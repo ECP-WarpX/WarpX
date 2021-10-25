@@ -37,9 +37,9 @@ void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v )
  *
  * \param[in, out] index_begin Point to the beginning of the vector which is
  *            to be filled with these indices
- * \param[in, out] index_begin Point to the end of the vector which is
+ * \param[in, out] index_end Point to the end of the vector which is
  *            to be filled with these indices
- * \param[in] Vector that indicates the elements that need to be reordered first
+ * \param[in] predicate that indicates the elements that need to be reordered first
  */
 template< typename ForwardIterator >
 ForwardIterator stablePartition(ForwardIterator const index_begin,
@@ -67,7 +67,7 @@ ForwardIterator stablePartition(ForwardIterator const index_begin,
 
 /** \brief Return the number of elements between `first` and `last`
  *
- * \param[in] fist Points to a position in a vector
+ * \param[in] first Points to a position in a vector
  * \param[in] last Points to another position in a vector
  * \return The number of elements between `first` and `last`
  */

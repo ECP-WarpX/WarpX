@@ -26,9 +26,10 @@
  * for that given pair of particles and the weight of the produced particles is stored in
  * p_pair_reaction_weight.
  *
- * @param[in] u1x, u1y, u1z, u2x, u2y and u2z are the momenta of the colliding particles
- * @param[in] m1 and m2 are masses.
- * @param[in] w1 and w2 are the effective weight of the colliding particles
+ * @param[in] u1x,u1y,u1z momenta of the colliding particles
+ * @param[in] u2x,u2y,u2z momenta of the colliding particles
+ * @param[in] m1,m2 masses
+ * @param[in] w1,w2 effective weight of the colliding particles
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] dV is the volume of the corresponding cell.
  * @param[in] pair_index is the index of the colliding pair
@@ -42,6 +43,7 @@
  * multiplier
  * @param[in] probability_target_value if the probability threshold is exceeded, this is used
  * to determine by how much the fusion multiplier is reduced
+ * @param[in] fusion_type the physical fusion process to model
  * @param[in] engine the random engine.
  */
 template <typename index_type>
