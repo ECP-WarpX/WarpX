@@ -612,6 +612,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         if self.source_smoother is not None:
             self.source_smoother.initialize_inputs(self)
 
+        pywarpx.warpx.do_dive_cleaning = self.divE_cleaning
+        pywarpx.warpx.do_divb_cleaning = self.divB_cleaning
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
