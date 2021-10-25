@@ -10,6 +10,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -556,7 +557,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
         }
         if (!local) {
             const Geometry& gm = allcontainers[0]->Geom(lev);
-            rho->SumBoundary(gm.periodicity());
+            WarpXCommUtil::SumBoundary(*rho, gm.periodicity());
         }
         return rho;
     }
@@ -1006,8 +1007,9 @@ void MultiParticleContainer::InitQuantumSync ()
         m_quantum_sync_photon_creation_energy_threshold = temp;
     }
     else{
-        amrex::Print() << "Using default value (2*me*c^2)" <<
-            " for photon energy creation threshold \n" ;
+        WarpX::GetInstance().RecordWarning("QED",
+            "Using default value (2*me*c^2) for photon energy creation threshold",
+            WarnPriority::low);
     }
 
     // qs_minimum_chi_part is the minimum chi parameter to be
@@ -1023,7 +1025,9 @@ void MultiParticleContainer::InitQuantumSync ()
     }
 
     if(lookup_table_mode == "generate"){
-        amrex::Print() << "Quantum Synchrotron table will be generated. \n" ;
+        WarpX::GetInstance().RecordWarning("QED",
+            "A new Quantum Synchrotron table will be generated.",
+            WarnPriority::low);
 #ifndef WARPX_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
@@ -1031,9 +1035,11 @@ void MultiParticleContainer::InitQuantumSync ()
 #endif
     }
     else if(lookup_table_mode == "load"){
-        amrex::Print() << "Quantum Synchrotron table will be read from file. \n" ;
         std::string load_table_name;
         pp_qed_qs.query("load_table_from", load_table_name);
+        WarpX::GetInstance().RecordWarning("QED",
+            "The Quantum Synchrotron table will be read from the file: " + load_table_name,
+            WarnPriority::low);
         if(load_table_name.empty()){
             amrex::Abort("Quantum Synchrotron table name should be provided");
         }
@@ -1044,7 +1050,10 @@ void MultiParticleContainer::InitQuantumSync ()
             qs_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
-        amrex::Print() << "Built-in Quantum Synchrotron table will be used. \n" ;
+        WarpX::GetInstance().RecordWarning("QED",
+            "The built-in Quantum Synchrotron table will be used."
+            "This low resolution table is intended for testing purposes only.",
+            WarnPriority::medium);
         m_shr_p_qs_engine->init_builtin_tables(qs_minimum_chi_part);
     }
     else{
@@ -1074,7 +1083,9 @@ void MultiParticleContainer::InitBreitWheeler ()
     }
 
     if(lookup_table_mode == "generate"){
-        amrex::Print() << "Breit Wheeler table will be generated. \n" ;
+        WarpX::GetInstance().RecordWarning("QED",
+            "A new Breit Wheeler table will be generated.",
+            WarnPriority::low);
 #ifndef WARPX_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
@@ -1082,9 +1093,11 @@ void MultiParticleContainer::InitBreitWheeler ()
 #endif
     }
     else if(lookup_table_mode == "load"){
-        amrex::Print() << "Breit Wheeler table will be read from file. \n" ;
         std::string load_table_name;
         pp_qed_bw.query("load_table_from", load_table_name);
+        WarpX::GetInstance().RecordWarning("QED",
+            "The Breit Wheeler table will be read from the file:" + load_table_name,
+            WarnPriority::low);
         if(load_table_name.empty()){
             amrex::Abort("Breit Wheeler table name should be provided");
         }
@@ -1095,7 +1108,10 @@ void MultiParticleContainer::InitBreitWheeler ()
             table_data, bw_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
-        amrex::Print() << "Built-in Breit Wheeler table will be used. \n" ;
+        WarpX::GetInstance().RecordWarning("QED",
+            "The built-in Breit Wheeler table will be used."
+            "This low resolution table is intended for testing purposes only.",
+            WarnPriority::medium);
         m_shr_p_bw_engine->init_builtin_tables(bw_minimum_chi_part);
     }
     else{

@@ -9,6 +9,7 @@
 """Classes following the PICMI standard
 """
 import re
+import os
 import picmistandard
 import numpy as np
 import pywarpx
@@ -613,6 +614,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         if self.source_smoother is not None:
             self.source_smoother.initialize_inputs(self)
 
+        pywarpx.warpx.do_dive_cleaning = self.divE_cleaning
+        pywarpx.warpx.do_divb_cleaning = self.divB_cleaning
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
@@ -1057,7 +1060,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
             file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 
 ElectrostaticFieldDiagnostic = FieldDiagnostic
@@ -1092,7 +1095,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
             file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
     def init(self, kw):
@@ -1136,7 +1139,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
             file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
@@ -1288,7 +1291,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
             file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 
 class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):

@@ -51,10 +51,10 @@ echo "cd $PWD"
 
 # Clone PICSAR, AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout 4914d5e42c2ee02c80645722b2d336e4dba6b4b3 && cd -
+cd amrex && git checkout --detach 614b9ebbbf04eb5b4532029ff4a7ae40e6663042 && cd -
 # Use QED brach for QED tests
 git clone https://github.com/ECP-WarpX/picsar.git
-cd picsar && git checkout a78be127f66adc1558f527edc8964e37e3a055ff && cd -
+cd picsar && git checkout --detach a78be127f66adc1558f527edc8964e37e3a055ff && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
