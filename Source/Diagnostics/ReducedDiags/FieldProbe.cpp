@@ -243,7 +243,7 @@ void FieldProbe::ComputeDiags (int step)
                 // Interpolating to the probe positions for each particle
 
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
-                int temp_modes = WarpX::r_rz_azimuthal_modes;
+                int temp_modes = WarpX::n_rz_azimuthal_modes;
                 int temp_interp_order = interp_order;
 
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
