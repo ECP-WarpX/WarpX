@@ -495,9 +495,18 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     // Define the number of guard cells in each direction, for E, B, and F
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
-    int ngf_int = (do_moving_window) ? 2 : 0;
+    int ngf_int = 0;
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
+
+    if (do_moving_window) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
+            "The number of grow cells for the moving window currently assumes 2 levels max.");
+        int rr = ref_ratio[WarpX::moving_window_dir];
+        nge[WarpX::moving_window_dir] = std::max(nge[WarpX::moving_window_dir], rr);
+        ngb[WarpX::moving_window_dir] = std::max(ngb[WarpX::moving_window_dir], rr);
+        ngf[WarpX::moving_window_dir] = std::max(ngf[WarpX::moving_window_dir], rr);
+    }
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         // Increase the number of guard cells, in order to fit the extent

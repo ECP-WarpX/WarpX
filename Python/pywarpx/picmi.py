@@ -615,6 +615,9 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_dive_cleaning = self.divE_cleaning
         pywarpx.warpx.do_divb_cleaning = self.divB_cleaning
 
+        pywarpx.warpx.do_pml_dive_cleaning = self.pml_divE_cleaning
+        pywarpx.warpx.do_pml_divb_cleaning = self.pml_divB_cleaning
+
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
