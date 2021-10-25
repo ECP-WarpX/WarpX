@@ -31,7 +31,17 @@ jobs:
       run: .github/workflows/source/inputsNotTested
     - name: Check that the test matrix for CI includes all tests
       run: .github/workflows/source/test_ci_matrix.sh
+
+  documentation:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v2
+    - uses: s-weigand/setup-conda@v1
+      with:
+        update-conda: true
+        conda-channels: conda-forge
+    - name: Install
+      run: conda install -c conda-forge doxygen
     - name: Doxygen
-      run: |
-        sudo apt-get install -y --no-install-recommends doxygen
-        .github/workflows/source/doxygen
+      run: .github/workflows/source/doxygen
