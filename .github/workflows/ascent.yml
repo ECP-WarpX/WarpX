@@ -21,9 +21,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Configure
       run: |
-        . ../s_env.sh && cmake -S . -B build    \
-                                    -DWarpX_ASCENT=ON     \
-                                    -DWarpX_COMPUTE=NOACC 
+        . ../s_env.sh && cmake -S . -B build               \
+                                    -DWarpX_ASCENT=ON      \
+                                    -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
         . ../s_env.sh && cmake --build build -j 2
