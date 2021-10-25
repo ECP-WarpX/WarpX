@@ -47,8 +47,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
  * \brief Parse a string (typically a mathematical expression) from the
  * input file and store it into a variable.
  *
- * \param ParmParse pp used to read the query_string pp.<function>=string
- * \param parmparse_string String used to initialize ParmParse
+ * \param pp used to read the query_string `pp.<function>=string`
  * \param query_string ParmParse.query will look for this string
  * \param stored_string variable in which the string to parse is stored
  */
@@ -258,13 +257,20 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored, either a scalar or vector
+ */
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+
+/** See earlier overload for base signature
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored, either a scalar or vector
  * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
  * amrex::ParmParse::FIRST for starting with the first input value)
  * \param[in] num_val number of input values to use (optional with arrays, default is
  * amrex::ParmParse::LAST for reading until the last input value)
  */
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                         const int start_ix = amrex::ParmParse::FIRST,
                         const int num_val = amrex::ParmParse::LAST);
@@ -284,13 +290,20 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored
+ */
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+
+/** See earlier overload for base signature
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
  * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
  * amrex::ParmParse::FIRST for starting with the first input value)
  * \param[in] num_val number of input values to use (optional with arrays, default is
  * amrex::ParmParse::LAST for reading until the last input value)
  */
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);

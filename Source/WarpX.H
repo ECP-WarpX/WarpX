@@ -441,18 +441,21 @@ public:
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
-    /** \brief apply QED correction on electric field
+    /** apply QED correction on electric field
+     *
      * \param dt vector of time steps (for all levels)
      */
     void Hybrid_QED_Push (         amrex::Vector<amrex::Real> dt);
 
-    /** \brief apply QED correction on electric field for level lev
+    /** apply QED correction on electric field for level lev
+     *
      * \param lev mesh refinement level
      * \param dt time step
      */
     void Hybrid_QED_Push (int lev, amrex::Real dt);
 
-    /** \brief apply QED correction on electric field for level lev and patch type patch_type
+    /** apply QED correction on electric field for level lev and patch type patch_type
+     *
      * \param lev mesh refinement level
      * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
      * \param dt time step
