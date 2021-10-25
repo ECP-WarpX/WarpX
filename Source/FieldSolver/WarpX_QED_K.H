@@ -25,6 +25,7 @@
  * \param[in] by The y-component of the B-field at the point at whicht the M-field is to be calculated
  * \param[in] bz The z-component of the B-field at the point at whicht the M-field is to be calculated
  * \param[in] xi_c2 The quantum parameter * c2 being used for the simulation
+ * \param[in] c2 the speed of light squared
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void calc_M(amrex::Real arr [], amrex::Real ex, amrex::Real ey, amrex::Real ez,
@@ -45,24 +46,30 @@ void calc_M(amrex::Real arr [], amrex::Real ex, amrex::Real ey, amrex::Real ez,
  * warpx_hybrid_QED_push uses an FDTD scheme to calculate QED corrections to
  * Maxwell's equations and preforms a half timestep correction to the E-fields
  *
- * \param[in] Ex This function modifies the Ex field at the end
- * \param[in] Ey This function modifies the Ey field at the end
- * \param[in] Ez This function modifies the Ez field at the end
+ * \param[in] j mesh index
+ * \param[in] k mesh index
+ * \param[in] l mesh index
+ * \param[inout] Ex This function modifies the Ex field at the end
+ * \param[inout] Ey This function modifies the Ey field at the end
+ * \param[inout] Ez This function modifies the Ez field at the end
  * \param[in] Bx The QED corrections are non-linear functions of B. However,
  *            they do not modify B itself
  * \param[in] By The QED corrections are non-linear functions of B. However,
  *            they do not modify B itself
  * \param[in] Bz The QED corrections are non-linear functions of B. However,
  *            they do not modify B itself
- * \param[in] tempEx Since the corrections to E at a given node are non-linear functions
+ * \param[in] tmpEx Since the corrections to E at a given node are non-linear functions
  *            of the values of E on the surronding nodes, temp arrays are used so that
  *            modifications to one node do not influence the corrections to the surronding nodes
- * \param[in] tempEy Since the corrections to E at a given node are non-linear functions
+ * \param[in] tmpEy Since the corrections to E at a given node are non-linear functions
  *            of the values of E on the surronding nodes, temp arrays are used so that modifications to
  *            one node do not influence the corrections to the surronding nodes
- * \param[in] tempEz Since the corrections to E at a given node are non-linear functions
+ * \param[in] tmpEz Since the corrections to E at a given node are non-linear functions
  *            of the values of E on the surronding nodes, temp arrays are used so that modifications to
  *            one node do not influence the corrections to the surronding nodes
+ * \param[in] Jx the current field in x
+ * \param[in] Jy the current field in y
+ * \param[in] Jz the current field in z
  * \param[in] dx The x spatial step, used for calculating curls
  * \param[in] dy The y spatial step, used for calculating curls
  * \param[in] dz The z spatial step, used for calulating curls
