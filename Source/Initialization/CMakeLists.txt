@@ -5,4 +5,6 @@ target_sources(WarpX
     InjectorMomentum.cpp
     PlasmaInjector.cpp
     WarpXInitData.cpp
+    TemperatureProperties.cpp
+    GetTemperature.cpp
 )

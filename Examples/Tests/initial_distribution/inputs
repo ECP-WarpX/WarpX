@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam
+particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam maxwell_juttner_parser
 particles.rigid_injected_species = beam
 
 gaussian.charge                     = -q_e
@@ -83,14 +83,25 @@ beam.uz_th                      = 1.0
 beam.zinject_plane              = 0.0
 beam.rigid_advance              = true
 
+maxwell_juttner_parser.charge                     = -q_e
+maxwell_juttner_parser.mass                       = m_e
+maxwell_juttner_parser.injection_style            = "NRandomPerCell"
+maxwell_juttner_parser.num_particles_per_cell     = 1000
+maxwell_juttner_parser.profile                    = constant
+maxwell_juttner_parser.density                    = 1.0e21
+maxwell_juttner_parser.momentum_distribution_type = "maxwell_juttner"
+maxwell_juttner_parser.theta_distribution_type    = "parser"
+maxwell_juttner_parser.theta_function(x,y,z)      = "1.0 + heaviside(x,0)"
+
 #################################
 ########## DIAGNOSTIC ###########
 #################################
 # 1 for gaussian
-# 2 for maxwell-boltzmann
-# 3 for maxwell-juttner
+# 2 for maxwell-boltzmann with constant temperature
+# 3 for maxwell-juttner with constant temperature
 # 4 for beam
-warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr
+# 5 for maxwell-juttner with parser function temperature
+warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr h5_neg h5_pos
 
 h1x.type                                 = ParticleHistogram
 h1x.intervals                            = 1
@@ -191,6 +202,27 @@ h4z.bin_number                           = 50
 h4z.bin_min                              = -1.0
 h4z.bin_max                              = +1.0
 h4z.histogram_function(t,x,y,z,ux,uy,uz) = "z"
+
+h5_neg.type                                 = ParticleHistogram
+h5_neg.intervals                            = 1
+h5_neg.path                                 = "./"
+h5_neg.species                              = maxwell_juttner_parser
+h5_neg.bin_number                           = 50
+h5_neg.bin_min                              = 1.0
+h5_neg.bin_max                              = 12.0
+h5_neg.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(1.0 + ux*ux + uy*uy + uz*uz)"
+h5_neg.filter_function(t,x,y,z,ux,uy,uz)    = "x < 0.0"
+
+h5_pos.type                                 = ParticleHistogram
+h5_pos.intervals                            = 1
+h5_pos.path                                 = "./"
+h5_pos.species                              = maxwell_juttner_parser
+h5_pos.bin_number                           = 50
+h5_pos.bin_min                              = 1.0
+h5_pos.bin_max                              = 12.0
+h5_pos.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(1.0 + ux*ux + uy*uy + uz*uz)"
+h5_pos.filter_function(t,x,y,z,ux,uy,uz)    = "x > 0.0"
+
 
 # our little beam monitor
 bmmntr.type                              = BeamRelevant
