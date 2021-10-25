@@ -1994,7 +1994,7 @@ def get_mesh_phi_fp_lovects(level, include_ghosts=True):
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getPhiFPLoVects)
 
 
-def get_mesh_F_field_cp_lovects(level, include_ghosts=True):
+def get_mesh_F_cp_lovects(level, include_ghosts=True):
     '''
 
     This returns a list of the lo vectors of the arrays containing the mesh F field
@@ -2015,7 +2015,7 @@ def get_mesh_F_field_cp_lovects(level, include_ghosts=True):
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldCPLoVects)
 
 
-def get_mesh_F_field_fp_lovects(level, include_ghosts=True):
+def get_mesh_F_fp_lovects(level, include_ghosts=True):
     '''
 
     This returns a list of the lo vectors of the arrays containing the mesh F field
@@ -2036,7 +2036,7 @@ def get_mesh_F_field_fp_lovects(level, include_ghosts=True):
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldFPLoVects)
 
 
-def get_mesh_G_field_cp_lovects(level, include_ghosts=True):
+def get_mesh_G_cp_lovects(level, include_ghosts=True):
     '''
 
     This returns a list of the lo vectors of the arrays containing the mesh G field
@@ -2057,7 +2057,7 @@ def get_mesh_G_field_cp_lovects(level, include_ghosts=True):
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getGfieldCPLoVects)
 
 
-def get_mesh_G_field_fp_lovects(level, include_ghosts=True):
+def get_mesh_G_fp_lovects(level, include_ghosts=True):
     '''
 
     This returns a list of the lo vectors of the arrays containing the mesh G field
