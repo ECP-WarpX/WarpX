@@ -265,7 +265,7 @@ void FieldProbe::ComputeDiags (int step)
                     //Calculate S
                     amrex::Real sraw[3]{
                     Exp * Bzp - Ezp * Byp,
-	                Ezp * Bxp - Exp * Bzp,
+                    Ezp * Bxp - Exp * Bzp,
                     Exp * Byp - Eyp * Bxp};
                     S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
