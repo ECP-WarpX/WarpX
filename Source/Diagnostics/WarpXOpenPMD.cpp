@@ -663,10 +663,10 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   // define positions & offsets
   //
   const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
-  m_ParticleSetUp = 1;
+  m_ParticleSetUp = false;
   if (counter.GetTotalNumParticles() > 0 and ParticleFlushOffset == 0) {
       // This will trigger meta-data flush for particles
-      m_ParticleSetUp = -1;
+      m_ParticleSetUp = true;
   }
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
   SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
@@ -796,7 +796,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
     }
 
     // attributes need to be set only the first time BTD flush is called for a snapshot
-    if (isBTD and m_ParticleSetUp!=-1) return;
+    if (isBTD and m_ParticleSetUp == false) return;
     std::set< std::string > addedRecords; // add meta-data per record only once
     for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
         auto ii = m_NumAoSRealAttributes + idx; // jump over AoS names
@@ -940,7 +940,7 @@ WarpXOpenPMDPlot::SetupPos (
   currSpecies["charge"][scalar].resetDataset( realType );
   currSpecies["mass"][scalar].resetDataset( realType );
 
-  if (isBTD and m_ParticleSetUp != -1) return;
+  if (isBTD and m_ParticleSetUp == false) return;
   // make constant
   for( auto const& comp : positionComponents ) {
       currSpecies["positionOffset"][comp].makeConstant( 0. );

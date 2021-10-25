@@ -275,7 +275,7 @@ private:
 
   std::unique_ptr<openPMD::Series> m_Series;
 
-  int m_ParticleSetUp = -1;
+  bool m_ParticleSetUp = true;
 
   /** This is the output directory
    *
