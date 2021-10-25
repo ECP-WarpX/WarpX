@@ -142,6 +142,8 @@ public:
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
+  /** Return OpenPMD File type ("bp" or "h5" or "json")*/
+  std::string OpenPMDFileType () {return m_OpenPMDFileType;}
 
 private:
   void Init (openPMD::Access access, bool isBTD);

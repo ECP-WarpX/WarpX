@@ -116,16 +116,6 @@ void BTDiagnostics::DerivedInitData ()
     m_output_species.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
-    for (int i = 0; i < m_num_buffers; ++i) {
-        m_particles_buffer[i].resize(m_output_species_names.size());
-        m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
-        m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
-        // initialize these values to 0
-        for (int isp = 0; isp < m_totalParticles_flushed_already[i].size(); ++isp) {
-            m_totalParticles_flushed_already[i][isp] = 0;
-            m_totalParticles_in_buffer[i][isp] = 0;
-        }
-    }
 }
 
 void
@@ -690,9 +680,12 @@ BTDiagnostics::Flush (int i_buffer)
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
     IncrementBufferFlushCounter(i_buffer);
-    UpdateTotalParticlesFlushed(i_buffer);
-    ResetTotalParticlesInBuffer(i_buffer);
-    ClearParticleBuffer(i_buffer);
+    // if particles are selected for output then update and reset counters
+    if (m_output_species_names.size() > 0) {
+        UpdateTotalParticlesFlushed(i_buffer);
+        ResetTotalParticlesInBuffer(i_buffer);
+        ClearParticleBuffer(i_buffer);
+    }
 }
 
 void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
@@ -965,6 +958,9 @@ BTDiagnostics::InitializeParticleBuffer ()
     auto& warpx = WarpX::GetInstance();
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     for (int i = 0; i < m_num_buffers; ++i) {
+        m_particles_buffer[i].resize(m_output_species_names.size());
+        m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
+        m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
             m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;

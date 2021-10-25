@@ -202,12 +202,18 @@ Diagnostics::InitData ()
             InitializeFieldBufferData(i_buffer, lev);
         }
     }
-    // When particle buffers, m_particle_boundary_buffer are included,
-    // they will be initialized here
-    InitializeParticleBuffer();
-    InitializeParticleFunctors();
 
     amrex::ParmParse pp_diag_name(m_diag_name);
+    // default for writing species output is 1
+    int write_species = 1;
+    pp_diag_name.query("write_species", write_species);
+    if (write_species == 1) {
+        // When particle buffers, m_particle_boundary_buffer are included,
+        // they will be initialized here
+        InitializeParticleBuffer();
+        InitializeParticleFunctors();
+    }
+
     amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
     if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
          queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
@@ -224,9 +230,6 @@ Diagnostics::InitData ()
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
     }
 
-    // default for writing species output is 1
-    int write_species = 1;
-    pp_diag_name.query("write_species", write_species);
     if (write_species == 0) {
         if (m_format == "checkpoint"){
             amrex::Abort("For checkpoint format, write_species flag must be 1.");
