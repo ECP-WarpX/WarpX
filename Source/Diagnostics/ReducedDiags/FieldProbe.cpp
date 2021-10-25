@@ -245,6 +245,7 @@ void FieldProbe::ComputeDiags (int step)
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 int temp_modes = WarpX::n_rz_azimuthal_modes;
                 int temp_interp_order = interp_order;
+                int m_field_probe_integrate = field_probe_integrate;
 
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
@@ -274,7 +275,7 @@ void FieldProbe::ComputeDiags (int step)
                      * If not integrating, store instantaneous values.
                      */
 
-                    if (field_probe_integrate != 1)
+                    if (m_field_probe_integrate != 1)
                     {
 
                         //Store Values on Particles
@@ -297,7 +298,10 @@ void FieldProbe::ComputeDiags (int step)
                         part_Bz[ip] += part_Bz[ip]; //remember to add lorentz transform
                         part_S[ip] += part_S[ip]; //remember to add lorentz transform
                     }
+                });// ParallelFor Close
 
+                for (int ip=0; ip < np; ip++)
+                {
                     // Fill output array
                     m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip];
                     m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip];
@@ -306,14 +310,11 @@ void FieldProbe::ComputeDiags (int step)
                     m_data[0 * noutputs + ParticleVal::By] = part_By[ip];
                     m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip];
                     m_data[0 * noutputs + ParticleVal::S] = part_S[ip];
-
-                    /* m_data now contains up-to-date values for:
-                     *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
-
-                });// ParallelFor Close
-
+                }
                 probe_proc = amrex::ParallelDescriptor::MyProc();
 
+                /* m_data now contains up-to-date values for:
+                 *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
             }
 
         } // end particle iterator loop
