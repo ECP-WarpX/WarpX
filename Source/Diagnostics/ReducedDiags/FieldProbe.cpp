@@ -242,6 +242,10 @@ void FieldProbe::ComputeDiags (int step)
 
                 // Interpolating to the probe positions for each particle
 
+                // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
+                int temp_modes = WarpX::r_rz_azimuthal_modes;
+                int temp_interp_order = interp_order;
+
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
@@ -255,8 +259,8 @@ void FieldProbe::ComputeDiags (int step)
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
-                                   dx_arr, xyzmin_arr, amrex::lbound(box), WarpX::n_rz_azimuthal_modes,
-                                   interp_order, false);
+                                   dx_arr, xyzmin_arr, amrex::lbound(box), temp_modes,
+                                   temp_interp_order, false);
 
                     //Calculate S
                     amrex::Real sraw[3]{
