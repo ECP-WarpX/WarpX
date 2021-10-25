@@ -181,9 +181,9 @@ void FieldProbe::ComputeDiags (int step)
         //defined for use in determining which CPU contains the particles
         int probe_proc = -1;
 
-	    // loop over each particle
-    	using MyParIter = FieldProbeParticleContainer::iterator;
-       	for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti) 
+        // loop over each particle
+        using MyParIter = FieldProbeParticleContainer::iterator;
+        for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti) 
         {
             const auto getPosition = GetParticlePosition(pti);
 
@@ -207,7 +207,7 @@ void FieldProbe::ComputeDiags (int step)
 
             if( m_probe_in_domain ) 
             {
-	            /*
+                /*
                  * Make the box cell centered in preparation for the interpolation (and to avoid
                  * including ghost cells in the calculation)
                  */
@@ -258,12 +258,12 @@ void FieldProbe::ComputeDiags (int step)
                                    dx_arr, xyzmin_arr, amrex::lbound(box), WarpX::n_rz_azimuthal_modes,
                                    interp_order, false);
 
-	                //Calculate S
+                    //Calculate S
                     amrex::Real sraw[3]{
-		            Exp * Bzp - Ezp * Byp,
-		            Ezp * Bxp - Exp * Bzp,
-		            Exp * Byp - Eyp * Bxp};
-    	            S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+                    Exp * Bzp - Ezp * Byp,
+	                Ezp * Bxp - Exp * Bzp,
+                    Exp * Byp - Eyp * Bxp};
+                    S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
                      * Determine whether or not to integrate field data.
@@ -282,7 +282,7 @@ void FieldProbe::ComputeDiags (int step)
                         part_By[ip] = Byp; //remember to add lorentz transform
                         part_Bz[ip] = Bzp; //remember to add lorentz transform
                         part_S[ip] = S; //remember to add lorentz transform
-    	            }
+                    }
                     else
                     {
                         part_Ex[ip] += part_Ex[ip]; //remember to add lorentz transform
@@ -312,7 +312,7 @@ void FieldProbe::ComputeDiags (int step)
 
             }
 
-	    } // end particle iterator loop
+        } // end particle iterator loop
 
         /*
          * All the processors have probe_proc = -1 except the one that contains the point, which

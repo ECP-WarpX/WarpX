@@ -64,14 +64,14 @@
 using namespace amrex;
 
 FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
-	:ParticleContainer<0,0,ParticleVal::nattribs>(amr_core->GetParGDB())
+    :ParticleContainer<0,0,ParticleVal::nattribs>(amr_core->GetParGDB())
 {
-	SetParticleSize();
+    SetParticleSize();
 }
 
 void
 FieldProbeParticleContainer::AddNParticles (int /*lev*/,
-		                    			    int np, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z)
+                                            int np, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z)
 {
 
     // have to resize here, not in the constructor because grids have not
@@ -79,7 +79,7 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
     reserveData();
     resizeData();
 
-	auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
+    auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
     /*
      * Creates a temporary tile to obtain data from simulation. This data
@@ -87,26 +87,26 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
      * (particle_tile).
      */
 
-	using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
-	      				amrex::PinnedArenaAllocator>;
-	PinnedTile pinned_tile;
-	pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
+    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+                        amrex::PinnedArenaAllocator>;
+    PinnedTile pinned_tile;
+    pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
 
-	for (int i = 0; i < np; i++)
-	{
-		ParticleType p;
-		p.id() = ParticleType::NextID();
-		p.cpu() = ParallelDescriptor::MyProc();
+    for (int i = 0; i < np; i++)
+    {
+        ParticleType p;
+        p.id() = ParticleType::NextID();
+        p.cpu() = ParallelDescriptor::MyProc();
 #if (AMREX_SPACEDIM == 3)
-		p.pos(0) = x[i];
-		p.pos(1) = y[i];
-		p.pos(2) = z[i];
+        p.pos(0) = x[i];
+        p.pos(1) = y[i];
+        p.pos(2) = z[i];
 #elif (AMREX_SPACEDIM == 2)
-		amrex::ignore_unused(y);	
-		p.pos(0) = x[i];
-		p.pos(1) = 0;
-		p.pos(2) = z[i];
+        amrex::ignore_unused(y) ;
+        p.pos(0) = x[i];
+        p.pos(1) = 0;
+        p.pos(2) = z[i];
 #endif
         //write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);
@@ -114,14 +114,14 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
         //write Real attributes (SoA) to particle initialized zero
         DefineAndReturnParticleTile(0, 0, 0);
 
-		pinned_tile.push_back_real(ParticleVal::Ex, np, 0.0);
-		pinned_tile.push_back_real(ParticleVal::Ey, np, 0.0);
-		pinned_tile.push_back_real(ParticleVal::Ez, np, 0.0);
-		pinned_tile.push_back_real(ParticleVal::Bx, np, 0.0);
-		pinned_tile.push_back_real(ParticleVal::By, np, 0.0);
-		pinned_tile.push_back_real(ParticleVal::Bz, np, 0.0);
-		pinned_tile.push_back_real(ParticleVal::S, np, 0.0);
-	}
+        pinned_tile.push_back_real(ParticleVal::Ex, np, 0.0);
+        pinned_tile.push_back_real(ParticleVal::Ey, np, 0.0);
+        pinned_tile.push_back_real(ParticleVal::Ez, np, 0.0);
+        pinned_tile.push_back_real(ParticleVal::Bx, np, 0.0);
+        pinned_tile.push_back_real(ParticleVal::By, np, 0.0);
+        pinned_tile.push_back_real(ParticleVal::Bz, np, 0.0);
+        pinned_tile.push_back_real(ParticleVal::S, np, 0.0);
+    }
 
     /*
      * Redistributes particles to their appropriate tiles if the box
@@ -129,11 +129,11 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
      * efficiently.
      */
 
-	auto old_np = particle_tile.numParticles();
+    auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
-       	particle_tile.resize(new_np);
+        particle_tile.resize(new_np);
         amrex::copyParticles(
-		particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
-	Redistribute();
+        particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
+    Redistribute();
 
 }
