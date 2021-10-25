@@ -9,6 +9,7 @@
  */
 #include "PlasmaInjector.H"
 
+#include "Initialization/GetTemperature.H"
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
@@ -555,14 +556,14 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
                                              flux_normal_axis, flux_direction));
     } else if (mom_dist_s == "maxwell_boltzmann"){
         amrex::Real beta = 0._rt;
-        amrex::Real theta = 10._rt;
         int dir = 0;
         std::string direction = "x";
+        h_mom_temp = std::make_unique<TemperatureProperties>(pp);
+        GetTemperature getTemp(*h_mom_temp.get());
         queryWithParser(pp, "beta", beta);
         if(beta < 0){
             amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
         }
-        queryWithParser(pp, "theta", theta);
         pp.query("bulk_vel_dir", direction);
         if(direction[0] == '-'){
             beta = -beta;
@@ -583,17 +584,17 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
             amrex::Abort(direction.c_str());
         }
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, theta, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, beta, dir));
     } else if (mom_dist_s == "maxwell_juttner"){
         amrex::Real beta = 0._rt;
-        amrex::Real theta = 10._rt;
         int dir = 0;
+        h_mom_temp = std::make_unique<TemperatureProperties>(pp);
+        GetTemperature getTemp(*h_mom_temp.get());
         std::string direction = "x";
         queryWithParser(pp, "beta", beta);
         if(beta < 0){
             amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
         }
-        queryWithParser(pp, "theta", theta);
         pp.query("bulk_vel_dir", direction);
         if(direction[0] == '-'){
             beta = -beta;
@@ -614,7 +615,7 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
             amrex::Abort(direction.c_str());
         }
         // Construct InjectorMomentum with InjectorMomentumJuttner.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, theta, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, beta, dir));
     } else if (mom_dist_s == "radial_expansion") {
         amrex::Real u_over_r = 0._rt;
         queryWithParser(pp, "u_over_r", u_over_r);
