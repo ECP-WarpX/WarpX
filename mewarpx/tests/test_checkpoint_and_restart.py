@@ -12,6 +12,9 @@ def test_create_checkpoints():
     from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
     from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
+    from mewarpx.utils_store import testing_util
+
+    testing_util.initialize_testingdir("test_create_checkpoints")
 
     DIAG_STEPS = 2
     CHECKPOINT_PERIOD = 5
@@ -51,17 +54,22 @@ def test_create_checkpoints():
         init_warpx=False
     )
 
-    checkpoint = CheckPointDiagnostic(CHECKPOINT_PERIOD, CHECKPOINT_NAME)
+    checkpoint = CheckPointDiagnostic(
+        CHECKPOINT_PERIOD, CHECKPOINT_NAME, write_dir='diags'
+    )
 
     mwxrun.init_run(restart=False)
 
     # Run the main WARP loop
     mwxrun.simulation.step(MAX_STEPS)
 
-    checkpoint_names = [f"{CHECKPOINT_NAME}{i:05}" for i in range(0, MAX_STEPS + 1, CHECKPOINT_PERIOD)]
+    checkpoint_names = [
+        f"{CHECKPOINT_NAME}{i:05}"
+        for i in range(0, MAX_STEPS + 1, CHECKPOINT_PERIOD)
+    ]
 
     for name in checkpoint_names:
-        print(f"Looking for checkpoint file {name}...")
+        print(f"Looking for checkpoint file 'diags/{name}'...")
         assert os.path.isdir(os.path.join("diags", name))
 
 
@@ -77,6 +85,11 @@ def test_restart_from_checkpoint(caplog, force, files_exist):
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.utils_store import testing_util
+
+    testing_util.initialize_testingdir(
+        f"test_restart_from_checkpoint_{force}_{files_exist}"
+    )
 
     DIAG_STEPS = 2
     D_CA = 0.067  # m
@@ -126,7 +139,7 @@ def test_restart_from_checkpoint(caplog, force, files_exist):
     try:
         mwxrun.init_run(
             restart=restart,
-            checkpoint_dir="tests/test_files/checkpoint",
+            checkpoint_dir="../../test_files/checkpoint",
             checkpoint_prefix=prefix
         )
     except RuntimeError as e:
@@ -155,6 +168,9 @@ def test_extra_steps_after_restart():
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.utils_store import testing_util
+
+    testing_util.initialize_testingdir("test_extra_steps_after_restart")
 
     DIAG_STEPS = 2
     D_CA = 0.067  # m
@@ -196,7 +212,7 @@ def test_extra_steps_after_restart():
 
     mwxrun.init_run(
         restart=True,
-        checkpoint_dir="tests/test_files/checkpoint",
+        checkpoint_dir="../../test_files/checkpoint",
         additional_steps=additional_steps
     )
 
