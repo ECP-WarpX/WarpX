@@ -31,7 +31,7 @@ public:
      */
     FieldProbe(std::string rd_name);
 
-    /** 
+    /**
      * This function assins test/data particles to constructed environemnt
      */
     void InitData() override final;

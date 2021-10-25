@@ -183,7 +183,7 @@ void FieldProbe::ComputeDiags (int step)
 
         // loop over each particle
         using MyParIter = FieldProbeParticleContainer::iterator;
-        for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti) 
+        for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
 
@@ -192,7 +192,7 @@ void FieldProbe::ComputeDiags (int step)
              * y values will be set to 0 making it unnecessary to check. Generally, the second
              * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
              * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
-             */ 
+             */
 
 #if (AMREX_SPACEDIM == 2)
             m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
@@ -205,7 +205,7 @@ void FieldProbe::ComputeDiags (int step)
 
             if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
 
-            if( m_probe_in_domain ) 
+            if( m_probe_in_domain )
             {
                 /*
                  * Make the box cell centered in preparation for the interpolation (and to avoid
@@ -310,7 +310,7 @@ void FieldProbe::ComputeDiags (int step)
                     /* m_data now contains up-to-date values for:
                      *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
 
-                });// ParallelFor Close  
+                });// ParallelFor Close
 
                 probe_proc = amrex::ParallelDescriptor::MyProc();
 
@@ -325,16 +325,16 @@ void FieldProbe::ComputeDiags (int step)
          */
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
-        if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) 
+        if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1)
         {
-            if (amrex::ParallelDescriptor::MyProc() == probe_proc) 
+            if (amrex::ParallelDescriptor::MyProc() == probe_proc)
             {
-                amrex::ParallelDescriptor::Send(fp_values.dataPtr(), noutputs, 
+                amrex::ParallelDescriptor::Send(fp_values.dataPtr(), noutputs,
                                 amrex::ParallelDescriptor::IOProcessorNumber(),
                                 0);
             }
             if (amrex::ParallelDescriptor::MyProc()
-            == amrex::ParallelDescriptor::IOProcessorNumber()) 
+            == amrex::ParallelDescriptor::IOProcessorNumber())
             {
                 amrex::ParallelDescriptor::Recv(fp_values.dataPtr(), noutputs, probe_proc, 0);
             }
