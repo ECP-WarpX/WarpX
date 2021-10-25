@@ -246,7 +246,7 @@ void FieldProbe::ComputeDiags (int step)
                 int temp_modes = WarpX::n_rz_azimuthal_modes;
                 int temp_interp_order = interp_order;
 
-                amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+                amrex::ParallelFor( np, [=, this] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
