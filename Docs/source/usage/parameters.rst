@@ -51,6 +51,11 @@ Overall simulation parameters
 * ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
     Controls how much information is printed to the terminal, when running WarpX.
 
+* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
+    If set to ``1``, WarpX immediately prints every warning message as soon as
+    it is generated. It is mainly intended for debug purposes, in case a simulation
+    crashes before a global warning report can be printed.
+
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
@@ -191,6 +196,10 @@ Setting up the field mesh
     explicitly set in the input script, ``n_field_gather_buffer`` is
     automatically set so that it is one cell larger than
     ``n_current_deposition_buffer``, on the fine grid.
+
+* ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
+    Perform MPI communications for field guard regions in single precision.
+    Only meaningful for ``WarpX_PRECISION=DOUBLE``.
 
 * ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
@@ -635,23 +644,27 @@ Particle initialization
 * ``<species_name>.momentum_distribution_type`` (`string`)
     Distribution of the normalized momentum (`u=p/mc`) for this species. The options are:
 
-    * ``constant``: constant momentum profile. This requires additional parameters
-      ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
-      momenta in the x, y and z direction respectively.
+    * ``at_rest``: Particles are initialized with zero momentum.
 
-    * ``gaussian``: gaussian momentum distribution in all 3 directions. This requires
+    * ``constant``: constant momentum profile. This can be controlled with the additional parameters
+      ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
+      momenta in the x, y and z direction respectively, which are all ``0.`` by default.
+
+    * ``gaussian``: gaussian momentum distribution in all 3 directions. This can be controlled with the
       additional arguments for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m`` as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
+      These 6 parameters are all ``0.`` by default.
 
     * ``gaussianflux``: Gaussian momentum flux distribution, which is Gaussian in the plane and v*Gaussian normal to the plane.
       It can only be used when ``injection_style = NFluxPerCell``.
-      This requires additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
+      This can be controlled with the additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
       ``<species_name>.flux_direction``, for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
+      ``ux_m``, ``uy_m``, ``uz_m``, ``ux_th``, ``uy_th`` and ``uz_th`` are all ``0.`` by default.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
       temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
@@ -664,13 +677,14 @@ Particle initialization
       distributions in each dimension using, the Box Mueller method, and then the distribution is
       transformed to the simulation frame using the flipping method. The flipping method can be
       found in Zenitani 2015 section III. B. (Phys. Plasmas 22, 042116).
+      By default, ``theta`` is equal to ``10.``, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Note that though the particles may move at relativistic speeds in the simulation frame,
       they are not relativistic in the drift frame. This is as opposed to the Maxwell Juttner
       setting, which initializes particles with relativistic momentums in their drifting frame.
 
     * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma. This mode
-      requires a dimensionless temperature parameter ``<species_name>.theta``, where theta is equal
+      can be controlled with a dimensionless temperature parameter ``<species_name>.theta``, where theta is equal
       to kb*T/(m*c^2), where kb is the Boltzmann constant, and m is the mass of the species. It also
       includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c. The plasma
       will be initialized to move at velocity beta*c in the
@@ -679,6 +693,7 @@ Particle initialization
       positive. The MJ distribution will be initialized in the moving frame using the Sobol method,
       and then the distribution will be transformed to the simulation frame using the flipping method.
       Both the Sobol and the flipping method can be found in Zenitani 2015 (Phys. Plasmas 22, 042116).
+      By default, ``theta`` is equal to ``10.``, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Please take notice that particles initialized with this setting can be relativistic in two ways.
       In the simulation frame, they can drift with a relativistic speed beta. Then, in the drifting
@@ -687,7 +702,7 @@ Particle initialization
       drifting frame.
 
     * ``radial_expansion``: momentum depends on the radial coordinate linearly. This
-      requires additional parameter ``u_over_r`` which is the slope.
+      can be controlled with additional parameter ``u_over_r`` which is the slope (``0.`` by default).
 
     * ``parse_momentum_function``: the momentum is given by a function in the input
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
@@ -1639,7 +1654,7 @@ Numerics and algorithms
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
-* ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+* ``warpx.do_device_synchronize`` (`int`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
@@ -1781,11 +1796,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
     Only used when ``<diag_name>.plot_raw_fields = 1``.
     Whether to include the guard cells in the output of the raw fields.
-    Only works with ``<diag_name>.format = plotfile``.
-
-    * ``<diag_name>.plot_raw_rho`` (`0` or `1`) optional (default `0`)
-    By default, the charge density written in the plot files is averaged on the cell centers.
-    When ``<diag_name>.plot_raw_rho = 1``, then the raw (i.e. non-averaged) charge density is also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
@@ -2020,6 +2030,33 @@ Reduced Diagnostics
 
         Note that the fields are averaged on the cell centers before their maximum values are
         computed.
+
+    * ``FieldProbe``
+        This type computes the value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors at a point in the domain.
+        The point where the fields are measured is specified through the input parameters
+        ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
+        ``<reduced_diags_name>.z_probe``.
+
+        The output columns are
+        the value of the :math:`E_x` field,
+        the value of the :math:`E_y` field,
+        the value of the :math:`E_z` field,
+        the value of the norm :math:`|E|` of the electric field,
+        the value of the :math:`B_x` field,
+        the value of the :math:`B_y` field,
+        the value of the :math:`B_z` field and
+        the value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
+
+        Note: the norms are always interpolated to the measurement point before they are written
+        to file. The electromagnetic field components are interpolated to the measurement point
+        by default, but can they be saved as non-averaged by setting
+        ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
+        containing the measurement point are saved.
+        The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
+        otherwise it is set to ``1``.
+
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as

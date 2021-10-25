@@ -35,6 +35,7 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarnManager_fwd.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -74,6 +75,27 @@ enum struct PatchType : int
     coarse
 };
 
+/** WarnPriority is recorded together with warning messages. It influences
+ * the display order and the appearance of a warning message.
+ * This enum class mirrors Utils::MsgLogger::Priority.
+*/
+enum class WarnPriority
+{
+    /** Low priority warning:
+     * essentially an informative message
+     */
+    low,
+    /** Medium priority warning:
+     * a bug or a performance issue may affect the simulation
+     */
+    medium,
+    /** High priority warning:
+     * a very serious bug or performance issue
+     * almost certainly affects the simulation
+     */
+    high
+};
+
 class WarpX
     : public amrex::AmrCore
 {
@@ -92,6 +114,34 @@ public:
 
     int Verbose () const { return verbose; }
 
+    /**
+     * \brief This function records a warning message.
+     * RecordWarning is thread safe: it can be used within OpenMP parallel loops.
+     *
+     * @param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
+     * @param[in] text the text of the warning message
+     * @param[in] priority priority of the warning message ("medium" by default)
+     */
+    void RecordWarning(
+        std::string topic,
+        std::string text,
+        WarnPriority priority = WarnPriority::medium);
+
+    /**
+     * \brief This function prints all the warning messages collected on the present MPI rank
+     * (i.e., this is not a collective call). This function is mainly intended for debug purposes.
+     *
+     * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
+     */
+    void PrintLocalWarnings(const std::string& when);
+
+    /**
+     * \brief This function prints all the warning messages collected by all the MPI ranks
+     * (i.e., this is a collective call). Only the I/O rank prints the message.
+     *
+     * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
+     */
+    void PrintGlobalWarnings(const std::string& when);
 
     void InitData ();
 
@@ -163,6 +213,9 @@ public:
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
     bool update_with_rho = false;
 
+    //! perform field communications in single precision
+    static int do_single_precision_comms;
+
     // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
     static amrex::IntVect fill_guards;
 
@@ -223,7 +276,7 @@ public:
     static int do_multi_J_n_depositions;
     static int J_linear_in_time;
 
-    static bool do_device_synchronize_before_profile;
+    static int do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
@@ -276,6 +329,8 @@ public:
     const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
     const amrex::MultiFab& getBfield_cp  (int lev, int direction) {return  *Bfield_cp[lev][direction];}
     const amrex::MultiFab& getrho_cp (int lev) {return  *rho_cp[lev];}
+    const amrex::MultiFab& getF_cp (int lev) {return *F_cp[lev];}
+    const amrex::MultiFab& getG_cp (int lev) {return *G_cp[lev];}
 
     const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
@@ -325,10 +380,10 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
     amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
-    amrex::Array<amrex::Real,3> m_v_comoving = {{0.}};
+    amrex::Vector<amrex::Real> m_v_comoving{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -561,7 +616,7 @@ public:
     /*
       /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
      */
-    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
+    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -783,10 +838,16 @@ private:
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
     /**
-     * \brief Synchronize the nodal points of a given field MultiFab (all mesh refinement levels)
+     * \brief Synchronize the nodal points of a given vector MultiFab (all mesh refinement levels)
      */
     void NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
                     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp);
+
+    /**
+     * \brief Synchronize the nodal points of a given scalar MultiFab (all mesh refinement levels)
+     */
+    void NodalSync (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_fp,
+                    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_cp);
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
@@ -931,6 +992,11 @@ private:
                                    const bool pml_flag=false);
 #   endif
 #endif
+
+    // Warning manager: it allows recording and printing error messages
+    std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
+    // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
+    bool m_always_warn_immediately = false;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

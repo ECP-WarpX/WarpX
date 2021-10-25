@@ -1,5 +1,4 @@
 #include "BTDiagnostics.H"
-
 #include "BTD_Plotfile_Header_Impl.H"
 #include "ComputeDiagFunctors/BackTransformFunctor.H"
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
@@ -7,6 +6,7 @@
 #include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/CoarsenIO.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -131,7 +131,7 @@ BTDiagnostics::ReadParameters ()
     pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
 
-    pp_diag_name.get("num_snapshots_lab", m_num_snapshots_lab);
+    getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
     m_num_buffers = m_num_snapshots_lab;
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
@@ -144,7 +144,7 @@ BTDiagnostics::ReadParameters ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (pp_diag_name.query("buffer_size", m_buffer_size)) {
+    if (queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
@@ -403,7 +403,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         AMREX_ALWAYS_ASSERT( icomp_dst == m_cellcenter_varnames.size() );
         // fill boundary call is required to average_down (flatten) data to
         // the coarsest level.
-        m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodicity() );
+        WarpXCommUtil::FillBoundary(*m_cell_centered_data[lev], warpx.Geom(lev).periodicity());
     }
     // Flattening out MF over levels
 
@@ -617,7 +617,7 @@ BTDiagnostics::Flush (int i_buffer)
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species, nlev_output, file_name, m_file_min_digits,
-        m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F,
+        m_plot_raw_fields, m_plot_raw_fields_guards,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 
     if (m_format == "plotfile") {

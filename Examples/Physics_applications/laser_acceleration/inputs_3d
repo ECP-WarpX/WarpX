@@ -48,7 +48,7 @@ electrons.ymax =  20.e-6
 electrons.zmin =  10.e-6
 electrons.profile = constant
 electrons.density = 2.e23  # number of electrons per m^3
-electrons.momentum_distribution_type = "constant"
+electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
 
 #################################

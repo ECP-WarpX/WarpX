@@ -338,6 +338,8 @@ extern "C"
     int* warpx_getJz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,2) );}
     int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getrho_fp(0) );}
     int* warpx_getPhi_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getphi_fp(0) );}
+    int* warpx_getF_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getF_fp(0) );}
+    int* warpx_getG_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getG_fp(0) );}
 
 #define WARPX_GET_SCALAR(SCALAR, GETTER) \
     amrex::Real** SCALAR(int lev, \
@@ -362,6 +364,16 @@ extern "C"
     WARPX_GET_SCALAR(warpx_getPhiFP, WarpX::GetInstance().getphi_fp)
 
     WARPX_GET_LOVECTS_SCALAR(warpx_getPhiFPLoVects, WarpX::GetInstance().getphi_fp)
+
+    // F and G
+    WARPX_GET_SCALAR(warpx_getFfieldCP, WarpX::GetInstance().getF_cp)
+    WARPX_GET_SCALAR(warpx_getFfieldFP, WarpX::GetInstance().getF_fp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getFfieldCPLoVects, WarpX::GetInstance().getF_cp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getFfieldFPLoVects, WarpX::GetInstance().getF_fp)
+    WARPX_GET_SCALAR(warpx_getGfieldCP, WarpX::GetInstance().getG_cp)
+    WARPX_GET_SCALAR(warpx_getGfieldFP, WarpX::GetInstance().getG_fp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getGfieldCPLoVects, WarpX::GetInstance().getG_cp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getGfieldFPLoVects, WarpX::GetInstance().getG_fp)
 
     void warpx_depositRhoSpecies ( const char* char_species_name ) {
         // Call the same function used in ElectrostaticSolver.cpp to

@@ -49,14 +49,14 @@ ele_schwinger.species_type = "electron"
 pos_schwinger.species_type = "positron"
 ele_schwinger.injection_style = "NUniformPerCell"
 pos_schwinger.injection_style = "NUniformPerCell"
-ele_schwinger.num_particles_per_cell_each_dim = 0 0
-pos_schwinger.num_particles_per_cell_each_dim = 0 0
+ele_schwinger.num_particles_per_cell_each_dim = 0 0 0
+pos_schwinger.num_particles_per_cell_each_dim = 0 0 0
 ele_schwinger.profile = "constant"
 pos_schwinger.profile = "constant"
 ele_schwinger.density = 0
 pos_schwinger.density = 0
-ele_schwinger.momentum_distribution_type = "gaussian"
-pos_schwinger.momentum_distribution_type = "gaussian"
+ele_schwinger.momentum_distribution_type = "at_rest"
+pos_schwinger.momentum_distribution_type = "at_rest"
 
 #################################
 ############## QED ##############

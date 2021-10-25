@@ -116,7 +116,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     pp_laser_name.query("min_particles_per_mode", m_min_particles_per_mode);
 
     if (m_e_max == amrex::Real(0.)){
-        amrex::Print() << m_laser_name << " with zero amplitude disabled.\n";
+        WarpX::GetInstance().RecordWarning("Laser",
+            m_laser_name + " with zero amplitude disabled.",
+            WarnPriority::low);
         m_enabled = false;
         return; // Disable laser if amplitude is 0
     }
@@ -290,7 +292,9 @@ LaserParticleContainer::InitData ()
     InitData(maxLevel());
 
     if(!do_continuous_injection && (TotalNumberOfParticles() == 0)){
-        amrex::Print() << "WARNING: laser antenna is completely out of the simulation box !!!\n";
+        WarpX::GetInstance().RecordWarning("Laser",
+            "The antenna is completely out of the simulation box for laser " + m_laser_name,
+            WarnPriority::high);
         m_enabled = false; // Disable laser if antenna is completely out of the simulation box
     }
 }
@@ -662,8 +666,10 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     // calculated antenna particle velocities may exceed c, which can cause a segfault.
     constexpr Real warning_tol = 0.1_rt;
     if (m_wavelength < std::min(Sx,Sy)*warning_tol){
-        amrex::Warning("WARNING: laser wavelength seems to be much smaller than the grid size."
-                       " This may cause a segmentation fault");
+        WarpX::GetInstance().RecordWarning("Laser",
+            "Laser wavelength seems to be much smaller than the grid size."
+            " This may cause a segmentation fault",
+            WarnPriority::high);
     }
 }
 

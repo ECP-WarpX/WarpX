@@ -56,13 +56,13 @@ FlushFormatSensei::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags,
     int nlev, const std::string prefix, int file_min_digits,
     bool plot_raw_fields, bool plot_raw_fields_guards,
-    bool plot_raw_rho, bool plot_raw_F, bool isBTD, int snapshotID,
+    bool isBTD, int snapshotID,
     const amrex::Geometry& full_BTD_snapshot, bool isLastBTDFlush) const
 {
     amrex::ignore_unused(
         geom, particle_diags, nlev, prefix, file_min_digits,
-        plot_raw_fields, plot_raw_fields_guards, plot_raw_rho,
-        plot_raw_F, isBTD, snapshotID, full_BTD_snapshot,
+        plot_raw_fields, plot_raw_fields_guards,
+        isBTD, snapshotID, full_BTD_snapshot,
         isLastBTDFlush);
 
 #ifndef AMREX_USE_SENSEI_INSITU

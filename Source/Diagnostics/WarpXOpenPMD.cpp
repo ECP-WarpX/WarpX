@@ -47,6 +47,42 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
+#   ifdef _WIN32
+    /** Replace all occurrences of a string
+     *
+     * Same as openPMD::auxiliary::replace_all (not public in <=0.14.2)
+     *
+     * @param[in] s input string
+     * @param[in] target string to be replaced
+     * @param[in] replacement string to be replaced with
+     * @return modified value of s
+     */
+    inline std::string
+    replace_all(std::string s,
+                std::string const& target,
+                std::string const& replacement)
+    {
+        std::string::size_type pos = 0;
+        auto tsize = target.size();
+        assert(tsize > 0);
+        auto rsize = replacement.size();
+        while (true)
+        {
+            pos = s.find(target, pos);
+            if (pos == std::string::npos)
+                break;
+            s.replace(pos, tsize, replacement);
+            // Allow replacing recursively, but only if
+            // the next replaced substring overlaps with
+            // some parts of the original word.
+            // This avoids loops.
+            pos += rsize - std::min(tsize - 1, rsize);
+        }
+        s.shrink_to_fit();
+        return s;
+    }
+#   endif
+
     /** \brief Convert a snake_case string to a camelCase one.
      *
      *  WarpX uses snake_case internally for some component
@@ -289,7 +325,7 @@ namespace detail
         }
     }
 #endif // WARPX_USE_OPENPMD
-}
+} // namespace detail
 
 #ifdef WARPX_USE_OPENPMD
 WarpXOpenPMDPlot::WarpXOpenPMDPlot (
@@ -331,6 +367,11 @@ std::string
 WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 {
   filepath.append("/");
+  // transform paths for Windows
+#ifdef _WIN32
+  filepath = detail::replace_all(filepath, "/", "\\");
+#endif
+
   std::string filename = "openpmd";
   //
   // OpenPMD supports timestepped names
@@ -356,10 +397,10 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_m
         if (m_CurrentStep >= ts) {
             // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
             // last written step in m_Series's life time, but not other earlier written steps by other m_Series
-            std::string warnMsg =
-                    " Warning from openPMD writer: Already written iteration:" + std::to_string(ts);
-            std::cout << warnMsg << std::endl;
-            amrex::Warning(warnMsg);
+            WarpX::GetInstance().RecordWarning("Diagnostics",
+                    " Warning from openPMD writer: Already written iteration:"
+                    + std::to_string(ts)
+                );
         }
     }
 

@@ -8,6 +8,7 @@
 
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -45,8 +46,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 {
     if (!std::numeric_limits< double >::is_iec559)
     {
-        Print() << R"(Warning: double does not comply with IEEE 754: bad
-            things will happen parsing the X, Y and T profiles for the laser!)";
+        WarpX::GetInstance().RecordWarning("Laser",
+            "(Double does not comply with IEEE 754: bad"
+            "things will happen parsing the X, Y and T profiles for the laser!)",
+            WarnPriority::high);
     }
 
     // Parse the TXYE file
@@ -60,7 +63,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     //Set time_chunk_size
     m_params.time_chunk_size = m_params.nt;
     int temp = 1;
-    if(ppl.query("time_chunk_size", temp)){
+    if(queryWithParser(ppl ,"time_chunk_size", temp)){
         m_params.time_chunk_size = min(
             temp, m_params.time_chunk_size);
     }
@@ -69,7 +72,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     }
 
     //Reads the (optional) delay
-    ppl.query("delay", m_params.t_delay);
+    queryWithParser(ppl, "delay", m_params.t_delay);
 
     //Allocate memory for E_data Vector
     const int data_size = m_params.time_chunk_size*

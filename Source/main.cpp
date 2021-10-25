@@ -66,6 +66,8 @@ int main(int argc, char* argv[])
 
         warpx.Evolve();
 
+        warpx.PrintGlobalWarnings("THE END"); //Print warning messages at the end of the simulation
+
         if (warpx.Verbose()) {
             auto end_total = static_cast<Real>(amrex::second()) - strt_total;
             ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());

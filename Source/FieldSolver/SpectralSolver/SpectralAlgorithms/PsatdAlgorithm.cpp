@@ -35,7 +35,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     const int norder_z,
     const bool nodal,
     const amrex::IntVect& fill_guards,
-    const amrex::Array<amrex::Real,3>& v_galilean,
+    const amrex::Vector<amrex::Real>& v_galilean,
     const amrex::Real dt,
     const bool update_with_rho,
     const bool time_averaging,
@@ -324,11 +324,11 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 {
                     const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
 
-                    fields(i,j,k,Idx.Bx) += I * c2 * S_ck * G_old * kx;
-                    fields(i,j,k,Idx.By) += I * c2 * S_ck * G_old * ky;
-                    fields(i,j,k,Idx.Bz) += I * c2 * S_ck * G_old * kz;
+                    fields(i,j,k,Idx.Bx) += I * S_ck * G_old * kx;
+                    fields(i,j,k,Idx.By) += I * S_ck * G_old * ky;
+                    fields(i,j,k,Idx.Bz) += I * S_ck * G_old * kz;
 
-                    fields(i,j,k,Idx.G) = C * G_old + I * S_ck * k_dot_B;
+                    fields(i,j,k,Idx.G) = C * G_old + I * c2 * S_ck * k_dot_B;
                 }
 
                 if (time_averaging)
@@ -373,9 +373,9 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
                     if (divb_cleaning)
                     {
-                        fields(i,j,k,Idx.Bx_avg) += I * c2 * ep0 * X1 * G_old * kx;
-                        fields(i,j,k,Idx.By_avg) += I * c2 * ep0 * X1 * G_old * ky;
-                        fields(i,j,k,Idx.Bz_avg) += I * c2 * ep0 * X1 * G_old * kz;
+                        fields(i,j,k,Idx.Bx_avg) += I * ep0 * X1 * G_old * kx;
+                        fields(i,j,k,Idx.By_avg) += I * ep0 * X1 * G_old * ky;
+                        fields(i,j,k,Idx.Bz_avg) += I * ep0 * X1 * G_old * kz;
                     }
                 }
             }

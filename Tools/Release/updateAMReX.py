@@ -109,7 +109,7 @@ with open(run_test_path, encoding='utf-8') as f:
     #   branch/commit/tag (git fetcher) version
     #     cd amrex && git checkout COMMIT_TAG_OR_BRANCH && cd -
     run_test_content = re.sub(
-        r'(.*cd\s+amrex.+git checkout\s+)(.+)(\s+&&\s.*)',
+        r'(.*cd\s+amrex.+git checkout\s+--detach\s+)(.+)(\s+&&\s.*)',
         r'\g<1>{}\g<3>'.format(amrex_new_branch),
         run_test_content, flags = re.MULTILINE)
 
