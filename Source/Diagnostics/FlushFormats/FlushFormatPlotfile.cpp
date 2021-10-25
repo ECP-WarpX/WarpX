@@ -342,8 +342,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         // plot by default
         int_flags.resize(pc->NumIntComps(), 1);
 
-        // temporarily disable unit conversion for BTD
-        if(!isBTD) pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+        pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
@@ -377,8 +376,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             real_flags, int_flags,
             real_names, int_names);
 
-        // temporarily disable unit conversion for BTD
-        if (!isBTD) pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
+        pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
 
