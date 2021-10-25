@@ -424,6 +424,36 @@ extern "C"
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityCPLoVects_PML, Getj_cp)
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityFPLoVects_PML, Getj_fp)
 
+#define WARPX_GET_SCALAR_PML(SCALAR, GETTER) \
+    amrex::Real** SCALAR(int lev, \
+                        int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
+        auto * pml = WarpX::GetInstance().GetPML(lev); \
+        if (!pml) return nullptr; \
+        auto * mf = pml->GETTER(); \
+        if (!mf) return nullptr; \
+        return getMultiFabPointers(*mf, return_size, ncomps, ngrowvect, shapes); \
+    }
+
+#define WARPX_GET_LOVECTS_PML_SCALAR(SCALAR, GETTER) \
+    int* SCALAR(int lev, \
+               int *return_size, int **ngrowvect) { \
+        auto * pml = WarpX::GetInstance().GetPML(lev); \
+        if (!pml) return nullptr; \
+        auto * mf = pml->GETTER(); \
+        if (!mf) return nullptr; \
+        return getMultiFabLoVects(*mf, return_size, ngrowvect); \
+    }
+
+    // F and G
+    WARPX_GET_SCALAR_PML(warpx_getFfieldCP_PML, GetF_cp)
+    WARPX_GET_SCALAR_PML(warpx_getFfieldFP_PML, GetF_fp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getFfieldCPLoVects_PML, GetF_cp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getFfieldFPLoVects_PML, GetF_fp)
+    WARPX_GET_SCALAR_PML(warpx_getGfieldCP_PML, GetG_cp)
+    WARPX_GET_SCALAR_PML(warpx_getGfieldFP_PML, GetG_fp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldCPLoVects_PML, GetG_cp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldFPLoVects_PML, GetG_fp)
+
     amrex::ParticleReal** warpx_getParticleStructs(
             const char* char_species_name, int lev,
             int* num_tiles, int** particles_per_tile) {
