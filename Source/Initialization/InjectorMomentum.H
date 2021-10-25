@@ -249,7 +249,11 @@ struct InjectorMomentumJuttner
         if (theta < 0.1) {
             amrex::Abort("Temeprature parameter theta is less than minimum 0.1 allowed for Maxwell-Juttner");
         }
+        // Calculate local velocity and abort if |beta|>=1
         amrex::Real const beta = velocity(x,y,z);
+        if (beta <= -1 || beta >= 1) {
+            amrex::Abort("beta = v/c magnitude greater than or equal to 1");
+        }
         int const dir = velocity.direction();
         x1 = static_cast<amrex::Real>(0.);
         gamma = static_cast<amrex::Real>(0.);
