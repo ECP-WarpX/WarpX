@@ -30,6 +30,7 @@ jobs:
     - name: Build
       run: |
         cmake --build build -j 2
+
   ascent:
     name: Ascent
     runs-on: ubuntu-20.04
