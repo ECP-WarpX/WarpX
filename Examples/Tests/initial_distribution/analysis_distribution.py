@@ -12,6 +12,8 @@
 # 3 denotes maxwell-juttner distribution.
 # 4 denotes gaussian position distribution.
 # 5 denotes maxwell-juttner distribution w/ spatially varying temperature
+# 6 denotes maxwell-boltzmann distribution w/ constant velocity
+# 7 denotes maxwell-boltzmann distribution w/ spatially-varying velocity
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
 import numpy as np
