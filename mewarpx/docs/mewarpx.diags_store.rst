@@ -4,6 +4,14 @@ mewarpx.diags\_store package
 Submodules
 ----------
 
+mewarpx.diags\_store.checkpoint\_diagnostic module
+--------------------------------------------------
+
+.. automodule:: mewarpx.diags_store.checkpoint_diagnostic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 mewarpx.diags\_store.diag\_base module
 --------------------------------------
 

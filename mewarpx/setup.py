@@ -15,7 +15,8 @@ requires = [
     "dill",
     # added on 10/25/21 due to an issue with rendering LaTex in pulse waveform
     # plot, this can be reverted once that issue is fixed
-    "pyparsing<3.0.0"
+    "pyparsing<3.0.0",
+    "sphinx-rtd-theme<1.0.0"
 ]
 
 extras = {
