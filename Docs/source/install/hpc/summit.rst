@@ -238,10 +238,9 @@ parameters provided good performance:
 .. _building-summit-romio-hints:
 
 ROMIO MPI-IO Hints
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
-You might notice some performance improvements on Summit by setting the appropriate
-ROMIO hints for MPI-IO operations. 
+You might notice some parallel HDF5 performance improvements on Summit by setting the appropriate ROMIO hints for MPI-IO operations. 
 
 .. code-block:: bash
    
@@ -249,10 +248,10 @@ ROMIO hints for MPI-IO operations.
    export ROMIO_HINTS=./romio-hints
 
 
-The `romio-hints` file contains pairs of key-value hints to enable and tune collective
+The ``romio-hints`` file contains pairs of key-value hints to enable and tune collective
 buffering of MPI-IO operations. As Summit's Alpine file system uses a 16MB block size,
 you should set the collective buffer size to 16GB and tune the number of aggregators
-(`cb_nodes`) to the number of compute nodes you are using, i.e., one aggregator per node.
+(``cb_nodes``) to the number of compute nodes you are using, i.e., one aggregator per node.
 
 .. code-block:: bash
 
