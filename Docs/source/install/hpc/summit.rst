@@ -240,10 +240,10 @@ parameters provided good performance:
 ROMIO MPI-IO Hints
 ^^^^^^^^^^^^^^^^^^
 
-You might notice some parallel HDF5 performance improvements on Summit by setting the appropriate ROMIO hints for MPI-IO operations. 
+You might notice some parallel HDF5 performance improvements on Summit by setting the appropriate ROMIO hints for MPI-IO operations.
 
 .. code-block:: bash
-   
+
    export OMPI_MCA_io=romio321
    export ROMIO_HINTS=./romio-hints
 
