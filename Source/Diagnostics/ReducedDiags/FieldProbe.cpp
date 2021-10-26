@@ -270,7 +270,7 @@ void FieldProbe::ComputeDiags (int step)
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 int temp_modes = WarpX::n_rz_azimuthal_modes;
                 int temp_interp_order = interp_order;
-                int m_field_probe_integrate = field_probe_integrate;
+                int temp_field_probe_integrate = field_probe_integrate;
 
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
@@ -288,8 +288,8 @@ void FieldProbe::ComputeDiags (int step)
                                    dx_arr, xyzmin_arr, amrex::lbound(box), temp_modes,
                                    temp_interp_order, false);
 
-                    //Calculate S
-                    amrex::Real sraw[3]{
+                    //Calculate the Poynting Vector S
+                    amrex::Real const sraw[3]{
                     Exp * Bzp - Ezp * Byp,
                     Ezp * Bxp - Exp * Bzp,
                     Exp * Byp - Eyp * Bxp};
@@ -300,7 +300,7 @@ void FieldProbe::ComputeDiags (int step)
                      * If not integrating, store instantaneous values.
                      */
 
-                    if (m_field_probe_integrate != 1)
+                    if (temp_field_probe_integrate != 1)
                     {
 
                         //Store Values on Particles
