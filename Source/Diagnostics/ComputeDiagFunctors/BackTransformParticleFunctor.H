@@ -26,10 +26,10 @@ struct SelectParticles
     /**
      * \brief Constructor of SelectParticles functor.
      *
-     * @param[in] a_pti, WarpX particle iterator
-     * @param[in] tmp_particle_data, temporary particle data
-     * @param[in] current_z_boost, current z-position of the slice in boosted frame
-     * @param[in] old_z_boost, previous z-position of the slice in boosted frame
+     * @param[in] a_pti              WarpX particle iterator
+     * @param[in] tmp_particle_data  temporary particle data
+     * @param[in] current_z_boost    current z-position of the slice in boosted frame
+     * @param[in] old_z_boost        previous z-position of the slice in boosted frame
      */
     SelectParticles( const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
                      amrex::Real current_z_boost, amrex::Real old_z_boost,
@@ -41,7 +41,7 @@ struct SelectParticles
      * with positions that correspond to the specific z-slice in boosted frame are selected.
      *
      * @param[in] SrcData particle tile data
-     * @param[in] i particle index
+     * @param[in] i       particle index
      * @return 1 if particles is selected for transformation, else 0
      */
     template <typename SrcData>
@@ -80,11 +80,11 @@ struct LorentzTransformParticles
     /**
      * \brief Constructor of the LorentzTransformParticles functor.
      *
-     * @param[in] a_pti, WarpX particle iterator
-     * @param[in] tmp_particle_data, temporary particle data
-     * @param[in] t_boost, time in boosted frame
-     * @param[in] dt, timestep in boosted-frame.
-     * @param[in] t_lab, time in lab-fram.
+     * @param[in] a_pti              WarpX particle iterator
+     * @param[in] tmp_particle_data  temporary particle data
+     * @param[in] t_boost            time in boosted frame
+     * @param[in] dt                 timestep in boosted-frame
+     * @param[in] t_lab              time in lab-frame
      */
     LorentzTransformParticles ( const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
                                 amrex::Real t_boost, amrex::Real dt,
@@ -192,12 +192,12 @@ public:
     void InitData() override;
     /** \brief Prepare data required to back-transform particle attribtutes for lab-frame snapshot, i_buffer
      *
-     * \param[in] i_buffer, index of the snapshot
-     * \param[in] ZSliceInDomain, if the z-slice at current_z_boost is within the bounds of
+     * \param[in] i_buffer        index of the snapshot
+     * \param[in] ZSliceInDomain  if the z-slice at current_z_boost is within the bounds of
      *            the boosted-frame and lab-frame domain. The particles are transformed
      *            only if this value is true.
-     * \param[in] current_z_boost, z co-ordinate of the slice selected in boosted-frame.
-     * \param[in] t_lab, current time in lab-frame for snapshot, i_buffer.
+     * \param[in] current_z_boost z co-ordinate of the slice selected in boosted-frame.
+     * \param[in] t_lab           current time in lab-frame for snapshot, i_buffer.
      */
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain, amrex::Real old_z_boost,
                               amrex::Real current_z_boost, amrex::Real t_lab) override;
