@@ -32,6 +32,7 @@
 
 #include <cmath>
 #include <ostream>
+#include <iostream>
 
 using namespace amrex;
 
@@ -165,7 +166,6 @@ void FieldProbe::ComputeDiags (int step)
     {
         if (!m_intervals.contains(step+1)) { return; }
     }
-
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
@@ -324,9 +324,9 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] += S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
-
                 if (field_probe_integrate == 0)
-                {   for (int ip=0; ip < np; ip++)
+                {   
+                    for (int ip=0; ip < np; ip++)
                     {
                         // Fill output array
                         m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip];
@@ -347,13 +347,13 @@ void FieldProbe::ComputeDiags (int step)
                         for (int ip=0; ip < np; ip++)
                         {
                             // Fill output array
-                            m_data[0 * noutputs + ParticleVal::Ex * time_ellapsed] = part_Ex[ip];
-                            m_data[0 * noutputs + ParticleVal::Ey * time_ellapsed] = part_Ey[ip];
-                            m_data[0 * noutputs + ParticleVal::Ez * time_ellapsed] = part_Ez[ip];
-                            m_data[0 * noutputs + ParticleVal::Bx * time_ellapsed] = part_Bx[ip];
-                            m_data[0 * noutputs + ParticleVal::By * time_ellapsed] = part_By[ip];
-                            m_data[0 * noutputs + ParticleVal::Bz * time_ellapsed] = part_Bz[ip];
-                            m_data[0 * noutputs + ParticleVal::S * time_ellapsed] = part_S[ip];
+                            m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Ez] = part_Ez[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Bx] = part_Bx[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::By] = part_By[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::S] = part_S[ip] * time_ellapsed;
                         }
                     }
                 }
