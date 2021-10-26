@@ -48,11 +48,6 @@ public:
      */
 
     /**
-     * np is number of particles to be used
-     */
-    static constexpr int np = 1;
-
-    /**
      *noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
      */
     static constexpr int noutputs = ParticleVal::nattribs;
@@ -70,7 +65,7 @@ public:
 
 private:
     amrex::Real x_probe, y_probe, z_probe;
-    amrex::Real x_probe1, y_probe1, z_probe1;
+    amrex::Real x1_probe, y1_probe, z1_probe;
     int dimension;
     int resolution;
 

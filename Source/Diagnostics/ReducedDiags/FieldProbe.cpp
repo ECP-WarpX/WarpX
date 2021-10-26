@@ -163,15 +163,16 @@ void FieldProbe::InitData()
 {
     if (dimension == 0)
     {
-        np = 1;
+        const int np = 1;
         //create 1D array for X, Y, and Z of particles
         amrex::ParticleReal xpos[1]{x_probe};
         amrex::ParticleReal ypos[1]{y_probe};
         amrex::ParticleReal zpos[1]{z_probe};
+        m_probe.AddNParticles(0, np, xpos, ypos, zpos);
     }
     else
     {
-        np = resolution;
+        const int np = resolution;
         amrex::ParticleReal xpos[np]{};
         amrex::ParticleReal ypos[np]{};
         amrex::ParticleReal zpos[np]{};
@@ -179,15 +180,15 @@ void FieldProbe::InitData()
                 (x1_probe - x_probe) / (np - 1),
                 (y1_probe - y_probe) / (np - 1),
                 (z1_probe - z_probe) / (np - 1)};
-        for ( int step = 0; step < detectRes; step++)
+        for ( int step = 0; step < np; step++)
         {
             xpos[step] = x_probe + (DetLineStepSize[0] * step);
             ypos[step] = y_probe + (DetLineStepSize[1] * step);
             zpos[step] = z_probe + (DetLineStepSize[2] * step);
+            m_probe.AddNParticles(0, np, xpos, ypos, zpos);
         }
     }
     //add np partciles on lev 0 to m_probe
-    m_probe.AddNParticles(0, np, xpos, ypos, zpos);
 }
 // function that computes field values at probe position
 
@@ -264,7 +265,7 @@ void FieldProbe::ComputeDiags (int step)
                                           y1_probe >= prob_lo[1] and y1_probe < prob_hi[1] and
                                           z1_probe >= prob_lo[2] and z1_probe < prob_hi[2];
 #endif
-            m_probe_in_domain = first_probe1_in_domain and second_probe2_in_domain;
+            m_probe_in_domain = first_probe_in_domain and second_probe_in_domain;
 
             if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
 
@@ -309,6 +310,9 @@ void FieldProbe::ComputeDiags (int step)
                 int temp_modes = WarpX::n_rz_azimuthal_modes;
                 int temp_interp_order = interp_order;
                 int temp_field_probe_integrate = field_probe_integrate;
+                static int np;
+                if (dimension == 0){ np = 1; }
+                else { np = resolution; }
 
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
