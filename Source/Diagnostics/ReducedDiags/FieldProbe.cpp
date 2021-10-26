@@ -73,7 +73,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     getWithParser(pp_rd_name, "x_probe", x_probe);
     getWithParser(pp_rd_name, "y_probe", y_probe);
     getWithParser(pp_rd_name, "z_probe", z_probe);
-    pp_rd_name.query("integrate", field_probe_integrate);
+    getWithParser(pp_rd_name, "integrate", field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
 
@@ -97,24 +97,46 @@ FieldProbe::FieldProbe (std::string rd_name)
             ofs << "[" << c++ << "]step()";
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
-            for (int lev = 0; lev < nLevel; ++lev)
+            if (field_probe_integrate == 0)
             {
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + " (V/m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + " (V/m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + " (V/m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + " (T)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + " (T)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + " (T)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + " (W/m^2)"; //update all units if integrating (might be energy / m^2)
-
+                for (int lev = 0; lev < nLevel; ++lev)
+                {
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + " (V/m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + " (V/m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + " (V/m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + " (T)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + " (T)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + " (T)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + " (W/m^2)"; //update all units if integrating (might be energy / m^2)
+                }
             }
+            else
+            {
+                for (int lev = 0; lev < nLevel; ++lev)
+                {
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + " (V*s/m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + " (V*s/m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + " (V*s/m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + " (T*s)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + " (T*s)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + " (T*s)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + " (W*s/m^2)"; //update all units if integrating (might be energy / m^2)
+                }
+            }   
             ofs << std::endl;
 
             // close file
@@ -139,7 +161,10 @@ void FieldProbe::InitData()
 void FieldProbe::ComputeDiags (int step)
 {
     // Judge if the diags should be done
-    if (!m_intervals.contains(step+1)) { return; }
+    if (field_probe_integrate == 0)
+    {
+        if (!m_intervals.contains(step+1)) { return; }
+    }
 
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
@@ -290,27 +315,49 @@ void FieldProbe::ComputeDiags (int step)
                     }
                     else
                     {
-                        part_Ex[ip] += part_Ex[ip]; //remember to add lorentz transform
-                        part_Ey[ip] += part_Ey[ip]; //remember to add lorentz transform
-                        part_Ez[ip] += part_Ez[ip]; //remember to add lorentz transform
-                        part_Bx[ip] += part_Bx[ip]; //remember to add lorentz transform
-                        part_By[ip] += part_By[ip]; //remember to add lorentz transform
-                        part_Bz[ip] += part_Bz[ip]; //remember to add lorentz transform
-                        part_S[ip] += part_S[ip]; //remember to add lorentz transform
+                        part_Ex[ip] += Exp; //remember to add lorentz transform
+                        part_Ey[ip] += Eyp; //remember to add lorentz transform
+                        part_Ez[ip] += Ezp; //remember to add lorentz transform
+                        part_Bx[ip] += Bxp; //remember to add lorentz transform
+                        part_By[ip] += Byp; //remember to add lorentz transform
+                        part_Bz[ip] += Bzp; //remember to add lorentz transform
+                        part_S[ip] += S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
 
-                for (int ip=0; ip < np; ip++)
-                {
-                    // Fill output array
-                    m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip];
-                    m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip];
-                    m_data[0 * noutputs + ParticleVal::Ez] = part_Ez[ip];
-                    m_data[0 * noutputs + ParticleVal::Bx] = part_Bx[ip];
-                    m_data[0 * noutputs + ParticleVal::By] = part_By[ip];
-                    m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip];
-                    m_data[0 * noutputs + ParticleVal::S] = part_S[ip];
+                if (field_probe_integrate == 0)
+                {   for (int ip=0; ip < np; ip++)
+                    {
+                        // Fill output array
+                        m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip];
+                        m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip];
+                        m_data[0 * noutputs + ParticleVal::Ez] = part_Ez[ip];
+                        m_data[0 * noutputs + ParticleVal::Bx] = part_Bx[ip];
+                        m_data[0 * noutputs + ParticleVal::By] = part_By[ip];
+                        m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip];
+                        m_data[0 * noutputs + ParticleVal::S] = part_S[ip];
+                    }
                 }
+                else
+                {
+                    static amrex::Real start_time{WarpX::GetInstance().gett_new(0)};
+                    if (m_intervals.contains(step+1))
+                    {
+                        amrex::Real time_ellapsed{WarpX::GetInstance().gett_new(0) - start_time};
+                        for (int ip=0; ip < np; ip++)
+                        {
+                            // Fill output array
+                            m_data[0 * noutputs + ParticleVal::Ex * time_ellapsed] = part_Ex[ip];
+                            m_data[0 * noutputs + ParticleVal::Ey * time_ellapsed] = part_Ey[ip];
+                            m_data[0 * noutputs + ParticleVal::Ez * time_ellapsed] = part_Ez[ip];
+                            m_data[0 * noutputs + ParticleVal::Bx * time_ellapsed] = part_Bx[ip];
+                            m_data[0 * noutputs + ParticleVal::By * time_ellapsed] = part_By[ip];
+                            m_data[0 * noutputs + ParticleVal::Bz * time_ellapsed] = part_Bz[ip];
+                            m_data[0 * noutputs + ParticleVal::S * time_ellapsed] = part_S[ip];
+                        }
+                    }
+                }
+                    
                 probe_proc = amrex::ParallelDescriptor::MyProc();
 
                 /* m_data now contains up-to-date values for:

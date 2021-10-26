@@ -72,10 +72,9 @@ private:
     amrex::Real x_probe, y_probe, z_probe;
 
     //! for field_probe_integrate = 0, will not integrate values
-    int field_probe_integrate = 0;
+    int field_probe_integrate;
     int interp_order = 1;
     bool raw_fields = false;
-
 
     /**
      * Built-in function in ReducedDiags to write out test data
