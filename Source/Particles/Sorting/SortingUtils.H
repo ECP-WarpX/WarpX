@@ -35,6 +35,7 @@ void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v )
 /** \brief Find the indices that would reorder the elements of `predicate`
  * so that the elements with non-zero value precede the other elements
  *
+ * \tparam ForwardIterator An iterator that supports std::advance
  * \param[in, out] index_begin Point to the beginning of the vector which is
  *            to be filled with these indices
  * \param[in, out] index_end Point to the end of the vector which is
@@ -67,6 +68,7 @@ ForwardIterator stablePartition(ForwardIterator const index_begin,
 
 /** \brief Return the number of elements between `first` and `last`
  *
+ * \tparam ForwardIterator An iterator that supports std::distance
  * \param[in] first Points to a position in a vector
  * \param[in] last Points to another position in a vector
  * \return The number of elements between `first` and `last`
