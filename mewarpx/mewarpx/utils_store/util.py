@@ -11,6 +11,8 @@ import logging
 import numpy as np
 
 from pywarpx import geometry
+
+import mewarpx
 from mewarpx.utils_store import mwxconstants as constants
 
 logger = logging.getLogger(__name__)
@@ -18,6 +20,55 @@ logger = logging.getLogger(__name__)
 # http://stackoverflow.com/questions/50499/in-python-how-do-i-get-the-path-and-name-of-the-file-t
 mewarpx_dir = os.path.join(os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe()))), "..")
+
+
+def check_version(script_version, script_physics_version):
+    """Check that a run script is compatible with this mewarpx.
+
+    If this mewarpx distribution is *lower* than that of the run script, throw
+    an error. If this mewarpx distribution API or physics version is higher
+    than that of the run script, throw a warning. Else do nothing.
+
+    Arguments:
+        script_version (tuple): A tuple of ints representing the mewarpx
+            version of the run script: (API_version, feature_version,
+            patch_version).
+        script_physics_version (int): Integer representing the physics version of the run script.
+    """
+    mewarpx_version = mewarpx.__version_info__
+    mewarpx_physics_version = mewarpx.__physics_version__
+
+    # Tuple comparison works well in Python and does what we want!
+    if mewarpx_version < script_version:
+        raise ValueError(
+            f"This version of mewarpx {mewarpx_version} is older than the "
+            f"version {script_version} this script was designed for."
+        )
+
+    # I'm not sure of any instance where mewarpx physics version would be <
+    # script physics version but software version would not be, but still
+    # safest to do the check.
+    if mewarpx_physics_version < script_physics_version:
+        raise ValueError(
+            f"This physics version of mewarpx {mewarpx_physics_version} is "
+            f"older than the version {script_physics_version} this script was "
+            "written for."
+        )
+
+    # Warnings only printed if API or physics versions are out of date.
+    if mewarpx_version[0] > script_version[0]:
+        logger.warning(
+            f"This version of mewarpx {mewarpx_version} is a newer API "
+            f"version than the version {script_version} this script was "
+            "designed for. Incompatibilities may be present."
+        )
+
+    if mewarpx_physics_version > script_physics_version:
+        logger.warning(
+            f"This physics version of mewarpx {mewarpx_physics_version} is "
+            f"newer than the version {script_physics_version} this script was "
+            "written for. Results may be different now."
+        )
 
 
 def init_libwarpx(ndim, rz):
@@ -40,6 +91,7 @@ def init_libwarpx(ndim, rz):
     # variable
     assert pywarpx._libwarpx
 
+
 def compute_step(simulation, interval=None):
     diag_periods = []
     for diag in simulation.diagnostics:
@@ -59,6 +111,7 @@ def compute_step(simulation, interval=None):
                           f'by the minimun diagnostic period {period}! Extra '
                           f'diagnostic data may be outputted!')
     return step_interval
+
 
 def get_velocities(num_samples, T, m, emission_type='thermionic',
                    transverse_fac=1.0, rseed=None):
@@ -166,7 +219,7 @@ def get_positions(num_samples, xmin, xmax, ymin=0, ymax=0, z=0,
 def return_iterable(x, depth=1):
     """Return x if x is iterable, None if x is None, [x] otherwise.
 
-    Useful for arguments taking either a list of single value. Strings are a
+    Useful for arguments taking either a list or single value. Strings are a
     special case counted as 'not iterable'.
 
     Arguments:
@@ -182,7 +235,8 @@ def return_iterable(x, depth=1):
         # need to nest it in one more list.
         x_flattened = x
         while depth > 1:
-            if all([(isinstance(y, collections.abc.Iterable) and not isinstance(y, str))
+            if all([(isinstance(y, collections.abc.Iterable)
+                     and not isinstance(y, str))
                     for y in x_flattened]):
                 x_flattened = [z for y in x_flattened for z in y]
                 depth -= 1
@@ -196,6 +250,7 @@ def return_iterable(x, depth=1):
         return x
     else:
         return [x]
+
 
 # https://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
 def mkdir_p(path):
@@ -211,6 +266,7 @@ def mkdir_p(path):
         else:
             raise
 
+
 def ideal_gas_density(p, T):
     """Calculate neutral gas density (in 1/m^3) from the ideal gas law using
     pressure in Torr.
@@ -223,6 +279,7 @@ def ideal_gas_density(p, T):
         N (float): Number density of gas atoms/molecules (1/m^3)
     """
     return (p * constants.torr_cgs) / (constants.kb_cgs * T) * 1e6
+
 
 def J_RD(T, WF, A):
     """Returns the Richardson-Dushmann thermionic emission given a temperature
@@ -239,38 +296,6 @@ def J_RD(T, WF, A):
     """
     return A*T**2*np.exp(-1.*WF/(constants.kb_eV*T))
 
-def return_iterable(x, depth=1):
-    """Return x if x is iterable, None if x is None, [x] otherwise.
-    Useful for arguments taking either a list of single value. Strings are a
-    special case counted as 'not iterable'.
-
-    Arguments:
-        depth (int): This many levels must be iterable. So if you need an
-            iterable of an iterable, this is 2.
-    """
-    if x is None:
-        return None
-    elif depth > 1:
-        # First make sure it's iterable to one less than the required depth.
-        x = return_iterable(x, depth=depth-1)
-        # Now check that it's iterable to the required depth. If not, we just
-        # need to nest it in one more list.
-        x_flattened = x
-        while depth > 1:
-            if all([(isinstance(y, collections.abc.Iterable) and not isinstance(y, str))
-                    for y in x_flattened]):
-                x_flattened = [z for y in x_flattened for z in y]
-                depth -= 1
-            else:
-                return [x]
-        return x
-
-    elif isinstance(x, str):
-        return [x]
-    elif isinstance(x, collections.abc.Iterable):
-        return x
-    else:
-        return [x]
 
 def recursive_update(d, u):
     """Recursively update dictionary d with keys from u.
@@ -285,6 +310,7 @@ def recursive_update(d, u):
         else:
             d[k] = v
     return d
+
 
 def plasma_Debye_length(T, n):
     """Returns the thermal Debye length of a plasma.
