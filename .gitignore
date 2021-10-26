@@ -32,6 +32,7 @@ Python/pywarpx.egg-info/
 # Sphinx #
 ##########
 Docs/amrex-doxygen-web.tag.xml
+Docs/warpx-doxygen-web.tag.xml
 Docs/doxyhtml/
 Docs/doxyxml/
 Docs/source/_static/
