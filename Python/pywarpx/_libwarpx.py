@@ -922,6 +922,9 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
         data = warpx_func(level, direction,
                           ctypes.byref(size), ctypes.byref(ncomps),
                           ctypes.byref(ngrowvect), ctypes.byref(shapes))
+    if not data:
+        raise Exception('object was not initialized')
+
     ngvect = [ngrowvect[i] for i in range(dim)]
     grid_data = []
     shapesize = dim
@@ -1561,6 +1564,9 @@ def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfun
     else:
         data = getlovectsfunc(level, direction, ctypes.byref(size), ctypes.byref(ngrowvect))
 
+    if not data:
+        raise Exception('object was not initialized')
+
     lovects_ref = np.ctypeslib.as_array(data, (size.value, dim))
 
     # --- Make a copy of the data to avoid memory problems
@@ -2080,6 +2086,9 @@ def get_mesh_G_fp_lovects(level, include_ghosts=True):
 
 def _get_nodal_flag(getdatafunc):
     data = getdatafunc()
+    if not data:
+        raise Exception('object was not initialized')
+
     nodal_flag_ref = np.ctypeslib.as_array(data, (dim,))
 
     # --- Make a copy of the data to avoid memory problems

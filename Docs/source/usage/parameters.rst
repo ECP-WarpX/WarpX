@@ -667,8 +667,11 @@ Particle initialization
       ``ux_m``, ``uy_m``, ``uz_m``, ``ux_th``, ``uy_th`` and ``uz_th`` are all ``0.`` by default.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
-      temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
-      kb is the Boltzmann constant, c is the speed of light, and m is the mass of the species.
+      temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
+      "math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, :math:`c` is the speed of light, and :math:`m` is the mass of the species.
+      Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
+      For values of :math:`\theta > 0.01`, errors due to ignored relativistic terms exceed 1%.
+      Temperatures less than zero are not allowed.
       It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
       The plasma will be initialized to move at bulk velocity beta*c in the
       ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
@@ -677,23 +680,27 @@ Particle initialization
       distributions in each dimension using, the Box Mueller method, and then the distribution is
       transformed to the simulation frame using the flipping method. The flipping method can be
       found in Zenitani 2015 section III. B. (Phys. Plasmas 22, 042116).
-      By default, ``theta`` is equal to ``10.``, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
+      By default, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Note that though the particles may move at relativistic speeds in the simulation frame,
       they are not relativistic in the drift frame. This is as opposed to the Maxwell Juttner
       setting, which initializes particles with relativistic momentums in their drifting frame.
 
-    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma. This mode
-      can be controlled with a dimensionless temperature parameter ``<species_name>.theta``, where theta is equal
-      to kb*T/(m*c^2), where kb is the Boltzmann constant, and m is the mass of the species. It also
-      includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c. The plasma
-      will be initialized to move at velocity beta*c in the
+    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma that takes a dimensionless temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
+      :math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, and :math:`m` is the mass of the species.
+      Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
+      The Sobol method used to generate the distribution will not terminate for :math:`\theta \lesssim 0.1`, and the code will abort if it encounters a temperature below that threshold.
+      The Maxwell-Boltzmann distribution is recommended for temperatures in the range :math:`0.01 < \theta < 0.1`.
+      Errors due to relativistic effects can be expected to approximately between 1% and 10%.
+      It also
+      includes the optional parameter ``<species_name>.beta`` where beta is equal to :math:`\frac{v}{c}`. The plasma
+      will be initialized to move at velocity :math:`\beta \cdot c` in the
       ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
       between the sign and the character on input. A direction without a sign will be treated as
       positive. The MJ distribution will be initialized in the moving frame using the Sobol method,
       and then the distribution will be transformed to the simulation frame using the flipping method.
       Both the Sobol and the flipping method can be found in Zenitani 2015 (Phys. Plasmas 22, 042116).
-      By default, ``theta`` is equal to ``10.``, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
+      By default, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Please take notice that particles initialized with this setting can be relativistic in two ways.
       In the simulation frame, they can drift with a relativistic speed beta. Then, in the drifting
@@ -708,6 +715,14 @@ Particle initialization
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
+
+* ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
+    Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
+    See documentation for these distributions (above) for constraints on values of theta. Temperatures less than zero are not allowed.
+
+    * If ``constant``, use a constant temperature, given by the required float parameter ``<species_name>.theta``.
+
+    * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.theta_function(x,y,z)``.
 
 * ``<species_name>.zinject_plane`` (`float`)
     Only read if  ``<species_name>`` is in ``particles.rigid_injected_species``.
