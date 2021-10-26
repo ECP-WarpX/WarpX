@@ -110,7 +110,7 @@ Overall simulation parameters
     residual with which the solution can be considered converged. In general
     this should be left as the default, but in cases where the simulation state
     changes very little between steps it can occur that the initial guess for
-    the MLMG solver is so close to the converged value that is fails to improve
+    the MLMG solver is so close to the converged value that it fails to improve
     that solution sufficiently to reach the ``self_fields_required_precision``
     value.
 
@@ -632,7 +632,7 @@ Particle initialization
     residual with which the solution can be considered converged. In general
     this should be left as the default, but in cases where the simulation state
     changes very little between steps it can occur that the initial guess for
-    the MLMG solver is so close to the converged value that is fails to improve
+    the MLMG solver is so close to the converged value that it fails to improve
     that solution sufficiently to reach the ``self_fields_required_precision``
     value.
 
