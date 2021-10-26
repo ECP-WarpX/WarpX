@@ -43,7 +43,7 @@ private:
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
      * \param[in] step current time step
-     * \param[in] i_buffer ...?
+     * \param[in] i_buffer snapshot index
      * \param[in] force_flush if true, return true for any step
      *  The return bool is used to determine when to write buffer data out
      */
@@ -205,7 +205,7 @@ private:
      *  snapshot, i_buffer, at level, lev
      *
      * \param[in] i_buffer buffer-id of the back-transformed snapshot
-     * \param[in] lev      level at which the output buffer MultiFab is defined
+     * \param[in] lev      mesh-refinement level at which the output buffer MultiFab is defined
      */
     void DefineFieldBufferMultiFab (const int i_buffer, const int lev);
 
@@ -243,8 +243,8 @@ private:
     amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
     /** Compute k-index corresponding to current lab-frame z co-ordinate (m_current_z_lab)
      *  for the ith buffer i_buffer, and at level, lev.
-     * \param[in] i_buffer ith buffer
-     * \param[in] lev      level at which the lab-frame z-index is computed
+     * \param[in] i_buffer snapshot index
+     * \param[in] lev      mesh-refinement level at which the lab-frame z-index is computed
      */
     int k_index_zlab (int i_buffer, int lev);
     /** whether field buffer is full
@@ -265,13 +265,13 @@ private:
     }
 
     /** Reset buffer counter to zero.
-     * \param[in] i_buffer ith buffer for which the counter is set to zero.
+     * \param[in] i_buffer snapshot index for which the counter is set to zero.
      */
     void ResetBufferCounter(int i_buffer) {
         m_buffer_counter[i_buffer] = 0;
     }
     /** Increment buffer counter by one when the buffer of a snapshot has been flushed.
-     * \param[in] i_buffer ith buffer for which the counter is incremented.
+     * \param[in] i_buffer snapshot index for which the counter is incremented.
      */
     void IncrementBufferFlushCounter(int i_buffer) {
         m_buffer_flush_counter[i_buffer]++;

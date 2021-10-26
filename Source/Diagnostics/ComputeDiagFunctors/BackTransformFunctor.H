@@ -31,7 +31,7 @@ public:
      *
      * \param[in] mf_src cell-centered multifab containing all user-requested
                          fields in boosted-frame
-     * \param[in] lev level of multifab.
+     * \param[in] lev mesh-refinement level of multifab.
      * \param[in] ncomp number of components of mf_src to Lorentz-Transform
                         and store in destination multifab.
      * \param[in] num_buffers number of user-defined snapshots in the back-transformed lab-frame
