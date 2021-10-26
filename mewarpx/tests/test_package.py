@@ -17,3 +17,4 @@ def test_version():
         next(reader)
         row = next(reader)
         assert row[0] == mewarpx.__version__
+        assert row[1].strip() == str(mewarpx.__physics_version__)

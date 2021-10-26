@@ -1,5 +1,5 @@
-Version, Date,        List of changes
-0.1.0,   In progress, "
+Version, Physics version, Date,        List of changes
+0.1.0, 0,  In progress, "
 
 **Physics changes**:
 
@@ -21,3 +21,4 @@ Version, Date,        List of changes
 
 - Initial release
 "
+0.1.0, 0,  10/25/2021, "Initial release"

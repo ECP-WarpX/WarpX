@@ -326,8 +326,7 @@ class RunInfo(SimInfo):
             with open(self.run_file, 'r') as rfile:
                 self.run_param_dict['run_file'] = rfile.read()
         # Other info
-        # TODO: warpx doesn't have version info yet
-        #self._save_version_info()
+        self._save_version_info()
         self._save_comp_info()
 
     def _save_version_info(self):
@@ -335,6 +334,8 @@ class RunInfo(SimInfo):
         self.run_param_dict['mewarpx_version'] = mewarpx.__version__
         # Version info is a tuple rather than a string
         self.run_param_dict['mewarpx_version_info'] = mewarpx.__version_info__
+        # physics version tracks changes that cause physical results to change
+        self.run_param_dict['mewarpx_physics_version'] = mewarpx.__physics_version__
         cwd = os.getcwd()
         try:
            os.chdir(mwxutil.mewarpx_dir)
