@@ -106,18 +106,18 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
 #endif
         //write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);
-
-        //write Real attributes (SoA) to particle initialized zero
-        DefineAndReturnParticleTile(0, 0, 0);
-
-        pinned_tile.push_back_real(ParticleVal::Ex, np, 0.0);
-        pinned_tile.push_back_real(ParticleVal::Ey, np, 0.0);
-        pinned_tile.push_back_real(ParticleVal::Ez, np, 0.0);
-        pinned_tile.push_back_real(ParticleVal::Bx, np, 0.0);
-        pinned_tile.push_back_real(ParticleVal::By, np, 0.0);
-        pinned_tile.push_back_real(ParticleVal::Bz, np, 0.0);
-        pinned_tile.push_back_real(ParticleVal::S, np, 0.0);
     }
+
+    //write Real attributes (SoA) to particle initialized zero
+    DefineAndReturnParticleTile(0, 0, 0);
+
+    pinned_tile.push_back_real(ParticleVal::Ex, np, 0.0);
+    pinned_tile.push_back_real(ParticleVal::Ey, np, 0.0);
+    pinned_tile.push_back_real(ParticleVal::Ez, np, 0.0);
+    pinned_tile.push_back_real(ParticleVal::Bx, np, 0.0);
+    pinned_tile.push_back_real(ParticleVal::By, np, 0.0);
+    pinned_tile.push_back_real(ParticleVal::Bz, np, 0.0);
+    pinned_tile.push_back_real(ParticleVal::S, np, 0.0);
 
     /*
      * Redistributes particles to their appropriate tiles if the box
