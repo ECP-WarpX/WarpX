@@ -24,7 +24,6 @@
  * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
  * @param[in] I1, I2 the index arrays. They determine all elements that will be used.
  * @param[in,out] soa_1,soa_2 the struct of array for species 1/2
- *                (u=v*gamma), they could be either different or the same,
  * @param[in] q1,q2 charge of species 1/2
  * @param[in] m1,m2 mass of species 1/2
  * @param[in] T1 temperature (Joule) of species 1
