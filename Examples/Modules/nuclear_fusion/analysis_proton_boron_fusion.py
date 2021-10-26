@@ -114,7 +114,7 @@ def add_species_to_dict(yt_ad, data_dict, species_name, prefix, suffix):
     try:
         ## If species exist, we add its data to the dictionary
         add_existing_species_to_dict(yt_ad, data_dict, species_name, prefix, suffix)
-    except:
+    except yt.utilities.exceptions.YTFieldNotFound:
         ## If species does not exist, we avoid python crash and add empty arrays to the
         ## dictionnary. Currently, this happens for the boron species in test number 4, which
         ## entirely fuses into alphas.
