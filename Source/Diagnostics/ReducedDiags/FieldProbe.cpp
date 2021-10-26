@@ -136,7 +136,7 @@ FieldProbe::FieldProbe (std::string rd_name)
                     ofs << m_sep;
                     ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + " (W*s/m^2)"; //update all units if integrating (might be energy / m^2)
                 }
-            }   
+            }
             ofs << std::endl;
 
             // close file
@@ -324,7 +324,7 @@ void FieldProbe::ComputeDiags (int step)
                     }
                 });// ParallelFor Close
                 if (field_probe_integrate == 0)
-                {   
+                {
                     for (int ip=0; ip < np; ip++)
                     {
                         // Fill output array
@@ -358,7 +358,7 @@ void FieldProbe::ComputeDiags (int step)
                     }
                     iteration++;
                 }
-                    
+
                 probe_proc = amrex::ParallelDescriptor::MyProc();
 
                 /* m_data now contains up-to-date values for:
