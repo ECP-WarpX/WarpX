@@ -185,6 +185,24 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --upgrade pip
    python3 -m pip install -U --no-cache-dir -v mpi4py
 
+Building `blaspp` and `lapackpp` (only needed for RZ-PSATD)
+-----------------------------------------------------------
+
+Use the following code to build `blaspp` and `lapackpp` if needed.
+
+.. code-block:: bash
+
+    git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+    cmake -S src/blaspp -B src/blaspp/build
+    cmake --build src/blaspp/build
+    export blas_DIR=$HOME/src/blaspp/build
+
+    git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+    cmake -S src/lapackpp -B src/lapackpp/build
+    cmake --build src/lapackpps/build
+    export lapackpp_DIR=$HOME/src/lapackpp/build
+
+
 Building WarpX
 --------------
 
