@@ -35,9 +35,10 @@ phases:
        # for psdevel branch, so this gives just psdevel
        # Having this separate command means DOCKER_BRANCHNAME can be set
        # manually in codebuild to get the same effect.
-       - if [ -z "$DOCKER_BRANCHNAME" ]; then export DOCKER_BRANCHNAME=$(basename ${CODEBUILD_WEBHOOK_HEAD_REF}); fi
        - cd ${CODEBUILD_SRC_DIR}/mewarpx/medocker/docker_ubuntu2004
-       - bash ../docker_shared/make_docker.sh graviton-autobuild $DOCKER_BRANCHNAME
+       - if [ -z "$DOCKER_REPOSITORY" ]; then export DOCKER_REPOSITORY="graviton-autobuild"; fi
+       - if [ -z "$DOCKER_BRANCHNAME" ]; then export DOCKER_BRANCHNAME=$(basename ${CODEBUILD_WEBHOOK_HEAD_REF}); fi
+       - bash ../docker_shared/make_docker.sh $DOCKER_REPOSITORY $DOCKER_BRANCHNAME
       # - command
   #post_build:
     #commands:

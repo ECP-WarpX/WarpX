@@ -22,7 +22,7 @@ fi
 
 SUFFIX=$2
 
-FULLTAG="$1:$2"
+FULLTAG="${DTAG}:${SUFFIX}"
 
 if [ ! -d "../../../../WarpX" ]; then
     echo "No WarpX install found in ../../.."
@@ -35,6 +35,6 @@ fi
 # Do the docker build
 cp .dockerignore ../../../../
 $(aws ecr get-login --no-include-email --region us-west-2)
-docker build --build-arg BUILDPLATFORM=$(uname -m) -f Dockerfile -t simteam/mewarpx-"$FULLTAG" ../../../../
+docker build --build-arg BUILDPLATFORM=$(uname -m) --build-arg WARPXCOMPUTE=${WARPXCOMPUTE:-} -f Dockerfile -t simteam/mewarpx-"$FULLTAG" ../../../../
 docker tag simteam/mewarpx-"$FULLTAG" 167833485543.dkr.ecr.us-west-2.amazonaws.com/simteam/mewarpx-"$FULLTAG"
 docker push 167833485543.dkr.ecr.us-west-2.amazonaws.com/simteam/mewarpx-"$FULLTAG"
