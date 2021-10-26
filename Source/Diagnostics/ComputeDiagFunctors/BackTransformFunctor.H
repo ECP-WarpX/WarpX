@@ -34,8 +34,8 @@ public:
      * \param[in] lev level of multifab.
      * \param[in] ncomp number of components of mf_src to Lorentz-Transform
                         and store in destination multifab.
-     * \param[in] num_buffers ...?
-     * \param[in] varnames ...?
+     * \param[in] num_buffers number of user-defined snapshots in the back-transformed lab-frame
+     * \param[in] varnames names of the field-components as defined by the user for back-transformed diagnostics.
      * \param[in] crse_ratio the coarsening ratio for fields
      */
     BackTransformFunctor ( const amrex::MultiFab * const mf_src, const int lev,
@@ -65,7 +65,7 @@ public:
      *                            the boosted-frame and lab-frame domain.
      *                            The fields are sliced and back-transformed only
      *                            if this value is true.
-     * \param[in] current_z_boost ...?
+     * \param[in] current_z_boost current z-coordinate of the slice in boosted-frame
      * \param[in] buffer_box      Box with index-space in lab-frame for the ith buffer
      * \param[in] k_index_zlab    k-index in the lab-frame corresponding to the
      *                            current z co-ordinate in the lab-frame for the ith buffer.

@@ -74,11 +74,11 @@ public:
     void WriteHeader ();
 
     /** Sets the physical simulation time, m_time, in the Header file to a new_time.
-     *  \param[in] new_time ...?
+     *  \param[in] new_time current time in the boosted-frame read from Header plotfile
      **/
     void set_time ( amrex::Real new_time) { m_time = new_time;}
     /** Sets the timestep, m_timestep, in the Header file to a new_timestep
-     *  \param[in] new_timestep ...?
+     *  \param[in] new_timestep current timestep in the boosted-frame (read from the Header file of the newly flushed buffer)
      **/
     void set_timestep (int new_timestep) { m_timestep = new_timestep; }
     /** Set the ith-dimension physical co-ordinate of the lower corner.
