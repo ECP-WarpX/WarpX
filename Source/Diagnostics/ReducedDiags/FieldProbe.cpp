@@ -32,7 +32,6 @@
 
 #include <cmath>
 #include <ostream>
-#include <iostream>
 
 using namespace amrex;
 
@@ -340,10 +339,11 @@ void FieldProbe::ComputeDiags (int step)
                 }
                 else
                 {
-                    static amrex::Real start_time{WarpX::GetInstance().gett_new(0)};
+                    amrex::Real const dt = WarpX::GetInstance().getdt(lev);
+                    static int iteration{0};
                     if (m_intervals.contains(step+1))
                     {
-                        amrex::Real time_ellapsed{WarpX::GetInstance().gett_new(0) - start_time};
+                        amrex::Real time_ellapsed {iteration * dt};
                         for (int ip=0; ip < np; ip++)
                         {
                             // Fill output array
@@ -356,6 +356,7 @@ void FieldProbe::ComputeDiags (int step)
                             m_data[0 * noutputs + ParticleVal::S] = part_S[ip] * time_ellapsed;
                         }
                     }
+                    iteration++;
                 }
                     
                 probe_proc = amrex::ParallelDescriptor::MyProc();
