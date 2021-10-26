@@ -246,8 +246,7 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
     }
 }
 
-/**
- * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
  *
  * amrex::ParmParse::query reads a name and a value from the input file. This function does the
  * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
@@ -261,7 +260,12 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 
-/** See earlier overload for base signature
+/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::query reads a name and a value from the input file. This function does the
+ * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
  *
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
@@ -279,8 +283,7 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
                         const int start_ix = amrex::ParmParse::FIRST,
                         const int num_val = amrex::ParmParse::LAST);
 
-/**
- * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+/** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
  * amrex::ParmParse::get reads a name and a value from the input file. This function does the
  * same, and applies the Parser to the value, so the user has the choice to specify a value or
@@ -294,7 +297,12 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 
-/** See earlier overload for base signature
+/** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::get reads a name and a value from the input file. This function does the
+ * same, and applies the Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
  *
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
