@@ -25,6 +25,7 @@ using namespace amrex::literals;
 
 /**
  * \brief Current Deposition for thread thread_num
+ * \tparam depos_order deposition order
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
  * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
@@ -315,6 +316,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 /**
  * \brief Esirkepov Current Deposition for thread thread_num
  *
+ * \param depos_order  deposition order
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
  * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
@@ -652,6 +654,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
  * for thread \c thread_num: deposit \c D in real space and store the result in
  * \c jx_fab, \c jy_fab, \c jz_fab
  *
+ * \tparam depos_order  deposition order
  * \param[in] GetPosition  Functor that returns the particle position
  * \param[in] wp           Pointer to array of particle weights
  * \param[in] uxp,uyp,uzp  Pointer to arrays of particle momentum along \c x

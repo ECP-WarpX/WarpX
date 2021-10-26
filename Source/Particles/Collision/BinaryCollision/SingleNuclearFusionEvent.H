@@ -26,8 +26,9 @@
  * for that given pair of particles and the weight of the produced particles is stored in
  * p_pair_reaction_weight.
  *
- * @param[in] u1x,u1y,u1z momenta of the colliding particles
- * @param[in] u2x,u2y,u2z momenta of the colliding particles
+ * @tparam index_type type of the index argument
+ * @param[in] u1x,u1y,u1z momenta of the first colliding particle
+ * @param[in] u2x,u2y,u2z momenta of the second colliding particle
  * @param[in] m1,m2 masses
  * @param[in] w1,w2 effective weight of the colliding particles
  * @param[in] dt is the time step length between two collision calls.

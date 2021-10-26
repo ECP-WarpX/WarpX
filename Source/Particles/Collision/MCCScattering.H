@@ -26,7 +26,7 @@
  * sphere collision occurs. The resulting particle velocities are transformed
  * back to the lab frame and the input particle's velocity is updated.
  *
- * @param[inout] ux,uy,uz colliding particle's velocity
+ * @param[in,out] ux,uy,uz colliding particle's velocity
  * @param[in] uCOM_x,uCOM_y,uCOM_z velocity of the center of momentum frame.
  * @param[in] engine random number generator.
  */
@@ -60,7 +60,7 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
  * reversed. The resulting particle velocities are then transformed back to the
  * lab frame and the input particle's velocity is updated.
  *
- * @param[inout] ux,uy,uz colliding particle's velocity
+ * @param[in,out] ux,uy,uz colliding particle's velocity
  * @param[in] uCOM_x,uCOM_y,uCOM_z velocity of the center of momentum frame.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -80,7 +80,7 @@ void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 
 /** Function to perform charge exchange of an ion with a neutral particle.
  *
- * @param[inout] ux,uy,uz colliding particle's velocity
+ * @param[in,out] ux,uy,uz colliding particle's velocity
  * @param[in] ua_x,ua_y,ua_z velocity of the neutral particle.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE

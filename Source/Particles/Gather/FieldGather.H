@@ -379,6 +379,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 /**
  * \brief Field gather for particles
  *
+ * \tparam depos_order         deposition order
+ * \tparam lower_in_v          lower shape order in parallel direction (Galerkin)
  * \param getPosition          A functor for returning the particle position.
  * \param getExternalE         A functor for assigning the external E field.
  * \param getExternalB         A functor for assigning the external B field.

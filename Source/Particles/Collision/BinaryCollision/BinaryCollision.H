@@ -79,8 +79,8 @@ public:
     /**
      * \brief Constructor of the BinaryCollision class.
      *
-     * @param collision_name the name of the collision
-     * @param mypc Container of species involved
+     * @param[in] collision_name the name of the collision
+     * @param[in] mypc Container of species involved
      *
      */
     BinaryCollision (std::string collision_name, MultiParticleContainer const * const mypc)
@@ -193,8 +193,8 @@ public:
 
     /** Perform all binary collisions within a tile
      *
-     * \param lev the mesh-refinement level
-     * \param mfi iterator for multifab
+     * \param[in] lev the mesh-refinement level
+     * \param[in] mfi iterator for multifab
      * \param species_1 first species container
      * \param species_2 second species container
      * \param product_species_vector vector of pointers to product species containers
