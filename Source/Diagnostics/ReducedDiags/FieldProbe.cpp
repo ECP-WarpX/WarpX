@@ -70,9 +70,23 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define whether ot not to integrate fields
      */
     amrex::ParmParse pp_rd_name(rd_name);
+    getWithParser(pp_rd_name, "dimension", dimension);
+    if (dimension == 0)
+    {
     getWithParser(pp_rd_name, "x_probe", x_probe);
     getWithParser(pp_rd_name, "y_probe", y_probe);
     getWithParser(pp_rd_name, "z_probe", z_probe);
+    }
+    else
+    {
+    getWithParser(pp_rd_name, "x_probe", x_probe);
+    getWithParser(pp_rd_name, "y_probe", y_probe);
+    getWithParser(pp_rd_name, "z_probe", z_probe);
+    getWithParser(pp_rd_name, "x1_probe", x1_probe);
+    getWithParser(pp_rd_name, "y1_probe", y1_probe);
+    getWithParser(pp_rd_name, "z1_probe", z1_probe);
+    getWithParser(pp_rd_name, "resolution", resolution);
+    }
     getWithParser(pp_rd_name, "integrate", field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
@@ -147,12 +161,31 @@ FieldProbe::FieldProbe (std::string rd_name)
 
 void FieldProbe::InitData()
 {
-
-    //create 1D array for X, Y, and Z of particles
-    amrex::ParticleReal xpos[1]{x_probe};
-    amrex::ParticleReal ypos[1]{y_probe};
-    amrex::ParticleReal zpos[1]{z_probe};
-
+    if (dimension == 0)
+    {
+        np = 1;
+        //create 1D array for X, Y, and Z of particles
+        amrex::ParticleReal xpos[1]{x_probe};
+        amrex::ParticleReal ypos[1]{y_probe};
+        amrex::ParticleReal zpos[1]{z_probe};
+    }
+    else
+    {
+        np = resolution;
+        amrex::ParticleReal xpos[np]{};
+        amrex::ParticleReal ypos[np]{};
+        amrex::ParticleReal zpos[np]{};
+        amrex::Real DetLineStepSize[3]{
+                (x1_probe - x_probe) / (np - 1),
+                (y1_probe - y_probe) / (np - 1),
+                (z1_probe - z_probe) / (np - 1)};
+        for ( int step = 0; step < detectRes; step++)
+        {
+            xpos[step] = x_probe + (DetLineStepSize[0] * step);
+            ypos[step] = y_probe + (DetLineStepSize[1] * step);
+            zpos[step] = z_probe + (DetLineStepSize[2] * step);
+        }
+    }
     //add np partciles on lev 0 to m_probe
     m_probe.AddNParticles(0, np, xpos, ypos, zpos);
 }
@@ -219,13 +252,19 @@ void FieldProbe::ComputeDiags (int step)
              */
 
 #if (AMREX_SPACEDIM == 2)
-            m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                                z_probe >= prob_lo[1] and z_probe < prob_hi[1];
+            bool first_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
+                                         z_probe >= prob_lo[1] and z_probe < prob_hi[1];
+            bool second_probe_in_domain = x1_probe >= prob_lo[0] and x1_probe < prob_hi[0] and
+                                          z1_probe >= prob_lo[1] and z1_probe < prob_hi[1];
 #else
-            m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                                y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
-                                z_probe >= prob_lo[2] and z_probe < prob_hi[2];
+            bool first_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
+                                         y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
+                                         z_probe >= prob_lo[2] and z_probe < prob_hi[2];
+            bool second_probe_in_domain = x1_probe >= prob_lo[0] and x1_probe < prob_hi[0] and
+                                          y1_probe >= prob_lo[1] and y1_probe < prob_hi[1] and
+                                          z1_probe >= prob_lo[2] and z1_probe < prob_hi[2];
 #endif
+            m_probe_in_domain = first_probe1_in_domain and second_probe2_in_domain;
 
             if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
 

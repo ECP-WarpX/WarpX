@@ -82,10 +82,15 @@ MF.intervals = 200
 FP.type = FieldProbe
 FP.intervals = 200
 #The probe is placed at a cell center to match the value in the plotfile
+FP.dimension = 0
 FP.x_probe = 0.53125
 FP.y_probe = 0.53125
 FP.z_probe = 0.53125
 FP.integrate = 0
+FP.x1_probe = 0.70225
+FP.y1_probe = 0.70225
+FP.z1_probe = 0.70225
+FP.resolution = 1280
 FP_integrate.x_probe = 0.53125
 FP_integrate.x_probe = 0.53125
 FP_integrate.x_probe = 0.53125
