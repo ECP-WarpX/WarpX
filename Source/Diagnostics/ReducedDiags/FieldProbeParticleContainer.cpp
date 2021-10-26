@@ -124,7 +124,6 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
      * structure of the simulation changes to accomodate data more
      * efficiently.
      */
-
     auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
         particle_tile.resize(new_np);
