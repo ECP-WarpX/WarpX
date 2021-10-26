@@ -59,8 +59,9 @@ And install ADIOS2:
    source $HOME/knl_warpx.profile
 
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-knl-install
-   cmake --build src/adios2-build --target install --parallel 16
+   rm -rf src/adios2-knl-build
+   cmake -S src/adios2 -B src/adios2-knl-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-knl-install
+   cmake --build src/adios2-knl-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
 
@@ -104,8 +105,9 @@ And install ADIOS2:
    source $HOME/haswell_warpx.profile
 
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-haswell-install
-   cmake --build src/adios2-build --target install --parallel 16
+   rm -rf src/adios2-haswell-build
+   cmake -S src/adios2 -B src/adios2-haswell-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-haswell-install
+   cmake --build src/adios2-haswell-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
 
@@ -168,8 +170,9 @@ And install ADIOS2:
    source $HOME/gpu_warpx.profile
 
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-gpu-install
-   cmake --build src/adios2-build --target install --parallel 16
+   rm -rf src/adios2-gpu-build
+   cmake -S src/adios2 -B src/adios2-gpu-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-gpu-install
+   cmake --build src/adios2-gpu-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
 
