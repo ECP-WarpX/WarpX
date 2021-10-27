@@ -8,11 +8,6 @@
 
 #include "VelocityProperties.H"
 
-/*
- * Construct VelocityProperties based on the passed parameters.
- * If velocity is a constant, store value. If a parser, make and
- * store the parser function
- */
 VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
     // Set defaults
     std::string vel_dist_s = "constant";

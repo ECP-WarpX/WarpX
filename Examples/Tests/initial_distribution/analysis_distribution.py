@@ -198,8 +198,8 @@ g_bin_size = 0.004
 g_bin_min = 1.
 uy_bin_size = 0.04
 uy_bin_min = -1.
-V = 8.0
-n = 1.0e21
+V = 8.0 # volume in m^3
+n = 1.0e21 # number density in 1/m^3
 
 f_g = np.zeros_like(bin_value_g)
 i_g = int(np.floor((g_const - g_bin_min) / g_bin_size))
@@ -234,8 +234,8 @@ g_bin_size = 0.004
 g_bin_min = 1.
 uy_bin_size = 0.04
 uy_bin_min = -1.
-V = 8.0
-n = 1.0e21
+V = 8.0 # volume in m^3
+n = 1.0e21 # number density in 1/m^3
 
 f_g = np.zeros_like(bin_value_g)
 i_g = int(np.floor((g_const - g_bin_min) / g_bin_size))

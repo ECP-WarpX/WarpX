@@ -30,6 +30,10 @@ struct VelocityProperties
      * \brief Read runtime parameters to populate constant or spatially-varying velocity
      * information
      *
+     * Construct VelocityProperties based on the passed parameters.
+     * If velocity is a constant, store value. If a parser, make and
+     * store the parser function
+     *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
      */
     VelocityProperties (amrex::ParmParse& pp);
