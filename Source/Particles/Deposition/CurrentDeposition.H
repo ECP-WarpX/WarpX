@@ -316,7 +316,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 /**
  * \brief Esirkepov Current Deposition for thread thread_num
  *
- * \param depos_order  deposition order
+ * \tparam depos_order  deposition order
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
  * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
