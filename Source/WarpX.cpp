@@ -1178,13 +1178,15 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
         }
 
-        constexpr int zdir = AMREX_SPACEDIM - 1;
-        if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
-            WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
-                "field boundary in both lo and hi must be set to Damped for PSATD"
-            );
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+        {
+            if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped ) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::field_boundary_lo[dir] == WarpX::field_boundary_hi[dir],
+                    "field boundary in both lo and hi must be set to Damped for PSATD"
+                );
+            }
         }
 
         // Whether to fill the guard cells with inverse FFTs:
