@@ -94,25 +94,29 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // Allocate fields for charge and potential
+    // Allocate fields for potential
     const int num_levels = max_level + 1;
-    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
-    // Use number of guard cells used for local deposition of rho
-    const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
         phi[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 1);
         phi[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)
-    bool const local = false;
+    bool const local = true;
+    bool const interpolate_across_levels = false;
     bool const reset = true;
-    bool const do_rz_volume_scaling = true;
-    pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    bool const do_rz_volume_scaling = false;
+    pc.DepositCharge( rho_fp, local, reset,
+        do_rz_volume_scaling, interpolate_across_levels);
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+    }
+#endif
+    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
@@ -120,7 +124,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi, beta, pc.self_fields_required_precision, pc.self_fields_max_iters, pc.self_fields_verbosity );
+    computePhi( rho_fp, phi, beta, pc.self_fields_required_precision, pc.self_fields_max_iters, pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
