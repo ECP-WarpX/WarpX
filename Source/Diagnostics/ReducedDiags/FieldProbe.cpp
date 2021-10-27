@@ -116,6 +116,12 @@ FieldProbe::FieldProbe (std::string rd_name)
                 for (int lev = 0; lev < nLevel; ++lev)
                 {
                     ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Rx_lev" + std::to_string(lev) + " (m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ry_lev" + std::to_string(lev) + " (m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Rz_lev" + std::to_string(lev) + " (m)";
+                    ofs << m_sep;
                     ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + " (V/m)";
                     ofs << m_sep;
                     ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + " (V/m)";
@@ -135,6 +141,12 @@ FieldProbe::FieldProbe (std::string rd_name)
             {
                 for (int lev = 0; lev < nLevel; ++lev)
                 {
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Rx_lev" + std::to_string(lev) + " (m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Ry_lev" + std::to_string(lev) + " (m)";
+                    ofs << m_sep;
+                    ofs << "[" << c++ << "]probe_Rz_lev" + std::to_string(lev) + " (m)";
                     ofs << m_sep;
                     ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + " (V*s/m)";
                     ofs << m_sep;
@@ -310,7 +322,7 @@ void FieldProbe::ComputeDiags (int step)
                 int temp_modes = WarpX::n_rz_azimuthal_modes;
                 int temp_interp_order = interp_order;
                 int temp_field_probe_integrate = field_probe_integrate;
-                static int np;
+                long const np = pti.numParticles();
                 if (dimension == 0){ np = 1; }
                 else { np = resolution; }
 
@@ -366,18 +378,28 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] += S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
+                const auto& aos = pti.GetArrayOfStructs();
+                const auto getPosition = GetParticlePosition(pti);
+                for (auto ip=0; ip<np; ip++) 
+                    {
+                        amrex::ParticleReal xp, yp, zp;
+                        getPosition(ip, xp, yp, zp);
+                        m_data[0 * noutputs + 0][ip] = xp;
+                        m_data[0 * noutputs + 1][ip] = yp;
+                        m_data[0 * noutputs + 2][ip] = zp;
+                    }
                 if (field_probe_integrate == 0)
                 {
                     for (int ip=0; ip < np; ip++)
                     {
                         // Fill output array
-                        m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip];
-                        m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip];
-                        m_data[0 * noutputs + ParticleVal::Ez] = part_Ez[ip];
-                        m_data[0 * noutputs + ParticleVal::Bx] = part_Bx[ip];
-                        m_data[0 * noutputs + ParticleVal::By] = part_By[ip];
-                        m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip];
-                        m_data[0 * noutputs + ParticleVal::S] = part_S[ip];
+                        m_data[0 * noutputs + ParticleVal::Ex + 3][ip] = part_Ex[ip];
+                        m_data[0 * noutputs + ParticleVal::Ey + 3][ip] = part_Ey[ip];
+                        m_data[0 * noutputs + ParticleVal::Ez + 3][ip] = part_Ez[ip];
+                        m_data[0 * noutputs + ParticleVal::Bx + 3][ip] = part_Bx[ip];
+                        m_data[0 * noutputs + ParticleVal::By + 3][ip] = part_By[ip];
+                        m_data[0 * noutputs + ParticleVal::Bz + 3][ip] = part_Bz[ip];
+                        m_data[0 * noutputs + ParticleVal::S + 3][ip] = part_S[ip];
                     }
                 }
                 else
@@ -390,13 +412,13 @@ void FieldProbe::ComputeDiags (int step)
                         for (int ip=0; ip < np; ip++)
                         {
                             // Fill output array
-                            m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip] * time_ellapsed;
-                            m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip] * time_ellapsed;
-                            m_data[0 * noutputs + ParticleVal::Ez] = part_Ez[ip] * time_ellapsed;
-                            m_data[0 * noutputs + ParticleVal::Bx] = part_Bx[ip] * time_ellapsed;
-                            m_data[0 * noutputs + ParticleVal::By] = part_By[ip] * time_ellapsed;
-                            m_data[0 * noutputs + ParticleVal::Bz] = part_Bz[ip] * time_ellapsed;
-                            m_data[0 * noutputs + ParticleVal::S] = part_S[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Ex + 3][ip] = part_Ex[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Ey + 3][ip] = part_Ey[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Ez + 3][ip] = part_Ez[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Bx + 3][ip] = part_Bx[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::By + 3][ip] = part_By[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::Bz + 3][ip] = part_Bz[ip] * time_ellapsed;
+                            m_data[0 * noutputs + ParticleVal::S + 3][ip] = part_S[ip] * time_ellapsed;
                         }
                     }
                     iteration++;
@@ -439,6 +461,34 @@ void FieldProbe::WriteToFile (int step) const
 {
     if(m_probe_in_domain_lev_0)
     {
-        ReducedDiags::WriteToFile (step);
-    }
+        // open file
+        std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+            std::ofstream::out | std::ofstream::app};
+
+        // write step
+        ofs << step+1;
+
+        ofs << m_sep;
+
+        // set precision
+        ofs << std::fixed << std::setprecision(14) << std::scientific;
+
+        // write time
+        ofs << WarpX::GetInstance().gett_new(0);
+
+        // loop over all particles
+        for (ip = 0; ip < np; ip++)
+        {
+            // loop over data size and write
+            for (int i = 0; i < (ParticleVal::nattribs + 3); ++i)
+            {
+                ofs << m_sep;
+                ofs << m_data[i][ip];
+            } // end loop over data size
+            // end line
+            ofs << std::endl;
+        }
+        // close file
+        ofs.close();
+}
 }
