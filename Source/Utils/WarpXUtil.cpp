@@ -271,30 +271,6 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-int safeCastToInt(const amrex::Real x, const std::string& real_name) {
-    int result = 0;
-    bool error_detected = false;
-    std::string assert_msg;
-    // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
-    // This accepts x = 2**31-1 but rejects 2**31.
-    if (x < (2.0*(std::numeric_limits<int>::max()/2+1))) {
-        if (std::ceil(x) >= std::numeric_limits<int>::min()) {
-            result = static_cast<int>(x);
-        } else {
-            error_detected = true;
-            assert_msg = "Error: Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
-        }
-    } else if (x > 0) {
-        error_detected = true;
-        assert_msg =  "Error: Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
-    } else {
-        error_detected = true;
-        assert_msg =  "Error: NaN detected when casting " + real_name + " to int";
-    }
-    WarpXUtilMsg::AlwaysAssert(!error_detected, assert_msg);
-    return result;
-}
-
 Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
     // Since queryWithParser recursively calls this routine, keep track of symbols
@@ -466,44 +442,6 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
         val[i] = parseStringtoReal(tmp_str_arr[i]);
-    }
-}
-
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
-    amrex::Real rval;
-    const int result = queryWithParser(a_pp, str, rval);
-    if (result) {
-        val = safeCastToInt(std::round(rval), str);
-    }
-    return result;
-}
-
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
-    amrex::Real rval;
-    getWithParser(a_pp, str, rval);
-    val = safeCastToInt(std::round(rval), str);
-}
-
-int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                        const int start_ix, const int num_val) {
-    std::vector<amrex::Real> rval;
-    const int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
-    if (result) {
-        val.resize(rval.size());
-        for (unsigned long i = 0 ; i < val.size() ; i++) {
-            val[i] = safeCastToInt(std::round(rval[i]), str);
-        }
-    }
-    return result;
-}
-
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                       const int start_ix, const int num_val) {
-    std::vector<amrex::Real> rval;
-    getArrWithParser(a_pp, str, rval, start_ix, num_val);
-    val.resize(rval.size());
-    for (unsigned long i = 0 ; i < val.size() ; i++) {
-        val[i] = safeCastToInt(std::round(rval[i]), str);
     }
 }
 
