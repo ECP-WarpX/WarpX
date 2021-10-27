@@ -291,8 +291,9 @@ public:
 
             // Start indices of the pairs in a cell. Will be used for particle creation.
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
-            const auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
-                                                     p_n_pairs_in_each_cell, pair_offsets.data());
+            const index_type n_total_pairs = (n_cells_products == 0) ? 0:
+                                                amrex::Scan::ExclusiveSum(n_cells_products,
+                                                    p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
@@ -444,8 +445,9 @@ public:
 
             // Start indices of the pairs in a cell. Will be used for particle creation
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
-            auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
-                                                     p_n_pairs_in_each_cell, pair_offsets.data());
+            const index_type n_total_pairs = (n_cells_products == 0) ? 0:
+                                                amrex::Scan::ExclusiveSum(n_cells_products,
+                                                    p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise

@@ -22,7 +22,7 @@ class BTDPlotfileHeaderImpl
 {
 public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDPlotfileHeaderImpl (std::string const& Headerfile_path);
     /** Destructor */
@@ -56,13 +56,13 @@ public:
     int numFabs () const noexcept {return m_numFabs; }
 
     /** Returns physical co-ordinates of the lower-corner for the i-th Fab.
-     *  \param[in] iFab, id of the ith Fab in the list of Multifabs
-     *  \param[out] Array of lower-corner physical co-ordinates corresponding to the ith Fab
+     *  \param[in] iFab id of the ith Fab in the list of Multifabs
+     *  \returns   Array of lower-corner physical co-ordinates corresponding to the ith Fab
      */
     amrex::Array<amrex::Real, AMREX_SPACEDIM> FabLo (int iFab) const noexcept {return m_glo[iFab]; }
     /** Returns physical co-ordinates of the lower-corner for the i-th Fab.
-     *  \param[in] iFab, id of the ith Fab in the list of Multifabs
-     *  \param[out] Array of lower-corner physical co-ordinates corresponding to the ith Fab
+     *  \param[in] iFab id of the ith Fab in the list of Multifabs
+     *  \returns   Array of lower-corner physical co-ordinates corresponding to the ith Fab
      */
     amrex::Array<amrex::Real, AMREX_SPACEDIM> FabHi (int iFab) const noexcept {return m_ghi[iFab]; }
     /** Returns path to location of multifabs */
@@ -74,25 +74,25 @@ public:
     void WriteHeader ();
 
     /** Sets the physical simulation time, m_time, in the Header file to a new_time.
-     *  \param[in] Real new_time
+     *  \param[in] new_time current time in the boosted-frame read from Header plotfile
      **/
     void set_time ( amrex::Real new_time) { m_time = new_time;}
     /** Sets the timestep, m_timestep, in the Header file to a new_timestep
-     *  \param[in] int new_timestep
+     *  \param[in] new_timestep current timestep in the boosted-frame (read from the Header file of the newly flushed buffer)
      **/
     void set_timestep (int new_timestep) { m_timestep = new_timestep; }
     /** Set the ith-dimension physical co-ordinate of the lower corner.
-     *  \param[in] int dim, dimension modified.
-     *  \param[in] Real lo, lower-corner physical coordinate to be stored in dimension, dim.
+     *  \param[in] dim dimension modified.
+     *  \param[in] lo  lower-corner physical coordinate to be stored in dimension, dim.
      **/
     void set_problo (int dim, amrex::Real lo) { m_prob_lo[dim] = lo;}
     /** Set the ith-dimension physical co-ordinate of the upper corner.
-     *  \param[in] int dim, dimension modified.
-     *  \param[in] Real hi, upper-corner physical coordinate to be stored in dimension, dim.
+     *  \param[in] dim dimension modified.
+     *  \param[in] hi  upper-corner physical coordinate to be stored in dimension, dim.
      **/
     void set_probhi (int dim, amrex::Real hi) { m_prob_hi[dim] = hi;}
     /** Set the Domain box spanning the plotfile data in the modified plotfile and Header.
-     *  \param[in] amrex::Box domainBox spanning the domain corresponding to the plotfile.
+     * \param[in] domainBox spanning the domain corresponding to the plotfile.
      */
     void set_probDomain (amrex::Box domainBox) {m_prob_domain = domainBox; }
     /** Increments the number of fabs stored in the plotfile by one. */
@@ -101,14 +101,14 @@ public:
     void ResizeFabHi () { m_ghi.resize(m_numFabs); }
     /** Append array of lower-corner physical coordinates corresponding to a new fab to
      *  the existing list of coordinates, m_glo.
-     *  \param[in] amrex::Array<Real,AMREX_SPACEDIM> newFabLo containing physical coordinates
-     *             of the newly appended fab-data to the plotfile.
+     *  \param[in] newFabLo contains physical coordinates
+     *                      of the newly appended fab-data to the plotfile.
      */
     void AppendNewFabLo (amrex::Array<amrex::Real, AMREX_SPACEDIM> newFabLo);
     /** Append array of upper-corner physical coordinates corresponding to a new fab to
      *  the existing list of coordinates, m_ghi.
-     *  \param[in] amrex::Array<Real,AMREX_SPACEDIM> newFabHi containing physical coordinates
-     *             of the newly appended fab-data to the plotfile.
+     *  \param[in] newFabHi contains physical coordinates
+     *                      of the newly appended fab-data to the plotfile.
      */
     void AppendNewFabHi (amrex::Array<amrex::Real, AMREX_SPACEDIM> newFabHi);
 private:
@@ -157,7 +157,7 @@ class BTDMultiFabHeaderImpl
 {
     public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDMultiFabHeaderImpl (std::string const& Headerfile_path);
     ~BTDMultiFabHeaderImpl () = default;
@@ -169,11 +169,11 @@ class BTDMultiFabHeaderImpl
     /** Returns size, m_ba_size, of the Box Array, m_ba.*/
     int ba_size () {return m_ba_size;}
     /** Returns box corresponding to the ith box in the BoxArray, m_ba.
-     *  \param[in] int ibox, index of the box in the BoxArray.
+     *  \param[in] ibox index of the box in the BoxArray.
      */
     amrex::Box ba_box (int ibox) {return m_ba[ibox]; }
     /** Returns prefix of the ith-fab on disk, i.e., ith fab of the MultiFab data.
-     *  \param[int] ifab, index of the ith fab in the MultiFab data.
+     *  \param[in] ifab index of the ith fab in the MultiFab data.
      */
     std::string fodPrefix (int ifab) {return m_FabOnDiskPrefix[ifab]; }
     /** Returns name of the ith fab stored in the MultiFab. */
@@ -186,13 +186,13 @@ class BTDMultiFabHeaderImpl
     amrex::Vector<amrex::Real> maxval(int ifab) { return m_maxval[ifab];}
     void ResizeFabData ();
     /** Increments MultiFab size, m_ba_size, by add_mf_size.
-     *  \param[in] int add_mf_size, number of new multifabs to be appended to the existing
+     *  \param[in] add_mf_size number of new multifabs to be appended to the existing
      *             Box Array.
      */
     void IncreaseMultiFabSize (int add_mf_size) {m_ba_size += add_mf_size;}
     /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
-     *  \param[in] int ibox, index of the ith box in BoxArray, m_ba.
-     *  \param[in] amrex::Box box dimensions corresponding to the ith Fab.
+     *  \param[in] ibox   index of the ith box in BoxArray, m_ba.
+     *  \param[in] ba_box dimensions corresponding to the ith Fab.
      */
     void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
     /** Set Fab name of the ith fab to be written in the multifab Header file.*/
