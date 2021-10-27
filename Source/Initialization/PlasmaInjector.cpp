@@ -210,6 +210,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     else if (injection_style == "nrandompercell") {
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
+        if (WarpX::n_rz_azimuthal_modes > 1)
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical gemoetry the number "
@@ -226,6 +227,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         surface_flux = true;
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
+        if (WarpX::n_rz_azimuthal_modes > 1)
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
@@ -288,6 +290,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         num_particles_per_cell_each_dim.push_back(1);
 #endif
 #if WARPX_DIM_RZ
+        if (WarpX::n_rz_azimuthal_modes > 1)
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_each_dim[1]>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
