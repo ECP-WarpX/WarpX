@@ -463,6 +463,8 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 void
 WarpX::ReadParameters ()
 {
+    ReadBCParams();
+
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         queryWithParser(pp, "max_step", max_step);
