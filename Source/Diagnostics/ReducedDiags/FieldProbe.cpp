@@ -87,7 +87,6 @@ FieldProbe::FieldProbe (std::string rd_name)
     {
         if ( m_IsNotRestart )
         {
-
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
 
@@ -176,7 +175,6 @@ void FieldProbe::ComputeDiags (int step)
     amrex::Vector<amrex::Real> fp_values(noutputs, 0);
 
     // loop over refinement levels
-
     for (int lev = 0; lev < nLevel; ++lev)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
@@ -279,7 +277,6 @@ void FieldProbe::ComputeDiags (int step)
 
                     amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
                     amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
-                    amrex::ParticleReal S = 0._rt;
 
                     // first gather E and B to the particle positions
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -293,18 +290,16 @@ void FieldProbe::ComputeDiags (int step)
                     Exp * Bzp - Ezp * Byp,
                     Ezp * Bxp - Exp * Bzp,
                     Exp * Byp - Eyp * Bxp};
-                    S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+                    amrex::ParticleReal const S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
                      * Determine whether or not to integrate field data.
                      * If not integrating, store instantaneous values.
                      */
-
                     if (temp_field_probe_integrate)
                     {
 
-                        //Store Values on Particles
-
+                        // store values on particles
                         part_Ex[ip] += Exp; //remember to add lorentz transform
                         part_Ey[ip] += Eyp; //remember to add lorentz transform
                         part_Ez[ip] += Ezp; //remember to add lorentz transform
@@ -334,6 +329,7 @@ void FieldProbe::ComputeDiags (int step)
                         for (int ip=0; ip < np; ip++)
                         {
                             // Fill output array
+                            // TODO replace with explicit copies later on to avoid managed memory on GPU
                             m_data[0 * noutputs + ParticleVal::Ex] = part_Ex[ip] * time_ellapsed;
                             m_data[0 * noutputs + ParticleVal::Ey] = part_Ey[ip] * time_ellapsed;
                             m_data[0 * noutputs + ParticleVal::Ez] = part_Ez[ip] * time_ellapsed;
