@@ -612,14 +612,13 @@ void OverwriteAMReXperiodic ()
     }
 
     // Check which dimention of space is periodic, according to
-    // `boundary.field_lo` and `boundary.field_hi`
+    // `boundary.field_lo`. (Consistency between `field_lo` and `field_hi`
+    // is checked in the function `ReadBCParams`)
     amrex::Vector<std::string> field_BC_lo(AMREX_SPACEDIM,"default");
-    amrex::Vector<std::string> field_BC_hi(AMREX_SPACEDIM,"default");
     ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
-    pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if (field_BC_lo[idim] == "periodic" || field_BC_hi[idim] == "periodic") {
+        if ( GetFieldBCTypeInteger(field_BC_lo[idim]) == FieldBoundaryType::Periodic ) {
             geom_periodicity[idim] = 1;
         }
     }
