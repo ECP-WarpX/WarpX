@@ -21,13 +21,13 @@
  * \tparam depos_order              Particle shape order
  * \tparam galerkin_interpolation   Lower the order of the particle shape by
  *                                  this value (0/1) for the parallel field component
- * \param xp, yp, zp                Particle position coordinates
- * \param Exp, Eyp, Ezp             Electric field on particles.
- * \param Bxp, Byp, Bzp             Magnetic field on particles.
- * \param ex_arr ey_arr ez_arr      Array4 of the electric field, either full array or tile.
- * \param bx_arr by_arr bz_arr      Array4 of the magnetic field, either full array or tile.
- * \param ex_type, ey_type, ez_type IndexType of the electric field
- * \param bx_type, by_type, bz_type IndexType of the magnetic field
+ * \param xp,yp,zp                        Particle position coordinates
+ * \param Exp,Eyp,Ezp                     Electric field on particles.
+ * \param Bxp,Byp,Bzp                     Magnetic field on particles.
+ * \param ex_arr,ey_arr,ez_arr            Array4 of the electric field, either full array or tile.
+ * \param bx_arr,by_arr,bz_arr            Array4 of the magnetic field, either full array or tile.
+ * \param ex_type,ey_type,ez_type         IndexType of the electric field
+ * \param bx_type,by_type,bz_type         IndexType of the magnetic field
  * \param dx                        3D cell spacing
  * \param xyzmin                    Physical lower bounds of domain in x, y, z.
  * \param lo                        Index lower bounds of domain.
@@ -379,18 +379,20 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 /**
  * \brief Field gather for particles
  *
- * /param getPosition          : A functor for returning the particle position.
- * /param getExternalEField    : A functor for assigning the external E field.
- * /param getExternalBField    : A functor for assigning the external B field.
- * \param Exp, Eyp, Ezp        : Pointer to array of electric field on particles.
- * \param Bxp, Byp, Bzp        : Pointer to array of magnetic field on particles.
- * \param exfab eyfab ezfab    : Array4 of the electric field, either full array or tile.
- * \param ezfab bxfab bzfab    : Array4 of the magnetic field, either full array or tile.
- * \param np_to_gather         : Number of particles for which field is gathered.
- * \param dx                   : 3D cell size
- * \param xyzmin               : Physical lower bounds of domain.
- * \param lo                   : Index lower bounds of domain.
- * \param n_rz_azimuthal_modes : Number of azimuthal modes when using RZ geometry
+ * \tparam depos_order         deposition order
+ * \tparam lower_in_v          lower shape order in parallel direction (Galerkin)
+ * \param getPosition          A functor for returning the particle position.
+ * \param getExternalE         A functor for assigning the external E field.
+ * \param getExternalB         A functor for assigning the external B field.
+ * \param Exp,Eyp,Ezp          Pointer to array of electric field on particles.
+ * \param Bxp,Byp,Bzp          Pointer to array of magnetic field on particles.
+ * \param exfab,eyfab,ezfab    Array4 of the electric field, either full array or tile.
+ * \param bxfab,byfab,bzfab    Array4 of the magnetic field, either full array or tile.
+ * \param np_to_gather         Number of particles for which field is gathered.
+ * \param dx                   3D cell size
+ * \param xyzmin               Physical lower bounds of domain.
+ * \param lo                   Index lower bounds of domain.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order, int lower_in_v>
 void doGatherShapeN(const GetParticlePosition& getPosition,
@@ -451,19 +453,19 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
 /**
  * \brief Field gather for a single particle
  *
- * /param xp, yp, zp                : Particle position coordinates
- * \param Exp, Eyp, Ezp             : Electric field on particles.
- * \param Bxp, Byp, Bzp             : Magnetic field on particles.
- * \param ex_arr ey_arr ez_arr      : Array4 of the electric field, either full array or tile.
- * \param bx_arr by_arr bz_arr      : Array4 of the magnetic field, either full array or tile.
- * \param ex_type, ey_type, ez_type : IndexType of the electric field
- * \param bx_type, by_type, bz_type : IndexType of the magnetic field
- * \param dx                        : 3D cell spacing
- * \param xyzmin                    : Physical lower bounds of domain in x, y, z.
- * \param lo                        : Index lower bounds of domain.
- * \param n_rz_azimuthal_modes      : Number of azimuthal modes when using RZ geometry
- * \param nox                       : order of the particle shape function
- * \param galerkin_interpolation        : whether to use lower order in v
+ * \param xp,yp,zp                Particle position coordinates
+ * \param Exp,Eyp,Ezp             Electric field on particles.
+ * \param Bxp,Byp,Bzp             Magnetic field on particles.
+ * \param ex_arr,ey_arr,ez_arr    Array4 of the electric field, either full array or tile.
+ * \param bx_arr,by_arr,bz_arr    Array4 of the magnetic field, either full array or tile.
+ * \param ex_type,ey_type,ez_type IndexType of the electric field
+ * \param bx_type,by_type,bz_type IndexType of the magnetic field
+ * \param dx_arr                  3D cell spacing
+ * \param xyzmin_arr              Physical lower bounds of domain in x, y, z.
+ * \param lo                      Index lower bounds of domain.
+ * \param n_rz_azimuthal_modes    Number of azimuthal modes when using RZ geometry
+ * \param nox                     order of the particle shape function
+ * \param galerkin_interpolation  whether to use lower order in v
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doGatherShapeN (const amrex::ParticleReal xp,
