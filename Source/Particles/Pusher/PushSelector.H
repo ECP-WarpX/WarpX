@@ -23,22 +23,22 @@
 /**
  * \brief Push position and momentum for a single particle
  *
- * /param GetPosition               : A functor for returning the particle position.
- * /param GetPosition               : A functor for setting the particle position.
- * /param copyAttribs               : A functor for storing the old u and x
- * /param i                         : The index of the particle to work on
- * \param ux, uy, uz                : Particle momentum
- * \param Ex, Ey, Ez                : Electric field on particles.
- * \param Bx, By, Bz                : Magnetic field on particles.
- * \param ion_lev                   : Ionization level of this particle (0 if ioniziation not on)
- * \param m                         : Mass of this species.
- * \param q                         : Charge of this species.
- * \param pusher_algo               : 0: Boris, 1: Vay, 2: HigueraCary
- * \param do_crr                    : Whether to do the classical radiation reaction
- * \param do_crr                    : Whether to copy the old x and u for the BTD
- * \param do_sync                   : Whether to include quantum synchrotron radiation (QSR)
- * \param t_chi_max                 : Cutoff chi for QSR
- * \param dt                        : Time step size
+ * \param GetPosition               A functor for returning the particle position.
+ * \param SetPosition               A functor for setting the particle position.
+ * \param copyAttribs               A functor for storing the old u and x
+ * \param i                         The index of the particle to work on
+ * \param ux, uy, uz                Particle momentum
+ * \param Ex, Ey, Ez                Electric field on particles.
+ * \param Bx, By, Bz                Magnetic field on particles.
+ * \param ion_lev                   Ionization level of this particle (0 if ioniziation not on)
+ * \param m                         Mass of this species.
+ * \param q                         Charge of this species.
+ * \param pusher_algo               0: Boris, 1: Vay, 2: HigueraCary
+ * \param do_crr                    Whether to do the classical radiation reaction
+ * \param do_copy                   Whether to copy the old x and u for the BTD
+ * \param do_sync                   Whether to include quantum synchrotron radiation (QSR)
+ * \param t_chi_max                 Cutoff chi for QSR
+ * \param dt                        Time step size
  */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void doParticlePush(const GetParticlePosition& GetPosition,
