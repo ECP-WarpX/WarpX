@@ -2060,7 +2060,7 @@ Reduced Diagnostics
         containing the measurement point are saved.
         The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
         otherwise it is set to ``1``.
-        Integrated electric and magnetic field components can instead be obtained by specifying 
+        Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
 
 
