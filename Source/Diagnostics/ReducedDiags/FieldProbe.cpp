@@ -73,7 +73,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     getWithParser(pp_rd_name, "x_probe", x_probe);
     getWithParser(pp_rd_name, "y_probe", y_probe);
     getWithParser(pp_rd_name, "z_probe", z_probe);
-    getWithParser(pp_rd_name, "integrate", m_field_probe_integrate);
+    pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
 

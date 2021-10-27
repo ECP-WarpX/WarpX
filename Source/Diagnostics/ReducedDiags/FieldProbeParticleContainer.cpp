@@ -66,7 +66,7 @@ FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
 }
 
 void
-FieldProbeParticleContainer::AddNParticles (int /*lev*/,
+FieldProbeParticleContainer::AddNParticles (int lev,
                                             amrex::Vector<amrex::ParticleReal> const & x,
                                             amrex::Vector<amrex::ParticleReal> const & y,
                                             amrex::Vector<amrex::ParticleReal> const & z)

@@ -47,7 +47,7 @@ public:
     using iterator = amrex::ParIter<0,0,ParticleVal::nattribs,0>;
 
     //! similar to WarpXParticleContainer::AddNParticles but does not include u(x,y,z)
-    void AddNParticles (int lev, amrex::Vector<amrex::ParticleReal> const & x, amrex::Vector<amrex::ParticleReal> const & y, const amrex::Vector<amrex::ParticleReal> const & z);
+    void AddNParticles (int lev, amrex::Vector<amrex::ParticleReal> const & x, amrex::Vector<amrex::ParticleReal> const & y, amrex::Vector<amrex::ParticleReal> const & z);
 };
 
 #endif // WARPX_FieldProbeParticleContainer_H_
