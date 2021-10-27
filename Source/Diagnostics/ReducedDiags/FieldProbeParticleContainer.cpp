@@ -84,10 +84,9 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
      */
 
     using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
-                        amrex::PinnedArenaAllocator>;
+                                    amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
-
 
     for (int i = 0; i < np; i++)
     {
@@ -104,11 +103,11 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = 0;
         p.pos(2) = z[i];
 #endif
-        //write position, cpu id, and particle id to particle
+        // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);
     }
 
-    //write Real attributes (SoA) to particle initialized zero
+    // write Real attributes (SoA) to particle initialized zero
     DefineAndReturnParticleTile(0, 0, 0);
 
     pinned_tile.push_back_real(ParticleVal::Ex, np, 0.0);

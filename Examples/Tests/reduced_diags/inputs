@@ -85,7 +85,6 @@ FP.intervals = 200
 FP.x_probe = 0.53125
 FP.y_probe = 0.53125
 FP.z_probe = 0.53125
-FP.integrate = 0
 FP_integrate.x_probe = 0.53125
 FP_integrate.x_probe = 0.53125
 FP_integrate.x_probe = 0.53125

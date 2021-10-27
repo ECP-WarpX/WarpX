@@ -13,6 +13,7 @@
 
 #include <AMReX_BaseFwd.H>
 #include <AMReX_AmrCoreFwd.H>
+#include <AMReX_Vector.H>
 
 /**
  * This enumerated struct is used to index the field probe particle
@@ -25,7 +26,7 @@ struct ParticleVal
     {
         Ex = 0, Ey, Ez,
         Bx, By, Bz,
-        S,
+        S, //!< the Poynting vector
         nattribs
     };
 };
