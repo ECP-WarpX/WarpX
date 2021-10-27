@@ -229,11 +229,15 @@ void FieldProbe::ComputeDiags (int step)
 
             if( m_probe_in_domain )
             {
-                /*
-                 * Make the box cell centered in preparation for the interpolation (and to avoid
-                 * including ghost cells in the calculation)
-                 */
-
+                const auto cell_size = gm.CellSizeArray();
+                const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
+#if (AMREX_SPACEDIM == 2)
+                const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
+                const int k_probe = 0;
+#elif(AMREX_SPACEDIM == 3)
+                const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
+                const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
+#endif
                 const auto &arrEx = Ex[pti].array();
                 const auto &arrEy = Ey[pti].array();
                 const auto &arrEz = Ez[pti].array();
@@ -241,6 +245,10 @@ void FieldProbe::ComputeDiags (int step)
                 const auto &arrBy = By[pti].array();
                 const auto &arrBz = Bz[pti].array();
 
+                /*
+                 * Make the box cell centered in preparation for the interpolation (and to avoid
+                 * including ghost cells in the calculation)
+                 */
                 amrex::Box box = pti.tilebox();
                 box.grow(Ex.nGrowVect());
 
@@ -310,12 +318,13 @@ void FieldProbe::ComputeDiags (int step)
                     }
                     else
                     {
-                        part_Ex[ip] = Exp; //remember to add lorentz transform
-                        part_Ey[ip] = Eyp; //remember to add lorentz transform
-                        part_Ez[ip] = Ezp; //remember to add lorentz transform
-                        part_Bx[ip] = Bxp; //remember to add lorentz transform
-                        part_By[ip] = Byp; //remember to add lorentz transform
-                        part_Bz[ip] = Bzp; //remember to add lorentz transform
+                        // Either save the interpolated fields or the raw fields depending on the raw_fields flag
+                        part_Ex[ip] = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Exp; //remember to add lorentz transform
+                        part_Ey[ip] = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Eyp; //remember to add lorentz transform
+                        part_Ez[ip] = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ezp; //remember to add lorentz transform
+                        part_Bx[ip] = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bxp; //remember to add lorentz transform
+                        part_By[ip] = raw_fields ? arrBy(i_probe, j_probe, k_probe) : Byp; //remember to add lorentz transform
+                        part_Bz[ip] = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bzp; //remember to add lorentz transform
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
