@@ -1179,6 +1179,7 @@ WarpX::ReadParameters ()
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+        {
             if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
                 WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped ) {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
