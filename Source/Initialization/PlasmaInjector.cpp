@@ -210,12 +210,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     else if (injection_style == "nrandompercell") {
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
-        if (WarpX::n_rz_azimuthal_modes > 1)
+        if (WarpX::n_rz_azimuthal_modes > 1) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical gemoetry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
+        }
 #endif
         // Construct InjectorPosition with InjectorPositionRandom.
         h_inj_pos = std::make_unique<InjectorPosition>(
@@ -227,12 +228,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         surface_flux = true;
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
-        if (WarpX::n_rz_azimuthal_modes > 1)
+        if (WarpX::n_rz_azimuthal_modes > 1) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
+        }
 #endif
         getWithParser(pp_species_name, "surface_flux_pos", surface_flux_pos);
         std::string flux_normal_axis_string;
@@ -290,12 +292,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         num_particles_per_cell_each_dim.push_back(1);
 #endif
 #if WARPX_DIM_RZ
-        if (WarpX::n_rz_azimuthal_modes > 1)
+        if (WarpX::n_rz_azimuthal_modes > 1) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_each_dim[1]>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles in the theta direction should be at least two times "
             "n_rz_azimuthal_modes (Please visit PR#765 for more information.)");
+        }
 #endif
         // Construct InjectorPosition from InjectorPositionRegular.
         h_inj_pos = std::make_unique<InjectorPosition>(
