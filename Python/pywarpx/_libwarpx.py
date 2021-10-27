@@ -202,6 +202,7 @@ libwarpx.warpx_getGfieldCPLoVects.restype = _LP_c_int
 libwarpx.warpx_getGfieldFP.restype = _LP_LP_c_real
 libwarpx.warpx_getGfieldFPLoVects.restype = _LP_c_int
 libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
+libwarpx.warpx_getParticleBoundaryBufferStructs.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
 
@@ -852,6 +853,50 @@ def get_particle_boundary_buffer_size(species_name, boundary):
     )
 
 
+def get_particle_boundary_buffer_structs(species_name, boundary, level):
+    '''
+
+    This returns a list of numpy arrays containing the particle struct data
+    for a species that has been scraped by a specific simulation boundary. The
+    particle data is represented as a structured numpy array and contains the
+    particle 'x', 'y', 'z', 'id', and 'cpu'.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        species_name : the species name that the data will be returned for
+        boundary     : the boundary from which to get the scraped particle data.
+                       In the form x/y/z_hi/lo or eb.
+        level        : Which AMR level to retrieve scraped particle data from.
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    particles_per_tile = _LP_c_int()
+    num_tiles = ctypes.c_int(0)
+    data = libwarpx.warpx_getParticleBoundaryBufferStructs(
+            ctypes.c_char_p(species_name.encode('utf-8')),
+            _get_boundary_number(boundary), level,
+            ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
+    )
+
+    particle_data = []
+    for i in range(num_tiles.value):
+        arr = _array1d_from_pointer(data[i], _p_dtype, particles_per_tile[i])
+        particle_data.append(arr)
+
+    _libc.free(particles_per_tile)
+    _libc.free(data)
+    return particle_data
+
+
 def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
     '''
 
@@ -872,6 +917,7 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
                          timestep at which a particle was scraped will be
                          returned.
         level          : Which AMR level to retrieve scraped particle data from.
+
     Returns
     -------
 

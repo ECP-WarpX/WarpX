@@ -114,6 +114,10 @@ extern "C" {
         const char* species_name, int boundary, int lev,
         int* num_tiles, int** particles_per_tile, const char* comp_name);
 
+    amrex::ParticleReal** warpx_getParticleBoundaryBufferStructs(
+            const char* species_name, int boundary, int lev,
+            int* num_tiles, int** particles_per_tile);
+
     void warpx_clearParticleBoundaryBuffer ();
 
   void warpx_ComputeDt ();

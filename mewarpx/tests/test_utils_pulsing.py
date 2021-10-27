@@ -16,7 +16,7 @@ def test_utils_pulsing_expr():
         t_rise=5e-9, t_fall=5e-9, plot=False
     )
     print(pulse_expr)
-    assert pulse_expr == "(modT=(t-5e-09); p1=(modT>=0 and modT<5e-09); p2=(modT>=5e-09 and modT<(5e-09+1e-08)); p3=(modT>=(5e-09+1e-08) and modT<(5e-09+1e-08+5e-09)); p4=if(p1 or p2 or p3, 0, 1); dV=7.5--1.0; p1*(-1.0+dV/5e-09*modT)+p2*7.5+p3*(7.5-dV/5e-09*(modT-5e-09-1e-08))+p4*-1.0)"
+    assert pulse_expr == "(((t-5e-09)>=0 and (t-5e-09)<5e-09)*(-1.0+1700000000.0*(t-5e-09))+((t-5e-09)>=5e-09 and (t-5e-09)<1.5000000000000002e-08)*7.5+((t-5e-09)>=1.5000000000000002e-08 and (t-5e-09)<2e-08)*(7.5-1700000000.0*((t-5e-09)-1.5000000000000002e-08))+(if(((t-5e-09)>=0 and (t-5e-09)<5e-09) or ((t-5e-09)>=5e-09 and (t-5e-09)<1.5000000000000002e-08) or ((t-5e-09)>=1.5000000000000002e-08 and (t-5e-09)<2e-08), 0, 1))*-1.0)"
 
 def test_utils_pulsing_sim():
     name = "pulsing_utility_test"

@@ -1,5 +1,17 @@
 Version, Physics version, Date,        List of changes
-0.1.1, 0,  In progress, "
+0.2.0, 0, In progress, "
+
+**Features**:
+
+- Allow multiple embedded boundaries to be installed in the simulation.
+
+**Other changes**:
+
+- The time-dependent voltage pulse function generated with ``util_store.pulsing`` was
+  changed to no longer use variables in the expression. This is in order to be able to
+  nest the voltage functions in ``if`` statements when multiple EBs are present.
+"
+0.1.1, 0,  10/26/2021, "
 
 **Other changes**:
 

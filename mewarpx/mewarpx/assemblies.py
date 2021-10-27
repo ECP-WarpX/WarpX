@@ -1,8 +1,8 @@
 """
 Assembly implementations.
 """
-
 import collections
+import logging
 import numpy as np
 
 from mewarpx.mwxrun import mwxrun
@@ -10,6 +10,8 @@ from mewarpx.utils_store.appendablearray import AppendableArray
 from mewarpx.utils_store import parallel_util
 from pywarpx import picmi, _libwarpx
 
+# Get module-level logger
+logger = logging.getLogger(__name__)
 
 class Assembly(object):
 
@@ -52,6 +54,40 @@ class Assembly(object):
         """Allows for time-dependent implementations to override this."""
         return self.getvoltage() + self.WF
 
+    def _install_in_simulation(self):
+        """Function to handle installation of embedded boundaries in the
+        simulation.
+        Care is taken to have the possibility to install multiple embedded
+        conductors (EBs). This is done by making the overall implicit function
+        that describe the EBs use the maximum of the individual EB's implicit
+        functions - this works since for each individual implicit function -1
+        means outside the boundary, 0 means on the boundary edge and 1 means
+        inside the boundary.
+        Furthermore, the potential for the embedded boundary is also constructed
+        with support for multiple embedded boundaries by adding a check for
+        which embedded boundary is considered when assigning the potential.
+        """
+        if mwxrun.simulation.embedded_boundary is not None:
+
+            # wrap the current EB potential in an if statement with the
+            # new implicit function
+            mwxrun.simulation.embedded_boundary.potential = (
+                f"if({self.implicit_function}>0,{self.V},"
+                f"{mwxrun.simulation.embedded_boundary.potential})"
+            )
+
+            # add a nested max() statement with the current implicit function
+            # to add the new embedded boundary
+            mwxrun.simulation.embedded_boundary.implicit_function = (
+                f"max({mwxrun.simulation.embedded_boundary.implicit_function},"
+                f"{self.implicit_function})"
+            )
+        else:
+            mwxrun.simulation.embedded_boundary = picmi.EmbeddedBoundary(
+                implicit_function=self.implicit_function,
+                potential=self.V
+            )
+
     def init_scrapedparticles(self, fieldlist):
         """Set up the scraped particles array. Call before
         append_scrapedparticles.
@@ -81,9 +117,10 @@ class Assembly(object):
 
         # skip conductors that don't have a label to get scraped particles with
         if not hasattr(self, 'scraper_label'):
+            logger.warning(f"Assembly {self.name} doesn't have a scraper label")
             return
 
-        # loop over species and the scraped particle data from the buffer
+        # loop over species and get the scraped particle data from the buffer
         for species in mwxrun.simulation.species:
             data = np.zeros(7)
             empty = True
@@ -105,6 +142,39 @@ class Assembly(object):
                     idx_list.append(np.where(arr == mwxrun.get_it())[0])
                     if len(idx_list[-1]) != 0:
                         empty = False
+
+                # sort the particles appropriately if this is an eb
+                if not empty and self.scraper_label == 'eb':
+                    temp_idx_list = []
+                    structs = _libwarpx.get_particle_boundary_buffer_structs(
+                        species.name, self.scraper_label, mwxrun.lev
+                    )
+
+                    if mwxrun.geom_str == 'XZ':
+                        xpos = [struct['x'] for struct in structs]
+                        ypos = [struct['y'] for struct in structs]
+                        zpos = [struct['y'] for struct in structs]
+                    elif mwxrun.geom_str == 'XYZ':
+                        xpos = [struct['x'] for struct in structs]
+                        ypos = [struct['y'] for struct in structs]
+                        zpos = [struct['z'] for struct in structs]
+                    else:
+                        raise NotImplementedError(
+                            f"Scraping not implemented for {mwxrun.geom_str}."
+                        )
+
+                    for i in range(len(idx_list)):
+                        is_inside = self.isinside(
+                            xpos[i][idx_list[i]], ypos[i][idx_list[i]],
+                            zpos[i][idx_list[i]]
+                        )
+                        temp_idx_list.append(idx_list[i][np.where(is_inside)])
+
+                        # set the scraped timestep to -1 for particles in this
+                        # EB so that they are not considered again
+                        comp_steps[i][idx_list[i][np.where(is_inside)]] = -1
+
+                    idx_list = temp_idx_list
 
             data[0] = mwxrun.get_t()
             data[1] = mwxrun.get_it()
@@ -289,17 +359,6 @@ class Cylinder(Assembly):
         nhat[2, :] = (pz - self.center_z) / dist
         return nhat
 
-    def _install_in_simulation(self):
-        """Function to pass this EB object to the WarpX simulation."""
-
-        if mwxrun.simulation.embedded_boundary is not None:
-            raise RuntimeError('Currently only 1 EB is supported.')
-
-        mwxrun.simulation.embedded_boundary = picmi.EmbeddedBoundary(
-            implicit_function=self.implicit_function,
-            potential=self.V
-        )
-
 
 class Rectangle(Assembly):
     """A rectangle that sits on the xz plane"""
@@ -480,14 +539,3 @@ class Rectangle(Assembly):
         result = np.where(X_in_bounds + Z_in_bounds > 1, 1, 0)
 
         return result
-
-    def _install_in_simulation(self):
-        """Function to pass this EB object to the WarpX simulation."""
-
-        if mwxrun.simulation.embedded_boundary is not None:
-            raise RuntimeError('Currently only 1 EB is supported.')
-
-        mwxrun.simulation.embedded_boundary = picmi.EmbeddedBoundary(
-            implicit_function=self.implicit_function,
-            potential=self.V
-        )

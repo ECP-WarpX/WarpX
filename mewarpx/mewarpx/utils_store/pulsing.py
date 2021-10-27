@@ -47,15 +47,17 @@ def linear_pulse_function(V_off, V_on, pulse_period, pulse_length, t_rise=25e-9,
         String expression of voltage function that can be parsed by the WarpX
         parser.
     """
+
+    modT = f"(t-{wait_time})" # f"fmod((t-{wait_time}),{pulse_period})" should insert modulo when supported
+    p1 = f"({modT}>=0 and {modT}<{t_rise})"
+    p2 = f"({modT}>={t_rise} and {modT}<{t_rise+pulse_length})"
+    p3 = f"({modT}>={t_rise+pulse_length} and {modT}<{t_rise+pulse_length+t_fall})"
+    p4 = f"(if({p1} or {p2} or {p3}, 0, 1))"
+    dV = V_on-V_off
     expr = (
-        f"(modT=(t-{wait_time}); " # f"modT=(t-{wait_time})%{pulse_period}; " should insert modulo when supported
-        f"p1=(modT>=0 and modT<{t_rise}); "
-        f"p2=(modT>={t_rise} and modT<({t_rise}+{pulse_length})); "
-        f"p3=(modT>=({t_rise}+{pulse_length}) and modT<({t_rise}+{pulse_length}+{t_fall})); "
-        "p4=if(p1 or p2 or p3, 0, 1); "
-        f"dV={V_on}-{V_off}; "
-        f"p1*({V_off}+dV/{t_rise}*modT)+p2*{V_on}+"
-        f"p3*({V_on}-dV/{t_fall}*(modT-{t_rise}-{pulse_length}))+p4*{V_off})"
+        f"({p1}*({V_off}+{dV/t_rise}*{modT})+{p2}*{V_on}+"
+        f"{p3}*({V_on}-{dV/t_fall}*({modT}-{t_rise + pulse_length}))+"
+        f"{p4}*{V_off})"
     )
 
     if plot:
