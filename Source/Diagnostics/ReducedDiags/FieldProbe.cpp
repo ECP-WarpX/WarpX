@@ -322,10 +322,9 @@ void FieldProbe::ComputeDiags (int step)
                 if (m_field_probe_integrate)
                 {
                     amrex::Real const dt = WarpX::GetInstance().getdt(lev);
-                    static int iteration{0};
                     if (m_intervals.contains(step+1))
                     {
-                        amrex::Real time_ellapsed {iteration * dt};
+                        amrex::Real time_ellapsed {m_iterated_steps * dt};
                         for (int ip=0; ip < np; ip++)
                         {
                             // Fill output array
@@ -339,7 +338,7 @@ void FieldProbe::ComputeDiags (int step)
                             m_data[0 * noutputs + ParticleVal::S] = part_S[ip] * time_ellapsed;
                         }
                     }
-                    iteration++;
+                    m_iterated_steps++;
                 }
                 else
                 {
