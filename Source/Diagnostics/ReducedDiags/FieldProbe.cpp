@@ -73,7 +73,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     getWithParser(pp_rd_name, "x_probe", x_probe);
     getWithParser(pp_rd_name, "y_probe", y_probe);
     getWithParser(pp_rd_name, "z_probe", z_probe);
-    getWithParser(pp_rd_name, "integrate", field_probe_integrate);
+    getWithParser(pp_rd_name, "integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
 
@@ -97,7 +97,7 @@ FieldProbe::FieldProbe (std::string rd_name)
             ofs << "[" << c++ << "]step()";
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
-            if (field_probe_integrate == 0)
+            if (m_field_probe_integrate == 0)
             {
                 for (int lev = 0; lev < nLevel; ++lev)
                 {
@@ -161,7 +161,7 @@ void FieldProbe::InitData()
 void FieldProbe::ComputeDiags (int step)
 {
     // Judge if the diags should be done
-    if (field_probe_integrate == 0)
+    if (m_field_probe_integrate == 0)
     {
         if (!m_intervals.contains(step+1)) { return; }
     }
@@ -269,7 +269,7 @@ void FieldProbe::ComputeDiags (int step)
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 int temp_modes = WarpX::n_rz_azimuthal_modes;
                 int temp_interp_order = interp_order;
-                int temp_field_probe_integrate = field_probe_integrate;
+                int temp_field_probe_integrate = m_field_probe_integrate;
 
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
@@ -323,7 +323,7 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] += S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
-                if (field_probe_integrate == 0)
+                if (m_field_probe_integrate == 0)
                 {
                     for (int ip=0; ip < np; ip++)
                     {
