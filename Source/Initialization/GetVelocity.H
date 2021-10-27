@@ -1,6 +1,5 @@
 /* Copyright 2021 Hannah Klion
  *
- *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
@@ -11,8 +10,7 @@
 
 #include "VelocityProperties.H"
 
-/**
- * \brief Get velocity at a point on the grid
+/** Get velocity at a point on the grid
  *
  * Class to get velocity at a point on the grid, either constant (m_velocity)
  * or a spatially varying value computed using the parser function (m_velocity_parser).
@@ -25,12 +23,12 @@ struct GetVelocity
     VelocityInitType m_type;
 
     /* Velocity direction */
-    int m_dir; // Index x=0, y=1, z=2
-    int m_sign_dir; // Sign of the velocity direction positive=1, negative=-1
+    int m_dir; //! Index x=0, y=1, z=2
+    int m_sign_dir; //! Sign of the velocity direction positive=1, negative=-1
 
-    /* Constant velocity value, if m_type == VelConstantValue */
+    /** Constant velocity value, if m_type == VelConstantValue */
     amrex::Real m_velocity;
-    /* Velocity parser function, if m_type == VelParserFunction */
+    /** Velocity parser function, if m_type == VelParserFunction */
     amrex::ParserExecutor<3> m_velocity_parser;
 
     /**
@@ -44,9 +42,9 @@ struct GetVelocity
     /**
      * \brief Functor call. Returns the value of velocity at the location (x,y,z)
      *
-     * \param[in] x: x-coordinate of given location
-     * \param[in] y: y-coordinate of given location
-     * \param[in] z: z-cooridnate of given location
+     * \param[in] x x-coordinate of given location
+     * \param[in] y y-coordinate of given location
+     * \param[in] z z-cooridnate of given location
      *
      *\return value of velocity at (x,y,z).
      *        m_velocity if m_type is VelConstantValue

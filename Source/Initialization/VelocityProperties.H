@@ -1,6 +1,5 @@
 /* Copyright 2021 Hannah Klion
  *
- *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL

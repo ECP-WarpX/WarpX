@@ -192,12 +192,12 @@ bin_value_uy, bin_data_uy = read_reduced_diags_histogram("h6uy.txt")[2:]
 
 # Expected values for beta and u = beta*gamma
 beta_const = 0.2
-g_const = 1. / np.sqrt(1 - beta_const * beta_const)
+g_const = 1. / np.sqrt(1. - beta_const * beta_const)
 uy_const = beta_const * g_const
 g_bin_size = 0.004
 g_bin_min = 1.
 uy_bin_size = 0.04
-uy_bin_min = -1
+uy_bin_min = -1.
 V = 8.0
 n = 1.0e21
 
@@ -228,12 +228,12 @@ bin_data_uy_pos = read_reduced_diags_histogram("h7uy_pos.txt")[3]
 
 # Expected values for beta and u = beta*gamma
 beta_const = 0.2
-g_const = 1. / np.sqrt(1 - beta_const * beta_const)
+g_const = 1. / np.sqrt(1. - beta_const * beta_const)
 uy_const = beta_const * g_const
 g_bin_size = 0.004
 g_bin_min = 1.
 uy_bin_size = 0.04
-uy_bin_min = -1
+uy_bin_min = -1.
 V = 8.0
 n = 1.0e21
 
