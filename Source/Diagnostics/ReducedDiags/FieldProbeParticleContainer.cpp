@@ -67,8 +67,16 @@ FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
 
 void
 FieldProbeParticleContainer::AddNParticles (int /*lev*/,
-                                            int np, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z)
+                                            amrex::Vector<amrex::ParticleReal> const & x,
+                                            amrex::Vector<amrex::ParticleReal> const & y,
+                                            amrex::Vector<amrex::ParticleReal> const & z)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
+    AMREX_ALWAYS_ASSERT(x.size() == y.size());
+    AMREX_ALWAYS_ASSERT(x.size() == z.size());
+
+    // number of particles to add
+    int const np = x.size();
 
     // have to resize here, not in the constructor because grids have not
     // been built when constructor was called.
