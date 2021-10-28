@@ -67,7 +67,6 @@ private:
     //! if  true, integrate values over time instead of probing instantaneous values
     bool m_field_probe_integrate = false;
     int interp_order = 1;
-    int m_iterated_steps = 0;
     bool raw_fields = false;
 
     /**
