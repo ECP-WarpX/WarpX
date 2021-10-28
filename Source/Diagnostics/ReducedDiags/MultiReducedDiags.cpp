@@ -79,7 +79,6 @@ MultiReducedDiags::MultiReducedDiags ()
     // end loop over all reduced diags
 }
 // end constructor
-//call functions to initialize data
 void MultiReducedDiags::InitData ()
 {
     // loop over all reduced diags
@@ -87,9 +86,7 @@ void MultiReducedDiags::InitData ()
     {
         m_multi_rd[i_rd] -> InitData();
     }
-    // end loop over all reduced diags
 }
-// end void MultiReducedDiags::ComputeDiags
 // call functions to compute diags
 void MultiReducedDiags::ComputeDiags (int step)
 {

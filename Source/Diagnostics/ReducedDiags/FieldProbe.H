@@ -15,6 +15,7 @@
 #include <AMReX.H>
 #include <AMReX_Vector.H>
 
+#include <unordered_map>
 #include <string>
 
 /**
@@ -47,20 +48,14 @@ public:
      * Define constants used throughout FieldProbe
      */
 
-    /**
-     *noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
-     */
-    static constexpr int noutputs = ParticleVal::nattribs;
+    //! noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
+    static constexpr int noutputs = FieldProbePIdx::nattribs;
 
-    /**
-     * this boolean is used to disqualify out of bounds particles
-     */
+    //! this boolean is used to disqualify out of bounds particles
     bool m_probe_in_domain;
     bool m_probe_in_domain_lev_0 = false;
 
-    /**
-    * initializes particle container m_probe where particles will be stored
-    */
+    //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;
 
 private:
@@ -69,8 +64,8 @@ private:
     int dimension;
     int resolution;
 
-    //! for field_probe_integrate = 0, will not integrate values
-    int field_probe_integrate;
+    //! if  true, integrate values over time instead of probing instantaneous values
+    bool m_field_probe_integrate = false;
     int interp_order = 1;
     bool raw_fields = false;
 

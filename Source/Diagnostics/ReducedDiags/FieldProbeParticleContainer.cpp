@@ -60,15 +60,23 @@
 using namespace amrex;
 
 FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
-    :ParticleContainer<0,0,ParticleVal::nattribs>(amr_core->GetParGDB())
+    : ParticleContainer<0, 0, FieldProbePIdx::nattribs>(amr_core->GetParGDB())
 {
     SetParticleSize();
 }
 
 void
-FieldProbeParticleContainer::AddNParticles (int /*lev*/,
-                                            int np, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z)
+FieldProbeParticleContainer::AddNParticles (int lev,
+                                            amrex::Vector<amrex::ParticleReal> const & x,
+                                            amrex::Vector<amrex::ParticleReal> const & y,
+                                            amrex::Vector<amrex::ParticleReal> const & z)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
+    AMREX_ALWAYS_ASSERT(x.size() == y.size());
+    AMREX_ALWAYS_ASSERT(x.size() == z.size());
+
+    // number of particles to add
+    int const np = x.size();
 
     // have to resize here, not in the constructor because grids have not
     // been built when constructor was called.
@@ -84,10 +92,9 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
      */
 
     using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
-                        amrex::PinnedArenaAllocator>;
+                                    amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
-
 
     for (int i = 0; i < np; i++)
     {
@@ -104,20 +111,20 @@ FieldProbeParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = 0;
         p.pos(2) = z[i];
 #endif
-        //write position, cpu id, and particle id to particle
+        // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);
     }
 
-    //write Real attributes (SoA) to particle initialized zero
+    // write Real attributes (SoA) to particle initialized zero
     DefineAndReturnParticleTile(0, 0, 0);
 
-    pinned_tile.push_back_real(ParticleVal::Ex, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Ey, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Ez, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Bx, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::By, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Bz, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::S, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Ex, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Ey, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Ez, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Bx, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::By, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Bz, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::S, np, 0.0);
 
     /*
      * Redistributes particles to their appropriate tiles if the box
