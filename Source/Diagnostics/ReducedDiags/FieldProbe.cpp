@@ -153,13 +153,20 @@ FieldProbe::FieldProbe (std::string rd_name)
 
 void FieldProbe::InitData()
 {
-
     //create 1D array for X, Y, and Z of particles
-    amrex::Vector<amrex::ParticleReal> xpos(1, x_probe);
-    amrex::Vector<amrex::ParticleReal> ypos(1, y_probe);
-    amrex::Vector<amrex::ParticleReal> zpos(1, z_probe);
+    amrex::Vector<amrex::ParticleReal> xpos;
+    amrex::Vector<amrex::ParticleReal> ypos;
+    amrex::Vector<amrex::ParticleReal> zpos;
 
-    //add np partciles on lev 0 to m_probe
+    // for now, only one MPI rank adds a probe particle
+    if (ParallelDescriptor::IOProcessor())
+    {
+        xpos.push_back(x_probe);
+        ypos.push_back(y_probe);
+        zpos.push_back(z_probe);
+    }
+
+    // add np particles on lev 0 to m_probe
     m_probe.AddNParticles(0, xpos, ypos, zpos);
 }
 // function that computes field values at probe position
