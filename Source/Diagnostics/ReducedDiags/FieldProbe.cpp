@@ -171,9 +171,6 @@ void FieldProbe::ComputeDiags (int step)
 
     const auto nLevel = warpx.finestLevel() + 1;
 
-    // vector to store the field values
-    amrex::Vector<amrex::Real> fp_values(noutputs, 0);
-
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
@@ -383,14 +380,14 @@ void FieldProbe::ComputeDiags (int step)
         {
             if (amrex::ParallelDescriptor::MyProc() == probe_proc)
             {
-                amrex::ParallelDescriptor::Send(fp_values.dataPtr(), noutputs,
+                amrex::ParallelDescriptor::Send(m_data.data(), noutputs,
                                 amrex::ParallelDescriptor::IOProcessorNumber(),
                                 0);
             }
             if (amrex::ParallelDescriptor::MyProc()
             == amrex::ParallelDescriptor::IOProcessorNumber())
             {
-                amrex::ParallelDescriptor::Recv(fp_values.dataPtr(), noutputs, probe_proc, 0);
+                amrex::ParallelDescriptor::Recv(m_data.data(), noutputs, probe_proc, 0);
             }
         }
     }// end loop over refinement levels
