@@ -272,6 +272,7 @@ void FieldProbe::ComputeDiags (int step)
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 const int temp_modes = WarpX::n_rz_azimuthal_modes;
                 const int temp_interp_order = interp_order;
+                const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
 
                 long const np = pti.numParticles();
@@ -316,12 +317,12 @@ void FieldProbe::ComputeDiags (int step)
                     else
                     {
                         // Either save the interpolated fields or the raw fields depending on the raw_fields flag
-                        part_Ex[ip] = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Exp; //remember to add lorentz transform
-                        part_Ey[ip] = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Eyp; //remember to add lorentz transform
-                        part_Ez[ip] = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ezp; //remember to add lorentz transform
-                        part_Bx[ip] = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bxp; //remember to add lorentz transform
-                        part_By[ip] = raw_fields ? arrBy(i_probe, j_probe, k_probe) : Byp; //remember to add lorentz transform
-                        part_Bz[ip] = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bzp; //remember to add lorentz transform
+                        part_Ex[ip] = temp_raw_fields ? arrEx(i_probe, j_probe, k_probe) : Exp; //remember to add lorentz transform
+                        part_Ey[ip] = temp_raw_fields ? arrEy(i_probe, j_probe, k_probe) : Eyp; //remember to add lorentz transform
+                        part_Ez[ip] = temp_raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ezp; //remember to add lorentz transform
+                        part_Bx[ip] = temp_raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bxp; //remember to add lorentz transform
+                        part_By[ip] = temp_raw_fields ? arrBy(i_probe, j_probe, k_probe) : Byp; //remember to add lorentz transform
+                        part_Bz[ip] = temp_raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bzp; //remember to add lorentz transform
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
