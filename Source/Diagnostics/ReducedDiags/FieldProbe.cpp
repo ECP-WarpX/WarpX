@@ -187,9 +187,19 @@ void FieldProbe::InitData()
     if (dimension == 0)
     {
         //create 1D array for X, Y, and Z of particles
-        amrex::Vector<amrex::ParticleReal> xpos(1, x_probe);
-        amrex::Vector<amrex::ParticleReal> ypos(1, y_probe);
-        amrex::Vector<amrex::ParticleReal> zpos(1, z_probe);
+        amrex::Vector<amrex::ParticleReal> xpos;
+        amrex::Vector<amrex::ParticleReal> ypos;
+        amrex::Vector<amrex::ParticleReal> zpos;
+
+        // for now, only one MPI rank adds a probe particle
+        if (ParallelDescriptor::IOProcessor())
+        {
+            xpos.push_back(x_probe);
+            ypos.push_back(y_probe);
+            zpos.push_back(z_probe);
+        }
+
+        // add np particles on lev 0 to m_probe
         m_probe.AddNParticles(0, xpos, ypos, zpos);
     }
     else
@@ -211,6 +221,32 @@ std::cout << "xpos size " << xpos.size() << "\n";
         m_probe.AddNParticles(0, xpos, ypos, zpos);
     }
 }
+
+bool FieldProbe::ProbeInDomain () const
+{
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+    int const lev = 0;
+    const amrex::Geometry& gm = warpx.Geom(lev);
+    const auto prob_lo = gm.ProbLo();
+    const auto prob_hi = gm.ProbHi();
+
+    /*
+     * Determine if probe exists within simulation boundaries. During 2D simulations,
+     * y values will be set to 0 making it unnecessary to check. Generally, the second
+     * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
+     * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
+     */
+#if (AMREX_SPACEDIM == 2)
+    return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
+           z_probe >= prob_lo[1] && z_probe < prob_hi[1];
+#else
+    return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
+           y_probe >= prob_lo[1] && y_probe < prob_hi[1] &&
+           z_probe >= prob_lo[2] && z_probe < prob_hi[2];
+#endif
+}
+
 void FieldProbe::ComputeDiags (int step)
 {
     // Judge if the diags should be done
@@ -230,7 +266,6 @@ void FieldProbe::ComputeDiags (int step)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
-        const auto prob_hi = gm.ProbHi();
 
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
@@ -261,30 +296,7 @@ void FieldProbe::ComputeDiags (int step)
             const auto getPosition = GetParticlePosition(pti);
             long const np = pti.numParticles();
 
-            /*
-             * Determine if probe exists within simulation boundaries. During 2D simulations,
-             * y values will be set to 0 making it unnecessary to check. Generally, the second
-             * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
-             * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
-             */
-#if (AMREX_SPACEDIM == 2)
-            bool first_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                                         z_probe >= prob_lo[1] and z_probe < prob_hi[1];
-            bool second_probe_in_domain = x1_probe >= prob_lo[0] and x1_probe < prob_hi[0] and
-                                          z1_probe >= prob_lo[1] and z1_probe < prob_hi[1];
-#else
-            bool first_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                                         y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
-                                         z_probe >= prob_lo[2] and z_probe < prob_hi[2];
-            bool second_probe_in_domain = x1_probe >= prob_lo[0] and x1_probe < prob_hi[0] and
-                                          y1_probe >= prob_lo[1] and y1_probe < prob_hi[1] and
-                                          z1_probe >= prob_lo[2] and z1_probe < prob_hi[2];
-#endif
-            m_probe_in_domain = first_probe_in_domain and second_probe_in_domain;
-
-            if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
-
-            if( m_probe_in_domain )
+            if( ProbeInDomain() )
             {
                 const auto cell_size = gm.CellSizeArray();
                 const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
@@ -396,27 +408,32 @@ void FieldProbe::ComputeDiags (int step)
                 });// ParallelFor Close
 //std::cout << "particle 4 Ex " << part_Ex[3] << "\n";
 std::cout << "np = " << np << "\n";
-                if (!m_intervals.contains(step+1)) { return; }
-                for (auto ip=0; ip < np; ip++) 
+                // this check is here because for m_field_probe_integrate == True, we always compute
+                // but we only write when we truly are in an output interval step
+                if (m_intervals.contains(step+1))
                 {
-                    amrex::ParticleReal xp, yp, zp;
-                    getPosition(ip, xp, yp, zp);
-                    // Fill output array
-                    m_data_vector[ip][0 * noutputs + 0] = ip;
-                    m_data_vector[ip][0 * noutputs + 1] = xp;
-                    m_data_vector[ip][0 * noutputs + 2] = yp;
-                    m_data_vector[ip][0 * noutputs + 3] = zp;
-                    m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ex + 4] = part_Ex[ip];
-                    m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ey + 4] = part_Ey[ip];
-                    m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ez + 4] = part_Ez[ip];
-                    m_data_vector[ip][0 * noutputs + FieldProbePIdx::Bx + 4] = part_Bx[ip];
-                    m_data_vector[ip][0 * noutputs + FieldProbePIdx::By + 4] = part_By[ip];
-                    m_data_vector[ip][0 * noutputs + FieldProbePIdx::Bz + 4] = part_Bz[ip];
-                    m_data_vector[ip][0 * noutputs + FieldProbePIdx::S + 4] = part_S[ip];
-                }
-                probe_proc = amrex::ParallelDescriptor::MyProc();
+                    for (auto ip=0; ip < np; ip++) 
+                    {
+                        amrex::ParticleReal xp, yp, zp;
+                        getPosition(ip, xp, yp, zp);
+                        // Fill output array
+                        m_data_vector[ip][0 * noutputs + 0] = ip;
+                        m_data_vector[ip][0 * noutputs + 1] = xp;
+                        m_data_vector[ip][0 * noutputs + 2] = yp;
+                        m_data_vector[ip][0 * noutputs + 3] = zp;
+                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ex + 4] = part_Ex[ip];
+                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ey + 4] = part_Ey[ip];
+                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ez + 4] = part_Ez[ip];
+                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Bx + 4] = part_Bx[ip];
+                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::By + 4] = part_By[ip];
+                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Bz + 4] = part_Bz[ip];
+                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::S + 4] = part_S[ip];
+                    }
+                    if (np > 0)
+                        probe_proc = amrex::ParallelDescriptor::MyProc();
                 /* m_data_vector now contains up-to-date values for:
                  *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
+                }
             }
 
         } // end particle iterator loop
@@ -455,37 +472,40 @@ std::cout << "np = " << np << "\n";
 
 void FieldProbe::WriteToFile (int step) const
 {
-    if(m_probe_in_domain_lev_0)
+    if (ProbeInDomain())
     {
-        // open file
-        std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-            std::ofstream::out | std::ofstream::app};
-
-        // write step
-        ofs << step+1;
-
-        ofs << m_sep;
-
-        // set precision
-        ofs << std::fixed << std::setprecision(14) << std::scientific;
-
-        // write time
-        ofs << WarpX::GetInstance().gett_new(0);
-
-         // loop over all particles
-        long const np = resolution;
-        for (int ip = 0; ip < np; ip++)
+        if (ParallelDescriptor::IOProcessor())
         {
-            // loop over data size and write
-            for (int i = 0; i < (FieldProbePIdx::nattribs + 4); ++i)
+            // open file
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+                std::ofstream::out | std::ofstream::app};
+
+            // write step
+            ofs << step+1;
+
+            ofs << m_sep;
+
+            // set precision
+            ofs << std::fixed << std::setprecision(14) << std::scientific;
+
+            // write time
+            ofs << WarpX::GetInstance().gett_new(0);
+
+            // loop over all particles
+            long const np = resolution;
+            for (int ip = 0; ip < np; ip++)
             {
-                ofs << m_sep;
-                ofs << m_data_vector[ip][i];
-            } // end loop over data size
-            // end line
-            ofs << std::endl;
+                // loop over data size and write
+                for (int i = 0; i < (FieldProbePIdx::nattribs + 4); ++i)
+                {
+                    ofs << m_sep;
+                    ofs << m_data_vector[ip][i];
+                } // end loop over data size
+                // end line
+                ofs << std::endl;
+            }
+            // close file
+            ofs.close();
         }
-        // close file
-        ofs.close();
-}
+    }
 }

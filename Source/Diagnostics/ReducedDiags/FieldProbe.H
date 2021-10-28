@@ -52,13 +52,6 @@ public:
     //! noutputs is 11 (i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, S)
     static constexpr int noutputs = FieldProbePIdx::nattribs + 4;
 
-    //! this boolean is used to disqualify out of bounds particles
-    bool m_probe_in_domain;
-    bool m_probe_in_domain_lev_0 = false;
-
-    //! this is the particle container in which probe particles are stored
-    FieldProbeParticleContainer m_probe;
-
 private:
     amrex::Real x_probe, y_probe, z_probe;
     amrex::Real x1_probe, y1_probe, z1_probe;
@@ -66,8 +59,11 @@ private:
     int resolution;
     std::vector<std::vector<amrex::Real>> m_data_vector;
 
+    //! this is the particle container in which probe particles are stored
+    FieldProbeParticleContainer m_probe;
+
     //! if  true, integrate values over time instead of probing instantaneous values
-    bool m_field_probe_integrate = false;
+    bool m_field_probe_integrate;
     int interp_order = 1;
     bool raw_fields = false;
 
@@ -76,6 +72,9 @@ private:
      */
     virtual void WriteToFile (int step) const override;
 
+    /** Check if the probe is in the simulation domain boundary
+     */
+    bool ProbeInDomain () const;
 };
 
 #endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
