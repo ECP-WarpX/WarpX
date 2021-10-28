@@ -20,7 +20,7 @@
  * values that are being stored as SoA data. Nattribs
  * is enumerated to give the number of attributes stored.
  */
-struct FieldProbePIdx 
+struct FieldProbePIdx
 {
     enum
     {
