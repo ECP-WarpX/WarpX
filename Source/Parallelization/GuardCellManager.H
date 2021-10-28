@@ -24,11 +24,12 @@ public:
     /**
      * \brief Initialize number of guard cells depending on the options used.
      *
+     * \param dt time step
+     * \param dx cell spacing
      * \param do_subcycling bool, whether to use subcycling
      * \param do_fdtd_nci_corr bool, whether to use Godfrey NCI corrector
      * \param do_nodal bool, whether the field solver is nodal
      * \param do_moving_window bool, whether to use moving window
-     * \param aux_is_nodal bool, true if the aux grid is nodal
      * \param moving_window_dir direction of moving window
      * \param nox order of current deposition
      * \param nox_fft order of PSATD in x direction
@@ -37,6 +38,13 @@ public:
      * \param nci_corr_stencil stencil of NCI corrector
      * \param maxwell_solver_id if of Maxwell solver
      * \param max_level max level of the simulation
+     * \param v_galilean ...?
+     * \param v_comoving ...?
+     * \param safe_guard_cells ...?
+     * \param do_electrostatic ...?
+     * \param do_multi_J ...?
+     * \param fft_do_time_averaging ...?
+     * \param ref_ratios mesh refinement ratios between mesh-refinement levels
      */
     void Init(
         const amrex::Real dt,

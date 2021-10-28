@@ -85,6 +85,17 @@ public:
     * lookup tables. Therefore, it should be rather lightweight to copy.
     *
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
+    * @param[in] a_pti ...?
+    * @param[in] lev   the mesh-refinement level
+    * @param[in] ngE   ...?
+    * @param[in] exfab ...?
+    * @param[in] eyfab ...?
+    * @param[in] ezfab ...?
+    * @param[in] bxfab ...?
+    * @param[in] byfab ...?
+    * @param[in] bzfab ...?
+    * @param[in] v_galilean ...?
+    * @param[in] a_offset ...?
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
                                 const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
