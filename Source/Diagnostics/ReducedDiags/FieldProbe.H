@@ -48,7 +48,7 @@ public:
      */
 
     //! noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
-    static constexpr int noutputs = ParticleVal::nattribs;
+    static constexpr int noutputs = FieldProbePIdx::nattribs;
 
     //! this boolean is used to disqualify out of bounds particles
     bool m_probe_in_domain;

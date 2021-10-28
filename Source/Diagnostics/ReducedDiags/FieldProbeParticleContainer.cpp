@@ -60,7 +60,7 @@
 using namespace amrex;
 
 FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
-    :ParticleContainer<0,0,ParticleVal::nattribs>(amr_core->GetParGDB())
+    :ParticleContainer<0,0,FieldProbePIdx::nattribs>(amr_core->GetParGDB())
 {
     SetParticleSize();
 }
@@ -118,13 +118,13 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     // write Real attributes (SoA) to particle initialized zero
     DefineAndReturnParticleTile(0, 0, 0);
 
-    pinned_tile.push_back_real(ParticleVal::Ex, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Ey, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Ez, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Bx, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::By, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::Bz, np, 0.0);
-    pinned_tile.push_back_real(ParticleVal::S, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Ex, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Ey, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Ez, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Bx, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::By, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::Bz, np, 0.0);
+    pinned_tile.push_back_real(FieldProbePIdx::S, np, 0.0);
 
     /*
      * Redistributes particles to their appropriate tiles if the box

@@ -20,7 +20,7 @@
  * values that are being stored as SoA data. Nattribs
  * is enumerated to give the number of attributes stored.
  */
-struct ParticleVal
+struct FieldProbePIdx 
 {
     enum
     {
@@ -37,14 +37,14 @@ struct ParticleVal
  * nattribs tells the particle container to allot 7 SOA values.
  */
 class FieldProbeParticleContainer
-    : public amrex::ParticleContainer<0,0,ParticleVal::nattribs>
+    : public amrex::ParticleContainer<0,0,FieldProbePIdx::nattribs>
 {
 public:
     FieldProbeParticleContainer (amrex::AmrCore* amr_core);
     virtual ~FieldProbeParticleContainer() {}
 
     //! amrex iterator for our number of attributes
-    using iterator = amrex::ParIter<0,0,ParticleVal::nattribs,0>;
+    using iterator = amrex::ParIter<0,0,FieldProbePIdx::nattribs,0>;
 
     //! similar to WarpXParticleContainer::AddNParticles but does not include u(x,y,z)
     void AddNParticles (int lev, amrex::Vector<amrex::ParticleReal> const & x, amrex::Vector<amrex::ParticleReal> const & y, amrex::Vector<amrex::ParticleReal> const & z);
