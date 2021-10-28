@@ -341,7 +341,7 @@ LaserParticleContainer::InitData (int lev)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt))*m_u_X[0] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[0],
                  m_position[1] + (S_X*(Real(i)+0.5_rt))*m_u_X[1] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[1],
                  m_position[2] + (S_X*(Real(i)+0.5_rt))*m_u_X[2] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[2] };
-#elif (AMREX_SPACEDIM == 2) 
+#elif (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(j);
 #   if (defined WARPX_DIM_RZ)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt)),
@@ -366,7 +366,7 @@ LaserParticleContainer::InitData (int lev)
 #if (AMREX_SPACEDIM == 3)
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[1]*(pos[1]-m_position[1])+m_u_X[2]*(pos[2]-m_position[2]),
                 m_u_Y[0]*(pos[0]-m_position[0])+m_u_Y[1]*(pos[1]-m_position[1])+m_u_Y[2]*(pos[2]-m_position[2])};
-#elif (AMREX_SPACEDIM == 2) 
+#elif (AMREX_SPACEDIM == 2)
 #   if (defined WARPX_DIM_RZ)
         return {pos[0]-m_position[0], 0.0_rt};
 #   else
@@ -698,14 +698,14 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     m_weight = PhysConst::ep0 / m_mobility;
     // Multiply by particle spacing
 #if (AMREX_SPACEDIM == 3)
-    m_weight *= Sx *Sy; 
+    m_weight *= Sx *Sy;
 #elif (AMREX_SPACEDIM == 2)
-    m_weight *= Sx; 
+    m_weight *= Sx;
     amrex::ignore_unused(Sy);
 #else
     amrex::ignore_unused(Sx,Sy);
 #endif
-    
+
     // When running in the boosted-frame, the input parameters (and in particular
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.

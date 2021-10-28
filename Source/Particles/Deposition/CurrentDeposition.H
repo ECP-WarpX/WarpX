@@ -1071,6 +1071,6 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         amrex::The_Managed_Arena()->free(cost_real);
     }
 #   endif
-#endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z) 
+#endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
 }
 #endif // CURRENTDEPOSITION_H_
