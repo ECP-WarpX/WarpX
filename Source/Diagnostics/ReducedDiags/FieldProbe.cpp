@@ -60,13 +60,13 @@ FieldProbe::FieldProbe (std::string rd_name)
      * For the case of a line detector:
      *     Define x, y, and z of end of line point 1
      *     Define x, y, and z of end of line point 2
-     *     Define resoliton to determine number of particles
+     *     Define resolution to determine number of particles
      *     Define whether ot not to integrate fields
      * For the case of a plane detector:
      *     Define a vector normal to the detector plane
      *     Define a vector in the "up" direction of the plane
      *     Define the size of the plane (width of half square)
-     *     Define resoliton to determine number of particles
+     *     Define resolution to determine number of particles
      *     Define whether ot not to integrate fields
      */
     amrex::ParmParse pp_rd_name(rd_name);
@@ -78,9 +78,8 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_rd_name.query("interp_order", interp_order);
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
-                                     "Field probe interp_order should be lower or equal than algo.particle_shape");
+                                     "Field probe interp_order should be less than or equal to algo.particle_shape");
     // resize data array
-
     m_data.resize(noutputs*nLevel, 0.0_rt);
 
     if (ParallelDescriptor::IOProcessor())
