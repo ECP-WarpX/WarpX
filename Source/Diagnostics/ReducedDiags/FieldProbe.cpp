@@ -171,6 +171,31 @@ void FieldProbe::InitData()
 }
 // function that computes field values at probe position
 
+bool FieldProbe::ProbeInDomain () const
+{
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+    int const lev = 0;
+    const amrex::Geometry& gm = warpx.Geom(lev);
+    const auto prob_lo = gm.ProbLo();
+    const auto prob_hi = gm.ProbHi();
+
+    /*
+     * Determine if probe exists within simulation boundaries. During 2D simulations,
+     * y values will be set to 0 making it unnecessary to check. Generally, the second
+     * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
+     * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
+     */
+#if (AMREX_SPACEDIM == 2)
+    return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
+           z_probe >= prob_lo[1] && z_probe < prob_hi[1];
+#else
+    return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
+           y_probe >= prob_lo[1] && y_probe < prob_hi[1] &&
+           z_probe >= prob_lo[2] && z_probe < prob_hi[2];
+#endif
+}
+
 void FieldProbe::ComputeDiags (int step)
 {
     // Judge if the diags should be done
@@ -190,7 +215,6 @@ void FieldProbe::ComputeDiags (int step)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
-        const auto prob_hi = gm.ProbHi();
 
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
@@ -220,24 +244,7 @@ void FieldProbe::ComputeDiags (int step)
         {
             const auto getPosition = GetParticlePosition(pti);
 
-            /*
-             * Determine if probe exists within simulation boundaries. During 2D simulations,
-             * y values will be set to 0 making it unnecessary to check. Generally, the second
-             * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
-             * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
-             */
-#if (AMREX_SPACEDIM == 2)
-            m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                                z_probe >= prob_lo[1] and z_probe < prob_hi[1];
-#else
-            m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                                y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
-                                z_probe >= prob_lo[2] and z_probe < prob_hi[2];
-#endif
-
-            if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
-
-            if( m_probe_in_domain )
+            if( ProbeInDomain() )
             {
                 const auto cell_size = gm.CellSizeArray();
                 const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
@@ -400,9 +407,9 @@ void FieldProbe::ComputeDiags (int step)
 
 void FieldProbe::WriteToFile (int step) const
 {
-    if(m_probe_in_domain_lev_0)
+    if (ProbeInDomain())
     {
-        if (amrex::ParallelDescriptor::MyProc() == amrex::ParallelDescriptor::IOProcessorNumber())
+        if (ParallelDescriptor::IOProcessor())
         {
             ReducedDiags::WriteToFile (step);
         }
