@@ -253,9 +253,9 @@ extern "C"
       ConvertLabParamsToBoost();
     }
 
-    void warpx_ReadBCParams()
+    void warpx_OverwriteAMReXperiodic()
     {
-      ReadBCParams();
+      OverwriteAMReXperiodic();
     }
 
     void warpx_CheckGriddingForRZSpectral()
