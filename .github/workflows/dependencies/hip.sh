@@ -31,9 +31,18 @@ sudo apt-get install -y --no-install-recommends \
     ninja-build     \
     openmpi-bin     \
     rocm-dev        \
+    rocfft          \
+    rocprim         \
+    rocrand
+
+# add this to the above command once ROCm 4.5 is properly rolled out
+set +e
+sudo apt-get install -y --no-install-recommends \
     rocfft-devel    \
     rocprim-devel   \
     rocrand-devel
+
+set -e
 
 # activate
 #
