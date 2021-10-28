@@ -96,6 +96,17 @@ public:
     * @param[in] opt_depth_functor functor to re-initialize the optical depth of the source particles
     * @param[in] opt_depth_runtime_comp index of the optical depth component of the source species
     * @param[in] emission_functor functor to generate photons and update momentum of the source particles
+    * @param[in] a_pti ...?
+    * @param[in] lev   the mesh-refinement level
+    * @param[in] ngE   ...?
+    * @param[in] exfab ...?
+    * @param[in] eyfab ...?
+    * @param[in] ezfab ...?
+    * @param[in] bxfab ...?
+    * @param[in] byfab ...?
+    * @param[in] bzfab ...?
+    * @param[in] v_galilean ...?
+    * @param[in] a_offset ...?
     */
     PhotonEmissionTransformFunc (
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,

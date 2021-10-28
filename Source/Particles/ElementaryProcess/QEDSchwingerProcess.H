@@ -28,6 +28,8 @@ struct SchwingerFilterFunc
      * @param[in] i index of the cell in the first direction.
      * @param[in] j index of the cell in the second direction.
      * @param[in] k index of the cell in the third direction.
+     * @param[in] engine the random number state and factory
+     * @return ...?
      */
     template <typename FABs>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

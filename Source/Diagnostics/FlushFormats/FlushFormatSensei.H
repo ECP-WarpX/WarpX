@@ -38,9 +38,10 @@ public:
     FlushFormatSensei(const FlushFormatSensei &) = delete;
     void operator=(const FlushFormatSensei &) = delete;
 
-    /** \breif Construct.
-     * \parm[in] amr_mesh an AmrMesh instance
-     * \parm[in] diag_name ParmParse scope string.
+    /** Construct.
+     *
+     * \param[in] amr_mesh an AmrMesh instance
+     * \param[in] diag_name ParmParse scope string.
      */
     FlushFormatSensei (amrex::AmrMesh *amr_mesh, std::string diag_name);
 
