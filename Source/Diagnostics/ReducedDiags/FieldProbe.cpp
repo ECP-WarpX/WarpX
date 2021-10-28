@@ -97,6 +97,9 @@ FieldProbe::FieldProbe (std::string rd_name)
             ofs << "[" << c++ << "]step()";
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
+            // maps FieldProbe observables to units
+            std::unordered_map< int, std::string > u_map;
+
             if (m_field_probe_integrate)
             {
                 u_map =
