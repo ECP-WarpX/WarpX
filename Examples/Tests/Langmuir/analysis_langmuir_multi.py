@@ -165,7 +165,7 @@ if div_cleaning:
     x = F_new - F_old
     y = (divE - rho/epsilon_0) * 2 * dt
     error_rel = np.amax(np.abs(x - y)) / np.amax(np.abs(y))
-    tolerance = 1e-1
+    tolerance = 1e-2
     print("Check div(E) cleaning:")
     print("error_rel = {}".format(error_rel))
     print("tolerance = {}".format(tolerance))
