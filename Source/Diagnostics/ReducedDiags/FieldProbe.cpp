@@ -394,7 +394,7 @@ void FieldProbe::WriteToFile (int step) const
 {
     if(m_probe_in_domain_lev_0)
     {
-        if (amrex::ParallelDescriptor::MyProc() == amrex::ParallelDescriptor::IOProcessorNumber()
+        if (amrex::ParallelDescriptor::MyProc() == amrex::ParallelDescriptor::IOProcessorNumber())
         {
             ReducedDiags::WriteToFile (step);
         }
