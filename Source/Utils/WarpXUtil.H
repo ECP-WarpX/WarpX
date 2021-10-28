@@ -197,6 +197,108 @@ void getCellCoordinates (int i, int j, int k,
 
 }
 
+/**
+* \brief Do a safe cast of a real to an int
+* This ensures that the float value is within the range of ints and if not,
+* raises an exception.
+*
+* \param x Real value to cast
+* \param real_name String, the name of the variable being casted to use in the error message
+*/
+int
+safeCastToInt(amrex::Real x, const std::string& real_name);
+
+/**
+* \brief Initialize an amrex::Parser object from a string containing a math expression
+*
+* \param parse_function String to read to initialize the parser.
+* \param varnames A list of predefined independent variables
+*/
+amrex::Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames);
+
+/** Parse a string and return as a real
+ *
+ * In case the string cannot be interpreted as Real,
+ * this function ... <throws an exception? aborts with error message?>
+ *
+ * \param str The string to be parsed
+ * \return representation as real
+ */
+double parseStringtoReal(std::string str);
+
+/** Parse a string and return an int
+ *
+ * In case the string cannot be interpreted as Real,
+ * this function ... <throws an exception? aborts with error message?>
+  *
+ * \param str The string to be parsed
+ * \param name For integers, the name, to be used in error messages
+ * \return rounded closest integer
+ */
+int parseStringtoInt(std::string str, std::string name);
+
+template <int N>
+amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
+{
+    if (parser) {
+        return parser->compile<N>();
+    } else {
+        return amrex::ParserExecutor<N>{};
+    }
+}
+
+/**
+ * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::query reads a name and a value from the input file. This function does the
+ * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored, either a scalar or vector
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
+ * amrex::ParmParse::FIRST for starting with the first input value)
+ * \param[in] num_val number of input values to use (optional with arrays, default is
+ * amrex::ParmParse::LAST for reading until the last input value)
+ */
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                        const int start_ix = amrex::ParmParse::FIRST,
+                        const int num_val = amrex::ParmParse::LAST);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                        const int start_ix = amrex::ParmParse::FIRST,
+                        const int num_val = amrex::ParmParse::LAST);
+
+/**
+ * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::get reads a name and a value from the input file. This function does the
+ * same, and applies the Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
+ * amrex::ParmParse::FIRST for starting with the first input value)
+ * \param[in] num_val number of input values to use (optional with arrays, default is
+ * amrex::ParmParse::LAST for reading until the last input value)
+ */
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
+                       const int start_ix = amrex::ParmParse::FIRST,
+                       const int num_val = amrex::ParmParse::LAST);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
+                       const int start_ix = amrex::ParmParse::FIRST,
+                       const int num_val = amrex::ParmParse::LAST);
+
 namespace WarpXUtilMsg{
 
 /** \brief If is_expression_true is false, this function prints msg and calls amrex::abort()
@@ -262,179 +364,6 @@ namespace WarpXUtilStr
         return cont;
     }
 
-}
-
-/**
-* \brief Do a safe cast of a real to an int or a long
-* This ensures that the float value is within the range of ints and if not,
-* raises an exception.
-*
-* \tparam int_type the integer type that we cast into, either int or long (int by default).
-* \param x Real value to cast
-* \param real_name String, the name of the variable being casted to use in the error message
-*/
-template <typename int_type = int>
-int_type safeCastToInt (amrex::Real x, const std::string& real_name)
-{
-    int_type result = 0;
-    bool error_detected = false;
-    std::string assert_msg;
-    // (2.0*(numeric_limits<int_type>::max()/2+1)) converts numeric_limits<int_type>::max()+1 to a
-    // real ensuring accuracy to all digits/
-    // For int_type = int, this accepts x = 2**31-1 but rejects 2**31.
-    if (x < (2.0*(std::numeric_limits<int_type>::max()/2+1))) {
-        if (std::ceil(x) >= std::numeric_limits<int_type>::min()) {
-            result = static_cast<int_type>(x);
-        } else {
-            error_detected = true;
-            assert_msg = "Error: Negative overflow detected when casting " + real_name + " = " +
-                         std::to_string(x) + " to int";
-        }
-    } else if (x > 0) {
-        error_detected = true;
-        assert_msg =  "Error: Overflow detected when casting " + real_name + " = " +
-                      std::to_string(x) + " to int";
-    } else {
-        error_detected = true;
-        assert_msg =  "Error: NaN detected when casting " + real_name + " to int";
-    }
-    WarpXUtilMsg::AlwaysAssert(!error_detected, assert_msg);
-    return result;
-}
-
-/**
-* \brief Initialize an amrex::Parser object from a string containing a math expression
-*
-* \param parse_function String to read to initialize the parser.
-* \param varnames A list of predefined independent variables
-*/
-amrex::Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames);
-
-/** Parse a string and return as a real
- *
- * In case the string cannot be interpreted as Real,
- * this function ... <throws an exception? aborts with error message?>
- *
- * \param str The string to be parsed
- * \return representation as real
- */
-double parseStringtoReal(std::string str);
-
-/** Parse a string and return an int
- *
- * In case the string cannot be interpreted as Real,
- * this function ... <throws an exception? aborts with error message?>
-  *
- * \param str The string to be parsed
- * \param name For integers, the name, to be used in error messages
- * \return rounded closest integer
- */
-int parseStringtoInt(std::string str, std::string name);
-
-template <int N>
-amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
-{
-    if (parser) {
-        return parser->compile<N>();
-    } else {
-        return amrex::ParserExecutor<N>{};
-    }
-}
-
-/**
- * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
- *
- * amrex::ParmParse::query reads a name and a value from the input file. This function does the
- * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
- * a math expression (including user-defined constants).
- * Works for amrex::Real numbers and integers.
- *
- * \param[in] a_pp amrex::ParmParse object
- * \param[in] str name of the parameter to read
- * \param[out] val where the value queried and parsed is stored, either a scalar or vector
- * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
- * amrex::ParmParse::FIRST for starting with the first input value)
- * \param[in] num_val number of input values to use (optional with arrays, default is
- * amrex::ParmParse::LAST for reading until the last input value)
- */
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
-int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                        const int start_ix = amrex::ParmParse::FIRST,
-                        const int num_val = amrex::ParmParse::LAST);
-
-// Integer verions are templated so that we can parse both int and long input parameters
-template <typename int_type>
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int_type& val)
-{
-    amrex::Real rval;
-    const int result = queryWithParser(a_pp, str, rval);
-    if (result) {
-        val = safeCastToInt(std::round(rval), str);
-    }
-    return result;
-}
-
-template <typename int_type>
-int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str,
-                        std::vector<int_type>& val,
-                        const int start_ix = amrex::ParmParse::FIRST,
-                        const int num_val = amrex::ParmParse::LAST)
-{
-    std::vector<amrex::Real> rval;
-    const int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
-    if (result) {
-        val.resize(rval.size());
-        for (unsigned long i = 0 ; i < val.size() ; i++) {
-            val[i] = safeCastToInt(std::round(rval[i]), str);
-        }
-    }
-    return result;
-}
-
-/**
- * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
- *
- * amrex::ParmParse::get reads a name and a value from the input file. This function does the
- * same, and applies the Parser to the value, so the user has the choice to specify a value or
- * a math expression (including user-defined constants).
- * Works for amrex::Real numbers and integers.
- *
- * \param[in] a_pp amrex::ParmParse object
- * \param[in] str name of the parameter to read
- * \param[out] val where the value queried and parsed is stored
- * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
- * amrex::ParmParse::FIRST for starting with the first input value)
- * \param[in] num_val number of input values to use (optional with arrays, default is
- * amrex::ParmParse::LAST for reading until the last input value)
- */
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                       const int start_ix = amrex::ParmParse::FIRST,
-                       const int num_val = amrex::ParmParse::LAST);
-
-// Integer verions are templated so that we can parse both int and long input parameters
-template <typename int_type>
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int_type& val)
-{
-    amrex::Real rval;
-    getWithParser(a_pp, str, rval);
-    val = safeCastToInt(std::round(rval), str);
-}
-
-template <typename int_type>
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str,
-                       std::vector<int_type>& val,
-                       const int start_ix = amrex::ParmParse::FIRST,
-                       const int num_val = amrex::ParmParse::LAST)
-{
-    std::vector<amrex::Real> rval;
-    getArrWithParser(a_pp, str, rval, start_ix, num_val);
-    val.resize(rval.size());
-    for (unsigned long i = 0 ; i < val.size() ; i++) {
-        val[i] = safeCastToInt(std::round(rval[i]), str);
-    }
 }
 
 #endif //WARPX_UTILS_H_

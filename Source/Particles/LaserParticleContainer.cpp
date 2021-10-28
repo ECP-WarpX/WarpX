@@ -113,7 +113,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         );
 
     pp_laser_name.query("do_continuous_injection", do_continuous_injection);
-    queryWithParser(pp_laser_name, "min_particles_per_mode", m_min_particles_per_mode);
+    pp_laser_name.query("min_particles_per_mode", m_min_particles_per_mode);
 
     if (m_e_max == amrex::Real(0.)){
         WarpX::GetInstance().RecordWarning("Laser",
