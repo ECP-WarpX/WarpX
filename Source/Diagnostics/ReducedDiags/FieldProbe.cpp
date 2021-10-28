@@ -318,59 +318,39 @@ void FieldProbe::ComputeDiags (int step)
 
                         // store values on particles
                         part_Ex[ip] += Exp * dt; //remember to add lorentz transform
-                        part_Ey[ip] += Eyp; //remember to add lorentz transform
-                        part_Ez[ip] += Ezp; //remember to add lorentz transform
-                        part_Bx[ip] += Bxp; //remember to add lorentz transform
-                        part_By[ip] += Byp; //remember to add lorentz transform
-                        part_Bz[ip] += Bzp; //remember to add lorentz transform
-                        part_S[ip] += S; //remember to add lorentz transform
+                        part_Ey[ip] += Eyp * dt; //remember to add lorentz transform
+                        part_Ez[ip] += Ezp * dt; //remember to add lorentz transform
+                        part_Bx[ip] += Bxp * dt; //remember to add lorentz transform
+                        part_By[ip] += Byp * dt; //remember to add lorentz transform
+                        part_Bz[ip] += Bzp * dt; //remember to add lorentz transform
+                        part_S[ip] += S * dt; //remember to add lorentz transform
                     }
                     else
                     {
                         // Either save the interpolated fields or the raw fields depending on the raw_fields flag
                         part_Ex[ip] = Exp; //remember to add lorentz transform
-                        part_Ey[ip] = temp_raw_fields ? arrEy(i_probe, j_probe, k_probe) : Eyp; //remember to add lorentz transform
-                        part_Ez[ip] = temp_raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ezp; //remember to add lorentz transform
-                        part_Bx[ip] = temp_raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bxp; //remember to add lorentz transform
-                        part_By[ip] = temp_raw_fields ? arrBy(i_probe, j_probe, k_probe) : Byp; //remember to add lorentz transform
-                        part_Bz[ip] = temp_raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bzp; //remember to add lorentz transform
+                        part_Ey[ip] = Eyp; //remember to add lorentz transform
+                        part_Ez[ip] = Ezp; //remember to add lorentz transform
+                        part_Bx[ip] = Bxp; //remember to add lorentz transform
+                        part_By[ip] = Byp; //remember to add lorentz transform
+                        part_Bz[ip] = Bzp; //remember to add lorentz transform
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
                 if (m_field_probe_integrate)
                 {
-                    amrex::Real const dt = WarpX::GetInstance().getdt(lev);
-                    if (m_intervals.contains(step+1))
-                    {
-                        amrex::Real time_ellapsed {m_iterated_steps * dt};
-                        for (int ip=0; ip < np; ip++)
-                        {
-                            // Fill output array
-                            // TODO replace with explicit copies later on to avoid managed memory on GPU
-                            m_data[0 * noutputs + FieldProbePIdx::Ex] = part_Ex[ip] * time_ellapsed;
-                            m_data[0 * noutputs + FieldProbePIdx::Ey] = part_Ey[ip] * time_ellapsed;
-                            m_data[0 * noutputs + FieldProbePIdx::Ez] = part_Ez[ip] * time_ellapsed;
-                            m_data[0 * noutputs + FieldProbePIdx::Bx] = part_Bx[ip] * time_ellapsed;
-                            m_data[0 * noutputs + FieldProbePIdx::By] = part_By[ip] * time_ellapsed;
-                            m_data[0 * noutputs + FieldProbePIdx::Bz] = part_Bz[ip] * time_ellapsed;
-                            m_data[0 * noutputs + FieldProbePIdx::S] = part_S[ip] * time_ellapsed;
-                        }
-                    }
-                    m_iterated_steps++;
+                    if (!m_intervals.contains(step+1)) {return}
                 }
-                else
+                for (int ip=0; ip < np; ip++)
                 {
-                    for (int ip=0; ip < np; ip++)
-                    {
-                        // Fill output array
-                        m_data[0 * noutputs + FieldProbePIdx::Ex] = part_Ex[ip];
-                        m_data[0 * noutputs + FieldProbePIdx::Ey] = part_Ey[ip];
-                        m_data[0 * noutputs + FieldProbePIdx::Ez] = part_Ez[ip];
-                        m_data[0 * noutputs + FieldProbePIdx::Bx] = part_Bx[ip];
-                        m_data[0 * noutputs + FieldProbePIdx::By] = part_By[ip];
-                        m_data[0 * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
-                        m_data[0 * noutputs + FieldProbePIdx::S] = part_S[ip];
-                    }
+                    // Fill output array
+                    m_data[0 * noutputs + FieldProbePIdx::Ex] = part_Ex[ip];
+                    m_data[0 * noutputs + FieldProbePIdx::Ey] = part_Ey[ip];
+                    m_data[0 * noutputs + FieldProbePIdx::Ez] = part_Ez[ip];
+                    m_data[0 * noutputs + FieldProbePIdx::Bx] = part_Bx[ip];
+                    m_data[0 * noutputs + FieldProbePIdx::By] = part_By[ip];
+                    m_data[0 * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
+                    m_data[0 * noutputs + FieldProbePIdx::S] = part_S[ip];
                 }
 
                 probe_proc = amrex::ParallelDescriptor::MyProc();
