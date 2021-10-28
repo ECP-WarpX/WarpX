@@ -372,14 +372,11 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
 
-    //std::cout << "WarpXEvolve:: Jy = " << current_fp[0][1]->max(0) << std::endl;
-
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
-    //std::cout << "WarpXEvolve:: After Sync Current Jy = " << current_fp[0][1]->max(0) << std::endl;
 
     // Apply current correction in Fourier space: for periodic single-box global FFTs
     // without guard cells, apply this after calling SyncCurrent

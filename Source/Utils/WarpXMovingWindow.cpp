@@ -67,7 +67,7 @@ WarpX::UpdatePlasmaInjectionPosition (Real a_dt)
             // In 1D, dir=0 corresponds to z
             // This needs to be converted in order to index `boost_direction`
             // which has 3 components, for 1D, 2D, and 3D simulations.
-            WarpX::boost_direction[2+dir] * PhysConst::c * a_dt; // 1D : Check with Remi
+            WarpX::boost_direction[2+dir] * PhysConst::c * a_dt;
 #endif
     }
 }

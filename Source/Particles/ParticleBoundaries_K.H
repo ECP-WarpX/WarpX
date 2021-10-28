@@ -84,7 +84,7 @@ namespace ApplyParticleBoundaries {
     void
     apply_boundaries (
 #ifndef WARPX_DIM_1D_Z
-		      amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
+              amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
 #endif
 #ifdef WARPX_DIM_3D
                       amrex::ParticleReal& y, amrex::Real ymin, amrex::Real ymax,

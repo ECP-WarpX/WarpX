@@ -624,7 +624,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int i=dil; i<=depos_order+1-diu; i++) {
                     sdxi += wqx*(sx_old[i] - sx_new[i])*0.5_rt*(sz_new[k] + sz_old[k]);
                     amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdxi);
-                //if(std::abs(sdxi) > 0.0)std::cout<< "2D Current Deposition : sdxi = "<< sdxi  << std::endl;
 #if (defined WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
@@ -643,7 +642,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                         one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                        +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
                     amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
-                //if(std::abs(sdyj) > 0.0)std::cout<< "2D Current Deposition : sdyj = "<< sdyj  << std::endl;
 #if (defined WARPX_DIM_RZ)
                     Complex xy_new = xy_new0;
                     Complex xy_mid = xy_mid0;
@@ -669,7 +667,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int k=dkl; k<=depos_order+1-dku; k++) {
                     sdzk += wqz*(sz_old[k] - sz_new[k])*0.5_rt*(sx_new[i] + sx_old[i]);
                     amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdzk);
-               //if(std::abs(sdzk) > 0.0) std::cout<< "2D Current Deposition : sdzk = "<< sdzk  << std::endl;
 #if (defined WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
@@ -682,31 +679,23 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
                 }
             }
-            //std::cout<< "2D Current Deposition : vy = " << vy << std::endl;
-#elif (defined WARPX_DIM_1D_Z) //PK -- Following block is a place holder. Understand Esirkepov current deposition derivation for 1D
+#elif (defined WARPX_DIM_1D_Z)
 
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 amrex::Real sdxi = 0._rt;
                 sdxi += wq*vx*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_new-1+k, 0, 0, 0), sdxi);
-                //std::cout<< "Current Deposition : sdxi = "<< sdxi  << std::endl;
-                //std::cout<< "Current Deposition : Jx = "<< Jx_arr(lo.x+k_new-1+k,0,0,0)  << std::endl;
             }
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 amrex::Real sdyj = 0._rt;
                 sdyj += wq*vy*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_new-1+k, 0, 0, 0), sdyj);
-                //std::cout<< "Current Deposition : sdyj = " << sdyj << std::endl;
-                //std::cout<< "Current Deposition : Jy [ " << lo.x+k_new-1+k << " ] = " <<  Jy_arr(lo.x+k_new-1+k,0,0,0)  << std::endl;
             }
             for (int k=dkl; k<=depos_order+1-dku; k++) {
                 amrex::Real sdzk = 0._rt;
                 sdzk += wqz*(sz_old[k] - sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k_new-1+k, 0, 0, 0), sdzk);
-                //std::cout<< "Current Deposition : sdzk = "<< sdzk << std::endl;
             }
-            //std::cout<< "Current Deposition : vx = "<< vx << ", and vy = " << vy << std::endl;
-            //std::cout<< "Current Deposition : xp = "<< xp << ", yp = " << yp << ", and zp = " << zp << std::endl;
 #endif
         }
     );
