@@ -494,7 +494,6 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::Real> particle_uy(np, 0.0);
     amrex::Vector<amrex::Real> particle_uz(np, 0.0);
 
-    std::cout << "np = " << np << std::endl;
     if (Verbose()) amrex::Print() << "Adding laser particles\n";
     // Add particles on level 0. They will be redistributed afterwards
     AddNParticles(0,
@@ -619,7 +618,6 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
-            //std::cout<<"Jy in LaserParticleContainer max = " << jy[pti].max(0) << std::endl;//", and jy_min = " << jy.min(0) << std::endl;     
 
             if (rho && ! skip_deposition) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
@@ -816,10 +814,6 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             // Calculate the velocity according to the amplitude of E
             const Real sign_charge = (pwp[i]>0) ? 1 : -1;
             const Real v_over_c = sign_charge * tmp_mobility * amplitude[i];
-//            std::cout << "wavelength = " << m_wavelength << std::endl;
-//            std::cout << "emax = " << m_e_max << std::endl;
-//            std::cout << "sign_charge " << sign_charge << ", tmp_mobility = " << tmp_mobility << " ,amp["<< i <<"] = " << amplitude[i] << std::endl;
-            std::cout << "v_over_c = " << amrex::Math::abs(v_over_c) << std::endl;
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::Math::abs(v_over_c) < amrex::Real(1.),
                             "Error: calculated laser particle velocity greater than c."
                             "Make sure the laser wavelength and amplitude are accurately set.");

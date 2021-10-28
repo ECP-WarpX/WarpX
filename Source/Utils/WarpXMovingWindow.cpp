@@ -373,8 +373,8 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
 #if (AMREX_SPACEDIM==1)
                       Real x = 0.0;
                       Real y = 0.0;
-                      Real fac_z = (1.0 - mf_type[1]) * dx[1]*0.5;
-                      Real z = j*dx[1] + real_box.lo(1) + fac_z;
+                      Real fac_z = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      Real z = j*dx[0] + real_box.lo(0) + fac_z;
 #elif (AMREX_SPACEDIM==2)
                       Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
                       Real x = i*dx[0] + real_box.lo(0) + fac_x;
