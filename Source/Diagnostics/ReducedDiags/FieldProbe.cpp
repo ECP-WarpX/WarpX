@@ -348,13 +348,13 @@ void FieldProbe::ComputeDiags (int step)
                 for (int ip=0; ip < np; ip++)
                 {
                     // Fill output array
-                    m_data[0 * noutputs + FieldProbePIdx::Ex] = part_Ex[ip];
-                    m_data[0 * noutputs + FieldProbePIdx::Ey] = part_Ey[ip];
-                    m_data[0 * noutputs + FieldProbePIdx::Ez] = part_Ez[ip];
-                    m_data[0 * noutputs + FieldProbePIdx::Bx] = part_Bx[ip];
-                    m_data[0 * noutputs + FieldProbePIdx::By] = part_By[ip];
-                    m_data[0 * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
-                    m_data[0 * noutputs + FieldProbePIdx::S] = part_S[ip];
+                    m_data[ip * noutputs + FieldProbePIdx::Ex] = part_Ex[ip];
+                    m_data[ip * noutputs + FieldProbePIdx::Ey] = part_Ey[ip];
+                    m_data[ip * noutputs + FieldProbePIdx::Ez] = part_Ez[ip];
+                    m_data[ip * noutputs + FieldProbePIdx::Bx] = part_Bx[ip];
+                    m_data[ip * noutputs + FieldProbePIdx::By] = part_By[ip];
+                    m_data[ip * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
+                    m_data[ip * noutputs + FieldProbePIdx::S] = part_S[ip];
                 }
 
                 probe_proc = amrex::ParallelDescriptor::MyProc();
