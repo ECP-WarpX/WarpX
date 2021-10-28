@@ -672,9 +672,11 @@ Particle initialization
       Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
       For values of :math:`\theta > 0.01`, errors due to ignored relativistic terms exceed 1%.
       Temperatures less than zero are not allowed.
-      It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
-      The plasma will be initialized to move at bulk velocity beta*c in the
-      ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+      The plasma can be initialized to move at a bulk velocity :math:`\beta = v/c`.
+      The speed is specified by the parameters ``<species_name>.beta_distribution_type``, ``<species_name>.beta``, and ``<species_name>.beta_function(x,y,z)`` (see below).
+      :math:`\beta` can be positive or negative and is limited to the range :math:`-1 < \beta < 1`.
+      The direction of the velocity field is given by ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'``, and must be the same across the domain.
+      Please leave no whitespace
       between the sign and the character on input. A direction without a sign will be treated as
       positive. The MB distribution is initialized in the drifting frame by sampling three Gaussian
       distributions in each dimension using, the Box Mueller method, and then the distribution is
@@ -692,10 +694,11 @@ Particle initialization
       The Sobol method used to generate the distribution will not terminate for :math:`\theta \lesssim 0.1`, and the code will abort if it encounters a temperature below that threshold.
       The Maxwell-Boltzmann distribution is recommended for temperatures in the range :math:`0.01 < \theta < 0.1`.
       Errors due to relativistic effects can be expected to approximately between 1% and 10%.
-      It also
-      includes the optional parameter ``<species_name>.beta`` where beta is equal to :math:`\frac{v}{c}`. The plasma
-      will be initialized to move at velocity :math:`\beta \cdot c` in the
-      ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+      The plasma can be initialized to move at a bulk velocity :math:`\beta = v/c`.
+      The speed is specified by the parameters ``<species_name>.beta_distribution_type``, ``<species_name>.beta``, and ``<species_name>.beta_function(x,y,z)`` (see below).
+      :math:`\beta` can be positive or negative and is limited to the range :math:`-1 < \beta < 1`.
+      The direction of the velocity field is given by ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'``, and must be the same across the domain.
+      Please leave no whitespace
       between the sign and the character on input. A direction without a sign will be treated as
       positive. The MJ distribution will be initialized in the moving frame using the Sobol method,
       and then the distribution will be transformed to the simulation frame using the flipping method.
@@ -723,6 +726,14 @@ Particle initialization
     * If ``constant``, use a constant temperature, given by the required float parameter ``<species_name>.theta``.
 
     * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.theta_function(x,y,z)``.
+
+* ``<species_name>.beta_distribution_type`` (`string`) optional (default ``constant``)
+    Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
+    See documentation for these distributions (above) for constraints on values of beta.
+
+    * If ``constant``, use a constant speed, given by the required float parameter ``<species_name>.beta``.
+
+    * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.beta_function(x,y,z)``.
 
 * ``<species_name>.zinject_plane`` (`float`)
     Only read if  ``<species_name>`` is in ``particles.rigid_injected_species``.

@@ -10,6 +10,7 @@
 #include "PlasmaInjector.H"
 
 #include "Initialization/GetTemperature.H"
+#include "Initialization/GetVelocity.H"
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
@@ -555,67 +556,19 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
                                              flux_normal_axis, flux_direction));
     } else if (mom_dist_s == "maxwell_boltzmann"){
-        amrex::Real beta = 0._rt;
-        int dir = 0;
-        std::string direction = "x";
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
         GetTemperature getTemp(*h_mom_temp.get());
-        queryWithParser(pp, "beta", beta);
-        if(beta < 0){
-            amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
-        }
-        pp.query("bulk_vel_dir", direction);
-        if(direction[0] == '-'){
-            beta = -beta;
-        }
-        if((direction == "x" || direction[1] == 'x') ||
-           (direction == "X" || direction[1] == 'X')){
-            dir = 0;
-        } else if ((direction == "y" || direction[1] == 'y') ||
-                   (direction == "Y" || direction[1] == 'Y')){
-            dir = 1;
-        } else if ((direction == "z" || direction[1] == 'z') ||
-                   (direction == "Z" || direction[1] == 'Z')){
-            dir = 2;
-        } else{
-            std::stringstream stringstream;
-            stringstream << "Cannot interpret <s_name>.bulk_vel_dir input '" << direction << "'. Please enter +/- x, y, or z with no whitespace between the sign and other character.";
-            direction = stringstream.str();
-            amrex::Abort(direction.c_str());
-        }
+        h_mom_vel = std::make_unique<VelocityProperties>(pp);
+        GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "maxwell_juttner"){
-        amrex::Real beta = 0._rt;
-        int dir = 0;
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
         GetTemperature getTemp(*h_mom_temp.get());
-        std::string direction = "x";
-        queryWithParser(pp, "beta", beta);
-        if(beta < 0){
-            amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
-        }
-        pp.query("bulk_vel_dir", direction);
-        if(direction[0] == '-'){
-            beta = -beta;
-        }
-        if((direction == "x" || direction[1] == 'x') ||
-           (direction == "X" || direction[1] == 'X')){
-            dir = 0;
-        } else if ((direction == "y" || direction[1] == 'y') ||
-                   (direction == "Y" || direction[1] == 'Y')){
-            dir = 1;
-        } else if ((direction == "z" || direction[1] == 'z') ||
-                   (direction == "Z" || direction[1] == 'Z')){
-            dir = 2;
-        } else{
-            std::stringstream stringstream;
-            stringstream << "Cannot interpret <s_name>.bulk_vel_dir input '" << direction << "'. Please enter +/- x, y, or z with no whitespace between the sign and other character.";
-            direction = stringstream.str();
-            amrex::Abort(direction.c_str());
-        }
+        h_mom_vel = std::make_unique<VelocityProperties>(pp);
+        GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumJuttner.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "radial_expansion") {
         amrex::Real u_over_r = 0._rt;
         queryWithParser(pp, "u_over_r", u_over_r);
