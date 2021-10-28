@@ -216,7 +216,6 @@ void FieldProbe::ComputeDiags (int step)
              * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
              * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
              */
-
 #if (AMREX_SPACEDIM == 2)
             m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
                                 z_probe >= prob_lo[1] and z_probe < prob_hi[1];
@@ -254,7 +253,6 @@ void FieldProbe::ComputeDiags (int step)
                 box.grow(Ex.nGrowVect());
 
                 //preparing to write data to particle
-
                 auto& attribs = pti.GetStructOfArrays().GetRealData();
                 ParticleReal* const AMREX_RESTRICT part_Ex = attribs[FieldProbePIdx::Ex].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_Ey = attribs[FieldProbePIdx::Ey].dataPtr();
@@ -272,7 +270,6 @@ void FieldProbe::ComputeDiags (int step)
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
                 // Interpolating to the probe positions for each particle
-
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 const int temp_modes = WarpX::n_rz_azimuthal_modes;
                 const int temp_interp_order = interp_order;
@@ -293,7 +290,11 @@ void FieldProbe::ComputeDiags (int step)
                     if (temp_raw_fields)
                     {
                         Exp = arrEx(i_probe, j_probe, k_probe);
-                        // ...y,z, Bxp, ...
+                        Eyp = arrEy(i_probe, j_probe, k_probe);
+                        Ezp = arrEz(i_probe, j_probe, k_probe);
+                        Bxp = arrBx(i_probe, j_probe, k_probe);
+                        Byp = arrBy(i_probe, j_probe, k_probe);
+                        Bzp = arrBz(i_probe, j_probe, k_probe);
                     }
                     else
                         doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -339,7 +340,7 @@ void FieldProbe::ComputeDiags (int step)
                 });// ParallelFor Close
                 if (m_field_probe_integrate)
                 {
-                    if (!m_intervals.contains(step+1)) {return}
+                    if (!m_intervals.contains(step+1)) { return; }
                 }
                 for (int ip=0; ip < np; ip++)
                 {
