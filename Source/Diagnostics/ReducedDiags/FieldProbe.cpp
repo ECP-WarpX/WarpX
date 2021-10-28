@@ -32,6 +32,8 @@
 
 #include <cmath>
 #include <ostream>
+#include <string>
+#include <unordered_map>
 
 using namespace amrex;
 
@@ -97,43 +99,46 @@ FieldProbe::FieldProbe (std::string rd_name)
             ofs << "[" << c++ << "]time(s)";
             if (m_field_probe_integrate)
             {
-                for (int lev = 0; lev < nLevel; ++lev)
+                u_map =
                 {
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + " (V*s/m)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + " (V*s/m)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + " (V*s/m)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + " (T*s)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + " (T*s)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + " (T*s)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + " (W*s/m^2)"; //update all units if integrating (might be energy / m^2)
-                }
+                    {FieldProbePIdx::Ex , " (V*s/m) "},
+                    {FieldProbePIdx::Ey , " (V*s/m) "},
+                    {FieldProbePIdx::Ez , " (V*s/m) "},
+                    {FieldProbePIdx::Bx , " (T*s) "},
+                    {FieldProbePIdx::By , " (T*s) "},
+                    {FieldProbePIdx::Bz , " (T*s) "},
+                    {FieldProbePIdx::S , " (W*s/m^2) "}
+                };
             }
             else
             {
-                for (int lev = 0; lev < nLevel; ++lev)
+                u_map =
                 {
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + " (V/m)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + " (V/m)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + " (V/m)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + " (T)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + " (T)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + " (T)";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + " (W/m^2)"; //update all units if integrating (might be energy / m^2)
-                }
+                    {FieldProbePIdx::Ex , " (V/m) "},
+                    {FieldProbePIdx::Ey , " (V/m) "},
+                    {FieldProbePIdx::Ez , " (V/m) "},
+                    {FieldProbePIdx::Bx , " (T) "},
+                    {FieldProbePIdx::By , " (T) "},
+                    {FieldProbePIdx::Bz , " (T) "},
+                    {FieldProbePIdx::S , " (W/m^2) "}
+                };
+            }
+            for (int lev = 0; lev < nLevel; ++lev)
+            {
+                ofs << m_sep;
+                ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ex];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ey];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ez];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Bx];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + u_map[FieldProbePIdx::By];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Bz];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + u_map[FieldProbePIdx::S]; //update all units if integrating (might be energy / m^2)
             }
             ofs << std::endl;
 
