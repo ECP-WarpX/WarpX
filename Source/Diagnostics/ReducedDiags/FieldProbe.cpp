@@ -394,7 +394,7 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
-std::cout << "particle 4 Ex " << part_Ex[3] << "\n";
+//std::cout << "particle 4 Ex " << part_Ex[3] << "\n";
 std::cout << "np = " << np << "\n";
                 if (!m_intervals.contains(step+1)) { return; }
                 for (auto ip=0; ip < np; ip++) 
@@ -421,7 +421,7 @@ std::cout << "np = " << np << "\n";
 
         } // end particle iterator loop
 
-std::cout << "particle 4 Ex "<< m_data_vector[3][FieldProbePIdx::Ex + 4] << "\n";
+//std::cout << "particle 4 Ex "<< m_data_vector[3][FieldProbePIdx::Ex + 4] << "\n";
         /*
          * All the processors have probe_proc = -1 except the one that contains the point, which
          * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
