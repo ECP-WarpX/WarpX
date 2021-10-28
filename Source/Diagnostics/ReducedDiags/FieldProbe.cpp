@@ -348,26 +348,27 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
-                if (m_field_probe_integrate)
-                {
-                    if (!m_intervals.contains(step+1)) { return; }
-                }
-                for (int ip=0; ip < np; ip++)
-                {
-                    // Fill output array
-                    m_data[ip * noutputs + FieldProbePIdx::Ex] = part_Ex[ip];
-                    m_data[ip * noutputs + FieldProbePIdx::Ey] = part_Ey[ip];
-                    m_data[ip * noutputs + FieldProbePIdx::Ez] = part_Ez[ip];
-                    m_data[ip * noutputs + FieldProbePIdx::Bx] = part_Bx[ip];
-                    m_data[ip * noutputs + FieldProbePIdx::By] = part_By[ip];
-                    m_data[ip * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
-                    m_data[ip * noutputs + FieldProbePIdx::S] = part_S[ip];
-                }
 
-                probe_proc = amrex::ParallelDescriptor::MyProc();
+                // this check is here because for m_field_probe_integrate == True, we always compute
+                // but we only write when we truly are in an output interval step
+                if (m_intervals.contains(step+1)) {
+                    for (int ip = 0; ip < np; ip++) {
+                        // Fill output array
+                        m_data[ip * noutputs + FieldProbePIdx::Ex] = part_Ex[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Ey] = part_Ey[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Ez] = part_Ez[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Bx] = part_Bx[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::By] = part_By[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::S] = part_S[ip];
+                    }
 
-                /* m_data now contains up-to-date values for:
-                 *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
+                    if (np > 0)
+                        probe_proc = amrex::ParallelDescriptor::MyProc();
+
+                    /* m_data now contains up-to-date values for:
+                     *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
+                }
             }
 
         } // end particle iterator loop
