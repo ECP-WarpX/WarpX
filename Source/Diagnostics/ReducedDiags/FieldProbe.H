@@ -51,9 +51,6 @@ public:
     //! noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
     static constexpr int noutputs = FieldProbePIdx::nattribs;
 
-    //! u_map maps FieldProbe observables to units
-    std::unordered_map< int, std::string > u_map;
-
     //! this boolean is used to disqualify out of bounds particles
     bool m_probe_in_domain;
     bool m_probe_in_domain_lev_0 = false;
