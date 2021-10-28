@@ -759,11 +759,6 @@ WarpX::ReadParameters ()
             do_pml_divb_cleaning = 1;
         }
 
-        // If WarpX::do_div<e,b>_cleaning = 1, set also WarpX::do_pml_div<e,b>_cleaning = 1
-        // (possibly overwritten by users in the input file, see query below)
-        if (do_dive_cleaning) do_pml_dive_cleaning = 1;
-        if (do_divb_cleaning) do_pml_divb_cleaning = 1;
-
         // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
         pp_warpx.query("do_pml_divb_cleaning", do_pml_divb_cleaning);
