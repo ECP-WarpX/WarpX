@@ -17,6 +17,7 @@
 
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 /**
  *  This class mainly contains a function that computes the value of each component
@@ -48,8 +49,8 @@ public:
      * Define constants used throughout FieldProbe
      */
 
-    //! noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
-    static constexpr int noutputs = FieldProbePIdx::nattribs;
+    //! noutputs is 11 (i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, S)
+    static constexpr int noutputs = FieldProbePIdx::nattribs + 4;
 
     //! this boolean is used to disqualify out of bounds particles
     bool m_probe_in_domain;
@@ -63,6 +64,7 @@ private:
     amrex::Real x1_probe, y1_probe, z1_probe;
     int dimension;
     int resolution;
+    std::vector<std::vector<amrex::Real>> m_data_vector;
 
     //! if  true, integrate values over time instead of probing instantaneous values
     bool m_field_probe_integrate = false;

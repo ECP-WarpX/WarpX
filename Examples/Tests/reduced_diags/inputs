@@ -86,7 +86,6 @@ FP.dimension = 0
 FP.x_probe = 0.53125
 FP.y_probe = 0.53125
 FP.z_probe = 0.53125
-<<<<<<< HEAD
 FP.x1_probe = 0.70225
 FP.y1_probe = 0.70225
 FP.z1_probe = 0.70225
