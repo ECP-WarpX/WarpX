@@ -100,7 +100,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     // resize data array
     if (dimension == 0)
     {
-    m_data_vector.resize(noutputs);
+    m_data_vector.resize(noutputs, 0.0_rt);
     }
     else
     {
@@ -260,8 +260,7 @@ void FieldProbe::ComputeDiags (int step)
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
-    // get number of level
-
+    // get number of mesh-refinement levels
     const auto nLevel = warpx.finestLevel() + 1;
 
     // loop over refinement levels
@@ -293,6 +292,7 @@ void FieldProbe::ComputeDiags (int step)
         int probe_proc = -1;
 
         // loop over each particle
+        // TODO: add OMP parallel as in PhysicalParticleContainer::Evolve
         using MyParIter = FieldProbeParticleContainer::iterator;
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
@@ -340,6 +340,7 @@ void FieldProbe::ComputeDiags (int step)
 
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                const Dim3 lo = lbound(box);
 
                 // Interpolating to the probe positions for each particle
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
@@ -371,14 +372,15 @@ void FieldProbe::ComputeDiags (int step)
                         doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
-                                   dx_arr, xyzmin_arr, amrex::lbound(box), temp_modes,
+                                   dx_arr, xyzmin_arr, lo, temp_modes,
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S
                     amrex::Real const sraw[3]{
-                    Exp * Bzp - Ezp * Byp,
-                    Ezp * Bxp - Exp * Bzp,
-                    Exp * Byp - Eyp * Bxp};
+                        Exp * Bzp - Ezp * Byp,
+                        Ezp * Bxp - Exp * Bzp,
+                        Exp * Byp - Eyp * Bxp
+                    };
                     amrex::ParticleReal const S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
@@ -387,7 +389,6 @@ void FieldProbe::ComputeDiags (int step)
                      */
                     if (temp_field_probe_integrate)
                     {
-
                         // store values on particles
                         part_Ex[ip] += Exp * dt; //remember to add lorentz transform
                         part_Ey[ip] += Eyp * dt; //remember to add lorentz transform
@@ -435,6 +436,8 @@ void FieldProbe::ComputeDiags (int step)
                         probe_proc = amrex::ParallelDescriptor::MyProc();
                 /* m_data_vector now contains up-to-date values for:
                  *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
+                    /* m_data now contains up-to-date values for:
+                     *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
             }
 
@@ -448,60 +451,68 @@ void FieldProbe::ComputeDiags (int step)
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
 //mpi gather.... amrex::ParallelGather
-        if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1)
-        {
-            if (amrex::ParallelDescriptor::MyProc() == probe_proc)
-            {
-                amrex::ParallelDescriptor::Send(m_data_vector.data(), noutputs,
-                                amrex::ParallelDescriptor::IOProcessorNumber(),
-                                0);
-            }
-        if (amrex::ParallelDescriptor::MyProc()
-        == amrex::ParallelDescriptor::IOProcessorNumber())
-            {
-                amrex::ParallelDescriptor::Recv(m_data_vector.data(), noutputs, probe_proc, 0);
-            }
-        }
-    }// end loop over refinement levels
 
-}// end void FieldProbe::ComputeDiags
+        // make sure data is in m_data
+        Gpu::synchronize();
+
+        // this check is here because for m_field_probe_integrate == True, we always compute
+        // but we only write when we truly are in an output interval step
+        if (m_intervals.contains(step+1)) {
+            /*
+             * All the processors have probe_proc = -1 except the one that contains the point, which
+             * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
+             * processors the rank of the processor which contains the point
+             */
+            amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
+
+            if (probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
+                if (amrex::ParallelDescriptor::MyProc() == probe_proc) {
+                    amrex::ParallelDescriptor::Send(m_data.data(), noutputs,
+                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
+                                                    0);
+                }
+                if (amrex::ParallelDescriptor::MyProc()
+                    == amrex::ParallelDescriptor::IOProcessorNumber()) {
+                    amrex::ParallelDescriptor::Recv(m_data.data(), noutputs, probe_proc, 0);
+                }
+            }
+        } // send to IO Processor
+    }// end loop over refinement levels
+} // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
 {
-    if (ProbeInDomain())
+    if (ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())
     {
-        if (ParallelDescriptor::IOProcessor())
-        {
-            // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+        // open file
+        std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+               std::ofstream::out | std::ofstream::app};
 
-            // write step
-            ofs << step+1;
+        // write step
+        ofs << step+1;
 
-            ofs << m_sep;
+        ofs << m_sep;
 
-            // set precision
-            ofs << std::fixed << std::setprecision(14) << std::scientific;
+        // set precision
+        ofs << std::fixed << std::setprecision(14) << std::scientific;
 
-            // write time
-            ofs << WarpX::GetInstance().gett_new(0);
+        // write time
+        ofs << WarpX::GetInstance().gett_new(0);
 
 //query m_probe for getting np
-            // loop over data size and write
-            for (int i = 0; i < m_probe.TotalNumberOfParticles(); i++)
+        // loop over data size and write
+        for (int i = 0; i < m_probe.TotalNumberOfParticles(); i++)
+        {
+            for (int k = 0; k < noutputs; k++)
             {
-                for (int k = 0; k < noutputs; k++)
-                {
-                ofs << m_sep;
-                ofs << m_data_vector[i * noutputs + k];
-                }
-                ofs << std::endl;
-            } // end loop over data size
-            // end line
+            ofs << m_sep;
+            ofs << m_data_vector[i * noutputs + k];
+            }
             ofs << std::endl;
-        // close file
-        ofs.close();
-        }
+        } // end loop over data size
+        // end line
+        ofs << std::endl;
+    // close file
+    ofs.close();
     }
 }
