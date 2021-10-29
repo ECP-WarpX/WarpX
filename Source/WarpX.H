@@ -329,6 +329,8 @@ public:
     const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
     const amrex::MultiFab& getBfield_cp  (int lev, int direction) {return  *Bfield_cp[lev][direction];}
     const amrex::MultiFab& getrho_cp (int lev) {return  *rho_cp[lev];}
+    const amrex::MultiFab& getF_cp (int lev) {return *F_cp[lev];}
+    const amrex::MultiFab& getG_cp (int lev) {return *G_cp[lev];}
 
     const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
@@ -439,18 +441,21 @@ public:
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
-    /** \brief apply QED correction on electric field
+    /** apply QED correction on electric field
+     *
      * \param dt vector of time steps (for all levels)
      */
     void Hybrid_QED_Push (         amrex::Vector<amrex::Real> dt);
 
-    /** \brief apply QED correction on electric field for level lev
+    /** apply QED correction on electric field for level lev
+     *
      * \param lev mesh refinement level
      * \param dt time step
      */
     void Hybrid_QED_Push (int lev, amrex::Real dt);
 
-    /** \brief apply QED correction on electric field for level lev and patch type patch_type
+    /** apply QED correction on electric field for level lev and patch type patch_type
+     *
      * \param lev mesh refinement level
      * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
      * \param dt time step

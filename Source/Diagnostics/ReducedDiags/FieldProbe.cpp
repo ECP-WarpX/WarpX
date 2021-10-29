@@ -228,6 +228,7 @@ void FieldProbe::LoadBalance()
 {
     m_probe.Redistribute();
 }
+
 bool FieldProbe::ProbeInDomain () const
 {
     // get a reference to WarpX instance
@@ -467,7 +468,6 @@ void FieldProbe::WriteToFile (int step) const
         // write time
         ofs << WarpX::GetInstance().gett_new(0);
 
-//query m_probe for getting np
         // loop over data size and write
         for (int i = 0; i < m_probe.TotalNumberOfParticles(); i++)
         {

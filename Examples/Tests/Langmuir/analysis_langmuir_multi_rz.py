@@ -84,13 +84,13 @@ zz = zmin + (coords[1] + 0.5)*dz
 
 # Check the validity of the fields
 overall_max_error = 0
-Er_sim = data['Ex'].to_ndarray()[:,:,0]
+Er_sim = data[('mesh','Ex')].to_ndarray()[:,:,0]
 Er_th = Er(zz, rr, epsilon, k0, w0, wp, t0)
 max_error = abs(Er_sim-Er_th).max()/abs(Er_th).max()
 print('Er: Max error: %.2e' %(max_error))
 overall_max_error = max( overall_max_error, max_error )
 
-Ez_sim = data['Ez'].to_ndarray()[:,:,0]
+Ez_sim = data[('mesh','Ez')].to_ndarray()[:,:,0]
 Ez_th = Ez(zz, rr, epsilon, k0, w0, wp, t0)
 max_error = abs(Ez_sim-Ez_th).max()/abs(Ez_th).max()
 print('Ez: Max error: %.2e' %(max_error))
@@ -119,8 +119,8 @@ assert( error_rel < tolerance_rel )
 
 # Check charge conservation (relative L-infinity norm of error) with current correction
 if current_correction:
-    divE = data['divE'].to_ndarray()
-    rho  = data['rho' ].to_ndarray() / epsilon_0
+    divE = data[('boxlib','divE')].to_ndarray()
+    rho  = data[('boxlib','rho')].to_ndarray() / epsilon_0
     error_rel = np.amax(np.abs(divE - rho)) / max(np.amax(divE), np.amax(rho))
     tolerance = 1.e-9
     print("Check charge conservation:")

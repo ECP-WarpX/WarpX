@@ -83,17 +83,17 @@ data = ds.covering_grid(level=0,
 
 # Extract the E field along the axes
 if ndims == 2:
-    Ex = data['Ex'].to_ndarray()
+    Ex = data[('mesh','Ex')].to_ndarray()
     Ex_axis = Ex[:,iz0,0]
     Ey_axis = Ex_axis
-    Ez = data['Ez'].to_ndarray()
+    Ez = data[('mesh','Ez')].to_ndarray()
     Ez_axis = Ez[ix0,:,0]
 else:
-    Ex = data['Ex'].to_ndarray()
+    Ex = data[('mesh','Ex')].to_ndarray()
     Ex_axis = Ex[:,iy0,iz0]
-    Ey = data['Ey'].to_ndarray()
+    Ey = data[('mesh','Ey')].to_ndarray()
     Ey_axis = Ey[ix0,:,iz0]
-    Ez = data['Ez'].to_ndarray()
+    Ez = data[('mesh','Ez')].to_ndarray()
     Ez_axis = Ez[ix0,iy0,:]
 
 def calculate_error(E_axis, xmin, dx, nx):

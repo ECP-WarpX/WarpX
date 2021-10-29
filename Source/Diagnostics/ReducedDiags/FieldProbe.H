@@ -53,6 +53,7 @@ public:
      * Define constants used throughout FieldProbe
      */
 
+<<<<<<< HEAD
     //! noutputs is 11 (i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, S)
     static constexpr int noutputs = FieldProbePIdx::nattribs + 4;
 

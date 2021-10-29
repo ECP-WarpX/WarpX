@@ -36,7 +36,7 @@ ds = yt.load(fn)
 t0 = ds.current_time.to_value()
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                                     dims=ds.domain_dimensions)
-Ey_array = data['Ey'].to_ndarray()
+Ey_array = data[('mesh','Ey')].to_ndarray()
 max_Ey_sim = Ey_array.max()
 min_Ey_sim = Ey_array.min()
 max_Ey_error = abs(max_Ey_sim-E_th)/abs(E_th)
