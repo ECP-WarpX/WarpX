@@ -35,7 +35,11 @@ public:
     /**
      * This function assins test/data particles to constructed environemnt
      */
-    void InitData() override final;
+    void InitData () override final;
+
+    /** Redistribute parallel data structures during load balance
+     */
+    void LoadBalance () override final;
 
     /**
      * This function computes the value of Ex, Ey, Ez, Bx, By, Bz and at a given point

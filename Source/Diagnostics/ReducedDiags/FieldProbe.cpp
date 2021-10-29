@@ -169,7 +169,10 @@ void FieldProbe::InitData()
     // add np particles on lev 0 to m_probe
     m_probe.AddNParticles(0, xpos, ypos, zpos);
 }
-// function that computes field values at probe position
+
+void FieldProbe::LoadBalance() {
+    m_probe.Redistribute();
+}
 
 bool FieldProbe::ProbeInDomain () const
 {

@@ -62,6 +62,10 @@ public:
      */
     virtual void InitData ();
 
+    /** Redistribute parallel data structures during load balance
+     */
+    virtual void LoadBalance ();
+
     /**
      * function to compute diags
      *

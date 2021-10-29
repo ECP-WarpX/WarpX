@@ -41,6 +41,10 @@ public:
      */
     void InitData ();
 
+    /** Redistribute parallel data structures during load balance
+     */
+    void LoadBalance ();
+
     /** Loop over all ReducedDiags and call their ComputeDiags
      *  @param[in] step current iteration time */
     void ComputeDiags(int step);
