@@ -2059,7 +2059,7 @@ Reduced Diagnostics
 
     * ``FieldProbe``
         This type computes the value of each component of the electric and magnetic fields
-        and of the norm of the electric and magnetic field vectors at a point in the domain.
+        and of the Poynting vector (a measure of electromagnetic flux) at a point in the domain.
         The point where the fields are measured is specified through the input parameters
         ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
         ``<reduced_diags_name>.z_probe``.
@@ -2068,11 +2068,10 @@ Reduced Diagnostics
         the value of the :math:`E_x` field,
         the value of the :math:`E_y` field,
         the value of the :math:`E_z` field,
-        the value of the norm :math:`|E|` of the electric field,
         the value of the :math:`B_x` field,
         the value of the :math:`B_y` field,
         the value of the :math:`B_z` field and
-        the value of the norm :math:`|B|` of the magnetic field,
+        the value of the Poynting Vector :math:`|S|` of the electromagnetic fields,
         at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
 
         Note: the norms are always interpolated to the measurement point before they are written
@@ -2082,6 +2081,8 @@ Reduced Diagnostics
         containing the measurement point are saved.
         The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
         otherwise it is set to ``1``.
+        Integrated electric and magnetic field components can instead be obtained by specifying
+        ``<reduced_diags_name>.integrate == true``.
 
 
     * ``RhoMaximum``
