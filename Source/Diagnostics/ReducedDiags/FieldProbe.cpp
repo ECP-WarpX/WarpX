@@ -445,7 +445,7 @@ void FieldProbe::ComputeDiags (int step)
         // make sure data is in m_data
         Gpu::synchronize();
         m_data_out.resize(m_probe.TotalNumberOfParticles() * noutputs);
-        amrex::ParallelGather::Gather (m_data_vector.data(), m_data_vector.size(), m_data_out.data(), 0, amrex::ParallelDescriptor::Communicator());
+        amrex::ParallelGather::Gather (m_data_vector.data(), m_data_vector.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
     }// end loop over refinement levels
 } // end void FieldProbe::ComputeDiags
 
