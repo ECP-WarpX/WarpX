@@ -384,8 +384,6 @@ void FieldProbe::ComputeDiags (int step)
         // make sure data is in m_data
         Gpu::synchronize();
 
-        amrex::AllPrint() << amrex::ParallelDescriptor::MyProc() << " - " << probe_proc << "\n";
-
         // this check is here because for m_field_probe_integrate == True, we always compute
         // but we only write when we truly are in an output interval step
         if (m_intervals.contains(step+1)) {
