@@ -523,7 +523,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
         auto const npart = ps["position"]["x"].getExtent()[0];
-#ifndef (WARPX_DIM_1D_Z)
+#ifndef WARPX_DIM_1D_Z
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
 #endif
