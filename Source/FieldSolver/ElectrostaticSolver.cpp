@@ -779,9 +779,9 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
             }
             else {
                 WarpX::GetInstance().RecordWarning(
-                    "When using the electrostatic solver, the field boundary "
-                    "condition is only well-defined for periodic, PEC. "
-                    "Neumann boundaries will be used for electrostatic solver here."
+                    "ElectrostaticSolver",
+                    "When using the electrostatic solver, the field boundary condition is only well-defined for periodic and PEC. Neumann boundaries will be used for electrostatic solver here.",
+                    WarnPriority::low
                 );
                 lobc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2] = false;
@@ -797,9 +797,9 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
             }
             else {
                 WarpX::GetInstance().RecordWarning(
-                    "When using the electrostatic solver, the field boundary "
-                    "condition is only well-defined for periodic, PEC. "
-                    "Neumann boundaries will be used for electrostatic solver here."
+                     "ElectrostaticSolver",
+                     "When using the electrostatic solver, the field boundary condition is only well-defined for periodic and PEC. Neumann boundaries will be used for electrostatic solver here.",
+                     WarnPriority::low
                 );
                 hibc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2+1] = false;                
