@@ -62,6 +62,7 @@ private:
     int dimension;
     int resolution;
     std::vector<amrex::Real> m_data_vector;
+    std::vector<amrex::Real> m_data_out;
 
     //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;
