@@ -104,7 +104,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else
     {
-    m_data_vector.resize(resolution * noutputs);
+    m_data_vector.resize(resolution * noutputs, 0.0_rt);
     }
 
     if (ParallelDescriptor::IOProcessor())
