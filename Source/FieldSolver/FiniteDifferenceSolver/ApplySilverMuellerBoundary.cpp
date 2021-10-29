@@ -205,10 +205,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         // Extract field data for this grid/tile
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
+#ifndef WARPX_DIM_1D_Z
         Array4<Real> const& Ez = Efield[2]->array(mfi);
+#endif
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
+#ifndef WARPX_DIM_1D_Z
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
+#endif
 
         // Extract the tileboxes for which to loop
         Box tbx  = mfi.tilebox(Bfield[0]->ixType().toIntVect());

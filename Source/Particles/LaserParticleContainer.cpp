@@ -683,6 +683,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 #else
     Sx = 1.0;//dx[2]/(std::abs(m_u_X[0] + eps));
     Sy = 1.0;
+    amrex::ignore_unused(eps);
 #endif
 }
 
