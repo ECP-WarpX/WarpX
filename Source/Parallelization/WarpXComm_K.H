@@ -99,6 +99,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 
     // interp from fine staggered to fine nodal
     Real bf = 0.5_rt*(Bxf_zeropad(j-1,0,0) + Bxf_zeropad(j,0,0));
+    amrex::ignore_unused(owy);
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -188,6 +189,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
 
     // interp from fine staggered to fine nodal
     Real bf = 0.5_rt*(Byf_zeropad(j-1,0,0) + Byf_zeropad(j,0,0));
+    amrex::ignore_unused(owy);
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -279,6 +281,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
 
     // interp from fine staggered to fine nodal
     Real bf =  Bzf_zeropad(j,0,0);
+    amrex::ignore_unused(owy);
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -369,6 +372,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
 
     // interp from fine staggered to fine nodal
     Real ef = Exf_zeropad(j,0,0);
+    amrex::ignore_unused(owy);
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -460,6 +464,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 
     // interp from fine staggered to fine nodal
     Real ef = Eyf_zeropad(j,0,0);
+    amrex::ignore_unused(owy);
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -548,6 +553,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 
     // interp from fine staggered to fine nodal
     Real ef = 0.5_rt*(Ezf_zeropad(j-1,0,0) + Ezf_zeropad(j,0,0));
+    amrex::ignore_unused(owy);
 
 #elif (AMREX_SPACEDIM == 2)
 

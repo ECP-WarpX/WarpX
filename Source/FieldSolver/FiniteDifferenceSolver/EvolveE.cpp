@@ -164,7 +164,6 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
                     + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
                     - PhysConst::mu0 * jx(i, j, k) );
-		//if(std::abs(Ex(i,j,k)) > 0.0)std::cout << "Ex("<< i << ", " << j << ", " << k << ") = " << Ex(i,j,k) << std::endl;
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -177,8 +176,6 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
                     - PhysConst::mu0 * jy(i, j, k) );
-		//if(std::abs(Ey(i,j,k)) > 0.0)std::cout << "Ey("<< i << ", " << j << ", " << k << ") = " << Ey(i,j,k) << std::endl;
-		//if(std::abs(jy(i,j,k)) > 0.0)std::cout << "jy("<< i << ", " << j << ", " << k << ") = " << jy(i,j,k) << std::endl;
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -191,7 +188,6 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
                     + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k)
                     - PhysConst::mu0 * jz(i, j, k) );
-		//if(std::abs(Ez(i,j,k)) > 0.0)std::cout << "Ez("<< i << ", " << j << ", " << k << ") = " << Ez(i,j,k) << std::endl;
             }
 
         );

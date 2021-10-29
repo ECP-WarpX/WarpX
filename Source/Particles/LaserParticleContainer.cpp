@@ -341,7 +341,7 @@ LaserParticleContainer::InitData (int lev)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt))*m_u_X[0] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[0],
                  m_position[1] + (S_X*(Real(i)+0.5_rt))*m_u_X[1] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[1],
                  m_position[2] + (S_X*(Real(i)+0.5_rt))*m_u_X[2] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[2] };
-#elif (AMREX_SPACEDIM == 2) 
+#elif (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(j);
 #   if (defined WARPX_DIM_RZ)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt)),
@@ -366,7 +366,7 @@ LaserParticleContainer::InitData (int lev)
 #if (AMREX_SPACEDIM == 3)
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[1]*(pos[1]-m_position[1])+m_u_X[2]*(pos[2]-m_position[2]),
                 m_u_Y[0]*(pos[0]-m_position[0])+m_u_Y[1]*(pos[1]-m_position[1])+m_u_Y[2]*(pos[2]-m_position[2])};
-#elif (AMREX_SPACEDIM == 2) 
+#elif (AMREX_SPACEDIM == 2)
 #   if (defined WARPX_DIM_RZ)
         return {pos[0]-m_position[0], 0.0_rt};
 #   else
@@ -494,7 +494,6 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::Real> particle_uy(np, 0.0);
     amrex::Vector<amrex::Real> particle_uz(np, 0.0);
 
-    std::cout << "np = " << np << std::endl;
     if (Verbose()) amrex::Print() << "Adding laser particles\n";
     // Add particles on level 0. They will be redistributed afterwards
     AddNParticles(0,
@@ -619,7 +618,6 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
-            //std::cout<<"Jy in LaserParticleContainer max = " << jy[pti].max(0) << std::endl;//", and jy_min = " << jy.min(0) << std::endl;     
 
             if (rho && ! skip_deposition) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
@@ -685,6 +683,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 #else
     Sx = 1.0;//dx[2]/(std::abs(m_u_X[0] + eps));
     Sy = 1.0;
+    amrex::ignore_unused(eps);
 #endif
 }
 
@@ -700,14 +699,14 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     m_weight = PhysConst::ep0 / m_mobility;
     // Multiply by particle spacing
 #if (AMREX_SPACEDIM == 3)
-    m_weight *= Sx *Sy; 
+    m_weight *= Sx *Sy;
 #elif (AMREX_SPACEDIM == 2)
-    m_weight *= Sx; 
+    m_weight *= Sx;
     amrex::ignore_unused(Sy);
 #else
     amrex::ignore_unused(Sx,Sy);
 #endif
-    
+
     // When running in the boosted-frame, the input parameters (and in particular
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.
@@ -816,10 +815,6 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             // Calculate the velocity according to the amplitude of E
             const Real sign_charge = (pwp[i]>0) ? 1 : -1;
             const Real v_over_c = sign_charge * tmp_mobility * amplitude[i];
-//            std::cout << "wavelength = " << m_wavelength << std::endl;
-//            std::cout << "emax = " << m_e_max << std::endl;
-//            std::cout << "sign_charge " << sign_charge << ", tmp_mobility = " << tmp_mobility << " ,amp["<< i <<"] = " << amplitude[i] << std::endl;
-            std::cout << "v_over_c = " << amrex::Math::abs(v_over_c) << std::endl;
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::Math::abs(v_over_c) < amrex::Real(1.),
                             "Error: calculated laser particle velocity greater than c."
                             "Make sure the laser wavelength and amplitude are accurately set.");
