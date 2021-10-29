@@ -802,7 +802,7 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
                      WarnPriority::low
                 );
                 hibc[idim] = LinOpBCType::Neumann;
-                dirichlet_flag[idim*2+1] = false;                
+                dirichlet_flag[idim*2+1] = false;
             }
         }
     }
