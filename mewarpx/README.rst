@@ -1,8 +1,33 @@
-mewarpx README
-==============
+Introduction
+============
 
-A set of tools for running and postprocessing WarpX simulations for thermionic
-applications.
+MEWarpX is a set of tools for running and postprocessing
+`WarpX <https://warpx.readthedocs.io/en/latest/index.html>`_ simulations for
+thermionic applications. This includes functionality that couples to WarpX's
+python interface to inject *thermionically emitted* electrons at every simulation
+step (see :class:`~mewarpx.emission.ThermionicInjector`) from an
+:class:`~mewarpx.emission.Emitter`. Emitters can include both domain
+boundaries and embedded conductors. The velocity of thermionically emitted
+electrons are sampled from the distribution function derived in the supplemental
+material of `Groenewald et. al. (2021)
+<https://journals.aps.org/pre/abstract/10.1103/PhysRevE.103.023207>`_.
+Furthermore, both the emitted and absorbed charge at every simulation step can
+be recorded for all conductors in the simulation. This allows tracking of
+electrical currents in the simulation as a function of time, through the
+:mod:`~mewarpx.diags_store.flux_diagnostic` module.
+
+Using a fully kinetic approach (such as a particle-in-cell code) to simulate the
+underlying particle dynamics in a thermionic converter is important since the
+particle populations have been observed to be strongly non-Maxwellian (see
+page 23 on `Lietz et. al. (2021)
+<http://plasma-pici-doe.umich.edu/files/LTP_2021_booklet_v10a.pdf>`_ results).
+
+The package is openly available from the `MEWarpX Github repo
+<https://github.com/ModernElectron/WarpX>`_.
+
+For more details about thermionics and their applications as well as other
+details about Modern Electron please visit the `company website
+<https://modernelectron.com/>`_.
 
 Usage
 -----
@@ -11,7 +36,9 @@ To use Modern Electron WarpX Tools in a project::
 
     import mewarpx
 
-More usage information should come in the future.
+Examples scripts of simulations that use the package can be found in the
+`Examples <https://github.com/ModernElectron/WarpX/tree/memaster/mewarpx/examples>`_
+directory. More usage information should come in the future.
 
 Installation
 ------------
