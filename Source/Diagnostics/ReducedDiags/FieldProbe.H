@@ -57,7 +57,7 @@ private:
     amrex::Real x1_probe, y1_probe, z1_probe;
     int dimension;
     int resolution;
-    std::vector<std::vector<amrex::Real>> m_data_vector;
+    std::vector<amrex::Real> m_data_vector;
 
     //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;
@@ -66,7 +66,6 @@ private:
     bool m_field_probe_integrate;
     int interp_order = 1;
     bool raw_fields = false;
-
     /**
      * Built-in function in ReducedDiags to write out test data
      */

@@ -100,11 +100,11 @@ FieldProbe::FieldProbe (std::string rd_name)
     // resize data array
     if (dimension == 0)
     {
-    m_data_vector.resize(1, std::vector<amrex::Real>(noutputs));
+    m_data_vector.resize(noutputs);
     }
     else
     {
-    m_data_vector.resize(resolution, std::vector<amrex::Real>(noutputs));
+    m_data_vector.resize(resolution * noutputs);
     }
 
     if (ParallelDescriptor::IOProcessor())
@@ -199,7 +199,7 @@ void FieldProbe::InitData()
             zpos.push_back(z_probe);
         }
 
-        // add np particles on lev 0 to m_probe
+        // add particles on lev 0 to m_probe
         m_probe.AddNParticles(0, xpos, ypos, zpos);
     }
     else
@@ -207,17 +207,20 @@ void FieldProbe::InitData()
         amrex::Vector<amrex::ParticleReal> xpos(resolution, 0);
         amrex::Vector<amrex::ParticleReal> ypos(resolution, 0);
         amrex::Vector<amrex::ParticleReal> zpos(resolution, 0);
-        amrex::Real DetLineStepSize[3]{
-                (x1_probe - x_probe) / (resolution - 1),
-                (y1_probe - y_probe) / (resolution - 1),
-                (z1_probe - z_probe) / (resolution - 1)};
-        for ( int step = 0; step < resolution; step++)
+
+        if (ParallelDescriptor::IOProcessor())
         {
-            xpos[step] = x_probe + (DetLineStepSize[0] * step);
-            ypos[step] = y_probe + (DetLineStepSize[1] * step);
-            zpos[step] = z_probe + (DetLineStepSize[2] * step);
+            amrex::Real DetLineStepSize[3]{
+                    (x1_probe - x_probe) / (resolution - 1),
+                    (y1_probe - y_probe) / (resolution - 1),
+                    (z1_probe - z_probe) / (resolution - 1)};
+            for ( int step = 0; step < resolution; step++)
+            {
+                xpos[step] = x_probe + (DetLineStepSize[0] * step);
+                ypos[step] = y_probe + (DetLineStepSize[1] * step);
+                zpos[step] = z_probe + (DetLineStepSize[2] * step);
+            }
         }
-std::cout << "xpos size " << xpos.size() << "\n";
         m_probe.AddNParticles(0, xpos, ypos, zpos);
     }
 }
@@ -294,7 +297,7 @@ void FieldProbe::ComputeDiags (int step)
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
-            long const np = pti.numParticles();
+            const long np = pti.numParticles();
 
             if( ProbeInDomain() )
             {
@@ -406,8 +409,7 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
-//std::cout << "particle 4 Ex " << part_Ex[3] << "\n";
-std::cout << "np = " << np << "\n";
+
                 // this check is here because for m_field_probe_integrate == True, we always compute
                 // but we only write when we truly are in an output interval step
                 if (m_intervals.contains(step+1))
@@ -417,17 +419,17 @@ std::cout << "np = " << np << "\n";
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
                         // Fill output array
-                        m_data_vector[ip][0 * noutputs + 0] = ip;
-                        m_data_vector[ip][0 * noutputs + 1] = xp;
-                        m_data_vector[ip][0 * noutputs + 2] = yp;
-                        m_data_vector[ip][0 * noutputs + 3] = zp;
-                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ex + 4] = part_Ex[ip];
-                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ey + 4] = part_Ey[ip];
-                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Ez + 4] = part_Ez[ip];
-                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Bx + 4] = part_Bx[ip];
-                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::By + 4] = part_By[ip];
-                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::Bz + 4] = part_Bz[ip];
-                        m_data_vector[ip][0 * noutputs + FieldProbePIdx::S + 4] = part_S[ip];
+                        m_data_vector[ip * noutputs + 0] = ip;
+                        m_data_vector[ip * noutputs + 1] = xp;
+                        m_data_vector[ip * noutputs + 2] = yp;
+                        m_data_vector[ip * noutputs + 3] = zp;
+                        m_data_vector[ip * noutputs + FieldProbePIdx::Ex + 4] = part_Ex[ip];
+                        m_data_vector[ip * noutputs + FieldProbePIdx::Ey + 4] = part_Ey[ip];
+                        m_data_vector[ip * noutputs + FieldProbePIdx::Ez + 4] = part_Ez[ip];
+                        m_data_vector[ip * noutputs + FieldProbePIdx::Bx + 4] = part_Bx[ip];
+                        m_data_vector[ip * noutputs + FieldProbePIdx::By + 4] = part_By[ip];
+                        m_data_vector[ip * noutputs + FieldProbePIdx::Bz + 4] = part_Bz[ip];
+                        m_data_vector[ip * noutputs + FieldProbePIdx::S + 4] = part_S[ip];
                     }
                     if (np > 0)
                         probe_proc = amrex::ParallelDescriptor::MyProc();
@@ -438,7 +440,6 @@ std::cout << "np = " << np << "\n";
 
         } // end particle iterator loop
 
-//std::cout << "particle 4 Ex "<< m_data_vector[3][FieldProbePIdx::Ex + 4] << "\n";
         /*
          * All the processors have probe_proc = -1 except the one that contains the point, which
          * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
@@ -446,24 +447,19 @@ std::cout << "np = " << np << "\n";
          */
         amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
 
+//mpi gather.... amrex::ParallelGather
         if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1)
         {
             if (amrex::ParallelDescriptor::MyProc() == probe_proc)
             {
-                for (int ip = 0; ip < resolution; ip++)
-                {
-                    amrex::ParallelDescriptor::Send(m_data_vector[ip].data(), noutputs,
-                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                    0);
-                }
+                amrex::ParallelDescriptor::Send(m_data_vector.data(), noutputs,
+                                amrex::ParallelDescriptor::IOProcessorNumber(),
+                                0);
             }
-            if (amrex::ParallelDescriptor::MyProc()
-            == amrex::ParallelDescriptor::IOProcessorNumber())
+        if (amrex::ParallelDescriptor::MyProc()
+        == amrex::ParallelDescriptor::IOProcessorNumber())
             {
-                for (int ip = 0; ip < resolution; ip++)
-                {
-                    amrex::ParallelDescriptor::Recv(m_data_vector[ip].data(), noutputs, probe_proc, 0);
-                }
+                amrex::ParallelDescriptor::Recv(m_data_vector.data(), noutputs, probe_proc, 0);
             }
         }
     }// end loop over refinement levels
@@ -491,21 +487,21 @@ void FieldProbe::WriteToFile (int step) const
             // write time
             ofs << WarpX::GetInstance().gett_new(0);
 
-            // loop over all particles
-            long const np = resolution;
-            for (int ip = 0; ip < np; ip++)
+//query m_probe for getting np
+            // loop over data size and write
+            for (int i = 0; i < m_probe.TotalNumberOfParticles(); i++)
             {
-                // loop over data size and write
-                for (int i = 0; i < (FieldProbePIdx::nattribs + 4); ++i)
+                for (int k = 0; k < noutputs; k++)
                 {
-                    ofs << m_sep;
-                    ofs << m_data_vector[ip][i];
-                } // end loop over data size
-                // end line
+                ofs << m_sep;
+                ofs << m_data_vector[i * noutputs + k];
+                }
                 ofs << std::endl;
-            }
-            // close file
-            ofs.close();
+            } // end loop over data size
+            // end line
+            ofs << std::endl;
+        // close file
+        ofs.close();
         }
     }
 }
