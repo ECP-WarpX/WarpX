@@ -778,10 +778,13 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
                 dirichlet_flag[idim*2] = false;
             }
             else {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
-                    "when using the electrostatic solver"
+                WarpX::GetInstance().RecordWarning(
+                    "When using the electrostatic solver, the field boundary "
+                    "condition is only well-defined for periodic, PEC. "
+                    "Neumann boundaries will be used for electrostatic solver here."
                 );
+                lobc[idim] = LinOpBCType::Neumann;
+                dirichlet_flag[idim*2] = false;
             }
 
             if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
@@ -793,10 +796,13 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
-                    "when using the electrostatic solver"
+                WarpX::GetInstance().RecordWarning(
+                    "When using the electrostatic solver, the field boundary "
+                    "condition is only well-defined for periodic, PEC. "
+                    "Neumann boundaries will be used for electrostatic solver here."
                 );
+                hibc[idim] = LinOpBCType::Neumann;
+                dirichlet_flag[idim*2+1] = false;                
             }
         }
     }
