@@ -82,7 +82,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     // resize data array
-    m_data.resize(noutputs*nLevel, 0.0_rt);
+    m_data.resize(noutputs, 0.0_rt);
 
     if (ParallelDescriptor::IOProcessor())
     {
@@ -369,49 +369,52 @@ void FieldProbe::ComputeDiags (int step)
                         m_data[ip * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
                         m_data[ip * noutputs + FieldProbePIdx::S] = part_S[ip];
                     }
-
-                    if (np > 0)
-                        probe_proc = amrex::ParallelDescriptor::MyProc();
-
                     /* m_data now contains up-to-date values for:
                      *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
+
+                // do we have the one and only probe particle on our MPI rank?
+                if (np > 0)
+                    probe_proc = amrex::ParallelDescriptor::MyProc();
             }
 
         } // end particle iterator loop
 
-        /*
-         * All the processors have probe_proc = -1 except the one that contains the point, which
-         * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
-         * processors the rank of the processor which contains the point
-         */
-        amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
+        // make sure data is in m_data
+        Gpu::synchronize();
 
-        if(probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1)
-        {
-            if (amrex::ParallelDescriptor::MyProc() == probe_proc)
-            {
-                amrex::ParallelDescriptor::Send(m_data.data(), noutputs,
-                                amrex::ParallelDescriptor::IOProcessorNumber(),
-                                0);
+        amrex::AllPrint() << amrex::ParallelDescriptor::MyProc() << " - " << probe_proc << "\n";
+
+        // this check is here because for m_field_probe_integrate == True, we always compute
+        // but we only write when we truly are in an output interval step
+        if (m_intervals.contains(step+1)) {
+            /*
+             * All the processors have probe_proc = -1 except the one that contains the point, which
+             * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
+             * processors the rank of the processor which contains the point
+             */
+            amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
+
+            if (probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
+                if (amrex::ParallelDescriptor::MyProc() == probe_proc) {
+                    amrex::ParallelDescriptor::Send(m_data.data(), noutputs,
+                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
+                                                    0);
+                }
+                if (amrex::ParallelDescriptor::MyProc()
+                    == amrex::ParallelDescriptor::IOProcessorNumber()) {
+                    amrex::ParallelDescriptor::Recv(m_data.data(), noutputs, probe_proc, 0);
+                }
             }
-            if (amrex::ParallelDescriptor::MyProc()
-            == amrex::ParallelDescriptor::IOProcessorNumber())
-            {
-                amrex::ParallelDescriptor::Recv(m_data.data(), noutputs, probe_proc, 0);
-            }
-        }
+        } // send to IO Processor
     }// end loop over refinement levels
 
 }// end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
 {
-    if (ProbeInDomain())
+    if (ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())
     {
-        if (ParallelDescriptor::IOProcessor())
-        {
-            ReducedDiags::WriteToFile (step);
-        }
+        ReducedDiags::WriteToFile (step);
     }
 }
