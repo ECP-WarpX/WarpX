@@ -35,7 +35,7 @@ public:
     std::vector<std::unique_ptr<ReducedDiags>> m_multi_rd;
 
     /// constructor
-    MultiReducedDiags();
+    MultiReducedDiags ();
 
     /** Loop over all ReducedDiags and call their InitData
      */
@@ -47,11 +47,11 @@ public:
 
     /** Loop over all ReducedDiags and call their ComputeDiags
      *  @param[in] step current iteration time */
-    void ComputeDiags(int step);
+    void ComputeDiags (int step);
 
     /** Loop over all ReducedDiags and call their WriteToFile
      *  @param[in] step current iteration time */
-    void WriteToFile(int step);
+    void WriteToFile (int step);
 
 };
 

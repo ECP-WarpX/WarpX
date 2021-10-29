@@ -79,6 +79,7 @@ MultiReducedDiags::MultiReducedDiags ()
     // end loop over all reduced diags
 }
 // end constructor
+
 void MultiReducedDiags::InitData ()
 {
     // loop over all reduced diags
