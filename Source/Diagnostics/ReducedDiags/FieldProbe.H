@@ -31,19 +31,23 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    FieldProbe(std::string rd_name);
+    FieldProbe (std::string rd_name);
 
     /**
      * This function assins test/data particles to constructed environemnt
      */
-    void InitData() override final;
+    void InitData () override final;
+
+    /** Redistribute parallel data structures during load balance
+     */
+    void LoadBalance () override final;
 
     /**
      * This function computes the value of Ex, Ey, Ez, Bx, By, Bz and at a given point
      *
      * @param[in] step current time step
      */
-    void ComputeDiags(int step) override final;
+    void ComputeDiags (int step) override final;
 
     /*
      * Define constants used throughout FieldProbe

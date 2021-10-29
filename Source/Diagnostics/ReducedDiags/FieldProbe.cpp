@@ -182,7 +182,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
 } // end constructor
 
-void FieldProbe::InitData()
+void FieldProbe::InitData ()
 {
     if (dimension == 0)
     {
@@ -224,7 +224,10 @@ void FieldProbe::InitData()
         m_probe.AddNParticles(0, xpos, ypos, zpos);
     }
 }
-
+void FieldProbe::LoadBalance()
+{
+    m_probe.Redistribute();
+}
 bool FieldProbe::ProbeInDomain () const
 {
     // get a reference to WarpX instance

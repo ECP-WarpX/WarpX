@@ -67,7 +67,15 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 void ReducedDiags::InitData ()
 {
     // Defines an empty function InitData() to be overwritten if needed.
-    // Function used to assign test/data particles to environment
+    // Function used to initialize data of the diagnostics after the WarpX
+    // data structures are all set up
+}
+
+void ReducedDiags::LoadBalance ()
+{
+    // Defines an empty function LoadBalance() to be overwritten if needed.
+    // Function used to redistribute parallel data of the diagnostics in
+    // load balancing operations
 }
 
 void ReducedDiags::BackwardCompatibility ()
