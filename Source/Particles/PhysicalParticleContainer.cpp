@@ -523,20 +523,20 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
         auto const npart = ps["position"]["x"].getExtent()[0];
-#   ifndef (WARPX_DIM_1D_Z)
+#ifndef (WARPX_DIM_1D_Z)
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
-#   endif
+#endif
         std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
         double const position_unit_z = ps["position"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
-#   ifndef (WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#ifndef (WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
-#   endif
+#endif
         std::shared_ptr<ParticleReal> ptr_uy = nullptr;
         double momentum_unit_y = 1.0;
         if (ps["momentum"].contains("y")) {
@@ -566,17 +566,17 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-#   if !(defined WARPX_DIM_1D_Z)
+#if !(defined WARPX_DIM_1D_Z)
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
-#   else
+#else
             ParticleReal const x = 0.0_prt;
-#   endif
+#endif
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
-#   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
-#   else
+#else
             ParticleReal const y = 0.0_prt;
-#   endif
+#endif
             if (plasma_injector->insideBounds(x, y, z)) {
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
