@@ -206,8 +206,7 @@ void FieldProbe::ComputeDiags (int step)
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
-    // get number of level
-
+    // get number of mesh-refinement levels
     const auto nLevel = warpx.finestLevel() + 1;
 
     // loop over refinement levels
@@ -239,6 +238,7 @@ void FieldProbe::ComputeDiags (int step)
         int probe_proc = -1;
 
         // loop over each particle
+        // TODO: add OMP parallel as in PhysicalParticleContainer::Evolve
         using MyParIter = FieldProbeParticleContainer::iterator;
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
@@ -285,6 +285,7 @@ void FieldProbe::ComputeDiags (int step)
 
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                const Dim3 lo = lbound(box);
 
                 // Interpolating to the probe positions for each particle
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
@@ -317,14 +318,15 @@ void FieldProbe::ComputeDiags (int step)
                         doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
-                                   dx_arr, xyzmin_arr, amrex::lbound(box), temp_modes,
+                                   dx_arr, xyzmin_arr, lo, temp_modes,
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S
                     amrex::Real const sraw[3]{
-                    Exp * Bzp - Ezp * Byp,
-                    Ezp * Bxp - Exp * Bzp,
-                    Exp * Byp - Eyp * Bxp};
+                        Exp * Bzp - Ezp * Byp,
+                        Ezp * Bxp - Exp * Bzp,
+                        Exp * Byp - Eyp * Bxp
+                    };
                     amrex::ParticleReal const S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
@@ -333,7 +335,6 @@ void FieldProbe::ComputeDiags (int step)
                      */
                     if (temp_field_probe_integrate)
                     {
-
                         // store values on particles
                         part_Ex[ip] += Exp * dt; //remember to add lorentz transform
                         part_Ey[ip] += Eyp * dt; //remember to add lorentz transform
@@ -408,8 +409,7 @@ void FieldProbe::ComputeDiags (int step)
             }
         } // send to IO Processor
     }// end loop over refinement levels
-
-}// end void FieldProbe::ComputeDiags
+} // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
 {
