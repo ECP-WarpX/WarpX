@@ -70,9 +70,6 @@ photons.uz_th = 0.2
 #################################
 <<<<<<< HEAD
 warpx.reduced_diags_names = EP NP EF PP PF MF FP FP_integrate FP_line MR FR_Max FR_Min FR_Integral
-=======
-warpx.reduced_diags_names = EP NP EF PP PF MF FP FP_integrate MR FR_Max FR_Min FR_Integral
->>>>>>> development
 EP.type = ParticleEnergy
 EP.intervals = 200
 EF.type = FieldEnergy
