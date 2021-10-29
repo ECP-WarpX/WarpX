@@ -86,12 +86,33 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
+    See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
+    for details of the MLMG solver (the default solver used with electrostatic
+    simulations). The default behavior of the code is to check whether there is
+    non-zero charge density in the system and if so force the MLMG solver to
+    use the solution max norm when checking convergence. If there is no charge
+    density, the MLMG solver will switch to using the initial guess max norm
+    error when evaluating convergence and an absolute error tolerance of
+    :math:`10^{-6}` :math:`\mathrm{V/m}^2` will be used (unless a different
+    non-zero value is specified by the user via
+    ``warpx.self_fields_absolute_tolerance``).
+
 * ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
     This solver can fail to reach the default precision within a reasonable time.
     This only applies when warpx.do_electrostatic = labframe.
+
+* ``warpx.self_fields_absolute_tolerance`` (`float`, default: 0.0)
+    The absolute tolerance with which the space-charge fields should be
+    calculated in units of :math:`\mathrm{V/m}^2`. More specifically, the acceptable
+    residual with which the solution can be considered converged. In general
+    this should be left as the default, but in cases where the simulation state
+    changes very little between steps it can occur that the initial guess for
+    the MLMG solver is so close to the converged value that it fails to improve
+    that solution sufficiently to reach the ``self_fields_required_precision``
+    value.
 
 * ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
@@ -604,6 +625,16 @@ Particle initialization
     For highly-relativistic beams, this solver can fail to reach the default
     precision within a reasonable time ; in that case, users can set a
     relaxed precision requirement through ``self_fields_required_precision``.
+
+* ``<species_name>.self_fields_absolute_tolerance`` (`float`, default: 0.0)
+    The absolute tolerance with which the space-charge fields should be
+    calculated in units of :math:`\mathrm{V/m}^2`. More specifically, the acceptable
+    residual with which the solution can be considered converged. In general
+    this should be left as the default, but in cases where the simulation state
+    changes very little between steps it can occur that the initial guess for
+    the MLMG solver is so close to the converged value that it fails to improve
+    that solution sufficiently to reach the ``self_fields_required_precision``
+    value.
 
 * ``<species_name>.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for initial space-charge
