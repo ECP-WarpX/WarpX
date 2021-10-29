@@ -1,18 +1,13 @@
 #! /usr/bin/env python
 
-# Copyright 2019 Andrew Myers, Jean-Luc Vay, Maxence Thevenet
-# Remi Lehe, Weiqun Zhang, Luca Fedeli
+# Copyright 2021 Prabhat Kumar, Remi Lehe
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
 
 # This file is part of the WarpX automated test suite. Its purpose is to test the
-# injection of a Gaussian laser pulse from an antenna in a 2D simulation.
-# In order to avoid privileged directions, the laser is injected at
-# approximately 27 degrees with respect to the x axis. Moreover the polarization axis is neither
-# parallel nor perpendicular to the xz plane. Finally moving window along the
-# x axis is enabled.
+# injection of a Gaussian laser pulse from an antenna in a 1D simulation.
 # The test calculates the envelope of each component of the laser pulse at the end of
 # the simulation and it compares it with theory. It also checks that the
 # central frequency of the Fourier transform is the expected one.
@@ -24,7 +19,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import hilbert
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 sys.path.insert(1, '../../../../WarpX/Regression/Checksum/')
 import checksumAPI
 
@@ -70,7 +64,6 @@ def check_component(data, component, t_env_theory, coeff,Z,dz):
     field = data['boxlib', component].v.squeeze()
     env = abs(hilbert(field))
 
-    #print("coef  = " + str(np.abs(coeff)))
     env_theory = t_env_theory*np.abs(coeff)
 
     # Plot results
@@ -78,30 +71,21 @@ def check_component(data, component, t_env_theory, coeff,Z,dz):
 
     ax1 = fig.add_subplot(221)
     ax1.set_title('PIC field')
-    p1 = ax1.plot(Z,field)
-    p22 = ax1.plot(Z,env)
-    #cax1 = make_axes_locatable(ax1).append_axes('right', size='5%', pad=0.05)
-    #fig.colorbar(p1, cax=cax1, orientation='vertical')
+    ax1.plot(Z,field)
 
     ax2 = fig.add_subplot(222)
     ax2.set_title('PIC envelope')
-    p2 = ax2.plot(Z,env)
-    #cax2 = make_axes_locatable(ax2).append_axes('right', size='5%', pad=0.05)
-    #fig.colorbar(p2, cax=cax2, orientation='vertical')
+    ax2.plot(Z,env)
 
     ax3 = fig.add_subplot(223)
     ax3.set_title('Theory envelope')
-    p3 = ax3.plot(Z,env_theory, label="theory")
-    p = ax3.plot(Z,env, label="simulation")
+    ax3.plot(Z,env_theory, label="theory")
+    ax3.plot(Z,env, label="simulation")
     ax3.legend(loc="upper right")
-    #cax3 = make_axes_locatable(ax3).append_axes('right', size='5%', pad=0.05)
-    #fig.colorbar(p3, cax=cax3, orientation='vertical')
 
     ax4 = fig.add_subplot(224)
     ax4.set_title('Difference')
-    p4 = ax4.plot(Z,env-env_theory)
-    #cax4 = make_axes_locatable(ax4).append_axes('right', size='5%', pad=0.05)
-    #fig.colorbar(p4, cax=cax4, orientation='vertical')
+    ax4.plot(Z,env-env_theory)
 
     plt.tight_layout()
     plt.savefig("plt_" + component + ".png", bbox_inches='tight')
@@ -124,8 +108,6 @@ def check_component(data, component, t_env_theory, coeff,Z,dz):
 
     freq = np.abs(freq_cols[pos_max[0]])
     exp_freq = c/wavelength
-    print("pos_max = " + str(pos_max))
-    print("freq = " + str(freq))
 
     relative_error_freq = np.abs(freq-exp_freq)/exp_freq
     is_freq_ok = relative_error_freq < relative_error_threshold
