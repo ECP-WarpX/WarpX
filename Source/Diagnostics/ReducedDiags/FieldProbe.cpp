@@ -74,12 +74,12 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define whether ot not to integrate fields
      */
     amrex::ParmParse pp_rd_name(rd_name);
-    pp_rd_name.query("dimension", dimension);
-    if (dimension == 0)
+    pp_rd_name.query("probe_geometry", probe_geometry);
+    if (probe_geometry == DetectorGeometry::Point)
     {
-    getWithParser(pp_rd_name, "x_probe", x_probe);
-    getWithParser(pp_rd_name, "y_probe", y_probe);
-    getWithParser(pp_rd_name, "z_probe", z_probe);
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "y_probe", y_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
     }
     else
     {
@@ -98,13 +98,13 @@ FieldProbe::FieldProbe (std::string rd_name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     // resize data array
-    if (dimension == 0)
+    if (probe_geometry == DetectorGeometry::Point)
     {
-    m_data_vector.resize(noutputs, 0.0_rt);
+        m_data_vector.resize(noutputs, 0.0_rt);
     }
     else
     {
-    m_data_vector.resize(resolution * noutputs, 0.0_rt);
+        m_data_vector.resize(resolution * noutputs, 0.0_rt);
     }
 
     if (ParallelDescriptor::IOProcessor())
@@ -184,7 +184,7 @@ FieldProbe::FieldProbe (std::string rd_name)
 
 void FieldProbe::InitData ()
 {
-    if (dimension == 0)
+    if (probe_geometry == DetectorGeometry::Point)
     {
         //create 1D array for X, Y, and Z of particles
         amrex::Vector<amrex::ParticleReal> xpos;
@@ -204,9 +204,9 @@ void FieldProbe::InitData ()
     }
     else
     {
-        amrex::Vector<amrex::ParticleReal> xpos(resolution, 0);
-        amrex::Vector<amrex::ParticleReal> ypos(resolution, 0);
-        amrex::Vector<amrex::ParticleReal> zpos(resolution, 0);
+        amrex::Vector<amrex::ParticleReal> xpos;
+        amrex::Vector<amrex::ParticleReal> ypos;
+        amrex::Vector<amrex::ParticleReal> zpos;
 
         if (ParallelDescriptor::IOProcessor())
         {
@@ -216,15 +216,16 @@ void FieldProbe::InitData ()
                     (z1_probe - z_probe) / (resolution - 1)};
             for ( int step = 0; step < resolution; step++)
             {
-                xpos[step] = x_probe + (DetLineStepSize[0] * step);
-                ypos[step] = y_probe + (DetLineStepSize[1] * step);
-                zpos[step] = z_probe + (DetLineStepSize[2] * step);
+                xpos.push_back(x_probe + (DetLineStepSize[0] * step));
+                ypos.push_back(y_probe + (DetLineStepSize[1] * step));
+                zpos.push_back(z_probe + (DetLineStepSize[2] * step));
             }
         }
         m_probe.AddNParticles(0, xpos, ypos, zpos);
     }
 }
-void FieldProbe::LoadBalance()
+
+void FieldProbe::LoadBalance ()
 {
     m_probe.Redistribute();
 }
@@ -435,17 +436,18 @@ void FieldProbe::ComputeDiags (int step)
                     }
                 /* m_data_vector now contains up-to-date values for:
                  *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
-                m_data_vector.resize(np * noutputs);
                 }
             }
 
         } // end particle iterator loop
 //mpi gather.... amrex::ParallelGather
-        // make sure data is in m_data
     }// end loop over refinement levels
-        Gpu::synchronize();
-        m_data_out.resize(m_probe.TotalNumberOfParticles() * noutputs);
-        amrex::ParallelGather::Gather (m_data_vector.data(), m_data_vector.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+
+     // make sure data is in m_data on the IOProcessor
+     // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
+     Gpu::synchronize();
+     m_data_out.resize(m_probe.TotalNumberOfParticles() * noutputs);
+     amrex::ParallelGather::Gather (m_data_vector.data(), m_data_vector.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const

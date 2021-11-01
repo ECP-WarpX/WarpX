@@ -20,6 +20,19 @@
 #include <vector>
 
 /**
+ * This enumeration is used for assigning structural geometry levels (point vs line vs plane)
+ */
+struct DetectorGeometry
+{
+    enum
+    {
+        Point =0,
+        Line,
+        Plane
+    };
+};
+
+/**
  *  This class mainly contains a function that computes the value of each component
  * of the EM field at a given point
  */
@@ -53,13 +66,13 @@ public:
      * Define constants used throughout FieldProbe
      */
 
-    //! noutputs is 11 (i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, S)
+    //! noutputs is 11 (id, x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
     static constexpr int noutputs = FieldProbePIdx::nattribs + 4;
 
 private:
     amrex::Real x_probe, y_probe, z_probe;
     amrex::Real x1_probe, y1_probe, z1_probe;
-    int dimension;
+    int probe_geometry;
     int resolution;
     std::vector<amrex::Real> m_data_vector;
     std::vector<amrex::Real> m_data_out;
@@ -68,9 +81,10 @@ private:
     FieldProbeParticleContainer m_probe;
 
     //! if  true, integrate values over time instead of probing instantaneous values
-    bool m_field_probe_integrate;
+    bool m_field_probe_integrate = false;
     int interp_order = 1;
     bool raw_fields = false;
+
     /**
      * Built-in function in ReducedDiags to write out test data
      */
