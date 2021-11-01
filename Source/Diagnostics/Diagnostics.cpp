@@ -307,7 +307,7 @@ Diagnostics::ComputeAndPack ()
     // prepare the field-data necessary to compute output data
     PrepareFieldDataForOutput();
     // Prepare the particle data necessary to compute output data
-    // Prepare field data first for BTD, since the z-slice location is used
+    // Field-data is called first for BTD, since the z-slice location is used to prepare particle data
     // to determine if the transform is to be done this step.
     PrepareParticleDataForOutput();
 

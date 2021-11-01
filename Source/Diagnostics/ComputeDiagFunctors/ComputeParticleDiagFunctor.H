@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_COMPUTEPARTICLEDIAGFUNCTOR_H_
 #define WARPX_COMPUTEPARTICLEDIAGFUNCTOR_H_
 
@@ -28,7 +34,7 @@ public:
                                       }
     /** Compute particle attributes and store the result in pc_dst particle container.
      *  \param[out] pc_dst  output particle container where the result is stored.
-     *  \param[in] i_buffer integer of the particle buffer that is processed
+     *  \param[in] i_buffer snapshot index for which the particle buffer is processed
      */
     virtual void operator () (ParticleContainer& pc_dst, int &totalParticlesInBuffer, int i_buffer = 0) const = 0;
     virtual void InitData() {}

@@ -573,7 +573,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // real_flags is 1 or 0, whether quantity is dumped or not.
 
     {
-      if (!isBTD) {
+      if (isBTD) {
           DumpToFile(&tmp,
              particle_diags[i].getSpeciesName(),
              m_CurrentStep,
@@ -581,7 +581,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
              int_flags,
              real_names, int_names,
              pc->getCharge(), pc->getMass(),
-             isBTD, 0
+             isBTD, totalParticlesFlushedAlready[i]
           );
       } else {
           DumpToFile(&tmp,
@@ -591,7 +591,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
              int_flags,
              real_names, int_names,
              pc->getCharge(), pc->getMass(),
-             isBTD, totalParticlesFlushedAlready[i]
+             isBTD, 0
           );
       }
     }
@@ -615,7 +615,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
-  // should this be WarpXParticleContainer for BTD?
   WarpXParticleCounter counter(pc);
   if (counter.GetTotalNumParticles() == 0) return;
   openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
@@ -665,7 +664,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
   m_ParticleSetUp = false;
   if (counter.GetTotalNumParticles() > 0 and ParticleFlushOffset == 0) {
-      // This will trigger meta-data flush for particles
+      // This will trigger meta-data flush for particles the first-time non-zero number of particles are flushed.
       m_ParticleSetUp = true;
   }
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);

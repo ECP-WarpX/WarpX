@@ -65,6 +65,7 @@ private:
     void InitializeParticleBuffer () override;
     /** Prepare field data to be used for diagnostics */
     void PrepareFieldDataForOutput () override;
+    /** Prepare particle data to be used for diagnostics. */
     void PrepareParticleDataForOutput() override {}
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
