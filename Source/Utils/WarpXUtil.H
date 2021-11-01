@@ -47,8 +47,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
  * \brief Parse a string (typically a mathematical expression) from the
  * input file and store it into a variable.
  *
- * \param ParmParse pp used to read the query_string pp.<function>=string
- * \param parmparse_string String used to initialize ParmParse
+ * \param pp used to read the query_string `pp.<function>=string`
  * \param query_string ParmParse.query will look for this string
  * \param stored_string variable in which the string to parse is stored
  */
@@ -247,8 +246,21 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
     }
 }
 
-/**
- * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::query reads a name and a value from the input file. This function does the
+ * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored, either a scalar or vector
+ */
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+
+/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
  *
  * amrex::ParmParse::query reads a name and a value from the input file. This function does the
  * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
@@ -263,8 +275,6 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
  * \param[in] num_val number of input values to use (optional with arrays, default is
  * amrex::ParmParse::LAST for reading until the last input value)
  */
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                         const int start_ix = amrex::ParmParse::FIRST,
                         const int num_val = amrex::ParmParse::LAST);
@@ -273,8 +283,21 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
                         const int start_ix = amrex::ParmParse::FIRST,
                         const int num_val = amrex::ParmParse::LAST);
 
-/**
- * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+/** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::get reads a name and a value from the input file. This function does the
+ * same, and applies the Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
+ */
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+
+/** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
  * amrex::ParmParse::get reads a name and a value from the input file. This function does the
  * same, and applies the Parser to the value, so the user has the choice to specify a value or
@@ -289,8 +312,6 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
  * \param[in] num_val number of input values to use (optional with arrays, default is
  * amrex::ParmParse::LAST for reading until the last input value)
  */
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);

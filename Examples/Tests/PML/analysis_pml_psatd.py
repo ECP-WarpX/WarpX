@@ -63,5 +63,10 @@ print("reflectivity_max = " + str(reflectivity_max))
 
 assert(reflectivity < reflectivity_max)
 
+# Check restart data v. original data
+sys.path.insert(0, '../../../../warpx/Examples/')
+from analysis_default_restart import check_restart
+check_restart(filename)
+
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

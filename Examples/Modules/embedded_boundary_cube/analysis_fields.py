@@ -74,11 +74,11 @@ for i in range(ncells[0]):
 rel_tol_err = 1e-1
 
 # Compute relative l^2 error on By
-By_sim = data['By'].to_ndarray()
+By_sim = data[('mesh','By')].to_ndarray()
 rel_err_y = np.sqrt( np.sum(np.square(By_sim - By_th)) / np.sum(np.square(By_th)))
 assert(rel_err_y < rel_tol_err)
 # Compute relative l^2 error on Bz
-Bz_sim = data['Bz'].to_ndarray()
+Bz_sim = data[('mesh','Bz')].to_ndarray()
 rel_err_z = np.sqrt( np.sum(np.square(Bz_sim - Bz_th)) / np.sum(np.square(Bz_th)))
 assert(rel_err_z < rel_tol_err)
 
