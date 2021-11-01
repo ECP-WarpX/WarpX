@@ -41,6 +41,7 @@ jobs:
       CMAKE_PREFIX_PATH: /home/user/ascent/install-debug/lib/cmake/
     container:
       image: alpinedav/ascent:ascent-ubuntu-18_2021-10-23-shaba7872
+      options: --user 1000
     steps:
     - uses: actions/checkout@v2
     - name: Configure
