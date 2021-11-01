@@ -77,9 +77,9 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_rd_name.query("dimension", dimension);
     if (dimension == 0)
     {
-    getWithParser(pp_rd_name, "x_probe", x_probe);
-    getWithParser(pp_rd_name, "y_probe", y_probe);
-    getWithParser(pp_rd_name, "z_probe", z_probe);
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "y_probe", y_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
     }
     else
     {
@@ -100,11 +100,11 @@ FieldProbe::FieldProbe (std::string rd_name)
     // resize data array
     if (dimension == 0)
     {
-    m_data_vector.resize(noutputs, 0.0_rt);
+        m_data_vector.resize(noutputs, 0.0_rt);
     }
     else
     {
-    m_data_vector.resize(resolution * noutputs, 0.0_rt);
+        m_data_vector.resize(resolution * noutputs, 0.0_rt);
     }
 
     if (ParallelDescriptor::IOProcessor())
@@ -224,7 +224,8 @@ void FieldProbe::InitData ()
         m_probe.AddNParticles(0, xpos, ypos, zpos);
     }
 }
-void FieldProbe::LoadBalance()
+
+void FieldProbe::LoadBalance ()
 {
     m_probe.Redistribute();
 }
@@ -435,14 +436,14 @@ void FieldProbe::ComputeDiags (int step)
                     }
                 /* m_data_vector now contains up-to-date values for:
                  *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
-                m_data_vector.resize(np * noutputs);
                 }
             }
 
         } // end particle iterator loop
 //mpi gather.... amrex::ParallelGather
 
-        // make sure data is in m_data
+        // make sure data is in m_data on the IOProcessor
+        // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
         Gpu::synchronize();
         m_data_out.resize(m_probe.TotalNumberOfParticles() * noutputs);
         amrex::ParallelGather::Gather (m_data_vector.data(), m_data_vector.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
