@@ -296,11 +296,14 @@ void FieldProbe::ComputeDiags (int step)
 
         // loop over each particle
         // TODO: add OMP parallel as in PhysicalParticleContainer::Evolve
+
+        long numparticles= 0; //particles in this processor
         using MyParIter = FieldProbeParticleContainer::iterator;
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
-            const long np = pti.numParticles();
+            auto np = pti.numParticles();
+            numparticles += np;
 
             if( ProbeInDomain() )
             {
@@ -353,6 +356,7 @@ void FieldProbe::ComputeDiags (int step)
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
                 amrex::Real const dt = WarpX::GetInstance().getdt(lev);
 
+                m_data.resize(np * noutputs);
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
@@ -439,16 +443,24 @@ void FieldProbe::ComputeDiags (int step)
                  *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
             }
-
         } // end particle iterator loop
-//mpi gather.... amrex::ParallelGather
-    }// end loop over refinement levels
+        unsigned long long sum=0; //numparticles in this level (sum from all processors)
+        int m_MPISize = amrex::ParallelDescriptor::NProcs(); 
+        std::vector<long> result(m_MPISize, 0);
+        amrex::ParallelGather::Gather (numparticles, result.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
 
-     // make sure data is in m_data on the IOProcessor
-     // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
-     Gpu::synchronize();
-     m_data_out.resize(m_probe.TotalNumberOfParticles() * noutputs);
-     amrex::ParallelGather::Gather (m_data.data(), m_data.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+        sum = 0;
+        int const num_results = result.size();
+            for (int i=0; i<num_results; i++) {
+                sum += result[i];
+            }
+
+        Gpu::synchronize();
+        m_data_out.resize(sum * noutputs);
+        amrex::ParallelGather::Gather (m_data.data(), m_data.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+    }// end loop over refinement levels
+    // make sure data is in m_data on the IOProcessor
+    // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
