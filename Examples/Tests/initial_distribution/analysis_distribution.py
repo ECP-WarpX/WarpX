@@ -12,6 +12,8 @@
 # 3 denotes maxwell-juttner distribution.
 # 4 denotes gaussian position distribution.
 # 5 denotes maxwell-juttner distribution w/ spatially varying temperature
+# 6 denotes maxwell-boltzmann distribution w/ constant velocity
+# 7 denotes maxwell-boltzmann distribution w/ spatially-varying velocity
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
 import numpy as np
@@ -179,6 +181,81 @@ f5_error = np.sum( np.abs(f_neg-bin_data_neg) + np.abs(f_pos-bin_data_pos) ) \
 print('Maxwell-Juttner parser temperature difference:', f5_error)
 
 assert(f5_error < tolerance)
+
+#==============================================
+# maxwell-boltzmann with constant bulk velocity
+#==============================================
+
+# load data
+bin_value_g, bin_data_g = read_reduced_diags_histogram("h6.txt")[2:]
+bin_value_uy, bin_data_uy = read_reduced_diags_histogram("h6uy.txt")[2:]
+
+# Expected values for beta and u = beta*gamma
+beta_const = 0.2
+g_const = 1. / np.sqrt(1. - beta_const * beta_const)
+uy_const = beta_const * g_const
+g_bin_size = 0.004
+g_bin_min = 1.
+uy_bin_size = 0.04
+uy_bin_min = -1.
+V = 8.0 # volume in m^3
+n = 1.0e21 # number density in 1/m^3
+
+f_g = np.zeros_like(bin_value_g)
+i_g = int(np.floor((g_const - g_bin_min) / g_bin_size))
+f_g[i_g] = n * V
+f_peak = np.amax(f_g)
+
+f_uy = np.zeros_like(bin_value_uy)
+i_uy = int(np.floor((-uy_const - uy_bin_min) / uy_bin_size))
+f_uy[i_uy] = n * V
+
+f6_error = np.sum(np.abs(f_g - bin_data_g) + np.abs(f_uy - bin_data_uy)) \
+        / bin_value_g.size / f_peak
+
+print('Maxwell-Boltzmann constant velocity difference:', f6_error)
+
+assert(f6_error < tolerance)
+
+#============================================
+# maxwell-boltzmann with parser bulk velocity
+#============================================
+
+# load data
+bin_value_g, bin_data_g = read_reduced_diags_histogram("h7.txt")[2:]
+bin_value_uy, bin_data_uy_neg = read_reduced_diags_histogram("h7uy_neg.txt")[2:]
+bin_data_uy_pos = read_reduced_diags_histogram("h7uy_pos.txt")[3]
+
+# Expected values for beta and u = beta*gamma
+beta_const = 0.2
+g_const = 1. / np.sqrt(1. - beta_const * beta_const)
+uy_const = beta_const * g_const
+g_bin_size = 0.004
+g_bin_min = 1.
+uy_bin_size = 0.04
+uy_bin_min = -1.
+V = 8.0 # volume in m^3
+n = 1.0e21 # number density in 1/m^3
+
+f_g = np.zeros_like(bin_value_g)
+i_g = int(np.floor((g_const - g_bin_min) / g_bin_size))
+f_g[i_g] = n * V
+f_peak = np.amax(f_g)
+
+f_uy_neg = np.zeros_like(bin_value_uy)
+i_uy_neg = int(np.floor((uy_const - uy_bin_min) / uy_bin_size))
+f_uy_neg[i_uy_neg] = n * V / 2.
+
+f_uy_pos = np.zeros_like(bin_value_uy)
+i_uy_pos = int(np.floor((-uy_const - uy_bin_min) / uy_bin_size))
+f_uy_pos[i_uy_pos] = n * V / 2.
+
+f7_error = np.sum(np.abs(f_g - bin_data_g) + np.abs(f_uy_pos - bin_data_uy_pos) \
+        + np.abs(f_uy_neg - bin_data_uy_neg)) / bin_value_g.size / f_peak
+
+print('Maxwell-Boltzmann parser velocity difference:', f7_error)
+
+assert(f7_error < tolerance)
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
