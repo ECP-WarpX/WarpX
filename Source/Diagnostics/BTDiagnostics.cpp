@@ -161,10 +161,13 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
     // timestep < 0, i.e., at initialization time when step == -1
     if (step < 0 )
         return false;
+    // Do not call dump if the snapshot is already full and the files are closed.
     else if (m_snapshot_full[i_buffer] == 1)
         return false;
-    // buffer for this lab snapshot is full, time to dump it and continue
-    // to collect more slices afterwards
+    // If buffer for this lab snapshot is full then dump it and continue to collect
+    // slices afters; or
+    // If last z-slice in the lab-frame snapshot is filled, call dump to close
+    // write the buffer and close the file.
     else if (buffer_full(i_buffer) || m_lastValidZSlice[i_buffer] == 1)
         return true;
     // forced: at the end of the simulation
@@ -453,6 +456,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              m_snapshot_full[i_buffer] );
 
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
+                // when the 0th z-index is filled, then set lastValidZSlice to 1
                 if (k_index_zlab(i_buffer, lev) == 0) m_lastValidZSlice[i_buffer] = 1;
             }
         }
@@ -486,9 +490,9 @@ void
 BTDiagnostics::SetSnapshotFullStatus (const int i_buffer, const int lev)
 {
    if (m_snapshot_full[i_buffer] == 1) return;
-
-   const int k_lab = k_index_zlab(i_buffer, lev);
-   if (k_lab <= 0) m_snapshot_full[i_buffer] = 1;
+   // if the last valid z-index of the snapshot, which is 0, is filled, then
+   // set the snapshot full integer to 1
+   if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
 
 }
 
