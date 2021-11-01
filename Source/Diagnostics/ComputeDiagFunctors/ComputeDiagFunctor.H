@@ -30,6 +30,22 @@ public:
      * multifab */
     int nComp () const { return m_ncomp; }
 
+    /** \brief Prepare data required to process fields in the operator()
+     *         Note that this function has parameters that are specific to
+     *         back-transformed diagnostics, that are unused for regular diagnostics.
+     *
+     * \param[in] i_buffer       index of the back-transform snapshot
+     * \param[in] ZSliceInDomain if the z-slice at current_z_boost is within
+     *            the boosted-frame and lab-frame domain.
+     *            The fields are sliced and back-transformed only if this value is true.
+     * \param[in] buffer_box     Box with index-space in lab-frame for the ith buffer
+     * \param[in] k_index_zlab   k-index in the lab-frame corresponding to the
+     *                           current z co-ordinate in the lab-frame for the ith buffer.
+     * \param[in] max_box_size   maximum box size for the multifab to generate box arrays
+     * \param[in] SnapshotFull   if the current snapshot, with index, i_buffer, is full (1)
+                                 or not (0). If it is full, then Lorentz-transform
+                                 is not performed by setting m_perform_backtransform to 0; 
+     */     
     virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                                       amrex::Real current_z_boost,
                                       amrex::Box buffer_box, const int k_index_zlab,
