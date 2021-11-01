@@ -44,19 +44,29 @@ Installation
 ------------
 Prerequisites include: numpy, scipy, WarpX.
 
-At this stage I recommend running ``make devel`` or ``make devel-all``. These
-use the ``pip`` package manager, but they also set it so that a symlink to the
-current directory is inserted into your python user environment; changes made
-to the source will automatically be used in new ``import mewarpx`` calls.
+See :ref:`development-page` for information on how to do an efficient compile
+and install of everything. That is the configuration we expect to consistently
+use.
 
-``make devel-all`` will also install all optional dependencies. This, notably,
-will let you run ``make test``, or equivalently ``pytest``, to check that the
-whole distribution is running properly.
+If you only want to install the python package component:
+
+  * As a user, you can run ``make devel`` or ``make devel-all``. These use the
+    ``pip`` package manager, but they also set it so that a symlink to the
+    current directory is inserted into your python user environment; changes
+    made to the source will automatically be used in new ``import mewarpx``
+    calls.
+  * In a virtual environment, run ``make devel-system`` or ``make
+    devel-all-system`` for the same effect.
+
+``make devel-all`` and ``make devel-all-system`` will also install all optional
+dependencies. This, notably, will let you run ``make test``, or equivalently
+``pytest``, to check that the whole distribution is running properly (which
+requires WarpX compilation, however, again see :ref:`development-page` for
+details).
 
 For building all docs in latex format, ``latexmk``, and a number of latex
 packages, must be installed as well. Installing a **full** ``texlive``
 distribution will satisfy package requirements.
-
 
 Compatibility
 -------------
