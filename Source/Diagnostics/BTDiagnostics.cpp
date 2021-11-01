@@ -632,8 +632,6 @@ BTDiagnostics::Flush (int i_buffer)
         file_name = file_name+"/buffer";
     }
     SetSnapshotFullStatus(i_buffer);
-    //bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
-    //                           - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
