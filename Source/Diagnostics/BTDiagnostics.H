@@ -181,6 +181,7 @@ private:
      *  will be equal to the predicted m_max_buffer_multifabs for each snapshot.
      */
     amrex::Vector<int> m_snapshot_full;
+    amrex::Vector<int> m_lastValidZSlice;
     amrex::Vector<int> m_max_buffer_multifabs;
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */

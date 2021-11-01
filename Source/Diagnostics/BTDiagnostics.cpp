@@ -84,10 +84,12 @@ void BTDiagnostics::DerivedInitData ()
     // allocate vector of geometry objects corresponding to each snapshot
     m_geom_snapshot.resize( m_num_buffers );
     m_snapshot_full.resize( m_num_buffers );
+    m_lastValidZSlice.resize( m_num_buffers );
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
         // initialize snapshot full boolean to false
         m_snapshot_full[i] = 0;
+        m_lastValidZSlice[i] = 0;
     }
 
     for (int lev = 0; lev < nmax_lev; ++lev) {
@@ -163,7 +165,7 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
         return false;
     // buffer for this lab snapshot is full, time to dump it and continue
     // to collect more slices afterwards
-    else if (buffer_full(i_buffer))
+    else if (buffer_full(i_buffer) || m_lastValidZSlice[i_buffer] == 1)
         return true;
     // forced: at the end of the simulation
     // empty: either lab snapshot was already fully written and buffer was reset
@@ -455,6 +457,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              m_snapshot_full[i_buffer] );
 
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
+                if (k_index_zlab(i_buffer, lev) == 0) m_lastValidZSlice[i_buffer] = 1;
             }
         }
     }
@@ -499,6 +502,7 @@ BTDiagnostics::SetSnapshotFullStatus (const int i_buffer, const int lev)
    if (m_snapshot_full[i_buffer] == 1) return;
 
    const int k_lab = k_index_zlab(i_buffer, lev);
+   amrex::Print() << " at set snapshot status for buffer : " <<i_buffer << " k_lab : " << k_lab << "\n";
    if (k_lab <= 0) m_snapshot_full[i_buffer] = 1;
 
 }
@@ -647,7 +651,7 @@ BTDiagnostics::Flush (int i_buffer)
     //bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
     //                           - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
-    amrex::Print() << " *** ClosingSnapshot This timestep : " << i_buffer <<"\n";
+    if (isLastBTDFlush) amrex::Print() << " *** ClosingSnapshot This timestep : " << i_buffer <<"\n";
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(
