@@ -165,7 +165,7 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
     else if (m_snapshot_full[i_buffer] == 1)
         return false;
     // If buffer for this lab snapshot is full then dump it and continue to collect
-    // slices afters; or
+    // slices afterwards; or
     // If last z-slice in the lab-frame snapshot is filled, call dump to close
     // write the buffer and close the file.
     else if (buffer_full(i_buffer) || m_lastValidZSlice[i_buffer] == 1)
