@@ -185,7 +185,7 @@ private:
      *  If the snapshot is full, then the snapshot files are closed.
      */
     amrex::Vector<int> m_snapshot_full;
-    /** Vector of integeres to store if the last valid slice in the lab-frame
+    /** Vector of integers to store if the last valid slice in the lab-frame
      *  is being filled. When the value is 1, then the buffer is flushed, and
      *  m_snapshot_full is set to 1 for that snapshot index.
      */
