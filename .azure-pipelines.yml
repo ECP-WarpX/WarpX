@@ -22,6 +22,7 @@ jobs:
     matrix:
       cartesian1d:
         WARPX_CI_REGULAR_CARTESIAN_1D: 'TRUE'
+        WARPX_CI_PSATD: 'FALSE'
       cartesian2d:
         WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
       cartesian3d:
