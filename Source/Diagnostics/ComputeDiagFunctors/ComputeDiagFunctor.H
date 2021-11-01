@@ -44,8 +44,8 @@ public:
      * \param[in] max_box_size   maximum box size for the multifab to generate box arrays
      * \param[in] snapshot_full   if the current snapshot, with index, i_buffer, is full (1)
                                  or not (0). If it is full, then Lorentz-transform
-                                 is not performed by setting m_perform_backtransform to 0; 
-     */     
+                                 is not performed by setting m_perform_backtransform to 0;
+     */
     virtual void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                                       amrex::Real current_z_boost,
                                       amrex::Box buffer_box, const int k_index_zlab,
