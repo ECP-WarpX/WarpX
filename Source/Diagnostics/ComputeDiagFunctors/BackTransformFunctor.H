@@ -74,7 +74,7 @@ public:
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                               amrex::Real current_z_boost,
                               amrex::Box buffer_box, const int k_index_zlab,
-                              const int max_box_size ) override;
+                              const int max_box_size, const int SnapshotFull ) override;
     /** Allocate and initialize member variables and arrays required to back-transform
      *  field-data from boosted-frame to lab-frame.
      */

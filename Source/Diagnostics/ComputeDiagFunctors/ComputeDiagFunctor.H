@@ -33,11 +33,11 @@ public:
     virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                                       amrex::Real current_z_boost,
                                       amrex::Box buffer_box, const int k_index_zlab,
-                                      const int max_box_size) {
+                                      const int max_box_size, const int SnapshotFull) {
                                           amrex::ignore_unused(i_buffer,
                                           ZSliceInDomain,
                                           current_z_boost, buffer_box,
-                                          k_index_zlab, max_box_size);
+                                          k_index_zlab, max_box_size, SnapshotFull);
                                       }
     virtual void InitData() {}
 private:

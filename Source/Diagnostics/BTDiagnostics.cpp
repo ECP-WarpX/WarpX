@@ -83,8 +83,11 @@ void BTDiagnostics::DerivedInitData ()
     m_buffer_flush_counter.resize(m_num_buffers);
     // allocate vector of geometry objects corresponding to each snapshot
     m_geom_snapshot.resize( m_num_buffers );
+    m_snapshot_full.resize( m_num_buffers );
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
+        // initialize snapshot full boolean to false
+        m_snapshot_full[i] = 0;
     }
 
     for (int lev = 0; lev < nmax_lev; ++lev) {
@@ -155,6 +158,8 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
     // timestep < 0, i.e., at initialization time when step == -1
     if (step < 0 )
+        return false;
+    else if (m_snapshot_full[i_buffer] == 1)
         return false;
     // buffer for this lab snapshot is full, time to dump it and continue
     // to collect more slices afterwards
@@ -310,6 +315,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 #else
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
 #endif
+    amrex::Print() << "Nx lab nz lab " << Nx_lab << " " << Nz_lab << "\n";
 }
 
 void
@@ -430,6 +436,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 // Initialize and define field buffer multifab if buffer is empty
                 if (ZSliceInDomain) {
                     if ( buffer_empty(i_buffer) ) {
+                        amrex::Print() << " ibuffer : " << i_buffer << " start filling buffer\n";
                         if ( m_buffer_flush_counter[i_buffer] == 0) {
                             // Compute the geometry, snapshot lab-domain extent
                             // and box-indices
@@ -437,12 +444,15 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                    amrex::Print() << i_buffer << " buffer counter : " << m_buffer_counter[i_buffer] << "\n";
                 }
+                amrex::Print() << " snapshot full " << m_snapshot_full[i_buffer] << " zslice in domain : " << ZSliceInDomain << "\n";
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev), m_max_box_size );
+                                             k_index_zlab(i_buffer, lev), m_max_box_size,
+                                             m_snapshot_full[i_buffer] );
 
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
             }
@@ -470,10 +480,28 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
                             - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
                       ) );
-    return k_lab;
+    int k2_lab = static_cast<int>(floor (
+                          ( m_current_z_lab[i_buffer]
+                            - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
+                          / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
+                      ) );
+    amrex::Print() << " ibuffer : " << i_buffer << " zlab : " << m_current_z_lab[i_buffer];
+    amrex::Print() << " max prob dom lab : " << m_prob_domain_lab[i_buffer].hi( m_moving_window_dir );
+    amrex::Print() << " min prob dom lab : " << prob_domain_zmin_lab ;
+    amrex::Print() << " half dz : " << (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) )  << "\n";
+    amrex::Print() << " ibuffer : " << i_buffer << " klab : " << k_lab << " " << k2_lab << "\n"; 
+    return k2_lab;
 }
 
+void
+BTDiagnostics::SetSnapshotFullStatus (const int i_buffer, const int lev)
+{
+   if (m_snapshot_full[i_buffer] == 1) return;
 
+   const int k_lab = k_index_zlab(i_buffer, lev);
+   if (k_lab <= 0) m_snapshot_full[i_buffer] = 1;
+    
+}
 
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
@@ -536,9 +564,11 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 void
 BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
+    amrex::Print() << " Defining snapshot : " << i_buffer << "\n";
     if ( m_do_back_transformed_fields ) {
         auto & warpx = WarpX::GetInstance();
         const int k_lab = k_index_zlab (i_buffer, lev);
+        amrex::Print() << " klab : " << k_lab << "\n";
         // Box covering the extent of the user-defined diag in the back-transformed frame
         // for the ith snapshot
         // estimating the maximum number of buffer multifabs needed to obtain the
@@ -561,6 +591,8 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
                              num_z_cells_in_snapshot *
                              dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
         m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
+        amrex::Print() << " numzcells : " << num_z_cells_in_snapshot << " max_buffer_mfs : " << m_max_buffer_multifabs[i_buffer] << " " << m_buffer_size << "\n";
+        amrex::Print() << " snapshot box : " << m_snapshot_box[i_buffer] << "\n";
         if (lev == 0) {
             // The extent of the physical domain covered by the ith snapshot
             // Default non-periodic geometry for diags
@@ -604,14 +636,18 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 void
 BTDiagnostics::Flush (int i_buffer)
 {
+    amrex::Print() << " in flush for i buffer : " << i_buffer << "\n";
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
         file_name = amrex::Concatenate(m_file_prefix,i_buffer,5);
         file_name = file_name+"/buffer";
     }
-    bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
-                               - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
+    SetSnapshotFullStatus(i_buffer);
+    //bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
+    //                           - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
+    bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
+    amrex::Print() << " *** ClosingSnapshot This timestep : " << i_buffer <<"\n";
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(

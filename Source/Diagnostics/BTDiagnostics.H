@@ -180,6 +180,7 @@ private:
      *  generate each lab-frame snapshot. At the final flush, m_buffer_flush_counter
      *  will be equal to the predicted m_max_buffer_multifabs for each snapshot.
      */
+    amrex::Vector<int> m_snapshot_full;
     amrex::Vector<int> m_max_buffer_multifabs;
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
@@ -276,6 +277,7 @@ private:
     void IncrementBufferFlushCounter(int i_buffer) {
         m_buffer_flush_counter[i_buffer]++;
     }
+    void SetSnapshotFullStatus (const int i_buffer, const int lev = 0);
     /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
