@@ -297,12 +297,12 @@ void FieldProbe::ComputeDiags (int step)
         // loop over each particle
         // TODO: add OMP parallel as in PhysicalParticleContainer::Evolve
 
-        long numparticles= 0; //particles in this processor
+        long numparticles = 0; // particles on this MPI rank
         using MyParIter = FieldProbeParticleContainer::iterator;
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
-            auto np = pti.numParticles();
+            auto const np = pti.numParticles();
             numparticles += np;
 
             if( ProbeInDomain() )
@@ -356,7 +356,7 @@ void FieldProbe::ComputeDiags (int step)
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
                 amrex::Real const dt = WarpX::GetInstance().getdt(lev);
 
-                m_data.resize(np * noutputs);
+                m_data.resize(numparticles * noutputs);
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
@@ -422,7 +422,7 @@ void FieldProbe::ComputeDiags (int step)
                 // but we only write when we truly are in an output interval step
                 if (m_intervals.contains(step+1))
                 {
-                    for (auto ip=0; ip < np; ip++) 
+                    for (auto ip=numparticles - np; ip < numparticles; ip++) 
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
