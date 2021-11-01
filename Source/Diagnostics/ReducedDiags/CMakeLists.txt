@@ -2,6 +2,8 @@ target_sources(WarpX
   PRIVATE
     BeamRelevant.cpp
     FieldEnergy.cpp
+    FieldProbe.cpp
+    FieldProbeParticleContainer.cpp
     FieldMomentum.cpp
     LoadBalanceCosts.cpp
     LoadBalanceEfficiency.cpp
