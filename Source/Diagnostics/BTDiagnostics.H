@@ -289,9 +289,8 @@ private:
      *  for the ith snapshot index, given by, i_buffer, is filled.
      *
      *  \param[in] i_buffer snapshot index
-     *  \param[in] lev      mesh-refinement level of the output buffer
      */
-    void SetSnapshotFullStatus (const int i_buffer, const int lev = 0);
+    void SetSnapshotFullStatus (const int i_buffer);
     /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
