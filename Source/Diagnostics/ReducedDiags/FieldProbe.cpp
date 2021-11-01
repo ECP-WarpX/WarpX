@@ -441,12 +441,11 @@ void FieldProbe::ComputeDiags (int step)
 
         } // end particle iterator loop
 //mpi gather.... amrex::ParallelGather
-
         // make sure data is in m_data
+    }// end loop over refinement levels
         Gpu::synchronize();
         m_data_out.resize(m_probe.TotalNumberOfParticles() * noutputs);
         amrex::ParallelGather::Gather (m_data_vector.data(), m_data_vector.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
-    }// end loop over refinement levels
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
