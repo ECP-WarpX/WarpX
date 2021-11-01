@@ -13,6 +13,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+#include "Diagnostics/WarpXOpenPMD.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
@@ -100,11 +101,11 @@ FieldProbe::FieldProbe (std::string rd_name)
     // resize data array
     if (probe_geometry == DetectorGeometry::Point)
     {
-        m_data_vector.resize(noutputs, 0.0_rt);
+        m_data.resize(noutputs, 0.0_rt);
     }
     else
     {
-        m_data_vector.resize(resolution * noutputs, 0.0_rt);
+        m_data.resize(resolution * noutputs, 0.0_rt);
     }
 
     if (ParallelDescriptor::IOProcessor())
@@ -422,19 +423,19 @@ void FieldProbe::ComputeDiags (int step)
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
                         // Fill output array
-                        m_data_vector[ip * noutputs + 0] = ip;
-                        m_data_vector[ip * noutputs + 1] = xp;
-                        m_data_vector[ip * noutputs + 2] = yp;
-                        m_data_vector[ip * noutputs + 3] = zp;
-                        m_data_vector[ip * noutputs + FieldProbePIdx::Ex + 4] = part_Ex[ip];
-                        m_data_vector[ip * noutputs + FieldProbePIdx::Ey + 4] = part_Ey[ip];
-                        m_data_vector[ip * noutputs + FieldProbePIdx::Ez + 4] = part_Ez[ip];
-                        m_data_vector[ip * noutputs + FieldProbePIdx::Bx + 4] = part_Bx[ip];
-                        m_data_vector[ip * noutputs + FieldProbePIdx::By + 4] = part_By[ip];
-                        m_data_vector[ip * noutputs + FieldProbePIdx::Bz + 4] = part_Bz[ip];
-                        m_data_vector[ip * noutputs + FieldProbePIdx::S + 4] = part_S[ip];
+                        m_data[ip * noutputs + 0] = ip;
+                        m_data[ip * noutputs + 1] = xp;
+                        m_data[ip * noutputs + 2] = yp;
+                        m_data[ip * noutputs + 3] = zp;
+                        m_data[ip * noutputs + FieldProbePIdx::Ex + 4] = part_Ex[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Ey + 4] = part_Ey[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Ez + 4] = part_Ez[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Bx + 4] = part_Bx[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::By + 4] = part_By[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Bz + 4] = part_Bz[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::S + 4] = part_S[ip];
                     }
-                /* m_data_vector now contains up-to-date values for:
+                /* m_data now contains up-to-date values for:
                  *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
             }
@@ -447,7 +448,7 @@ void FieldProbe::ComputeDiags (int step)
      // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
      Gpu::synchronize();
      m_data_out.resize(m_probe.TotalNumberOfParticles() * noutputs);
-     amrex::ParallelGather::Gather (m_data_vector.data(), m_data_vector.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+     amrex::ParallelGather::Gather (m_data.data(), m_data.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
@@ -470,7 +471,7 @@ void FieldProbe::WriteToFile (int step) const
         ofs << WarpX::GetInstance().gett_new(0);
 
         // loop over data size and write
-        for (int i = 0; i < m_probe.TotalNumberOfParticles(); i++)
+        for (int i = 0; i < (m_data_out.size() / noutputs); i++)
         {
             for (int k = 0; k < noutputs; k++)
             {

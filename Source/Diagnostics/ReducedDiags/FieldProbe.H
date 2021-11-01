@@ -74,7 +74,7 @@ private:
     amrex::Real x1_probe, y1_probe, z1_probe;
     int probe_geometry;
     int resolution;
-    std::vector<amrex::Real> m_data_vector;
+    std::vector<amrex::Real> m_data;
     std::vector<amrex::Real> m_data_out;
 
     //! this is the particle container in which probe particles are stored
