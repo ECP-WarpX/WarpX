@@ -489,7 +489,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
     amrex::Print() << " max prob dom lab : " << m_prob_domain_lab[i_buffer].hi( m_moving_window_dir );
     amrex::Print() << " min prob dom lab : " << prob_domain_zmin_lab ;
     amrex::Print() << " half dz : " << (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) )  << "\n";
-    amrex::Print() << " ibuffer : " << i_buffer << " klab : " << k_lab << " " << k2_lab << "\n"; 
+    amrex::Print() << " ibuffer : " << i_buffer << " klab : " << k_lab << " " << k2_lab << "\n";
     return k2_lab;
 }
 
@@ -500,7 +500,7 @@ BTDiagnostics::SetSnapshotFullStatus (const int i_buffer, const int lev)
 
    const int k_lab = k_index_zlab(i_buffer, lev);
    if (k_lab <= 0) m_snapshot_full[i_buffer] = 1;
-    
+
 }
 
 void
