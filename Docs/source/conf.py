@@ -189,4 +189,8 @@ urllib.request.urlretrieve(url, '../amrex-doxygen-web.tag.xml')
 
 
 # Build Doxygen
-subprocess.call('cd ../; doxygen; mkdir -p source/_static; cp -r doxyhtml source/_static/', shell=True)
+subprocess.call('cd ../; doxygen;'
+                'mkdir -p source/_static;'
+                'cp -r doxyhtml source/_static/;'
+                'cp warpx-doxygen-web.tag.xml source/_static/doxyhtml/',
+                shell=True)

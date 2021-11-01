@@ -441,18 +441,21 @@ public:
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
-    /** \brief apply QED correction on electric field
+    /** apply QED correction on electric field
+     *
      * \param dt vector of time steps (for all levels)
      */
     void Hybrid_QED_Push (         amrex::Vector<amrex::Real> dt);
 
-    /** \brief apply QED correction on electric field for level lev
+    /** apply QED correction on electric field for level lev
+     *
      * \param lev mesh refinement level
      * \param dt time step
      */
     void Hybrid_QED_Push (int lev, amrex::Real dt);
 
-    /** \brief apply QED correction on electric field for level lev and patch type patch_type
+    /** apply QED correction on electric field for level lev and patch type patch_type
+     *
      * \param lev mesh refinement level
      * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
      * \param dt time step
@@ -627,6 +630,7 @@ public:
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
+    static amrex::Real self_fields_absolute_tolerance;
     static int self_fields_max_iters;
     static int self_fields_verbosity;
 
@@ -687,18 +691,21 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
+                     amrex::Real const absolute_tolerance=amrex::Real(0.0),
                      const int max_iters=200,
                      const int verbosity=2) const;
     void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
+                       amrex::Real absolute_tolerance,
                        int const max_iters,
                        int const verbosity) const;
     void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                        amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                        std::array<amrex::Real, 3> const beta,
                        amrex::Real const required_precision,
+                       amrex::Real absolute_tolerance,
                        int const max_iters,
                        int const verbosity) const;
 

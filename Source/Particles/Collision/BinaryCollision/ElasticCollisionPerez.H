@@ -15,23 +15,26 @@
 #include <AMReX_Random.H>
 
 
-/** \brief Prepare information for and call
- *        UpdateMomentumPerezElastic().
+/** Prepare information for and call UpdateMomentumPerezElastic().
+ *
+ * @tparam T_index type of index arguments
+ * @tparam T_R type of floating point arguments
+ * @tparam SoaData_type type of the "struct of array" for the two involved species
  * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
  * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
- * @param[in] I1 and I2 are the index arrays. They determine all elements that will be used.
- * @param[in,out] u1 and u2 are the velocity arrays (u=v*gamma),
- *                they could be either different or the same,
- *                their lengths are not needed,
- * @param[in] w1 and w2 are arrays of weights.
- * @param[in] q1 and q2 are charges. m1 and m2 are masses.
- * @param[in] T1 and T2 are temperatures (Joule)
+ * @param[in] I1,I2 the index arrays. They determine all elements that will be used.
+ * @param[in,out] soa_1,soa_2 the struct of array for species 1/2
+ * @param[in] q1,q2 charge of species 1/2
+ * @param[in] m1,m2 mass of species 1/2
+ * @param[in] T1 temperature (Joule) of species 1
  *            and will be used if greater than zero,
  *            otherwise will be computed.
+ * @param[in] T2 temperature (Joule) of species 2, @see T1
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] L is the Coulomb log and will be used if greater than zero,
  *            otherwise will be computed.
  * @param[in] dV is the volume of the corresponding cell.
+ * @param[in] engine the random number generator state & factory
 */
 
 template <typename T_index, typename T_R, typename SoaData_type>

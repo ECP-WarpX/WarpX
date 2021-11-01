@@ -45,8 +45,8 @@ public:
 
     /** Perform MCC ionization interactions
      *
-     * @param pti particle iterator
-     * @param species1/2 reference to species container used to inject
+     * @param[in] lev the mesh-refinement level
+     * @param[in,out] species1,species2 reference to species container used to inject
      * new particles
      *
      */
