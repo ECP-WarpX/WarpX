@@ -31,9 +31,12 @@ public:
      *
      * \param[in] mf_src cell-centered multifab containing all user-requested
                          fields in boosted-frame
-     * \param[in] lev level of multifab.
-     * \param[in] ncom number of components of mf_src to Lorentz-Transform
-                       and store in destination multifab.
+     * \param[in] lev mesh-refinement level of multifab.
+     * \param[in] ncomp number of components of mf_src to Lorentz-Transform
+                        and store in destination multifab.
+     * \param[in] num_buffers number of user-defined snapshots in the back-transformed lab-frame
+     * \param[in] varnames names of the field-components as defined by the user for back-transformed diagnostics.
+     * \param[in] crse_ratio the coarsening ratio for fields
      */
     BackTransformFunctor ( const amrex::MultiFab * const mf_src, const int lev,
                            const int ncomp, const int num_buffers,
@@ -57,14 +60,16 @@ public:
 
     /** \brief Prepare data required to back-transform fields for lab-frame snapshot, i_buffer
      *
-     * \param[in] i_buffer, index of the snapshot
-     * \param[in] ZSliceInDomain if the z-slice at current_z_boost is within
-     *            the boosted-frame and lab-frame domain.
-     *            The fields are sliced and back-transformed only if this value is true.
-     * \param[in] buffer_box, Box with index-space in lab-frame for the ith buffer
-     * \param[in] k_index_zlab, k-index in the lab-frame corresponding to the
-     *                          current z co-ordinate in the lab-frame for the ith buffer.
-     * \param[in] max_box_size, maximum box size for the multifab to generate box arrays
+     * \param[in] i_buffer        index of the snapshot
+     * \param[in] ZSliceInDomain  if the z-slice at current_z_boost is within
+     *                            the boosted-frame and lab-frame domain.
+     *                            The fields are sliced and back-transformed only
+     *                            if this value is true.
+     * \param[in] current_z_boost current z-coordinate of the slice in boosted-frame
+     * \param[in] buffer_box      Box with index-space in lab-frame for the ith buffer
+     * \param[in] k_index_zlab    k-index in the lab-frame corresponding to the
+     *                            current z co-ordinate in the lab-frame for the ith buffer.
+     * \param[in] max_box_size    maximum box size for the multifab to generate box arrays
      */
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                               amrex::Real current_z_boost,

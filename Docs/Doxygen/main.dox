@@ -1,0 +1,60 @@
+// This is the main landing page for Doxygen
+
+/**
+\mainpage WarpX: C++ Reference
+
+  \tableofcontents
+
+  \section welcome_to_WarpX Welcome to WarpX' C++ Reference
+
+  This document provides searchable low-level information useful for developers and
+  experienced users.
+
+
+  \subsection Overview
+
+  WarpX is an advanced electromagnetic Particle-In-Cell code.
+  It supports many features including Perfectly-Matched Layers (PML),
+  mesh refinement, and the boosted-frame technique.
+  WarpX is freely available on Github at
+  <a href="https://github.com/ECP-WarpX/WarpX">ECP-WarpX/WarpX</a>
+
+  WarpX is developed at LBNL in DOE's Exascale Computing Project and
+  receives essential contributions from many collaborators, especially
+  LIDYL (CEA, France), SLAC (USA), LLNL (USA), DESY (Germany), UHH (Germany),
+  HZDR (Germany), Radiasoft (USA), and CERN (Switzerland), among others.
+
+
+  \subsection manual Manual
+
+  In case you are looking for the manual of WarpX, please go over to our
+  documentation at <a href="https://warpx.readthedocs.io">warpx.readthedocs.io</a> .
+  Our manual also contains introductions for new developers that are best
+  read first.
+
+
+  \subsection development Development
+
+  All of WarpX' development is done in the GitHub repository under the
+  <a href="https://github.com/ECP-WarpX/WarpX/tree/development">
+  development branch</a>; anyone can see the latest updates. A monthly release is
+  tagged at the beginning of each month.
+
+
+  \subsection contribute Contribute
+
+  We are always happy to have users contribute to the WarpX source code. To
+  contribute, issue a pull request against the development branch.
+  Any level of changes are welcome: documentation, bug fixes,
+  new test problems, new solvers, etc.
+  For more complex projects, consider opening an
+  <a href="https://github.com/ECP-WarpX/WarpX/issues">issue</a>
+  first to coordinate development and gather feedback.
+
+  To obtain help, simply post a
+  <a href="https://github.com/ECP-WarpX/WarpX/discussions">discussion</a>
+  or an
+  <a href="https://github.com/ECP-WarpX/WarpX/issues">issue</a>
+  on the WarpX GitHub page.
+
+*/

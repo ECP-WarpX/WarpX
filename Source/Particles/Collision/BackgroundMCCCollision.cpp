@@ -226,11 +226,6 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
 }
 
 
-/** Perform all particle conserving MCC collisions within a tile
- *
- * @param pti particle iterator
- *
- */
 void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 ( WarpXParIter& pti )
 {
@@ -352,13 +347,6 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 }
 
 
-/** Perform MCC ionization interactions
- *
- * @param pti particle iterator
- * @param species1/2 reference to species container used to inject new
- particles from ionization events
- *
- */
 void BackgroundMCCCollision::doBackgroundIonization
 ( int lev, WarpXParticleContainer& species1,
   WarpXParticleContainer& species2)

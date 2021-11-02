@@ -11,6 +11,8 @@
 
 #include "InjectorDensity.H"
 #include "InjectorMomentum.H"
+#include "TemperatureProperties.H"
+#include "VelocityProperties.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 
 #include "InjectorPosition_fwd.H"
@@ -148,6 +150,11 @@ protected:
     std::unique_ptr<amrex::Parser> ux_parser;
     std::unique_ptr<amrex::Parser> uy_parser;
     std::unique_ptr<amrex::Parser> uz_parser;
+
+    // Keep a pointer to TemperatureProperties to ensure the lifetime of the
+    // contained Parser
+    std::unique_ptr<TemperatureProperties> h_mom_temp;
+    std::unique_ptr<VelocityProperties> h_mom_vel;
 
     void parseDensity (amrex::ParmParse& pp);
     void parseMomentum (amrex::ParmParse& pp);
