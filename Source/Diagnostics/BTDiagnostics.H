@@ -43,6 +43,7 @@ private:
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
      * \param[in] step current time step
+     * \param[in] i_buffer snapshot index
      * \param[in] force_flush if true, return true for any step
      *  The return bool is used to determine when to write buffer data out
      */
@@ -84,13 +85,14 @@ private:
      *            Return true if the z co-ordinates stored in
      *            m_current_z_boost and m_current_z_lab for buffer, i_buffer,
      *            are within the bounds of the boosted-frame and lab-frame domain.
+     * \param[in] lev the mesh-refinement level
      */
     bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
 
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
-     * \param[in] lev level for which the field buffer data is initialized.
+     * \param[in] lev mesh-refinement level for which the field buffer data is initialized.
      */
     void InitializeFieldBufferData ( int i_buffer , int lev) override;
     /** Whether to compute back-tranformed values for field-data.
@@ -179,6 +181,15 @@ private:
      *  will be equal to the predicted m_max_buffer_multifabs for each snapshot.
      */
     amrex::Vector<int> m_max_buffer_multifabs;
+    /** Vector of integers to indicate if the snapshot is full (0 not full, 1 for full).
+     *  If the snapshot is full, then the snapshot files are closed.
+     */
+    amrex::Vector<int> m_snapshot_full;
+    /** Vector of integers to store if the last valid slice in the lab-frame
+     *  is being filled. When the value is 1, then the buffer is flushed, and
+     *  m_snapshot_full is set to 1 for that snapshot index.
+     */
+    amrex::Vector<int> m_lastValidZSlice;
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;
@@ -203,7 +214,7 @@ private:
      *  snapshot, i_buffer, at level, lev
      *
      * \param[in] i_buffer buffer-id of the back-transformed snapshot
-     * \param[in] lev, level at which the output buffer MultiFab is defined
+     * \param[in] lev      mesh-refinement level at which the output buffer MultiFab is defined
      */
     void DefineFieldBufferMultiFab (const int i_buffer, const int lev);
 
@@ -211,13 +222,13 @@ private:
      *  ith snapshot, i_buffer, at level, lev.
      *
      * \param[in] i_buffer id of the back-transformed snapshot
-     * \param[in] lev, level at which the geometry object is defined
+     * \param[in] lev      level at which the geometry object is defined
      */
     void DefineSnapshotGeometry (const int i_buffer, const int lev);
 
     /** Compute and return z-position in the boosted-frame at the current timestep
-      * \param[in] t_lab, lab-frame time of the snapshot
-      * \param[in] t_boost, boosted-frame time at level, lev
+      * \param[in] t_lab   lab-frame time of the snapshot
+      * \param[in] t_boost boosted-frame time at level, lev
       */
     amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
@@ -225,8 +236,8 @@ private:
         return current_z_boost;
     }
     /** Compute and return z-position in the lab-frame at the current timestep
-      * \param[in] t_lab, lab-frame time of the snapshot
-      * \param[in] t_boost, boosted-frame time at level, lev
+      * \param[in] t_lab   lab-frame time of the snapshot
+      * \param[in] t_boost boosted-frame time at level, lev
       */
     amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
@@ -234,14 +245,15 @@ private:
         return current_z_lab;
     }
     /** Compute and return cell-size in z-dimension in the lab-frame at level, lev
-     *  \param[in] dt, timestep in boosted-frame at level, lev
-     *  \param[in] ref_ratio, refinement ratio in the z-direction at level, lev-1.
-     *             The ref-ratio in the z-direction for single-level diagnostics is 1.             */
+     *  \param[in] dt         timestep in boosted-frame at level, lev
+     *  \param[in] ref_ratio  refinement ratio in the z-direction at level, lev-1.
+     *             The ref-ratio in the z-direction for single-level diagnostics is 1.
+     */
     amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
     /** Compute k-index corresponding to current lab-frame z co-ordinate (m_current_z_lab)
-     *  for the ith buffer, i_buffer, and at level, lev.
-     * \param[in] i_buffer, ith buffer
-     * \param[in] lev, level at which the lab-frame z-index is computed
+     *  for the ith buffer i_buffer, and at level, lev.
+     * \param[in] i_buffer snapshot index
+     * \param[in] lev      mesh-refinement level at which the lab-frame z-index is computed
      */
     int k_index_zlab (int i_buffer, int lev);
     /** whether field buffer is full
@@ -262,17 +274,23 @@ private:
     }
 
     /** Reset buffer counter to zero.
-     * \param[in] i_buffer, ith buffer for which the counter is set to zero.
+     * \param[in] i_buffer snapshot index for which the counter is set to zero.
      */
     void ResetBufferCounter(int i_buffer) {
         m_buffer_counter[i_buffer] = 0;
     }
     /** Increment buffer counter by one when the buffer of a snapshot has been flushed.
-     * \param[in] i_buffer, ith buffer for which the counter is incremented.
+     * \param[in] i_buffer snapshot index for which the counter is incremented.
      */
     void IncrementBufferFlushCounter(int i_buffer) {
         m_buffer_flush_counter[i_buffer]++;
     }
+    /** Set Snapshot full status to 1 if the last valid zslice, m_lastValidZSlice,
+     *  for the ith snapshot index, given by, i_buffer, is filled.
+     *
+     *  \param[in] i_buffer snapshot index
+     */
+    void SetSnapshotFullStatus (const int i_buffer);
     /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.

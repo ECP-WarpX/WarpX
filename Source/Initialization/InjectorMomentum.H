@@ -10,7 +10,9 @@
 
 #include "CustomMomentumProb.H"
 #include "GetTemperature.H"
+#include "GetVelocity.H"
 #include "TemperatureProperties.H"
+#include "VelocityProperties.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
@@ -138,11 +140,10 @@ private:
 struct InjectorMomentumBoltzmann
 {
     // Constructor whose inputs are:
-    // a pointer to the initial temperature container temperature,
-    // boost velocity/c beta,
-    // and boost direction dir respectively.
-    InjectorMomentumBoltzmann(GetTemperature const& t, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), temperature(t)
+    // a reference to the initial temperature container t,
+    // a reference to the initial velocity container b
+    InjectorMomentumBoltzmann(GetTemperature const& t, GetVelocity const& b) noexcept
+        : velocity(b), temperature(t)
         {}
 
     AMREX_GPU_HOST_DEVICE
@@ -156,7 +157,14 @@ struct InjectorMomentumBoltzmann
         if (theta < 0) {
             amrex::Abort("Negative temperature parameter theta encountered, which is not allowed");
         }
+        // Calculate local velocity and abort if |beta|>=1
+        amrex::Real const beta = velocity(x,y,z);
+        if (beta <= -1 || beta >= 1) {
+            amrex::Abort("beta = v/c magnitude greater than or equal to 1");
+        }
+        // Calculate the value of vave from the local temperature
         amrex::Real const vave = std::sqrt(amrex::Real(2) * theta);
+        int const dir = velocity.direction();
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
         x1 = amrex::Random(engine);
@@ -197,19 +205,20 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
     {
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        const Real beta = velocity(x,y,z);
+        int const dir = velocity.direction();
         const Real gamma = static_cast<amrex::Real>(1./sqrt(1+beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
 
 private:
-    int dir;
-    amrex::Real beta;
+    GetVelocity velocity;
     GetTemperature temperature;
 };
 
@@ -219,11 +228,10 @@ private:
 struct InjectorMomentumJuttner
 {
     // Constructor whose inputs are:
-    // the temperature parameter theta,
-    // boost velocity/c beta,
-    // and boost direction dir respectively.
-    InjectorMomentumJuttner(GetTemperature const& t, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), temperature(t)
+    // a reference to the initial temperature container t,
+    // a reference to the initial velocity container b
+    InjectorMomentumJuttner(GetTemperature const& t, GetVelocity const& b) noexcept
+        : velocity(b), temperature(t)
         {}
 
     AMREX_GPU_HOST_DEVICE
@@ -241,6 +249,12 @@ struct InjectorMomentumJuttner
         if (theta < 0.1) {
             amrex::Abort("Temeprature parameter theta is less than minimum 0.1 allowed for Maxwell-Juttner");
         }
+        // Calculate local velocity and abort if |beta|>=1
+        amrex::Real const beta = velocity(x,y,z);
+        if (beta <= -1 || beta >= 1) {
+            amrex::Abort("beta = v/c magnitude greater than or equal to 1");
+        }
+        int const dir = velocity.direction();
         x1 = static_cast<amrex::Real>(0.);
         gamma = static_cast<amrex::Real>(0.);
         u[dir] = static_cast<amrex::Real>(0.);
@@ -291,19 +305,20 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
     {
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        Real const beta = velocity(x,y,z);
+        int const dir = velocity.direction();
         const Real gamma = static_cast<Real>(1./sqrt(1.+beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
 
 private:
-    int dir;
-    amrex::Real beta;
+    GetVelocity velocity;
     GetTemperature temperature;
 };
 
@@ -412,16 +427,16 @@ struct InjectorMomentum
     { }
 
     InjectorMomentum (InjectorMomentumBoltzmann* t,
-                       GetTemperature const& temperature, amrex::Real beta, int dir)
+                       GetTemperature const& temperature, GetVelocity const& velocity)
          : type(Type::boltzmann),
-           object(t, temperature, beta, dir)
+           object(t, temperature, velocity)
     { }
 
      // This constructor stores a InjectorMomentumJuttner in union object.
      InjectorMomentum (InjectorMomentumJuttner* t,
-                       GetTemperature const& temperature, amrex::Real beta, int dir)
+                       GetTemperature const& temperature, GetVelocity const& velocity)
          : type(Type::juttner),
-           object(t, temperature, beta, dir)
+           object(t, temperature, velocity)
     { }
 
     // This constructor stores a InjectorMomentumCustom in union object.
@@ -570,11 +585,11 @@ private:
                 int a_flux_normal_axis, int a_flux_direction) noexcept
             : gaussianflux(a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction) {}
         Object (InjectorMomentumBoltzmann*,
-                GetTemperature const& t, amrex::Real b, int dir) noexcept
-            : boltzmann(t,b,dir) {}
+                GetTemperature const& t, GetVelocity const& b) noexcept
+            : boltzmann(t,b) {}
         Object (InjectorMomentumJuttner*,
-                GetTemperature const& t, amrex::Real b, int dir) noexcept
-            : juttner(t,b,dir) {}
+                GetTemperature const& t, GetVelocity const& b) noexcept
+            : juttner(t,b) {}
         Object (InjectorMomentumRadialExpansion*,
                 amrex::Real u_over_r) noexcept
             : radial_expansion(u_over_r) {}

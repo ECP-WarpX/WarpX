@@ -1,5 +1,11 @@
 Version, Physics version, Date,        List of changes
-0.2.0, 0, In progress, "
+0.2.1, 0, In progress, "
+
+**Other changes**:
+
+- Merge `upstream/development` (release 21.11) into memaster.
+"
+0.2.0, 0, 11/02/2021, "
 
 **Features**:
 
@@ -17,7 +23,6 @@ Version, Physics version, Date,        List of changes
 
 - :func:`mewarpx.utils_store.util.check_version` for scripts to define what
   version they use.
-
 "
 0.1.0, 0,  10/25/2021, "
 

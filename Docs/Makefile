@@ -14,7 +14,7 @@ help:
 
 clean:
 	rm -rf
-	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)"
+	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" amrex-doxygen-web.tag.xml warpx-doxygen-web.tag.xml
 
 .PHONY: help Makefile
 

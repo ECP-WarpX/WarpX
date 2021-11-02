@@ -31,9 +31,12 @@ public:
      *
      * \param[in] mf_src cell-centered multifab containing all user-requested
                          fields in boosted-frame
-     * \param[in] lev level of multifab.
-     * \param[in] ncom number of components of mf_src to Lorentz-Transform
-                       and store in destination multifab.
+     * \param[in] lev mesh-refinement level of multifab.
+     * \param[in] ncomp number of components of mf_src to Lorentz-Transform
+                        and store in destination multifab.
+     * \param[in] num_buffers number of user-defined snapshots in the back-transformed lab-frame
+     * \param[in] varnames names of the field-components as defined by the user for back-transformed diagnostics.
+     * \param[in] crse_ratio the coarsening ratio for fields
      */
     BackTransformFunctor ( const amrex::MultiFab * const mf_src, const int lev,
                            const int ncomp, const int num_buffers,
@@ -57,19 +60,22 @@ public:
 
     /** \brief Prepare data required to back-transform fields for lab-frame snapshot, i_buffer
      *
-     * \param[in] i_buffer, index of the snapshot
-     * \param[in] ZSliceInDomain if the z-slice at current_z_boost is within
+     * \param[in] i_buffer          index of the snapshot
+     * \param[in] z_slice_in_domain if the z-slice at current_z_boost is within
      *            the boosted-frame and lab-frame domain.
      *            The fields are sliced and back-transformed only if this value is true.
-     * \param[in] buffer_box, Box with index-space in lab-frame for the ith buffer
-     * \param[in] k_index_zlab, k-index in the lab-frame corresponding to the
-     *                          current z co-ordinate in the lab-frame for the ith buffer.
-     * \param[in] max_box_size, maximum box size for the multifab to generate box arrays
+     * \param[in] buffer_box        Box with index-space in lab-frame for the ith buffer
+     * \param[in] k_index_zlab      k-index in the lab-frame corresponding to the
+     *            current z co-ordinate in the lab-frame for the ith buffer.
+     * \param[in] max_box_size      maximum box size for the multifab to generate box arrays
+     * \param[in] snapshot_full     if the current snapshot, with index, i_buffer, is full (1)
+                  or not (0). If it is full, then Lorentz-transform is not performed
+                  by setting m_perform_backtransform to 0.
      */
-    void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
+    void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                               amrex::Real current_z_boost,
                               amrex::Box buffer_box, const int k_index_zlab,
-                              const int max_box_size ) override;
+                              const int max_box_size, const int snapshot_full ) override;
     /** Allocate and initialize member variables and arrays required to back-transform
      *  field-data from boosted-frame to lab-frame.
      */
@@ -98,7 +104,7 @@ private:
     amrex::Vector<amrex::Real> m_current_z_boost;
     /** Vector of 0s and 1s stored to check if back-transformation is to be performed
      *  for the ith buffer. The value is set 0 (false) or 1 (true) using the boolean
-     *  ZSliceInDomain in PrepareFunctorData().
+     *  z_slice_in_domain in PrepareFunctorData().
      */
     amrex::Vector<int> m_perform_backtransform;
     /** Vector of k-index correspoding to the current lab-frame z co-ordinate for each buffer */
