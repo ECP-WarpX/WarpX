@@ -181,6 +181,15 @@ private:
      *  will be equal to the predicted m_max_buffer_multifabs for each snapshot.
      */
     amrex::Vector<int> m_max_buffer_multifabs;
+    /** Vector of integers to indicate if the snapshot is full (0 not full, 1 for full).
+     *  If the snapshot is full, then the snapshot files are closed.
+     */
+    amrex::Vector<int> m_snapshot_full;
+    /** Vector of integers to store if the last valid slice in the lab-frame
+     *  is being filled. When the value is 1, then the buffer is flushed, and
+     *  m_snapshot_full is set to 1 for that snapshot index.
+     */
+    amrex::Vector<int> m_lastValidZSlice;
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;
@@ -276,6 +285,12 @@ private:
     void IncrementBufferFlushCounter(int i_buffer) {
         m_buffer_flush_counter[i_buffer]++;
     }
+    /** Set Snapshot full status to 1 if the last valid zslice, m_lastValidZSlice,
+     *  for the ith snapshot index, given by, i_buffer, is filled.
+     *
+     *  \param[in] i_buffer snapshot index
+     */
+    void SetSnapshotFullStatus (const int i_buffer);
     /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
