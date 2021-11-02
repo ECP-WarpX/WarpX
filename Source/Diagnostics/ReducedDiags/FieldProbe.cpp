@@ -444,20 +444,23 @@ void FieldProbe::ComputeDiags (int step)
                 }
             }
         } // end particle iterator loop
-        unsigned long long sum=0; //numparticles in this level (sum from all processors)
-        int m_MPISize = amrex::ParallelDescriptor::NProcs(); 
-        std::vector<long> result(m_MPISize, 0);
-        amrex::ParallelGather::Gather (numparticles, result.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+        Gpu::synchronize();
+        if (m_intervals.contains(step+1))
+        {
+            unsigned long long sum=0; //numparticles in this level (sum from all processors)
+            int m_MPISize = amrex::ParallelDescriptor::NProcs(); 
+            std::vector<long> result(m_MPISize, 0);
+            amrex::ParallelGather::Gather (numparticles, result.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
 
-        sum = 0;
-        int const num_results = result.size();
+            sum = 0;
+            int const num_results = result.size();
             for (int i=0; i<num_results; i++) {
                 sum += result[i];
             }
 
-        Gpu::synchronize();
-        m_data_out.resize(sum * noutputs);
-        amrex::ParallelGather::Gather (m_data.data(), m_data.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+            m_data_out.resize(sum * noutputs);
+            amrex::ParallelGather::Gather (m_data.data(), m_data.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+}
     }// end loop over refinement levels
     // make sure data is in m_data on the IOProcessor
     // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
