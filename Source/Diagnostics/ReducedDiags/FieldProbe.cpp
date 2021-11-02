@@ -73,11 +73,6 @@ FieldProbe::FieldProbe (std::string rd_name)
      */
     amrex::ParmParse pp_rd_name(rd_name);
     getWithParser(pp_rd_name, "x_probe", x_probe);
-<<<<<<< HEAD
-#endif
-#if (AMREX_SPACEDIM == 3)
-=======
->>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
     getWithParser(pp_rd_name, "y_probe", y_probe);
     getWithParser(pp_rd_name, "z_probe", z_probe);
     pp_rd_name.query("integrate", m_field_probe_integrate);
@@ -224,45 +219,7 @@ void FieldProbe::ComputeDiags (int step)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        const auto prob_hi = gm.ProbHi();
 
-#if (AMREX_SPACEDIM == 1)
-        m_probe_in_domain = z_probe >= prob_lo[0] and z_probe < prob_hi[0];
-#elif (AMREX_SPACEDIM == 2)
-        m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                            z_probe >= prob_lo[1] and z_probe < prob_hi[1];
-#else
-        m_probe_in_domain = x_probe >= prob_lo[0] and x_probe < prob_hi[0] and
-                            y_probe >= prob_lo[1] and y_probe < prob_hi[1] and
-                            z_probe >= prob_lo[2] and z_probe < prob_hi[2];
-#endif
-        if(lev == 0) m_probe_in_domain_lev_0 = m_probe_in_domain;
-
-        if( !m_probe_in_domain ) break;
-
-        const auto cell_size = gm.CellSizeArray();
-
-#if (AMREX_SPACEDIM == 1)
-        const int i_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[0]) / cell_size[0]));
-        const int j_probe = 0;
-        const int k_probe = 0;
-#elif (AMREX_SPACEDIM == 2)
-        const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-        const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
-        const int k_probe = 0;
-#elif(AMREX_SPACEDIM == 3)
-        const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-        const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
-        const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
-#endif
-=======
-
->>>>>>> mainline/development
-=======
-
->>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
         const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
@@ -336,35 +293,6 @@ void FieldProbe::ComputeDiags (int step)
 
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-                //Interpolating to the probe point
-#if (AMREX_SPACEDIM == 1)
-                constexpr amrex::Real x_probe = 0._rt;
-                constexpr amrex::Real y_probe = 0._rt;
-#endif
-#if (AMREX_SPACEDIM == 2)
-                constexpr amrex::Real y_probe = 0._rt;
-#endif
-                doGatherShapeN(x_probe, y_probe, z_probe, Ex_interp, Ey_interp, Ez_interp,
-                               Bx_interp, By_interp, Bz_interp, arrEx, arrEy, arrEz, arrBx,
-                               arrBy, arrBz, Extype, Eytype, Eztype, Bxtype, Bytype, Bztype, dx_arr,
-                               xyzmin_arr, amrex::lbound(box), WarpX::n_rz_azimuthal_modes,
-                               interp_order, false);
-
-                // Either save the interpolated fields or the raw fields depending on the raw_fields flag
-                fp_values[index_Ex] = raw_fields ? arrEx(i_probe, j_probe, k_probe) : Ex_interp;
-                fp_values[index_Ey] = raw_fields ? arrEy(i_probe, j_probe, k_probe) : Ey_interp;
-                fp_values[index_Ez] = raw_fields ? arrEz(i_probe, j_probe, k_probe) : Ez_interp;
-                fp_values[index_Bx] = raw_fields ? arrBx(i_probe, j_probe, k_probe) : Bx_interp;
-                fp_values[index_By] = raw_fields ? arrBy(i_probe, j_probe, k_probe) : By_interp;
-                fp_values[index_Bz] = raw_fields ? arrBz(i_probe, j_probe, k_probe) : Bz_interp;
-
-                probe_proc = amrex::ParallelDescriptor::MyProc();
-=======
-=======
->>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
                 const Dim3 lo = lbound(box);
 
                 // Interpolating to the probe positions for each particle
@@ -457,10 +385,6 @@ void FieldProbe::ComputeDiags (int step)
                 // do we have the one and only probe particle on our MPI rank?
                 if (np > 0)
                     probe_proc = amrex::ParallelDescriptor::MyProc();
-<<<<<<< HEAD
->>>>>>> mainline/development
-=======
->>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
             }
 
         } // end particle iterator loop
