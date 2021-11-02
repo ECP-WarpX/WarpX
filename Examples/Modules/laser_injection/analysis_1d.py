@@ -19,7 +19,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import hilbert
-sys.path.insert(1, '../../../../WarpX/Regression/Checksum/')
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 # Maximum acceptable error for this test
