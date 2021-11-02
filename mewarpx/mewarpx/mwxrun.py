@@ -28,7 +28,9 @@ import atexit
 import os.path
 
 from pywarpx import _libwarpx, picmi, fields
-from mewarpx.utils_store import mwxconstants as constants, parallel_util, profileparser, init_restart_util
+from mewarpx.utils_store import mwxconstants as constants
+from mewarpx.utils_store import parallel_util
+from mewarpx.utils_store import profileparser, init_restart_util
 from mewarpx.utils_store.util import compute_step
 
 logger = logging.getLogger(__name__)
@@ -105,16 +107,19 @@ class MEWarpXRun(object):
 
     def init_run(self, restart=None, checkpoint_dir="diags",
                  checkpoint_prefix=init_restart_util.default_checkpoint_name,
-                additional_steps=None):
+                 additional_steps=None):
         if self.initialized:
             raise RuntimeError(
                 "Attempted to initialize the mwxrun class multiple times.")
+        self.restart = restart
         try:
-            if restart != False:
-                force_restart = bool(restart)
-                restart = init_restart_util.run_restart(
-                    checkpoint_dir, checkpoint_prefix,
-                    force_restart, additional_steps
+            if self.restart != False:
+                force_restart = bool(self.restart)
+                self.restart, self.checkpoint_dir, self.checkpoint = (
+                    init_restart_util.run_restart(
+                        checkpoint_dir, checkpoint_prefix,
+                        force_restart, additional_steps
+                    )
                 )
 
             self.simulation.initialize_inputs()
@@ -136,7 +141,7 @@ class MEWarpXRun(object):
             self.initialized = True
 
         except RuntimeError:
-            if restart:
+            if self.restart:
                 logger.error(
                     "init_restart_util returned success for restarting from"
                     f"a checkpoint starting with {checkpoint_prefix} "

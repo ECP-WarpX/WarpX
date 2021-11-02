@@ -54,7 +54,7 @@ def test_field_diag(plot_on_diag_steps):
     NX = 8
     NZ = 128
     DT = 1.0 / (400 * FREQ)
-    DIAG_STEPS = 2
+    DIAG_STEPS = 2 * (int(post_processing) + 1)
     DIAG_DATA_LIST = ['rho_electrons', 'rho_he_ions', 'phi']
     #DIAG_SPECIES_LIST = ["electrons", "he_ions"]
     DIAG_SPECIES_LIST = None
@@ -70,7 +70,7 @@ def test_field_diag(plot_on_diag_steps):
         T_INERT=300.0,  # K
         PLASMA_DENSITY=2.56e14,  # m^-3
         T_ELEC=30000.0,  # K
-        SEED_NPPC=16*32,
+        SEED_NPPC=10,
         NX=NX,
         NZ=NZ,
         # This gives equal spacing in x & z
@@ -92,32 +92,51 @@ def test_field_diag(plot_on_diag_steps):
         init_inert_gas=True,
         init_neutral_plasma=True,
         init_field_diag=True,
-        init_simcontrol=True,
         init_warpx=True,
         init_simulation=True
     )
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    mwxrun.simulation.step()
 
     # verify that the plot images were created.
     if plot_on_diag_steps:
-        print("Verifying that all plots were created...", flush=True)
-        assert len(glob.glob(f"diags/fields/Electrostatic_potential_*.npy")) == 5
-        assert len(glob.glob(f"diags/fields/Electrostatic_potential_*.png")) == 5
+        print("Verifying that all data and plot files were created...")
+        phi_data_n = len(glob.glob(
+            os.path.join(
+                run.field_diag.write_dir, "Electrostatic_potential_*.npy"
+            )
+        ))
+        phi_plots_n = len(glob.glob(
+            os.path.join(
+                run.field_diag.write_dir, "Electrostatic_potential_*.png"
+            )
+        ))
+        assert phi_data_n == 5
+        assert phi_plots_n == 5
         for species in [species.name for species in mwxrun.simulation.species]:
-            assert len(glob.glob(f"diags/fields/{species}_charge_density_*.npy")) == 5
-            assert len(glob.glob(f"diags/fields/{species}_charge_density_*.png")) == 5
+            n_data = len(glob.glob(
+                os.path.join(
+                    run.field_diag.write_dir, f"{species}_charge_density_*.npy"
+                )
+            ))
+            n_plots = len(glob.glob(
+                os.path.join(
+                    run.field_diag.write_dir, f"{species}_charge_density_*.png"
+                )
+            ))
+            assert n_data == 5
+            assert n_plots == 5
 
-        print("All plots exist!", flush=True)
+        print("All plots exist!")
 
     # verify that the post processing image was created
     if post_processing:
-        print("Verifying that all plots were created...", flush=True)
+        print("Verifying that all plots were created...")
         for i in range(0, STEPS - 1, DIAG_STEPS):
             for param in DIAG_DATA_LIST:
                 assert os.path.isfile(
-                    "diags/fields/" + param + "_" + f"{i:05d}.png"
+                    os.path.join(
+                        run.field_diag.write_dir, param + f"_{i:05d}.png"
+                    )
                 ), param + "_" + f"{i:06d}.png doesn't exist"
 
-
-        print("All plots exist!", flush=True)
+        print("All plots exist!")

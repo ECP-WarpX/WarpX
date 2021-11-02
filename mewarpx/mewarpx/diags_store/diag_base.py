@@ -20,6 +20,8 @@ class WarpXDiagnostic(object):
     run.
     """
 
+    DIAG_DIR = "diags"
+
     def __init__(self, diag_steps, diag_step_offset=0,
                  extended_interval_level=None,
                  manual_timesteps=None,

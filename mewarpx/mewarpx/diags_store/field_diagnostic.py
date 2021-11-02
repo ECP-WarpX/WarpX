@@ -19,10 +19,12 @@ logger = logging.getLogger(__name__)
 
 class FieldDiagnostic(WarpXDiagnostic):
 
-    def __init__(self, diag_steps, write_dir='diags/fields', process_phi=True,
-                 process_E=False, process_rho=True, species_list=None,
-                 plot=True, barrier_slices=None, max_dim=16.0, min_dim=0.0,
-                 dpi=300, install_field_diagnostic=False, post_processing=False,
+    FIELD_DIAG_DIR = "fields"
+
+    def __init__(self, diag_steps, process_phi=True, process_E=False,
+                 process_rho=True, species_list=None, plot=True,
+                 barrier_slices=None, max_dim=16.0, min_dim=0.0, dpi=300,
+                 install_field_diagnostic=False, post_processing=False,
                  **kwargs):
         """
         This class handles diagnostics for field quantities (output and
@@ -32,8 +34,6 @@ class FieldDiagnostic(WarpXDiagnostic):
         Arguments:
             diag_steps (int): Run the diagnostic with this period.
                 Also plot on this period if enabled.
-            write_dir (str): The directory where diagnostic data will be written
-                from the field diagnostic.
             process_phi (bool): If True, output phi. Default True.
             process_E (bool): If True, output E. Default False.
             process_rho (bool): If True, output rho. Default True.
@@ -56,7 +56,7 @@ class FieldDiagnostic(WarpXDiagnostic):
                 diag_base.WarpXDiagnostic
         """
         self.diag_steps = diag_steps
-        self.direc = write_dir
+        self.write_dir = os.path.join(self.DIAG_DIR, self.FIELD_DIAG_DIR)
         # field quantities to process
         self.process_phi = process_phi
         self.process_E = process_E
@@ -96,7 +96,7 @@ class FieldDiagnostic(WarpXDiagnostic):
                 period=self.kwargs.pop('period', self.diag_steps),
                 data_list=self.kwargs['data_list'],
                 name=self.kwargs['name'],
-                write_dir=self.kwargs.pop('write_dir', self.direc)
+                write_dir=self.kwargs.pop('write_dir', self.write_dir)
             )
         )
 
@@ -258,17 +258,17 @@ class FieldDiagnostic(WarpXDiagnostic):
         Arguments:
             title (str): String for title; whitespace will become underscores
         """
-        direc_local = self.direc.format(self.it)
-        util.mkdir_p(direc_local)
+        if mwxrun.me == 0:
+            util.mkdir_p(self.write_dir)
         return os.path.join(
-                self.direc.format(self.it),
-                '_'.join(title.split() + [f"{self.it:010d}"]))
+            self.write_dir, '_'.join(title.split() + [f"{self.it:010d}"])
+        )
 
     def do_post_processing(self):
         if mwxrun.me == 0:
             constants = picmi.constants
             data_dirs = glob.glob(os.path.join(
-                self.direc, self.kwargs['name'] + '*'
+                self.write_dir, self.kwargs['name'] + '*'
             ))
 
             if len(data_dirs) == 0:
@@ -288,9 +288,10 @@ class FieldDiagnostic(WarpXDiagnostic):
 
                 for parameter in self.kwargs['data_list']:
                     plot_name = os.path.join(
-                        self.direc, parameter + "_" +
+                        self.write_dir, parameter + "_" +
                         datafolder.replace(
-                            self.direc + "/" + self.kwargs['name'], ""
+                            os.path.join(self.write_dir, self.kwargs['name']),
+                            ""
                         )
                     )
                     data = np.mean(

@@ -1,11 +1,37 @@
 Version, Physics version, Date,        List of changes
-0.2.1, 0, In progress, "
+1.0.0, 1, In progress, "
+
+**Physics changes**:
+
+- The flux history will now be loaded when restarting a run from a checkpoint
+  file, so that the ``fullhist_dict`` accurately reflects the flux recorded
+  over the full simulation span.
+
+**API Changes**:
+
+- Removed argument `write_dir` from diagnostics. Instead class variables are
+  used for each type of diagnostic to specify the directory where data and
+  plot files will be saved.
+- :class:`mewarpx.diags_store.flux_diagnostic.FluxDiagFromFile` no longer takes
+  runinfo parameters as input since the pickle files saved
+  by :func:`mewarpx.diags_store.flux_diagnostic.FluxDiagBase.save` now contain
+  all the information needed to reconstruct the flux diagnostic from file.
 
 **Other changes**:
 
-- Merge `upstream/development` (release 21.11) into memaster.
+- :class:`mewarpx.diags_store.flux_diagnostic.FluxDiagBase` now also saves the
+  list of species names included in the simulation and a dictionary of
+  components and their labels, in the flux diagnostic pickle file. This allows
+  flux diagnostics to be reloaded without loading a runinfo file.
+
 "
-0.2.0, 0, 11/02/2021, "
+0.2.1, 0, 11/02/2021, "
+
+**Other changes**:
+
+- Merge ``upstream/development`` (release 21.11) into memaster.
+"
+0.2.0, 0, 10/28/2021, "
 
 **Features**:
 
@@ -13,9 +39,10 @@ Version, Physics version, Date,        List of changes
 
 **Other changes**:
 
-- The time-dependent voltage pulse function generated with ``util_store.pulsing`` was
-  changed to no longer use variables in the expression. This is in order to be able to
-  nest the voltage functions in ``if`` statements when multiple EBs are present.
+- The time-dependent voltage pulse function generated with
+  :func:`mewarpx.util_store.pulsing.linear_pulse_function` was changed to no
+  longer use variables in the expression. This is in order to be able to nest
+  the voltage functions in ``if`` statements when multiple EBs are present.
 "
 0.1.1, 0,  10/26/2021, "
 

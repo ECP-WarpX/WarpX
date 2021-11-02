@@ -23,13 +23,13 @@ class ParticleDiagnostic(WarpXDiagnostic):
     Contains:
         add_particle_diag (function): Function to add the particle diagnostic to
             the mwxrun.simulation
-
         post_processing: plot particle diagnostic data, not yet implemented
     """
 
+    PARTICLE_DIAG_DIR = "particles"
+
     def __init__(self, diag_steps, name=None, species=None,
-                 data_list=None, write_dir='.',
-                 post_processing=False, plot_data_list=None,
+                 data_list=None, post_processing=False, plot_data_list=None,
                  plot_species=None, **kwargs):
 
         """Initializes the picmi.ParticleDiagnostic and adds the diagnostic to
@@ -37,26 +37,18 @@ class ParticleDiagnostic(WarpXDiagnostic):
 
         Arguments:
             diag_steps (int): Number of steps between each diagnostic output
-
             name (str): name of the diag output folder, defaults to
                 ``particle_diag``
-
             species (:class:`mewarpx.mepicmi.Species`): species in the
                 simulation, if None then uses all particles in the simulation
-
             data_list (list str): list of attributes to be outputted by the
                 diagnostic, default uses ``["position", "momentum", "weighting"]``
-
-            write_dir (str): where to write particle diagnostic data
-
             post_process (bool): generate plots for each diagnostic data
                 directory produced
-
             plot_data_list (list str): list of data to be plotted for each
                 diagnostic step ("particle_position_x", "particle_position_y",
                 "particle_position_z", "particle_momentum_x",
                 "particle_momentum_y", "particle_momentum_z")
-
             plot_species (list str): list of species names to be plotted,
                 defaults to all species if not specified. Name variable in
                 :class:`mewarpx.mepicmi.Species` must be set for each species
@@ -66,7 +58,7 @@ class ParticleDiagnostic(WarpXDiagnostic):
         self.name = name
         self.species = species
         self.data_list = data_list
-        self.write_dir = write_dir
+        self.write_dir = os.path.join(self.DIAG_DIR, self.PARTICLE_DIAG_DIR)
 
         self.post_processing = post_processing
         self.plot_data_list = plot_data_list

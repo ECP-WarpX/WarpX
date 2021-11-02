@@ -17,20 +17,23 @@ def clean_old_checkpoints(prefix, directory):
                 print(f"Removing old checkpoint file {d}")
                 shutil.rmtree(os.path.join(directory, d))
 
-def run_restart(checkpoint_directory="diags", checkpoint_prefix=default_checkpoint_name,
+def run_restart(checkpoint_directory="diags",
+                checkpoint_prefix=default_checkpoint_name,
                 force=False, additional_steps=None):
     '''
     Attempts to restart a run by looking for checkpoint files
     starting with a prefix in the given directory.
 
     Arguments:
-        checkpoint_directory (string): Look in this directory for checkpoint directories. Default is 'diags'.
-        checkpoint_prefix (string): Look for a checkpoint directory starting with this prefix
-          to restart from.
-        force (bool): If true, a problem with restarting from a checkpoint will cause an error,
-          otherwise simply print a warning.
-        additional_steps (int): The number of steps to run after restarting from the checkpoint.
-          If this is None then it will run to the current value of mwxrun.simulation.max_steps.
+        checkpoint_directory (string): Look in this directory for checkpoint
+            directories. Default is ``diags``.
+        checkpoint_prefix (string): Look for a checkpoint directory starting
+            with this prefix to restart from.
+        force (bool): If true, a problem with restarting from a checkpoint will
+            cause an error, otherwise simply print a warning.
+        additional_steps (int): The number of steps to run after restarting from
+            the checkpoint. If this is None then it will run to the current
+            value of mwxrun.simulation.max_steps.
     '''
     # import must be done here to avoid a circular import
     from mewarpx.mwxrun import mwxrun
@@ -43,10 +46,12 @@ def run_restart(checkpoint_directory="diags", checkpoint_prefix=default_checkpoi
 
     if not os.path.isdir(checkpoint_directory):
         if force:
-            raise RuntimeError(f"{checkpoint_directory} directory does not exist!")
+            raise RuntimeError(
+                f"{checkpoint_directory} directory does not exist!"
+            )
         else:
             logger.warning(f"{checkpoint_directory} directory does not exist!")
-            return False
+            return False, None, None
 
     # using next() gives only the first layer of subdirectories
     checkpoints = sorted(
@@ -65,7 +70,7 @@ def run_restart(checkpoint_directory="diags", checkpoint_prefix=default_checkpoi
                 "There were no checkpoint directories "
                 f"starting with {checkpoint_prefix}!"
             )
-            return False
+            return False, None, None
 
     checkpoint = checkpoints[-1]
     max_steps = mwxrun.simulation.max_steps
@@ -75,9 +80,9 @@ def run_restart(checkpoint_directory="diags", checkpoint_prefix=default_checkpoi
         mwxrun.simulation.max_steps = max_steps - checkpoint_step
         if mwxrun.simulation.max_steps == 0:
             logger.warning(
-                f"The checkpoint directory was created at step {checkpoint_step}, "
-                f"but the max steps is also {max_steps}, so the simulation will "
-                f"only rerun step {checkpoint_step}."
+                f"The checkpoint directory was created at step "
+                f"{checkpoint_step}, but the max steps is also {max_steps}, so "
+                f"the simulation will only rerun step {checkpoint_step}."
             )
         if mwxrun.simulation.max_steps < 0:
             raise RuntimeError(
@@ -89,8 +94,10 @@ def run_restart(checkpoint_directory="diags", checkpoint_prefix=default_checkpoi
         mwxrun.simulation.max_steps = additional_steps
         logger.info(f"Running for {additional_steps} steps after restarting")
 
-
     logger.info(f"Restarting from {checkpoint}")
 
-    mwxrun.simulation.amr_restart = os.path.join(checkpoint_directory, checkpoint)
-    return True
+    mwxrun.simulation.amr_restart = os.path.join(
+        checkpoint_directory, checkpoint
+    )
+
+    return True, checkpoint_directory, checkpoint

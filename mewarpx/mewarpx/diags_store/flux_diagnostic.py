@@ -252,8 +252,9 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
                'units': 'particles per step'})
     ])
 
+    FLUX_DIAG_DIR = "fluxes"
+
     def __init__(self, diag_steps, runinfo,
-                 write_dir='diags/fluxes',
                  overwrite=True,
                  sig_figs=6,
                  printed_qtys=None,
@@ -264,9 +265,8 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
 
         Arguments:
             diag_steps (int): Number of steps between each output
-            runinfo (:class:`metools.runinfo.RunInfo`): RunInfo object is used
+            runinfo (:class:`mewarpx.runinfo.RunInfo`): RunInfo object is used
                 to get the species, injectors, surfaces, and system area.
-            write_dir (string): Directory to write CSV files and plots to.
             overwrite (bool): If True the dill pickled save file will overwrite
                 the previous diagnostic period's saved file.
             sig_figs (int): Number of significant figures in text output.
@@ -280,14 +280,17 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
                 for more timing options.
         """
         # Save input variables
-        self.write_dir = write_dir
         self.overwrite = overwrite
         self.format_str = '{:.%dg}' % sig_figs
         self.printed_qtys = copy.deepcopy(self.default_printed_qtys)
         if printed_qtys is not None:
             mwxutil.recursive_update(self.printed_qtys, printed_qtys)
 
-        self.component_list = runinfo.component_list
+        self.component_dict = {}
+        for component in runinfo.component_list:
+            self.component_dict[component] = runinfo.component_labels.get(
+                component, component
+            )
         self.species_list = [spec.name for spec in mwxrun.simulation.species]
 
         self.fullhist_dict = fullhist_dict
@@ -297,6 +300,10 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
         self.ts_dict = ts_dict
         if self.ts_dict is None:
             self.ts_dict = collections.OrderedDict()
+
+        self.write_dir = os.path.join(self.DIAG_DIR, self.FLUX_DIAG_DIR)
+        if mwxrun.me == 0:
+            mwxutil.mkdir_p(self.write_dir)
 
         super(FluxDiagBase, self).__init__(
             diag_steps=diag_steps,
@@ -315,7 +322,7 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
             it at init. However, for now this is the quickest way to proceed.
 
         Arguments:
-            runinfo (:class:`metools.runinfo.RunInfo`): An updated RunInfo
+            runinfo (:class:`mewarpx.runinfo.RunInfo`): An updated RunInfo
                 object is solely used to get new species name information.
         """
         self.species_list = [spec.name for spec in mwxrun.simulation.species]
@@ -325,14 +332,16 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
         done often, a specific function is used to minimize file size.
         """
         if self.overwrite:
-            filename = 'fluxdata.dpkl'
+            filename = "fluxdata.dpkl"
         else:
-            filename = 'fluxdata_{:010d}.dpkl'.format(mwxrun.get_it())
+            filename = f"fluxdata_{mwxrun.get_it():010d}.dpkl"
 
         filepath = os.path.join(self.write_dir, filename)
         dict_to_save = {
             'write_dir': self.write_dir,
             'format_str': self.format_str,
+            'species_list': self.species_list,
+            'component_dict': self.component_dict,
             'printed_qtys': self.printed_qtys,
             'fullhist_dict': self.fullhist_dict,
             'ts_dict': self.ts_dict,
@@ -363,11 +372,7 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
         resultstr = ""
         for qty, flags in self.printed_qtys.items():
             if flags['by_component']:
-                for component in self.component_list:
-                    componentstr = self.runinfo.component_labels.get(
-                        component, component
-                    )
-
+                for component, componentstr in self.component_dict.items():
                     for species_name in self.species_list:
                         prefixstr = " ".join(
                             [componentstr, species_name.title(), flags['description']]
@@ -576,20 +581,19 @@ class FluxDiagnostic(FluxDiagBase):
 
     """Handles writing out charge injection and absorption."""
 
-    def __init__(self, diag_steps, runinfo,
-                 write_dir='diags/fluxes', overwrite=True,
+    def __init__(self, diag_steps, runinfo, overwrite=True,
                  history_maxlen=5000, sig_figs=6,
                  printed_qtys=None,
                  check_charge_conservation=True,
                  print_per_diagnostic=True, print_total=False,
-                 plot=True, profile_decorator=None, **kwargs):
+                 plot=True, save_csv=False, profile_decorator=None,
+                 **kwargs):
         """Generate and install function to write out fluxes.
 
         Arguments:
             diag_steps (int): Number of steps between each output
-            runinfo (:class:`metools.runinfo.RunInfo`): RunInfo object is used
+            runinfo (:class:`mewarpx.runinfo.RunInfo`): RunInfo object is used
                 to get the species, injectors, surfaces, and system area.
-            write_dir (string): Directory to write CSV files and plots to.
             overwrite (bool): If True the dill pickled save file will overwrite
                 the previous diagnostic period's saved file.
             history_maxlen (int): Maximum length of full history to keep. If
@@ -608,9 +612,11 @@ class FluxDiagnostic(FluxDiagBase):
                 diagnostic period.
             plot (bool): Whether to save a plot of fluxes after each diagnostic
                 period.
+            save_csv (bool): Whether to save csv files of scraped / injected
+                particles.
             profile_decorator (decorator): A decorator used to profile the
                 timeseries update methods and related functions.
-            kwargs: See :class:`metools.diags_store.diag_base.WarpDiagnostic`
+            kwargs: See :class:`mewarpx.diags_store.diag_base.WarpXDiagnostic`
                 for more timing options.
         """
         # Save input variables
@@ -621,6 +627,11 @@ class FluxDiagnostic(FluxDiagBase):
         self.print_per_diagnostic = print_per_diagnostic
         self.print_total = print_total
         self.plot = plot
+
+        if save_csv:
+            csv_write_dir = os.path.join(self.DIAG_DIR, self.FLUX_DIAG_DIR)
+        else:
+            csv_write_dir = None
 
         if profile_decorator is not None:
             self.update_ts_dict = profile_decorator(self.update_ts_dict)
@@ -640,7 +651,7 @@ class FluxDiagnostic(FluxDiagBase):
             self.diags_dict[('inject', key)] = [
                 InjectorFluxDiag(diag_steps=diag_steps,
                                  injector=injector,
-                                 write_dir=write_dir,
+                                 write_dir=csv_write_dir,
                                  **kwargs)
                 for injector in self.injector_dict[key]
             ]
@@ -650,7 +661,7 @@ class FluxDiagnostic(FluxDiagBase):
             self.diags_dict[('scrape', key)] = [
                 SurfaceFluxDiag(diag_steps=diag_steps,
                                 surface=surface,
-                                write_dir=write_dir,
+                                write_dir=csv_write_dir,
                                 **kwargs)
                 for surface in self.surface_dict[key]
             ]
@@ -662,12 +673,16 @@ class FluxDiagnostic(FluxDiagBase):
         super(FluxDiagnostic, self).__init__(
             diag_steps=diag_steps,
             runinfo=runinfo,
-            write_dir=write_dir,
             overwrite=overwrite,
             sig_figs=sig_figs,
             printed_qtys=printed_qtys,
             **kwargs
         )
+
+        # if this run is from a restart, try to load flux data up to the
+        # current point
+        if mwxrun.restart:
+            self._load_checkpoint_flux()
 
         callbacks.installafterstep(self._flux_ana)
 
@@ -797,6 +812,36 @@ class FluxDiagnostic(FluxDiagBase):
                 % (mwxrun.get_it(), net_current)
             )
 
+    def _load_checkpoint_flux(self):
+        """Function to load the flux data from a simulation checkpoint during
+        a restart. The 'old' flux data will be recorded in the fullhist_dict so
+        that the simulation output will contain the full flux history and not
+        just the flux timeseries after the current restart.
+        """
+        # the current simulation step presumably matches the restart step
+        restart_step = mwxrun.get_it()
+
+        # get the flux diag file for the current step
+        flux_diag_file = os.path.join(
+            mwxrun.checkpoint_dir, self.FLUX_DIAG_DIR,
+            f"fluxdata_{restart_step:010}.dpkl"
+        )
+        # throw an error if flux diag file does not exist
+        if not os.path.isfile(flux_diag_file):
+            raise RuntimeError(
+                f"{flux_diag_file} doesn't exist but is needed to restart."
+            )
+
+        logger.warning(
+            "Loading old flux data at restart assuming names of conductors and "
+            "species in the simulation have not changed"
+        )
+
+        # update the full history with the old history
+        old_fluxdiag = FluxDiagFromFile(fluxdatafile=flux_diag_file)
+        self.fullhist_dict = old_fluxdiag.fullhist_dict
+        self.last_run_step = restart_step
+
 
 class FluxCalcDataframe(timeseries.Timeseries):
 
@@ -915,11 +960,10 @@ class FluxDiagFromFile(FluxDiagBase):
 
     def __init__(self, basedir='diags', fluxdatafile=None,
                  fluxdatafileformat='fluxes/fluxdata*', fs=None):
-        """Load from fluxdata_XXXXXXXXXX.dpkl and runinfo.dpkl files.
+        """Load from fluxdata_XXXXXXXXXX.dpkl files.
 
         Arguments:
-            basedir (str): Base directory of the diagnostic files. Has to
-                contain a runinfo dill-pickled file.
+            basedir (str): Base directory of the diagnostic files.
             fluxdatafile (str): Filename dill-pickled with FluxDiagBase.save().
             fluxdatafileformat (str): If a specific fluxdatafile is not
                 specified, this naming format will be used to search for the
@@ -938,38 +982,19 @@ class FluxDiagFromFile(FluxDiagBase):
 
         self.fluxdatafileformat = fluxdatafileformat
 
-        runinfofile = self._get_runinfofile(basedir)
         if fluxdatafile is None:
-            fluxdatafile = self._get_fluxdatafile(runinfofile, fs)
-
-        with self.open_command(runinfofile, 'rb') as pfile:
-            self.runinfo = dill.load(pfile)
-
-        self.component_list = self.runinfo.component_list
-        self.species_list = [
-            species.name for species in self.runinfo.species_list
-        ]
+            fluxdatafile = self._get_fluxdatafile(basedir)
 
         with self.open_command(fluxdatafile, 'rb') as pfile:
             dict_to_load = dill.load(pfile)
 
         self.__dict__.update(dict_to_load)
 
-    def _get_runinfofile(self, basedir):
-        """Function to check if a runinfo.dpkl file exists in the base
-        directory."""
-        runinfofile = os.path.join(basedir, 'runinfo.dpkl')
-        if self.exists_command(runinfofile):
-            return runinfofile
-        raise IOError(f'No runinfo.dpkl found in base directory {basedir}')
-
-    def _get_fluxdatafile(self, runinfofile, fs):
-        """Function to look for latest fluxdata file from the base directory of
-        the runinfo.dpkl file.
+    def _get_fluxdatafile(self, basedir):
+        """Function to look for latest fluxdata file from the base directory.
         """
-        direc_base = runinfofile[:runinfofile.rfind('/')+1]
         flux_files = sorted(
-            self.glob_command(os.path.join(direc_base, self.fluxdatafileformat))
+            self.glob_command(os.path.join(basedir, self.fluxdatafileformat))
         )
         if len(flux_files) == 0:
             raise IOError('No fluxdata files found in base directory: %s'

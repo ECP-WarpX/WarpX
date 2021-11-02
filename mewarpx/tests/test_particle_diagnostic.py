@@ -85,13 +85,9 @@ def test_particle_diag():
         for specimen in PLOT_SPECIES:
             for param in DIAG_PLOT_DATA_LIST:
                 file_name = os.path.join(
-                    os.getcwd(),
-                    'diags', 'particles',
-                    specimen + '_'+param + f'_{i:05d}.png'
+                    run.particle_diag.write_dir,
+                    specimen + '_' + param + f'_{i:05d}.png'
                 )
                 print(file_name)
                 assert os.path.isfile(file_name), f"{file_name} not found"
         print('All plots exist!')
-
-if __name__ == "__main__":
-    test_particle_diag()

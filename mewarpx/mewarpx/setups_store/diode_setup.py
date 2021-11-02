@@ -568,10 +568,10 @@ class DiodeRun_V1(object):
         logger.info("### Init Diode FluxDiag ###")
         self.fluxdiag = flux_diagnostic.FluxDiagnostic(
             diag_steps=self.DIAG_STEPS,
-            write_dir="diags/fluxes",
             runinfo=self.runinfo,
             check_charge_conservation=self.CHECK_CHARGE_CONSERVATION,
-            overwrite=False
+            overwrite=False,
+            save_csv=True
         )
 
     def init_field_diag(self):
@@ -579,7 +579,6 @@ class DiodeRun_V1(object):
 
         self.field_diag = field_diagnostic.FieldDiagnostic(
             diag_steps=self.DIAG_STEPS,
-            write_dir='diags/fields',
             plot=self.FIELD_DIAG_PLOT,
             min_dim=2.0, save_pdf=False,
             install_field_diagnostic=self.FIELD_DIAG_INSTALL_WARPX,
@@ -596,7 +595,6 @@ class DiodeRun_V1(object):
         self.particle_diag = particle_diagnostic.ParticleDiagnostic(
             name='particles',
             diag_steps=self.DIAG_STEPS,
-            write_dir='diags/particles',
             data_list=self.PARTICLE_DIAG_DATA_LIST,
             plot_species=self.PARTICLE_PLOT_SPECIES,
             plot_data_list=self.PARTICLE_DIAG_PLOT_DATA_LIST,

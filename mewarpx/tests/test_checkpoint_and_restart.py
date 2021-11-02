@@ -5,40 +5,34 @@ import numpy as np
 
 from mewarpx.utils_store import util as mwxutil
 
+VOLTAGE = 25 # V
+CATHODE_TEMP = 1100 + 273.15 # K
+CATHODE_PHI = 2.1 # work function in eV
 
-def test_create_checkpoints():
-    np.random.seed(47239475)
+DIAG_STEPS = 4
+MAX_STEPS = 8
+CHECKPOINT_NAME = "checkpoint"
+D_CA = 0.067  # m
+NX = 64
+NZ = 64
+DT = 7.5e-10
+
+P_INERT = 10
+
+def get_run():
+    """Utility function to get the same run setup for all tests below."""
+    from mewarpx.setups_store import diode_setup
 
     # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
-    from mewarpx.utils_store import testing_util
-
-    testing_util.initialize_testingdir("test_create_checkpoints")
-
-    DIAG_STEPS = 2
-    CHECKPOINT_PERIOD = 5
-    CHECKPOINT_NAME = "checkpoint"
-    D_CA = 0.067  # m
-    NX = 64
-    NZ = 64
-    DT = 7.5e-10
-
-    P_INERT = 10
-
-    MAX_STEPS = 10
-
-    nx = 64
-    ny = 64
-
     run = diode_setup.DiodeRun_V1(
         dim=2,
-        rz=False,
+        CATHODE_TEMP=CATHODE_TEMP,
+        CATHODE_PHI=CATHODE_PHI,
+        V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
-        NX=nx,
-        NZ=ny,
+        NPPC=4,
+        NX=NX,
+        NZ=NZ,
         # This gives equal spacing in x & z
         PERIOD=D_CA * NX / NZ,
         DT=DT,
@@ -53,7 +47,7 @@ def test_create_checkpoints():
     )
     # Only the functions we change from defaults are listed here
     run.setup_run(
-        init_conductors=False,
+        init_conductors=True,
         init_injectors=False,
         init_inert_gas=True,
         init_neutral_plasma=True,
@@ -62,9 +56,24 @@ def test_create_checkpoints():
         init_simcontrol=False,
         init_warpx=False
     )
+    return run
+
+def test_create_checkpoints():
+
+    mwxutil.init_libwarpx(ndim=2, rz=False)
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
+    from mewarpx.utils_store import testing_util
+
+    testing_util.initialize_testingdir("test_create_checkpoints")
+
+    # use a fixed random seed
+    np.random.seed(47239475)
+
+    run = get_run()
 
     checkpoint = CheckPointDiagnostic(
-        CHECKPOINT_PERIOD, CHECKPOINT_NAME, write_dir='diags'
+        DIAG_STEPS, CHECKPOINT_NAME, write_dir='diags'
     )
 
     mwxrun.init_run(restart=False)
@@ -74,7 +83,7 @@ def test_create_checkpoints():
 
     checkpoint_names = [
         f"{CHECKPOINT_NAME}{i:05}"
-        for i in range(0, MAX_STEPS + 1, CHECKPOINT_PERIOD)
+        for i in range(0, MAX_STEPS + 1, DIAG_STEPS)
     ]
 
     for name in checkpoint_names:
@@ -90,9 +99,9 @@ def test_create_checkpoints():
     (False, False), # should throw an error but start a fresh run
 ])
 def test_restart_from_checkpoint(caplog, force, files_exist):
+
     caplog.set_level(logging.WARNING)
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
     from mewarpx.utils_store import testing_util
 
@@ -100,60 +109,29 @@ def test_restart_from_checkpoint(caplog, force, files_exist):
         f"test_restart_from_checkpoint_{force}_{files_exist}"
     )
 
-    DIAG_STEPS = 2
-    D_CA = 0.067  # m
-    NX = 64
-    NZ = 64
-    DT = 7.5e-10
+    run = get_run()
 
-    MAX_STEPS = 10
-
-    nx = 64
-    ny = 64
+    if force:
+        restart = True
+    else:
+        restart = None
 
     if not files_exist:
         prefix = "nonexistent_prefix"
     else:
         prefix = "checkpoint"
 
-    run = diode_setup.DiodeRun_V1(
-        dim=2,
-        rz=False,
-        D_CA=D_CA,
-        NX=nx,
-        NZ=ny,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
-        DT=DT,
-        TOTAL_TIMESTEPS=MAX_STEPS,
-        DIAG_STEPS=DIAG_STEPS,
-        FIELD_DIAG_DATA_LIST=['phi']
-    )
-
-    # Only the functions we change from defaults are listed here
-    run.setup_run(
-        init_conductors=False,
-        init_injectors=False,
-        init_inert_gas=False,
-        init_neutral_plasma=False,
-        init_mcc=False,
-        init_field_diag=True,
-        init_simcontrol=False,
-        init_warpx=False
-    )
-    if force:
-        restart = True
-    else:
-        restart = None
     try:
-
         mwxrun.init_run(
             restart=restart,
             checkpoint_dir=os.path.join(testing_util.test_dir, "checkpoint"),
             checkpoint_prefix=prefix
         )
     except RuntimeError as e:
-        if "There were no checkpoint directories starting with nonexistent_prefix!" in str(e):
+        if (
+            "There were no checkpoint directories starting with "
+            "nonexistent_prefix!" in str(e)
+        ):
             # There should only be an exception if this restart was forced
             assert force
 
@@ -178,58 +156,19 @@ def test_restart_from_checkpoint(caplog, force, files_exist):
         assert end_step - start_step == new_max_steps
 
 def test_extra_steps_after_restart():
-    np.random.seed(47239475)
+
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
     from mewarpx.utils_store import testing_util
 
     testing_util.initialize_testingdir("test_extra_steps_after_restart")
 
-    DIAG_STEPS = 2
-    D_CA = 0.067  # m
-    NX = 64
-    NZ = 64
-    DT = 7.5e-10
+    # use a fixed random seed
+    np.random.seed(47239475)
 
-    P_INERT = 10
+    run = get_run()
 
-    MAX_STEPS = 10
-
-    nx = 64
-    ny = 64
-
-    run = diode_setup.DiodeRun_V1(
-        dim=2,
-        rz=False,
-        D_CA=D_CA,
-        NX=nx,
-        NZ=ny,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
-        DT=DT,
-        TOTAL_TIMESTEPS=MAX_STEPS,
-        DIAG_STEPS=DIAG_STEPS,
-        P_INERT=P_INERT,
-        T_ELEC=1100 + 273.15,
-        INERT_GAS_TYPE="Ar",
-        FIELD_DIAG_DATA_LIST=['phi'],
-        PLASMA_DENSITY=10.2e12,
-        SEED_NPPC=10
-    )
-
-    # Only the functions we change from defaults are listed here
-    run.setup_run(
-        init_conductors=False,
-        init_injectors=False,
-        init_inert_gas=True,
-        init_neutral_plasma=False,
-        init_mcc=False,
-        init_field_diag=True,
-        init_simcontrol=False,
-        init_warpx=False
-    )
-    additional_steps = 20
+    additional_steps = 8
 
     mwxrun.init_run(
         restart=True,
@@ -246,11 +185,53 @@ def test_extra_steps_after_restart():
     assert start_step + additional_steps == end_step
 
     restart_net_charge_density = np.load(os.path.join(
-        "diags", "fields", "Net_charge_density_0000000006.npy"
-        ))
+        run.field_diag.write_dir, "Net_charge_density_0000000008.npy"
+    ))
     original_net_charge_density = np.load(os.path.join(
-        testing_util.test_dir, "checkpoint", "Net_charge_density_0000000006.npy"
-        ))
+        testing_util.test_dir, "checkpoint", "Net_charge_density_0000000008.npy"
+    ))
 
     assert np.allclose(restart_net_charge_density,
-                       original_net_charge_density, rtol=0.01)
+                       original_net_charge_density, rtol=0.1)
+
+def test_checkpoints_fluxdiag():
+
+    mwxutil.init_libwarpx(ndim=2, rz=False)
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
+    from mewarpx.diags_store.flux_diagnostic import FluxDiagFromFile
+    from mewarpx.utils_store import testing_util
+
+    testing_util.initialize_testingdir("test_checkpoints_fluxdiag")
+
+    # use a fixed random seed
+    np.random.seed(47239475)
+
+    run = get_run()
+
+    run.init_injectors()
+
+    mwxrun.init_run(
+        restart=True,
+        checkpoint_dir=os.path.join(testing_util.test_dir, "checkpoint"),
+    )
+
+    run.init_runinfo()
+    run.init_fluxdiag()
+
+    # Run the main WARP loop
+    mwxrun.simulation.step()
+
+    # load flux diagnostic from a completed run for comparison
+    basedir = os.path.join(testing_util.test_dir, "checkpoint")
+    original_flux_file = os.path.join(
+        testing_util.test_dir, "checkpoint/fluxes/fluxdata_0000000008.dpkl"
+    )
+    original_flux = FluxDiagFromFile(basedir, original_flux_file)
+
+    # compare injected flux from the restarted history with the original history
+    flux_key = ('inject', 'cathode', 'electrons')
+    for key in ['J', 'P', 'n']:
+        old = original_flux.fullhist_dict[flux_key].get_timeseries_by_key(key)
+        new = run.fluxdiag.fullhist_dict[flux_key].get_timeseries_by_key(key)
+        assert np.allclose(old, new)
