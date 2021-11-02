@@ -659,7 +659,7 @@ WarpX::ReadParameters ()
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
         queryArrWithParser(pp_warpx, "filter_npass_each_dir", parse_filter_npass_each_dir, 0, AMREX_SPACEDIM);
         filter_npass_each_dir[0] = parse_filter_npass_each_dir[0];
-#if (AMREX_SPACEDIM >= 2)        
+#if (AMREX_SPACEDIM >= 2)
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
 #endif
 #if (AMREX_SPACEDIM == 3)
