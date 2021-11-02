@@ -56,11 +56,14 @@ public:
     static constexpr int noutputs = FieldProbePIdx::nattribs;
 
 private:
+<<<<<<< HEAD
 #if (AMREX_SPACEDIM == 1)
     amrex::Real z_probe;
 #elif (AMREX_SPACEDIM == 2)
     amrex::Real x_probe, z_probe;
 #elif (AMREX_SPACEDIM == 3)
+=======
+>>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
     amrex::Real x_probe, y_probe, z_probe;
 #endif
     //! this is the particle container in which probe particles are stored

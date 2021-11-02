@@ -72,10 +72,12 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define whether ot not to integrate fields
      */
     amrex::ParmParse pp_rd_name(rd_name);
-#if !(AMREX_SPACEDIM == 1)
     getWithParser(pp_rd_name, "x_probe", x_probe);
+<<<<<<< HEAD
 #endif
 #if (AMREX_SPACEDIM == 3)
+=======
+>>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
     getWithParser(pp_rd_name, "y_probe", y_probe);
     getWithParser(pp_rd_name, "z_probe", z_probe);
     pp_rd_name.query("integrate", m_field_probe_integrate);
@@ -192,7 +194,9 @@ bool FieldProbe::ProbeInDomain () const
      * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
      * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
      */
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    return z_probe >= prob_lo[1] && z_probe < prob_hi[1];
+#elif (AMREX_SPACEDIM == 2)
     return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
            z_probe >= prob_lo[1] && z_probe < prob_hi[1];
 #else
@@ -220,6 +224,7 @@ void FieldProbe::ComputeDiags (int step)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
+<<<<<<< HEAD
 <<<<<<< HEAD
         const auto prob_hi = gm.ProbHi();
 
@@ -255,6 +260,9 @@ void FieldProbe::ComputeDiags (int step)
 =======
 
 >>>>>>> mainline/development
+=======
+
+>>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
         const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
@@ -288,7 +296,10 @@ void FieldProbe::ComputeDiags (int step)
             {
                 const auto cell_size = gm.CellSizeArray();
                 const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+                const int j_probe = 0;
+                const int k_probe = 0;
+#elif (AMREX_SPACEDIM == 2)
                 const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
                 const int k_probe = 0;
 #elif(AMREX_SPACEDIM == 3)
@@ -326,6 +337,7 @@ void FieldProbe::ComputeDiags (int step)
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 <<<<<<< HEAD
+<<<<<<< HEAD
 
                 //Interpolating to the probe point
 #if (AMREX_SPACEDIM == 1)
@@ -351,6 +363,8 @@ void FieldProbe::ComputeDiags (int step)
 
                 probe_proc = amrex::ParallelDescriptor::MyProc();
 =======
+=======
+>>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
                 const Dim3 lo = lbound(box);
 
                 // Interpolating to the probe positions for each particle
@@ -443,7 +457,10 @@ void FieldProbe::ComputeDiags (int step)
                 // do we have the one and only probe particle on our MPI rank?
                 if (np > 0)
                     probe_proc = amrex::ParallelDescriptor::MyProc();
+<<<<<<< HEAD
 >>>>>>> mainline/development
+=======
+>>>>>>> 8e6543ad25f295e8cc89e7a9b6afb3d48d07ff02
             }
 
         } // end particle iterator loop
