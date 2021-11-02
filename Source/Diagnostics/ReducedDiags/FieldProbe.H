@@ -57,7 +57,7 @@ public:
 
 private:
     amrex::Real x_probe, y_probe, z_probe;
-#endif
+
     //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;
 
