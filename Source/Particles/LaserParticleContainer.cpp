@@ -336,6 +336,7 @@ LaserParticleContainer::InitData (int lev)
         m_position = m_updated_position;
     }
 
+#if (AMREX_SPACEDIM >= 2)
     auto Transform = [&](int const i, int const j) -> Vector<Real>{
 #if (AMREX_SPACEDIM == 3)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt))*m_u_X[0] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[0],
@@ -352,14 +353,9 @@ LaserParticleContainer::InitData (int lev)
                  0.0_rt,
                  m_position[2] + (S_X*(Real(i)+0.5_rt))*m_u_X[2] };
 #   endif
-#else
-    amrex::ignore_unused(i,j);
-        return { 0.0_rt,
-                 0.0_rt,
-                 m_position[2]};
-
 #endif
     };
+#endif
 
     // Given the "lab" frame coordinates, return the real coordinates in the laser plane coordinates
     auto InverseTransform = [&](const Vector<Real>& pos) -> Vector<Real>{
@@ -437,8 +433,7 @@ LaserParticleContainer::InitData (int lev)
 #elif (AMREX_SPACEDIM == 2)
     BoxArray plane_ba { Box {IntVect(plane_lo[0],0), IntVect(plane_hi[0],0)} };
 #else
-    BoxArray plane_ba { Box {IntVect(0), IntVect(0)} }; // 1D Is this correct?
-    //BoxArray plane_ba { Box {IntVect(plane_lo[0]), IntVect(plane_hi[0])} }; // 1D Is this correct?
+    BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
 #endif
 
     amrex::Vector<amrex::Real> particle_x, particle_y, particle_z, particle_w;
@@ -452,7 +447,11 @@ LaserParticleContainer::InitData (int lev)
             const Box& bx = plane_ba[i];
             for (IntVect cell = bx.smallEnd(); cell <= bx.bigEnd(); bx.next(cell))
             {
+#if (AMREX_SPACEDIM >= 2)
                 const Vector<Real>& pos = Transform(cell[0], cell[1]);
+#else
+                const Vector<Real>& pos = { 0.0_rt, 0.0_rt, m_position[2] };
+#endif
 #if (AMREX_SPACEDIM == 3)
                 const Real* x = pos.dataPtr();
 #elif (AMREX_SPACEDIM == 2)
@@ -681,7 +680,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 #   endif
     Sy = 1.0;
 #else
-    Sx = 1.0;//dx[2]/(std::abs(m_u_X[0] + eps));
+    Sx = 1.0;
     Sy = 1.0;
     amrex::ignore_unused(eps);
 #endif
