@@ -53,8 +53,8 @@ jobs:
         . /ascent_docker_setup_env.sh && cmake --build build -j 2
     - name: Test
       run: |
-        cp Examples/Physics_applications/laser_acceleration/inputs_3d_ascent_test .
-        cp Examples/Physics_applications/laser_acceleration/ascent_actions_test.yaml ascent_actions.yaml
+        cp .github/workflows/resources/inputs_3d_ascent_test .
+        cp .github/workflows/resources/inputs_3d_ascent_test_ascent_actions.yaml ascent_actions.yaml
         mpiexec -n 2 ./build/bin/warpx inputs_3d_ascent_test
     - uses: actions/upload-artifact@v2
       with:
