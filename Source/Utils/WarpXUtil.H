@@ -30,6 +30,11 @@ void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boos
 
 void ConvertLabParamsToBoost();
 
+/** Reads the user-defined field boundary condition parameters
+ * and set the amrex parameter `is_periodic` accordingly
+ */
+void OverwriteAMReXperiodic ();
+
 /**
  * Reads the user-defined field and particle boundary condition parameters
  */

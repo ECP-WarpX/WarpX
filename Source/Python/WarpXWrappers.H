@@ -80,7 +80,7 @@ extern "C" {
 
     void warpx_ConvertLabParamsToBoost();
 
-    void warpx_ReadBCParams();
+    void warpx_OverwriteAMReXperiodic();
 
     void warpx_CheckGriddingForRZSpectral();
 

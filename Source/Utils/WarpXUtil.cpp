@@ -602,6 +602,34 @@ void CheckGriddingForRZSpectral ()
 #endif
 }
 
+void OverwriteAMReXperiodic ()
+{
+    // Check that `is_periodic` is not already set.
+    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
+    ParmParse pp_geometry("geometry");
+    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
+        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
+    }
+
+    // Check which dimention of space is periodic, according to
+    // `boundary.field_lo`. (Consistency between `field_lo` and `field_hi`
+    // is checked in the function `ReadBCParams`)
+    amrex::Vector<std::string> field_BC_lo(AMREX_SPACEDIM,"default");
+    ParmParse pp_boundary("boundary");
+    pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if ( GetFieldBCTypeInteger(field_BC_lo[idim]) == FieldBoundaryType::Periodic ) {
+            geom_periodicity[idim] = 1;
+        }
+    }
+
+    // Appending periodicity information to input so that it can be used by amrex
+    // to set parameters necessary to define geometry and perform communication
+    // such as FillBoundary. The periodicity is 1 if user-define boundary condition is
+    // periodic else it is set to 0.
+    pp_geometry.addarr("is_periodic", geom_periodicity);
+}
+
 
 void ReadBCParams ()
 {
@@ -610,14 +638,10 @@ void ReadBCParams ()
     amrex::Vector<std::string> field_BC_hi(AMREX_SPACEDIM,"default");
     amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
     amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
-    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
-    ParmParse pp_geometry("geometry");
     ParmParse pp_warpx("warpx");
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
-    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
-        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
-    }
+
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
     ParmParse pp_boundary("boundary");
@@ -632,6 +656,12 @@ void ReadBCParams ()
     AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
 
+    // Prepare consistency check with amrex's is_periodic
+    // (set in `OverwriteAMReXperiodic`)
+    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
+    ParmParse pp_geometry("geometry");
+    pp_boundary.queryarr("is_periodic", geom_periodicity);
+
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         // Get field boundary type
         WarpX::field_boundary_lo[idim] = GetFieldBCTypeInteger(field_BC_lo[idim]);
@@ -644,12 +674,13 @@ void ReadBCParams ()
             WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ||
             WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic ||
             WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic ) {
-            geom_periodicity[idim] = 1;
             // to ensure both lo and hi are set to periodic consistently for both field and particles.
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 (WarpX::field_boundary_lo[idim]  == FieldBoundaryType::Periodic) &&
                 (WarpX::field_boundary_hi[idim]  == FieldBoundaryType::Periodic),
             "field boundary must be consistenly periodic in both lo and hi");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom_periodicity[idim] == 1,
+                "amrex boundary condition (as set in function OverwriteAMReXperiodic) is inconsistent.");
             if (particle_boundary_specified) {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic) &&
@@ -673,12 +704,6 @@ void ReadBCParams ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
         "Error : Field boundary at r=0 must be ``none``. \n");
 #endif
-
-    // Appending periodicity information to input so that it can be used by amrex
-    // to set parameters necessary to define geometry and perform communication
-    // such as FillBoundary. The periodicity is 1 if user-define boundary condition is
-    // periodic else it is set to 0.
-    pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 
 namespace WarpXUtilMsg{

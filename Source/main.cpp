@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     ParseGeometryInput();
 
     ConvertLabParamsToBoost();
-    ReadBCParams();
+    OverwriteAMReXperiodic();
 
 #ifdef WARPX_DIM_RZ
     CheckGriddingForRZSpectral();
