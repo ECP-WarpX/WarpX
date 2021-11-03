@@ -36,7 +36,7 @@
 #include <unordered_map>
 #include <vector>
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 using namespace amrex;
 
 // constructor
@@ -74,8 +74,8 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define whether ot not to integrate fields
      */
     amrex::ParmParse pp_rd_name(rd_name);
-    pp_rd_name.query("probe_geometry", probe_geometry);
-    if (probe_geometry == DetectorGeometry::Point)
+    pp_rd_name.query("probe_geometry", m_probe_geometry);
+    if (m_probe_geometry == DetectorGeometry::Point)
     {
         getWithParser(pp_rd_name, "x_probe", x_probe);
         getWithParser(pp_rd_name, "y_probe", y_probe);
@@ -89,7 +89,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     getWithParser(pp_rd_name, "x1_probe", x1_probe);
     getWithParser(pp_rd_name, "y1_probe", y1_probe);
     getWithParser(pp_rd_name, "z1_probe", z1_probe);
-    getWithParser(pp_rd_name, "resolution", resolution);
+    getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
@@ -144,11 +144,11 @@ FieldProbe::FieldProbe (std::string rd_name)
 //                ofs << m_sep;
 //                ofs << "[" << c++ << "]part_id" + std::to_string(lev);
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_Rx_lev" + std::to_string(lev) + " (m) ";
+                ofs << "[" << c++ << "]part_x_lev" + std::to_string(lev) + " (m) ";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_Ry_lev" + std::to_string(lev) + " (m) ";
+                ofs << "[" << c++ << "]part_y_lev" + std::to_string(lev) + " (m) ";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_Rz_lev" + std::to_string(lev) + " (m) ";
+                ofs << "[" << c++ << "]part_z_lev" + std::to_string(lev) + " (m) ";
                 ofs << m_sep;
                 ofs << "[" << c++ << "]part_Ex_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ex];
                 ofs << m_sep;
@@ -174,7 +174,7 @@ FieldProbe::FieldProbe (std::string rd_name)
 
 void FieldProbe::InitData ()
 {
-    if (probe_geometry == DetectorGeometry::Point)
+    if (m_probe_geometry == DetectorGeometry::Point)
     {
     
         //create 1D array for X, Y, and Z of particles
@@ -202,10 +202,10 @@ void FieldProbe::InitData ()
         if (ParallelDescriptor::IOProcessor())
         {
             amrex::Real DetLineStepSize[3]{
-                    (x1_probe - x_probe) / (resolution - 1),
-                    (y1_probe - y_probe) / (resolution - 1),
-                    (z1_probe - z_probe) / (resolution - 1)};
-            for ( int step = 0; step < resolution; step++)
+                    (x1_probe - x_probe) / (m_resolution - 1),
+                    (y1_probe - y_probe) / (m_resolution - 1),
+                    (z1_probe - z_probe) / (m_resolution - 1)};
+            for ( int step = 0; step < m_resolution; step++)
             {
                 xpos.push_back(x_probe + (DetLineStepSize[0] * step));
                 ypos.push_back(y_probe + (DetLineStepSize[1] * step));
@@ -253,7 +253,8 @@ void FieldProbe::ComputeDiags (int step)
     {
         if (!m_intervals.contains(step+1)) { return; }
     }
-m_data.clear();
+    m_data.clear();
+
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
@@ -437,7 +438,7 @@ m_data.clear();
                         m_data[ip * noutputs + FieldProbePIdx::S + 3] = part_S[ip];
 */                    }
                 /* m_data now contains up-to-date values for:
-                 *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
+                 *  [x, y, z, Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
             }
         } // end particle iterator loop
@@ -469,7 +470,7 @@ m_data.clear();
                     displs[i] += displs[i-1] + length_array[i-1];
                     total_data_size += length_array[i];
                 }
-                valid_particles = total_data_size / noutputs;
+                m_valid_particles = total_data_size / noutputs;
                 m_data_out = (amrex::Real *) malloc( total_data_size * sizeof(amrex::Real));
             }
             MPI_Gatherv(m_data.data(), my_vec_size, MPI_DOUBLE,
@@ -503,7 +504,7 @@ void FieldProbe::WriteToFile (int step) const
         ofs << WarpX::GetInstance().gett_new(0);
 
         // loop over data size and write
-        for (int i = 0; (i < valid_particles); i++)
+        for (int i = 0; (i < m_valid_particles); i++)
         {
             for (int k = 0; k < noutputs; k++)
             {

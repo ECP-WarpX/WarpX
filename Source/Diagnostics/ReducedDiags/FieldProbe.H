@@ -72,9 +72,9 @@ public:
 private:
     amrex::Real x_probe, y_probe, z_probe;
     amrex::Real x1_probe, y1_probe, z1_probe;
-    long valid_particles {0};
-    int probe_geometry = DetectorGeometry::Point;
-    int resolution;
+    long m_valid_particles {0};
+    int m_probe_geometry = DetectorGeometry::Point;
+    int m_resolution;
     amrex::Vector<amrex::Real> m_data;
     amrex::Real *m_data_out = NULL;
 
