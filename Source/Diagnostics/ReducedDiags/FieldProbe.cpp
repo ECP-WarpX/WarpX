@@ -180,7 +180,7 @@ void FieldProbe::InitData ()
 {
     if (m_probe_geometry == DetectorGeometry::Point)
     {
-    
+
         //create 1D vector for X, Y, and Z of particles
         amrex::Vector<amrex::ParticleReal> xpos;
         amrex::Vector<amrex::ParticleReal> ypos;
@@ -423,12 +423,12 @@ void FieldProbe::ComputeDiags (int step)
                 // but we only write when we truly are in an output interval step
                 if (m_intervals.contains(step+1))
                 {
-                    for (auto ip=0; ip < np; ip++) 
+                    for (auto ip=0; ip < np; ip++)
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
 
-                        // push to output vector 
+                        // push to output vector
                         m_data.push_back(xp);
                         m_data.push_back(yp);
                         m_data.push_back(zp);
@@ -486,7 +486,7 @@ void FieldProbe::ComputeDiags (int step)
             // gather m_data of varied lengths from all processors. Prints to m_data_out
             MPI_Gatherv(m_data.data(), my_vec_size, MPI_DOUBLE,
                         m_data_out, length_array, displs, MPI_DOUBLE,
-                        amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator()); 
+                        amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
         }
     }// end loop over refinement levels
     // make sure data is in m_data on the IOProcessor
