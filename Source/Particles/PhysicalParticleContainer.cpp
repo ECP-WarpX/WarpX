@@ -408,11 +408,6 @@ PhysicalParticleContainer::AddGaussianBeam (
     const Real q_tot, long npart,
     const int do_symmetrize) {
 
-    std::mt19937_64 mt(0451);
-    std::normal_distribution<double> distx(x_m, x_rms);
-    std::normal_distribution<double> disty(y_m, y_rms);
-    std::normal_distribution<double> distz(z_m, z_rms);
-
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
     Gpu::HostVector<ParticleReal> particle_y;
@@ -432,14 +427,14 @@ PhysicalParticleContainer::AddGaussianBeam (
         for (long i = 0; i < npart; ++i) {
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
-            const Real x = distx(mt);
-            const Real y = disty(mt);
-            const Real z = distz(mt);
+            const Real x = amrex::RandomNormal(x_m, x_rms, amrex::RandomEngine{});
+            const Real y = amrex::RandomNormal(y_m, y_rms, amrex::RandomEngine{});
+            const Real z = amrex::RandomNormal(z_m, z_rms, amrex::RandomEngine{});
 #elif (defined WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
-            const Real x = distx(mt);
+            const Real x = amrex::RandomNormal(x_m, x_rms, amrex::RandomEngine{});
             constexpr Real y = 0._prt;
-            const Real z = distz(mt);
+            const Real z = amrex::RandomNormal(z_m, z_rms, amrex::RandomEngine{});
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) < x_cut * x_rms     &&
