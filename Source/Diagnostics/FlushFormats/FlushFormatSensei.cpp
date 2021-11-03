@@ -4,7 +4,7 @@
 #include "WarpX.H"
 
 #ifdef AMREX_USE_SENSEI_INSITU
-# include <AMReX_AmrMeshInSituBridge.H>
+# include <AMReX_AmrMeshParticleInSituBridge.H>
 #endif
 
 FlushFormatSensei::FlushFormatSensei () :
@@ -25,7 +25,7 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     pp_diag_name.query("sensei_config", m_insitu_config);
     pp_diag_name.query("sensei_pin_mesh", m_insitu_pin_mesh);
 
-    m_insitu_bridge = new amrex::AmrMeshInSituBridge;
+    m_insitu_bridge = new amrex::AmrMeshParticleInSituBridge;
     m_insitu_bridge->setEnabled(true);
     m_insitu_bridge->setConfig(m_insitu_config);
     m_insitu_bridge->setPinMesh(m_insitu_pin_mesh);
@@ -60,21 +60,25 @@ FlushFormatSensei::WriteToFile (
     const amrex::Geometry& full_BTD_snapshot, bool isLastBTDFlush) const
 {
     amrex::ignore_unused(
-        geom, particle_diags, nlev, prefix, file_min_digits,
+        geom, nlev, prefix, file_min_digits,
         plot_raw_fields, plot_raw_fields_guards,
         isBTD, snapshotID, full_BTD_snapshot,
         isLastBTDFlush);
 
 #ifndef AMREX_USE_SENSEI_INSITU
-    amrex::ignore_unused(varnames, mf, iteration, time);
+    amrex::ignore_unused(varnames, mf, iteration, time, particle_diags);
 #else
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
 
     amrex::Vector<amrex::MultiFab> *mf_ptr =
         const_cast<amrex::Vector<amrex::MultiFab>*>(&mf);
 
-    if (m_insitu_bridge->update(iteration[0], time, m_amr_mesh,
-        {mf_ptr}, {varnames}))
+    auto particles = particle_diags[0].getParticleContainer();
+    bool didUpdate = m_insitu_bridge->update(
+        iteration[0], time, m_amr_mesh,{mf_ptr}, {varnames},
+        particles, {}, {}, {{"u",{0,1,2}}}, {});
+
+    if (didUpdate)
     {
         amrex::ErrorStream() << "FlushFormatSensei::WriteToFile : "
             "Failed to update the in situ bridge." << std::endl;
