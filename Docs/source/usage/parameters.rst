@@ -1120,7 +1120,7 @@ Laser initialization
     ``<laser_name>.profile_focal_distance`` in the laboratory frame, and use ``warpx.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
-* ``<laser_name>.phi0`` (`float`; in radians)
+* ``<laser_name>.phi0`` (`float`; in radians) optional (default `0.`)
     The Carrier Envelope Phase, i.e. the phase of the laser oscillation, at the
     position where the laser envelope is maximum (only used for the ``"gaussian"`` profile)
 
