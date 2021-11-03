@@ -8,7 +8,7 @@
 #  include <AMReX_AmrMeshParticleInSituBridge.H>
 #else
 namespace amrex {
-using AmrMeshInSituBridge = void;
+using AmrMeshParticleInSituBridge = void;
 }
 #endif
 
