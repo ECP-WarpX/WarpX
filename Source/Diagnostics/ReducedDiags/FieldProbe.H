@@ -72,10 +72,20 @@ public:
 private:
     amrex::Real x_probe, y_probe, z_probe;
     amrex::Real x1_probe, y1_probe, z1_probe;
+
+    //! counts number of particles for all MPI ranks
     long m_valid_particles {0};
+
+    //! determines geometry of detector point distribution
     int m_probe_geometry = DetectorGeometry::Point;
+
+    //! determines number of particles places for non-point geometries
     int m_resolution;
+
+    //! Empty vector for to which data is pushed
     amrex::Vector<amrex::Real> m_data;
+
+    //! Empty array to be used by IOProcessor node to store and output data
     amrex::Real *m_data_out = NULL;
 
     //! this is the particle container in which probe particles are stored
@@ -84,6 +94,8 @@ private:
     //! if  true, integrate values over time instead of probing instantaneous values
     bool m_field_probe_integrate = false;
     int interp_order = 1;
+
+    //! Judges whether to gather raw fields or interpolated data
     bool raw_fields = false;
 
     /**
