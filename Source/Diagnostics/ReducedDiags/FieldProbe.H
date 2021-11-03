@@ -66,16 +66,17 @@ public:
      * Define constants used throughout FieldProbe
      */
 
-    //! noutputs is 11 (id, x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
-    static constexpr int noutputs = FieldProbePIdx::nattribs + 4;
+    //! noutputs is 10 (x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
+    static constexpr int noutputs = FieldProbePIdx::nattribs + 3;
 
 private:
     amrex::Real x_probe, y_probe, z_probe;
     amrex::Real x1_probe, y1_probe, z1_probe;
-    int probe_geometry;
+    long valid_particles {0};
+    int probe_geometry = DetectorGeometry::Point;
     int resolution;
-    std::vector<amrex::Real> m_data;
-    std::vector<amrex::Real> m_data_out;
+    amrex::Vector<amrex::Real> m_data;
+    amrex::Real *m_data_out = NULL;
 
     //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;

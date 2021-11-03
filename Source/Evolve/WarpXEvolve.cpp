@@ -318,6 +318,7 @@ WarpX::Evolve (int numsteps)
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
         {
+            reduced_diags->LoadBalance();
             reduced_diags->ComputeDiags(step);
             reduced_diags->WriteToFile(step);
         }

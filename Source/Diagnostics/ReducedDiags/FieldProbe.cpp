@@ -37,7 +37,7 @@
 #include <unordered_map>
 #include <vector>
 #include <iostream>
-
+#include <stdlib.h>
 using namespace amrex;
 
 // constructor
@@ -98,16 +98,6 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
-    // resize data array
-    if (probe_geometry == DetectorGeometry::Point)
-    {
-        m_data.resize(noutputs, 0.0_rt);
-    }
-    else
-    {
-        m_data.resize(resolution * noutputs, 0.0_rt);
-    }
-
     if (ParallelDescriptor::IOProcessor())
     {
         if ( m_IsNotRestart )
@@ -152,8 +142,8 @@ FieldProbe::FieldProbe (std::string rd_name)
             }
             for (int lev = 0; lev < nLevel; ++lev)
             {
-                ofs << m_sep;
-                ofs << "[" << c++ << "]part_id" + std::to_string(lev);
+//                ofs << m_sep;
+//                ofs << "[" << c++ << "]part_id" + std::to_string(lev);
                 ofs << m_sep;
                 ofs << "[" << c++ << "]part_Rx_lev" + std::to_string(lev) + " (m) ";
                 ofs << m_sep;
@@ -187,6 +177,7 @@ void FieldProbe::InitData ()
 {
     if (probe_geometry == DetectorGeometry::Point)
     {
+    
         //create 1D array for X, Y, and Z of particles
         amrex::Vector<amrex::ParticleReal> xpos;
         amrex::Vector<amrex::ParticleReal> ypos;
@@ -263,6 +254,7 @@ void FieldProbe::ComputeDiags (int step)
     {
         if (!m_intervals.contains(step+1)) { return; }
     }
+m_data.clear();
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
@@ -296,7 +288,6 @@ void FieldProbe::ComputeDiags (int step)
 
         // loop over each particle
         // TODO: add OMP parallel as in PhysicalParticleContainer::Evolve
-
         long numparticles = 0; // particles on this MPI rank
         using MyParIter = FieldProbeParticleContainer::iterator;
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
@@ -355,8 +346,6 @@ void FieldProbe::ComputeDiags (int step)
                 const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
                 amrex::Real const dt = WarpX::GetInstance().getdt(lev);
-
-                m_data.resize(numparticles * noutputs);
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
@@ -417,28 +406,37 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
-
                 // this check is here because for m_field_probe_integrate == True, we always compute
                 // but we only write when we truly are in an output interval step
                 if (m_intervals.contains(step+1))
                 {
-                    for (auto ip=numparticles - np; ip < numparticles; ip++) 
+                    for (auto ip=0; ip < np; ip++) 
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
                         // Fill output array
-                        m_data[ip * noutputs + 0] = ip;
-                        m_data[ip * noutputs + 1] = xp;
-                        m_data[ip * noutputs + 2] = yp;
-                        m_data[ip * noutputs + 3] = zp;
-                        m_data[ip * noutputs + FieldProbePIdx::Ex + 4] = part_Ex[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Ey + 4] = part_Ey[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Ez + 4] = part_Ez[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Bx + 4] = part_Bx[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::By + 4] = part_By[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Bz + 4] = part_Bz[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::S + 4] = part_S[ip];
-                    }
+ //                       m_data[ip * noutputs + 0] = ip;
+                        m_data.push_back(xp);
+                        m_data.push_back(yp);
+                        m_data.push_back(zp);
+                        m_data.push_back(part_Ex[ip]);
+                        m_data.push_back(part_Ey[ip]);
+                        m_data.push_back(part_Ez[ip]);
+                        m_data.push_back(part_Bx[ip]);
+                        m_data.push_back(part_By[ip]);
+                        m_data.push_back(part_Bz[ip]);
+                        m_data.push_back(part_S[ip]);
+/*                        m_data[ip * noutputs + 0] = xp;
+                        m_data[ip * noutputs + 1] = yp;
+                        m_data[ip * noutputs + 2] = zp;
+                        m_data[ip * noutputs + FieldProbePIdx::Ex + 3] = part_Ex[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Ey + 3] = part_Ey[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Ez + 3] = part_Ez[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Bx + 3] = part_Bx[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::By + 3] = part_By[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::Bz + 3] = part_Bz[ip];
+                        m_data[ip * noutputs + FieldProbePIdx::S + 3] = part_S[ip];
+*/                    }
                 /* m_data now contains up-to-date values for:
                  *  [i, Rx, Ry, Rz, Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
@@ -447,20 +445,40 @@ void FieldProbe::ComputeDiags (int step)
         Gpu::synchronize();
         if (m_intervals.contains(step+1))
         {
-            unsigned long long sum=0; //numparticles in this level (sum from all processors)
-            int m_MPISize = amrex::ParallelDescriptor::NProcs(); 
-            std::vector<long> result(m_MPISize, 0);
-            amrex::ParallelGather::Gather (numparticles, result.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
-
-            sum = 0;
-            int const num_results = result.size();
-            for (int i=0; i<num_results; i++) {
-                sum += result[i];
+            int mpisize;
+            MPI_Comm_size(amrex::ParallelDescriptor::Communicator(), &mpisize);
+            int *length_array = NULL;
+            if (amrex::ParallelDescriptor::IOProcessor()) {
+                length_array = (int *) malloc( mpisize * sizeof(int));
             }
-
-            m_data_out.resize(sum * noutputs);
-            amrex::ParallelGather::Gather (m_data.data(), m_data.size(), m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
-}
+            int my_vec_size = m_data.size();
+            MPI_Gather(&my_vec_size, 1, MPI_INT,
+                       length_array, 1, MPI_INT,
+                       amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+//            long result;
+//            MPI_Reduce(&numparticles, &result, 1,
+//                       MPI_LONG, MPI_SUM,
+//                       amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+//            m_data_out.resize(result * noutputs * 2);
+            long total_data_size = 0;
+            int *displs = NULL;
+            if (amrex::ParallelDescriptor::IOProcessor()) {
+                displs = (int *) malloc( mpisize * sizeof(int));
+                displs[0] = 0;
+                total_data_size += length_array[0];
+                for (int i=1; i<mpisize; i++) {
+                    displs[i] += displs[i-1] + length_array[i-1];
+                    total_data_size += length_array[i];
+                }
+                valid_particles = total_data_size / noutputs;
+                m_data_out = (amrex::Real *) malloc( total_data_size * sizeof(amrex::Real));
+            }
+            MPI_Gatherv(m_data.data(), my_vec_size, MPI_DOUBLE,
+                        m_data_out, length_array, displs, MPI_DOUBLE,
+                        amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator()); 
+//            amrex::ParallelGather::Gather (m_data.data(), numparticles * noutputs, m_data_out.data(), amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+//std::cout << "Ex " << m_data_out[4] << " Ey " << m_data_out[5] << " x " << m_data_out[1] << "\n";
+        }
     }// end loop over refinement levels
     // make sure data is in m_data on the IOProcessor
     // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
@@ -486,7 +504,7 @@ void FieldProbe::WriteToFile (int step) const
         ofs << WarpX::GetInstance().gett_new(0);
 
         // loop over data size and write
-        for (int i = 0; i < (m_data_out.size() / noutputs); i++)
+        for (int i = 0; (i < valid_particles); i++)
         {
             for (int k = 0; k < noutputs; k++)
             {

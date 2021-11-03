@@ -200,6 +200,7 @@ WarpX::InitDiagnostics () {
                                                particle_slice_width_lab);
     }
     reduced_diags->InitData();
+    reduced_diags->LoadBalance();
 }
 
 void
