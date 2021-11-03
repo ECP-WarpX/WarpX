@@ -2095,6 +2095,14 @@ Reduced Diagnostics
         ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
         ``<reduced_diags_name>.z_probe``.
 
+        FieldProbe can instead probe a 1 dimensional line of points to create a line detector.
+        To utilize the line detector, specify ``<reduced_diags_name>.probe_geometry=1``. Initial
+        input paramaters x_probe, y_probe, and z_probe designate one end of the line detector,
+        while the far end is specified via ``<reduced_diags_name>.x1_probe``,
+        ``<reduced_diags_name>.y1_probe``, ``<reduced_diags_name>.z1_probe``. Additionally,
+        ``<reduced_diags_name>.resolution`` must be defined to give the number of detector
+        points along the line (equally spaced) to probe.
+
         The output columns are
         the value of the :math:`E_x` field,
         the value of the :math:`E_y` field,
@@ -2114,7 +2122,6 @@ Reduced Diagnostics
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
-
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as
