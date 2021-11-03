@@ -292,7 +292,8 @@ Known System Issues
 
 .. warning::
 
-   Related to the above issue, libfabric 1.6+ introduced a couple of breaking changes that break ADIOS2 SST (staging/streaming) workflows.
+   Related to the above issue, the fabric selection in ADIOS2 was designed for libfabric 1.6.
+   With newer versions of libfabric, a workaround is needed to guide the selection of a functional fabric for RDMA support.
    Details are discussed in `ADIOS2 issue #2887 <https://github.com/ornladios/ADIOS2/issues/2887>`__.
 
    The following environment variables can be set as work-arounds, when working with ADIOS2 SST:
