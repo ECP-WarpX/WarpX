@@ -45,9 +45,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Configure
       run: |
-        cmake -S . -B build               \
+        . /ascent_docker_setup_env.sh && cmake -S . -B build               \
                    -DWarpX_ASCENT=ON      \
                    -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
-        cmake --build build -j 2
+        . /ascent_docker_setup_env.sh && cmake --build build -j 2
