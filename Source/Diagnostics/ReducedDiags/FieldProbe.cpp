@@ -460,10 +460,9 @@ void FieldProbe::ComputeDiags (int step)
 
             // gather size of m_data from each processor
             int my_vec_size = m_data.size();
-            MPI_Gather(&my_vec_size, 1, MPI_INT,
-                       length_array, 1, MPI_INT,
-                       amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
-
+            amrex::ParallelDescriptor::Gather(&my_vec_size, 1,
+                                              length_array, 1,
+                                              amrex::ParallelDescriptor::IOProcessorNumber());
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
              * tells Gatherv where in the m_data_out array allocation to write incomming data. */
