@@ -36,7 +36,7 @@
 -
   action: add_extracts
   extracts:
-    e1: 
+    e1:
       params:
         path: ./conduit_blueprint
         protocol: blueprint/mesh/hdf5
