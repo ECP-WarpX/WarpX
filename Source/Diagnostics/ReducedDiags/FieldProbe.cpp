@@ -13,7 +13,6 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
-#include "Diagnostics/WarpXOpenPMD.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
