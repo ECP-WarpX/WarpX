@@ -1,0 +1,44 @@
+#
+# This actions file tests:
+#  Rendering a Contour of Ey
+#  Volume Rendering Ey
+#  Rendering the Electrons Particle mesh
+#  Exporting Blueprint HDF5 files
+#
+- 
+  action: add_pipelines
+  pipelines: 
+    contour_pipeline: 
+      f0: 
+        params: 
+          field: Ey
+          levels: 16
+        type: contour
+- 
+  action: add_scenes
+  scenes: 
+    ey_contour_pc: 
+      plots: 
+        p0: 
+          field: Ey
+          pipeline: contour_pipeline
+          type: pseudocolor
+    ey_volrend: 
+       plots: 
+         p0: 
+           field: Ey
+           type: volume
+    uz_pc: 
+       plots: 
+         p0: 
+           field: particle_electrons_uz
+           type: pseudocolor
+- 
+  action: add_extracts
+  extracts: 
+    e1: 
+      params: 
+        path: ./conduit_blueprint
+        protocol: blueprint/mesh/hdf5
+      type: relay
+
