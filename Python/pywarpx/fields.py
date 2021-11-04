@@ -914,14 +914,14 @@ def JzFPPMLWrapper(level=0, include_ghosts=False):
                             get_nodal_flag=_libwarpx.get_Jz_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
-def FFPPMLWrapper(level=1, include_ghosts=False):
+def FFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=None,
                             get_lovects=_libwarpx.get_mesh_F_fp_lovects_pml,
                             get_fabs=_libwarpx.get_mesh_F_fp_pml,
                             get_nodal_flag=_libwarpx.get_F_pml_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
-def GFPPMLWrapper(level=1, include_ghosts=False):
+def GFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=None,
                             get_lovects=_libwarpx.get_mesh_G_fp_lovects_pml,
                             get_fabs=_libwarpx.get_mesh_G_fp_pml,
