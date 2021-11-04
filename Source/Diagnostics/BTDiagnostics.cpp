@@ -1016,12 +1016,12 @@ BTDiagnostics::PrepareParticleDataForOutput()
                         geom.define(ParticleBox, &ParticleRealBox, amrex::CoordSys::cartesian,
                                     BTdiag_periodicity.data() );
                         m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, geom);
-                        //m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
                     }
                 }
                 m_all_particle_functors[i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain, m_old_z_boost[i_buffer],
-                                             m_current_z_boost[i_buffer], m_t_lab[i_buffer]);
+                                             m_current_z_boost[i_buffer], m_t_lab[i_buffer],
+                                             m_snapshot_full[i_buffer]);
             }
         }
     }

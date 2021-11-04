@@ -164,13 +164,13 @@ BackTransformParticleFunctor::InitData()
 }
 
 void
-BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
+BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                               amrex::Real old_z_boost, amrex::Real current_z_boost,
-                              amrex::Real t_lab)
+                              amrex::Real t_lab, int snapshot_full)
 {
     m_old_z_boost[i_buffer] = old_z_boost;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_t_lab[i_buffer] = t_lab;
     m_perform_backtransform[i_buffer] = 0;
-    if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
+    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform[i_buffer] = 1;
 }

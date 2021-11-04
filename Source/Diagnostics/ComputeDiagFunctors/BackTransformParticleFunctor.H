@@ -192,15 +192,19 @@ public:
     void InitData() override;
     /** \brief Prepare data required to back-transform particle attribtutes for lab-frame snapshot, i_buffer
      *
-     * \param[in] i_buffer        index of the snapshot
-     * \param[in] ZSliceInDomain  if the z-slice at current_z_boost is within the bounds of
+     * \param[in] i_buffer           index of the snapshot
+     * \param[in] z_slice_in_domain  if the z-slice at current_z_boost is within the bounds of
      *            the boosted-frame and lab-frame domain. The particles are transformed
      *            only if this value is true.
-     * \param[in] current_z_boost z co-ordinate of the slice selected in boosted-frame.
-     * \param[in] t_lab           current time in lab-frame for snapshot, i_buffer.
+     * \param[in] current_z_boost    z co-ordinate of the slice selected in boosted-frame.
+     * \param[in] t_lab              current time in lab-frame for snapshot, i_buffer.
+     * \param[in] snapshot_full      if the current snapshot, with index, i_buffer, is
+     *            full (1) or not (0). If it is full, then Lorentz-transform is not performed
+     *            by setting m_perform_backtransform to 0 for the corresponding ith snapshot.
      */
-    void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain, amrex::Real old_z_boost,
-                              amrex::Real current_z_boost, amrex::Real t_lab) override;
+    void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain, amrex::Real old_z_boost,
+                              amrex::Real current_z_boost, amrex::Real t_lab,
+                              int snapshot_full) override;
 private:
     /** Source particle container */
     WarpXParticleContainer* m_pc_src = nullptr;
