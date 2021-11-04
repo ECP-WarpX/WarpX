@@ -1930,8 +1930,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Please see the :ref:`data analysis section <dataanalysis-formats>` for more information.
 
 .. _running-cpp-parameters-diagnostics-btd:
-BackTransformed Diagnostics (with support for Plotfile/OpenPMD output)
+
+BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
