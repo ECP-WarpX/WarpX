@@ -61,7 +61,7 @@ class Species(picmistandard.PICMI_Species):
                 else:
                     self.charge = self.charge_state*constants.q_e
             # Match a string of the format '#nXx', with the '#n' optional isotope number.
-            m = re.match('(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
+            m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
             if m is not None:
                 element = periodictable.elements.symbol(m['sym'])
                 if m['iso'] is not None:

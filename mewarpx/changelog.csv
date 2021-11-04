@@ -1,5 +1,11 @@
 Version, Physics version, Date,        List of changes
-2.0.0, 1, In progress, "
+2.0.1, 0, In progress, "
+
+**Other changes**:
+
+- Merge ``upstream/development`` (release 21.11) into memaster.
+"
+2.0.0, 1, 11/04/2021, "
 
 **API Changes**:
 

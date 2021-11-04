@@ -650,27 +650,26 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 void
 LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 {
-    constexpr Real eps = 0.01_rt;
-    constexpr Real fac = 1.0_rt / (2.0_rt * MathConst::pi * PhysConst::mu0 * PhysConst::c * PhysConst::c * eps);
-    m_weight = fac * m_wavelength * Sx * Sy / std::min(Sx,Sy) * m_e_max;
-
     // The mobility is the constant of proportionality between the field to
     // be emitted, and the corresponding velocity that the particles need to have.
-    m_mobility = (Sx * Sy)/(m_weight * PhysConst::mu0 * PhysConst::c * PhysConst::c);
+    // We set the mobility so that the particles do not exceed a fraction
+    // `eps` of the speed of light, at the peak of the laser field.
+    constexpr Real eps = 0.05_rt;
+    m_mobility = eps/m_e_max;
+    m_weight = PhysConst::ep0 / m_mobility;
+    // Multiply by particle spacing
+#if (AMREX_SPACEDIM == 3)
+    m_weight *= Sx * Sy;
+#elif (AMREX_SPACEDIM == 2)
+    m_weight *= Sx;
+    amrex::ignore_unused(Sy);
+#else
+    amrex::ignore_unused(Sx,Sy);
+#endif
     // When running in the boosted-frame, the input parameters (and in particular
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.
     m_mobility = m_mobility/WarpX::gamma_boost;
-
-    // If mobility is too high (caused by a small wavelength compared to the grid size),
-    // calculated antenna particle velocities may exceed c, which can cause a segfault.
-    constexpr Real warning_tol = 0.1_rt;
-    if (m_wavelength < std::min(Sx,Sy)*warning_tol){
-        WarpX::GetInstance().RecordWarning("Laser",
-            "Laser wavelength seems to be much smaller than the grid size."
-            " This may cause a segmentation fault",
-            WarnPriority::high);
-    }
 }
 
 void
