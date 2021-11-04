@@ -479,7 +479,7 @@ std::cout << "LOCALSIZE = "<< localsize[0] << "\n";
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,
                                               length_vector.data(), 1,
                                               amrex::ParallelDescriptor::IOProcessorNumber());
- 
+
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
              * tells Gatherv where in the m_data_out array allocation to write incomming data. */
