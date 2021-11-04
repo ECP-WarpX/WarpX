@@ -490,7 +490,7 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
 
     // Account for galilean shift
     amrex::Real new_lo[AMREX_SPACEDIM];
-    amrex::Real new_hi[AMREX_SPACEDIM]; 
+    amrex::Real new_hi[AMREX_SPACEDIM];
     // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
     // m_geom_output[i_buffer][lev] below have values 0 and 0, respectively, because
     // we need the physical extent from mesh-refinement level = 0,
