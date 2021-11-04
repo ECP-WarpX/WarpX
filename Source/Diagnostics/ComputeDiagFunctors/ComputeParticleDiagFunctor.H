@@ -53,7 +53,7 @@ public:
      *  \param[in] i_buffer snapshot index for which the particle buffer is processed
      */
     virtual void operator () (ParticleContainer& pc_dst, int &totalParticlesInBuffer, int i_buffer = 0) const = 0;
-    virtual void InitData() {}
+    virtual void InitData () {}
 };
 
 #endif // WARPX_COMPUTEPARTICLEDIAGFUNCTOR_H_

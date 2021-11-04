@@ -185,7 +185,7 @@ protected:
     /** Vector of particle buffer vectors for each snapshot */
     amrex::Vector< amrex::Vector<std::unique_ptr<PinnedMemoryParticleContainer> > > m_particles_buffer;
     /** Vector of pointers to functors to compute particle output per species*/
-    amrex::Vector <std::unique_ptr<ComputeParticleDiagFunctor > > m_all_particle_functors;
+    amrex::Vector< std::unique_ptr<ComputeParticleDiagFunctor> > m_all_particle_functors;
 
     /** Vector of total number of particles previously flushed, per species, per snapshot.
      *  The first vector is for total number of snapshots and second vector loops

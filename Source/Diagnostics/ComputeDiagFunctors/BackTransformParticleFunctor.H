@@ -49,7 +49,6 @@ struct SelectParticles
     int operator() (const SrcData& src, int i) const noexcept
     {
         amrex::ignore_unused(src);
-        using namespace amrex;
         amrex::ParticleReal xp, yp, zp;
         m_get_position(i, xp, yp, zp);
         int Flag = 0;

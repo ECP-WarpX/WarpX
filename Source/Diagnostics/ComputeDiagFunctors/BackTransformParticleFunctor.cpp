@@ -79,7 +79,6 @@ void
 BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &totalParticleCounter, int i_buffer) const
 {
     if (m_perform_backtransform[i_buffer] == 0) return;
-//    ParticleContainer pc_tmp(&WarpX::GetInstance());
     auto &warpx = WarpX::GetInstance();
     // get particle slice
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
