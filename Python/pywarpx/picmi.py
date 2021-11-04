@@ -403,6 +403,8 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.max_grid_size_y = kw.pop('warpx_max_grid_size_y', None)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
         self.potential_xmin = None
@@ -417,7 +419,11 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
-        pywarpx.amr.max_grid_size = self.max_grid_size
+        if self.max_grid_size_x is None or self.max_grid_size_y is None:
+            pywarpx.amr.max_grid_size = self.max_grid_size
+        else:
+            pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+            pywarpx.amr.max_grid_size_y = self.max_grid_size_y
         pywarpx.amr.blocking_factor = self.blocking_factor
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
@@ -458,6 +464,8 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.max_grid_size_y = kw.pop('warpx_max_grid_size_y', None)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
         self.potential_xmin = kw.pop('warpx_potential_lo_x', None)
@@ -472,7 +480,11 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
-        pywarpx.amr.max_grid_size = self.max_grid_size
+        if self.max_grid_size_x is None or self.max_grid_size_y is None:
+            pywarpx.amr.max_grid_size = self.max_grid_size
+        else:
+            pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+            pywarpx.amr.max_grid_size_y = self.max_grid_size_y
         pywarpx.amr.blocking_factor = self.blocking_factor
 
         # Geometry
@@ -509,6 +521,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.max_grid_size_y = kw.pop('warpx_max_grid_size_y', None)
+        self.max_grid_size_z = kw.pop('warpx_max_grid_size_z', None)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
 
         self.potential_xmin = kw.pop('warpx_potential_lo_x', None)
@@ -523,7 +538,12 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
-        pywarpx.amr.max_grid_size = self.max_grid_size
+        if self.max_grid_size_x is None or self.max_grid_size_y is None or self.max_grid_size_z is None:
+            pywarpx.amr.max_grid_size = self.max_grid_size
+        else:
+            pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+            pywarpx.amr.max_grid_size_y = self.max_grid_size_y
+            pywarpx.amr.max_grid_size_z = self.max_grid_size_z
         pywarpx.amr.blocking_factor = self.blocking_factor
 
         # Geometry
