@@ -86,7 +86,7 @@ private:
     amrex::Vector<amrex::Real> m_data;
 
     //! Empty array to be used by IOProcessor node to store and output data
-    amrex::Real *m_data_out = NULL;
+    amrex::Vector<amrex::Real> m_data_out;
 
     //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;

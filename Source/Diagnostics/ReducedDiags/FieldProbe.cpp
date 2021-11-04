@@ -206,6 +206,10 @@ void FieldProbe::InitData ()
         if (ParallelDescriptor::IOProcessor())
         {
 
+            xpos.reserve(m_resolution);
+            ypos.reserve(m_resolution);
+            zpos.reserve(m_resolution);
+
             // Final - initial / steps. Array contains dx, dy, dz
             amrex::Real DetLineStepSize[3]{
                     (x1_probe - x_probe) / (m_resolution - 1),
@@ -263,9 +267,6 @@ void FieldProbe::ComputeDiags (int step)
     {
         if (!m_intervals.contains(step+1)) { return; }
     }
-    // reset m_data vector to clear pushed values
-    m_data.clear();
-
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
@@ -303,11 +304,22 @@ void FieldProbe::ComputeDiags (int step)
         using MyParIter = FieldProbeParticleContainer::iterator;
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
+            // count particle on MPI rank
+            numparticles += pti.numParticles();
+        }
+
+        if (m_intervals.contains(step+1))
+        {
+            // reset m_data vector to clear pushed values. Reserves data
+            m_data.clear();
+            m_data.shrink_to_fit();
+            m_data.reserve(numparticles * noutputs);
+        }
+
+        for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
+        {
             const auto getPosition = GetParticlePosition(pti);
             auto const np = pti.numParticles();
-
-            // count particle on MPI rank
-            numparticles += np;
 
             if( ProbeInDomain() )
             {
@@ -453,19 +465,25 @@ void FieldProbe::ComputeDiags (int step)
             MPI_Comm_size(amrex::ParallelDescriptor::Communicator(), &mpisize);
 
             // allocates data space for length_array. Will contain size of m_data from each processor
-            int *length_array = NULL;
-            if (amrex::ParallelDescriptor::IOProcessor()) {
-                length_array = (int *) malloc( mpisize * sizeof(int));
-            }
+            amrex::Vector<int> length_vector;
+            amrex::Vector<int> localsize;
 
+            if (amrex::ParallelDescriptor::IOProcessor()) {
+                length_vector.resize(mpisize, 0);
+            }
+            localsize.resize(1,0);
+            localsize[0] = m_data.size();
+
+std::cout << "LOCALSIZE = "<< localsize[0] << "\n";
             // gather size of m_data from each processor
-            int my_vec_size = m_data.size();
-            amrex::ParallelDescriptor::Gather(&my_vec_size, 1,
-                                              length_array, 1,
+            amrex::ParallelDescriptor::Gather(localsize.data(), 1,
+                                              length_vector.data(), 1,
                                               amrex::ParallelDescriptor::IOProcessorNumber());
+ 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
              * tells Gatherv where in the m_data_out array allocation to write incomming data. */
+/*
             long total_data_size = 0;
             int *displs = NULL;
             if (amrex::ParallelDescriptor::IOProcessor()) {
@@ -486,6 +504,33 @@ void FieldProbe::ComputeDiags (int step)
             MPI_Gatherv(m_data.data(), my_vec_size, MPI_DOUBLE,
                         m_data_out, length_array, displs, MPI_DOUBLE,
                         amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
+*/
+
+            // IO processor sums values from length_array to get size of total output array.
+            /* displs records the size of each m_data as well as previous displs. This array
+             * tells Gatherv where in the m_data_out array allocation to write incomming data. */
+            long total_data_size = 0;
+            amrex::Vector<int> displs_vector;
+            if (amrex::ParallelDescriptor::IOProcessor()) {
+                displs_vector.resize(mpisize, 0);
+                displs_vector[0] = 0;
+                total_data_size += length_vector[0];
+                for (int i=1; i<mpisize; i++) {
+                    displs_vector[i] = (displs_vector[i-1] + length_vector[i-1]);
+                    total_data_size += length_vector[i];
+                }
+                // valid particles are counted (for all MPI ranks) to inform output processes as to size of output
+                m_valid_particles = total_data_size / noutputs;
+                m_data_out.resize(total_data_size, 0);
+            }
+// risize receive buffer (resize, initialize 0)
+            // gather m_data of varied lengths from all processors. Prints to m_data_out
+
+std::cout << "LOCALSIZE = "<< localsize[0] << "\n";
+
+            amrex::ParallelDescriptor::Gatherv(m_data.data(), localsize[0],
+                                               m_data_out.data(), length_vector, displs_vector,
+                                               amrex::ParallelDescriptor::IOProcessorNumber());
         }
     }// end loop over refinement levels
     // make sure data is in m_data on the IOProcessor
@@ -496,6 +541,7 @@ void FieldProbe::WriteToFile (int step) const
 {
     if (ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())
     {
+std::cout<< static_cast<double>(m_data_out[1]) << " y val \n";
         // open file
         std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
                std::ofstream::out | std::ofstream::app};
