@@ -226,6 +226,8 @@ libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getPhi_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getF_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getG_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getF_pml_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getG_pml_nodal_flag.restype = _LP_c_int
 
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
