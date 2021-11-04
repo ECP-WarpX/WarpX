@@ -356,8 +356,8 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
         Arguments:
             tsdict (dict of (str, str, str)): First string is either 'inject' or
                 'scrape'; second string is the group name (eg cathode, accgrid);
-                third value is species_name for the species. Note any cropping etc.
-                should be done before this dict is passed in!
+                third value is species_name for the species. Note any cropping
+                etc. should be done before this dict is passed in!
 
         Returns:
             resultstr (str): A string that can be printed for the performance.
@@ -707,11 +707,15 @@ class FluxDiagnostic(FluxDiagBase):
                     self._check_charge_conservation()
 
                 if self.print_per_diagnostic:
-                    logger.info("THIS DIAGNOSTIC PERIOD:")
-                    logger.info(self.print_fluxes(self.ts_dict))
+                    logger.info(
+                        "\nTHIS DIAGNOSTIC PERIOD:\n"
+                        + self.print_fluxes(self.ts_dict)
+                    )
                 if self.print_total:
-                    logger.info("TOTAL HISTORY:")
-                    logger.info(self.print_fluxes(self.fullhist_dict))
+                    logger.info(
+                        "\nTOTAL HISTORY:\n"
+                        + self.print_fluxes(self.fullhist_dict)
+                    )
 
                 if self.plot:
                     self.plot_fluxes(self.fullhist_dict, save=True)

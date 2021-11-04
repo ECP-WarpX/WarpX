@@ -49,38 +49,72 @@ class MEWarpXRun(object):
         self.initialized = False
         self.simulation = picmi.Simulation(verbose=0)
 
-    def init_grid(self, xmin, xmax, zmin, zmax, nx, nz, max_grid_size=4):
-        """Function to set up the simulation grid."""
+    def init_grid(self, xmin, xmax, zmin, zmax, nx, nz,
+                  field_boundary_xmin='periodic',
+                  field_boundary_xmax='periodic',
+                  field_boundary_zmin='dirichlet',
+                  field_boundary_zmax='dirichlet',
+                  parts_boundary_xmin='periodic',
+                  parts_boundary_xmax='periodic',
+                  parts_boundary_zmin='absorbing',
+                  parts_boundary_zmax='absorbing',
+                  min_tiles=1):
+        """Function to set up the simulation grid.
+
+        Arguments:
+            x/zmin (float): Minimum coordinate in given direction.
+            x/zmax (float): Maximum coordinate in given direction.
+            nx/z (int): Number of grid cells in given direction.
+            field_boundary_x/zmin (str): Boundary condition to use on the lower
+                boundary in given direction ('periodic', 'dirichlet' or 'none').
+            field_boundary_x/zmax (str): Boundary condition to use on the upper
+                boundary in given direction ('periodic', 'dirichlet' or 'none').
+            parts_boundary_x/zmin (str): Particle boundary condition to use on
+                the lower boundary in given direction ('periodic', 'absorbing'
+                or 'reflecting').
+            parts_boundary_x/zmax (str): Particle boundary condition to use on
+                the upper boundary in given direction ('periodic', 'absorbing'
+                or 'reflecting').
+            min_tiles (int): Minimum number of tiles to use in the z-direction.
+        """
+        lower_boundary_conditions = [field_boundary_xmin, field_boundary_zmin]
+        upper_boundary_conditions = [field_boundary_xmax, field_boundary_zmax]
+        lower_boundary_conditions_parts = [
+            parts_boundary_xmin, parts_boundary_zmin
+        ]
+        upper_boundary_conditions_parts = [
+            parts_boundary_xmax, parts_boundary_zmax
+        ]
+
         self.grid = picmi.Cartesian2DGrid(
             number_of_cells=[nx, nz],
             lower_bound=[xmin, zmin],
             upper_bound=[xmax, zmax],
-            lower_boundary_conditions=['periodic', 'dirichlet'],
-            upper_boundary_conditions=['periodic', 'dirichlet'],
-            lower_boundary_conditions_particles=['periodic', 'absorbing'],
-            upper_boundary_conditions_particles=['periodic', 'absorbing'],
-            warpx_max_grid_size=nz//max_grid_size
+            lower_boundary_conditions=lower_boundary_conditions,
+            upper_boundary_conditions=upper_boundary_conditions,
+            lower_boundary_conditions_particles=lower_boundary_conditions_parts,
+            upper_boundary_conditions_particles=upper_boundary_conditions_parts,
+            warpx_max_grid_size=nz//min_tiles
         )
 
         self._set_geom_str()
         self._set_grid_params()
 
-    def init_timestep(self, V_anode, DT=None, CFL_factor=None, V_grid=5):
+    def init_timestep(self, DT=None, CFL_factor=None, V_grid=5):
         """Calculate timestep size based on grid data and CFL parameter
 
          Arguments:
-            V_anode (float): Vacuum bias of anode relative to cathode, V.
             DT (float): The dt of each step of the simulation, if not given it
                 will be calculated.
             CFL_factor (float): Multiplier to determine the actual timestep
                 given the CFL ratio. eg. ``dt = CFL_factor * CFL_ratio``.
             V_grid (float): The vaccum bias of highest-voltage grid relative to
-                the cathode V. If not defined a value of 5 is used, which
+                the cathode V. If not defined a value of 5 V is used, which
                 is a safe value for finding vmax in the case that the
-                electron velocities are only set by their temperature
+                electron velocities are only set by their temperature.
         """
         if self.grid is None:
-            raise ValueError("init_grid must be called before init_timestep!")
+            raise ValueError("init_grid must be called before init_timestep.")
 
         if DT is not None:
             self.dt = DT
@@ -88,11 +122,17 @@ class MEWarpXRun(object):
             return self.dt
 
         if CFL_factor is None:
-            raise ValueError("No CFL_factor passed into init_timestep when DT is not defined!")
+            raise ValueError(
+                "Either CFL-factor or DT should be passed to init_timestep."
+            )
+        V_grid = abs(V_grid)
+        if V_grid < 1:
+            raise ValueError(
+                "V_grid must be greater than or equal to 1 V to calculate "
+                "timestep using CFL_factor."
+            )
 
-        vmax = np.sqrt(
-               2*constants.e/constants.m_e * max(0.0, abs(V_anode), abs(V_grid))
-        )
+        vmax = np.sqrt(2*constants.e/constants.m_e * V_grid)
 
         if self.geom_str == 'XZ' or self.geom_str == 'RZ':
             dt_local = min(self.dx, self.dz) / vmax * CFL_factor
@@ -104,13 +144,14 @@ class MEWarpXRun(object):
 
         return self.dt
 
-
     def init_run(self, restart=None, checkpoint_dir="diags",
                  checkpoint_prefix=init_restart_util.default_checkpoint_name,
                  additional_steps=None):
         if self.initialized:
             raise RuntimeError(
-                "Attempted to initialize the mwxrun class multiple times.")
+                "Attempted to initialize the mwxrun class multiple times."
+            )
+
         self.restart = restart
         try:
             if self.restart != False:
@@ -241,11 +282,9 @@ class MEWarpXRun(object):
             raise ValueError("Unrecognized type of pywarpx.picmi Grid.")
 
     def step(self, sim_control, interval=None):
-        sim_control.max_steps = self.simulation.max_steps
         self.step_interval = compute_step(self.simulation, interval)
         while sim_control.check_criteria():
             self.simulation.step(self.step_interval)
-
 
     def get_domain_area(self):
         """Return float of simulation domain area in X & Y directions or R depending

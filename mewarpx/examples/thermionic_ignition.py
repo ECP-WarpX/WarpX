@@ -1,7 +1,7 @@
 from mewarpx.utils_store import util as mwxutil
 mwxutil.init_libwarpx(ndim=2, rz=False)
 
-from mewarpx import assemblies, emission, mepicmi
+from mewarpx import assemblies, emission, mespecies
 from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
 
 from mewarpx.mwxrun import mwxrun
@@ -69,19 +69,19 @@ mwxrun.grid.potential_zmax = V_bias
 solver = PoissonSolverPseudo1D(grid=mwxrun.grid)
 
 mwxrun.simulation.solver = solver
-mwxrun.init_timestep(V_bias, DT=DT)
+mwxrun.init_timestep(DT=DT)
 mwxrun.simulation.max_steps = max_steps
 
 #################################
 # physics components
 ################################
 
-electrons = mepicmi.Species(
+electrons = mespecies.Species(
     particle_type='electron',
     name='electrons',
 )
 
-ions = mepicmi.Species(
+ions = mespecies.Species(
     particle_type='Ar',
     name='ar_ions',
     charge='q_e',

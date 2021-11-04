@@ -75,28 +75,9 @@ class SimInfo(object):
         # return np.linspace(xmin, xmax, npts + 1)
 
 
-class WarpXSimInfo(SimInfo):
-
-    """Create a SimInfo object when running a warpx simulation."""
-
-    def __init__(self):
-        self.nxyz = [mwxrun.nx, mwxrun.ny, mwxrun.nz]
-        self.pos_lims = [mwxrun.xmin, mwxrun.xmax,
-                         mwxrun.ymin, mwxrun.ymax,
-                         mwxrun.zmin, mwxrun.zmax]
-        self.geom = mwxrun.geom_str
-        self.dt = mwxrun.get_dt()
-        # self.periodic = (
-            #   warp.w3d.boundxy is warp.periodic
-            # The rwall in RZ simulations can be set even if boundxy is
-            # periodic. It defaults to 1e36 so this should be fine.
-        #    and warp.top.prwall > 1e10
-        # )
-
-
 class RunInfo(SimInfo):
 
-    """Store parameters for a WARP run.
+    """Store parameters for a WarpX run.
 
     Attributes:
         diagnames_dict (dict): Dictionary of paths to diagnostic outputs.
@@ -235,7 +216,9 @@ class RunInfo(SimInfo):
         for cdict in [injector_dict, surface_dict]:
             for cname in list(cdict.keys()):
                 if cname not in self.component_list:
-                    logger.info(f"Adding non-standard component {cname} to runinfo data.")
+                    logger.info(
+                        f"Adding non-standard component {cname} to runinfo data"
+                    )
                     self.component_list.append(cname)
 
         # Now create ordered dictionaries internally for ease-of-use.
@@ -382,10 +365,9 @@ class RunInfo(SimInfo):
                 )
 
     def save(self, diagdir='diags', filename='runinfo.dpkl'):
-        """Save run info as a pickle file into the diagnostics directory. The
-        inclusion of injectors forces the use of dill rather than pickle, both
-        owing to customization of Norcross ionization but also apparently
-        scipy.interp1d.
+        """Save run info as a pickle file into the diagnostics directory.
+        ``dill`` generally handles more diverse objects than ``pickle``, and
+        has historically avoided unpickleable objects in similar situations.
 
         Arguments:
             diagdir (str): Folder to save to, default 'diags'

@@ -38,10 +38,10 @@ mewarpx.mcc\_wrapper module
    :undoc-members:
    :show-inheritance:
 
-mewarpx.mepicmi module
-----------------------
+mewarpx.mespecies module
+------------------------
 
-.. automodule:: mewarpx.mepicmi
+.. automodule:: mewarpx.mespecies
    :members:
    :undoc-members:
    :show-inheritance:

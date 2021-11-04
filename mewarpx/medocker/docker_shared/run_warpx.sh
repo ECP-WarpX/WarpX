@@ -36,8 +36,7 @@ cd /efs/WarpX_simulation_runs/${DIRNAME}
 
 # Copy files from S3
 aws s3 cp --recursive s3://${BUCKET}/${DIRNAME} ./ --exclude "*" \
-    --include "run*" --include "*.dump" --include "std*" \
-    --include "*runinfo.dpkl"
+    --include "run*" --include "std*"
 ls
 
 # Move diagnostic files that are done
@@ -72,16 +71,12 @@ do
     sleep 300
     if [[ "$MVFILES" == "True" ]]
     then
-        find . -name "*Header" | while read file; do checkptmove "$file"; done
-        find . -name "Cell_D_*[0-9][0-9][0-9][0-9][0-9]" | while read file; do checkptmove "$file"; done
-        find . -name "warpx_job_info" | while read file; do checkptmove "$file"; done
         find . -name "*.h5" | while read file; do checkptmove "$file"; done
         find . -name "*.npy" | while read file; do checkptmove "$file"; done
-        find . -name "*.dpkl" | while read file; do checkptmove "$file"; done
         find . -name "*.png" | while read file; do checkptmove "$file"; done
         find . -name "*.txt" | while read file; do checkptmove "$file"; done
         find . -name "*.json" | while read file; do checkptmove "$file"; done
-        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*" --include "*.json"
+        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*" --include "*.dpkl"
     else
         for d in ./diags_* ; do
             aws s3 sync $d s3://${BUCKET}/${DIRNAME}/diags/

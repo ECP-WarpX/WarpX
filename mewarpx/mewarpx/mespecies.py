@@ -1,6 +1,6 @@
 """
-Child classes of WarpX Picmi objects to support ME utility functions and
-extended functionality without going through their standards.
+File to hold a child class of picmi.Species to allow us to add extra attributes
+and functionality to species.
 """
 import logging
 import numpy as np

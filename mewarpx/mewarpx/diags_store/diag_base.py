@@ -137,7 +137,7 @@ class TextDiag(WarpXDiagnostic):
 
         Arguments:
             diag_steps (int): Number of steps between each output
-            simulation (mepicmi.Simulation): Main simulation object
+            simulation (mespecies.Simulation): Main simulation object
             preset_string (str): Defaults to choose between:
 
               - ``default`` - just the step number and total particle num
@@ -213,7 +213,10 @@ class TextDiag(WarpXDiagnostic):
                 # This isn't perfectly accurate, but it's a good approximation
                 self.particle_steps_total += live_parts * steps
                 if wall_time > 0:
-                    particle_step_rate = (self.particle_steps_total - self.previous_particle_steps_total) / wall_time
+                    particle_step_rate = (
+                        self.particle_steps_total
+                        - self.previous_particle_steps_total
+                    ) / wall_time
                     step_rate = steps / wall_time
                 else:
                     step_rate = 0
@@ -250,7 +253,10 @@ class TextDiag(WarpXDiagnostic):
                 self.previous_particle_steps_total = self.particle_steps_total
 
             except Exception as err:
-                logger.error(f"Failed to output diag_string {self.diag_string} with error {err}")
+                logger.error(
+                    f"Failed to output diag_string {self.diag_string} "
+                    f"with error {err}"
+                )
 
             self.prev_time = time.time()
             self.prev_step = mwxrun.get_it()

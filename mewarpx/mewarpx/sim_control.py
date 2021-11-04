@@ -14,15 +14,15 @@ class SimControl:
     set of user defined functions and criteria
 
     """
-    def __init__(self, max_steps, criteria=None):
+    def __init__(self, total_steps, criteria=None):
         """
         Generate and install functions to perform after a step #.
 
         Arguments:
 
-            max_steps (int): Maximum number of steps to perform in the
-                simulation, when step == max_steps check_criteria returns False
-
+            total_steps (int): Total number of steps to perform in the
+                simulation, when step == total_steps check_criteria returns
+                False
             criteria (list): list of user defined functions or list of user
                 defined tuples(function, kwargs) that each return a True or
                 False value
@@ -41,11 +41,14 @@ class SimControl:
 
         self.crit_list = []
         self.crit_args_list = []
-        self.max_steps = max_steps
-        if self.max_steps < 1:
-            raise AssertionError("max_steps must be >= 1")
-        self.add_checker(self.eval_max_steps)
+        self.total_steps = total_steps
+        if self.total_steps < 1:
+            raise AssertionError("total_steps must be >= 1")
+        self.add_checker(self.eval_total_steps)
         self.initialize_criteria(criteria)
+
+        mwxrun.simulation.max_steps = self.total_steps
+        logger.info(f"Total simulation steps set to {self.total_steps}")
 
     def add_checker(self, criterion):
         """Install a single function to check.
@@ -67,9 +70,10 @@ class SimControl:
             for crit in criteria_list:
                 self.add_checker(crit)
 
-    def eval_max_steps(self):
-        if mwxrun.get_it() >= self.max_steps:
-            logger.info("SimControl: Max steps reached!")
+    def eval_total_steps(self):
+        """Evaluate whether the total timesteps have been reached."""
+        if mwxrun.get_it() >= self.total_steps:
+            logger.info("SimControl: Total steps reached")
             return False
         return True
 
@@ -78,8 +82,9 @@ class SimControl:
         all_good = True
         terminate_statement = 'SimControl: Termination from criteria: '
         for i, criteria in enumerate(self.crit_list):
-            all_good = all_good and criteria(**self.crit_args_list[i])
-            if not criteria(**self.crit_args_list[i]):
+            continue_flag = criteria(**self.crit_args_list[i])
+            all_good = all_good and continue_flag
+            if not continue_flag:
                 add_statement = "{criteria_name} ".format(
                     criteria_name=criteria.__name__)
                 terminate_statement += add_statement

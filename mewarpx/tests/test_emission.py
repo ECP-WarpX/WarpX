@@ -169,7 +169,7 @@ def test_circle_emitter():
     name = "circleEmitter"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import picmi
-    from mewarpx import assemblies, emission, mepicmi
+    from mewarpx import assemblies, emission, mespecies
     from mewarpx.utils_store import testing_util
 
     from mewarpx.mwxrun import mwxrun
@@ -192,7 +192,7 @@ def test_circle_emitter():
         WF=1.2, name='circle'
     )
 
-    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20)
+    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20, min_tiles=4)
     solver = picmi.ElectrostaticSolver(
         grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
     )
@@ -201,7 +201,7 @@ def test_circle_emitter():
     # physics components
     ################################
 
-    electrons = mepicmi.Species(particle_type='electron', name='electrons')
+    electrons = mespecies.Species(particle_type='electron', name='electrons')
 
     #################################
     # simulation setup
@@ -244,7 +244,7 @@ def test_rectangle_emitter():
     name = "rectangleEmitter"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import picmi
-    from mewarpx import assemblies, emission, mepicmi
+    from mewarpx import assemblies, emission, mespecies
     from mewarpx.utils_store import testing_util
 
     from mewarpx.mwxrun import mwxrun
@@ -271,7 +271,7 @@ def test_rectangle_emitter():
         center_x=0.2, center_z=0.4, length_x=0.2, length_z =0.4, V=0,
         T=T_rectangle, WF=1.2, name="rectangle")
 
-    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20)
+    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20, min_tiles=4)
     solver = picmi.ElectrostaticSolver(
         grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
     )
@@ -280,7 +280,7 @@ def test_rectangle_emitter():
     # physics components
     ################################
 
-    electrons = mepicmi.Species(particle_type='electron', name='electrons')
+    electrons = mespecies.Species(particle_type='electron', name='electrons')
 
     #################################
     # simulation setup

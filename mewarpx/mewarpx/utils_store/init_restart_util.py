@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 default_checkpoint_name = "checkpoint"
 
-def clean_old_checkpoints(prefix, directory):
+def clean_old_checkpoints(prefix=default_checkpoint_name, directory="diags"):
     if os.path.isdir(directory):
         for d in next(os.walk(directory))[1]:
             if d.startswith(prefix):
@@ -76,6 +76,11 @@ def run_restart(checkpoint_directory="diags",
     max_steps = mwxrun.simulation.max_steps
     checkpoint_step = int(checkpoint.replace(checkpoint_prefix, ""))
 
+    if checkpoint_step == 0:
+        return False, None, None
+
+    logger.info(f"Restarting from {checkpoint}")
+
     if additional_steps is None:
         mwxrun.simulation.max_steps = max_steps - checkpoint_step
         if mwxrun.simulation.max_steps == 0:
@@ -93,8 +98,6 @@ def run_restart(checkpoint_directory="diags",
     else:
         mwxrun.simulation.max_steps = additional_steps
         logger.info(f"Running for {additional_steps} steps after restarting")
-
-    logger.info(f"Restarting from {checkpoint}")
 
     mwxrun.simulation.amr_restart = os.path.join(
         checkpoint_directory, checkpoint

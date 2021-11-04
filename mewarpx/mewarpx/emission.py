@@ -19,7 +19,7 @@ import mewarpx.utils_store.util as mwxutil
 from mewarpx.mwxrun import mwxrun
 import mewarpx.utils_store.mwxconstants as constants
 from mewarpx.utils_store import appendablearray, parallel_util
-from mewarpx import mepicmi
+from mewarpx.mespecies import Species
 
 # Get module-level logger
 logger = logging.getLogger(__name__)
@@ -127,9 +127,10 @@ class Injector(object):
             argument if no particles are being added by this processor.
 
         Arguments:
-            species (mepicmi.Species): Species of particle
-            w (np.ndarray or float): Array of length npart with particle weights.
-            E_total (np.ndarray or float): Array of length npart with E_total values.
+            species (:class:`mewarpx.mespecies.Species`): Species of particle
+            w (np.ndarray or float): Array of length npart with particle weights
+            E_total (np.ndarray or float): Array of length npart with E_total
+                values.
             n (int): Number of macroparticles, _only_ needed if overriding the
                 length of E_total. This is useful mostly in the case that
                 E_total is already summed over particles, in which case a
@@ -302,8 +303,8 @@ class ThermionicInjector(Injector):
 
     """Performs standard every-timestep injection from a thermionic cathode."""
 
-    def __init__(self, emitter, species, npart_per_cellstep, T,
-                 WF, A=constants.A0*1e4, use_Schottky=True,
+    def __init__(self, emitter, species, npart_per_cellstep, T=None,
+                 WF=None, A=constants.A0*1e4, use_Schottky=True,
                  allow_poisson=False, wfac=1.0,
                  name=None, profile_decorator=None,
                  unique_particles=True):
@@ -312,12 +313,14 @@ class ThermionicInjector(Injector):
         Arguments:
             emitter (:class:`mewarpx.emission.Emitter`): Emitter object that
                 will specify positions and velocities of particles to inject.
-            species (mepicmi.Species): A premade species. Note only electrons
-                will actually give physically meaningful weight calculations.
+            species (mewarpx.mespecies.Species): A premade species. Note only
+                electrons will actually give physically meaningful weight
+                calculations.
             npart_per_cellstep (int): Number of macroparticles to inject per
                 cell on the cathode surface per timestep
-            T (float): Cathode temperature (K)
-            WF (float): Cathode work function (eV)
+            T (float): Cathode temperature (K). Uses emitter T if not specified.
+            WF (float): Cathode work function (eV). Uses WF of the conductor
+                associated with the emitter if not specified.
             A (float): Coefficient of emission in Amp/m^2/K^2. Default is
                 the theoretical max, approximately 1.2e6.
             use_Schottky (bool): Flag specifying whether or not to augment the
@@ -356,6 +359,12 @@ class ThermionicInjector(Injector):
         self.A = A
         self.use_Schottky = use_Schottky
         self.wfac = wfac
+
+        # Get values from the emitter and its conductor if not specified
+        if self.T is None:
+            self.T = self.emitter.T
+        if self.WF is None:
+            self.WF = self.emitter.conductor.WF
 
         if profile_decorator is not None:
             self.inject_particles = profile_decorator(self.inject_particles)
@@ -412,7 +421,7 @@ class ThermionicInjector(Injector):
         # particles and retrieve the electric field at their injection sites in
         # order to calculate Schottky enhancement
         if self.use_Schottky:
-            self.injection_species = mepicmi.Species(
+            self.injection_species = Species(
                 particle_type='electron', name=self.species.name+'_injection'
             )
         else:
@@ -556,9 +565,9 @@ class PlasmaInjector(Injector):
             emitter (:class:`mewarpx.emission.BaseEmitter`): BaseEmitter object
                 that will specify positions and velocities of particles to
                 inject.
-            species1 (:class:`mewarpx.mepicmi.Species`): First species, eg
+            species1 (:class:`mewarpx.mespecies.Species`): First species, eg
                 electron
-            species2 (:class:`mewarpx.mepicmi.Species`): Second species, eg ion
+            species2 (:class:`mewarpx.mespecies.Species`): Second species, eg ion
             npart (int): Number of macroparticles to inject total among all
                 processors and species.
             T_2 (float): If specified, species2 will be injected at this
@@ -1000,7 +1009,8 @@ class Emitter(BaseEmitter):
 
         Arguments:
             T (float): Emitter temperature in Kelvin. Determines particle
-                velocity distribution.
+                velocity distribution. If None, the temperature of the
+                conductor will be used if one is specified.
             conductor (assemblies.Assembly): Conductor the emitter is attached
                 to, used for recording initial voltages and energies. If None,
                 V_e is set to 0. Since there's no current use case for this, a
@@ -1012,6 +1022,13 @@ class Emitter(BaseEmitter):
         """
         super(Emitter, self).__init__()
         self.T = T
+        if self.T is None and conductor is not None:
+            self.T = conductor.T
+        if self.T is None:
+            raise ValueError(
+                "No value for T given to the Emitter. An Emitter T must be "
+                "specified directly, or on a conductor passed to the Emitter."
+            )
 
         self.conductor = conductor
         if self.conductor is not None:
@@ -1066,7 +1083,8 @@ class ZPlaneEmitter(Emitter):
                 used to obtain work function. Can later grab other variables
                 from this conductor.
             T (float): Temperature in Kelvin for the emitter; determines
-                velocities.
+                velocities. If not specified the temperature of the conductor
+                will be used.
             z (float): Position of the emitter along the z axis. If None, grab
                 zcent from the conductor.
             zsign (float): -1 for the cathode, +1 for the anode, or None to
@@ -1086,8 +1104,6 @@ class ZPlaneEmitter(Emitter):
                 Emitter constructor (such as "emission_type").
         """
         # Default initialization
-        if T is None:
-            T = conductor.T
         super(ZPlaneEmitter, self).__init__(T=T, conductor=conductor, **kwargs)
 
         self.z = conductor.z
@@ -1178,12 +1194,14 @@ class ArbitraryEmitter2D(Emitter):
     """
     geoms = ['XZ']
 
-    def __init__(self, conductor, T, res_fac=5., transverse_fac=1.0, **kwargs):
+    def __init__(self, conductor, T=None, res_fac=5., transverse_fac=1.0,
+                 **kwargs):
         """Construct the emitter based on conductor object and temperature.
 
         Arguments:
             conductor (mewarpx.assemblies object): Conductor to emit from.
-            T (float): Temperature in Kelvin.
+            T (float): Temperature in Kelvin. If not specified the temperature
+                of the conductor will be used.
             res_fac (float): Level of resolution beyond the grid resolution to
                 use for calculating shape contours.
             transverse_fac (float): Scale the transverse energy distribution by
@@ -1192,7 +1210,7 @@ class ArbitraryEmitter2D(Emitter):
             kwargs (dict): Any other keyword arguments supported by the parent
                 Emitter constructor (such as "emission_type").
         """
-        # Default Emitter initialization.
+        # Default initialization
         super(ArbitraryEmitter2D, self).__init__(
             T=T, conductor=conductor, **kwargs
         )

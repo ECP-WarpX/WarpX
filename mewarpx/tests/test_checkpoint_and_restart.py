@@ -72,9 +72,7 @@ def test_create_checkpoints():
 
     run = get_run()
 
-    checkpoint = CheckPointDiagnostic(
-        DIAG_STEPS, CHECKPOINT_NAME, write_dir='diags'
-    )
+    checkpoint = CheckPointDiagnostic(DIAG_STEPS, CHECKPOINT_NAME)
 
     mwxrun.init_run(restart=False)
 

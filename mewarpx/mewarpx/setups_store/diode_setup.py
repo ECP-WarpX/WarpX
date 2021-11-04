@@ -5,7 +5,7 @@ from pywarpx import picmi
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
-from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mepicmi, runinfo
+from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mespecies, runinfo
 from mewarpx.diags_store import field_diagnostic, particle_diagnostic, flux_diagnostic
 from mewarpx.utils_store import util as mwxutil
 
@@ -113,10 +113,9 @@ class DiodeRun_V1(object):
     # so is overwritten if NZ is given. If NX and/or NY are specified, the cell
     # spacing in those dimensions is not guaranteed to match RES_LENGTH.
     RES_LENGTH = 0.8e-06
-    # MAX_GRID_SIZE_FACTOR is the factor by which nz (the number of cells
-    # in the z-direction) is reduced to obtain the max grid size parameter
-    # for Cartesian grids.
-    MAX_GRID_SIZE_FACTOR = 4
+    # MIN_TILES is the minimum number of tiles the domain should be broken into
+    # in the z-direction
+    MIN_TILES = 4
     # OFFSET pads the cathode and anode by extending the simulation limits.
     # However, if the boundaries are serving as the conductors this should be
     # 0.
@@ -318,7 +317,7 @@ class DiodeRun_V1(object):
         elif self.dim == 2:
             mwxrun.init_grid(
                 xmin, xmax, zmin, zmax, self.NX, self.NZ,
-                max_grid_size=self.MAX_GRID_SIZE_FACTOR
+                min_tiles=self.MIN_TILES
             )
         elif self.dim == 3:
             raise NotImplementedError("3d grid not yet implemented.")
@@ -336,14 +335,16 @@ class DiodeRun_V1(object):
                 upper_boundary_conditions_particles=[
                     'periodic', 'periodic', 'absorbing'],
                 moving_window_velocity=None,
-                warpx_max_grid_size=self.NZ//self.MAX_GRID_SIZE_FACTOR
+                warpx_max_grid_size=self.NZ//self.MIN_TILES
             )
             '''
 
         self.DT = mwxrun.init_timestep(
             DT=self.DT,
-            V_anode=self.V_ANODE_CATHODE,
             CFL_factor=self.CFL_FACTOR,
+            # NOTE: If back-emission is later introduced, the absolute value of
+            # self.V_ANODE_CATHODE should be used instead.
+            V_grid=max(self.V_ANODE_CATHODE, 1.0)
         )
 
         logger.info("Setting up simulation with")
@@ -390,7 +391,7 @@ class DiodeRun_V1(object):
 
     def init_electrons(self):
         logger.info("### Init Electrons ###")
-        self.electrons = mepicmi.Species(
+        self.electrons = mespecies.Species(
             particle_type='electron', name='electrons'
         )
 
@@ -402,7 +403,7 @@ class DiodeRun_V1(object):
                 f"INERT_GAS_TYPE = {self.INERT_GAS_TYPE}"
             )
 
-        self.ions = mepicmi.Species(
+        self.ions = mespecies.Species(
             particle_type=self.INERT_GAS_TYPE,
             name=f'{self.INERT_GAS_TYPE.lower()}_ions',
             charge='q_e'
@@ -603,7 +604,7 @@ class DiodeRun_V1(object):
 
     def init_simcontrol(self):
         logger.info("### Init Diode SimControl ###")
-        self.control = SimControl(max_steps=self.TOTAL_TIMESTEPS)
+        self.control = SimControl(total_steps=self.TOTAL_TIMESTEPS)
 
     def init_simulation(self):
         logger.info("### Init Simulation Setup ###")

@@ -93,6 +93,10 @@ def init_libwarpx(ndim, rz):
 
 
 def compute_step(simulation, interval=None):
+    """Function to compute the appropriate number of simulations steps to
+    take at a time based on the diagnostic interval provided and the period
+    for output set in (native WarpX) simulation diagnostics.
+    """
     diag_periods = []
     for diag in simulation.diagnostics:
         diag_periods.append(diag.period)

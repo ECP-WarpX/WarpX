@@ -26,7 +26,7 @@ def test_utils_pulsing_sim():
     mwxutil.init_libwarpx(ndim=dim, rz=False)
     from mewarpx.mwxrun import mwxrun
     from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
-    from mewarpx import assemblies, mepicmi
+    from mewarpx import assemblies, mespecies
     from mewarpx.utils_store import testing_util, pulsing
 
     # Include a random run number to allow parallel runs to not collide. Using
@@ -56,12 +56,12 @@ def test_utils_pulsing_sim():
     # grid, solver and timesteps
     #####################################
 
-    mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz, max_grid_size=1)
+    mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz)
 
     solver = PoissonSolverPseudo1D(grid=mwxrun.grid)
 
     mwxrun.simulation.solver = solver
-    mwxrun.init_timestep(30, DT=DT)
+    mwxrun.init_timestep(DT=DT)
     mwxrun.simulation.max_steps = max_steps
 
     pulse_expr = pulsing.linear_pulse_function(
@@ -71,7 +71,7 @@ def test_utils_pulsing_sim():
     )
     anode = assemblies.Anode(D_CA, pulse_expr, 100, 3.0)
 
-    electrons = mepicmi.Species(
+    electrons = mespecies.Species(
         particle_type='electron',
         name='electrons',
     )

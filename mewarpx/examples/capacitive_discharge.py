@@ -9,7 +9,7 @@ mwxutil.init_libwarpx(ndim=2, rz=False)
 from mewarpx.mwxrun import mwxrun
 from mewarpx.diags_store import diag_base
 from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
-from mewarpx import mepicmi, emission, mcc_wrapper, poisson_pseudo_1d
+from mewarpx import mespecies, emission, mcc_wrapper, poisson_pseudo_1d
 
 from pywarpx import picmi, _libwarpx, callbacks
 
@@ -98,15 +98,15 @@ mwxrun.grid.potential_zmax = anode_voltage
 solver = poisson_pseudo_1d.PoissonSolverPseudo1D(grid=mwxrun.grid)
 
 mwxrun.simulation.solver = solver
-mwxrun.init_timestep(None, DT=DT)
+mwxrun.init_timestep(DT=DT)
 mwxrun.simulation.max_steps = max_steps
 
 ##########################
 # declare species
 ##########################
 
-electrons = mepicmi.Species(particle_type='electron', name='electrons')
-ions = mepicmi.Species(particle_type='He', name='he_ions', charge='q_e')
+electrons = mespecies.Species(particle_type='electron', name='electrons')
+ions = mespecies.Species(particle_type='He', name='he_ions', charge='q_e')
 
 ##########################
 # neutral plasma injection

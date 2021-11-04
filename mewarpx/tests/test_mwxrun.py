@@ -119,5 +119,5 @@ def test_capacitive_discharge_multigrid(caplog, name):
 
     print(all_log_output)
     # make sure out isn't empty
-    outstr = "SimControl: Termination from criteria: eval_max_steps"
+    outstr = "SimControl: Termination from criteria: eval_total_steps"
     assert outstr in all_log_output

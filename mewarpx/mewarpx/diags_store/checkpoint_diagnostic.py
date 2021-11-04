@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class CheckPointDiagnostic(WarpXDiagnostic):
-    def __init__(self, diag_steps, name=init_restart_util.default_checkpoint_name,
-                 write_dir=".", **kwargs):
+    def __init__(self, diag_steps,
+                 name=init_restart_util.default_checkpoint_name, **kwargs):
         """
         This class is a wrapper for creating checkpoints from which
         to restart a simulation from
@@ -23,16 +23,15 @@ class CheckPointDiagnostic(WarpXDiagnostic):
                 Also plot on this period if enabled.
             name (str): The name of the diagnostic to be passed into the
                 picmi checkpoint diagnostic.
-            write_dir (str): The directory where diagnostic data will be written
-                from the checkpoint diagnostic.
-            kwargs: For a list of valid keyword arguments see diag_base.WarpXDiagnostic
+            kwargs: For a list of valid keyword arguments see
+                :class:`mewarpx.diags_store.diag_base.WarpXDiagnostic`
         """
         self.diag_steps = diag_steps
         self.name = name
-        self.write_dir = write_dir
 
         super(CheckPointDiagnostic, self).__init__(diag_steps, **kwargs)
 
+        self.write_dir = self.DIAG_DIR
         self.add_checkpoint()
 
     def add_checkpoint(self):

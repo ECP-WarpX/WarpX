@@ -111,7 +111,6 @@ class ArrayPlot(object):
             'default_ticks': True,
             'templates': {
                 'barrier': {'zeroinitial': False},
-                'phi': {'slicepos': 2.5e-7},
                 'E': {'titleunits': 'V nm$^{-1}$', 'linportion': 0.1}
             }
         }
@@ -215,7 +214,7 @@ class ArrayPlot(object):
             self.valmax = self.valmin + 1e-10
 
         if self.params['linthresh'] is None:
-            self.params['linthresh'] = 10**(int(np.log10(max(
+            self.params['linthresh'] = 10**(np.floor(np.log10(max(
                 self.params['_linthreshmin'],
                 np.percentile(np.unique(np.abs(array)),
                               self.params['_linthreshper'])))))

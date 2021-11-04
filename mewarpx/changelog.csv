@@ -1,5 +1,35 @@
 Version, Physics version, Date,        List of changes
-1.0.0, 1, In progress, "
+2.0.0, 1, In progress, "
+
+**API Changes**:
+
+- Renamed `mepicmi` to `mespecies`.
+- Removed ``V_anode`` as input argument to
+  :func:`mewarpx.mwxrun.MEWarpXRun.init_timestep`.
+- :func:`mewarpx.mwxrun.MEWarpXRun.init_grid` now accepts boundary conditions
+  as input.
+- :func:`mewarpx.mwxrun.MEWarpXRun.init_grid` input argument ``max_grid_size``
+  has been renamed to the more appropriate ``min_tiles``, and the default value
+  changed from 4 to 1.
+- Removed argument `write_dir` from checkpoint diagnostic.
+- Argument ``max_steps`` in :class:`mewarpx.sim_control.SimControl` was changed
+  to ``total_steps``.
+
+**Other changes**:
+
+- :class:`mewarpx.emission.ThermionicInjector` will now use the temperature
+  and work-function of the conductor if those values are not directly given.
+
+**Bugfixes**:
+
+- In :func:`mewarpx.mwxrun.MEWarpXRun.step` the value of
+  ``self.simulation.max_steps`` is no longer used, but instead the function
+  relies on ``sim_control`` entirely.
+- When attempting to restart the simulation it will not restart from a
+  checkpoint file dumped at step 0.
+
+"
+1.0.0, 1, 11/03/2021, "
 
 **Physics changes**:
 

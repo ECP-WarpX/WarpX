@@ -39,7 +39,7 @@ class ParticleDiagnostic(WarpXDiagnostic):
             diag_steps (int): Number of steps between each diagnostic output
             name (str): name of the diag output folder, defaults to
                 ``particle_diag``
-            species (:class:`mewarpx.mepicmi.Species`): species in the
+            species (:class:`mewarpx.mespecies.Species`): species in the
                 simulation, if None then uses all particles in the simulation
             data_list (list str): list of attributes to be outputted by the
                 diagnostic, default uses ``["position", "momentum", "weighting"]``
@@ -51,7 +51,7 @@ class ParticleDiagnostic(WarpXDiagnostic):
                 "particle_momentum_y", "particle_momentum_z")
             plot_species (list str): list of species names to be plotted,
                 defaults to all species if not specified. Name variable in
-                :class:`mewarpx.mepicmi.Species` must be set for each species
+                :class:`mewarpx.mespecies.Species` must be set for each species
                 in the simulation
 
         """

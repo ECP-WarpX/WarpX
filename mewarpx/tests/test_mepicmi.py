@@ -7,7 +7,7 @@ from mewarpx.utils_store import util as mwxutil
 
 def test_extra_pid(caplog):
     caplog.set_level(logging.INFO)
-    name = "mepicmi_extra_pid"
+    name = "mespecies_extra_pid"
     dim = 2
 
     # Initialize and import only when we know dimension
