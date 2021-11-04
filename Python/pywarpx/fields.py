@@ -918,12 +918,12 @@ def FFPPMLWrapper(level=1, include_ghosts=False):
     return _MultiFABWrapper(direction=None,
                             get_lovects=_libwarpx.get_mesh_F_fp_lovects_pml,
                             get_fabs=_libwarpx.get_mesh_F_fp_pml,
-                            get_nodal_flag=_libwarpx.get_F_nodal_flag,
+                            get_nodal_flag=_libwarpx.get_F_pml_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
 def GFPPMLWrapper(level=1, include_ghosts=False):
     return _MultiFABWrapper(direction=None,
                             get_lovects=_libwarpx.get_mesh_G_fp_lovects_pml,
                             get_fabs=_libwarpx.get_mesh_G_fp_pml,
-                            get_nodal_flag=_libwarpx.get_G_nodal_flag,
+                            get_nodal_flag=_libwarpx.get_G_pml_nodal_flag,
                             level=level, include_ghosts=include_ghosts)

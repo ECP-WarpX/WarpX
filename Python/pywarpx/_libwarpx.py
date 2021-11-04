@@ -2400,3 +2400,15 @@ def get_G_nodal_flag():
     This returns a 1d array of the nodal flags for G along each direction. A 1 means node centered, and 0 cell centered.
     '''
     return _get_nodal_flag(libwarpx.warpx_getG_nodal_flag)
+
+def get_F_pml_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for F in the PML along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getF_pml_nodal_flag)
+
+def get_G_pml_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for G in the PML along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getG_pml_nodal_flag)
