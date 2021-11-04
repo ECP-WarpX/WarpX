@@ -419,11 +419,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
-        if self.max_grid_size_x is None or self.max_grid_size_y is None:
-            pywarpx.amr.max_grid_size = self.max_grid_size
-        else:
-            pywarpx.amr.max_grid_size_x = self.max_grid_size_x
-            pywarpx.amr.max_grid_size_y = self.max_grid_size_y
+        pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.max_grid_size_y = self.max_grid_size_y
         pywarpx.amr.blocking_factor = self.blocking_factor
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
@@ -480,11 +478,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
-        if self.max_grid_size_x is None or self.max_grid_size_y is None:
-            pywarpx.amr.max_grid_size = self.max_grid_size
-        else:
-            pywarpx.amr.max_grid_size_x = self.max_grid_size_x
-            pywarpx.amr.max_grid_size_y = self.max_grid_size_y
+        pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.max_grid_size_y = self.max_grid_size_y
         pywarpx.amr.blocking_factor = self.blocking_factor
 
         # Geometry
@@ -538,12 +534,10 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
-        if self.max_grid_size_x is None or self.max_grid_size_y is None or self.max_grid_size_z is None:
-            pywarpx.amr.max_grid_size = self.max_grid_size
-        else:
-            pywarpx.amr.max_grid_size_x = self.max_grid_size_x
-            pywarpx.amr.max_grid_size_y = self.max_grid_size_y
-            pywarpx.amr.max_grid_size_z = self.max_grid_size_z
+        pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.max_grid_size_y = self.max_grid_size_y
+        pywarpx.amr.max_grid_size_z = self.max_grid_size_z
         pywarpx.amr.blocking_factor = self.blocking_factor
 
         # Geometry
