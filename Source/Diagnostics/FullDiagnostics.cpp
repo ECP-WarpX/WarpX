@@ -471,8 +471,15 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     warpx.FillBoundaryAux(warpx.getngUpdateAux());
 
     // Update the RealBox used for the geometry filter in particle diags
-    for (int i = 0; i < m_output_species[0].size(); ++i) {
-        m_output_species[0][i].m_diag_domain = m_geom_output[0][0].ProbDomain();
+    // Note that full diagnostics every diag has only one buffer. (m_num_buffers = 1).
+    // For m_geom_output[i_buffer][lev], the first element is the buffer index, and
+    // second is level=0
+    // The level is set to 0, because the whole physical domain of the simulation is used
+    // to set the domain dimensions for the output particle container.
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        for (int i = 0; i < m_output_species[i_buffer].size(); ++i) {
+            m_output_species[i_buffer][i].m_diag_domain = m_geom_output[i_buffer][0].ProbDomain();
+        }
     }
 }
 
@@ -483,7 +490,11 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
 
     // Account for galilean shift
     amrex::Real new_lo[AMREX_SPACEDIM];
-    amrex::Real new_hi[AMREX_SPACEDIM];
+    amrex::Real new_hi[AMREX_SPACEDIM]; 
+    // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
+    // m_geom_output[i_buffer][lev] below have values 0 and 0, respectively, because
+    // we need the physical extent from mesh-refinement level = 0,
+    // and only for the 0th snapshot, since full diagnostics has only one snapshot.
     const amrex::Real* current_lo = m_geom_output[0][0].ProbLo();
     const amrex::Real* current_hi = m_geom_output[0][0].ProbHi();
 
@@ -505,11 +516,12 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
         new_hi[0] = current_hi[0] + warpx.m_galilean_shift[2];
     }
 #endif
-    // Update RealBox of geometry with galilean-shifted boundary
+    // Update RealBox of geometry with galilean-shifted boundary.
     for (int lev = 0; lev < nmax_lev; ++lev) {
+        // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
+        // Thus here we set the prob domain for the 0th snapshot only.
         m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
     }
-
     // For Moving Window Shift
     if (warpx.moving_window_active(step+1)) {
         int moving_dir = warpx.moving_window_dir;
@@ -530,6 +542,8 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
         new_hi[moving_dir] = cur_hi[moving_dir] + num_shift_base*geom_dx[moving_dir];
         // Update RealBox of geometry with shifted domain geometry for moving-window
         for (int lev = 0; lev < nmax_lev; ++lev) {
+            // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
+            // Thus here we set the prob domain for the 0th snapshot only.
             m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
         }
     }
