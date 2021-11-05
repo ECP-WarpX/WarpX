@@ -40,6 +40,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                                const amrex::ParticleReal * const wp,
                                const int * const ion_lev,
                                amrex::FArrayBox& rho_fab,
+                               const amrex::IntVect& ix_type,
                                const long np_to_deposit,
                                const std::array<amrex::Real,3>& dx,
                                const std::array<amrex::Real, 3> xyzmin,
@@ -47,7 +48,11 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                                const amrex::Real q,
                                const int n_rz_azimuthal_modes,
                                amrex::Real* cost,
-                               const long load_balance_costs_update_algo)
+                               const long load_balance_costs_update_algo,
+                               const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
+                               const amrex::Box& box,
+                               const amrex::Geometry& geom,
+                               const amrex::IntVect& a_tbox_max_size)
 {
     using namespace amrex;
 
