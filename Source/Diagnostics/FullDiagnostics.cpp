@@ -80,7 +80,7 @@ FullDiagnostics::ReadParameters ()
         m_format == "sensei",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
     std::vector<std::string> intervals_string_vec = {"0"};
-    pp_diag_name.queryarr("intervals", intervals_string_vec);
+    pp_diag_name.getarr("intervals", intervals_string_vec);
     m_intervals = IntervalsParser(intervals_string_vec);
     bool raw_specified = pp_diag_name.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);

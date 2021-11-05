@@ -120,7 +120,9 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi, beta, pc.self_fields_required_precision, pc.self_fields_max_iters, pc.self_fields_verbosity );
+    computePhi( rho, phi, beta, pc.self_fields_required_precision,
+                pc.self_fields_absolute_tolerance, pc.self_fields_max_iters,
+                pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
@@ -172,7 +174,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Compute the potential phi, by solving the Poisson equation
     if (warpx_py_poissonsolver) warpx_py_poissonsolver();
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
-                     self_fields_max_iters, self_fields_verbosity );
+                     self_fields_absolute_tolerance, self_fields_max_iters,
+                     self_fields_verbosity );
 
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
@@ -199,13 +202,16 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
+                   Real const absolute_tolerance,
                    int const max_iters,
                    int const verbosity) const
 {
 #ifdef WARPX_DIM_RZ
-    computePhiRZ( rho, phi, beta, required_precision, max_iters, verbosity );
+    computePhiRZ( rho, phi, beta, required_precision, absolute_tolerance,
+                  max_iters, verbosity );
 #else
-    computePhiCartesian( rho, phi, beta, required_precision, max_iters, verbosity );
+    computePhiCartesian( rho, phi, beta, required_precision, absolute_tolerance,
+                         max_iters, verbosity );
 #endif
 
 }
@@ -230,6 +236,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
+                   Real absolute_tolerance,
                    int const max_iters,
                    int const verbosity) const
 {
@@ -317,8 +324,19 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         linop.setSigma( lev, *sigma[lev] );
     }
 
+    amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
+        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
+    }
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+
+    bool always_use_bnorm = (max_norm_b > 0);
+    if (!always_use_bnorm) {
+        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        WarpX::GetInstance().RecordWarning(
+            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
+        );
     }
 
     // Solve the Poisson equation
@@ -326,7 +344,9 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
-    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+    mlmg.setAlwaysUseBNorm(always_use_bnorm);
+    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
+                required_precision, absolute_tolerance );
 }
 
 #else
@@ -350,6 +370,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
                             amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                             std::array<Real, 3> const beta,
                             Real const required_precision,
+                            Real absolute_tolerance,
                             int const max_iters,
                             int const verbosity) const
 {
@@ -411,14 +432,27 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // Solve the Poisson equation
     linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
 
+    amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
+        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
+    }
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+
+    bool always_use_bnorm = (max_norm_b > 0);
+    if (!always_use_bnorm) {
+        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        WarpX::GetInstance().RecordWarning(
+            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
+        );
     }
 
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
-    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+    mlmg.setAlwaysUseBNorm(always_use_bnorm);
+    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
+                required_precision, absolute_tolerance );
 
 #ifdef AMREX_USE_EB
     // use amrex to directly calculate the electric field since with EB's the

@@ -11,12 +11,11 @@
  * \brief Compute weight of each surrounding node in interpolating a nodal field
  *        to the given coordinates.
  *
- * \param xp, yp, zp                Particle position coordinates
- * \param scalar_field              Array4 of the nodal scalar field, either full array or tile.
- * \param plo                       Index lower bounds of domain.
- * \param dxi                       3D cell spacing
- * \param i, j, p                   Variables to store indices of position on grid
- * \param W                         2D array of weights to store each neighbouring node
+ * \param xp,yp,zp Particle position coordinates
+ * \param plo      Index lower bounds of domain.
+ * \param dxi      3D cell spacing
+ * \param i,j,k    Variables to store indices of position on grid
+ * \param W        2D array of weights to store each neighbouring node
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void compute_weights_nodal (const amrex::ParticleReal xp,
@@ -66,9 +65,9 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
 /**
  * \brief Interpolate nodal field value based on surrounding indices and weights.
  *
- * \param i, j, p                Indices of position on grid
- * \param W                      2D array of weights for each neighbouring node
- * \param scalar_field           Array4 of the nodal scalar field, either full array or tile.
+ * \param i,j,k                Indices of position on grid
+ * \param W                    2D array of weights for each neighbouring node
+ * \param scalar_field         Array4 of the nodal scalar field, either full array or tile.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::Real interp_field_nodal (int i, int j, int k,
@@ -101,10 +100,10 @@ amrex::Real interp_field_nodal (int i, int j, int k,
  * \brief Scalar field gather for a single particle. The field has to be defined
  *        at the cell nodes (see https://amrex-codes.github.io/amrex/docs_html/Basics.html#id2)
  *
- * \param xp, yp, zp                Particle position coordinates
- * \param scalar_field              Array4 of the nodal scalar field, either full array or tile.
- * \param dxi                       3D cell spacing
- * \param lo                        Index lower bounds of domain.
+ * \param xp,yp,zp                Particle position coordinates
+ * \param scalar_field            Array4 of the nodal scalar field, either full array or tile.
+ * \param dxi                     3D cell spacing
+ * \param lo                      Index lower bounds of domain.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 amrex::Real doGatherScalarFieldNodal (const amrex::ParticleReal xp,

@@ -25,7 +25,7 @@
  * unit vector).
  *
  * @tparam T_ParticleContainer a WarpX particle container or AmrParticleContainer
- * @param convert_dir convert to or from SI
+ * @param convert_direction convert to or from SI
  * @param pc the particle container to manipulate
  * @param mass the particle rest mass to use for conversion
  */
