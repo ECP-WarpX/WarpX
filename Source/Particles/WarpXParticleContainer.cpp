@@ -794,8 +794,12 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
             {
                 const Box& box = boxes_ptr[i];
-                IntVect si = box.length();
-                return {AMREX_D_DECL(si[0], si[1], si[2])};
+                if (box.ok()) {
+                  IntVect si = box.length();
+                  return {AMREX_D_DECL(si[0], si[1], si[2])};
+                } else {
+                  return {AMREX_D_DECL(0, 0, 0)};
+                }
             });
 
         ReduceTuple hv = reduce_data.value();
