@@ -103,7 +103,7 @@ data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
 # Check the validity of the fields
 error_rel = 0
 for field in ['Ex', 'Ey', 'Ez']:
-    E_sim = data[field].to_ndarray()
+    E_sim = data[('mesh',field)].to_ndarray()
 
     E_th = get_theoretical_field(field, t0)
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
@@ -133,8 +133,8 @@ assert( error_rel < tolerance_rel )
 # current correction (psatd.do_current_correction=1) is applied or when
 # Vay current deposition (algo.current_deposition=vay) is used
 if current_correction or vay_deposition:
-    rho  = data['rho' ].to_ndarray()
-    divE = data['divE'].to_ndarray()
+    rho  = data[('boxlib','rho')].to_ndarray()
+    divE = data[('boxlib','divE')].to_ndarray()
     error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
     tolerance = 1.e-9
     print("Check charge conservation:")

@@ -73,6 +73,9 @@ void FiniteDifferenceSolver::EvolveGCartesian (
     std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
     amrex::Real const dt)
 {
+
+    amrex::Real constexpr c2 = PhysConst::c * PhysConst::c;
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -101,9 +104,9 @@ void FiniteDifferenceSolver::EvolveGCartesian (
         // Loop over cells and update G
         amrex::ParallelFor(tf, [=] AMREX_GPU_DEVICE (int i, int j, int k)
         {
-            G(i,j,k) += dt * (T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k)
-                            + T_Algo::UpwardDy(By, coefs_y, n_coefs_y, i, j, k)
-                            + T_Algo::UpwardDz(Bz, coefs_z, n_coefs_z, i, j, k));
+            G(i,j,k) += c2 * dt * (T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k)
+                                 + T_Algo::UpwardDy(By, coefs_y, n_coefs_y, i, j, k)
+                                 + T_Algo::UpwardDz(Bz, coefs_z, n_coefs_z, i, j, k));
         });
     }
 }

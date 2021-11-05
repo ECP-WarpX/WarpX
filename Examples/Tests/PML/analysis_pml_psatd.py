@@ -19,7 +19,7 @@ filename = sys.argv[1]
 ############################
 ### INITIAL LASER ENERGY ###
 ############################
-energy_start = 7.297324456269243e-08 # electromagnetic energy at iteration 50
+energy_start = 7.282940107273505e-08 # electromagnetic energy at iteration 50
 
 # Check consistency of field energy diagnostics with initial energy above
 ds = yt.load('pml_x_psatd_plt00050')
@@ -62,6 +62,11 @@ print("reflectivity     = " + str(reflectivity))
 print("reflectivity_max = " + str(reflectivity_max))
 
 assert(reflectivity < reflectivity_max)
+
+# Check restart data v. original data
+sys.path.insert(0, '../../../../warpx/Examples/')
+from analysis_default_restart import check_restart
+check_restart(filename)
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

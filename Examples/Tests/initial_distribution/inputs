@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam
+particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam maxwell_juttner_parser velocity_constant velocity_parser
 particles.rigid_injected_species = beam
 
 gaussian.charge                     = -q_e
@@ -83,14 +83,53 @@ beam.uz_th                      = 1.0
 beam.zinject_plane              = 0.0
 beam.rigid_advance              = true
 
+maxwell_juttner_parser.charge                     = -q_e
+maxwell_juttner_parser.mass                       = m_e
+maxwell_juttner_parser.injection_style            = "NRandomPerCell"
+maxwell_juttner_parser.num_particles_per_cell     = 1000
+maxwell_juttner_parser.profile                    = constant
+maxwell_juttner_parser.density                    = 1.0e21
+maxwell_juttner_parser.momentum_distribution_type = "maxwell_juttner"
+maxwell_juttner_parser.theta_distribution_type    = "parser"
+maxwell_juttner_parser.theta_function(x,y,z)      = "1.0 + heaviside(x,0)"
+
+velocity_constant.charge                     = -q_e
+velocity_constant.mass                       = m_e
+velocity_constant.injection_style            = "NRandomPerCell"
+velocity_constant.num_particles_per_cell     = 1000
+velocity_constant.profile                    = constant
+velocity_constant.density                    = 1.0e21
+velocity_constant.momentum_distribution_type = "maxwell_boltzmann"
+velocity_constant.theta_distribution_type    = "constant"
+velocity_constant.theta                      = 1e-9
+velocity_constant.beta_distribution_type     = "constant"
+velocity_constant.beta                       = 0.2
+velocity_constant.bulk_vel_dir               = -y
+
+velocity_parser.charge                     = -q_e
+velocity_parser.mass                       = m_e
+velocity_parser.injection_style            = "NRandomPerCell"
+velocity_parser.num_particles_per_cell     = 1000
+velocity_parser.profile                    = constant
+velocity_parser.density                    = 1.0e21
+velocity_parser.momentum_distribution_type = "maxwell_boltzmann"
+velocity_parser.theta_distribution_type    = "constant"
+velocity_parser.theta                      = 1e-9
+velocity_parser.beta_distribution_type     = "parser"
+velocity_parser.beta_function(x,y,z)       = "-0.2 + 0.4 * heaviside(z,0)"
+velocity_parser.bulk_vel_dir               = -y
+
 #################################
 ########## DIAGNOSTIC ###########
 #################################
 # 1 for gaussian
-# 2 for maxwell-boltzmann
-# 3 for maxwell-juttner
+# 2 for maxwell-boltzmann with constant temperature
+# 3 for maxwell-juttner with constant temperature
 # 4 for beam
-warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr
+# 5 for maxwell-juttner with parser function temperature
+# 6 for maxwell-boltzmann with constant velocity
+# 7 for maxwell-boltzmann with parser velocity
+warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr h5_neg h5_pos h6 h6uy h7 h7uy_pos h7uy_neg
 
 h1x.type                                 = ParticleHistogram
 h1x.intervals                            = 1
@@ -191,6 +230,83 @@ h4z.bin_number                           = 50
 h4z.bin_min                              = -1.0
 h4z.bin_max                              = +1.0
 h4z.histogram_function(t,x,y,z,ux,uy,uz) = "z"
+
+h5_neg.type                                 = ParticleHistogram
+h5_neg.intervals                            = 1
+h5_neg.path                                 = "./"
+h5_neg.species                              = maxwell_juttner_parser
+h5_neg.bin_number                           = 50
+h5_neg.bin_min                              = 1.0
+h5_neg.bin_max                              = 12.0
+h5_neg.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(1.0 + ux*ux + uy*uy + uz*uz)"
+h5_neg.filter_function(t,x,y,z,ux,uy,uz)    = "x < 0.0"
+
+h5_pos.type                                 = ParticleHistogram
+h5_pos.intervals                            = 1
+h5_pos.path                                 = "./"
+h5_pos.species                              = maxwell_juttner_parser
+h5_pos.bin_number                           = 50
+h5_pos.bin_min                              = 1.0
+h5_pos.bin_max                              = 12.0
+h5_pos.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(1.0 + ux*ux + uy*uy + uz*uz)"
+h5_pos.filter_function(t,x,y,z,ux,uy,uz)    = "x > 0.0"
+
+h5_pos.type                                 = ParticleHistogram
+h5_pos.intervals                            = 1
+h5_pos.path                                 = "./"
+h5_pos.species                              = maxwell_juttner_parser
+h5_pos.bin_number                           = 50
+h5_pos.bin_min                              = 1.0
+h5_pos.bin_max                              = 12.0
+h5_pos.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(1.0 + ux*ux + uy*uy + uz*uz)"
+h5_pos.filter_function(t,x,y,z,ux,uy,uz)    = "x > 0.0"
+
+h6.type                                   = ParticleHistogram
+h6.intervals                              = 1
+h6.path                                   = "./"
+h6.species                                = velocity_constant
+h6.bin_number                             = 50
+h6.bin_min                                = 1.0
+h6.bin_max                                = 1.2
+h6.histogram_function(t,x,y,z,ux,uy,uz)   = "sqrt(1.0 + ux*ux + uy*uy + uz*uz)"
+
+h6uy.type                                   = ParticleHistogram
+h6uy.intervals                              = 1
+h6uy.path                                   = "./"
+h6uy.species                                = velocity_constant
+h6uy.bin_number                             = 50
+h6uy.bin_min                                = -1.0
+h6uy.bin_max                                = 1.0
+h6uy.histogram_function(t,x,y,z,ux,uy,uz)   = "uy"
+
+h7.type                                   = ParticleHistogram
+h7.intervals                              = 1
+h7.path                                   = "./"
+h7.species                                = velocity_parser
+h7.bin_number                             = 50
+h7.bin_min                                = 1.0
+h7.bin_max                                = 1.2
+h7.histogram_function(t,x,y,z,ux,uy,uz)   = "sqrt(1.0 + ux*ux + uy*uy + uz*uz)"
+
+h7uy_pos.type                                 = ParticleHistogram
+h7uy_pos.intervals                            = 1
+h7uy_pos.path                                 = "./"
+h7uy_pos.species                              = velocity_parser
+h7uy_pos.bin_number                           = 50
+h7uy_pos.bin_min                              = -1.0
+h7uy_pos.bin_max                              = 1.0
+h7uy_pos.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
+h7uy_pos.filter_function(t,x,y,z,ux,uy,uz)    = "z > 0.0"
+
+h7uy_neg.type                                 = ParticleHistogram
+h7uy_neg.intervals                            = 1
+h7uy_neg.path                                 = "./"
+h7uy_neg.species                              = velocity_parser
+h7uy_neg.bin_number                           = 50
+h7uy_neg.bin_min                              = -1.0
+h7uy_neg.bin_max                              = 1.0
+h7uy_neg.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
+h7uy_neg.filter_function(t,x,y,z,ux,uy,uz)    = "z < 0.0"
 
 # our little beam monitor
 bmmntr.type                              = BeamRelevant

@@ -292,6 +292,19 @@ Known System Issues
 
 .. warning::
 
+   Related to the above issue, the fabric selection in ADIOS2 was designed for libfabric 1.6.
+   With newer versions of libfabric, a workaround is needed to guide the selection of a functional fabric for RDMA support.
+   Details are discussed in `ADIOS2 issue #2887 <https://github.com/ornladios/ADIOS2/issues/2887>`__.
+
+   The following environment variables can be set as work-arounds, when working with ADIOS2 SST:
+
+   .. code-block:: bash
+
+      export FABRIC_IFACE=mlx5_0   # ADIOS SST: select interface (1 NIC on Summit)
+      export FI_OFI_RXM_USE_SRX=1  # libfabric: use shared receive context from MSG provider
+
+.. warning::
+
    Oct 12th, 2021 (OLCFHELP-4242):
    There is currently a problem with the pre-installed Jupyter extensions, which can lead to connection splits at long running analysis sessions.
 

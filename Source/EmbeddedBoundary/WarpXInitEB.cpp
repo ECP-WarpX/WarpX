@@ -93,14 +93,21 @@ WarpX::InitEB ()
         auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
         ParserIF pif(eb_if_parser.compile<3>());
         auto gshop = amrex::EB2::makeShop(pif, eb_if_parser);
-        amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel());
+         // The last argument of amrex::EB2::Build is the maximum coarsening level
+         // to which amrex should try to coarsen the EB.  It will stop after coarsening
+         // as much as it can, if it cannot coarsen to that level.  Here we use a big
+         // number (e.g., maxLevel()+20) for multigrid solvers.  Because the coarse
+         // level has only 1/8 of the cells on the fine level, the memory usage should
+         // not be an issue.
+        amrex::EB2::Build(gshop, Geom(maxLevel()), maxLevel(), maxLevel()+20);
     } else {
         amrex::ParmParse pp_eb2("eb2");
         if (!pp_eb2.contains("geom_type")) {
             std::string geom_type = "all_regular";
             pp_eb2.add("geom_type", geom_type); // use all_regular by default
         }
-        amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
+        // See the comment above on amrex::EB2::Build for the hard-wired number 20.
+        amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel()+20);
     }
 
 #endif
