@@ -83,8 +83,13 @@ void BTDiagnostics::DerivedInitData ()
     m_buffer_flush_counter.resize(m_num_buffers);
     // allocate vector of geometry objects corresponding to each snapshot
     m_geom_snapshot.resize( m_num_buffers );
+    m_snapshot_full.resize( m_num_buffers );
+    m_lastValidZSlice.resize( m_num_buffers );
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
+        // initialize snapshot full boolean to false
+        m_snapshot_full[i] = 0;
+        m_lastValidZSlice[i] = 0;
     }
 
     for (int lev = 0; lev < nmax_lev; ++lev) {
@@ -156,9 +161,14 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
     // timestep < 0, i.e., at initialization time when step == -1
     if (step < 0 )
         return false;
-    // buffer for this lab snapshot is full, time to dump it and continue
-    // to collect more slices afterwards
-    else if (buffer_full(i_buffer))
+    // Do not call dump if the snapshot is already full and the files are closed.
+    else if (m_snapshot_full[i_buffer] == 1)
+        return false;
+    // If buffer for this lab snapshot is full then dump it and continue to collect
+    // slices afterwards; or
+    // If last z-slice in the lab-frame snapshot is filled, call dump to
+    // write the buffer and close the file.
+    else if (buffer_full(i_buffer) || m_lastValidZSlice[i_buffer] == 1)
         return true;
     // forced: at the end of the simulation
     // empty: either lab snapshot was already fully written and buffer was reset
@@ -442,9 +452,12 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev), m_max_box_size );
+                                             k_index_zlab(i_buffer, lev), m_max_box_size,
+                                             m_snapshot_full[i_buffer] );
 
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
+                // when the 0th z-index is filled, then set lastValidZSlice to 1
+                if (k_index_zlab(i_buffer, lev) == 0) m_lastValidZSlice[i_buffer] = 1;
             }
         }
     }
@@ -465,7 +478,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
     amrex::Real prob_domain_zmin_lab = m_prob_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-    int k_lab = static_cast<unsigned>( (
+    int k_lab = static_cast<int>(floor (
                           ( m_current_z_lab[i_buffer]
                             - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
@@ -473,7 +486,15 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
     return k_lab;
 }
 
+void
+BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
+{
+   if (m_snapshot_full[i_buffer] == 1) return;
+   // if the last valid z-index of the snapshot, which is 0, is filled, then
+   // set the snapshot full integer to 1
+   if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
 
+}
 
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
@@ -610,8 +631,8 @@ BTDiagnostics::Flush (int i_buffer)
         file_name = amrex::Concatenate(m_file_prefix,i_buffer,5);
         file_name = file_name+"/buffer";
     }
-    bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
-                               - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
+    SetSnapshotFullStatus(i_buffer);
+    bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(

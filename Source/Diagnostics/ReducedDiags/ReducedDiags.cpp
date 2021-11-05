@@ -56,7 +56,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     // read reduced diags intervals
     std::vector<std::string> intervals_string_vec = {"1"};
-    pp_rd_name.queryarr("intervals", intervals_string_vec);
+    pp_rd_name.getarr("intervals", intervals_string_vec);
     m_intervals = IntervalsParser(intervals_string_vec);
 
     // read separator

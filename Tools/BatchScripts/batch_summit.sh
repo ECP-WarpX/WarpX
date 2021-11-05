@@ -25,5 +25,14 @@ umask 0027
 # disable all the IBM optimized barriers and drop back to HCOLL or OMPI's barrier implementations
 export OMPI_MCA_coll_ibm_skip_barrier=true
 
+# libfabric 1.6+: limit the visible devices
+# Needed for ADIOS2 SST staging/streaming workflows since RHEL8 update
+#   https://github.com/ornladios/ADIOS2/issues/2887
+#export FABRIC_IFACE=mlx5_0   # ADIOS SST: select interface (1 NIC on Summit)
+#export FI_OFI_RXM_USE_SRX=1  # libfabric: use shared receive context from MSG provider
+
+# OpenMP: one thread per MPI rank and GPU
 export OMP_NUM_THREADS=1
+
+# run WarpX
 jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" <path/to/executable> <input file> > output.txt
