@@ -182,7 +182,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
         // Zero-initialize the temporary array in shared memory
         volatile amrex::Real* vs = shared;
-        for (int i = threadIdx.x; i < rho_box.numPts(); i += blockDim.x) {
+        for (int i = threadIdx.x; i < tbx.numPts(); i += blockDim.x) {
           vs[i] = 0.0;
         }
         __syncthreads();
