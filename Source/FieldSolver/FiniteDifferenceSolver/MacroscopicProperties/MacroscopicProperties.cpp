@@ -15,6 +15,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 #include <AMReX_RealBox.H>
+#include <AMReX_Parser.H>
 
 #include <AMReX_BaseFwd.H>
 
@@ -22,49 +23,6 @@
 #include <sstream>
 
 using namespace amrex;
-
-GetSigmaMacroparameter::GetSigmaMacroparameter () noexcept
-{
-    auto& warpx = WarpX::GetInstance();
-    auto& macroscopic_properties = warpx.GetMacroscopicProperties();
-    if (macroscopic_properties.m_sigma_s == "constant") {
-        m_type = ConstantValue;
-        m_value = macroscopic_properties.m_sigma;
-    }
-    else if (macroscopic_properties.m_sigma_s == "parse_sigma_function") {
-        m_type = ParserFunction;
-        m_parser = macroscopic_properties.m_sigma_parser->compile<3>();
-    }
-}
-
-GetMuMacroparameter::GetMuMacroparameter () noexcept
-{
-    auto& warpx = WarpX::GetInstance();
-    auto& macroscopic_properties = warpx.GetMacroscopicProperties();
-    if (macroscopic_properties.m_mu_s == "constant") {
-        m_type = ConstantValue;
-        m_value = macroscopic_properties.m_mu;
-    }
-    else if (macroscopic_properties.m_mu_s == "parse_mu_function") {
-        m_type = ParserFunction;
-        m_parser = macroscopic_properties.m_mu_parser->compile<3>();
-    }
-}
-
-GetEpsilonMacroparameter::GetEpsilonMacroparameter () noexcept
-{
-    auto& warpx = WarpX::GetInstance();
-    auto& macroscopic_properties = warpx.GetMacroscopicProperties();
-    if (macroscopic_properties.m_epsilon_s == "constant") {
-        m_type = ConstantValue;
-        m_value = macroscopic_properties.m_epsilon;
-    }
-    else if (macroscopic_properties.m_epsilon_s == "parse_epsilon_function") {
-        m_type = ParserFunction;
-        m_parser = macroscopic_properties.m_epsilon_parser->compile<3>();
-    }
-}
-
 
 MacroscopicProperties::MacroscopicProperties ()
 {
@@ -100,7 +58,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         Store_parserString(pp_macroscopic, "sigma_function(x,y,z)", m_str_sigma_function);
-        m_sigma_parser = std::make_unique<Parser>(
+        m_sigma_parser = std::make_unique<amrex::Parser>(
                                  makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
@@ -124,7 +82,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         Store_parserString(pp_macroscopic, "epsilon_function(x,y,z)", m_str_epsilon_function);
-        m_epsilon_parser = std::make_unique<Parser>(
+        m_epsilon_parser = std::make_unique<amrex::Parser>(
                                  makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
@@ -149,7 +107,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         Store_parserString(pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
-        m_mu_parser = std::make_unique<Parser>(
+        m_mu_parser = std::make_unique<amrex::Parser>(
                                  makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
@@ -161,30 +119,105 @@ MacroscopicProperties::InitData ()
     amrex::Print() << "we are in init data of macro \n";
     auto & warpx = WarpX::GetInstance();
 
-    IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
-    IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
-    IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
-    IntVect Bx_stag = warpx.getBfield_fp(0,0).ixType().toIntVect();
-    IntVect By_stag = warpx.getBfield_fp(0,1).ixType().toIntVect();
-    IntVect Bz_stag = warpx.getBfield_fp(0,2).ixType().toIntVect();
+    // Get BoxArray and DistributionMap of warpx instant.
+    int lev = 0;
+    BoxArray ba = warpx.boxArray(lev);
+    DistributionMapping dmap = warpx.DistributionMap(lev);
+    const amrex::IntVect ng_EBSolver = warpx.getngE();
+    // Define material property multifabs using ba and dmap from WarpX instance
+    // sigma is cell-centered MultiFab
+    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EBSolver);
+    // epsilon is cell-centered MultiFab
+    m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EBSolver);
+    // mu is cell-centered MultiFab
+    m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EBSolver);
+    // Initialize sigma
+    if (m_sigma_s == "constant") {
 
+        m_sigma_mf->setVal(m_sigma);
+
+    } else if (m_sigma_s == "parse_sigma_function") {
+
+        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(), lev);
+    }
+    // Initialize epsilon
+    if (m_epsilon_s == "constant") {
+
+        m_eps_mf->setVal(m_epsilon);
+
+    } else if (m_epsilon_s == "parse_epsilon_function") {
+
+        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), lev);
+
+    }
+    // Initialize mu
+    if (m_mu_s == "constant") {
+
+        m_mu_mf->setVal(m_mu);
+
+    } else if (m_mu_s == "parse_mu_function") {
+
+        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser->compile<3>(), lev);
+
+    }
+
+    amrex::IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
+    amrex::IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
+    amrex::IntVect mu_stag = m_mu_mf->ixType().toIntVect();
+    amrex::IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
+    amrex::IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
+    amrex::IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
 
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        sigma_IndexType[idim]   = sigma_stag[idim];
+        epsilon_IndexType[idim] = epsilon_stag[idim];
+        mu_IndexType[idim]      = mu_stag[idim];
         Ex_IndexType[idim]      = Ex_stag[idim];
         Ey_IndexType[idim]      = Ey_stag[idim];
         Ez_IndexType[idim]      = Ez_stag[idim];
-        Bx_IndexType[idim]      = Bx_stag[idim];
-        By_IndexType[idim]      = By_stag[idim];
-        Bz_IndexType[idim]      = Bz_stag[idim];
+        macro_cr_ratio[idim]    = 1;
     }
 #if (AMREX_SPACEDIM==2)
+        sigma_IndexType[2]   = 0;
+        epsilon_IndexType[2] = 0;
+        mu_IndexType[2]      = 0;
         Ex_IndexType[2]      = 0;
         Ey_IndexType[2]      = 0;
         Ez_IndexType[2]      = 0;
-        Bx_IndexType[2]      = 0;
-        By_IndexType[2]      = 0;
-        Bz_IndexType[2]      = 0;
+        macro_cr_ratio[2]    = 1;
 #endif
+}
 
+void
+MacroscopicProperties::InitializeMacroMultiFabUsingParser (
+                       amrex::MultiFab *macro_mf,
+                       amrex::ParserExecutor<3> const& macro_parser,
+                       const int lev)
+{
+    auto& warpx = WarpX::GetInstance();
+    const auto dx_lev = warpx.Geom(lev).CellSizeArray();
+    const RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    IntVect iv = macro_mf->ixType().toIntVect();
+    for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        // Initialize ghost cells in addition to valid cells
 
+        const Box& tb = mfi.tilebox( iv, macro_mf->nGrowVect());
+        auto const& macro_fab =  macro_mf->array(mfi);
+        amrex::ParallelFor (tb,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                // Shift x, y, z position based on index type
+                Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+
+                Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
+
+                Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
+                Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
+
+                // initialize the macroparameter
+                macro_fab(i,j,k) = macro_parser(x,y,z);
+        });
+
+    }
 }
