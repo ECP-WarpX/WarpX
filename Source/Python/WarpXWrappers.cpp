@@ -424,6 +424,50 @@ extern "C"
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityCPLoVects_PML, Getj_cp)
     WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityFPLoVects_PML, Getj_fp)
 
+#define WARPX_GET_SCALAR_PML(SCALAR, GETTER) \
+    amrex::Real** SCALAR(int lev, \
+                        int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
+        auto * pml = WarpX::GetInstance().GetPML(lev); \
+        if (!pml) return nullptr; \
+        auto * mf = pml->GETTER(); \
+        if (!mf) return nullptr; \
+        return getMultiFabPointers(*mf, return_size, ncomps, ngrowvect, shapes); \
+    }
+
+#define WARPX_GET_LOVECTS_PML_SCALAR(SCALAR, GETTER) \
+    int* SCALAR(int lev, \
+               int *return_size, int **ngrowvect) { \
+        auto * pml = WarpX::GetInstance().GetPML(lev); \
+        if (!pml) return nullptr; \
+        auto * mf = pml->GETTER(); \
+        if (!mf) return nullptr; \
+        return getMultiFabLoVects(*mf, return_size, ngrowvect); \
+    }
+
+    // F and G
+    WARPX_GET_SCALAR_PML(warpx_getFfieldCP_PML, GetF_cp)
+    WARPX_GET_SCALAR_PML(warpx_getFfieldFP_PML, GetF_fp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getFfieldCPLoVects_PML, GetF_cp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getFfieldFPLoVects_PML, GetF_fp)
+    WARPX_GET_SCALAR_PML(warpx_getGfieldCP_PML, GetG_cp)
+    WARPX_GET_SCALAR_PML(warpx_getGfieldFP_PML, GetG_fp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldCPLoVects_PML, GetG_cp)
+    WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldFPLoVects_PML, GetG_fp)
+
+    int* warpx_getF_pml_nodal_flag()
+    {
+        auto * pml = WarpX::GetInstance().GetPML(0);
+        if (!pml) return nullptr;
+        return getFieldNodalFlagData(pml->GetF_fp());
+    }
+
+    int* warpx_getG_pml_nodal_flag()
+    {
+        auto * pml = WarpX::GetInstance().GetPML(0);
+        if (!pml) return nullptr;
+        return getFieldNodalFlagData(pml->GetG_fp());
+    }
+
     amrex::ParticleReal** warpx_getParticleStructs(
             const char* char_species_name, int lev,
             int* num_tiles, int** particles_per_tile) {
@@ -560,6 +604,30 @@ extern "C"
             (*particles_per_tile)[i] = pti.numParticles();
         }
 
+        return data;
+    }
+
+    amrex::ParticleReal** warpx_getParticleBoundaryBufferStructs(const char* species_name, int boundary, int lev,
+                     int* num_tiles, int** particles_per_tile)
+    {
+        const std::string name(species_name);
+        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
+        auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
+
+        int i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
+
+        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
+        *num_tiles = i;
+        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+
+        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*));
+        i = 0;
+        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
+            auto& aos = pti.GetArrayOfStructs();
+            data[i] = (amrex::ParticleReal*) aos.data();
+            (*particles_per_tile)[i] = pti.numParticles();
+        }
         return data;
     }
 
