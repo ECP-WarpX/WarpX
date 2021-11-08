@@ -103,4 +103,3 @@ assert abs(np.abs((uy - uy_sim)/uy)) < 5.e-5, Exception('error in y particle vel
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
-
