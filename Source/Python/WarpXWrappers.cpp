@@ -446,15 +446,11 @@ namespace
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
-        int i = 0;
-        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
-        i = 0;
+        int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();
             data[i] = (amrex::ParticleReal*) aos.data();
@@ -473,15 +469,11 @@ namespace
 
         int comp = warpx_getParticleCompIndex(char_species_name, char_comp_name);
 
-        int i = 0;
-        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
-        i = 0;
+        int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
@@ -541,15 +533,11 @@ namespace
 
         const int comp = particle_buffer.NumIntComps() - 1;
 
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
         auto data = static_cast<int**>(malloc(*num_tiles*sizeof(int*)));
-        i = 0;
+        int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (int*) soa.GetIntData(comp).dataPtr();
@@ -568,15 +556,11 @@ namespace
 
         const int comp = warpx_getParticleCompIndex(species_name, comp_name);
 
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
-        i = 0;
+        int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
@@ -593,15 +577,11 @@ namespace
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
         auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
 
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
-        i = 0;
+        int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();
             data[i] = (amrex::ParticleReal*) aos.data();
