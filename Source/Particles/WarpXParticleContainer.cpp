@@ -748,7 +748,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     WARPX_PROFILE_VAR_STOP(blp_sort);
 
     // get tile boxes
-    amrex::Gpu::DeviceVector<Box> tboxes(bins.numBins());
+    amrex::Gpu::DeviceVector<Box> tboxes(bins.numBins(), amrex::Box());
     {
         const Geometry& geom = Geom(lev);
         const auto dxi = geom.InvCellSizeArray();
