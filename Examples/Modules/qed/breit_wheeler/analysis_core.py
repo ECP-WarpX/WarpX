@@ -268,4 +268,3 @@ def check(dt, particle_data):
         check_opt_depths(phot_data, ele_data, pos_data)
 
         print("*************\n")
-

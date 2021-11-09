@@ -124,4 +124,3 @@ Apt (Debian/Ubuntu)
 
    sudo apt update
    sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-scipy
-
