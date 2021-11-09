@@ -160,6 +160,8 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         const int bin_start = offsets_ptr[bin_id];
         const int bin_stop = offsets_ptr[bin_id+1];
 
+        if (bin_start == bin_stop) { return; }
+
         amrex::Box buffer_box;
         {
           ParticleReal xp, yp, zp;
