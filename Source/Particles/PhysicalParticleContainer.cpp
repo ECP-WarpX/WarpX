@@ -427,14 +427,14 @@ PhysicalParticleContainer::AddGaussianBeam (
         for (long i = 0; i < npart; ++i) {
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
-            const Real x = amrex::RandomNormal(x_m, x_rms, amrex::RandomEngine{});
-            const Real y = amrex::RandomNormal(y_m, y_rms, amrex::RandomEngine{});
-            const Real z = amrex::RandomNormal(z_m, z_rms, amrex::RandomEngine{});
+            const Real x = amrex::RandomNormal(x_m, x_rms);
+            const Real y = amrex::RandomNormal(y_m, y_rms);
+            const Real z = amrex::RandomNormal(z_m, z_rms);
 #elif (defined WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
-            const Real x = amrex::RandomNormal(x_m, x_rms, amrex::RandomEngine{});
+            const Real x = amrex::RandomNormal(x_m, x_rms);
             constexpr Real y = 0._prt;
-            const Real z = amrex::RandomNormal(z_m, z_rms, amrex::RandomEngine{});
+            const Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) < x_cut * x_rms     &&
