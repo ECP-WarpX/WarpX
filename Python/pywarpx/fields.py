@@ -140,6 +140,32 @@ class _MultiFABWrapper(object):
         elif self.dim == 3:
             return self._getitem3d(index)
 
+    def _find_start_stop(self, ii, imin, imax, d):
+        """Given the input index, calculate the start and stop range of the indices.
+        - ii: input index, either a slice object or an integer
+        - imin: the global lowest lovect value in the specified diretion
+        - imax: the global highest hivect value in the specified diretion
+        - d: the direction, an integer, 0, 1, or 2
+        If ii is a slice, the start and stop values are used directly,
+        unless they are None, then the lower or upper bound is used.
+        An assertion checks if the indices are within the bounds.
+        """
+        if isinstance(ii, slice):
+            if ii.start is None:
+                iistart = imin
+            else:
+                iistart = ii.start
+            if ii.stop is None:
+                iistop = imax + self.overlaps[d]
+            else:
+                iistop = ii.stop
+        else:
+            iistart = ii
+            iistop = ii + 1
+        assert imin <= iistart <= imax + self.overlaps[d], Exception(f'Dimension {d} lower index is out of bounds')
+        assert imin <= iistop <= imax + self.overlaps[d], Exception(f'Dimension {d} upper index is out of bounds')
+        return iistart, iistop
+
     def _getitem3d(self, index):
         """Returns slices of a 3D decomposed array,
         """
@@ -165,33 +191,24 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - ngrow[0]
-        ny = hivects[1,:].max() - ngrow[1]
-        nz = hivects[2,:].max() - ngrow[2]
+        ixmin = lovects[0,:].min()
+        ixmax = hivects[0,:].max()
+        iymin = lovects[1,:].min()
+        iymax = hivects[1,:].max()
+        izmin = lovects[2,:].min()
+        izmax = hivects[2,:].max()
 
         if npes > 1:
-            nx = comm_world.allreduce(nx, op=mpi.MAX)
-            ny = comm_world.allreduce(ny, op=mpi.MAX)
-            nz = comm_world.allreduce(nz, op=mpi.MAX)
+            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
+            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
 
-        if isinstance(ix, slice):
-            ixstart = max(ix.start or -ngrow[0], -ngrow[0])
-            ixstop = min(ix.stop or nx + 1 + ngrow[0], nx + self.overlaps[0] + ngrow[0])
-        else:
-            ixstart = ix
-            ixstop = ix + 1
-        if isinstance(iy, slice):
-            iystart = max(iy.start or -ngrow[1], -ngrow[1])
-            iystop = min(iy.stop or ny + 1 + ngrow[1], ny + self.overlaps[1] + ngrow[1])
-        else:
-            iystart = iy
-            iystop = iy + 1
-        if isinstance(iz, slice):
-            izstart = max(iz.start or -ngrow[2], -ngrow[2])
-            izstop = min(iz.stop or nz + 1 + ngrow[2], nz + self.overlaps[2] + ngrow[2])
-        else:
-            izstart = iz
-            izstop = iz + 1
+        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+        iystart, iystop = self._find_start_stop(iy, iymin, iymax, 1)
+        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 2)
 
         # --- Setup the size of the array to be returned and create it.
         # --- Space is added for multiple components if needed.
@@ -271,25 +288,19 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - ngrow[0]
-        nz = hivects[1,:].max() - ngrow[1]
+        ixmin = lovects[0,:].min()
+        ixmax = hivects[0,:].max()
+        izmin = lovects[1,:].min()
+        izmax = hivects[1,:].max()
 
         if npes > 1:
-            nx = comm_world.allreduce(nx, op=mpi.MAX)
-            nz = comm_world.allreduce(nz, op=mpi.MAX)
+            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
 
-        if isinstance(ix, slice):
-            ixstart = max(ix.start or -ngrow[0], -ngrow[0])
-            ixstop = min(ix.stop or nx + 1 + ngrow[0], nx + self.overlaps[0] + ngrow[0])
-        else:
-            ixstart = ix
-            ixstop = ix + 1
-        if isinstance(iz, slice):
-            izstart = max(iz.start or -ngrow[1], -ngrow[1])
-            izstop = min(iz.stop or nz + 1 + ngrow[1], nz + self.overlaps[1] + ngrow[1])
-        else:
-            izstart = iz
-            izstop = iz + 1
+        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 1)
 
         # --- Setup the size of the array to be returned and create it.
         # --- Space is added for multiple components if needed.
@@ -378,9 +389,24 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - ngrow[0]
-        ny = hivects[1,:].max() - ngrow[1]
-        nz = hivects[2,:].max() - ngrow[2]
+        ixmin = lovects[0,:].min()
+        ixmax = hivects[0,:].max()
+        iymin = lovects[1,:].min()
+        iymax = hivects[1,:].max()
+        izmin = lovects[2,:].min()
+        izmax = hivects[2,:].max()
+
+        if npes > 1:
+            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
+            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+
+        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+        iystart, iystop = self._find_start_stop(iy, iymin, iymax, 1)
+        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 2)
 
         # --- Add extra dimensions so that the input has the same number of
         # --- dimensions as array.
@@ -391,25 +417,6 @@ class _MultiFABWrapper(object):
             if not isinstance(iy, slice): sss[1:1] = [1]
             if not isinstance(iz, slice): sss[2:2] = [1]
             value3d.shape = sss
-
-        if isinstance(ix, slice):
-            ixstart = max(ix.start or -ngrow[0], -ngrow[0])
-            ixstop = min(ix.stop or nx + 1 + ngrow[0], nx + self.overlaps[0] + ngrow[0])
-        else:
-            ixstart = ix
-            ixstop = ix + 1
-        if isinstance(iy, slice):
-            iystart = max(iy.start or -ngrow[1], -ngrow[1])
-            iystop = min(iy.stop or ny + 1 + ngrow[1], ny + self.overlaps[1] + ngrow[1])
-        else:
-            iystart = iy
-            iystop = iy + 1
-        if isinstance(iz, slice):
-            izstart = max(iz.start or -ngrow[2], -ngrow[2])
-            izstop = min(iz.stop or nz + 1 + ngrow[2], nz + self.overlaps[2] + ngrow[2])
-        else:
-            izstart = iz
-            izstop = iz + 1
 
         for i in range(len(fields)):
 
@@ -460,8 +467,19 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - ngrow[0]
-        nz = hivects[1,:].max() - ngrow[1]
+        ixmin = lovects[0,:].min()
+        ixmax = hivects[0,:].max()
+        izmin = lovects[1,:].min()
+        izmax = hivects[1,:].max()
+
+        if npes > 1:
+            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+
+        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 1)
 
         # --- Add extra dimensions so that the input has the same number of
         # --- dimensions as array.
@@ -471,19 +489,6 @@ class _MultiFABWrapper(object):
             if not isinstance(ix, slice): sss[0:0] = [1]
             if not isinstance(iz, slice): sss[1:1] = [1]
             value3d.shape = sss
-
-        if isinstance(ix, slice):
-            ixstart = max(ix.start or -ngrow[0], -ngrow[0])
-            ixstop = min(ix.stop or nx + 1 + ngrow[0], nx + self.overlaps[0] + ngrow[0])
-        else:
-            ixstart = ix
-            ixstop = ix + 1
-        if isinstance(iz, slice):
-            izstart = max(iz.start or -ngrow[1], -ngrow[1])
-            izstop = min(iz.stop or nz + 1 + ngrow[1], nz + self.overlaps[1] + ngrow[1])
-        else:
-            izstart = iz
-            izstop = iz + 1
 
         for i in range(len(fields)):
 
@@ -651,6 +656,22 @@ def RhoCPWrapper(level=1, include_ghosts=False):
                             get_nodal_flag=_libwarpx.get_Rho_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
+def FCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_F_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_F_cp,
+                            get_nodal_flag=_libwarpx.get_F_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def GCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_G_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_G_cp,
+                            get_nodal_flag=_libwarpx.get_G_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def ExFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=0,
                             get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects,
@@ -728,6 +749,20 @@ def PhiFPWrapper(level=0, include_ghosts=False):
                             get_nodal_flag=_libwarpx.get_Phi_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
+def FFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_F_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_F_fp,
+                            get_nodal_flag=_libwarpx.get_F_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def GFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_G_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_G_fp,
+                            get_nodal_flag=_libwarpx.get_G_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def ExCPPMLWrapper(level=1, include_ghosts=False):
     assert level>0, Exception('Coarse patch only available on levels > 0')
     return _MultiFABWrapper(direction=0,
@@ -800,6 +835,22 @@ def JzCPPMLWrapper(level=1, include_ghosts=False):
                             get_nodal_flag=_libwarpx.get_Jz_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
+def FCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_F_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_F_cp_pml,
+                            get_nodal_flag=_libwarpx.get_F_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def GCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_G_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_G_cp_pml,
+                            get_nodal_flag=_libwarpx.get_G_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def ExFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=0,
                             get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects_pml,
@@ -861,4 +912,18 @@ def JzFPPMLWrapper(level=0, include_ghosts=False):
                             get_lovects=_libwarpx.get_mesh_current_density_fp_lovects_pml,
                             get_fabs=_libwarpx.get_mesh_current_density_fp_pml,
                             get_nodal_flag=_libwarpx.get_Jz_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def FFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_F_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_F_fp_pml,
+                            get_nodal_flag=_libwarpx.get_F_pml_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def GFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=None,
+                            get_lovects=_libwarpx.get_mesh_G_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_G_fp_pml,
+                            get_nodal_flag=_libwarpx.get_G_pml_nodal_flag,
                             level=level, include_ghosts=include_ghosts)

@@ -60,4 +60,3 @@ class WarpXPIC(PICAPI):
     def apply_particle_boundary_conditions(self):
         libwarpx.mypc_Redistribute() # Redistribute particles
         libwarpx.warpx_MoveWindow(self.istep,True) # !!! not the correct place yet
-

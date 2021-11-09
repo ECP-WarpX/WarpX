@@ -199,6 +199,7 @@ WarpX::InitDiagnostics () {
                                                slice_realbox,
                                                particle_slice_width_lab);
     }
+    reduced_diags->InitData();
 }
 
 void

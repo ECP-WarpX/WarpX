@@ -176,6 +176,7 @@ bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::do_electrostatic;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
+Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
 int WarpX::self_fields_verbosity = 2;
 
@@ -628,6 +629,7 @@ WarpX::ReadParameters ()
             // Note that with the relativistic version, these parameters would be
             // input for each species.
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
+            queryWithParser(pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
             queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
@@ -1178,13 +1180,15 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
         }
 
-        constexpr int zdir = AMREX_SPACEDIM - 1;
-        if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
-            WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
-                "field boundary in both lo and hi must be set to Damped for PSATD"
-            );
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+        {
+            if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped ) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::field_boundary_lo[dir] == WarpX::field_boundary_hi[dir],
+                    "field boundary in both lo and hi must be set to Damped for PSATD"
+                );
+            }
         }
 
         // Whether to fill the guard cells with inverse FFTs:
@@ -1452,7 +1456,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         safe_guard_cells,
         WarpX::do_electrostatic,
         WarpX::do_multi_J,
-        WarpX::fft_do_time_averaging);
+        WarpX::fft_do_time_averaging,
+        this->refRatio());
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;

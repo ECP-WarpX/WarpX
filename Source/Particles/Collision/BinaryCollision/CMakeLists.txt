@@ -3,4 +3,3 @@ target_sources(WarpX
     BinaryCollisionUtils.cpp
     ParticleCreationFunc.cpp
 )
-
