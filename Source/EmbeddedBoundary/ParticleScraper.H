@@ -179,6 +179,8 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 #elif (defined WARPX_DIM_XZ)
                 pos[0] = xp - normal[0]*phi_value;
                 pos[1] = zp - normal[1]*phi_value;
+#elif defined(WARPX_DIM_1D_Z)
+                pos[0] = zp - normal[0]*phi_value;
 #endif
                 DistanceToEB::normalize(normal);
 
