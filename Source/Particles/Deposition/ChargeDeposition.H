@@ -164,10 +164,15 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         {
           ParticleReal xp, yp, zp;
           GetPosition(bin_start, xp, yp, zp);
+#if (AMREX_SPACEDIM == 3)
+          IntVect iv = IntVect(int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
+                               int(amrex::Math::floor((yp-plo[1])*dxiarr[1])),
+                               int(amrex::Math::floor((zp-plo[2])*dxiarr[2])));
+#elif (AMREX_SPACEDIM == 2)
           IntVect iv = IntVect(
-                               AMREX_D_DECL(int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
-                                            int(amrex::Math::floor((yp-plo[1])*dxiarr[1])),
-                                            int(amrex::Math::floor((zp-plo[2])*dxiarr[2]))));
+                               int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
+                               int(amrex::Math::floor((zp-plo[1])*dxiarr[1])));
+#endif
           iv += domain.smallEnd();
           getTileIndex(iv, box, true, bin_size, buffer_box);
         }
