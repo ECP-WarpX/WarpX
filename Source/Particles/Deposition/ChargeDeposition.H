@@ -148,6 +148,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if defined(AMREX_USE_GPU)
+    ignore_unused(np_to_deposit);
     amrex::launch(
                   nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
                   [=] AMREX_GPU_DEVICE () noexcept
