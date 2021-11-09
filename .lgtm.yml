@@ -27,4 +27,3 @@ extraction:
     index:
       build_command:
         - $CMAKE --build build -j 2
-

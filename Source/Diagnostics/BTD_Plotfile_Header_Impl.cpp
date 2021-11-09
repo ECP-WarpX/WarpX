@@ -335,5 +335,3 @@ BTDMultiFabHeaderImpl::CopyVec(amrex::Vector<amrex::Real>& dst,
         dst[i] = src[i];
     }
 }
-
-
