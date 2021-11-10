@@ -234,6 +234,16 @@ parameters provided good performance:
 * **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
   results in ~49 tiles per OpenMP thread)
 
+.. _building-summit-large-blocks:
+
+GPFS Large Block I/O
+^^^^^^^^^^^^^^^^^^^^
+
+Setting IBM_largeblock_io to true disables data shipping, saving overhead when writing/reading large contiguous I/O chunks.
+
+.. code-block:: bash
+
+   export IBM_largeblock_io=true
 
 .. _building-summit-romio-hints:
 
@@ -247,6 +257,16 @@ You might notice some parallel HDF5 performance improvements on Summit by settin
    export OMPI_MCA_io=romio321
    export ROMIO_HINTS=./romio-hints
 
+You can generate the ``romio-hints`` by issuing the following command. Remember to change the number of ``cb_nodes`` to match the number of compute nodes you are using.
+
+.. code-block:: bash
+
+   cat > romio-hints << EOL
+   romio_cb_write enable
+   romio_ds_write enable
+   cb_buffer_size 16777216
+   cb_nodes 64
+   EOL
 
 The ``romio-hints`` file contains pairs of key-value hints to enable and tune collective
 buffering of MPI-IO operations. As Summit's Alpine file system uses a 16MB block size,
