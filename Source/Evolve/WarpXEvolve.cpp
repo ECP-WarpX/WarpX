@@ -321,7 +321,7 @@ WarpX::Evolve (int numsteps)
             reduced_diags->ComputeDiags(step);
             reduced_diags->WriteToFile(step);
         }
- 
+
         // Calling backtransform diagnstics, passing step, force-flush=false, back-transform = true
         multi_diags->FilterComputePackFlush( step, false, true );
         // Calling regular diagnostics
