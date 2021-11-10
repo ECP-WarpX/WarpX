@@ -25,14 +25,24 @@ public:
     void ReadParameters ();
     /** \brief Loop over diags in alldiags and call their InitDiags */
     void InitData ();
-    /** \brief Called at each iteration. Compute diags and flush. */
-    void FilterComputePackFlush (int step, bool force_flush=false);
+    /** \brief Called at each iteration. Compute diags and flush.
+     *
+     * \param[in] step simulation timestep when diagnostics is invoked
+     * \param[in] force_flush     whether to enforce flushing data even if plot interval
+     *                            criterion is not satisfied
+     * \param[in] BackTranform    whether the diagnostics call is for regular or back transformed diagnostics
+     */
+    void FilterComputePackFlush (int step, bool force_flush=false, bool BackTransform=false);
     /** \brief Called only at the last iteration. Loop over each diag and if m_dump_last_timestep
-     *         is true, compute diags and flush with force_flush=true. */
+     *         is true, compute diags and flush with force_flush=true.
+     *
+     * \param[in] step last timestep when diagnostics is invoked
+     */
     void FilterComputePackFlushLastTimestep (int step);
     /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
-               Called when a new partitioning is generated at level, lev.
-      * \param[in] lev level at this the field functors are initialized.
+               Called when a new partitioning is generated at level, lev
+      *
+      * \param[in] lev mesh-refinement level at this the field functors are initialized
       */
     void InitializeFieldFunctors (int lev);
     /** Start a new iteration, i.e., dump has not been done yet. */
