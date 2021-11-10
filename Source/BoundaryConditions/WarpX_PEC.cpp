@@ -24,8 +24,8 @@ PEC::isAnyBoundaryPEC() {
 }
 
 void
-PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, const int lev,
-                       PatchType patch_type)
+PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
+                       PatchType patch_type, bool split_pml_field)
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
@@ -49,22 +49,32 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
     amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
     amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
     amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
-    int nComp_x = Efield[0]->nComp();
-    int nComp_y = Efield[1]->nComp();
-    int nComp_z = Efield[2]->nComp();
+    // For each Efield multifab, apply PEC boundary condition to ncomponents
+    // If not split E-field, the PEC is applied to the regular Efield used in Maxwell's eq.
+    // If split_pml_field is true, then PEC is applied to the first two components of the pml multifabs
+    // Since PML_components are xy, xz for Efield[0]
+    //                          yz, yx for Efield[1]
+    //                          zx, zy for Efield[2]
+    int nComp_x = (split_pml_field) ? 2 : Efield[0]->nComp();
+    int nComp_y = (split_pml_field) ? 2 : Efield[1]->nComp();
+    int nComp_z = (split_pml_field) ? 2 : Efield[2]->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Efield[0], false); mfi.isValid(); ++mfi) {
         // Extract field data
         amrex::Array4<amrex::Real> const& Ex = Efield[0]->array(mfi);
         amrex::Array4<amrex::Real> const& Ey = Efield[1]->array(mfi);
         amrex::Array4<amrex::Real> const& Ez = Efield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        amrex::Box const& tex = mfi.tilebox(Efield[0]->ixType().toIntVect(), shape_factor);
-        amrex::Box const& tey = mfi.tilebox(Efield[1]->ixType().toIntVect(), shape_factor);
-        amrex::Box const& tez = mfi.tilebox(Efield[2]->ixType().toIntVect(), shape_factor);
+        // if split field, the box includes nodal flag, else nodal flag plus particle shape factor
+        amrex::Box const& tex = (split_pml_field) ? mfi.tilebox(Efield[0]->ixType().toIntVect())
+                                                  : mfi.tilebox(Efield[0]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tey = (split_pml_field) ? mfi.tilebox(Efield[1]->ixType().toIntVect())
+                                                  : mfi.tilebox(Efield[1]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tez = (split_pml_field) ? mfi.tilebox(Efield[2]->ixType().toIntVect())
+                                                  : mfi.tilebox(Efield[2]->ixType().toIntVect(), shape_factor);
 
         // loop over cells and update fields
         amrex::ParallelFor(
@@ -105,7 +115,7 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
 
 
 void
-PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, const int lev,
+PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
                        PatchType patch_type)
 {
     auto& warpx = WarpX::GetInstance();
