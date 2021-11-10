@@ -9,6 +9,7 @@
 #include "WarpX.H"
 
 #include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -129,6 +130,11 @@ WarpX::LoadBalance ()
     {
         mypc->Redistribute();
         mypc->defineAllParticleTiles();
+
+        // diagnostics & reduced diagnostics
+        // not yet needed:
+        //multi_diags->LoadBalance();
+        reduced_diags->LoadBalance();
     }
 #endif
 }
@@ -402,7 +408,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (costs[lev] != nullptr)
         {
             costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
-            for (int i : costs[lev]->IndexArray())
+            const auto iarr = costs[lev]->IndexArray();
+            for (int i : iarr)
             {
                 (*costs[lev])[i] = 0.0;
                 setLoadBalanceEfficiency(lev, -1);
@@ -415,8 +422,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     {
         amrex::Abort("RemakeLevel: to be implemented");
     }
+
     // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
     multi_diags->InitializeFieldFunctors( lev );
+
+    // Reduced diagnostics
+    // not needed yet
 }
 
 void
@@ -454,7 +465,8 @@ WarpX::ResetCosts ()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        for (int i : costs[lev]->IndexArray())
+        const auto iarr = costs[lev]->IndexArray();
+        for (int i : iarr)
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;

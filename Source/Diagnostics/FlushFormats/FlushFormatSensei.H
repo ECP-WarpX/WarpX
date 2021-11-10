@@ -5,10 +5,10 @@
 
 #include <AMReX_AmrMesh.H>
 #if defined(AMREX_USE_SENSEI_INSITU)
-#  include <AMReX_AmrMeshInSituBridge.H>
+#  include <AMReX_AmrMeshParticleInSituBridge.H>
 #else
 namespace amrex {
-using AmrMeshInSituBridge = void;
+using AmrMeshParticleInSituBridge = void;
 }
 #endif
 
@@ -54,7 +54,6 @@ public:
         const std::string prefix, int file_min_digits,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
-        bool plot_raw_rho, bool plot_raw_F,
         bool isBTD = false, int snapshotID = -1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
         bool isLastBTDFlush = false) const override;
@@ -67,7 +66,7 @@ public:
 private:
     std::string m_insitu_config;
     int m_insitu_pin_mesh = 0;
-    amrex::AmrMeshInSituBridge * m_insitu_bridge = nullptr;
+    amrex::AmrMeshParticleInSituBridge * m_insitu_bridge = nullptr;
     amrex::AmrMesh * m_amr_mesh = nullptr;
 };
 

@@ -56,13 +56,27 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     // read reduced diags intervals
     std::vector<std::string> intervals_string_vec = {"1"};
-    pp_rd_name.queryarr("intervals", intervals_string_vec);
+    pp_rd_name.getarr("intervals", intervals_string_vec);
     m_intervals = IntervalsParser(intervals_string_vec);
 
     // read separator
     pp_rd_name.query("separator", m_sep);
 }
 // end constructor
+
+void ReducedDiags::InitData ()
+{
+    // Defines an empty function InitData() to be overwritten if needed.
+    // Function used to initialize data of the diagnostics after the WarpX
+    // data structures are all set up
+}
+
+void ReducedDiags::LoadBalance ()
+{
+    // Defines an empty function LoadBalance() to be overwritten if needed.
+    // Function used to redistribute parallel data of the diagnostics in
+    // load balancing operations
+}
 
 void ReducedDiags::BackwardCompatibility ()
 {

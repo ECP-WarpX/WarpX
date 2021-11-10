@@ -268,11 +268,11 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                 {
                     const Complex k_dot_B = -I * (kr * (Bp_old - Bm_old) + I * kz * Bz_old);
 
-                    fields(i,j,k,Bp_m) += -c2 * kr * 0.5_rt * S_ck * G_old;
-                    fields(i,j,k,Bm_m) +=  c2 * kr * 0.5_rt * S_ck * G_old;
-                    fields(i,j,k,Bz_m) += I * c2 * kz * S_ck * G_old;
+                    fields(i,j,k,Bp_m) += -kr * 0.5_rt * S_ck * G_old;
+                    fields(i,j,k,Bm_m) +=  kr * 0.5_rt * S_ck * G_old;
+                    fields(i,j,k,Bz_m) += I * kz * S_ck * G_old;
 
-                    fields(i,j,k,G_m) = C * G_old + I * S_ck * k_dot_B;
+                    fields(i,j,k,G_m) = C * G_old + I * c2 * S_ck * k_dot_B;
                 }
 
                 if (time_averaging)
@@ -315,9 +315,9 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
                     if (divb_cleaning)
                     {
-                        fields(i,j,k,Bp_avg_m) += -c2 * kr * 0.5_rt * ep0 * X1 * G_old;
-                        fields(i,j,k,Bm_avg_m) +=  c2 * kr * 0.5_rt * ep0 * X1 * G_old;
-                        fields(i,j,k,Bz_avg_m) += I * c2 * ep0 * X1 * G_old * kz;
+                        fields(i,j,k,Bp_avg_m) += -kr * 0.5_rt * ep0 * X1 * G_old;
+                        fields(i,j,k,Bm_avg_m) +=  kr * 0.5_rt * ep0 * X1 * G_old;
+                        fields(i,j,k,Bz_avg_m) += I * ep0 * X1 * G_old * kz;
                     }
                 }
             }

@@ -20,10 +20,6 @@ private:
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
     bool m_plot_raw_fields_guards = false;
-    /** Whether to plot charge density rho in raw fields */
-    bool m_plot_raw_rho = false;
-    /** Whether to plot F (charge conservation error) in raw fields */
-    bool m_plot_raw_F = false;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer) override;
     /** Flush raw data */
