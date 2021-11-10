@@ -97,6 +97,9 @@ MCCProcess::readCrossSectionFile (
                                   amrex::Gpu::HostVector<amrex::Real>& sigmas )
 {
     std::ifstream infile(cross_section_file);
+    if(!infile) amrex::Abort("Failed to open readCrossSectionFile file");
+    infile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
     double energy, sigma;
     while (infile >> energy >> sigma) {
         energies.push_back(energy);
