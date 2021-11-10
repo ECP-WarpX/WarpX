@@ -32,6 +32,9 @@ export OMPI_MCA_coll_ibm_skip_barrier=true
 #export FI_OFI_RXM_USE_SRX=1  # libfabric: use shared receive context from MSG provider
 
 # OpenMP: one thread per MPI rank and GPU
+# ROMIO has a hint for GPFS named IBM_largeblock_io which optimizes I/O with operations on large blocks
+export IBM_largeblock_io=true
+
 export OMP_NUM_THREADS=1
 
 # run WarpX

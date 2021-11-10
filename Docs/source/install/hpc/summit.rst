@@ -234,6 +234,35 @@ parameters provided good performance:
 * **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
   results in ~49 tiles per OpenMP thread)
 
+
+.. _building-summit-romio-hints:
+
+ROMIO MPI-IO Hints
+^^^^^^^^^^^^^^^^^^^
+
+You might notice some performance improvements on Summit by setting the appropriate
+ROMIO hints for MPI-IO operations. 
+
+.. code-block:: bash
+   
+   export OMPI_MCA_io=romio321
+   export ROMIO_HINTS=./romio-hints
+
+
+The `romio-hints` file contains pairs of key-value hints to enable and tune collective
+buffering of MPI-IO operations. As Summit's Alpine file system uses a 16MB block size,
+you should set the collective buffer size to 16GB and tune the number of aggregators
+(`cb_nodes`) to the number of compute nodes you are using, i.e., one aggregator per node.
+
+.. code-block:: bash
+
+   romio_cb_write enable
+   romio_ds_write enable
+   cb_buffer_size 16777216
+   cb_nodes 64
+
+Further details are available at `Summit's documentation page <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#slow-performance-using-parallel-hdf5-resolved-march-12-2019>`__.
+
 .. _building-summit-issues:
 
 Known System Issues
