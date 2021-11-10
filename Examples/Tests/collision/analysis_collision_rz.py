@@ -19,7 +19,6 @@ import sys
 import yt
 import numpy as np
 from glob import glob
-import post_processing_utils
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -29,7 +28,6 @@ last_fn = sys.argv[1]
 if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
 fn_list = glob(last_fn[:-5] + "?????")
 
-error = 0.0
 for fn in fn_list:
     # get time index j
     j = int(fn[-5:])
