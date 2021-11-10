@@ -61,7 +61,7 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (amrex::MFIter mfi(*Efield[0], false); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         // Extract field data
         amrex::Array4<amrex::Real> const& Ex = Efield[0]->array(mfi);
         amrex::Array4<amrex::Real> const& Ey = Efield[1]->array(mfi);
