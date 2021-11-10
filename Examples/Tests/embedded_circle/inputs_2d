@@ -73,9 +73,8 @@ coll_ar_ions.back_cross_section = ../../../../warpx-data/MCC_cross_sections/Ar/i
 coll_ar_ions.elastic_cross_section = ../../../../warpx-data/MCC_cross_sections/Ar/ion_scattering.dat
 coll_ar_ions.charge_exchange_cross_section = ../../../../warpx-data/MCC_cross_sections/Ar/charge_exchange.dat
 
-diagnostics.diags_names = diags
-diags.diag_type = Full
-diags.format = plotfile
-diags.intervals = 1
-diags.fields_to_plot = phi rho_electrons rho_ar_ions
-diags.file_prefix = embedded_circle_diags
+diagnostics.diags_names = diag1
+diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 1
+diag1.fields_to_plot = phi rho_electrons rho_ar_ions
