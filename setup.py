@@ -313,4 +313,3 @@ setup(
     license='BSD-3-Clause-LBNL',
     license_files = ['LICENSE.txt', 'LEGAL.txt'],
 )
-

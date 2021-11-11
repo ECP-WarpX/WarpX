@@ -11,7 +11,7 @@
   experienced users.
 
 
-  \subsection Overview
+  \subsection overview_of_warpx Overview
 
   WarpX is an advanced electromagnetic Particle-In-Cell code.
   It supports many features including Perfectly-Matched Layers (PML),
@@ -25,7 +25,7 @@
   HZDR (Germany), Radiasoft (USA), and CERN (Switzerland), among others.
 
 
-  \subsection manual Manual
+  \subsection manual_of_warpx Manual
 
   In case you are looking for the manual of WarpX, please go over to our
   documentation at <a href="https://warpx.readthedocs.io">warpx.readthedocs.io</a> .
@@ -33,7 +33,7 @@
   read first.
 
 
-  \subsection development Development
+  \subsection development_of_warpx Development
 
   All of WarpX' development is done in the GitHub repository under the
   <a href="https://github.com/ECP-WarpX/WarpX/tree/development">
@@ -41,7 +41,7 @@
   tagged at the beginning of each month.
 
 
-  \subsection contribute Contribute
+  \subsection contribute_to_warpx Contribute
 
   We are always happy to have users contribute to the WarpX source code. To
   contribute, issue a pull request against the development branch.
