@@ -1,3 +1,7 @@
+# This is a 2D electrostatic simulation containing a circle embedded boundary at
+# the center of the grid domain, pre -seeded with equal density of argon ions
+# and electrons.
+
 max_step = 1
 warpx.const_dt = 3.99e-13
 warpx.do_electrostatic = labframe
