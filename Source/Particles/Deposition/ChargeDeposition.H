@@ -158,8 +158,8 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
       {
 #if defined(AMREX_USE_GPU)
         const int bin_id = blockIdx.x;
-        const int bin_start = offsets_ptr[bin_id];
-        const int bin_stop = offsets_ptr[bin_id+1];
+        const unsigned int bin_start = offsets_ptr[bin_id];
+        const unsigned int bin_stop = offsets_ptr[bin_id+1];
 
         if (bin_start == bin_stop) { return; }
 
