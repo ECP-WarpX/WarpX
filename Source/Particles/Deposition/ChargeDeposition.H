@@ -18,6 +18,7 @@
 
 #include <AMReX.H>
 
+#if defined(AMREX_USE_GPU)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void addLocalToGlobal (const amrex::Box& bx,
                        const amrex::Array4<amrex::Real>& global,
@@ -36,6 +37,7 @@ void addLocalToGlobal (const amrex::Box& bx,
         amrex::Gpu::Atomic::AddNoRet( &global(i, j, k), local(i, j, k));
     }
 }
+#endif
 
 /* \brief Charge Deposition for thread thread_num
  * \param GetPosition   : A functor for returning the particle position.
@@ -76,7 +78,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     using namespace amrex;
 
 #if !defined(AMREX_USE_GPU)
-    amrex::ignore_unused(cost, load_balance_costs_update_algo);
+    amrex::ignore_unused(ix_type, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
 #endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
@@ -119,6 +121,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     }
 #endif
 
+#if defined(AMREX_USE_GPU)
     const auto dxiarr = geom.InvCellSizeArray();
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
@@ -130,7 +133,6 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
     const auto npts = sample_tbox_x.numPts();
 
-#if defined(AMREX_USE_GPU)
     const int nblocks = a_bins.numBins();
     const auto offsets_ptr = a_bins.offsetsPtr();
     const int threads_per_block = 256;
@@ -145,10 +147,10 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                 << " bytes would not fit in GPU's shared memory of " << max_shared_mem_bytes << " bytes" << std::endl;
       amrex::Abort("Tile size too big for GPU shared memory charge deposition");
     }
+    ignore_unused(np_to_deposit);
 #endif
 
 #if defined(AMREX_USE_GPU)
-    ignore_unused(np_to_deposit);
     amrex::launch(
                   nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
                   [=] AMREX_GPU_DEVICE () noexcept
@@ -194,9 +196,13 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
           vs[i] = 0.0;
         }
         __syncthreads();
+#else
+        amrex::Array4<amrex::Real> const &buf = rho_arr;
 #endif // defined(AMREX_USE_GPU)
 
+#if defined(AMREX_USE_GPU)
         for (unsigned int ip = bin_start + threadIdx.x; ip < bin_stop; ip += blockDim.x)
+#endif
         {
 #if defined(WARPX_USE_GPUCLOCK)
             KernelTimer kernelTimer(cost && load_balance_costs_update_algo
