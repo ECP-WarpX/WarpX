@@ -1,6 +1,6 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
-# Copyright 2019-2020 Yinjian Zhao
+# Copyright 2019-2021 Yinjian Zhao
 #
 # This file is part of WarpX.
 #

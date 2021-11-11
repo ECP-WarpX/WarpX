@@ -119,14 +119,13 @@ void ElasticCollisionPerez (
       {
 
 #if (defined WARPX_DIM_RZ)
-//When particles are having the same vr, their velocities would change after collision,
-//because they may have different azimuth angles, but their velocities are not supposed to be changed.
-//To fix this, we rotate one particle to be in parallel with the other particle,
-//such that their velocities won't change after collision if they have the same vr.
-//Then, we rotate that particle back.
+          /* When particles are having the same vr, their velocities would change after collision,
+           * because they may have different azimuth angles, but their velocities are not supposed to be changed.
+           * To fix this, we rotate one particle to be in parallel with the other particle,
+           * such that their velocities won't change after collision if they have the same vr.
+           * Then, we rotate that particle back. */
           T_R const theta = theta2[I2[i2]]-theta1[I1[i1]];
-          T_R u1xbuf;
-          u1xbuf = u1x[I1[i1]];
+          T_R const u1xbuf = u1x[I1[i1]];
           u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
           u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
 #endif
@@ -140,9 +139,9 @@ void ElasticCollisionPerez (
               engine);
 
 #if (defined WARPX_DIM_RZ)
-          u1xbuf = u1x[I1[i1]];
-          u1x[I1[i1]] = u1xbuf*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
-          u1y[I1[i1]] = u1xbuf*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+          T_R const u1xbuf_new = u1x[I1[i1]];
+          u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
+          u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
 
           ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
