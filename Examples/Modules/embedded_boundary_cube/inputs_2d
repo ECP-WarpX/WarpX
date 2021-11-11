@@ -28,7 +28,7 @@ my_constants.Lz = 1
 
 warpx.Bz_external_grid_function(x,y,z) = 0
 warpx.Bx_external_grid_function(x,y,z) = 0
-warpx.By_external_grid_function(x,y,z) = cos(m * pi / Lx * (x - Lx / 2)) * cos(p * pi / Lz * (z - Lz / 2))*mu0 #*(x>-0.5)*(x<0.5)*(z>-0.5)*(z<0.5)
+warpx.By_external_grid_function(x,y,z) = cos(m * pi / Lx * (x - Lx / 2)) * cos(p * pi / Lz * (z - Lz / 2))*mu0
 
 diagnostics.diags_names = diag1
 diag1.intervals = 1
