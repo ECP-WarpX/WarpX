@@ -76,8 +76,7 @@ text = re.sub('runtime_params =',
 # Use less/more cores for compiling, e.g. public CI only provides 2 cores
 if ci_num_make_jobs is not None:
     text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = {}'.format(ci_num_make_jobs), text )
-# Use only 1 OMP thread for running
-text = re.sub( 'numthreads = \d+', 'numthreads = 1', text)
+
 # Prevent emails from being sent
 text = re.sub( 'sendEmailWhenFail = 1', 'sendEmailWhenFail = 0', text )
 
