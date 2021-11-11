@@ -106,8 +106,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     const amrex::Real zmin = xyzmin[2];
 
     amrex::Array4<amrex::Real> const& rho_arr = rho_fab.array();
-    auto rho_box = rho_fab.box();
-    amrex::IntVect const rho_type = rho_box.type();
+    amrex::IntVect const rho_type = rho_fab.box().type();
 
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
