@@ -183,7 +183,7 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                 }
             }
         }
-#else
+#elif defined(WARPX_DIM_3D)
         for (int i_n = -1; i_n < 2; i_n++) {
             for (int k_n = -1; k_n < 2; k_n++) {
                 //This if makes sure that we don't visit the "diagonal neighbours"
@@ -203,6 +203,8 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                 }
             }
         }
+#else
+        amrex::Abort("ComputeNBorrowOneFaceExtension: Only implemented in 2D3V and 3D3V")
 #endif
     }else if(idim == 2) {
         for (int i_n = -1; i_n < 2; i_n++) {
@@ -341,7 +343,7 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
                 local_avail(0, 2) * S(i - 1, j + 1, k) +
                 local_avail(2, 2) * S(i + 1, j + 1, k);
         }
-#else
+#elif defined(WARPX_DIM_3D)
         for(int i_loc = 0; i_loc <= 2; i_loc++){
             for(int k_loc = 0; k_loc <= 2; k_loc++){
                 local_avail(i_loc, k_loc) = (flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 1
@@ -383,7 +385,8 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
                 local_avail(0, 2) * S(i - 1, j, k + 1) +
                 local_avail(2, 2) * S(i + 1, j, k + 1);
         }
-
+#else
+        amrex::Abort("ComputeNBorrowEightFacesExtension: Only implemented in 2D3V and 3D3V")
 #endif
     } else if(idim == 2){
         for(int i_loc = 0; i_loc <= 2; i_loc++){
@@ -582,9 +585,11 @@ WarpX::ComputeOneWayExtensions() {
 #ifdef WARPX_DIM_XZ
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
                                                       lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
-#else
+#elif defined(WARPX_DIM_3D)
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#else
+                amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V")
 #endif
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 int n_borrow =
@@ -642,7 +647,7 @@ WarpX::ComputeOneWayExtensions() {
                         }
                     }
 
-#else
+#elif defined(WARPX_DIM_3D)
                     amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                              lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                     amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
@@ -677,7 +682,8 @@ WarpX::ComputeOneWayExtensions() {
                             }
                         }
                     }
-
+#else
+                    amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V")
 #endif
                 }
             }, amrex::Scan::Type::exclusive);
@@ -961,9 +967,11 @@ WarpX::ComputeEightWaysExtensions() {
 #ifdef WARPX_DIM_XZ
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
-#else
+#elif defined(WARPX_DIM_3D)
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#else
+                amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V")
 #endif
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 const int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sy_ext, Sy_mod, Sy,
@@ -1060,7 +1068,7 @@ WarpX::ComputeEightWaysExtensions() {
                         }
                         flag_ext_face_y(i, j, k) = false;
                     }
-#else
+#elif defined(WARPX_DIM_3D)
                     amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                           lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                     amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
@@ -1128,6 +1136,8 @@ WarpX::ComputeEightWaysExtensions() {
                         }
                         flag_ext_face_y(i, j, k) = false;
                     }
+#else
+                    amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V")
 #endif
                 }
             },
