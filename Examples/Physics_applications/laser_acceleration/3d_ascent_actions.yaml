@@ -28,6 +28,23 @@
          p0:
            field: Ey
            type: volume
+           min_value: -3e+12
+           max_value: 3e+12
+           color_table: 
+             name: "Cool to Warm Extended"
+             control_points: 
+              -
+                type: "alpha"
+                position: 0.0
+                alpha: 1.0
+              -
+                type: "alpha"
+                position: 0.5
+                alpha: 0.0
+              -
+                type: "alpha"
+                position: 1.0
+                alpha: 1.0
     uz_pc:
        plots:
          p0:
