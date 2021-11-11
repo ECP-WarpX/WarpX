@@ -204,7 +204,7 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
             }
         }
 #else
-        amrex::Abort("ComputeNBorrowOneFaceExtension: Only implemented in 2D3V and 3D3V")
+        amrex::Abort("ComputeNBorrowOneFaceExtension: Only implemented in 2D3V and 3D3V");
 #endif
     }else if(idim == 2) {
         for (int i_n = -1; i_n < 2; i_n++) {
@@ -386,7 +386,7 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
                 local_avail(2, 2) * S(i + 1, j, k + 1);
         }
 #else
-        amrex::Abort("ComputeNBorrowEightFacesExtension: Only implemented in 2D3V and 3D3V")
+        amrex::Abort("ComputeNBorrowEightFacesExtension: Only implemented in 2D3V and 3D3V");
 #endif
     } else if(idim == 2){
         for(int i_loc = 0; i_loc <= 2; i_loc++){
@@ -589,7 +589,7 @@ WarpX::ComputeOneWayExtensions() {
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #else
-                amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V")
+                amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
 #endif
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 int n_borrow =
@@ -683,7 +683,7 @@ WarpX::ComputeOneWayExtensions() {
                         }
                     }
 #else
-                    amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V")
+                    amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
 #endif
                 }
             }, amrex::Scan::Type::exclusive);
@@ -971,7 +971,7 @@ WarpX::ComputeEightWaysExtensions() {
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #else
-                amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V")
+                amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
 #endif
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 const int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sy_ext, Sy_mod, Sy,
@@ -1137,7 +1137,7 @@ WarpX::ComputeEightWaysExtensions() {
                         flag_ext_face_y(i, j, k) = false;
                     }
 #else
-                    amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V")
+                    amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
 #endif
                 }
             },
