@@ -188,7 +188,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         Gpu::SharedMemory<amrex::Real> gsm;
         amrex::Real* const shared = gsm.dataPtr();
 
-        amrex::Array4<amrex::Real> buf(shared, amrex::begin(tbx), amrex::end(tbx), 1);
+        amrex::Array4<amrex::Real> rho_tmp(shared, amrex::begin(tbx), amrex::end(tbx), 1);
 
         // Zero-initialize the temporary array in shared memory
         volatile amrex::Real* vs = shared;
@@ -197,7 +197,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         }
         __syncthreads();
 #else
-        amrex::Array4<amrex::Real> const &buf = rho_arr;
+        amrex::Array4<amrex::Real> const &rho_tmp = rho_arr;
 #endif // defined(AMREX_USE_GPU)
 
 #if defined(AMREX_USE_GPU)
@@ -270,7 +270,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                 k = compute_shape_factor(sz, z - 0.5_rt);
             }
 
-            // Deposit charge into buf
+            // Deposit charge into rho_tmp
 #if (defined WARPX_DIM_1D_Z)
             for (int iz=0; iz<=depos_order; iz++){
                 amrex::Gpu::Atomic::AddNoRet(
@@ -282,14 +282,14 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
                     amrex::Gpu::Atomic::AddNoRet(
-                        &buf(lo.x+i+ix, lo.y+k+iz, 0, 0),
+                        &rho_tmp(lo.x+i+ix, lo.y+k+iz, 0, 0),
                         sx[ix]*sz[iz]*wq);
 #if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
-                        amrex::Gpu::Atomic::AddNoRet( &buf(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
-                        amrex::Gpu::Atomic::AddNoRet( &buf(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
+                        amrex::Gpu::Atomic::AddNoRet( &rho_tmp(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
+                        amrex::Gpu::Atomic::AddNoRet( &rho_tmp(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
                         xy = xy*xy0;
                     }
 #endif
@@ -300,7 +300,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
                         amrex::Gpu::Atomic::AddNoRet(
-                            &buf(lo.x+i+ix, lo.y+j+iy, lo.z+k+iz),
+                            &rho_tmp(lo.x+i+ix, lo.y+j+iy, lo.z+k+iz),
                             sx[ix]*sy[iy]*sz[iz]*wq);
                     }
                 }
@@ -311,7 +311,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #if defined(AMREX_USE_GPU)
           __syncthreads();
 
-          addLocalToGlobal(tbx, rho_arr, buf);
+          addLocalToGlobal(tbx, rho_arr, rho_tmp);
 #endif // defined(AMREX_USE_GPU)
       }
       );
