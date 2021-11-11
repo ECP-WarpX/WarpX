@@ -25,29 +25,28 @@ using namespace amrex::literals;
 
 /**
  * \brief Current Deposition for thread thread_num
- * \param GetPosition : A functor for returning the particle position.
- * \param wp           : Pointer to array of particle weights.
- * \param uxp uyp uzp  : Pointer to arrays of particle momentum.
- * \param ion_lev      : Pointer to array of particle ionization level. This is
+ * \tparam depos_order deposition order
+ * \param GetPosition  A functor for returning the particle position.
+ * \param wp           Pointer to array of particle weights.
+ * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
+ * \param ion_lev      Pointer to array of particle ionization level. This is
                          required to have the charge of each macroparticle
                          since q is a scalar. For non-ionizable species,
                          ion_lev is a null pointer.
- * \param jx_fab       : FArrayBox of current density, either full array or tile.
- * \param jy_fab       : FArrayBox of current density, either full array or tile.
- * \param jz_fab       : FArrayBox of current density, either full array or tile.
- * \param np_to_depose : Number of particles for which current is deposited.
- * \param relative_t   : Time at which to deposit J, relative to the time of
- *                       the current positions of the particles (expressed in
- *                       physical units). When different than 0, the particle
- *                       position will be temporarily modified to match the
- *                       time of the deposition.
- * \param dx           : 3D cell size
- * \param xyzmin       : Physical lower bounds of domain.
- * \param lo           : Index lower bounds of domain.
- * \param q            : species charge.
- * \param n_rz_azimuthal_modes: Number of azimuthal modes when using RZ geometry.
- * \param cost: Pointer to (load balancing) cost corresponding to box where present particles deposit current.
- * \param load_balance_costs_update_algo: Selected method for updating load balance costs.
+ * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
+ * \param np_to_depose Number of particles for which current is deposited.
+ * \param relative_t   Time at which to deposit J, relative to the time of
+ *                     the current positions of the particles (expressed in
+ *                     physical units). When different than 0, the particle
+ *                     position will be temporarily modified to match the
+ *                     time of the deposition.
+ * \param dx           3D cell size
+ * \param xyzmin       Physical lower bounds of domain.
+ * \param lo           Index lower bounds of domain.
+ * \param q            species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
+ * \param cost  Pointer to (load balancing) cost corresponding to box where present particles deposit current.
+ * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
 void doDepositionShapeN(const GetParticlePosition& GetPosition,
@@ -317,25 +316,24 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 /**
  * \brief Esirkepov Current Deposition for thread thread_num
  *
- * \param GetPosition : A functor for returning the particle position.
- * \param wp           : Pointer to array of particle weights.
- * \param uxp uyp uzp  : Pointer to arrays of particle momentum.
- * \param ion_lev      : Pointer to array of particle ionization level. This is
-                         required to have the charge of each macroparticle
-                         since q is a scalar. For non-ionizable species,
-                         ion_lev is a null pointer.
- * \param Jx_arr       : Array4 of current density, either full array or tile.
- * \param Jy_arr       : Array4 of current density, either full array or tile.
- * \param Jz_arr       : Array4 of current density, either full array or tile.
- * \param np_to_depose : Number of particles for which current is deposited.
- * \param dt           : Time step for particle level
- * \param dx           : 3D cell size
- * \param xyzmin       : Physical lower bounds of domain.
- * \param lo           : Index lower bounds of domain.
- * \param q            : species charge.
- * \param n_rz_azimuthal_modes: Number of azimuthal modes when using RZ geometry.
- * \param cost: Pointer to (load balancing) cost corresponding to box where present particles deposit current.
- * \param load_balance_costs_update_algo: Selected method for updating load balance costs.
+ * \tparam depos_order  deposition order
+ * \param GetPosition  A functor for returning the particle position.
+ * \param wp           Pointer to array of particle weights.
+ * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
+ * \param ion_lev      Pointer to array of particle ionization level. This is
+                       required to have the charge of each macroparticle
+                       since q is a scalar. For non-ionizable species,
+                       ion_lev is a null pointer.
+ * \param Jx_arr,Jy_arr,Jz_arr Array4 of current density, either full array or tile.
+ * \param np_to_depose Number of particles for which current is deposited.
+ * \param dt           Time step for particle level
+ * \param dx           3D cell size
+ * \param xyzmin       Physical lower bounds of domain.
+ * \param lo           Index lower bounds of domain.
+ * \param q            species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
+ * \param cost Pointer to (load balancing) cost corresponding to box where present particles deposit current.
+ * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
 void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
@@ -398,6 +396,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 
     Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
+    Real constexpr one_third = 1.0_rt / 3.0_rt;
+    Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
 #if defined(WARPX_USE_GPUCLOCK)
@@ -544,8 +544,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int j=djl; j<=depos_order+2-dju; j++) {
                     amrex::Real sdxi = 0._rt;
                     for (int i=dil; i<=depos_order+1-diu; i++) {
-                        sdxi += wqx*(sx_old[i] - sx_new[i])*(0.5_rt*(sy_new[j] + sy_old[j])*sz_new[k] +
-                                                             (1._rt/6._rt*sy_new[j] + 1._rt/3._rt*sy_old[j])*(sz_old[k] - sz_new[k]));
+                        sdxi += wqx*(sx_old[i] - sx_new[i])*(
+                            one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
+                           +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
                         amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
                     }
                 }
@@ -554,8 +555,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdyj = 0._rt;
                     for (int j=djl; j<=depos_order+1-dju; j++) {
-                        sdyj += wqy*(sy_old[j] - sy_new[j])*(0.5_rt*(sz_new[k] + sz_old[k])*sx_new[i] +
-                                                             (1._rt/6._rt*sz_new[k] + 1._rt/3._rt*sz_old[k])*(sx_old[i] - sx_new[i]));
+                        sdyj += wqy*(sy_old[j] - sy_new[j])*(
+                            one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
+                           +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
                     }
                 }
@@ -564,8 +566,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdzk = 0._rt;
                     for (int k=dkl; k<=depos_order+1-dku; k++) {
-                        sdzk += wqz*(sz_old[k] - sz_new[k])*( 0.5_rt*(sx_new[i] + sx_old[i])*sy_new[j] +
-                                                             (1._rt/6._rt*sx_new[i] + 1._rt/3._rt*sx_old[i])*(sy_old[j] - sy_new[j]));
+                        sdzk += wqz*(sz_old[k] - sz_new[k])*(
+                            one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
+                           +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
                         amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
                     }
                 }
@@ -592,8 +595,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             }
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
-                    Real const sdyj = wq*vy*invvol*( 0.5_rt*(sz_new[k] + sz_old[k])*sx_new[i] +
-                                                     (1._rt/6._rt*sz_new[k] + 1._rt/3._rt*sz_old[k])*(sx_old[i] - sx_new[i]));
+                    Real const sdyj = wq*vy*invvol*(
+                        one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
+                       +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
                     amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
 #if (defined WARPX_DIM_RZ)
                     Complex xy_new = xy_new0;
@@ -650,17 +654,14 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
  * for thread \c thread_num: deposit \c D in real space and store the result in
  * \c jx_fab, \c jy_fab, \c jz_fab
  *
+ * \tparam depos_order  deposition order
  * \param[in] GetPosition  Functor that returns the particle position
  * \param[in] wp           Pointer to array of particle weights
- * \param[in] uxp          Pointer to arrays of particle momentum along \c x
- * \param[in] uyp          Pointer to arrays of particle momentum along \c y
- * \param[in] uzp          Pointer to arrays of particle momentum along \c z
+ * \param[in] uxp,uyp,uzp  Pointer to arrays of particle momentum along \c x
  * \param[in] ion_lev      Pointer to array of particle ionization level. This is
                            required to have the charge of each macroparticle since \c q
                            is a scalar. For non-ionizable species, \c ion_lev is \c null
- * \param[in,out] jx_fab   FArrayBox of current density, either full array or tile
- * \param[in,out] jy_fab   FArrayBox of current density, either full array or tile
- * \param[in,out] jz_fab   FArrayBox of current density, either full array or tile
+ * \param[in,out] jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile
  * \param[in] np_to_depose Number of particles for which current is deposited
  * \param[in] dt           Time step for particle level
  * \param[in] dx           3D cell size

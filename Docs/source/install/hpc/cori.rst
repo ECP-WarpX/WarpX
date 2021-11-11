@@ -37,12 +37,15 @@ We use the following modules and environments on the system (``$HOME/knl_warpx.p
    module swap craype-haswell craype-mic-knl
    module swap PrgEnv-intel PrgEnv-gnu
    module load cmake/3.21.3
+   module switch cray-libsci cray-libsci/20.09.1
    module load cray-hdf5-parallel/1.10.5.2
    module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
 
    export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
    export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-knl-install:$CMAKE_PREFIX_PATH
+   export CMAKE_PREFIX_PATH=$HOME/sw/blaspp-master-knl-install:$CMAKE_PREFIX_PATH
+   export CMAKE_PREFIX_PATH=$HOME/sw/lapackpp-master-knl-install:$CMAKE_PREFIX_PATH
 
    if [ -d "$HOME/sw/venvs/knl_warpx" ]
    then
@@ -52,15 +55,29 @@ We use the following modules and environments on the system (``$HOME/knl_warpx.p
    export CXXFLAGS="-march=knl"
    export CFLAGS="-march=knl"
 
-And install ADIOS2:
+And install ADIOS2, BLAS++ and LAPACK++:
 
 .. code-block:: bash
 
    source $HOME/knl_warpx.profile
 
+   # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-knl-install
-   cmake --build src/adios2-build --target install --parallel 16
+   rm -rf src/adios2-knl-build
+   cmake -S src/adios2 -B src/adios2-knl-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-knl-install
+   cmake --build src/adios2-knl-build --target install --parallel 16
+
+   # BLAS++ (for PSATD+RZ)
+   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   rm -rf src/blaspp-knl-build
+   cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-knl-install
+   cmake --build src/blaspp-knl-build --target install --parallel 16
+
+   # LAPACK++ (for PSATD+RZ)
+   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   rm -rf src/lapackpp-knl-build
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-knl-install
+   cmake --build src/lapackpp-knl-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
 
@@ -85,27 +102,44 @@ We use the following modules and environments on the system (``$HOME/haswell_war
 
    module swap PrgEnv-intel PrgEnv-gnu
    module load cmake/3.21.3
+   module switch cray-libsci cray-libsci/20.09.1
    module load cray-hdf5-parallel/1.10.5.2
    module load cray-fftw/3.3.8.4
    module load cray-python/3.7.3.2
 
    export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
    export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-haswell-install:$CMAKE_PREFIX_PATH
+   export CMAKE_PREFIX_PATH=$HOME/sw/blaspp-master-haswell-install:$CMAKE_PREFIX_PATH
+   export CMAKE_PREFIX_PATH=$HOME/sw/lapackpp-master-haswell-install:$CMAKE_PREFIX_PATH
 
    if [ -d "$HOME/sw/venvs/haswell_warpx" ]
    then
      source $HOME/sw/venvs/haswell_warpx/bin/activate
    fi
 
-And install ADIOS2:
+And install ADIOS2, BLAS++ and LAPACK++:
 
 .. code-block:: bash
 
    source $HOME/haswell_warpx.profile
 
+   # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-haswell-install
-   cmake --build src/adios2-build --target install --parallel 16
+   rm -rf src/adios2-haswell-build
+   cmake -S src/adios2 -B src/adios2-haswell-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-haswell-install
+   cmake --build src/adios2-haswell-build --target install --parallel 16
+
+   # BLAS++ (for PSATD+RZ)
+   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   rm -rf src/blaspp-haswell-build
+   cmake -S src/blaspp -B src/blaspp-haswell-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-haswell-install
+   cmake --build src/blaspp-haswell-build --target install --parallel 16
+
+   # LAPACK++ (for PSATD+RZ)
+   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   rm -rf src/lapackpp-haswell-build
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-haswell-install
+   cmake --build src/lapackpp-haswell-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
 
@@ -168,8 +202,9 @@ And install ADIOS2:
    source $HOME/gpu_warpx.profile
 
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-gpu-install
-   cmake --build src/adios2-build --target install --parallel 16
+   rm -rf src/adios2-gpu-build
+   cmake -S src/adios2 -B src/adios2-gpu-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-gpu-install
+   cmake --build src/adios2-gpu-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
 
@@ -313,3 +348,25 @@ A multi-node batch script template can be found below:
 
 .. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_gpu.sh
    :language: bash
+
+
+.. _post-processing-cori:
+
+Post-Processing
+---------------
+
+For post-processing, most users use Python via NERSC's `Jupyter service <https://jupyter.nersc.gov>`__ (`Docs <https://docs.nersc.gov/services/jupyter/>`__).
+
+As a one-time preparatory setup, `create your own Conda environment as described in NERSC docs <https://docs.nersc.gov/services/jupyter/#conda-environments-as-kernels>`__.
+In this manual, we often use this ``conda create`` line over the officially documented one:
+
+.. code-block:: bash
+
+   conda create -n myenv -c conda-forge python mamba ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
+
+We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
+
+When opening a Jupyter notebook, just select the name you picked for your custom kernel on the top right of the notebook.
+
+Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
+Software that is not available via conda can be installed via ``!python -m pip install ...``.

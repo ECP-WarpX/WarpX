@@ -74,8 +74,13 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
 
    # optional: for Python bindings or libEnsemble
    module load python/3.8.10
-   module load openblas/0.3.5-omp  # numpy; same as for blaspp & lapackpp
    module load freetype/2.10.4     # matplotlib
+
+   # dependencies for numpy, blaspp & lapackpp
+   module load openblas/0.3.5-omp
+   export BLAS=${OLCF_OPENBLAS_ROOT}/lib/libopenblas.so
+   export LAPACK=${OLCF_OPENBLAS_ROOT}/lib/libopenblas.so
+
    if [ -d "$HOME/sw/venvs/warpx" ]
    then
      source $HOME/sw/venvs/warpx/bin/activate
@@ -115,8 +120,6 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
 
 .. code-block:: bash
 
-   export BLAS=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
-   export LAPACK=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
    python3 -m pip cache purge
@@ -289,3 +292,51 @@ Known System Issues
    For instance, if you compile large software stacks with Spack, make sure to register ``libfabric`` with that exact version as an external module.
 
    If you load the documented ADIOS2 module above, this problem does not affect you, since the correct ``libfabric`` version is chosen for this one.
+
+.. warning::
+
+   Related to the above issue, the fabric selection in ADIOS2 was designed for libfabric 1.6.
+   With newer versions of libfabric, a workaround is needed to guide the selection of a functional fabric for RDMA support.
+   Details are discussed in `ADIOS2 issue #2887 <https://github.com/ornladios/ADIOS2/issues/2887>`__.
+
+   The following environment variables can be set as work-arounds, when working with ADIOS2 SST:
+
+   .. code-block:: bash
+
+      export FABRIC_IFACE=mlx5_0   # ADIOS SST: select interface (1 NIC on Summit)
+      export FI_OFI_RXM_USE_SRX=1  # libfabric: use shared receive context from MSG provider
+
+.. warning::
+
+   Oct 12th, 2021 (OLCFHELP-4242):
+   There is currently a problem with the pre-installed Jupyter extensions, which can lead to connection splits at long running analysis sessions.
+
+   Work-around this issue by running in a single Jupyter cell, before starting analysis:
+
+   .. code-block:: bash
+
+      !jupyter serverextension enable --py --sys-prefix dask_labextension
+
+
+.. _post-processing-summit:
+
+Post-Processing
+---------------
+
+For post-processing, most users use Python via OLCFs's `Jupyter service <https://jupyter.olcf.ornl.gov>`__ (`Docs <https://docs.olcf.ornl.gov/services_and_applications/jupyter/index.html>`__).
+
+We usually just install our software on-the-fly on Summit.
+When starting up a post-processing session, run this in your first cells:
+
+.. code-block:: bash
+
+   # work-around for OLCFHELP-4242
+   !jupyter serverextension enable --py --sys-prefix dask_labextension
+
+   # next Jupyter cell: install a faster & better conda package manager
+   !conda install -c conda-forge -y mamba
+
+   # next cell: the software you want
+   !mamba install -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
+
+   # restart notebook

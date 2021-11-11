@@ -104,3 +104,13 @@ Or in non-interactive runs:
    :language: bash
 
 We can currently use up to ``4`` nodes with ``4`` GPUs each (maximum: ``-N 4 -n 16``).
+
+
+.. _post-processing-spock:
+
+Post-Processing
+---------------
+
+For post-processing, most users use Python via OLCFs's `Jupyter service <https://jupyter.olcf.ornl.gov>`__ (`Docs <https://docs.olcf.ornl.gov/services_and_applications/jupyter/index.html>`__).
+
+Please follow the same guidance as for :ref:`OLCF Summit post-processing <post-processing-summit>`.

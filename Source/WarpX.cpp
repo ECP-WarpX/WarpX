@@ -29,8 +29,11 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "Utils/MsgLogger/MsgLogger.H"
+#include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
 #ifdef AMREX_USE_SENSEI_INSITU
@@ -117,6 +120,7 @@ bool WarpX::do_dive_cleaning = 0;
 bool WarpX::do_divb_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
+int WarpX::do_single_precision_comms=0;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -172,6 +176,7 @@ bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::do_electrostatic;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
+Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
 int WarpX::self_fields_verbosity = 2;
 
@@ -215,6 +220,9 @@ WarpX::ResetInstance ()
 WarpX::WarpX ()
 {
     m_instance = this;
+
+    m_p_warn_manager = std::make_unique<Utils::WarnManager>();
+
     ReadParameters();
 
     BackwardCompatibility();
@@ -409,6 +417,51 @@ WarpX::~WarpX ()
 }
 
 void
+WarpX::RecordWarning(
+        std::string topic,
+        std::string text,
+        WarnPriority priority)
+{
+    WARPX_PROFILE("WarpX::RecordWarning");
+
+    auto msg_priority = Utils::MsgLogger::Priority::high;
+    if(priority == WarnPriority::low)
+        msg_priority = Utils::MsgLogger::Priority::low;
+    else if(priority == WarnPriority::medium)
+        msg_priority = Utils::MsgLogger::Priority::medium;
+
+    if(m_always_warn_immediately){
+        amrex::Warning(
+            "!!!!!! WARNING: ["
+            + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+            + "][" + topic + "] " + text);
+    }
+
+#ifdef AMREX_USE_OMP
+    #pragma omp critical
+#endif
+    {
+        m_p_warn_manager->record_warning(topic, text, msg_priority);
+    }
+}
+
+void
+WarpX::PrintLocalWarnings(const std::string& when)
+{
+    WARPX_PROFILE("WarpX::PrintLocalWarnings");
+    const auto warn_string = m_p_warn_manager->print_local_warnings(when);
+    amrex::AllPrint() << warn_string;
+}
+
+void
+WarpX::PrintGlobalWarnings(const std::string& when)
+{
+    WARPX_PROFILE("WarpX::PrintGlobalWarnings");
+    const auto warn_string = m_p_warn_manager->print_global_warnings(when);
+    amrex::Print() << warn_string;
+}
+
+void
 WarpX::ReadParameters ()
 {
     {
@@ -431,6 +484,11 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp_warpx("warpx");
+
+        //"Synthetic" warning messages may be injected in the Warning Manager via
+        // inputfile for debug&testing purposes.
+        m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
+        pp_warpx.query("always_warn_immediately", m_always_warn_immediately);
 
         std::vector<int> numprocs_in;
         queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
@@ -571,6 +629,7 @@ WarpX::ReadParameters ()
             // Note that with the relativistic version, these parameters would be
             // input for each species.
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
+            queryWithParser(pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
             queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
@@ -619,10 +678,9 @@ WarpX::ReadParameters ()
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             if (use_filter)
             {
-                amrex::Print() << "\nWARNING:"
-                               << "\nFilter currently not working with FDTD solver in RZ geometry:"
-                               << "\nwe recommend setting warpx.use_filter = 0 in the input file.\n"
-                               << std::endl;
+                this->RecordWarning("Filter",
+                    "Filter currently not working with FDTD solver in RZ geometry."
+                    "We recommend setting warpx.use_filter = 0 in the input file.");
             }
         }
 #endif
@@ -636,6 +694,15 @@ WarpX::ReadParameters ()
             mirror_z_npoints.resize(num_mirrors);
             getArrWithParser(pp_warpx, "mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
         }
+
+        pp_warpx.query("do_single_precision_comms", do_single_precision_comms);
+#ifdef AMREX_USE_FLOAT
+        if (do_single_precision_comms) {
+            do_single_precision_comms = 0;
+            amrex::Warning("\nWARNING: Overwrote warpx.do_single_precision_comms"
+                               " to be 0, since WarpX was built in single precision.");
+        }
+#endif
 
         pp_warpx.query("serialize_ics", serialize_ics);
         pp_warpx.query("refine_plasma", refine_plasma);
@@ -894,9 +961,10 @@ WarpX::ReadParameters ()
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
             {
-                amrex::Warning("\nWARNING: When algo.particle_shape > 1,"
-                               " some numerical artifact will be present at the interface between coarse and fine patch."
-                               "\nWe recommend setting algo.particle_shape = 1 in order to avoid this issue");
+                this->RecordWarning("Particles",
+                    "When algo.particle_shape > 1,"
+                    "some numerical artifact will be present at the interface between coarse and fine patch."
+                    "We recommend setting algo.particle_shape = 1 in order to avoid this issue");
             }
 
             // default sort interval for particles if species or lasers vector is not empty
@@ -1112,13 +1180,15 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
         }
 
-        constexpr int zdir = AMREX_SPACEDIM - 1;
-        if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
-            WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
-                "field boundary in both lo and hi must be set to Damped for PSATD"
-            );
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+        {
+            if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped ) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::field_boundary_lo[dir] == WarpX::field_boundary_hi[dir],
+                    "field boundary in both lo and hi must be set to Damped for PSATD"
+                );
+            }
         }
 
         // Whether to fill the guard cells with inverse FFTs:
@@ -1269,17 +1339,23 @@ WarpX::BackwardCompatibility ()
     ParmParse pp_particles("particles");
     int nspecies;
     if (pp_particles.query("nspecies", nspecies)){
-        amrex::Print()<<"particles.nspecies is ignored. Just use particles.species_names please.\n";
+        this->RecordWarning("Species",
+            "particles.nspecies is ignored. Just use particles.species_names please.",
+            WarnPriority::low);
     }
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
-        amrex::Print()<<"collisions.ncollisions is ignored. Just use particles.collision_names please.\n";
+        this->RecordWarning("Collisions",
+            "collisions.ncollisions is ignored. Just use particles.collision_names please.",
+            WarnPriority::low);
     }
     ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
-        amrex::Print()<<"lasers.nlasers is ignored. Just use lasers.names please.\n";
+        this->RecordWarning("Laser",
+            "lasers.nlasers is ignored. Just use lasers.names please.",
+            WarnPriority::low);
     }
 }
 
@@ -1380,7 +1456,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         safe_guard_cells,
         WarpX::do_electrostatic,
         WarpX::do_multi_J,
-        WarpX::fft_do_time_averaging);
+        WarpX::fft_do_time_averaging,
+        this->refRatio());
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;

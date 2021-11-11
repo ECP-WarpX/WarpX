@@ -13,6 +13,7 @@
 #include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -298,10 +299,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                         RealVector const & wp, RealVector const & uxp,
                                         RealVector const & uyp, RealVector const & uzp,
                                         int const * const ion_lev,
-                                        MultiFab * const jx, MultiFab * const jy, MultiFab * const jz,
+                                        amrex::MultiFab * const jx, amrex::MultiFab * const jy, amrex::MultiFab * const jz,
                                         long const offset, long const np_to_depose,
                                         int const thread_num, const int lev, int const depos_lev,
-                                        Real const dt, Real const relative_time)
+                                        amrex::Real const dt, amrex::Real const relative_time)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -783,23 +784,29 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 #endif
 
         // Exchange guard cells
-        if (local == false) rho[lev]->SumBoundary(m_gdb->Geom(lev).periodicity());
+        if (local == false) {
+            WarpXCommUtil::SumBoundary(*rho[lev], m_gdb->Geom(lev).periodicity());
+        }
     }
 
     // Now that the charge has been deposited at each level,
     // we average down from fine to crse
     if (interpolate_across_levels)
     {
-        for (int lev = finest_level - 1; lev >= 0; --lev)
-        {
+        for (int lev = finest_level - 1; lev >= 0; --lev) {
             const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
             BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
             coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
             MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
             coarsened_fine_data.setVal(0.0);
-            const int refinement_ratio = 2;
-            CoarsenMR::Coarsen(coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio));
-            rho[lev]->ParallelAdd(coarsened_fine_data, m_gdb->Geom(lev).periodicity());
+
+            int const refinement_ratio = 2;
+
+            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
+            WarpXCommUtil::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0, rho[lev]->nComp(),
+                                       amrex::IntVect::TheZeroVector(),
+                                       amrex::IntVect::TheZeroVector(),
+                                       m_gdb->Geom(lev).periodicity());
         }
     }
 }
@@ -860,7 +867,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (local == false) rho->SumBoundary(gm.periodicity());
+    if (local == false) { WarpXCommUtil::SumBoundary(*rho, gm.periodicity()); }
 
     return rho;
 }

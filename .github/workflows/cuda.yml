@@ -14,8 +14,10 @@ jobs:
   build_nvcc:
     name: NVCC 11.0.2 SP
     runs-on: ubuntu-18.04
-    env: {CXXFLAGS: "-Werror"}
     if: github.event.pull_request.draft == false
+    env:
+      CXXFLAGS: "-Werror"
+      CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -51,6 +53,10 @@ jobs:
   build_nvhpc21-9-nvcc:
     name: NVHPC@21.9 NVCC/NVC++ Release [tests]
     runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
+    # For NVHPC, Ninja is slower than the default:
+    #env:
+    #  CMAKE_GENERATOR: Ninja
     steps:
     - uses: actions/checkout@v2
     - name: Dependencies

@@ -1,6 +1,7 @@
 #include "BackTransformFunctor.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
@@ -70,11 +71,13 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         tmp_slice_ptr = std::make_unique<MultiFab> ( slice_ba, mf_dst.DistributionMap(),
-                                            slice->nComp(), 0 );
+                                                     slice->nComp(), 0 );
+        tmp_slice_ptr->setVal(0.0);
         // Parallel copy the lab-frame data from "slice" MultiFab with
         // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
         // ncomp=10 and dmap of the destination Multifab, which will store the final data
-        tmp_slice_ptr->ParallelCopy( *slice, 0, 0, slice->nComp() );
+        WarpXCommUtil::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, slice->nComp(),
+                                    IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
         // Now we will cherry pick only the user-defined fields from
         // tmp_slice_ptr to dst_mf
         const int k_lab = m_k_index_zlab[i_buffer];
@@ -116,15 +119,15 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 
 void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
-                          bool ZSliceInDomain, amrex::Real current_z_boost,
+                          bool z_slice_in_domain, amrex::Real current_z_boost,
                           amrex::Box buffer_box, const int k_index_zlab,
-                          const int max_box_size )
+                          const int max_box_size, const int snapshot_full)
 {
     m_buffer_box[i_buffer] = buffer_box;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
-    if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
+    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform[i_buffer] = 1;
     m_max_box_size = max_box_size;
 }
 

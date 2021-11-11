@@ -55,8 +55,8 @@ ele_schwinger.profile = "constant"
 pos_schwinger.profile = "constant"
 ele_schwinger.density = 0
 pos_schwinger.density = 0
-ele_schwinger.momentum_distribution_type = "gaussian"
-pos_schwinger.momentum_distribution_type = "gaussian"
+ele_schwinger.momentum_distribution_type = "at_rest"
+pos_schwinger.momentum_distribution_type = "at_rest"
 
 #################################
 ############## QED ##############
@@ -71,4 +71,3 @@ qed_schwinger.pos_product_species = pos_schwinger
 diagnostics.diags_names = diag1
 diag1.diag_type = Full
 diag1.intervals = 1
-

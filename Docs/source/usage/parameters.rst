@@ -51,6 +51,11 @@ Overall simulation parameters
 * ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
     Controls how much information is printed to the terminal, when running WarpX.
 
+* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
+    If set to ``1``, WarpX immediately prints every warning message as soon as
+    it is generated. It is mainly intended for debug purposes, in case a simulation
+    crashes before a global warning report can be printed.
+
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
@@ -81,12 +86,33 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
+    See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
+    for details of the MLMG solver (the default solver used with electrostatic
+    simulations). The default behavior of the code is to check whether there is
+    non-zero charge density in the system and if so force the MLMG solver to
+    use the solution max norm when checking convergence. If there is no charge
+    density, the MLMG solver will switch to using the initial guess max norm
+    error when evaluating convergence and an absolute error tolerance of
+    :math:`10^{-6}` :math:`\mathrm{V/m}^2` will be used (unless a different
+    non-zero value is specified by the user via
+    ``warpx.self_fields_absolute_tolerance``).
+
 * ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
     This solver can fail to reach the default precision within a reasonable time.
     This only applies when warpx.do_electrostatic = labframe.
+
+* ``warpx.self_fields_absolute_tolerance`` (`float`, default: 0.0)
+    The absolute tolerance with which the space-charge fields should be
+    calculated in units of :math:`\mathrm{V/m}^2`. More specifically, the acceptable
+    residual with which the solution can be considered converged. In general
+    this should be left as the default, but in cases where the simulation state
+    changes very little between steps it can occur that the initial guess for
+    the MLMG solver is so close to the converged value that it fails to improve
+    that solution sufficiently to reach the ``self_fields_required_precision``
+    value.
 
 * ``warpx.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
@@ -191,6 +217,10 @@ Setting up the field mesh
     explicitly set in the input script, ``n_field_gather_buffer`` is
     automatically set so that it is one cell larger than
     ``n_current_deposition_buffer``, on the fine grid.
+
+* ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
+    Perform MPI communications for field guard regions in single precision.
+    Only meaningful for ``WarpX_PRECISION=DOUBLE``.
 
 * ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
@@ -596,6 +626,16 @@ Particle initialization
     precision within a reasonable time ; in that case, users can set a
     relaxed precision requirement through ``self_fields_required_precision``.
 
+* ``<species_name>.self_fields_absolute_tolerance`` (`float`, default: 0.0)
+    The absolute tolerance with which the space-charge fields should be
+    calculated in units of :math:`\mathrm{V/m}^2`. More specifically, the acceptable
+    residual with which the solution can be considered converged. In general
+    this should be left as the default, but in cases where the simulation state
+    changes very little between steps it can occur that the initial guess for
+    the MLMG solver is so close to the converged value that it fails to improve
+    that solution sufficiently to reach the ``self_fields_required_precision``
+    value.
+
 * ``<species_name>.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for initial space-charge
     fields calculation. In case if MLMG converges but fails to reach the desired
@@ -635,50 +675,66 @@ Particle initialization
 * ``<species_name>.momentum_distribution_type`` (`string`)
     Distribution of the normalized momentum (`u=p/mc`) for this species. The options are:
 
-    * ``constant``: constant momentum profile. This requires additional parameters
-      ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
-      momenta in the x, y and z direction respectively.
+    * ``at_rest``: Particles are initialized with zero momentum.
 
-    * ``gaussian``: gaussian momentum distribution in all 3 directions. This requires
+    * ``constant``: constant momentum profile. This can be controlled with the additional parameters
+      ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
+      momenta in the x, y and z direction respectively, which are all ``0.`` by default.
+
+    * ``gaussian``: gaussian momentum distribution in all 3 directions. This can be controlled with the
       additional arguments for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m`` as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
+      These 6 parameters are all ``0.`` by default.
 
     * ``gaussianflux``: Gaussian momentum flux distribution, which is Gaussian in the plane and v*Gaussian normal to the plane.
       It can only be used when ``injection_style = NFluxPerCell``.
-      This requires additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
+      This can be controlled with the additional arguments to specify the plane's orientation, ``<species_name>.flux_normal_axis`` and
       ``<species_name>.flux_direction``, for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
+      ``ux_m``, ``uy_m``, ``uz_m``, ``ux_th``, ``uy_th`` and ``uz_th`` are all ``0.`` by default.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
-      temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
-      kb is the Boltzmann constant, c is the speed of light, and m is the mass of the species.
-      It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
-      The plasma will be initialized to move at bulk velocity beta*c in the
-      ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+      temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
+      "math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, :math:`c` is the speed of light, and :math:`m` is the mass of the species.
+      Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
+      For values of :math:`\theta > 0.01`, errors due to ignored relativistic terms exceed 1%.
+      Temperatures less than zero are not allowed.
+      The plasma can be initialized to move at a bulk velocity :math:`\beta = v/c`.
+      The speed is specified by the parameters ``<species_name>.beta_distribution_type``, ``<species_name>.beta``, and ``<species_name>.beta_function(x,y,z)`` (see below).
+      :math:`\beta` can be positive or negative and is limited to the range :math:`-1 < \beta < 1`.
+      The direction of the velocity field is given by ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'``, and must be the same across the domain.
+      Please leave no whitespace
       between the sign and the character on input. A direction without a sign will be treated as
       positive. The MB distribution is initialized in the drifting frame by sampling three Gaussian
       distributions in each dimension using, the Box Mueller method, and then the distribution is
       transformed to the simulation frame using the flipping method. The flipping method can be
       found in Zenitani 2015 section III. B. (Phys. Plasmas 22, 042116).
+      By default, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Note that though the particles may move at relativistic speeds in the simulation frame,
       they are not relativistic in the drift frame. This is as opposed to the Maxwell Juttner
       setting, which initializes particles with relativistic momentums in their drifting frame.
 
-    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma. This mode
-      requires a dimensionless temperature parameter ``<species_name>.theta``, where theta is equal
-      to kb*T/(m*c^2), where kb is the Boltzmann constant, and m is the mass of the species. It also
-      includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c. The plasma
-      will be initialized to move at velocity beta*c in the
-      ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma that takes a dimensionless temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
+      :math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, and :math:`m` is the mass of the species.
+      Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
+      The Sobol method used to generate the distribution will not terminate for :math:`\theta \lesssim 0.1`, and the code will abort if it encounters a temperature below that threshold.
+      The Maxwell-Boltzmann distribution is recommended for temperatures in the range :math:`0.01 < \theta < 0.1`.
+      Errors due to relativistic effects can be expected to approximately between 1% and 10%.
+      The plasma can be initialized to move at a bulk velocity :math:`\beta = v/c`.
+      The speed is specified by the parameters ``<species_name>.beta_distribution_type``, ``<species_name>.beta``, and ``<species_name>.beta_function(x,y,z)`` (see below).
+      :math:`\beta` can be positive or negative and is limited to the range :math:`-1 < \beta < 1`.
+      The direction of the velocity field is given by ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'``, and must be the same across the domain.
+      Please leave no whitespace
       between the sign and the character on input. A direction without a sign will be treated as
       positive. The MJ distribution will be initialized in the moving frame using the Sobol method,
       and then the distribution will be transformed to the simulation frame using the flipping method.
       Both the Sobol and the flipping method can be found in Zenitani 2015 (Phys. Plasmas 22, 042116).
+      By default, ``beta`` is equal to ``0.`` and ``bulk_vel_dir`` is ``+x``.
 
       Please take notice that particles initialized with this setting can be relativistic in two ways.
       In the simulation frame, they can drift with a relativistic speed beta. Then, in the drifting
@@ -687,12 +743,28 @@ Particle initialization
       drifting frame.
 
     * ``radial_expansion``: momentum depends on the radial coordinate linearly. This
-      requires additional parameter ``u_over_r`` which is the slope.
+      can be controlled with additional parameter ``u_over_r`` which is the slope (``0.`` by default).
 
     * ``parse_momentum_function``: the momentum is given by a function in the input
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
+
+* ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
+    Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
+    See documentation for these distributions (above) for constraints on values of theta. Temperatures less than zero are not allowed.
+
+    * If ``constant``, use a constant temperature, given by the required float parameter ``<species_name>.theta``.
+
+    * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.theta_function(x,y,z)``.
+
+* ``<species_name>.beta_distribution_type`` (`string`) optional (default ``constant``)
+    Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
+    See documentation for these distributions (above) for constraints on values of beta.
+
+    * If ``constant``, use a constant speed, given by the required float parameter ``<species_name>.beta``.
+
+    * If ``parser``, use a spatially-dependent analytic parser function, given by the required parameter ``<species_name>.beta_function(x,y,z)``.
 
 * ``<species_name>.zinject_plane`` (`float`)
     Only read if  ``<species_name>`` is in ``particles.rigid_injected_species``.
@@ -1048,7 +1120,7 @@ Laser initialization
     ``<laser_name>.profile_focal_distance`` in the laboratory frame, and use ``warpx.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
-* ``<laser_name>.phi0`` (`float`; in radians)
+* ``<laser_name>.phi0`` (`float`; in radians) optional (default `0.`)
     The Carrier Envelope Phase, i.e. the phase of the laser oscillation, at the
     position where the laser envelope is maximum (only used for the ``"gaussian"`` profile)
 
@@ -1689,10 +1761,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
 
-* ``<diag_name>.intervals`` (`string` optional, default `0`)
+* ``<diag_name>.intervals`` (`string`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which data is dumped.
     Use a negative number or 0 to disable data dumping.
-    This is ``0`` (disabled) by default.
     example: ``diag1.intervals = 10,20:25:1``.
     Note that by default the last timestep is dumped regardless of this parameter. This can be
     changed using the parameter ``<diag_name>.dump_last_timestep`` described below.
@@ -1781,11 +1852,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
     Only used when ``<diag_name>.plot_raw_fields = 1``.
     Whether to include the guard cells in the output of the raw fields.
-    Only works with ``<diag_name>.format = plotfile``.
-
-    * ``<diag_name>.plot_raw_rho`` (`0` or `1`) optional (default `0`)
-    By default, the charge density written in the plot files is averaged on the cell centers.
-    When ``<diag_name>.plot_raw_rho = 1``, then the raw (i.e. non-averaged) charge density is also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
@@ -2023,7 +2089,7 @@ Reduced Diagnostics
 
     * ``FieldProbe``
         This type computes the value of each component of the electric and magnetic fields
-        and of the norm of the electric and magnetic field vectors at a point in the domain.
+        and of the Poynting vector (a measure of electromagnetic flux) at a point in the domain.
         The point where the fields are measured is specified through the input parameters
         ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
         ``<reduced_diags_name>.z_probe``.
@@ -2032,11 +2098,10 @@ Reduced Diagnostics
         the value of the :math:`E_x` field,
         the value of the :math:`E_y` field,
         the value of the :math:`E_z` field,
-        the value of the norm :math:`|E|` of the electric field,
         the value of the :math:`B_x` field,
         the value of the :math:`B_y` field,
         the value of the :math:`B_z` field and
-        the value of the norm :math:`|B|` of the magnetic field,
+        the value of the Poynting Vector :math:`|S|` of the electromagnetic fields,
         at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
 
         Note: the norms are always interpolated to the measurement point before they are written
@@ -2046,6 +2111,8 @@ Reduced Diagnostics
         containing the measurement point are saved.
         The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
         otherwise it is set to ``1``.
+        Integrated electric and magnetic field components can instead be obtained by specifying
+        ``<reduced_diags_name>.integrate == true``.
 
 
     * ``RhoMaximum``
@@ -2257,7 +2324,7 @@ Reduced Diagnostics
         so the time of the diagnostic may be long
         depending on the simulation size.
 
-* ``<reduced_diags_name>.intervals`` (`string`) optional (default ``1``)
+* ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.
 

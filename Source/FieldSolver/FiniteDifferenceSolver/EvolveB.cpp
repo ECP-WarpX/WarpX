@@ -108,8 +108,6 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-    Real constexpr c2 = PhysConst::c * PhysConst::c;
-
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -190,15 +188,15 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    Bx(i,j,k) += c2 * dt * T_Algo::DownwardDx(G, coefs_x, n_coefs_x, i, j, k);
+                    Bx(i,j,k) += dt * T_Algo::DownwardDx(G, coefs_x, n_coefs_x, i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    By(i,j,k) += c2 * dt * T_Algo::DownwardDy(G, coefs_y, n_coefs_y, i, j, k);
+                    By(i,j,k) += dt * T_Algo::DownwardDy(G, coefs_y, n_coefs_y, i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    Bz(i,j,k) += c2 * dt * T_Algo::DownwardDz(G, coefs_z, n_coefs_z, i, j, k);
+                    Bz(i,j,k) += dt * T_Algo::DownwardDz(G, coefs_z, n_coefs_z, i, j, k);
                 }
             );
         }

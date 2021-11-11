@@ -15,6 +15,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpXComm_K.H"
+#include "WarpXCommUtil.H"
 #include "WarpXSumGuardCells.H"
 
 #include <AMReX.H>
@@ -188,7 +189,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
                 // Copy Bfield_aux to Btmp, using up to ng_src (=ng_FieldGather) guard cells from
                 // Bfield_aux and filling up to ng (=nGrow) guard cells in Btmp
-                Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
+                WarpXCommUtil::ParallelCopy(*Btmp[i], *Bfield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
 #ifdef AMREX_USE_OMP
@@ -245,7 +246,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
                 // Copy Efield_aux to Etmp, using up to ng_src (=ng_FieldGather) guard cells from
                 // Efield_aux and filling up to ng (=nGrow) guard cells in Etmp
-                Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
+                WarpXCommUtil::ParallelCopy(*Etmp[i], *Efield_aux[lev-1][i], 0, 0, 1, ng_src, ng, cperiod);
             }
 
 #ifdef AMREX_USE_OMP
@@ -296,13 +297,16 @@ WarpX::UpdateAuxilaryDataSameType ()
             dBx.setVal(0.0);
             dBy.setVal(0.0);
             dBz.setVal(0.0);
+
             // Guard cells may not be up to date beyond ng_FieldGather
             const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Bfield_aux to the dB MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Bfield_aux and filling up to ng (=nGrow) guard cells in the dB MultiFabs
-            dBx.ParallelCopy(*Bfield_aux[lev-1][0], 0, 0, Bfield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
-            dBy.ParallelCopy(*Bfield_aux[lev-1][1], 0, 0, Bfield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
-            dBz.ParallelCopy(*Bfield_aux[lev-1][2], 0, 0, Bfield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
+
+            WarpXCommUtil::ParallelCopy(dBx, *Bfield_aux[lev-1][0], 0, 0, Bfield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
+            WarpXCommUtil::ParallelCopy(dBy, *Bfield_aux[lev-1][1], 0, 0, Bfield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
+            WarpXCommUtil::ParallelCopy(dBz, *Bfield_aux[lev-1][2], 0, 0, Bfield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
+
             if (Bfield_cax[lev][0])
             {
                 MultiFab::Copy(*Bfield_cax[lev][0], dBx, 0, 0, Bfield_cax[lev][0]->nComp(), ng);
@@ -358,13 +362,15 @@ WarpX::UpdateAuxilaryDataSameType ()
             dEx.setVal(0.0);
             dEy.setVal(0.0);
             dEz.setVal(0.0);
+
             // Guard cells may not be up to date beyond ng_FieldGather
             const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             // Copy Efield_aux to the dE MultiFabs, using up to ng_src (=ng_FieldGather) guard
             // cells from Efield_aux and filling up to ng (=nGrow) guard cells in the dE MultiFabs
-            dEx.ParallelCopy(*Efield_aux[lev-1][0], 0, 0, Efield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
-            dEy.ParallelCopy(*Efield_aux[lev-1][1], 0, 0, Efield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
-            dEz.ParallelCopy(*Efield_aux[lev-1][2], 0, 0, Efield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
+            WarpXCommUtil::ParallelCopy(dEx, *Efield_aux[lev-1][0], 0, 0, Efield_aux[lev-1][0]->nComp(), ng_src, ng, crse_period);
+            WarpXCommUtil::ParallelCopy(dEy, *Efield_aux[lev-1][1], 0, 0, Efield_aux[lev-1][1]->nComp(), ng_src, ng, crse_period);
+            WarpXCommUtil::ParallelCopy(dEz, *Efield_aux[lev-1][2], 0, 0, Efield_aux[lev-1][2]->nComp(), ng_src, ng, crse_period);
+
             if (Efield_cax[lev][0])
             {
                 MultiFab::Copy(*Efield_cax[lev][0], dEx, 0, 0, Efield_cax[lev][0]->nComp(), ng);
@@ -555,14 +561,14 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
         const auto& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Efield_fp[lev][0].get(),Efield_fp[lev][1].get(),Efield_fp[lev][2].get()};
-            amrex::FillBoundary(mf, period);
+            WarpXCommUtil::FillBoundary(mf, period);
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Efield_fp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
-            Efield_fp[lev][0]->FillBoundary(ng, period);
-            Efield_fp[lev][1]->FillBoundary(ng, period);
-            Efield_fp[lev][2]->FillBoundary(ng, period);
+            WarpXCommUtil::FillBoundary(*Efield_fp[lev][0], ng, period);
+            WarpXCommUtil::FillBoundary(*Efield_fp[lev][1], ng, period);
+            WarpXCommUtil::FillBoundary(*Efield_fp[lev][2], ng, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -579,15 +585,15 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
         const auto& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Efield_cp[lev][0].get(),Efield_cp[lev][1].get(),Efield_cp[lev][2].get()};
-            amrex::FillBoundary(mf, cperiod);
+            WarpXCommUtil::FillBoundary(mf, cperiod);
 
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Efield_cp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
-            Efield_cp[lev][0]->FillBoundary(ng, cperiod);
-            Efield_cp[lev][1]->FillBoundary(ng, cperiod);
-            Efield_cp[lev][2]->FillBoundary(ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Efield_cp[lev][0], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Efield_cp[lev][1], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Efield_cp[lev][2], ng, cperiod);
         }
     }
 }
@@ -616,14 +622,15 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
         const auto& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Bfield_fp[lev][0].get(),Bfield_fp[lev][1].get(),Bfield_fp[lev][2].get()};
-            amrex::FillBoundary(mf, period);
+            WarpXCommUtil::FillBoundary(mf, period);
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Bfield_fp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
-            Bfield_fp[lev][0]->FillBoundary(ng, period);
-            Bfield_fp[lev][1]->FillBoundary(ng, period);
-            Bfield_fp[lev][2]->FillBoundary(ng, period);
+
+            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][0], ng, period);
+            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][1], ng, period);
+            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][2], ng, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -640,14 +647,15 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
         const auto& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Bfield_cp[lev][0].get(),Bfield_cp[lev][1].get(),Bfield_cp[lev][2].get()};
-            amrex::FillBoundary(mf, cperiod);
+            WarpXCommUtil::FillBoundary(mf, cperiod);
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Bfield_cp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
-            Bfield_cp[lev][0]->FillBoundary(ng, cperiod);
-            Bfield_cp[lev][1]->FillBoundary(ng, cperiod);
-            Bfield_cp[lev][2]->FillBoundary(ng, cperiod);
+
+            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][0], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][1], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][2], ng, cperiod);
         }
     }
 }
@@ -672,14 +680,14 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
         const auto& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
-            amrex::FillBoundary(mf, period);
+            WarpXCommUtil::FillBoundary(mf, period);
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Efield_avg_fp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
-            Efield_avg_fp[lev][0]->FillBoundary(ng, period);
-            Efield_avg_fp[lev][1]->FillBoundary(ng, period);
-            Efield_avg_fp[lev][2]->FillBoundary(ng, period);
+            WarpXCommUtil::FillBoundary(*Efield_avg_fp[lev][0], ng, period);
+            WarpXCommUtil::FillBoundary(*Efield_avg_fp[lev][1], ng, period);
+            WarpXCommUtil::FillBoundary(*Efield_avg_fp[lev][2], ng, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -692,15 +700,15 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
         const auto& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Efield_avg_cp[lev][0].get(),Efield_avg_cp[lev][1].get(),Efield_avg_cp[lev][2].get()};
-            amrex::FillBoundary(mf, cperiod);
+            WarpXCommUtil::FillBoundary(mf, cperiod);
 
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Efield_avg_cp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
-            Efield_avg_cp[lev][0]->FillBoundary(ng, cperiod);
-            Efield_avg_cp[lev][1]->FillBoundary(ng, cperiod);
-            Efield_avg_cp[lev][2]->FillBoundary(ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Efield_avg_cp[lev][0], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Efield_avg_cp[lev][1], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Efield_avg_cp[lev][2], ng, cperiod);
         }
     }
 }
@@ -725,14 +733,14 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
         const auto& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
-            amrex::FillBoundary(mf, period);
+            WarpXCommUtil::FillBoundary(mf, period);
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Bfield_fp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
-            Bfield_avg_fp[lev][0]->FillBoundary(ng, period);
-            Bfield_avg_fp[lev][1]->FillBoundary(ng, period);
-            Bfield_avg_fp[lev][2]->FillBoundary(ng, period);
+            WarpXCommUtil::FillBoundary(*Bfield_avg_fp[lev][0], ng, period);
+            WarpXCommUtil::FillBoundary(*Bfield_avg_fp[lev][1], ng, period);
+            WarpXCommUtil::FillBoundary(*Bfield_avg_fp[lev][2], ng, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -745,14 +753,14 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
         const auto& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
-            amrex::FillBoundary(mf, cperiod);
+            WarpXCommUtil::FillBoundary(mf, cperiod);
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Bfield_avg_cp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
-            Bfield_avg_cp[lev][0]->FillBoundary(ng, cperiod);
-            Bfield_avg_cp[lev][1]->FillBoundary(ng, cperiod);
-            Bfield_avg_cp[lev][2]->FillBoundary(ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Bfield_avg_cp[lev][0], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Bfield_avg_cp[lev][1], ng, cperiod);
+            WarpXCommUtil::FillBoundary(*Bfield_avg_cp[lev][2], ng, cperiod);
         }
     }
 }
@@ -779,7 +787,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? F_fp[lev]->nGrowVect() : ng;
-            F_fp[lev]->FillBoundary(nghost, period);
+            WarpXCommUtil::FillBoundary(*F_fp[lev], nghost, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -794,7 +802,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev-1).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? F_cp[lev]->nGrowVect() : ng;
-            F_cp[lev]->FillBoundary(nghost, period);
+            WarpXCommUtil::FillBoundary(*F_cp[lev], nghost, period);
         }
     }
 }
@@ -823,7 +831,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? G_fp[lev]->nGrowVect() : ng;
-            G_fp[lev]->FillBoundary(nghost, period);
+            WarpXCommUtil::FillBoundary(*G_fp[lev], nghost, period);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -838,7 +846,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev-1).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? G_cp[lev]->nGrowVect() : ng;
-            G_cp[lev]->FillBoundary(nghost, period);
+            WarpXCommUtil::FillBoundary(*G_cp[lev], nghost, period);
         }
     }
 }
@@ -856,12 +864,12 @@ void
 WarpX::FillBoundaryAux (int lev, IntVect ng)
 {
     const auto& period = Geom(lev).periodicity();
-    Efield_aux[lev][0]->FillBoundary(ng, period);
-    Efield_aux[lev][1]->FillBoundary(ng, period);
-    Efield_aux[lev][2]->FillBoundary(ng, period);
-    Bfield_aux[lev][0]->FillBoundary(ng, period);
-    Bfield_aux[lev][1]->FillBoundary(ng, period);
-    Bfield_aux[lev][2]->FillBoundary(ng, period);
+    WarpXCommUtil::FillBoundary(*Efield_aux[lev][0], ng, period);
+    WarpXCommUtil::FillBoundary(*Efield_aux[lev][1], ng, period);
+    WarpXCommUtil::FillBoundary(*Efield_aux[lev][2], ng, period);
+    WarpXCommUtil::FillBoundary(*Bfield_aux[lev][0], ng, period);
+    WarpXCommUtil::FillBoundary(*Bfield_aux[lev][1], ng, period);
+    WarpXCommUtil::FillBoundary(*Bfield_aux[lev][2], ng, period);
 }
 
 void
@@ -1049,7 +1057,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev);
 
                 MultiFab::Add(jfb, jfc, 0, 0, current_buf[lev+1][idim]->nComp(), ng);
-                mf.ParallelAdd(jfb, 0, 0, current_buf[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
+                WarpXCommUtil::ParallelAdd(mf, jfb, 0, 0, current_buf[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
 
                 WarpXSumGuardCells(*current_cp[lev+1][idim], jfc, period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
@@ -1062,7 +1070,8 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 MultiFab jf(current_cp[lev+1][idim]->boxArray(),
                             current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
                 bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev);
-                mf.ParallelAdd(jf, 0, 0, current_cp[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
+
+                WarpXCommUtil::ParallelAdd(mf, jf, 0, 0, current_cp[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
                 WarpXSumGuardCells(*current_cp[lev+1][idim], jf, period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
             else if (current_buf[lev+1][idim]) // but no filter
@@ -1071,17 +1080,17 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 MultiFab::Add(*current_buf[lev+1][idim],
                                *current_cp [lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
                                current_cp[lev+1][idim]->nGrowVect());
-                mf.ParallelAdd(*current_buf[lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
-                               current_buf[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
-                               period);
+                WarpXCommUtil::ParallelAdd(mf, *current_buf[lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
+                                           current_buf[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
+                                           period);
                 WarpXSumGuardCells(*(current_cp[lev+1][idim]), period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
             else // no filter, no buffer
             {
                 ng_depos_J.min(ng);
-                mf.ParallelAdd(*current_cp[lev+1][idim], 0, 0, current_cp[lev+1][idim]->nComp(),
-                               current_cp[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
-                               period);
+                WarpXCommUtil::ParallelAdd(mf, *current_cp[lev+1][idim], 0, 0, current_cp[lev+1][idim]->nComp(),
+                                           current_cp[lev+1][idim]->nGrowVect(), IntVect::TheZeroVector(),
+                                           period);
                 WarpXSumGuardCells(*(current_cp[lev+1][idim]), period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
             }
             MultiFab::Add(*current_fp[lev][idim], mf, 0, 0, current_fp[lev+1][idim]->nComp(), 0);
@@ -1174,7 +1183,8 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], lev, icomp, 0, ncomp);
 
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);
-            mf.ParallelAdd(rhofb, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
+
+            WarpXCommUtil::ParallelAdd(mf, rhofb, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
             WarpXSumGuardCells( *rho_cp[lev+1], rhofc, period, ng_depos_rho, icomp, ncomp );
         }
         else if (use_filter) // but no buffer
@@ -1184,7 +1194,8 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             ng_depos_rho.min(ng);
             MultiFab rf(rho_cp[lev+1]->boxArray(), rho_cp[lev+1]->DistributionMap(), ncomp, ng);
             bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev, icomp, 0, ncomp);
-            mf.ParallelAdd(rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
+
+            WarpXCommUtil::ParallelAdd(mf, rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
             WarpXSumGuardCells( *rho_cp[lev+1], rf, period, ng_depos_rho, icomp, ncomp );
         }
         else if (charge_buf[lev+1]) // but no filter
@@ -1193,18 +1204,19 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             MultiFab::Add(*charge_buf[lev+1],
                            *rho_cp[lev+1], icomp, icomp, ncomp,
                            rho_cp[lev+1]->nGrowVect());
-            mf.ParallelAdd(*charge_buf[lev+1], icomp, 0,
-                           ncomp,
-                           charge_buf[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
-                           period);
+
+            WarpXCommUtil::ParallelAdd(mf, *charge_buf[lev+1], icomp, 0,
+                                       ncomp,
+                                       charge_buf[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
+                                       period);
             WarpXSumGuardCells(*(rho_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
         else // no filter, no buffer
         {
             ng_depos_rho.min(ng);
-            mf.ParallelAdd(*rho_cp[lev+1], icomp, 0, ncomp,
-                           rho_cp[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
-                           period);
+            WarpXCommUtil::ParallelAdd(mf, *rho_cp[lev+1], icomp, 0, ncomp,
+                                       rho_cp[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
+                                       period);
             WarpXSumGuardCells(*(rho_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
         MultiFab::Add(*rho_fp[lev], mf, 0, icomp, ncomp, 0);
@@ -1222,16 +1234,16 @@ WarpX::NodalSyncJ (int lev, PatchType patch_type)
     if (patch_type == PatchType::fine)
     {
         const auto& period = Geom(lev).periodicity();
-        current_fp[lev][0]->OverrideSync(period);
-        current_fp[lev][1]->OverrideSync(period);
-        current_fp[lev][2]->OverrideSync(period);
+        WarpXCommUtil::OverrideSync(*current_fp[lev][0], period);
+        WarpXCommUtil::OverrideSync(*current_fp[lev][1], period);
+        WarpXCommUtil::OverrideSync(*current_fp[lev][2], period);
     }
     else if (patch_type == PatchType::coarse)
     {
         const auto& cperiod = Geom(lev-1).periodicity();
-        current_cp[lev][0]->OverrideSync(cperiod);
-        current_cp[lev][1]->OverrideSync(cperiod);
-        current_cp[lev][2]->OverrideSync(cperiod);
+        WarpXCommUtil::OverrideSync(*current_cp[lev][0], cperiod);
+        WarpXCommUtil::OverrideSync(*current_cp[lev][1], cperiod);
+        WarpXCommUtil::OverrideSync(*current_cp[lev][2], cperiod);
     }
 }
 
@@ -1244,13 +1256,13 @@ WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
     {
         const auto& period = Geom(lev).periodicity();
         MultiFab rhof(*rho_fp[lev], amrex::make_alias, icomp, ncomp);
-        rhof.OverrideSync(period);
+        WarpXCommUtil::OverrideSync(rhof, period);
     }
     else if (patch_type == PatchType::coarse && rho_cp[lev])
     {
         const auto& cperiod = Geom(lev-1).periodicity();
         MultiFab rhoc(*rho_cp[lev], amrex::make_alias, icomp, ncomp);
-        rhoc.OverrideSync(cperiod);
+        WarpXCommUtil::OverrideSync(rhoc, cperiod);
     }
 }
 
@@ -1278,17 +1290,17 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
 
         // Always synchronize nodal points
         const auto& period = Geom(lev).periodicity();
-        pml_E[0]->OverrideSync(period);
-        pml_E[1]->OverrideSync(period);
-        pml_E[2]->OverrideSync(period);
-        pml_B[0]->OverrideSync(period);
-        pml_B[1]->OverrideSync(period);
-        pml_B[2]->OverrideSync(period);
+        WarpXCommUtil::OverrideSync(*pml_E[0], period);
+        WarpXCommUtil::OverrideSync(*pml_E[1], period);
+        WarpXCommUtil::OverrideSync(*pml_E[2], period);
+        WarpXCommUtil::OverrideSync(*pml_B[0], period);
+        WarpXCommUtil::OverrideSync(*pml_B[1], period);
+        WarpXCommUtil::OverrideSync(*pml_B[2], period);
         if (pml_F) {
-            pml_F->OverrideSync(period);
+            WarpXCommUtil::OverrideSync(*pml_F, period);
         }
         if (pml_G) {
-            pml_G->OverrideSync(period);
+            WarpXCommUtil::OverrideSync(*pml_G, period);
         }
     }
 }
@@ -1301,16 +1313,34 @@ void WarpX::NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>
     for (int lev = 0; lev <= WarpX::finest_level; lev++)
     {
         const amrex::Periodicity& period = Geom(lev).periodicity();
-        mf_fp[lev][0]->OverrideSync(period);
-        mf_fp[lev][1]->OverrideSync(period);
-        mf_fp[lev][2]->OverrideSync(period);
+        WarpXCommUtil::OverrideSync(*mf_fp[lev][0], period);
+        WarpXCommUtil::OverrideSync(*mf_fp[lev][1], period);
+        WarpXCommUtil::OverrideSync(*mf_fp[lev][2], period);
 
         if (lev > 0)
         {
             const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
-            mf_cp[lev][0]->OverrideSync(cperiod);
-            mf_cp[lev][1]->OverrideSync(cperiod);
-            mf_cp[lev][2]->OverrideSync(cperiod);
+            WarpXCommUtil::OverrideSync(*mf_cp[lev][0], cperiod);
+            WarpXCommUtil::OverrideSync(*mf_cp[lev][1], cperiod);
+            WarpXCommUtil::OverrideSync(*mf_cp[lev][2], cperiod);
+        }
+    }
+}
+
+void WarpX::NodalSync (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_fp,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_cp)
+{
+    if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
+
+    for (int lev = 0; lev <= WarpX::finest_level; lev++)
+    {
+        const amrex::Periodicity& period = Geom(lev).periodicity();
+        mf_fp[lev]->OverrideSync(period);
+
+        if (lev > 0)
+        {
+            const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
+            mf_cp[lev]->OverrideSync(cperiod);
         }
     }
 }

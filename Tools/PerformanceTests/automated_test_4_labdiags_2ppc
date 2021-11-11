@@ -53,7 +53,7 @@ electrons.zmin =   0.e-6
 electrons.num_particles_per_cell_each_dim = 1 1 1
 electrons.profile = constant
 electrons.density = 1.
-electrons.momentum_distribution_type = "constant"
+electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
 
 ions.charge = q_e
@@ -67,7 +67,7 @@ ions.zmin =   0.e-6
 ions.num_particles_per_cell_each_dim = 1 1 1
 ions.profile = constant
 ions.density = 1.
-ions.momentum_distribution_type = "constant"
+ions.momentum_distribution_type = "at_rest"
 ions.do_continuous_injection = 1
 
 # Laser

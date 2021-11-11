@@ -40,32 +40,41 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    #BSUB -e err_automated_tests.txt
    #BSUB -o out_automated_tests.txt
 
-   #source $HOME/my_bashrc.sh
-   module load gcc/6.4.0
-   module load ccache
-   module load cmake
-   module load ninja
-   module load cuda
-   module load hdf5/1.10.4
-   module load fftw
-   module load boost/1.66.0
-   module load openblas/0.3.9-omp
-   module load netlib-lapack/3.8.0
+   module load nano
+   module load cmake/3.20.2
+   module load gcc/9.3.0
+   module load cuda/11.0.3
+   module load blaspp/2021.04.01
+   module load lapackpp/2021.04.00
+   module load boost/1.76.0
+   module load adios2/2.7.1
+   module load hdf5/1.10.7
+
+   module unload darshan-runtime
+
+   export AMREX_CUDA_ARCH=7.0
+   export CC=$(which gcc)
+   export CXX=$(which g++)
+   export FC=$(which gfortran)
+   export CUDACXX=$(which nvcc)
+   export CUDAHOSTCXX=$(which g++)
 
    # Make sure all dependencies are installed and loaded
    cd $HOME
-   module load python/3.7.0
+   module load python/3.8.10
+   module load openblas/0.3.5-omp
    export BLAS=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
-   export LAPACK=$OLCF_NETLIB_LAPACK_ROOT/lib64/liblapack.so
+   export LAPACK=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
    python3 -m venv $HOME/sw/venvs/warpx-perftest
    source $HOME/sw/venvs/warpx-perftest/bin/activate
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade cython
-   python3 -m pip install --upgrade numpy==1.19.5
+   python3 -m pip install --upgrade numpy
    python3 -m pip install --upgrade markupsafe
    python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade matplotlib==3.2.2
    python3 -m pip install --upgrade bokeh
    python3 -m pip install --upgrade gitpython
    python3 -m pip install --upgrade tables
