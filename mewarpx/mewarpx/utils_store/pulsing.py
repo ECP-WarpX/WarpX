@@ -48,7 +48,7 @@ def linear_pulse_function(V_off, V_on, pulse_period, pulse_length, t_rise=25e-9,
         parser.
     """
 
-    modT = f"(t-{wait_time})" # f"fmod((t-{wait_time}),{pulse_period})" should insert modulo when supported
+    modT = f"fmod((t-{wait_time}),{pulse_period})"
     p1 = f"({modT}>=0 and {modT}<{t_rise})"
     p2 = f"({modT}>={t_rise} and {modT}<{t_rise+pulse_length})"
     p3 = f"({modT}>={t_rise+pulse_length} and {modT}<{t_rise+pulse_length+t_fall})"

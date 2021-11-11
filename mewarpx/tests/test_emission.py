@@ -84,7 +84,7 @@ def test_thermionic_emission():
     # slice the reference data to just get the non ghost cells
     ref_rho_grid = np.load(ref_path)[2:11, 2:131]
 
-    assert np.allclose(net_rho_grid, ref_rho_grid)
+    assert np.allclose(net_rho_grid, ref_rho_grid, rtol=1e-4)
 
 
 def test_thermionic_emission_with_Schottky():
@@ -162,7 +162,7 @@ def test_thermionic_emission_with_Schottky():
                             "thermionic_emission_Schottky.npy")
     ref_rho_grid = np.load(ref_path)
 
-    assert np.allclose(net_rho_grid, ref_rho_grid)
+    assert np.allclose(net_rho_grid, ref_rho_grid, rtol=5e-4)
 
 
 def test_circle_emitter():

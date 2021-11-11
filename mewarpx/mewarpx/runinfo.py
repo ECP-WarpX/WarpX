@@ -280,10 +280,7 @@ class RunInfo(SimInfo):
                                      f'; assign WF to this shape.'
                     )
                 if mwxrun.me == 0:
-                    if callable(shape.V):
-                        voltage = shape.V(mwxrun.get_t())
-                    else:
-                        voltage = shape.V
+                    voltage = shape.getvoltage()
                     logger.info(
                         f"Saved shape {shape.name} of type {component} "
                         f"with WF {shape.WF} eV and voltage {voltage:.2f} V "

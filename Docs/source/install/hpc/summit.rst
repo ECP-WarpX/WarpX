@@ -74,8 +74,13 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
 
    # optional: for Python bindings or libEnsemble
    module load python/3.8.10
-   module load openblas/0.3.5-omp  # numpy; same as for blaspp & lapackpp
    module load freetype/2.10.4     # matplotlib
+
+   # dependencies for numpy, blaspp & lapackpp
+   module load openblas/0.3.5-omp
+   export BLAS=${OLCF_OPENBLAS_ROOT}/lib/libopenblas.so
+   export LAPACK=${OLCF_OPENBLAS_ROOT}/lib/libopenblas.so
+
    if [ -d "$HOME/sw/venvs/warpx" ]
    then
      source $HOME/sw/venvs/warpx/bin/activate
@@ -115,8 +120,6 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
 
 .. code-block:: bash
 
-   export BLAS=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
-   export LAPACK=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
    python3 -m pip cache purge

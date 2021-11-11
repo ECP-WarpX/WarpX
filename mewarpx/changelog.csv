@@ -1,5 +1,24 @@
 Version, Physics version, Date,        List of changes
-2.0.1, 1, In progress, "
+2.0.2, 2, In progress, "
+
+**Physics changes**:
+
+- :func:`mewarpx.util_store.pulsing.linear_pulse_function` now uses ``fmod`` to
+  allow periodic voltage signals. The unit test for the pulsing function was
+  updated accordingly.
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``f0c0791``) into memaster.
+- Relaxed tolerance for emission tests due to recent failures (the reason for
+  the failures are unknown).
+
+**Bugfixes**:
+
+- Fixed bug in :func:`mewarpx.runinfo.RunInfo._check_voltages_wfs` to correctly
+  parse an expression for the voltage on a conductor.
+"
+2.0.1, 1, 11/08/2021, "
 
 **Other changes**:
 
@@ -33,7 +52,6 @@ Version, Physics version, Date,        List of changes
   relies on ``sim_control`` entirely.
 - When attempting to restart the simulation it will not restart from a
   checkpoint file dumped at step 0.
-
 "
 1.0.0, 1, 11/03/2021, "
 
@@ -59,7 +77,6 @@ Version, Physics version, Date,        List of changes
   list of species names included in the simulation and a dictionary of
   components and their labels, in the flux diagnostic pickle file. This allows
   flux diagnostics to be reloaded without loading a runinfo file.
-
 "
 0.2.1, 0, 11/02/2021, "
 

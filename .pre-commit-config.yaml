@@ -1,0 +1,78 @@
+# To use:
+#
+#     pre-commit run -a
+#
+# Or:
+#
+#     pre-commit install  # (runs every time you commit in git)
+#
+# To update this file:
+#
+#     pre-commit autoupdate
+#
+# See https://pre-commit.com for more information
+
+# Do not check/format anything from third parties
+exclude: '^share/openPMD/thirdParty'
+
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+    - id: trailing-whitespace
+      args: [--markdown-linebreak-ext=md]
+    - id: end-of-file-fixer
+      exclude: '.json$'
+    - id: mixed-line-ending
+    - id: check-toml
+    - id: check-yaml
+    - id: check-added-large-files
+    - id: requirements-txt-fixer
+#  - id: fix-encoding-pragma
+#    exclude: ^noxfile.py$
+
+#- repo: https://github.com/asottile/pyupgrade
+#  rev: v2.29.0
+#  hooks:
+#  - id: pyupgrade
+
+# Changes tabs to spaces
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: v1.1.10
+  hooks:
+  - id: remove-tabs
+    exclude: 'Make.WarpX|Make.package|Makefile|GNUmake'
+
+# CMake formatting
+#- repo: https://github.com/cheshirekow/cmake-format-precommit
+#  rev: v0.6.13
+#  hooks:
+#  - id: cmake-format
+#    additional_dependencies: [pyyaml]
+#    types: [file]
+#    files: (\.cmake|CMakeLists.txt)(.in)?$
+
+# C++ formatting
+# clang-format
+
+# Python Formatting
+#- repo: https://github.com/psf/black
+#  rev: 21.10b0 # Keep in sync with blacken-docs
+#  hooks:
+#  - id: black
+#- repo: https://github.com/asottile/blacken-docs
+#  rev: v1.11.0
+#  hooks:
+#  - id: blacken-docs
+#    additional_dependencies:
+#    - black==21.10b0 # keep in sync with black hook
+
+# Checks the manifest for missing files (native support)
+- repo: https://github.com/mgedmin/check-manifest
+  rev: "0.47"
+  hooks:
+  - id: check-manifest
+    # This is a slow hook, so only run this if --hook-stage manual is passed
+    stages: [manual]
+    additional_dependencies: [cmake, ninja]
