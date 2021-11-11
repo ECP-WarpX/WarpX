@@ -453,6 +453,7 @@ m_u      unified atomic mass unit (Dalton)
 epsilon0 vacuum permittivity
 mu0      vacuum permeability
 clight   speed of light
+kb       Boltzmann's constant
 pi       math constant pi
 ======== ===================
 

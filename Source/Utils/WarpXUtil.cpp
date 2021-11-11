@@ -328,6 +328,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
        {"m_p", PhysConst::m_p},
        {"m_u", PhysConst::m_u},
        {"pi", MathConst::pi},
+       {"kb", PhysConst::kb}
       };
 
     for (auto it = symbols.begin(); it != symbols.end(); ) {
