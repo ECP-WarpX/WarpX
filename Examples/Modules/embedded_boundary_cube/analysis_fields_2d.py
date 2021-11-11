@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import yt
+import os
 import sys
 from scipy.constants import mu_0, pi, c
 import numpy as np
@@ -54,6 +55,6 @@ By_sim = data['By'].to_ndarray()
 rel_err_y = np.sqrt(np.sum(np.square(By_sim - By_th)) / np.sum(np.square(By_th)))
 assert (rel_err_y < rel_tol_err)
 
-test_name = filename[:-9]
+test_name = os.path.split(os.getcwd())[1]
 
 checksumAPI.evaluate_checksum(test_name, filename)
