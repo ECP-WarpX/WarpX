@@ -74,10 +74,11 @@ setuptools.setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    # entry_points={
-    #     'console_scripts': [
-    #     ]
-    # },
+    entry_points={
+        'console_scripts': [
+            "profile_parser = mewarpx.utils_store.profileparser:entry"
+        ]
+    },
     #
     # test_suite='tests',
     # tests_require=[],

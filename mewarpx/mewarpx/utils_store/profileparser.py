@@ -166,7 +166,8 @@ def main(stdout_path, write_dir=None):
     full_profile.parse_full_profiling_output()
     full_profile.write_file()
 
-if __name__ == "__main__":
+def entry():
+    """Reads command line arguments and passes to main(), called as an entry point"""
     parser = argparse.ArgumentParser()
     parser.add_argument("stdout_path", type=str, metavar="stdout_path", help="The path to the stdout file")
     parser.add_argument(
@@ -179,3 +180,7 @@ if __name__ == "__main__":
     write_dir = args["write_dir"]
 
     main(path, write_dir)
+
+
+if __name__ == "__main__":
+    entry()

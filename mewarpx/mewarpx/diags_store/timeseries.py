@@ -265,14 +265,14 @@ class Timeseries(object):
         """
         if new_dt < self.dt:
             raise ValueError(
-                "new_dt must be greater or equal to existing dt."
+                f"new_dt ({new_dt}) must be greater or equal to existing dt ({self.dt})."
             )
 
         dt_factor = int(round(new_dt / self.dt))
 
         if not np.isclose(new_dt / self.dt, dt_factor):
             raise ValueError(
-                "new_dt must be a multiple of existing dt."
+                f"new_dt ({new_dt}) must be a multiple of existing dt ({self.dt})."
             )
 
         if dt_factor == 1:
