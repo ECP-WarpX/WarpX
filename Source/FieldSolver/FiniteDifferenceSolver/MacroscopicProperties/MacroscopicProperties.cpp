@@ -119,10 +119,10 @@ MacroscopicProperties::InitData ()
     amrex::Print() << "we are in init data of macro \n";
     auto & warpx = WarpX::GetInstance();
 
-    // Get BoxArray and DistributionMap of warpx instant.
+    // Get BoxArray and DistributionMap of warpx instance.
     int lev = 0;
-    BoxArray ba = warpx.boxArray(lev);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
+    amrex::BoxArray ba = warpx.boxArray(lev);
+    amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     const amrex::IntVect ng_EBSolver = warpx.getngE();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
@@ -194,15 +194,15 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                        amrex::ParserExecutor<3> const& macro_parser,
                        const int lev)
 {
-    auto& warpx = WarpX::GetInstance();
-    const auto dx_lev = warpx.Geom(lev).CellSizeArray();
-    const RealBox& real_box = warpx.Geom(lev).ProbDomain();
-    IntVect iv = macro_mf->ixType().toIntVect();
-    for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+    WarpX& warpx = WarpX::GetInstance();
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
+    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    amrex::IntVect iv = macro_mf->ixType().toIntVect();
+    for ( amrex::MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 
-        const Box& tb = mfi.tilebox( iv, macro_mf->nGrowVect());
-        auto const& macro_fab =  macro_mf->array(mfi);
+        const amrex::Box& tb = mfi.tilebox( iv, macro_mf->nGrowVect());
+        amrex::Array4<amrex::Real> const& macro_fab =  macro_mf->array(mfi);
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift x, y, z position based on index type
