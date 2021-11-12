@@ -78,7 +78,7 @@ cd picsar && git checkout --detach 7b5449f92a4b30a095cc4a67f0a8b1fc69680e15 && c
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
 # Clone the AMReX regression test utility
-git clone https://github.com/ECP-WarpX/regression_testing.git
+git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
