@@ -216,6 +216,11 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB
+
+#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_2D))
+    amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
+
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
@@ -305,6 +310,11 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     const int lev, amrex::Real const dt ) {
 #ifdef AMREX_USE_EB
+
+#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_2D))
+    amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
+
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
 
     Venl[0]->setVal(0.);
