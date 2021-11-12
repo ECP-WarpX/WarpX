@@ -287,4 +287,3 @@ if plot_particle_evolution is not None:
     zbar, xstd = reduce_evolved_quantity(zbar, xstd)
     if rank == 0:
         plot_particle_evolved_quantity(zbar, xstd)
-

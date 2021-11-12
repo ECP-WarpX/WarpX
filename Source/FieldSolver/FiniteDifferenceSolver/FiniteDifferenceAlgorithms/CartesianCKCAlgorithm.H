@@ -132,19 +132,15 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if (defined WARPX_DIM_1D_Z)
-        amrex::ignore_unused(F, coefs_x,
-            i, j, k, ncomp);
-        return 0._rt; // 1D Cartesian: derivative along x is 0
-#else
+#if (defined WARPX_DIM_3D || WARPX_DIM_XZ)
         amrex::Real const alphax = coefs_x[1];
+        amrex::Real const betaxz = coefs_x[3];
+#endif
 #if defined WARPX_DIM_3D
         amrex::Real const betaxy = coefs_x[2];
-#endif
-        amrex::Real const betaxz = coefs_x[3];
-#if defined WARPX_DIM_3D
         amrex::Real const gammax = coefs_x[4];
 #endif
+
 #if defined WARPX_DIM_3D
         return alphax * (F(i+1,j  ,k  ,ncomp) - F(i,  j,  k  ,ncomp))
              + betaxy * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
@@ -159,8 +155,10 @@ struct CartesianCKCAlgorithm {
         return alphax * (F(i+1,j  ,k  ,ncomp) - F(i,  j,  k  ,ncomp))
              + betaxz * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k  ,ncomp) - F(i  ,j-1,k  ,ncomp));
+#elif (defined WARPX_DIM_1D_Z)
+        amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
+        return 0._rt; // 1D Cartesian: derivative along x is 0
 #endif
-#endif //1D
     }
 
     /**
@@ -174,8 +172,7 @@ struct CartesianCKCAlgorithm {
 
         using namespace amrex;
 #if (defined WARPX_DIM_1D_Z)
-        amrex::ignore_unused(F, coefs_x,
-            i, j, k, ncomp);
+        amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
         return 0._rt; // 1D Cartesian: derivative along x is 0
 #else
         amrex::Real const inv_dx = coefs_x[0];

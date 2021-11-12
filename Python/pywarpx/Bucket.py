@@ -67,4 +67,3 @@ class Bucket(object):
             attrstring = '{0}.{1} = {2}'.format(self.instancename, attr, repr(rhs).strip("'\""))
             result += [attrstring]
         return result
-
