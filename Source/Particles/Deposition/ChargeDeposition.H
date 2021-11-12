@@ -18,7 +18,7 @@
 
 #include <AMReX.H>
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void addLocalToGlobal (const amrex::Box& bx,
                        const amrex::Array4<amrex::Real>& global,
@@ -77,7 +77,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 {
     using namespace amrex;
 
-#if !defined(AMREX_USE_GPU)
+#if !(defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP))
     amrex::ignore_unused(ix_type, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
 #endif
 
@@ -120,7 +120,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     }
 #endif
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     const auto dxiarr = geom.InvCellSizeArray();
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
@@ -149,15 +149,15 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     ignore_unused(np_to_deposit);
 #endif
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     amrex::launch(
                   nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
                   [=] AMREX_GPU_DEVICE () noexcept
-#else // defined(AMREX_USE_GPU)
+#else // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     amrex::ParallelFor(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip) noexcept
 #endif
       {
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];
         const unsigned int bin_stop = offsets_ptr[bin_id+1];
@@ -197,9 +197,9 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
 #else
         amrex::Array4<amrex::Real> const &rho_tmp = rho_arr;
-#endif // defined(AMREX_USE_GPU)
+#endif // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         for (unsigned int ip = bin_start + threadIdx.x; ip < bin_stop; ip += blockDim.x)
 #endif
         {
@@ -307,11 +307,11 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
         }
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
           __syncthreads();
 
           addLocalToGlobal(tbx, rho_arr, rho_tmp);
-#endif // defined(AMREX_USE_GPU)
+#endif // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
       }
       );
 #if defined(WARPX_USE_GPUCLOCK)
