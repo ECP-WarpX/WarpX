@@ -583,13 +583,12 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-#if (AMREX_SPACEDIM > 1)
-            const Real inv_dx = 1._rt/dx[0];
-#endif
 #if (AMREX_SPACEDIM == 3)
+            const Real inv_dx = 1._rt/dx[0];
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
 #elif (AMREX_SPACEDIM == 2)
+            const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
 #else
             const Real inv_dz = 1._rt/dx[0];
@@ -701,13 +700,12 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-#if (AMREX_SPACEDIM > 1)
-            const Real inv_dx = 1._rt/dx[0];
-#endif
 #if (AMREX_SPACEDIM == 3)
+            const Real inv_dx = 1._rt/dx[0];
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
 #elif (AMREX_SPACEDIM == 2)
+            const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
 #else
             const Real inv_dz = 1._rt/dx[0];

@@ -8,11 +8,10 @@ DEBUG = FALSE
 WARN_ALL = TRUE
 #WARN_ERROR=TRUE
 
-DIM  = 2
-#DIM = 3
-#DIM = 1
+#DIM  = 2
+DIM = 3
 
-QED	       = FALSE
+QED	       = TRUE
 #QED_TABLE_GEN = TRUE
 
 COMP = gcc

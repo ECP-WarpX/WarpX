@@ -38,7 +38,6 @@ wavelength = 1.*um
 w0 = 5.*um
 tt = 10.*fs
 t_c = 24.*fs
-# foc_dist = 13.109*um (not actually used)
 E_max = 4e12
 
 # laser direction

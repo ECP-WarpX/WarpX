@@ -652,7 +652,6 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     for (int i = 0; i < N_slice_snapshots; ++i) {
 
-        //IntVect slice_ncells_lab ;
 
         // To construct LabFrameSlice(), the location of lo() and hi() of the
         // reduced diag is computed using the user-defined values of the

@@ -276,7 +276,7 @@ struct CartesianCKCAlgorithm {
              + betazx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
                       +  F(i-1,j+1,k  ,ncomp) - F(i-1,j  ,k  ,ncomp));
 #elif (defined WARPX_DIM_1D_Z)
-        return alphaz * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp));
+        return alphaz * (F(i+1  ,j,k  ,ncomp) - F(i  ,j  ,k  ,ncomp));
 #endif
     }
 

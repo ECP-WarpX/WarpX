@@ -165,9 +165,9 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen_local.z; ++iz){
             for     (int iy=0; iy < slen_local.y; ++iy){
                 for (int ix=0; ix < slen_local.x; ++ix){
-                    Real sss = sx[ix]*sz[iy];
-                    d += sss*( tmp(i-ix,j,k,scomp+n)
-                              +tmp(i+ix,j,k,scomp+n));
+                    Real sss = sz[iy];
+                    d += sss*( src_zeropad(i-ix,j,k,scomp+n)
+                              +src_zeropad(i+ix,j,k,scomp+n));
                 }
             }
         }

@@ -254,10 +254,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                     Bx(i,j,k) = coef1_z * Bx(i,j,k) + coef2_z * Ey(i,j+1,k);
 #elif WARPX_DIM_1D_Z
                 // At the +z boundary (innermost guard cell)
-                if ( apply_hi_z && ( i==domain_box.bigEnd(1)+1 ) )
+                if ( apply_hi_z && ( i==domain_box.bigEnd(0)+1 ) )
                     Bx(i,j,k) = coef1_z * Bx(i,j,k) - coef2_z * Ey(i,j,k);
                 // At the -z boundary (innermost guard cell)
-                if ( apply_lo_z && ( i==domain_box.smallEnd(1)-1 ) )
+                if ( apply_lo_z && ( i==domain_box.smallEnd(0)-1 ) )
                     Bx(i,j,k) = coef1_z * Bx(i,j,k) + coef2_z * Ey(i+1,j,k);
 #endif
             },
@@ -289,10 +289,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                     By(i,j,k) = coef1_z * By(i,j,k) - coef2_z * Ex(i,j+1,k);
 #elif WARPX_DIM_1D_Z
                 // At the +z boundary (innermost guard cell)
-                if ( apply_hi_z && ( i==domain_box.bigEnd(1)+1 ) )
+                if ( apply_hi_z && ( i==domain_box.bigEnd(0)+1 ) )
                     By(i,j,k) = coef1_z * By(i,j,k) + coef2_z * Ex(i,j,k);
                 // At the -z boundary (innermost guard cell)
-                if ( apply_lo_z && ( i==domain_box.smallEnd(1)-1 ) )
+                if ( apply_lo_z && ( i==domain_box.smallEnd(0)-1 ) )
                     By(i,j,k) = coef1_z * By(i,j,k) - coef2_z * Ex(i+1,j,k);
 #endif
             },

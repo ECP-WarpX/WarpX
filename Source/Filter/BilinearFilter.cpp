@@ -90,6 +90,7 @@ void BilinearFilter::ComputeStencils(){
     slen.z = 1;
 #endif
 #if (AMREX_SPACEDIM == 1)
-    slen.z = 0;
+    slen.y = 1;
+    slen.z = 1;
 #endif
 }
