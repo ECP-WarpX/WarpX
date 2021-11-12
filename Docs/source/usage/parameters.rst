@@ -454,6 +454,7 @@ epsilon0 vacuum permittivity
 mu0      vacuum permeability
 clight   speed of light
 pi       math constant pi
+kb       Boltzmann constant (J/K)
 ======== ===================
 
 See ``Source/Utils/WarpXConst.H`` for the values.
@@ -515,7 +516,7 @@ Particle initialization
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species.
-    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"`` and ``"copper"``.
+    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"``, ``"argon"``, ``"copper"`` and ``"xenon"``.
     Either this or both ``mass`` and ``charge`` have to be specified.
 
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)

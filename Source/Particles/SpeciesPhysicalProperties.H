@@ -18,7 +18,7 @@
 #include <string>
 
 enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen, helium, boron,
-                            carbon, nitrogen, oxygen, copper};
+                            carbon, nitrogen, oxygen, argon, copper, xenon};
 
 namespace species
 {
@@ -49,8 +49,12 @@ namespace species
             return PhysicalSpecies::nitrogen;
         if( species=="oxygen" )
             return PhysicalSpecies::oxygen;
+        if( species=="argon" )
+            return PhysicalSpecies::argon;
         if( species=="copper" )
             return PhysicalSpecies::copper;
+        if( species=="xenon" )
+            return PhysicalSpecies::xenon;
         amrex::Abort("unknown PhysicalSpecies");
         return PhysicalSpecies::unspecified;
     }
@@ -79,8 +83,12 @@ namespace species
             return PhysConst::q_e * amrex::Real(7.0);
         case PhysicalSpecies::oxygen:
             return PhysConst::q_e * amrex::Real(8.0);
+        case PhysicalSpecies::argon:
+            return PhysConst::q_e * amrex::Real(18.0);
         case PhysicalSpecies::copper:
             return PhysConst::q_e * amrex::Real(29.0);
+        case PhysicalSpecies::xenon:
+            return PhysConst::q_e * amrex::Real(54.0);
         default:
             amrex::Abort("unknown PhysicalSpecies");
             return 0.;
@@ -111,8 +119,12 @@ namespace species
             return PhysConst::m_e * amrex::Real(25716.9);
         case PhysicalSpecies::oxygen:
             return PhysConst::m_p * amrex::Real(15.8834);
+        case PhysicalSpecies::argon:
+            return PhysConst::m_p * amrex::Real(39.9480);
         case PhysicalSpecies::copper:
             return PhysConst::m_p * amrex::Real(63.0864);
+        case PhysicalSpecies::xenon:
+            return PhysConst::m_p * amrex::Real(131.293);
         default:
             amrex::Abort("unknown PhysicalSpecies");
             return 0.;
@@ -143,8 +155,12 @@ namespace species
             return "nitrogen";
         case PhysicalSpecies::oxygen:
             return "oxygen";
+        case PhysicalSpecies::argon:
+            return "argon";
         case PhysicalSpecies::copper:
             return "copper";
+        case PhysicalSpecies::xenon:
+            return "xenon";
         default:
             amrex::Abort("unknown PhysicalSpecies");
             return "";
