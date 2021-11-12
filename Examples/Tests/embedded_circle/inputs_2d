@@ -2,7 +2,7 @@
 # the center of the grid domain, pre -seeded with equal density of argon ions
 # and electrons.
 
-max_step = 1
+max_step = 10
 warpx.const_dt = 3.99e-13
 warpx.do_electrostatic = labframe
 warpx.self_fields_required_precision = 1e-06
@@ -10,8 +10,13 @@ warpx.eb_implicit_function = -((x-0.00005)**2+(z-0.00005)**2-1e-05**2)
 warpx.eb_potential(x,y,z,t) = -10
 warpx.self_fields_absolute_tolerance = 0.02
 
+algo.load_balance_intervals = 3
+algo.load_balance_efficiency_ratio_threshold = 1.01
+algo.load_balance_with_sfc = 0
+algo.load_balance_knapsack_factor = 2
+
 amr.n_cell = 128 128
-amr.max_grid_size = 32
+amr.max_grid_size = 16
 amr.max_level = 0
 geometry.coord_sys = 0
 geometry.prob_lo = 0.0 0.0
