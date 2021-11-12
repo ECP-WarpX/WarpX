@@ -269,9 +269,11 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
 #ifdef WARPX_DIM_XZ
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j + 1, k) * lx(i, j + 1, k) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
-#else
+#elif defined(WARPX_DIM_3D)
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
+#else
+                amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
             },
 
@@ -378,10 +380,12 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         ip = i + vec(0);
                         jp = j + vec(1);
                         kp = k;
-#else
+#elif defined(WARPX_DIM_3D)
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
+#else
+                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
                     }else{
                         ip = i + vec(0);
@@ -408,10 +412,12 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         ip = i + vec(0);
                         jp = j + vec(1);
                         kp = k;
-#else
+#elif defined(WARPX_DIM_3D)
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
+#else
+                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
                     }else{
                         ip = i + vec(0);
