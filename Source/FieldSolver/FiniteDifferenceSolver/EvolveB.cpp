@@ -217,7 +217,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB
 
-#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_2D))
+#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
     amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
 
@@ -313,7 +313,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     const int lev, amrex::Real const dt ) {
 #ifdef AMREX_USE_EB
 
-#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_2D))
+#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
     amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
 
