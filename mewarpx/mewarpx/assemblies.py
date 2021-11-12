@@ -123,6 +123,20 @@ class Assembly(object):
         # loop over species and get the scraped particle data from the buffer
         for species in mwxrun.simulation.species:
             data = np.zeros(7)
+            data[0] = mwxrun.get_t()
+            data[1] = mwxrun.get_it()
+            data[2] = species.species_number
+            data[3] = self.getvoltage_e()
+
+            # When pre-seeding a simulation with plasma we inject particles over
+            # embedded boundaries which causes the first scraping step to
+            # show very large currents. For this reason we skip that first step
+            # but note that we inject after the first step so we need to skip
+            # scraping step 2.
+            if data[1] == 2:
+                self.append_scrapedparticles(data)
+                continue
+
             empty = True
             idx_list = []
 
@@ -176,10 +190,6 @@ class Assembly(object):
 
                     idx_list = temp_idx_list
 
-            data[0] = mwxrun.get_t()
-            data[1] = mwxrun.get_it()
-            data[2] = species.species_number
-            data[3] = self.getvoltage_e()
             if not empty:
                 data[4] = sum(np.size(idx) for idx in idx_list)
                 w_arrays = _libwarpx.get_particle_boundary_buffer(

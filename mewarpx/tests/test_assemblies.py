@@ -283,8 +283,8 @@ def test_two_embedded_cylinders_scraping():
         # This gives equal spacing in x & z
         PERIOD=D_CA * NX / NZ,
         DT=1e-9,
-        TOTAL_TIMESTEPS=2,
-        DIAG_STEPS=2,
+        TOTAL_TIMESTEPS=4,
+        DIAG_STEPS=4,
         FIELD_DIAG_DATA_LIST=['phi'],
     )
     # Only the functions we change from defaults are listed here
@@ -345,8 +345,8 @@ def test_two_embedded_cylinders_scraping():
     cylinder2.record_scrapedparticles()
     cyl2_scraped = cylinder2.get_scrapedparticles()
 
-    assert np.all(cyl1_scraped['n'] == 48)
-    assert np.all(cyl2_scraped['n'] == 42)
+    assert np.allclose(cyl1_scraped['n'], np.array([3, 38]))
+    assert np.allclose(cyl2_scraped['n'], np.array([1, 48]))
 
     #######################################################################
     # Check rho results against reference data                            #

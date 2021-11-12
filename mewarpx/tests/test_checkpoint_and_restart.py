@@ -72,7 +72,9 @@ def test_create_checkpoints():
 
     run = get_run()
 
-    checkpoint = CheckPointDiagnostic(DIAG_STEPS, CHECKPOINT_NAME)
+    checkpoint = CheckPointDiagnostic(
+        DIAG_STEPS, CHECKPOINT_NAME, clear_old_checkpoints=False
+    )
 
     mwxrun.init_run(restart=False)
 
@@ -87,6 +89,47 @@ def test_create_checkpoints():
     for name in checkpoint_names:
         print(f"Looking for checkpoint file 'diags/{name}'...")
         assert os.path.isdir(os.path.join("diags", name))
+
+
+def test_create_checkpoints_with_fluxdiag():
+
+    mwxutil.init_libwarpx(ndim=2, rz=False)
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
+    from mewarpx.utils_store import testing_util
+
+    testing_util.initialize_testingdir("test_create_checkpoints_with_fluxdiag")
+
+    # use a fixed random seed
+    np.random.seed(47239475)
+
+    run = get_run()
+
+    run.init_injectors()
+
+    checkpoint = CheckPointDiagnostic(
+        DIAG_STEPS, CHECKPOINT_NAME, clear_old_checkpoints=True
+    )
+
+    mwxrun.init_run(restart=False)
+
+    run.init_runinfo()
+    run.init_fluxdiag()
+
+    checkpoint.flux_diag = run.fluxdiag
+
+    # Run the main WARP loop
+    mwxrun.simulation.step(MAX_STEPS)
+
+    checkpoint_names = [
+        f"{CHECKPOINT_NAME}{i:05}"
+        for i in range(DIAG_STEPS, MAX_STEPS + 1, DIAG_STEPS)
+    ]
+
+    for name in checkpoint_names:
+        print(f"Looking for checkpoint file 'diags/{name}'...")
+        assert os.path.isdir(os.path.join("diags", name))
+    assert os.path.isfile("diags/checkpoint00004/fluxdata.ckpt")
 
 
 @pytest.mark.parametrize("force, files_exist",

@@ -1,6 +1,5 @@
 import collections
 import copy
-import warnings
 import os
 import logging
 
@@ -667,7 +666,6 @@ class FluxDiagnostic(FluxDiagBase):
             ]
 
         # Initialize other variables
-        # Note that at present, last_run_step is only updated for processor 0.
         self.last_run_step = 0
 
         super(FluxDiagnostic, self).__init__(
@@ -810,10 +808,10 @@ class FluxDiagnostic(FluxDiagBase):
                     ('Step %d: Net current exceeds 1000 A/cm^2, which is almost'
                      ' definitely an error.') % mwxrun.get_it()
                 )
-            warnings.warn(
-                ('Step %d: Net current (%.3f A/cm^2) exceeds 0.5 A/cm^2, which '
-                 'likely indicates a violation of the CFL condition.')
-                % (mwxrun.get_it(), net_current)
+            logger.warning(
+                f"Step {mwxrun.get_it()}: Net current ({net_current:.3f} "
+                "A/cm^2) exceeds 0.5 A/cm^2, which likely indicates a "
+                "violation of the CFL condition."
             )
 
     def _load_checkpoint_flux(self):
@@ -827,8 +825,7 @@ class FluxDiagnostic(FluxDiagBase):
 
         # get the flux diag file for the current step
         flux_diag_file = os.path.join(
-            mwxrun.checkpoint_dir, self.FLUX_DIAG_DIR,
-            f"fluxdata_{restart_step:010}.dpkl"
+            mwxrun.checkpoint_dir, mwxrun.checkpoint, f"fluxdata.ckpt"
         )
         # throw an error if flux diag file does not exist
         if not os.path.isfile(flux_diag_file):
@@ -845,6 +842,7 @@ class FluxDiagnostic(FluxDiagBase):
         old_fluxdiag = FluxDiagFromFile(fluxdatafile=flux_diag_file)
         self.fullhist_dict = old_fluxdiag.fullhist_dict
         self.last_run_step = restart_step
+        self.history_dt = list(self.fullhist_dict.values())[0].dt
 
 
 class FluxCalcDataframe(timeseries.Timeseries):

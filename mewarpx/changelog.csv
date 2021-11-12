@@ -1,5 +1,23 @@
 Version, Physics version, Date,        List of changes
-2.0.2, 2, In progress, "
+2.0.3, 2, In progress, "
+
+**Other changes**:
+
+- Flux diagnostic data will be copied to checkpoint folders in order to ensure
+  that the flux data loaded during a restart comes from the appropriate
+  simulation step.
+- The particles scraped on the first step after standard pre-seed plasma
+  injection will no longer be counted by the flux diagnostic. Due to this change
+  reference values for the ``test_two_embedded_cylinders_scraping`` test had to
+  be updated.
+- Merge ``upstream/development`` (git hash ``b0c2c42``) into memaster.
+
+**Bugfixes**:
+
+- Fix bug in reloading the full flux history from a restart where the value of
+  ``history_dt`` was not properly set.
+"
+2.0.2, 2, 11/11/2021, "
 
 **Physics changes**:
 

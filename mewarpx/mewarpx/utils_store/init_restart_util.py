@@ -3,6 +3,7 @@ Utility functions to start a run from a checkpoint or restart.
 """
 import os
 import shutil
+import glob
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,31 +11,43 @@ logger = logging.getLogger(__name__)
 
 default_checkpoint_name = "checkpoint"
 
-def clean_old_checkpoints(prefix=default_checkpoint_name, directory="diags"):
-    if os.path.isdir(directory):
-        for d in next(os.walk(directory))[1]:
-            if d.startswith(prefix):
-                print(f"Removing old checkpoint file {d}")
-                shutil.rmtree(os.path.join(directory, d))
+def clean_old_checkpoints(prefix=default_checkpoint_name, directory="diags",
+                          num_to_keep=0):
+    """
+    Utility function to remove old checkpoints.
+
+    Arguments:
+        prefix (str): Name of the checkpoint directories.
+        directory (str): Look in this directory for checkpoint directories.
+        num_to_keep (int): Keep this many of the newest checkpoints.
+    """
+    # handle the case where num_to_keep is 0 or None
+    if not num_to_keep:
+        num_to_keep = None
+    else:
+        num_to_keep *= -1
+    checkpoints = sorted(glob.glob(os.path.join(directory, f"{prefix}*")))
+    for d in checkpoints[:num_to_keep]:
+        logger.info(f"Removing old checkpoint file {d}")
+        shutil.rmtree(d)
 
 def run_restart(checkpoint_directory="diags",
                 checkpoint_prefix=default_checkpoint_name,
                 force=False, additional_steps=None):
-    '''
-    Attempts to restart a run by looking for checkpoint files
+    """Attempts to restart a run by looking for checkpoint files
     starting with a prefix in the given directory.
 
     Arguments:
-        checkpoint_directory (string): Look in this directory for checkpoint
+        checkpoint_directory (str): Look in this directory for checkpoint
             directories. Default is ``diags``.
-        checkpoint_prefix (string): Look for a checkpoint directory starting
+        checkpoint_prefix (str): Look for a checkpoint directory starting
             with this prefix to restart from.
         force (bool): If true, a problem with restarting from a checkpoint will
             cause an error, otherwise simply print a warning.
         additional_steps (int): The number of steps to run after restarting from
             the checkpoint. If this is None then it will run to the current
             value of mwxrun.simulation.max_steps.
-    '''
+    """
     # import must be done here to avoid a circular import
     from mewarpx.mwxrun import mwxrun
 
