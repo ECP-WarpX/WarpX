@@ -40,11 +40,16 @@ WarpX::SetNeigh(const amrex::Array4<T>& arr, const T val,
 
     if(dim == 0){
         arr(i, j + i_n, k + j_n) = val;
+        return;
     }else if(dim == 1){
         arr(i + i_n, j, k + j_n) = val;
+        return;
     }else if(dim == 2){
         arr(i + i_n, j + j_n, k) = val;
+        return;
     }
+
+    amrex::Abort("SetNeigh: dim must be 0, 1 or 2");
 
 }
 
@@ -62,8 +67,6 @@ WarpX::ComputeSStab(const int i, const int j, const int k,
     const amrex::Real dx = cell_size[0];
     const amrex::Real dy = cell_size[1];
     const amrex::Real dz = cell_size[1];
-
-    amrex::Real S_stab;
 
     if(dim == 0) {
         return 0.5 * std::max({ly(i, j, k) * dz,
@@ -258,8 +261,8 @@ WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Re
 
     for(int i_loc = 0; i_loc <= 2; i_loc++){
         for(int j_loc = 0; j_loc <= 2; j_loc++){
-            local_avail(i_loc, j_loc) = (GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim) == 1
-                                         || GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim) == 2);
+            auto flag = GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim);
+            local_avail(i_loc, j_loc) = flag == 1 || flag == 2;
         }
     }
 
@@ -341,77 +344,76 @@ WarpX::ComputeOneWayExtensions() {
 
             vecs_size = amrex::Scan::PrefixSum<int>(ncells,
                                                     [=] AMREX_GPU_DEVICE (int icell) {
-                    const amrex::Dim3 cell = box.atOffset(icell).dim3();
-                    const int i = cell.x;
-                    const int j = cell.y;
-                    const int k = cell.z;
-                    // If the face doesn't need to be extended break the loop
-                    if (!flag_ext_face(i, j, k)) {
-                        return 0;
-                    }
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
+                // If the face doesn't need to be extended break the loop
+                if (!flag_ext_face(i, j, k)) {
+                    return 0;
+                }
 
-                    amrex::Real S_stab;
+                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
 
-                    amrex::Real Sz_ext = S_stab - S(i, j, k);
-                    const int n_borrow =
-                        ComputeNBorrowOneFaceExtension(cell, Sz_ext, S_mod, flag_info_face,
-                                                       flag_ext_face, idim);
+                amrex::Real S_ext = S_stab - S(i, j, k);
+                const int n_borrow =
+                    ComputeNBorrowOneFaceExtension(cell, S_ext, S_mod, flag_info_face,
+                                                   flag_ext_face, idim);
 
 
-                  borrowing_size(i, j, k) = n_borrow;
-                    return n_borrow;
-                },
-                                                    [=] AMREX_GPU_DEVICE (int icell, int ps){
-                    const amrex::Dim3 cell = box.atOffset(icell).dim3();
-                    const int i = cell.x;
-                    const int j = cell.y;
-                    const int k = cell.z;
-                    const int nborrow = borrowing_size(i, j, k);
-                    if (nborrow == 0) {
-                        borrowing_inds_pointer(i, j, k) = nullptr;
-                    } else{
-                        borrowing_inds_pointer(i, j, k) = borrowing_inds + ps;
+              borrowing_size(i, j, k) = n_borrow;
+                return n_borrow;
+            },
+                                                [=] AMREX_GPU_DEVICE (int icell, int ps){
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
+                const int nborrow = borrowing_size(i, j, k);
+                if (nborrow == 0) {
+                    borrowing_inds_pointer(i, j, k) = nullptr;
+                } else{
+                    borrowing_inds_pointer(i, j, k) = borrowing_inds + ps;
 
-                        amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
+                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
 
-                        amrex::Real S_ext = S_stab - S(i, j, k);
-                        for (int i_n = -1; i_n < 2; i_n++) {
-                            for (int j_n = -1; j_n < 2; j_n++) {
-                                //This if makes sure that we don't visit the "diagonal neighbours"
-                                if( !(i_n == j_n || i_n == -j_n)){
-                                    // Here a face is available if it doesn't need to be extended itself and if its
-                                    // area exceeds Sz_ext. Here we need to take into account if the intruded face
-                                    // has given away already some area, so we use Sz_red rather than Sz.
-                                    // If no face is available we don't do anything and we will need to use the
-                                    // multi-face extensions.
-                                    if (GetNeigh(S_mod, i, j, k, i_n, j_n, idim) > S_ext
-                                        && (GetNeigh(flag_info_face, i, j, k, i_n, j_n, idim) == 1
-                                             || GetNeigh(flag_info_face, i, j, k, i_n, j_n, idim) == 2)
-                                        && flag_ext_face(i, j, k)) {
+                    amrex::Real S_ext = S_stab - S(i, j, k);
+                    for (int i_n = -1; i_n < 2; i_n++) {
+                        for (int j_n = -1; j_n < 2; j_n++) {
+                            //This if makes sure that we don't visit the "diagonal neighbours"
+                            if( !(i_n == j_n || i_n == -j_n)){
+                                // Here a face is available if it doesn't need to be extended itself and if its
+                                // area exceeds Sz_ext. Here we need to take into account if the intruded face
+                                // has given away already some area, so we use Sz_red rather than Sz.
+                                // If no face is available we don't do anything and we will need to use the
+                                // multi-face extensions.
+                                if (GetNeigh(S_mod, i, j, k, i_n, j_n, idim) > S_ext
+                                    && (GetNeigh(flag_info_face, i, j, k, i_n, j_n, idim) == 1
+                                         || GetNeigh(flag_info_face, i, j, k, i_n, j_n, idim) == 2)
+                                    && flag_ext_face(i, j, k)) {
 
-                                        SetNeigh(S_mod,
-                                                 GetNeigh(S_mod, i, j, k, i_n, j_n, idim) - S_ext,
-                                                 i, j, k, i_n, j_n, idim);
+                                    SetNeigh(S_mod,
+                                             GetNeigh(S_mod, i, j, k, i_n, j_n, idim) - S_ext,
+                                             i, j, k, i_n, j_n, idim);
 
-                                        // Insert the index of the face info
-                                        borrowing_inds[ps] = ps;
-                                        // Store the information about the intruded face in the dataset of the
-                                        // faces which are borrowing area
-                                        FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps,
-                                                                          borrowing_neigh_faces);
-                                        borrowing_area[ps] = S_ext;
+                                    // Insert the index of the face info
+                                    borrowing_inds[ps] = ps;
+                                    // Store the information about the intruded face in the dataset of the
+                                    // faces which are borrowing area
+                                    FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps,
+                                                                      borrowing_neigh_faces);
+                                    borrowing_area[ps] = S_ext;
 
-                                        SetNeigh(flag_info_face, 2, i, j, k, i_n, j_n, idim);
-                                        // Add the area to the intruding face.
-                                        S_mod(i, j, k) = S(i, j, k) + S_ext;
-                                        flag_ext_face(i, j, k) = false;
-                                    }
+                                    SetNeigh(flag_info_face, 2, i, j, k, i_n, j_n, idim);
+                                    // Add the area to the intruding face.
+                                    S_mod(i, j, k) = S(i, j, k) + S_ext;
+                                    flag_ext_face(i, j, k) = false;
                                 }
                             }
                         }
                     }
-                },
-            amrex::Scan::Type::exclusive);
+                }
+            }, amrex::Scan::Type::exclusive);
         }
     }
 
@@ -423,143 +425,140 @@ void
 WarpX::ComputeEightWaysExtensions() {
 #ifdef AMREX_USE_EB
 
-    auto const &cell_size = CellSize(maxLevel());
-
     // Do the extensions
     for(int idim = 0; idim<=2; idim++){
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
             amrex::Box const &box = mfi.validbox();
 
-            auto const &Sz = m_face_areas[maxLevel()][idim]->array(mfi);
-            auto const &flag_ext_face_z = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-            auto const &flag_info_face_z = m_flag_info_face[maxLevel()][idim]->array(mfi);
-            auto &borrowing_z = (*m_borrowing[maxLevel()][idim])[mfi];
-            auto const &borrowing_z_inds_pointer = borrowing_z.inds_pointer.array();
-            auto const &borrowing_z_size = borrowing_z.size.array();
+            auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
+            auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+            auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
+            auto &borrowing = (*m_borrowing[maxLevel()][idim])[mfi];
+            auto const &borrowing_inds_pointer = borrowing.inds_pointer.array();
+            auto const &borrowing_size = borrowing.size.array();
             amrex::Long ncells = box.numPts();
-            int* borrowing_z_inds = borrowing_z.inds.data();
-            FaceInfoBox::Neighbours* borrowing_z_neigh_faces = borrowing_z.neigh_faces.data();
-            amrex::Real* borrowing_z_area = borrowing_z.area.data();
-            int& vecs_size_z = borrowing_z.vecs_size;
+            int* borrowing_inds = borrowing.inds.data();
+            FaceInfoBox::Neighbours* borrowing_neigh_faces = borrowing.neigh_faces.data();
+            amrex::Real* borrowing_area = borrowing.area.data();
+            int& vecs_size = borrowing.vecs_size;
 
-            auto const &Sz_mod = m_area_mod[maxLevel()][idim]->array(mfi);
+            auto const &S_mod = m_area_mod[maxLevel()][idim]->array(mfi);
             const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
             const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
-            const amrex::Real dx = cell_size[0];
-            const amrex::Real dy = cell_size[1];
+            const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
 
-            vecs_size_z += amrex::Scan::PrefixSum<int>(ncells,
-                [=] AMREX_GPU_DEVICE (int icell){
-                    const amrex::Dim3 cell = box.atOffset(icell).dim3();
-                    const int i = cell.x;
-                    const int j = cell.y;
-                    const int k = cell.z;
-                    // If the face doesn't need to be extended break the loop
-                    if (!flag_ext_face_z(i, j, k)) {
-                        return 0;
-                    }
-                    amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
-                                                        ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
-                    amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                    const int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sz_ext, Sz_mod, Sz,
-                                                                     flag_info_face_z, idim);
+            vecs_size += amrex::Scan::PrefixSum<int>(ncells,
+                                                     [=] AMREX_GPU_DEVICE (int icell){
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
+                // If the face doesn't need to be extended break the loop
+                if (!flag_ext_face(i, j, k)) {
+                    return 0;
+                }
+                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
 
-                    borrowing_z_size(i, j, k) = n_borrow;
-                    return n_borrow;
-                },
-                [=] AMREX_GPU_DEVICE (int icell, int ps) {
+                amrex::Real S_ext = S_stab - S(i, j, k);
+                const int n_borrow = ComputeNBorrowEightFacesExtension(cell, S_ext, S_mod, S,
+                                                                       flag_info_face, idim);
 
-                    ps += vecs_size_z;
+              borrowing_size(i, j, k) = n_borrow;
+                return n_borrow;
+            },
+            [=] AMREX_GPU_DEVICE (int icell, int ps) {
 
-                    const amrex::Dim3 cell = box.atOffset(icell).dim3();
-                    const int i = cell.x;
-                    const int j = cell.y;
-                    const int k = cell.z;
+                ps += vecs_size;
 
-                    if (!flag_ext_face_z(i, j, k)) {
-                        return;
-                    }
+                const amrex::Dim3 cell = box.atOffset(icell).dim3();
+                const int i = cell.x;
+                const int j = cell.y;
+                const int k = cell.z;
 
-                    const int nborrow = borrowing_z_size(i, j, k);
-                    if (nborrow == 0) {
-                        borrowing_z_inds_pointer(i, j, k) = nullptr;
-                    } else {
-                        borrowing_z_inds_pointer(i, j, k) = borrowing_z_inds + ps;
+                if (!flag_ext_face(i, j, k)) {
+                    return;
+                }
 
-                        Sz_mod(i, j, k) = Sz(i, j, k);
-                        amrex::Real Sz_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
-                                                              ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
-                        amrex::Real Sz_ext = Sz_stab - Sz(i, j, k);
-                        amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
-                        for(int i_loc = 0; i_loc <= 2; i_loc++){
-                            for(int j_loc = 0; j_loc <= 2; j_loc++){
-                                local_avail(i_loc, j_loc) = (flag_info_face_z(i + i_loc - 1, j + j_loc - 1, k) == 1
-                                                             || flag_info_face_z(i + i_loc - 1, j + j_loc - 1, k) == 2);
-                            }
+                const int nborrow = borrowing_size(i, j, k);
+                if (nborrow == 0) {
+                    borrowing_inds_pointer(i, j, k) = nullptr;
+                } else {
+                    borrowing_inds_pointer(i, j, k) = borrowing_inds + ps;
+
+                    S_mod(i, j, k) = S(i, j, k);
+                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
+
+                    amrex::Real S_ext = S_stab - S(i, j, k);
+                    amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
+                    for(int i_loc = 0; i_loc <= 2; i_loc++){
+                        for(int j_loc = 0; j_loc <= 2; j_loc++){
+                            auto flag = GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim);
+                            local_avail(i_loc, j_loc) = flag == 1 || flag == 2;
                         }
+                    }
 
-                        amrex::Real denom = local_avail(0, 1) * Sz(i - 1, j, k) +
-                                            local_avail(2, 1) * Sz(i + 1, j, k) +
-                                            local_avail(1, 0) * Sz(i, j - 1, k) +
-                                            local_avail(1, 2) * Sz(i, j + 1, k) +
-                                            local_avail(0, 0) * Sz(i - 1, j - 1, k) +
-                                            local_avail(2, 0) * Sz(i + 1, j - 1, k) +
-                                            local_avail(0, 2) * Sz(i - 1, j + 1, k) +
-                                            local_avail(2, 2) * Sz(i + 1, j + 1, k);
+                    amrex::Real denom = local_avail(0, 1) * GetNeigh(S, i, j, k, -1, 0, idim) +
+                                        local_avail(2, 1) * GetNeigh(S, i, j, k, 1, 0, idim) +
+                                        local_avail(1, 0) * GetNeigh(S, i, j, k, 0, -1, idim) +
+                                        local_avail(1, 2) * GetNeigh(S, i, j, k, 0, 1, idim) +
+                                        local_avail(0, 0) * GetNeigh(S, i, j, k, -1, -1, idim) +
+                                        local_avail(2, 0) * GetNeigh(S, i, j, k, 1, -1, idim) +
+                                        local_avail(0, 2) * GetNeigh(S, i, j, k, -1, 1, idim) +
+                                        local_avail(2, 2) * GetNeigh(S, i, j, k, 1, 1, idim);
 
-                        bool neg_face = true;
+                    bool neg_face = true;
 
-                        while(denom >= Sz_ext && neg_face && denom > 0){
-                            neg_face = false;
-                            for (int i_n = -1; i_n < 2; i_n++) {
-                                for (int j_n = -1; j_n < 2; j_n++) {
-                                    if(local_avail(i_n + 1, j_n + 1)){
-                                        amrex::Real patch = Sz_ext * Sz(i + i_n, j + j_n, k) / denom;
-                                        if(Sz_mod(i + i_n, j + j_n, k) - patch <= 0) {
-                                            neg_face = true;
-                                            local_avail(i_n + 1, j_n + 1) = false;
-                                        }
+                    while(denom >= S_ext && neg_face && denom > 0){
+                        neg_face = false;
+                        for (int i_n = -1; i_n < 2; i_n++) {
+                            for (int j_n = -1; j_n < 2; j_n++) {
+                                if(local_avail(i_n + 1, j_n + 1)){
+                                    amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
+                                    if(GetNeigh(S_mod, i, j, k, i_n, j_n, idim) - patch <= 0) {
+                                        neg_face = true;
+                                        local_avail(i_n + 1, j_n + 1) = false;
                                     }
                                 }
                             }
-
-                            denom = local_avail(0, 1) * Sz(i - 1, j, k) +
-                                    local_avail(2, 1) * Sz(i + 1, j, k) +
-                                    local_avail(1, 0) * Sz(i, j - 1, k) +
-                                    local_avail(1, 2) * Sz(i, j + 1, k) +
-                                    local_avail(0, 0) * Sz(i - 1, j - 1, k) +
-                                    local_avail(2, 0) * Sz(i + 1, j - 1, k) +
-                                    local_avail(0, 2) * Sz(i - 1, j + 1, k) +
-                                    local_avail(2, 2) * Sz(i + 1, j + 1, k);
                         }
 
-                        if(denom >= Sz_ext){
-                            Sz_mod(i, j, k) = Sz(i, j, k);
-                            int count = 0;
-                            for (int i_n = -1; i_n < 2; i_n++) {
-                                for (int j_n = -1; j_n < 2; j_n++) {
-                                    if(local_avail(i_n + 1, j_n + 1)){
-                                        amrex::Real patch = Sz_ext * Sz(i + i_n, j + j_n, k) / denom;
-                                        borrowing_z_inds[ps + count] = ps + count;
-                                        FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps + count,
-                                                                          borrowing_z_neigh_faces);
-                                        borrowing_z_area[ps + count] = patch;
+                        denom = local_avail(0, 1) * GetNeigh(S, i, j, k, -1, 0, idim) +
+                                local_avail(2, 1) * GetNeigh(S, i, j, k, 1, 0, idim) +
+                                local_avail(1, 0) * GetNeigh(S, i, j, k, 0, -1, idim) +
+                                local_avail(1, 2) * GetNeigh(S, i, j, k, 0, 1, idim) +
+                                local_avail(0, 0) * GetNeigh(S, i, j, k, -1, -1, idim) +
+                                local_avail(2, 0) * GetNeigh(S, i, j, k, 1, -1, idim) +
+                                local_avail(0, 2) * GetNeigh(S, i, j, k, -1, 1, idim) +
+                                local_avail(2, 2) * GetNeigh(S, i, j, k, 1, 1, idim);
+                    }
 
-                                        flag_info_face_z(i + i_n, j + j_n, k) = 2;
+                    if(denom >= S_ext){
+                        S_mod(i, j, k) = S(i, j, k);
+                        int count = 0;
+                        for (int i_n = -1; i_n < 2; i_n++) {
+                            for (int j_n = -1; j_n < 2; j_n++) {
+                                if(local_avail(i_n + 1, j_n + 1)){
+                                    amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
+                                    borrowing_inds[ps + count] = ps + count;
+                                    FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps + count,
+                                                                      borrowing_neigh_faces);
+                                    borrowing_area[ps + count] = patch;
 
-                                        Sz_mod(i, j, k) += patch;
-                                        Sz_mod(i + i_n, j + j_n, k) -= patch;
-                                        count +=1;
-                                    }
+                                    SetNeigh(flag_info_face, 2, i, j, k, i_n, j_n, idim);
+
+                                    S_mod(i, j, k) += patch;
+                                    SetNeigh(S_mod,
+                                             GetNeigh(S_mod, i, j, k, i_n, j_n, idim) - patch,
+                                             i, j, k, i_n, j_n, idim);
+                                    count +=1;
                                 }
                             }
-                            flag_ext_face_z(i, j, k) = false;
                         }
+                        flag_ext_face(i, j, k) = false;
                     }
-                },
-                amrex::Scan::Type::exclusive);
-
+                }
+            }, amrex::Scan::Type::exclusive);
         }
     }
 #endif
