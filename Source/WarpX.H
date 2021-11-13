@@ -1282,12 +1282,12 @@ public:
                                                  const amrex::Array4<int>& flag_info_face,
                                                  const int idim);
 
-    template <class T>
+    template <typename T>
     constexpr static T GetNeigh(const amrex::Array4<T>& arr,
                       const int i, const int j, const int k,
                       const int i_n, const int j_n, const int dim);
 
-    template <class T>
+    template <typename T>
     constexpr static void SetNeigh(const amrex::Array4<T>& arr, const T val,
                                    const int i, const int j, const int k,
                                    const int i_n, const int j_n, const int dim);
