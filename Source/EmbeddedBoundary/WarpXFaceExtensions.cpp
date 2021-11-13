@@ -80,7 +80,7 @@ WarpX::ComputeSStab(const int i, const int j, const int k,
 
     const amrex::Real dx = cell_size[0];
     const amrex::Real dy = cell_size[1];
-    const amrex::Real dz = cell_size[1];
+    const amrex::Real dz = cell_size[2];
 
     if(dim == 0) {
         return 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
