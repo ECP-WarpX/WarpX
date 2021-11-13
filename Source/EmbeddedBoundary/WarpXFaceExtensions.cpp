@@ -12,6 +12,7 @@
 
 AMREX_GPU_DEVICE
 template <class T>
+constexpr
 T
 WarpX::GetNeigh(const amrex::Array4<T>& arr,
                 const int i, const int j, const int k,
@@ -20,7 +21,13 @@ WarpX::GetNeigh(const amrex::Array4<T>& arr,
     if(dim == 0){
         return arr(i, j + i_n, k + j_n);
     }else if(dim == 1){
+#ifdef WARPX_DIM_XZ
+        return arr(i + i_n, j + j_n, k);
+#elif defined(WARPX_DIM_3D)
         return arr(i + i_n, j, k + j_n);
+#else
+        amrex::Abort("GetNeigh: Only implemented in 2D3V and 3D3V");
+#endif
     }else if(dim == 2){
         return arr(i + i_n, j + j_n, k);
     }
@@ -33,6 +40,7 @@ WarpX::GetNeigh(const amrex::Array4<T>& arr,
 
 AMREX_GPU_DEVICE
 template <class T>
+constexpr
 void
 WarpX::SetNeigh(const amrex::Array4<T>& arr, const T val,
                 const int i, const int j, const int k,
@@ -42,7 +50,13 @@ WarpX::SetNeigh(const amrex::Array4<T>& arr, const T val,
         arr(i, j + i_n, k + j_n) = val;
         return;
     }else if(dim == 1){
+#ifdef WARPX_DIM_XZ
+        arr(i + i_n, j + j_n, k) = val;
+#elif defined(WARPX_DIM_3D)
         arr(i + i_n, j, k + j_n) = val;
+#else
+        amrex::Abort("SetNeigh: Only implemented in 2D3V and 3D3V");
+#endif
         return;
     }else if(dim == 2){
         arr(i + i_n, j + j_n, k) = val;
@@ -69,20 +83,21 @@ WarpX::ComputeSStab(const int i, const int j, const int k,
     const amrex::Real dz = cell_size[1];
 
     if(dim == 0) {
-        return 0.5 * std::max({ly(i, j, k) * dz,
-                                 ly(i, j, k + 1) * dz,
-                                 lz(i, j, k) * dy,
-                                 lz(i, j + 1, k) * dy});
+        return 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
+                               lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
     }else if(dim == 1){
-        return 0.5 * std::max({lx(i, j, k) * dz,
-                                 lx(i, j, k + 1) * dz,
-                                 lz(i, j, k) * dx,
-                                 lz(i + 1, j, k) * dx});
+#ifdef WARPX_DIM_XZ
+        return 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                               lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#elif defined(WARPX_DIM_3D)
+        return 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
+                               lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#else
+        amrex::Abort("ComputeSStab: Only implemented in 2D3V and 3D3V");
+#endif
     }else if(dim == 2){
-        return 0.5 * std::max({lx(i, j, k) * dy,
-                                 lx(i, j + 1, k) * dy,
-                                 ly(i, j, k) * dx,
-                                 ly(i + 1, j, k) * dx});
+        return 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
+                               ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
     }
 
     amrex::Abort("ComputeSStab: dim must be 0, 1 or 2");

@@ -1283,14 +1283,14 @@ public:
                                                  const int idim);
 
     template <class T>
-    static T GetNeigh(const amrex::Array4<T>& arr,
+    constexpr static T GetNeigh(const amrex::Array4<T>& arr,
                       const int i, const int j, const int k,
                       const int i_n, const int j_n, const int dim);
 
     template <class T>
-    static void SetNeigh(const amrex::Array4<T>& arr, const T val,
-                         const int i, const int j, const int k,
-                         const int i_n, const int j_n, const int dim);
+    constexpr static void SetNeigh(const amrex::Array4<T>& arr, const T val,
+                                   const int i, const int j, const int k,
+                                   const int i_n, const int j_n, const int dim);
 
     static amrex::Real ComputeSStab(const int i, const int j, const int k,
                                     const amrex::Array4<amrex::Real> lx,
