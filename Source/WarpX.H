@@ -1271,13 +1271,11 @@ public:
     */
     void ComputeEightWaysExtensions();
 
-    AMREX_GPU_DEVICE
     static int ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                               const amrex::Array4<amrex::Real>& S_red,
                                               const amrex::Array4<int>& flag_info_face,
                                               const amrex::Array4<int>& flag_ext_face, const int idim);
 
-    AMREX_GPU_DEVICE
     static int ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                                  const amrex::Array4<amrex::Real>& S_red,
                                                  const amrex::Array4<amrex::Real>& S,
@@ -1285,9 +1283,20 @@ public:
                                                  const int idim);
 
     template <class T>
-    static T getNeigh(const amrex::Array4<T>& arr,
+    static T GetNeigh(const amrex::Array4<T>& arr,
                       const int i, const int j, const int k,
                       const int i_n, const int j_n, const int dim);
+
+    template <class T>
+    static void SetNeigh(const amrex::Array4<T>& arr, const T val,
+                         const int i, const int j, const int k,
+                         const int i_n, const int j_n, const int dim);
+
+    static amrex::Real ComputeSStab(const int i, const int j, const int k,
+                                    const amrex::Array4<amrex::Real> lx,
+                                    const amrex::Array4<amrex::Real> ly,
+                                    const amrex::Array4<amrex::Real> lz,
+                                    const int idim, const int lev);
 
 private:
     void ScrapeParticles ();
