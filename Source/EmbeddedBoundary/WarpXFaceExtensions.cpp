@@ -10,8 +10,8 @@
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
 
-AMREX_GPU_DEVICE
 template <class T>
+AMREX_GPU_DEVICE
 constexpr
 T
 WarpX::GetNeigh(const amrex::Array4<T>& arr,
@@ -38,8 +38,8 @@ WarpX::GetNeigh(const amrex::Array4<T>& arr,
 }
 
 
-AMREX_GPU_DEVICE
 template <class T>
+AMREX_GPU_DEVICE
 constexpr
 void
 WarpX::SetNeigh(const amrex::Array4<T>& arr, const T val,
