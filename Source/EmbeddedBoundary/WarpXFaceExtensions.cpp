@@ -10,6 +10,24 @@
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
 
+template <class T>
+T
+WarpX::getNeigh(const amrex::Array4<T>& arr,
+         const int i, const int j, const int k,
+         const int i_n, const int j_n, const int dim){
+
+    if(dim == 0){
+        return arr(i, j + i_n, k + j_n);
+    }else if(dim == 1){
+        return arr(i + i_n, j, k + j_n);
+    }else if(dim == 2){
+        return arr(i + i_n, j + j_n, k);
+    }
+
+    amrex::Abort("accessNeighbor: dim must be 0, 1 or 2");
+
+    return -1;
+}
 
 amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
@@ -134,7 +152,7 @@ WarpX::InitBorrowing() {
 
 AMREX_GPU_DEVICE
 int
-ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
+WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                       const amrex::Array4<amrex::Real>& S_red,
                                       const amrex::Array4<int>& flag_info_face,
                                       const amrex::Array4<int>& flag_ext_face, const int idim) {
@@ -143,63 +161,21 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
     const int k = cell.z;
     int n_borrow = 0;
     bool stop = false;
-    if(idim == 0){
+    for (int i_n = -1; i_n < 2; i_n++) {
         for (int j_n = -1; j_n < 2; j_n++) {
-            for (int k_n = -1; k_n < 2; k_n++) {
-                //This if makes sure that we don't visit the "diagonal neighbours"
-                if (!(j_n == k_n || j_n == -k_n)) {
-                    // Here a face is available if it doesn't need to be extended itself and if its
-                    // area exceeds Sz_ext. Here we need to take into account if the intruded face
-                    // has given away already some area, so we use Sz_red rather than Sz.
-                    // If no face is available we don't do anything and we will need to use the
-                    // multi-face extensions.
-                    if (S_red(i, j + j_n, k + k_n) > S_ext
-                        && (flag_info_face(i, j + j_n, k + k_n) == 1 ||
-                             flag_info_face(i, j + j_n, k + k_n) == 2)
-                        && flag_ext_face(i, j, k) && ! stop) {
-                        n_borrow += 1;
-                        stop = true;
-                    }
-                }
-            }
-        }
-    }else if(idim == 1){
-        for (int i_n = -1; i_n < 2; i_n++) {
-            for (int k_n = -1; k_n < 2; k_n++) {
-                //This if makes sure that we don't visit the "diagonal neighbours"
-                if (!(i_n == k_n || i_n == -k_n)) {
-                    // Here a face is available if it doesn't need to be extended itself and if its
-                    // area exceeds Sz_ext. Here we need to take into account if the intruded face
-                    // has given away already some area, so we use Sz_red rather than Sz.
-                    // If no face is available we don't do anything and we will need to use the
-                    // multi-face extensions.
-                    if (S_red(i + i_n, j, k + k_n) > S_ext
-                        && (flag_info_face(i + i_n, j, k + k_n) == 1
-                             || flag_info_face(i + i_n, j, k + k_n) == 2)
-                        && flag_ext_face(i, j, k) && ! stop) {
-                        n_borrow += 1;
-                        stop = true;
-                    }
-                }
-            }
-        }
-    }else if(idim == 2) {
-        for (int i_n = -1; i_n < 2; i_n++) {
-            for (int j_n = -1; j_n < 2; j_n++) {
-                //This if makes sure that we don't visit the "diagonal neighbours"
-                if (!(i_n == j_n || i_n == -j_n)) {
-                    // Here a face is available if it doesn't need to be extended itself and if its
-                    // area exceeds Sz_ext. Here we need to take into account if the intruded face
-                    // has given away already some area, so we use Sz_red rather than Sz.
-                    // If no face is available we don't do anything and we will need to use the
-                    // multi-face extensions.
-                    if (S_red(i + i_n, j + j_n, k) > S_ext
-                        && (flag_info_face(i + i_n, j + j_n, k) == 1
-                             || flag_info_face(i + i_n, j + j_n, k) == 2)
-                        && flag_ext_face(i, j, k) && ! stop) {
-                        n_borrow += 1;
-                        stop = true;
-                    }
+            //This if makes sure that we don't visit the "diagonal neighbours"
+            if (!(i_n == j_n || i_n == -j_n)) {
+                // Here a face is available if it doesn't need to be extended itself and if its
+                // area exceeds Sz_ext. Here we need to take into account if the intruded face
+                // has given away already some area, so we use Sz_red rather than Sz.
+                // If no face is available we don't do anything and we will need to use the
+                // multi-face extensions.
+                if (getNeigh(S_red, i, j, k, i_n, j_n, idim) > S_ext
+                    && (getNeigh(flag_info_face, i, j, k, i_n, j_n, idim) == 1
+                    || getNeigh(flag_info_face, i, j, k, i_n, j_n, idim) == 2)
+                    && flag_ext_face(i, j, k) && ! stop) {
+                    n_borrow += 1;
+                    stop = true;
                 }
             }
         }
@@ -211,7 +187,7 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
 
 AMREX_GPU_DEVICE
 int
-ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
+WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                          const amrex::Array4<amrex::Real>& S_red,
                                          const amrex::Array4<amrex::Real>& S,
                                          const amrex::Array4<int>& flag_info_face, const int idim) {
@@ -221,148 +197,46 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
     int n_borrow = 0;
     amrex::Array2D<int, 0, 2, 0, 2> local_avail{};
 
-    if(idim == 0) {
-        // Use a local 3x3 array to keep track of which of the neighboring faces is available to be
-        // intruded.
-        for (int j_loc = 0; j_loc <= 2; j_loc++) {
-            for (int k_loc = 0; k_loc <= 2; k_loc++) {
-                local_avail(j_loc, k_loc) = (flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 1
-                                             || flag_info_face(i, j + j_loc - 1, k + k_loc - 1) == 2);
-            }
+    for(int i_loc = 0; i_loc <= 2; i_loc++){
+        for(int j_loc = 0; j_loc <= 2; j_loc++){
+            local_avail(i_loc, j_loc) = (getNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim) == 1
+                                         || getNeigh(flag_info_face,i, j, k, i_loc - 1, j_loc - 1, idim) == 2);
         }
+    }
 
-        // denom is the total area that can be borrowed from the neighboring cells
-        amrex::Real denom = local_avail(0, 1) * S(i, j - 1, k) +
-            local_avail(2, 1) * S(i, j + 1, k) +
-            local_avail(1, 0) * S(i, j, k - 1) +
-            local_avail(1, 2) * S(i, j, k + 1) +
-            local_avail(0, 0) * S(i, j - 1, k - 1) +
-            local_avail(2, 0) * S(i, j + 1, k - 1) +
-            local_avail(0, 2) * S(i, j - 1, k + 1) +
-            local_avail(2, 2) * S(i, j + 1, k + 1);
+    amrex::Real denom = local_avail(0, 1) * getNeigh(S, i, j, k, -1, 0, idim) +
+                        local_avail(2, 1) * getNeigh(S, i, j, k, 1, 0, idim) +
+                        local_avail(1, 0) * getNeigh(S, i, j, k, 0, -1, idim) +
+                        local_avail(1, 2) * getNeigh(S, i, j, k, 0, 1, idim) +
+                        local_avail(0, 0) * getNeigh(S, i, j, k, -1, -1, idim) +
+                        local_avail(2, 0) * getNeigh(S, i, j, k, 1, -1, idim) +
+                        local_avail(0, 2) * getNeigh(S, i, j, k, -1, 1, idim) +
+                        local_avail(2, 2) * getNeigh(S, i, j, k, 1, 1, idim);
 
-        // This flag will be used to check if any of the intruded faces would give away too much
-        // area and needs to be excluded from the extension process. It is initialized to true to
-        // make sure that we perform at least one iteration of the while loop.
-        bool neg_face = true;
+    bool neg_face = true;
 
-        // If the total area of the neighboring available faces is greater than the area needed for
-        // the extension, then we can try to do the extension. (denom >= S_ext)
-        // If any of the surrounding faces would be giving away to much area, then we have to
-        // exclude it from the extension process and repeat. We keep trying until either all the faces
-        // are big enough to be intruded or until we find out that none of the faces can be intruded
-        // (that is denom = 0).
-        while (denom >= S_ext && neg_face && denom > 0) {
-            neg_face = false;
+    while(denom >= S_ext && neg_face && denom > 0){
+        neg_face = false;
+        for (int i_n = -1; i_n < 2; i_n++) {
             for (int j_n = -1; j_n < 2; j_n++) {
-                for (int k_n = -1; k_n < 2; k_n++) {
-                    if (local_avail(j_n + 1, k_n + 1)) {
-                        amrex::Real patch = S_ext * S(i, j + j_n, k + k_n) / denom;
-                        if (S_red(i, j + j_n, k + k_n) - patch <= 0) {
-                            neg_face = true;
-                            // Whenever a face cannot be intruded we set the corresponding entry
-                            // in local_avail to False
-                            local_avail(j_n + 1, k_n + 1) = false;
-                        }
+                if(local_avail(i_n + 1, j_n + 1)){
+                    amrex::Real patch = S_ext * getNeigh(S, i, j, k, i_n, j_n, idim) / denom;
+                    if(getNeigh(S_red, i, j, k, i_n, j_n, idim) - patch <= 0) {
+                        neg_face = true;
+                        local_avail(i_n + 1, j_n + 1) = false;
                     }
                 }
             }
-
-            denom = local_avail(0, 1) * S(i, j - 1, k) +
-                local_avail(2, 1) * S(i, j + 1, k) +
-                local_avail(1, 0) * S(i, j, k - 1) +
-                local_avail(1, 2) * S(i, j, k + 1) +
-                local_avail(0, 0) * S(i, j - 1, k - 1) +
-                local_avail(2, 0) * S(i, j + 1, k - 1) +
-                local_avail(0, 2) * S(i, j - 1, k + 1) +
-                local_avail(2, 2) * S(i, j + 1, k + 1);
-        }
-    }else if(idim == 1) {
-        for(int i_loc = 0; i_loc <= 2; i_loc++){
-            for(int k_loc = 0; k_loc <= 2; k_loc++){
-                local_avail(i_loc, k_loc) = (flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 1
-                                             || flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 2);
-            }
         }
 
-        amrex::Real denom = local_avail(0, 1) * S(i - 1, j, k) +
-            local_avail(2, 1) * S(i + 1, j, k) +
-            local_avail(1, 0) * S(i, j, k - 1) +
-            local_avail(1, 2) * S(i, j, k + 1) +
-            local_avail(0, 0) * S(i - 1, j, k - 1) +
-            local_avail(2, 0) * S(i + 1, j, k - 1) +
-            local_avail(0, 2) * S(i - 1, j, k + 1) +
-            local_avail(2, 2) * S(i + 1, j, k + 1);
-
-        bool neg_face = true;
-
-        while(denom >= S_ext && neg_face && denom > 0){
-            neg_face = false;
-            for (int i_n = -1; i_n < 2; i_n++) {
-                for (int k_n = -1; k_n < 2; k_n++) {
-                    if(local_avail(i_n + 1, k_n + 1)){
-                        amrex::Real patch = S_ext * S(i + i_n, j, k + k_n) / denom;
-                        if(S_red(i + i_n, j, k + k_n) - patch <= 0) {
-                            neg_face = true;
-                            local_avail(i_n + 1, k_n + 1) = false;
-                        }
-                    }
-                }
-            }
-
-            denom = local_avail(0, 1) * S(i - 1, j, k) +
-                local_avail(2, 1) * S(i + 1, j, k) +
-                local_avail(1, 0) * S(i, j, k - 1) +
-                local_avail(1, 2) * S(i, j, k + 1) +
-                local_avail(0, 0) * S(i - 1, j, k - 1) +
-                local_avail(2, 0) * S(i + 1, j, k - 1) +
-                local_avail(0, 2) * S(i - 1, j, k + 1) +
-                local_avail(2, 2) * S(i + 1, j, k + 1);
-        }
-
-    } else if(idim == 2){
-        for(int i_loc = 0; i_loc <= 2; i_loc++){
-            for(int j_loc = 0; j_loc <= 2; j_loc++){
-                local_avail(i_loc, j_loc) = (flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 1
-                                             || flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 2);
-            }
-        }
-
-        amrex::Real denom = local_avail(0, 1) * S(i - 1, j, k) +
-            local_avail(2, 1) * S(i + 1, j, k) +
-            local_avail(1, 0) * S(i, j - 1, k) +
-            local_avail(1, 2) * S(i, j + 1, k) +
-            local_avail(0, 0) * S(i - 1, j - 1, k) +
-            local_avail(2, 0) * S(i + 1, j - 1, k) +
-            local_avail(0, 2) * S(i - 1, j + 1, k) +
-            local_avail(2, 2) * S(i + 1, j + 1, k);
-
-        bool neg_face = true;
-
-        while(denom >= S_ext && neg_face && denom > 0){
-            neg_face = false;
-            for (int i_n = -1; i_n < 2; i_n++) {
-                for (int j_n = -1; j_n < 2; j_n++) {
-                    if(local_avail(i_n + 1, j_n + 1)){
-                        amrex::Real patch = S_ext * S(i + i_n, j + j_n, k) / denom;
-                        if(S_red(i + i_n, j + j_n, k) - patch <= 0) {
-                            neg_face = true;
-                            local_avail(i_n + 1, j_n + 1) = false;
-                        }
-                    }
-                }
-            }
-
-            denom = local_avail(0, 1) * S(i - 1, j, k) +
-                local_avail(2, 1) * S(i + 1, j, k) +
-                local_avail(1, 0) * S(i, j - 1, k) +
-                local_avail(1, 2) * S(i, j + 1, k) +
-                local_avail(0, 0) * S(i - 1, j - 1, k) +
-                local_avail(2, 0) * S(i + 1, j - 1, k) +
-                local_avail(0, 2) * S(i - 1, j + 1, k) +
-                local_avail(2, 2) * S(i + 1, j + 1, k);
-        }
-
+        denom = local_avail(0, 1) * getNeigh(S, i, j, k, -1, 0, idim) +
+                local_avail(2, 1) * getNeigh(S, i, j, k, 1, 0, idim) +
+                local_avail(1, 0) * getNeigh(S, i, j, k, 0, -1, idim) +
+                local_avail(1, 2) * getNeigh(S, i, j, k, 0, 1, idim) +
+                local_avail(0, 0) * getNeigh(S, i, j, k, -1, -1, idim) +
+                local_avail(2, 0) * getNeigh(S, i, j, k, 1, -1, idim) +
+                local_avail(0, 2) * getNeigh(S, i, j, k, -1, 1, idim) +
+                local_avail(2, 2) * getNeigh(S, i, j, k, 1, 1, idim);
     }
 
     // We count the number of entries in local_avail which are still True, this is the number of
