@@ -128,7 +128,7 @@ WarpX::ComputeEdgeLengths () {
 #endif
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
 #ifdef WARPX_DIM_XZ
-        for (int idim = 0; idim < 3; ++idim){
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
             if(idim == 1) continue;
 #elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
