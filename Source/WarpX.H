@@ -1301,7 +1301,8 @@ public:
                                     const amrex::Array4<amrex::Real> lx,
                                     const amrex::Array4<amrex::Real> ly,
                                     const amrex::Array4<amrex::Real> lz,
-                                    const int idim, const int lev);
+                                    const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
+                                    const int idim);
 
 private:
     void ScrapeParticles ();

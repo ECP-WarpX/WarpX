@@ -74,13 +74,8 @@ WarpX::ComputeSStab(const int i, const int j, const int k,
                     const amrex::Array4<amrex::Real> lx,
                     const amrex::Array4<amrex::Real> ly,
                     const amrex::Array4<amrex::Real> lz,
-                    const int dim, const int lev){
-
-    auto const &cell_size = CellSize(lev);
-
-    const amrex::Real dx = cell_size[0];
-    const amrex::Real dy = cell_size[1];
-    const amrex::Real dz = cell_size[2];
+                    const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
+                    const int dim){
 
     if(dim == 0) {
         return 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
@@ -333,6 +328,12 @@ WarpX::ComputeOneWayExtensions() {
 #ifdef AMREX_USE_EB
     auto const eb_fact = fieldEBFactory(maxLevel());
 
+    auto const &cell_size = CellSize(maxLevel());
+
+    const amrex::Real dx = cell_size[0];
+    const amrex::Real dy = cell_size[1];
+    const amrex::Real dz = cell_size[2];
+
     // Do the extensions
     for(int idim = 0; idim < AMREX_SPACEDIM; idim++){
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
@@ -368,7 +369,7 @@ WarpX::ComputeOneWayExtensions() {
                     return 0;
                 }
 
-                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
+                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
                 amrex::Real S_ext = S_stab - S(i, j, k);
                 const int n_borrow =
@@ -390,7 +391,7 @@ WarpX::ComputeOneWayExtensions() {
                 } else{
                     borrowing_inds_pointer(i, j, k) = borrowing_inds + ps;
 
-                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
+                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
                     amrex::Real S_ext = S_stab - S(i, j, k);
                     for (int i_n = -1; i_n < 2; i_n++) {
@@ -439,6 +440,11 @@ WarpX::ComputeOneWayExtensions() {
 void
 WarpX::ComputeEightWaysExtensions() {
 #ifdef AMREX_USE_EB
+    auto const &cell_size = CellSize(maxLevel());
+
+    const amrex::Real dx = cell_size[0];
+    const amrex::Real dy = cell_size[1];
+    const amrex::Real dz = cell_size[2];
 
     // Do the extensions
     for(int idim = 0; idim < AMREX_SPACEDIM; idim++){
@@ -473,7 +479,7 @@ WarpX::ComputeEightWaysExtensions() {
                 if (!flag_ext_face(i, j, k)) {
                     return 0;
                 }
-                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
+                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
                 amrex::Real S_ext = S_stab - S(i, j, k);
                 const int n_borrow = ComputeNBorrowEightFacesExtension(cell, S_ext, S_mod, S,
@@ -502,7 +508,7 @@ WarpX::ComputeEightWaysExtensions() {
                     borrowing_inds_pointer(i, j, k) = borrowing_inds + ps;
 
                     S_mod(i, j, k) = S(i, j, k);
-                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, idim, maxLevel());
+                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
                     amrex::Real S_ext = S_stab - S(i, j, k);
                     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
