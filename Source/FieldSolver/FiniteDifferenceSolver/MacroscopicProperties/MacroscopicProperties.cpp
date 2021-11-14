@@ -210,13 +210,13 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                 amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
                 amrex::Real y = 0._rt;
-                amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
 #else
-                amrex::Real fac_y = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
-                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
-                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // initialize the macroparameter
                 macro_fab(i,j,k) = macro_parser(x,y,z);
