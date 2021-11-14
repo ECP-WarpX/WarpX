@@ -126,11 +126,11 @@ MacroscopicProperties::InitData ()
     const amrex::IntVect ng_EBSolver = warpx.getngE();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
-    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EBSolver);
+    m_sigma_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EBSolver);
     // epsilon is cell-centered MultiFab
-    m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EBSolver);
+    m_eps_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EBSolver);
     // mu is cell-centered MultiFab
-    m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EBSolver);
+    m_mu_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EBSolver);
     // Initialize sigma
     if (m_sigma_s == "constant") {
 
