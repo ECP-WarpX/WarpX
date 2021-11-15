@@ -209,6 +209,14 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             rho_fp[lev] = std::move(pmf);
         }
 
+        if (phi_fp[lev] != nullptr) {
+            const int nc = phi_fp[lev]->nComp();
+            const IntVect& ng = phi_fp[lev]->nGrowVect();
+            auto pmf = std::make_unique<MultiFab>(phi_fp[lev]->boxArray(),
+                                                              dm, nc, ng);
+            phi_fp[lev] = std::move(pmf);
+        }
+
 #ifdef WARPX_USE_PSATD
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             if (spectral_solver_fp[lev] != nullptr) {
