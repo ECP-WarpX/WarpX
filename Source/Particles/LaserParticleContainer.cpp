@@ -202,7 +202,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         int dir = WarpX::moving_window_dir;
         std::vector<Real> windir(3, 0.0);
 #if (AMREX_SPACEDIM==1)
-        windir[2+dir] = 1.0;
+        windir[2] = 1.0;
+        amrex::ignore_unused(dir);
 #elif (AMREX_SPACEDIM==2)
         windir[2*dir] = 1.0;
 #else
@@ -295,8 +296,9 @@ LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
         // In 1D, dir=0 corresponds to z
         // This needs to be converted in order to index `boost_direction`
         // which has 3 components, for 1D, 2D, and 3D simulations.
-        m_updated_position[2 + dir] -= WarpX::beta_boost *
-            WarpX::boost_direction[2 + dir] * PhysConst::c * dt;
+        m_updated_position[2] -= WarpX::beta_boost *
+            WarpX::boost_direction[2] * PhysConst::c * dt;
+        amrex::ignore_unused(dir);
 #endif
     }
 }

@@ -802,6 +802,10 @@ void warpx_interp (const int j,
 
     else // PSATD (finite-order interpolation)
     {
+#if (AMREX_SPACEDIM == 1)
+        amrex::Abort("PSATD not implemented in 1D");
+#endif
+
 #if (AMREX_SPACEDIM > 1) // 1D not implemented for PSATD
         amrex::Real cj = 1.0_rt;
         amrex::Real ck = 1.0_rt;
