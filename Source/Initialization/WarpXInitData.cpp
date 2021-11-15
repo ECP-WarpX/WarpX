@@ -515,6 +515,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][2], guard_cells.ng_alloc_EB, period);
                 ComputeFaceExtensions();
             }
+            if(do_pml){
+                pml[lev]->FillBoundaryFaceAreas();
+                pml[lev]->FillBoundaryEdgeLengths();
+            }
         }
     }
 #endif
