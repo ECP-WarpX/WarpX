@@ -244,7 +244,7 @@ I/O Performance Tuning
 GPFS Large Block I/O
 ^^^^^^^^^^^^^^^^^^^^
 
-Setting IBM_largeblock_io to true disables data shipping, saving overhead when writing/reading large contiguous I/O chunks.
+Setting ``IBM_largeblock_io`` to ``true`` disables data shipping, saving overhead when writing/reading large contiguous I/O chunks.
 
 .. code-block:: bash
 
