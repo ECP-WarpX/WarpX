@@ -561,6 +561,27 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     pml_B_fp[1]->setVal(0.0);
     pml_B_fp[2]->setVal(0.0);
 
+    pml_edge_lengths[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, nge );
+    pml_edge_lengths[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, nge );
+    pml_edge_lengths[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, nge );
+
+    pml_face_areas[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, ngb );
+    pml_face_areas[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, ngb );
+    pml_face_areas[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, ngb );
+
+    pml_edge_lengths[0]->setVal(1.0);
+    pml_edge_lengths[1]->setVal(1.0);
+    pml_edge_lengths[2]->setVal(1.0);
+    pml_face_areas[0]->setVal(1.0);
+    pml_face_areas[1]->setVal(1.0);
+    pml_face_areas[2]->setVal(1.0);
+
     pml_j_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect() ), dm, 1, ngb );
     pml_j_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
@@ -784,7 +805,10 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
                     if (ii != 0 || jj != 0 || kk != 0) {
                         Box b = grid_bx;
                         b.shift(grid_bx_sz * IntVect{AMREX_D_DECL(ii,jj,kk)});
+                        amrex::Print()<<b<<std::endl;
+                        amrex::Print()<<bx<<std::endl;
                         b &= bx;
+                        amrex::Print()<<b<<std::endl;
                         if (b.ok()) {
                             bndryboxes.push_back(b);
                         }
@@ -857,6 +881,18 @@ std::array<MultiFab*,3>
 PML::Getj_cp ()
 {
     return {pml_j_cp[0].get(), pml_j_cp[1].get(), pml_j_cp[2].get()};
+}
+
+std::array<MultiFab*,3>
+PML::Get_edge_lengths()
+{
+    return {pml_edge_lengths[0].get(), pml_edge_lengths[1].get(), pml_edge_lengths[2].get()};
+}
+
+std::array<MultiFab*,3>
+PML::Get_face_areas()
+{
+    return {pml_face_areas[0].get(), pml_face_areas[1].get(), pml_face_areas[2].get()};
 }
 
 MultiFab*
@@ -999,6 +1035,7 @@ void PML::ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_do
         Exchange(*pml_G_cp, *Gp, *m_cgeom, do_pml_in_domain);
     }
 }
+
 
 void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
@@ -1180,6 +1217,48 @@ PML::FillBoundaryG (PatchType patch_type)
     {
         const auto& period = m_cgeom->periodicity();
         WarpXCommUtil::FillBoundary(*pml_G_cp, period);
+    }
+}
+
+void
+PML::FillBoundaryEdgeLengths ()
+{
+    FillBoundaryEdgeLengths(PatchType::fine);
+}
+
+void
+PML::FillBoundaryEdgeLengths (PatchType patch_type)
+{
+    if (patch_type == PatchType::fine && pml_edge_lengths[0] && pml_edge_lengths[0]->nGrowVect().max() > 0)
+    {
+        const auto& period = m_geom->periodicity();
+        Vector<MultiFab*> mf{pml_edge_lengths[0].get(),pml_edge_lengths[1].get(),pml_edge_lengths[2].get()};
+        WarpXCommUtil::FillBoundary(mf, period);
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        amrex::Abort("PML::FillBoundaryEdgeLengths: EB and MR not yet implemented");
+    }
+}
+
+void
+PML::FillBoundaryFaceAreas ()
+{
+    FillBoundaryEdgeLengths(PatchType::fine);
+}
+
+void
+PML::FillBoundaryFaceAreas (PatchType patch_type)
+{
+    if (patch_type == PatchType::fine && pml_face_areas[0] && pml_face_areas[0]->nGrowVect().max() > 0)
+    {
+        const auto& period = m_geom->periodicity();
+        Vector<MultiFab*> mf{pml_face_areas[0].get(),pml_face_areas[1].get(),pml_face_areas[2].get()};
+        WarpXCommUtil::FillBoundary(mf, period);
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        amrex::Abort("PML::FillBoundaryFaceAreas: EB and MR not yet implemented");
     }
 }
 

@@ -128,6 +128,8 @@ public:
     std::array<amrex::MultiFab*,3> GetE_cp ();
     std::array<amrex::MultiFab*,3> GetB_cp ();
     std::array<amrex::MultiFab*,3> Getj_cp ();
+    std::array<amrex::MultiFab*,3> Get_edge_lengths ();
+    std::array<amrex::MultiFab*,3> Get_face_areas ();
 
     // Used when WarpX::do_pml_dive_cleaning = true
     amrex::MultiFab* GetF_fp ();
@@ -173,10 +175,14 @@ public:
     void FillBoundaryB ();
     void FillBoundaryF ();
     void FillBoundaryG ();
+    void FillBoundaryEdgeLengths ();
+    void FillBoundaryFaceAreas ();
     void FillBoundaryE (PatchType patch_type);
     void FillBoundaryB (PatchType patch_type);
     void FillBoundaryF (PatchType patch_type);
     void FillBoundaryG (PatchType patch_type);
+    void FillBoundaryEdgeLengths (PatchType patch_type);
+    void FillBoundaryFaceAreas (PatchType patch_type);
 
     bool ok () const { return m_ok; }
 
@@ -199,6 +205,9 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_E_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_fp;
+
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_edge_lengths;
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_face_areas;
 
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_E_cp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_cp;
