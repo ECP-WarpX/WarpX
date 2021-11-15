@@ -69,7 +69,7 @@ endif
 endif
 
 ifeq ($(DIM),1)
-     DEFINES += -DWARPX_DIM_1D_Z
+  DEFINES += -DWARPX_DIM_1D_Z
 endif
 
 -include Make.package
