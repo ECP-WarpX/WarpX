@@ -456,10 +456,10 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
           const bool J_linear_in_time,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
-    : m_geom(geom),
-      m_cgeom(cgeom),
-      m_dive_cleaning(do_pml_dive_cleaning),
-      m_divb_cleaning(do_pml_divb_cleaning)
+    : m_dive_cleaning(do_pml_dive_cleaning),
+      m_divb_cleaning(do_pml_divb_cleaning),
+      m_geom(geom),
+      m_cgeom(cgeom)
 {
     // When `do_pml_in_domain` is true, the PML overlap with the last `ncell` of the physical domain
     // (instead of extending `ncell` outside of the physical domain)
@@ -885,9 +885,10 @@ PML::GetG_cp ()
 
 void PML::Exchange (const std::array<amrex::MultiFab*,3>& mf_pml,
                     const std::array<amrex::MultiFab*,3>& mf,
-                    const amrex::Geometry& geom,
+                    const PatchType& patch_type,
                     const int do_pml_in_domain)
 {
+    const amrex::Geometry& geom = (patch_type == PatchType::fine) ? *m_geom : *m_cgeom;
     if (mf_pml[0] && mf[0]) Exchange(*mf_pml[0], *mf[0], geom, do_pml_in_domain);
     if (mf_pml[1] && mf[1]) Exchange(*mf_pml[1], *mf[1], geom, do_pml_in_domain);
     if (mf_pml[2] && mf[2]) Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain);

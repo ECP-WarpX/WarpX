@@ -554,7 +554,7 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
                                {Efield_fp[lev][0].get(),
                                 Efield_fp[lev][1].get(),
                                 Efield_fp[lev][2].get()},
-                               *(pml[lev]->m_geom),
+                               patch_type,
                                do_pml_in_domain);
             pml[lev]->FillBoundaryE(patch_type);
         }
@@ -580,7 +580,7 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
                                {Efield_cp[lev][0].get(),
                                 Efield_cp[lev][1].get(),
                                 Efield_cp[lev][2].get()},
-                               *(pml[lev]->m_cgeom),
+                               patch_type,
                                do_pml_in_domain);
             pml[lev]->FillBoundaryE(patch_type);
         }
@@ -618,7 +618,7 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
                                {Bfield_fp[lev][0].get(),
                                 Bfield_fp[lev][1].get(),
                                 Bfield_fp[lev][2].get()},
-                               *(pml[lev]->m_geom),
+                               patch_type,
                                do_pml_in_domain);
         pml[lev]->FillBoundaryB(patch_type);
         }
@@ -644,7 +644,7 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
                            {Bfield_cp[lev][0].get(),
                             Bfield_cp[lev][1].get(),
                             Bfield_cp[lev][2].get()},
-                           *(pml[lev]->m_cgeom),
+                           patch_type,
                            do_pml_in_domain);
         pml[lev]->FillBoundaryB(patch_type);
         }
