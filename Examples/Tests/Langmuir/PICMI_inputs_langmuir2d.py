@@ -98,4 +98,3 @@ sim.write_input_file(file_name = 'inputs2d_from_PICMI')
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()
-

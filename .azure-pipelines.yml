@@ -58,7 +58,7 @@ jobs:
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
       if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
-        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.14.2 \
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
         python -m pip install --upgrade openpmd-api
       fi

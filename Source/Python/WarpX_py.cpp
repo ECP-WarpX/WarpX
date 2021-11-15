@@ -25,4 +25,3 @@ extern "C" {
     WARPX_CALLBACK_PY_FUNC_0 warpx_py_appliedfields = nullptr;
 
 }
-
