@@ -61,6 +61,8 @@ WarpX::DampPML (int lev, PatchType patch_type)
     const bool dive_cleaning = WarpX::do_pml_dive_cleaning;
     const bool divb_cleaning = WarpX::do_pml_divb_cleaning;
 
+    pml[0]->print_pml();
+
     if (pml[lev]->ok())
     {
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
