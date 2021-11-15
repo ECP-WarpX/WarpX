@@ -234,6 +234,11 @@ parameters provided good performance:
 * **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
   results in ~49 tiles per OpenMP thread)
 
+.. _building-summit-io-performance:
+
+I/O Performance Tuning
+----------------------
+
 .. _building-summit-large-blocks:
 
 GPFS Large Block I/O
@@ -257,7 +262,7 @@ You might notice some parallel HDF5 performance improvements on Summit by settin
    export OMPI_MCA_io=romio321
    export ROMIO_HINTS=./romio-hints
 
-You can generate the ``romio-hints`` by issuing the following command. Remember to change the number of ``cb_nodes`` to match the number of compute nodes you are using.
+You can generate the ``romio-hints`` by issuing the following command. Remember to change the number of ``cb_nodes`` to match the number of compute nodes you are using (example here: ``64``).
 
 .. code-block:: bash
 
