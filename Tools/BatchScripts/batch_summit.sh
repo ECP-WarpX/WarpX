@@ -46,7 +46,7 @@ cat > romio-hints << EOL
    cb_nodes ${NUM_HOSTS}
    EOL
 
-# OpenMP: 21 threads per MPI rank
+# OpenMP: 1 thread per MPI rank
 export OMP_NUM_THREADS=1
 
 # run WarpX
