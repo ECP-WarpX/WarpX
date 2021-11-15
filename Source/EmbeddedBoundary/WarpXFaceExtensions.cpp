@@ -10,11 +10,24 @@
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
 
+
+/**
+* \brief Get the value of arr in the neighbor (i_n, j_n) on the plane with normal 'dim'.
+*        I.E. If dim==0 it return arr(i, j + i_n, k + j_n),
+*             if dim==1 it return arr(i + i_n, j, k + j_n),
+*             if dim==2 it return arr(i + i_n, j + j_n, k)
+*
+* \param[in] arr \c Array4 To be accessed
+* \param[in] i, j, k the indices of the "center" cell
+* \param[in] i_n the offset of the neighbor in the first direction
+* \param[in] j_n the offset of the neighbor in the second direction
+* \param[in] dim normal direction to the plane in consideration (0 for x, 1 for y, 2 for z)
+*/
 template <class T>
 AMREX_GPU_DEVICE
 constexpr
 T
-WarpX::GetNeigh(const amrex::Array4<T>& arr,
+GetNeigh(const amrex::Array4<T>& arr,
                 const int i, const int j, const int k,
                 const int i_n, const int j_n, const int dim){
 
@@ -38,11 +51,24 @@ WarpX::GetNeigh(const amrex::Array4<T>& arr,
 }
 
 
+/**
+* \brief Set the value of arr in the neighbor (i_n, j_n) on the plane with normal 'dim'.
+*        I.E. If dim==0 it return arr(i, j + i_n, k + j_n),
+*             if dim==1 it return arr(i + i_n, j, k + j_n),
+*             if dim==2 it return arr(i + i_n, j + j_n, k)
+*
+* \param[in] arr \c Array4 to be modified
+* \param[in] val the value to be set
+* \param[in] i, j, k the indices of the "center" cell
+* \param[in] i_n the offset of the neighbor in the first direction
+* \param[in] j_n the offset of the neighbor in the second direction
+* \param[in] dim normal direction to the plane in consideration (0 for x, 1 for y, 2 for z)
+*/
 template <class T>
 AMREX_GPU_DEVICE
 constexpr
 void
-WarpX::SetNeigh(const amrex::Array4<T>& arr, const T val,
+SetNeigh(const amrex::Array4<T>& arr, const T val,
                 const int i, const int j, const int k,
                 const int i_n, const int j_n, const int dim){
 
@@ -68,9 +94,17 @@ WarpX::SetNeigh(const amrex::Array4<T>& arr, const T val,
 }
 
 
+/**
+* \brief Compute the minimal area for stability for the face i, j, k with normal 'dim'.
+*
+* \param[in] i, j, k the indices of the cell
+* \param[in] lx, ly, lz \c Array4 containing the edge lengths
+* \param[in] dx, dy, dz the mesh with in each direction
+* \param[in] dim normal direction to the plane in consideration (0 for x, 1 for y, 2 for z)
+*/
 AMREX_GPU_DEVICE
 amrex::Real
-WarpX::ComputeSStab(const int i, const int j, const int k,
+ComputeSStab(const int i, const int j, const int k,
                     const amrex::Array4<amrex::Real> lx,
                     const amrex::Array4<amrex::Real> ly,
                     const amrex::Array4<amrex::Real> lz,
@@ -224,10 +258,10 @@ WarpX::InitBorrowing() {
 
 AMREX_GPU_DEVICE
 int
-WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
-                                      const amrex::Array4<amrex::Real>& S_red,
-                                      const amrex::Array4<int>& flag_info_face,
-                                      const amrex::Array4<int>& flag_ext_face, const int idim) {
+ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
+                               const amrex::Array4<amrex::Real>& S_red,
+                               const amrex::Array4<int>& flag_info_face,
+                               const amrex::Array4<int>& flag_ext_face, const int idim) {
     const int i = cell.x;
     const int j = cell.y;
     const int k = cell.z;
@@ -259,10 +293,10 @@ WarpX::ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real 
 
 AMREX_GPU_DEVICE
 int
-WarpX::ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
-                                         const amrex::Array4<amrex::Real>& S_red,
-                                         const amrex::Array4<amrex::Real>& S,
-                                         const amrex::Array4<int>& flag_info_face, const int idim) {
+ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
+                                  const amrex::Array4<amrex::Real>& S_red,
+                                  const amrex::Array4<amrex::Real>& S,
+                                  const amrex::Array4<int>& flag_info_face, const int idim) {
     const int i = cell.x;
     const int j = cell.y;
     const int k = cell.z;
