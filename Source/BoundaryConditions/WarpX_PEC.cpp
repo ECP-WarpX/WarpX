@@ -35,11 +35,6 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
-    amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-    shape_factor[1] = WarpX::noz;
-#endif
-    shape_factor.max( amrex::IntVect::TheUnitVector() );
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -49,15 +44,13 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
     amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
     amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
     amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
+    amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     // For each Efield multifab, apply PEC boundary condition to ncomponents
     // If not split E-field, the PEC is applied to the regular Efield used in Maxwell's eq.
-    // If split_pml_field is true, then PEC is applied to the first two components of the pml multifabs
-    // Since PML_components are xy, xz for Efield[0]
-    //                          yz, yx for Efield[1]
-    //                          zx, zy for Efield[2]
-    int nComp_x = (split_pml_field) ? 2 : Efield[0]->nComp();
-    int nComp_y = (split_pml_field) ? 2 : Efield[1]->nComp();
-    int nComp_z = (split_pml_field) ? 2 : Efield[2]->nComp();
+    // If split_pml_field is true, then PEC is applied to all the split field components of the tangential field.
+    int nComp_x = Efield[0]->nComp();
+    int nComp_y = Efield[1]->nComp();
+    int nComp_z = Efield[2]->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -68,13 +61,17 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
         amrex::Array4<amrex::Real> const& Ez = Efield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        // if split field, the box includes nodal flag, else nodal flag plus particle shape factor
+        // if split field, the box includes nodal flag
+        // For E-field used in Maxwell's update, nodal flag plus cells that particles
+        // gather fields from in the guard-cell region are included.
+        // Note that for simulations without particles or laser, ng_field_gather is 0
+        // and the guard-cell values of the E-field multifab will not be modified.
         amrex::Box const& tex = (split_pml_field) ? mfi.tilebox(Efield[0]->ixType().toIntVect())
-                                                  : mfi.tilebox(Efield[0]->ixType().toIntVect(), shape_factor);
+                                                  : mfi.tilebox(Efield[0]->ixType().toIntVect(), ng_fieldgather);
         amrex::Box const& tey = (split_pml_field) ? mfi.tilebox(Efield[1]->ixType().toIntVect())
-                                                  : mfi.tilebox(Efield[1]->ixType().toIntVect(), shape_factor);
+                                                  : mfi.tilebox(Efield[1]->ixType().toIntVect(), ng_fieldgather);
         amrex::Box const& tez = (split_pml_field) ? mfi.tilebox(Efield[2]->ixType().toIntVect())
-                                                  : mfi.tilebox(Efield[2]->ixType().toIntVect(), shape_factor);
+                                                  : mfi.tilebox(Efield[2]->ixType().toIntVect(), ng_fieldgather);
 
         // loop over cells and update fields
         amrex::ParallelFor(
@@ -126,10 +123,6 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
-    amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-    shape_factor[1] = WarpX::noz;
-#endif
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -139,6 +132,7 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
     amrex::IntVect Bx_nodal = Bfield[0]->ixType().toIntVect();
     amrex::IntVect By_nodal = Bfield[1]->ixType().toIntVect();
     amrex::IntVect Bz_nodal = Bfield[2]->ixType().toIntVect();
+    amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     const int nComp_x = Bfield[0]->nComp();
     const int nComp_y = Bfield[1]->nComp();
     const int nComp_z = Bfield[2]->nComp();
@@ -154,9 +148,9 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
         amrex::Array4<amrex::Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), shape_factor);
-        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), shape_factor);
-        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), ng_fieldgather);
+        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), ng_fieldgather);
+        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), ng_fieldgather);
 
         // loop over cells and update fields
         amrex::ParallelFor(
