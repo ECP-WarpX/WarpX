@@ -805,10 +805,7 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
                     if (ii != 0 || jj != 0 || kk != 0) {
                         Box b = grid_bx;
                         b.shift(grid_bx_sz * IntVect{AMREX_D_DECL(ii,jj,kk)});
-                        amrex::Print()<<b<<std::endl;
-                        amrex::Print()<<bx<<std::endl;
                         b &= bx;
-                        amrex::Print()<<b<<std::endl;
                         if (b.ok()) {
                             bndryboxes.push_back(b);
                         }
@@ -1244,7 +1241,7 @@ PML::FillBoundaryEdgeLengths (PatchType patch_type)
 void
 PML::FillBoundaryFaceAreas ()
 {
-    FillBoundaryEdgeLengths(PatchType::fine);
+    FillBoundaryFaceAreas(PatchType::fine);
 }
 
 void

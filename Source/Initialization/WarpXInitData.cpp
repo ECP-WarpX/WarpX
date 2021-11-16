@@ -243,6 +243,10 @@ WarpX::InitPML ()
                              do_moving_window, pml_has_particles, do_pml_in_domain,
                              J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
+        if(do_pml){
+            pml[0]->FillBoundaryFaceAreas();
+            pml[0]->FillBoundaryEdgeLengths();
+        }
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -514,10 +518,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][1], guard_cells.ng_alloc_EB, period);
                 WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][2], guard_cells.ng_alloc_EB, period);
                 ComputeFaceExtensions();
-            }
-            if(do_pml){
-                pml[lev]->FillBoundaryFaceAreas();
-                pml[lev]->FillBoundaryEdgeLengths();
             }
         }
     }
