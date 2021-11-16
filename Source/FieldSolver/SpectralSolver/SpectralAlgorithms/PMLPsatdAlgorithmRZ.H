@@ -1,4 +1,4 @@
-/* Copyright 2019 David Grote
+/* Copyright 2021 David Grote
  *
  * This file is part of WarpX.
  *
@@ -16,16 +16,16 @@ class PMLPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 {
 
     public:
-        PMLPsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
-                            amrex::DistributionMapping const & dm,
-                            const SpectralFieldIndex& spectral_index,
-                            int const n_rz_azimuthal_modes, int const norder_z,
-                            bool const nodal, amrex::Real const dt_step);
+        PMLPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+                             amrex::DistributionMapping const & dm,
+                             const SpectralFieldIndex& spectral_index,
+                             int const n_rz_azimuthal_modes, int const norder_z,
+                             bool const nodal, amrex::Real const dt_step);
 
         // Redefine functions from base class
-        virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
+        virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
 
-        void InitializeSpectralCoefficients(SpectralFieldDataRZ const & f);
+        void InitializeSpectralCoefficients (SpectralFieldDataRZ const & f);
 
         /**
          * \brief Virtual function for current correction in Fourier space

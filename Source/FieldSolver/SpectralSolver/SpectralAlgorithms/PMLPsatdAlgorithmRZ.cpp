@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 David Grote
+/* Copyright 2021 David Grote
  *
  * This file is part of WarpX.
  *
@@ -36,7 +36,7 @@ PMLPsatdAlgorithmRZ::PMLPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspa
 /* Advance the E and B field in spectral space (stored in `f`)
  * over one time step */
 void
-PMLPsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
+PMLPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
 {
 
     if (not coefficients_initialized) {
