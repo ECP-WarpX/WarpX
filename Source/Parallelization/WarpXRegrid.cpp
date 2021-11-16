@@ -171,12 +171,19 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(current_store[lev][idim], dm, false);
 
 #ifdef AMREX_USE_EB
-            RemakeMultiFab(Venl[lev][idim], dm, false);
-            RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
-            RemakeMultiFab(m_face_areas[lev][idim], dm, false);
-            RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
-            RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
-            RemakeMultiFab(m_area_mod[lev][idim], dm, false);
+            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee || 
+                WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT || 
+                WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){ 
+                RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
+                RemakeMultiFab(m_face_areas[lev][idim], dm, false);
+                if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+                    RemakeMultiFab(Venl[lev][idim], dm, false);
+                    RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
+                    RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
+                    RemakeMultiFab(m_area_mod[lev][idim], dm, false);
+                    RemakeMultiFab(ECTRhofield[lev][idim], dm, false);
+                }
+            }
 #endif
         }
 
