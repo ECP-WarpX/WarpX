@@ -554,7 +554,7 @@ WarpX::FillBoundaryE (const int lev, PatchType patch_type, amrex::IntVect ng)
         mf     = {Efield_fp[lev][0].get(), Efield_fp[lev][1].get(), Efield_fp[lev][2].get()};
         period = Geom(lev).periodicity();
     }
-    else
+    else // coarse patch
     {
         mf     = {Efield_cp[lev][0].get(), Efield_cp[lev][1].get(), Efield_cp[lev][2].get()};
         period = Geom(lev-1).periodicity();
@@ -591,59 +591,42 @@ WarpX::FillBoundaryB (int lev, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
+WarpX::FillBoundaryB (const int lev, PatchType patch_type, amrex::IntVect ng)
 {
+    std::array<amrex::MultiFab*,3> mf;
+    amrex::Periodicity period;
+
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            pml[lev]->Exchange(pml[lev]->GetB_fp(),
-                               {Bfield_fp[lev][0].get(),
-                                Bfield_fp[lev][1].get(),
-                                Bfield_fp[lev][2].get()},
-                               patch_type,
-                               do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
-        }
-        const auto& period = Geom(lev).periodicity();
-        if ( safe_guard_cells ) {
-            Vector<MultiFab*> mf{Bfield_fp[lev][0].get(),Bfield_fp[lev][1].get(),Bfield_fp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, period);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_fp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryB, requested more guard cells than allocated");
-
-            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][0], ng, period);
-            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][1], ng, period);
-            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][2], ng, period);
-        }
+        mf     = {Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get()};
+        period = Geom(lev).periodicity();
     }
-    else if (patch_type == PatchType::coarse)
+    else // coarse patch
     {
-        if (do_pml && pml[lev]->ok())
-        {
-        pml[lev]->Exchange(pml[lev]->GetB_cp(),
-                           {Bfield_cp[lev][0].get(),
-                            Bfield_cp[lev][1].get(),
-                            Bfield_cp[lev][2].get()},
-                           patch_type,
-                           do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
-        }
-        const auto& cperiod = Geom(lev-1).periodicity();
-        if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Bfield_cp[lev][0].get(),Bfield_cp[lev][1].get(),Bfield_cp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, cperiod);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_cp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryB, requested more guard cells than allocated");
+        mf     = {Bfield_cp[lev][0].get(), Bfield_cp[lev][1].get(), Bfield_cp[lev][2].get()};
+        period = Geom(lev-1).periodicity();
+    }
 
-            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][0], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][1], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][2], ng, cperiod);
-        }
+    // Exchange data between valid domain and PML
+    // Fill guard cells in PML
+    if (do_pml && pml[lev]->ok())
+    {
+        std::array<amrex::MultiFab*,3> mf_pml =
+            (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+
+        pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
+        pml[lev]->FillBoundaryB(patch_type);
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < 3; ++i)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryB, requested more guard cells than allocated");
+
+        amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
     }
 }
 
