@@ -48,7 +48,7 @@ elif ds.dimensionality == 3:
     Ey_array = ad0[("mesh", "Ey")].to_ndarray()
     Ez_array = ad0[("mesh", "Ez")].to_ndarray()
     E_array = ( Ex_array**2 + Ey_array**2 + Ez_array**2 )**.5
-    relative_tolerance = 0.15
+    relative_tolerance = 0.165
 
 # Extract grid coordinates
 Nx, Ny, Nz =  ds.domain_dimensions

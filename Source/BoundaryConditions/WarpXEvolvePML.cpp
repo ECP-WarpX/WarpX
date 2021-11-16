@@ -180,7 +180,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
             // Damp G when WarpX::do_divb_cleaning = true
             if (pml_G) {
-                const Box& tb = mfi.tilebox();
+                const Box& tb = mfi.tilebox(G_stag);
                 auto const& pml_G_fab = pml_G->array(mfi);
                 amrex::ParallelFor(tb, [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {

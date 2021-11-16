@@ -454,6 +454,7 @@ epsilon0 vacuum permittivity
 mu0      vacuum permeability
 clight   speed of light
 pi       math constant pi
+kb       Boltzmann constant (J/K)
 ======== ===================
 
 See ``Source/Utils/WarpXConst.H`` for the values.
@@ -515,7 +516,7 @@ Particle initialization
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species.
-    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"`` and ``"copper"``.
+    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"``, ``"argon"``, ``"copper"`` and ``"xenon"``.
     Either this or both ``mass`` and ``charge`` have to be specified.
 
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
@@ -1120,7 +1121,7 @@ Laser initialization
     ``<laser_name>.profile_focal_distance`` in the laboratory frame, and use ``warpx.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
-* ``<laser_name>.phi0`` (`float`; in radians)
+* ``<laser_name>.phi0`` (`float`; in radians) optional (default `0.`)
     The Carrier Envelope Phase, i.e. the phase of the laser oscillation, at the
     position where the laser envelope is maximum (only used for the ``"gaussian"`` profile)
 
@@ -1761,10 +1762,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
 
-* ``<diag_name>.intervals`` (`string` optional, default `0`)
+* ``<diag_name>.intervals`` (`string`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which data is dumped.
     Use a negative number or 0 to disable data dumping.
-    This is ``0`` (disabled) by default.
     example: ``diag1.intervals = 10,20:25:1``.
     Note that by default the last timestep is dumped regardless of this parameter. This can be
     changed using the parameter ``<diag_name>.dump_last_timestep`` described below.
@@ -2332,7 +2332,7 @@ Reduced Diagnostics
         so the time of the diagnostic may be long
         depending on the simulation size.
 
-* ``<reduced_diags_name>.intervals`` (`string`) optional (default ``1``)
+* ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.
 

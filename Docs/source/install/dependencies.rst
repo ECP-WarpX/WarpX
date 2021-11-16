@@ -39,6 +39,7 @@ Spack (macOS/Linux)
 
    spack env create warpx-dev
    spack env activate warpx-dev
+
    spack add adios2        # for openPMD
    spack add blaspp        # for PSATD in RZ
    spack add ccache
@@ -49,19 +50,32 @@ Spack (macOS/Linux)
    spack add mpi
    spack add openpmd-api   # for openPMD
    spack add pkgconfig     # for fftw
+
+   # OpenMP support on macOS
+   [[ $OSTYPE == 'darwin'* ]] && spack add llvm-openmp
+
    # optional:
    # spack add python
    # spack add py-pip
    # spack add cuda
+
    spack install
 
-(in new terminals, re-activate the environment with ``spack env activate warpx-dev`` again)
+In new terminal sessions, re-activate the environment with ``spack env activate warpx-dev`` again.
 
 If you also want to run runtime tests and added Python (``spack add python`` and ``spack add py-pip``) above, install also these additional Python packages in the active Spack environment:
 
 .. code-block:: bash
 
    python -m pip install matplotlib==3.2.2 yt scipy numpy openpmd-api
+
+If you want to run the ``./run_test.sh`` :ref:`test script <developers-testing>`, which uses our legacy GNUmake build system, you need to set the following environment hints after ``spack env activate warpx-dev`` for dependent software:
+
+.. code-block:: bash
+
+   export FFTW_HOME=${SPACK_ENV}/.spack-env/view
+   export BLASPP_HOME=${SPACK_ENV}/.spack-env/view
+   export LAPACKPP_HOME=${SPACK_ENV}/.spack-env/view
 
 
 Brew (macOS/Linux)
@@ -124,4 +138,3 @@ Apt (Debian/Ubuntu)
 
    sudo apt update
    sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-scipy
-

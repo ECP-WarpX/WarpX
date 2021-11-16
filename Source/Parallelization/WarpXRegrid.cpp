@@ -209,6 +209,14 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             rho_fp[lev] = std::move(pmf);
         }
 
+        if (phi_fp[lev] != nullptr) {
+            const int nc = phi_fp[lev]->nComp();
+            const IntVect& ng = phi_fp[lev]->nGrowVect();
+            auto pmf = std::make_unique<MultiFab>(phi_fp[lev]->boxArray(),
+                                                              dm, nc, ng);
+            phi_fp[lev] = std::move(pmf);
+        }
+
 #ifdef WARPX_USE_PSATD
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             if (spectral_solver_fp[lev] != nullptr) {
@@ -408,7 +416,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (costs[lev] != nullptr)
         {
             costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
-            for (int i : costs[lev]->IndexArray())
+            const auto iarr = costs[lev]->IndexArray();
+            for (int i : iarr)
             {
                 (*costs[lev])[i] = 0.0;
                 setLoadBalanceEfficiency(lev, -1);
@@ -464,7 +473,8 @@ WarpX::ResetCosts ()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        for (int i : costs[lev]->IndexArray())
+        const auto iarr = costs[lev]->IndexArray();
+        for (int i : iarr)
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;

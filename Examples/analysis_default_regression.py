@@ -16,4 +16,3 @@ if re.search( 'single_precision', fn ):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=2.e-6)
 else:
     checksumAPI.evaluate_checksum(test_name, fn)
-
