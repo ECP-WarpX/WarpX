@@ -163,8 +163,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(Venl[lev][idim], dm, false);
             RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
             RemakeMultiFab(m_face_areas[lev][idim], dm, false);
-            RemakeiMultiFab(m_flag_info_face[lev][idim], dm, false);
-            RemakeiMultiFab(m_flag_ext_face[lev][idim], dm, false);
+            RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
+            RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
             RemakeMultiFab(m_area_mod[lev][idim], dm, false);
 #endif
         }
@@ -293,8 +293,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(current_buf[lev][idim], dm, false);
             }
             RemakeMultiFab(charge_buf[lev], dm, false);
-            RemakeiMultiFab(current_buffer_masks[lev], dm, false);
-            RemakeiMultiFab(gather_buffer_masks[lev], dm, false);
+            // we can avoid redistributing these since we immediately re-build the values via BuildBufferMasks()
+            RemakeMultiFab(current_buffer_masks[lev], dm, false);
+            RemakeMultiFab(gather_buffer_masks[lev], dm, false);
 
             if (current_buffer_masks[lev] || gather_buffer_masks[lev])
                 BuildBufferMasks();
@@ -325,24 +326,13 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     // not needed yet
 }
 
-void
-WarpX::RemakeMultiFab (std::unique_ptr<amrex::MultiFab>& mf, const DistributionMapping& dm,
+template <typename MultiFabType> void
+WarpX::RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
                        const bool redistribute)
 {
     if (mf == nullptr) return;
     const IntVect& ng = mf->nGrowVect();
-    auto pmf = std::make_unique<MultiFab>(mf->boxArray(), dm, mf->nComp(), ng);
-    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
-    mf = std::move(pmf);
-}
-
-void
-WarpX::RemakeiMultiFab (std::unique_ptr<amrex::iMultiFab>& mf, const DistributionMapping& dm,
-                        const bool redistribute)
-{
-    if (mf == nullptr) return;
-    const IntVect& ng = mf->nGrowVect();
-    auto pmf = std::make_unique<iMultiFab>(mf->boxArray(), dm, mf->nComp(), ng);
+    auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
     if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
     mf = std::move(pmf);
 }

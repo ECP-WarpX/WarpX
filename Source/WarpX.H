@@ -819,12 +819,10 @@ protected:
     //! data.  Called by AmrCore::regrid.
     virtual void RemakeLevel (int lev, amrex::Real time, const amrex::BoxArray& ba,
                               const amrex::DistributionMapping& dm) final;
-    virtual void RemakeMultiFab (std::unique_ptr<amrex::MultiFab>& mf,
-                                 const amrex::DistributionMapping& dm,
-                                 const bool redistribute = true) final;
-    virtual void RemakeiMultiFab (std::unique_ptr<amrex::iMultiFab>& mf,
-                                 const amrex::DistributionMapping& dm,
-                                 const bool redistribute = true) final;
+    template <typename MultiFabType>
+    void RemakeMultiFab (std::unique_ptr<MultiFabType>& mf,
+                         const amrex::DistributionMapping& dm,
+                         const bool redistribute = true);
 
     //! Delete level data.  Called by AmrCore::regrid.
     virtual void ClearLevel (int lev) final;
