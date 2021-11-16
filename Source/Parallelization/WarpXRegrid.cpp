@@ -206,6 +206,15 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         ScaleEdges();
         ScaleAreas();
         ComputeDistanceToEB();
+
+        // Since we have reset m_borrowing we need to recompute the extensions.
+        // To do so we need to recompute m_flag_ext_face since it has been changed
+        // since the last time ComputeFaceExtensions has been called. For this reason
+        // we call MarkCells before ComputeFaceExtensions
+        if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+            MarkCells();
+            ComputeFaceExtensions();
+        }
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif
