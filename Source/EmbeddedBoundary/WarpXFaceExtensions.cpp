@@ -154,7 +154,7 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                     // multi-face extensions.
                     if (S_red(i, j + j_n, k + k_n) > S_ext
                         && (flag_info_face(i, j + j_n, k + k_n) == 1 ||
-                             flag_info_face(i, j + j_n, k + k_n) == 2)
+                            flag_info_face(i, j + j_n, k + k_n) == 2)
                         && flag_ext_face(i, j, k) && ! stop) {
                         n_borrow += 1;
                         stop = true;
@@ -194,8 +194,8 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i + i_n, j, k + k_n) > S_ext
-                        && (flag_info_face(i + i_n, j, k + k_n) == 1
-                             || flag_info_face(i + i_n, j, k + k_n) == 2)
+                        && (flag_info_face(i + i_n, j, k + k_n) == 1 ||
+                            flag_info_face(i + i_n, j, k + k_n) == 2)
                         && flag_ext_face(i, j, k) && ! stop) {
                         n_borrow += 1;
                         stop = true;
@@ -217,8 +217,8 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                     // If no face is available we don't do anything and we will need to use the
                     // multi-face extensions.
                     if (S_red(i + i_n, j + j_n, k) > S_ext
-                        && (flag_info_face(i + i_n, j + j_n, k) == 1
-                             || flag_info_face(i + i_n, j + j_n, k) == 2)
+                        && (flag_info_face(i + i_n, j + j_n, k) == 1 ||
+                            flag_info_face(i + i_n, j + j_n, k) == 2)
                         && flag_ext_face(i, j, k) && ! stop) {
                         n_borrow += 1;
                         stop = true;
@@ -519,11 +519,18 @@ WarpX::ComputeOneWayExtensions() {
                             // has given away already some area, so we use Sz_red rather than Sz.
                             // If no face is available we don't do anything and we will need to use the
                             // multi-face extensions.
-                            if (Sx_mod(i, j + j_n, k + k_n) > Sx_ext
-                                && ( flag_info_face_x(i, j + j_n, k + k_n) == 1
-                                      || flag_info_face_x(i, j + j_n, k + k_n) == 2)
-                                && flag_ext_face_x(i, j, k)) {
-                                Sx_mod(i, j + j_n, k + k_n) -= Sx_ext;
+
+                            bool test_success = amrex::Gpu::Atomic::If(&Sx_mod(i, j + j_n, k + k_n),
+                                                                       Sx_ext,
+                                                                       amrex::Minus<amrex::Real>(),
+                                [=] AMREX_GPU_DEVICE (amrex::Real tmp) noexcept
+                                {
+                                    return (tmp >= 0 && ( flag_info_face_x(i, j + j_n, k + k_n) == 1
+                                                       || flag_info_face_x(i, j + j_n, k + k_n) == 2)
+                                            && flag_ext_face_x(i, j, k));
+                                });
+
+                            if (test_success) {
                                 // Insert the index of the face info
                                 borrowing_x_inds[ps] = ps;
                                 // Store the information about the intruded face in the dataset of the
@@ -661,11 +668,17 @@ WarpX::ComputeOneWayExtensions() {
                                 // has given away already some area, so we use Sz_red rather than Sz.
                                 // If no face is available we don't do anything and we will need to use the
                                 // multi-face extensions.
-                                if (Sy_mod(i + i_n, j, k + k_n) > Sy_ext
-                                    && (flag_info_face_y(i + i_n, j, k + k_n) == 1
-                                         || flag_info_face_y(i + i_n, j, k + k_n) == 2)
-                                    && flag_ext_face_y(i, j, k)) {
-                                    Sy_mod(i + i_n, j, k + k_n) -= Sy_ext;
+                                bool test_success = amrex::Gpu::Atomic::If(&Sy_mod(i + i_n, j, k + k_n),
+                                                                           Sy_ext,
+                                                                           amrex::Minus<amrex::Real>(),
+                                    [=] AMREX_GPU_DEVICE (amrex::Real tmp) noexcept
+                                    {
+                                        return (tmp >= 0 && ( flag_info_face_y(i + i_n, j, k + k_n) == 1
+                                                           || flag_info_face_y(i + i_n, j, k + k_n) == 2)
+                                                && flag_ext_face_y(i, j, k));
+                                    });
+
+                                if (test_success) {
                                     // Insert the index of the face info
                                     borrowing_y_inds[ps] = ps;
                                     // Store the information about the intruded face in the dataset of the
@@ -758,11 +771,17 @@ WarpX::ComputeOneWayExtensions() {
                                 // has given away already some area, so we use Sz_red rather than Sz.
                                 // If no face is available we don't do anything and we will need to use the
                                 // multi-face extensions.
-                                if (Sz_mod(i + i_n, j + j_n, k) > Sz_ext
-                                    && (flag_info_face_z(i + i_n, j + j_n, k) == 1
-                                         || flag_info_face_z(i + i_n, j + j_n, k) == 2)
-                                    && flag_ext_face_z(i, j, k)) {
-                                    Sz_mod(i + i_n, j + j_n, k) -= Sz_ext;
+                                bool test_success = amrex::Gpu::Atomic::If(&Sz_mod(i + i_n, j + j_n, k),
+                                                                           Sz_ext,
+                                                                           amrex::Minus<amrex::Real>(),
+                                    [=] AMREX_GPU_DEVICE (amrex::Real tmp) noexcept
+                                    {
+                                        return (tmp >= 0 && ( flag_info_face_z(i + i_n, j + j_n, k) == 1
+                                                           || flag_info_face_z(i + i_n, j + j_n, k) == 2)
+                                                         && flag_ext_face_z(i, j, k));
+                                    });
+
+                                if (test_success) {
                                     // Insert the index of the face info
                                     borrowing_z_inds[ps] = ps;
                                     // Store the information about the intruded face in the dataset of the
