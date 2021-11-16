@@ -183,6 +183,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                     RemakeMultiFab(m_area_mod[lev][idim], dm, false);
                     RemakeMultiFab(ECTRhofield[lev][idim], dm, false);
                 }
+
+                m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
+
             }
 #endif
         }
