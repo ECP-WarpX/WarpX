@@ -13,23 +13,24 @@
 
 /**
 * \brief Get the value of arr in the neighbor (i_n, j_n) on the plane with normal 'dim'.
+*
 *        I.E. If dim==0 it return arr(i, j + i_n, k + j_n),
 *             if dim==1 it return arr(i + i_n, j, k + j_n),
 *             if dim==2 it return arr(i + i_n, j + j_n, k)
 *
-* \param[in] arr \c Array4 To be accessed
+* \param[in] arr data To be accessed
 * \param[in] i, j, k the indices of the "center" cell
 * \param[in] i_n the offset of the neighbor in the first direction
 * \param[in] j_n the offset of the neighbor in the second direction
 * \param[in] dim normal direction to the plane in consideration (0 for x, 1 for y, 2 for z)
 */
 template <class T>
-AMREX_GPU_DEVICE
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 constexpr
 T
 GetNeigh(const amrex::Array4<T>& arr,
-                const int i, const int j, const int k,
-                const int i_n, const int j_n, const int dim){
+         const int i, const int j, const int k,
+         const int i_n, const int j_n, const int dim){
 
     if(dim == 0){
         return arr(i, j + i_n, k + j_n);
@@ -53,11 +54,12 @@ GetNeigh(const amrex::Array4<T>& arr,
 
 /**
 * \brief Set the value of arr in the neighbor (i_n, j_n) on the plane with normal 'dim'.
+*
 *        I.E. If dim==0 it return arr(i, j + i_n, k + j_n),
 *             if dim==1 it return arr(i + i_n, j, k + j_n),
 *             if dim==2 it return arr(i + i_n, j + j_n, k)
 *
-* \param[in] arr \c Array4 to be modified
+* \param[in] arr data to be modified
 * \param[in] val the value to be set
 * \param[in] i, j, k the indices of the "center" cell
 * \param[in] i_n the offset of the neighbor in the first direction
@@ -65,12 +67,12 @@ GetNeigh(const amrex::Array4<T>& arr,
 * \param[in] dim normal direction to the plane in consideration (0 for x, 1 for y, 2 for z)
 */
 template <class T>
-AMREX_GPU_DEVICE
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 constexpr
 void
 SetNeigh(const amrex::Array4<T>& arr, const T val,
-                const int i, const int j, const int k,
-                const int i_n, const int j_n, const int dim){
+         const int i, const int j, const int k,
+         const int i_n, const int j_n, const int dim){
 
     if(dim == 0){
         arr(i, j + i_n, k + j_n) = val;
@@ -98,18 +100,18 @@ SetNeigh(const amrex::Array4<T>& arr, const T val,
 * \brief Compute the minimal area for stability for the face i, j, k with normal 'dim'.
 *
 * \param[in] i, j, k the indices of the cell
-* \param[in] lx, ly, lz \c Array4 containing the edge lengths
+* \param[in] lx, ly, lz arrays containing the edge lengths
 * \param[in] dx, dy, dz the mesh with in each direction
 * \param[in] dim normal direction to the plane in consideration (0 for x, 1 for y, 2 for z)
 */
-AMREX_GPU_DEVICE
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 amrex::Real
 ComputeSStab(const int i, const int j, const int k,
-                    const amrex::Array4<amrex::Real> lx,
-                    const amrex::Array4<amrex::Real> ly,
-                    const amrex::Array4<amrex::Real> lz,
-                    const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
-                    const int dim){
+             const amrex::Array4<const amrex::Real> lx,
+             const amrex::Array4<const amrex::Real> ly,
+             const amrex::Array4<const amrex::Real> lz,
+             const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
+             const int dim){
 
     if(dim == 0) {
         return 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
@@ -256,7 +258,7 @@ WarpX::InitBorrowing() {
 }
 
 
-AMREX_GPU_DEVICE
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 int
 ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                const amrex::Array4<amrex::Real>& S_red,
@@ -291,7 +293,7 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
 }
 
 
-AMREX_GPU_DEVICE
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 int
 ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                                   const amrex::Array4<amrex::Real>& S_red,
@@ -305,7 +307,7 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
 
     for(int i_loc = 0; i_loc <= 2; i_loc++){
         for(int j_loc = 0; j_loc <= 2; j_loc++){
-            auto flag = GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim);
+            const int flag = GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim);
             local_avail(i_loc, j_loc) = flag == 1 || flag == 2;
         }
     }
@@ -326,7 +328,7 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
         for (int i_n = -1; i_n < 2; i_n++) {
             for (int j_n = -1; j_n < 2; j_n++) {
                 if(local_avail(i_n + 1, j_n + 1)){
-                    amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
+                    const amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
                     if(GetNeigh(S_red, i, j, k, i_n, j_n, idim) - patch <= 0) {
                         neg_face = true;
                         local_avail(i_n + 1, j_n + 1) = false;
@@ -403,9 +405,9 @@ WarpX::ComputeOneWayExtensions() {
                     return 0;
                 }
 
-                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
+                const amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
-                amrex::Real S_ext = S_stab - S(i, j, k);
+                const amrex::Real S_ext = S_stab - S(i, j, k);
                 const int n_borrow =
                     ComputeNBorrowOneFaceExtension(cell, S_ext, S_mod, flag_info_face,
                                                    flag_ext_face, idim);
@@ -425,9 +427,9 @@ WarpX::ComputeOneWayExtensions() {
                 } else{
                     borrowing_inds_pointer(i, j, k) = borrowing_inds + ps;
 
-                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
+                    const amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
-                    amrex::Real S_ext = S_stab - S(i, j, k);
+                    const amrex::Real S_ext = S_stab - S(i, j, k);
                     for (int i_n = -1; i_n < 2; i_n++) {
                         for (int j_n = -1; j_n < 2; j_n++) {
                             //This if makes sure that we don't visit the "diagonal neighbours"
@@ -513,9 +515,9 @@ WarpX::ComputeEightWaysExtensions() {
                 if (!flag_ext_face(i, j, k)) {
                     return 0;
                 }
-                amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
+                const amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
-                amrex::Real S_ext = S_stab - S(i, j, k);
+                const amrex::Real S_ext = S_stab - S(i, j, k);
                 const int n_borrow = ComputeNBorrowEightFacesExtension(cell, S_ext, S_mod, S,
                                                                        flag_info_face, idim);
 
@@ -542,9 +544,9 @@ WarpX::ComputeEightWaysExtensions() {
                     borrowing_inds_pointer(i, j, k) = borrowing_inds + ps;
 
                     S_mod(i, j, k) = S(i, j, k);
-                    amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
+                    const amrex::Real S_stab = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
 
-                    amrex::Real S_ext = S_stab - S(i, j, k);
+                    const amrex::Real S_ext = S_stab - S(i, j, k);
                     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
                     for(int i_loc = 0; i_loc <= 2; i_loc++){
                         for(int j_loc = 0; j_loc <= 2; j_loc++){
@@ -569,7 +571,7 @@ WarpX::ComputeEightWaysExtensions() {
                         for (int i_n = -1; i_n < 2; i_n++) {
                             for (int j_n = -1; j_n < 2; j_n++) {
                                 if(local_avail(i_n + 1, j_n + 1)){
-                                    amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
+                                    const amrex::Real patch = S_ext * GetNeigh(S, i, j, k, i_n, j_n, idim) / denom;
                                     if(GetNeigh(S_mod, i, j, k, i_n, j_n, idim) - patch <= 0) {
                                         neg_face = true;
                                         local_avail(i_n + 1, j_n + 1) = false;
