@@ -171,9 +171,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(current_store[lev][idim], dm, false);
 
 #ifdef AMREX_USE_EB
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee || 
-                WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT || 
-                WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){ 
+            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+                WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT ||
+                WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
                 RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
                 RemakeMultiFab(m_face_areas[lev][idim], dm, false);
                 if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
