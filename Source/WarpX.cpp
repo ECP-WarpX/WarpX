@@ -1144,7 +1144,7 @@ WarpX::ReadParameters ()
 #   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
-            update_with_rho = false; // standard PSATD
+            update_with_rho = (do_dive_cleaning) ? true : false; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
@@ -1153,6 +1153,15 @@ WarpX::ReadParameters ()
 
         // Overwrite update_with_rho with value set in input file
         pp_psatd.query("update_with_rho", update_with_rho);
+
+        if (do_dive_cleaning == true && update_with_rho == false)
+        {
+            update_with_rho = true;
+            RecordWarning(
+                "PSATD",
+                "Setting psatd.update_with_rho = 1 because warpx.do_dive_cleaning = 1",
+                WarnPriority::low);
+        }
 
         if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
