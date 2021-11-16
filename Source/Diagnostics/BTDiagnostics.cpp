@@ -59,45 +59,26 @@ void BTDiagnostics::DerivedInitData ()
     // The number of levels to be output is nlev_output.
     nlev_output = 1;
 
-    // allocate vector of m_t_lab with m_num_buffers;
     m_t_lab.resize(m_num_buffers);
-    // allocate vector of RealBost of the simulation domain in lab-frame
     m_prob_domain_lab.resize(m_num_buffers);
-    // allocate vector of RealBox of the diag domain
     m_snapshot_domain_lab.resize(m_num_buffers);
-    // allocate vector of RealBox of the buffers that fill the snapshot
     m_buffer_domain_lab.resize(m_num_buffers);
-    // define box correctly (one for all snapshots)
     m_snapshot_box.resize(m_num_buffers);
-    // define box for each buffer that fills the snapshot
     m_buffer_box.resize(m_num_buffers);
-    // allocate vector of m_current_z_lab
     m_current_z_lab.resize(m_num_buffers);
-    // allocate vector of current_z_boost
     m_current_z_boost.resize(m_num_buffers);
-    // allocate vector of old_z_boost positions
     m_old_z_boost.resize(m_num_buffers);
-    // allocate vector of m_buff_counter to counter number of slices filled in the buffer
     m_buffer_counter.resize(m_num_buffers);
-    // allocate vector of num_Cells in the lab-frame
     m_snapshot_ncells_lab.resize(m_num_buffers);
-    // allocate vector of cell centered multifabs for nlevels
     m_cell_centered_data.resize(nmax_lev);
-    // allocate vector of cell-center functors for nlevels
     m_cell_center_functors.resize(nmax_lev);
-    // allocate vector to estimate maximum number of buffer multifabs needed to
-    // obtain the lab-frame snapshot.
     m_max_buffer_multifabs.resize(m_num_buffers);
-    // allocate vector to count number of times the buffer multifab
-    // has been flushed and refilled
     m_buffer_flush_counter.resize(m_num_buffers);
-    // allocate vector of geometry objects corresponding to each snapshot
     m_geom_snapshot.resize( m_num_buffers );
     m_snapshot_full.resize( m_num_buffers );
     m_lastValidZSlice.resize( m_num_buffers );
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
-        // initialize snapshot full boolean to false
         m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
     }
@@ -206,10 +187,11 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
     // force_flush is set to true.
     if (step < 0 ) {
         return false;
+    } else if (force_flush) {
+        return false;
     } else {
-        if (force_flush) return false;
+        return true;
     }
-    return true;
 }
 
 void
