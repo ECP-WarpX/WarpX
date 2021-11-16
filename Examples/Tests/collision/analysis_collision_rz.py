@@ -22,7 +22,7 @@ from glob import glob
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-tolerance = 1.0e-30
+tolerance = 1.0e-15
 
 last_fn = sys.argv[1]
 if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
