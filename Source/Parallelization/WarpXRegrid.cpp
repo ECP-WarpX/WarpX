@@ -144,6 +144,17 @@ WarpX::LoadBalance ()
 }
 
 
+template <typename MultiFabType> void
+RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
+                const bool redistribute)
+{
+    if (mf == nullptr) return;
+    const IntVect& ng = mf->nGrowVect();
+    auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
+    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
+    mf = std::move(pmf);
+}
+
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
@@ -324,17 +335,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
     // Reduced diagnostics
     // not needed yet
-}
-
-template <typename MultiFabType> void
-WarpX::RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
-                       const bool redistribute)
-{
-    if (mf == nullptr) return;
-    const IntVect& ng = mf->nGrowVect();
-    auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
-    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
-    mf = std::move(pmf);
 }
 
 void
