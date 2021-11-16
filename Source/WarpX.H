@@ -822,7 +822,7 @@ protected:
     template <typename MultiFabType>
     void RemakeMultiFab (std::unique_ptr<MultiFabType>& mf,
                          const amrex::DistributionMapping& dm,
-                         const bool redistribute = true);
+                         const bool redistribute);
 
     //! Delete level data.  Called by AmrCore::regrid.
     virtual void ClearLevel (int lev) final;

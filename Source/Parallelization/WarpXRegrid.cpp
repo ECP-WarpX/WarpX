@@ -169,7 +169,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 #endif
         }
 
-        RemakeMultiFab(F_fp[lev], dm);
+        RemakeMultiFab(F_fp[lev], dm, true);
         RemakeMultiFab(rho_fp[lev], dm, false);
         // phi_fp should be redistributed since we use the solution from
         // the last step as the initial guess for the next solve
