@@ -15,6 +15,7 @@
 # tolerance: 1.0e-30
 # Possible running time: ~ 1.0 s
 
+import os
 import sys
 import yt
 import numpy as np
