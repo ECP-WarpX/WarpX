@@ -178,12 +178,12 @@ public:
             }
 
 #if (defined WARPX_DIM_RZ)
-    /* This momentum rotation is analogous to the one in ElasticCollisionPerez.H. */
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
-      "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary nuclear fusion module.");
-    amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
-    amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
-    amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
+            /* This momentum rotation is analogous to the one in ElasticCollisionPerez.H. */
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
+              "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary nuclear fusion module.");
+            amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
+            amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
+            amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
 #endif
 
             for (int k = 0; k < max_N; ++k)
@@ -211,9 +211,9 @@ public:
                     m_fusion_type, engine);
 
 #if (defined WARPX_DIM_RZ)
-          amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
-          u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
-          u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+                amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
+                u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
+                u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
 
                 p_pair_indices_1[pair_index] = I1[i1];
