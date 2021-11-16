@@ -1303,6 +1303,8 @@ Collision initialization
 
 WarpX provides a relativistic elastic Monte Carlo binary collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+If dimension 2D-RZ is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
+i.e., axisymmetry is assumed.
 A non-relativistic Monte Carlo treatment for particles colliding
 with a neutral, uniform background gas is also available. The implementation follows the so-called
 null collision strategy discussed for example in `Birdsall (IEEE Transactions on
