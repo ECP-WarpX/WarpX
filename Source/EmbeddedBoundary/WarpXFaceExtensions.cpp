@@ -15,7 +15,6 @@ amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
         amrex::ReduceData<int> reduce_data(reduce_ops);
@@ -164,6 +163,27 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
             }
         }
     }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+        for (int i_n = -1; i_n < 2; i_n++) {
+            for (int j_n = -1; j_n < 2; j_n++) {
+                // This "if" makes sure that we don't visit the "diagonal neighbours"
+                if (!(i_n == j_n || i_n == -j_n)) {
+                    // Here a face is available if it doesn't need to be extended itself and if its
+                    // area exceeds Sz_ext. Here we need to take into account if the intruded face
+                    // has given away already some area, so we use Sz_red rather than Sz.
+                    // If no face is available we don't do anything and we will need to use the
+                    // multi-face extensions.
+                    if (S_red(i + i_n, j + j_n, k) > S_ext
+                        && (flag_info_face(i + i_n, j + j_n, k) == 1
+                             || flag_info_face(i + i_n, j + j_n, k) == 2)
+                        && flag_ext_face(i, j, k) && ! stop) {
+                        n_borrow += 1;
+                        stop = true;
+                    }
+                }
+            }
+        }
+#elif defined(WARPX_DIM_3D)
         for (int i_n = -1; i_n < 2; i_n++) {
             for (int k_n = -1; k_n < 2; k_n++) {
                 //This if makes sure that we don't visit the "diagonal neighbours"
@@ -183,6 +203,9 @@ ComputeNBorrowOneFaceExtension(const amrex::Dim3 cell, const amrex::Real S_ext,
                 }
             }
         }
+#else
+        amrex::Abort("ComputeNBorrowOneFaceExtension: Only implemented in 2D3V and 3D3V");
+#endif
     }else if(idim == 2) {
         for (int i_n = -1; i_n < 2; i_n++) {
             for (int j_n = -1; j_n < 2; j_n++) {
@@ -278,6 +301,49 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
                 local_avail(2, 2) * S(i, j + 1, k + 1);
         }
     }else if(idim == 1) {
+#ifdef WARPX_DIM_XZ
+        for(int i_loc = 0; i_loc <= 2; i_loc++){
+            for(int j_loc = 0; j_loc <= 2; j_loc++){
+                local_avail(i_loc, j_loc) = (flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 1
+                                             || flag_info_face(i + i_loc - 1, j + j_loc - 1, k) == 2);
+            }
+        }
+
+        amrex::Real denom = local_avail(0, 1) * S(i - 1, j, k) +
+            local_avail(2, 1) * S(i + 1, j, k) +
+            local_avail(1, 0) * S(i, j - 1, k) +
+            local_avail(1, 2) * S(i, j + 1, k) +
+            local_avail(0, 0) * S(i - 1, j - 1, k) +
+            local_avail(2, 0) * S(i + 1, j - 1, k) +
+            local_avail(0, 2) * S(i - 1, j + 1, k) +
+            local_avail(2, 2) * S(i + 1, j + 1, k);
+
+        bool neg_face = true;
+
+        while(denom >= S_ext && neg_face && denom > 0){
+            neg_face = false;
+            for (int i_n = -1; i_n < 2; i_n++) {
+                for (int j_n = -1; j_n < 2; j_n++) {
+                    if(local_avail(i_n + 1, j_n + 1)){
+                        amrex::Real patch = S_ext * S(i + i_n, j + j_n, k) / denom;
+                        if(S_red(i + i_n, j + j_n, k) - patch <= 0) {
+                            neg_face = true;
+                            local_avail(i_n + 1, j_n + 1) = false;
+                        }
+                    }
+                }
+            }
+
+            denom = local_avail(0, 1) * S(i - 1, j, k) +
+                local_avail(2, 1) * S(i + 1, j, k) +
+                local_avail(1, 0) * S(i, j - 1, k) +
+                local_avail(1, 2) * S(i, j + 1, k) +
+                local_avail(0, 0) * S(i - 1, j - 1, k) +
+                local_avail(2, 0) * S(i + 1, j - 1, k) +
+                local_avail(0, 2) * S(i - 1, j + 1, k) +
+                local_avail(2, 2) * S(i + 1, j + 1, k);
+        }
+#elif defined(WARPX_DIM_3D)
         for(int i_loc = 0; i_loc <= 2; i_loc++){
             for(int k_loc = 0; k_loc <= 2; k_loc++){
                 local_avail(i_loc, k_loc) = (flag_info_face(i + i_loc - 1, j, k + k_loc - 1) == 1
@@ -319,7 +385,9 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
                 local_avail(0, 2) * S(i - 1, j, k + 1) +
                 local_avail(2, 2) * S(i + 1, j, k + 1);
         }
-
+#else
+        amrex::Abort("ComputeNBorrowEightFacesExtension: Only implemented in 2D3V and 3D3V");
+#endif
     } else if(idim == 2){
         for(int i_loc = 0; i_loc <= 2; i_loc++){
             for(int j_loc = 0; j_loc <= 2; j_loc++){
@@ -514,8 +582,15 @@ WarpX::ComputeOneWayExtensions() {
                     return 0;
                 }
 
+#ifdef WARPX_DIM_XZ
+                amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                                                      lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#elif defined(WARPX_DIM_3D)
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                       lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#else
+                amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
+#endif
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 int n_borrow =
                     ComputeNBorrowOneFaceExtension(cell, Sy_ext, Sy_mod, flag_info_face_y,
@@ -536,10 +611,48 @@ WarpX::ComputeOneWayExtensions() {
                 } else{
                     borrowing_y_inds_pointer(i, j, k) = borrowing_y_inds + ps;
 
-                    amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k+1) * dz,
-                                                          lz(i, j, k) * dx, lz(i+1, j, k) * dz});
+#ifdef WARPX_DIM_XZ
+                    amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                                                          lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                     amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                     for (int i_n = -1; i_n < 2; i_n++) {
+                        for (int j_n = -1; j_n < 2; j_n++) {
+                            // This "if" makes sure that we don't visit the "diagonal neighbours"
+                            if( !(i_n == j_n || i_n == -j_n)){
+                                // Here a face is available if it doesn't need to be extended itself and if its
+                                // area exceeds Sz_ext. Here we need to take into account if the intruded face
+                                // has given away already some area, so we use Sz_red rather than Sz.
+                                // If no face is available we don't do anything and we will need to use the
+                                // multi-face extensions.
+                                if (Sy_mod(i + i_n, j + j_n, k) > Sy_ext
+                                    && (flag_info_face_y(i + i_n, j + j_n, k) == 1
+                                        || flag_info_face_y(i + i_n, j + j_n, k) == 2)
+                                    && flag_ext_face_y(i, j, k)) {
+
+                                    Sy_mod(i + i_n, j + j_n, k) -= Sy_ext;
+                                    // Insert the index of the face info
+                                    borrowing_y_inds[ps] = ps;
+                                    // Store the information about the intruded face in the dataset of the
+                                    // faces which are borrowing area
+                                    FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps,
+                                                                      borrowing_y_neigh_faces);
+                                    borrowing_y_area[ps] = Sy_ext;
+
+                                    flag_info_face_y(i + i_n, j + j_n, k) = 2;
+                                    // Add the area to the intruding face.
+                                    Sy_mod(i, j, k) = Sy(i, j, k) + Sy_ext;
+                                    flag_ext_face_y(i, j, k) = false;
+                                }
+                            }
+                        }
+                    }
+
+#elif defined(WARPX_DIM_3D)
+                    amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
+                                             lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+                    amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
+
+                                        for (int i_n = -1; i_n < 2; i_n++) {
                         for (int k_n = -1; k_n < 2; k_n++) {
                             //This if makes sure that we don't visit the "diagonal neighbours"
                             if( !(i_n == k_n || i_n == -k_n)){
@@ -569,6 +682,9 @@ WarpX::ComputeOneWayExtensions() {
                             }
                         }
                     }
+#else
+                    amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
+#endif
                 }
             }, amrex::Scan::Type::exclusive);
 
@@ -615,7 +731,6 @@ WarpX::ComputeOneWayExtensions() {
                 const int n_borrow =
                     ComputeNBorrowOneFaceExtension(cell, Sz_ext, Sz_mod, flag_info_face_z,
                                                    flag_ext_face_z, idim);
-
 
                 borrowing_z_size(i, j, k) = n_borrow;
                 return n_borrow;
@@ -848,8 +963,16 @@ WarpX::ComputeEightWaysExtensions() {
                 if (!flag_ext_face_y(i, j, k)){
                     return 0;
                 }
+
+#ifdef WARPX_DIM_XZ
+                amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                                                    lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#elif defined(WARPX_DIM_3D)
                 amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                     lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#else
+                amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
+#endif
                 amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
                 const int n_borrow = ComputeNBorrowEightFacesExtension(cell, Sy_ext, Sy_mod, Sy,
                                                                  flag_info_face_y, idim);
@@ -877,6 +1000,75 @@ WarpX::ComputeEightWaysExtensions() {
                     borrowing_y_inds_pointer(i, j, k) = borrowing_y_inds + ps;
 
                     Sy_mod(i, j, k) = Sy(i, j, k);
+#ifdef WARPX_DIM_XZ
+                    amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                                                          lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+                    amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
+                    amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
+                    for (int i_loc = 0; i_loc <= 2; i_loc++) {
+                        for (int j_loc = 0; j_loc <= 2; j_loc++) {
+                            local_avail(i_loc, j_loc) = (flag_info_face_y(i + i_loc - 1, j + j_loc - 1, k) == 1
+                                || flag_info_face_y(i + i_loc - 1, j + j_loc - 1, k) == 2)   ;
+                        }
+                    }
+
+                    amrex::Real denom = local_avail(0, 1) * Sy(i - 1, j, k) +
+                        local_avail(2, 1) * Sy(i + 1, j, k) +
+                        local_avail(1, 0) * Sy(i, j - 1, k ) +
+                        local_avail(1, 2) * Sy(i, j + 1, k) +
+                        local_avail(0, 0) * Sy(i - 1, j - 1, k) +
+                        local_avail(2, 0) * Sy(i + 1, j - 1, k) +
+                        local_avail(0, 2) * Sy(i - 1, j + 1, k) +
+                        local_avail(2, 2) * Sy(i + 1, j + 1, k);
+
+                    bool neg_face = true;
+
+                    while (denom >= Sy_ext && neg_face && denom > 0) {
+                        neg_face = false;
+                        for (int i_n = -1; i_n < 2; i_n++) {
+                            for (int j_n = -1; j_n < 2; j_n++) {
+                                if (local_avail(i_n + 1, j_n + 1)) {
+                                    amrex::Real patch = Sy_ext * Sy(i + i_n, j + j_n, k) / denom;
+                                    if (Sy_mod(i + i_n, j + j_n, k) - patch <= 0) {
+                                        neg_face = true;
+                                        local_avail(i_n + 1, j_n + 1) = false;
+                                    }
+                                }
+                            }
+                        }
+
+                        denom = local_avail(0, 1) * Sy(i - 1, j, k) +
+                            local_avail(2, 1) * Sy(i + 1, j, k) +
+                            local_avail(1, 0) * Sy(i, j - 1, k ) +
+                            local_avail(1, 2) * Sy(i, j + 1, k) +
+                            local_avail(0, 0) * Sy(i - 1, j - 1, k) +
+                            local_avail(2, 0) * Sy(i + 1, j - 1, k) +
+                            local_avail(0, 2) * Sy(i - 1, j + 1, k) +
+                            local_avail(2, 2) * Sy(i + 1, j + 1, k);
+                    }
+
+                    if (denom >= Sy_ext) {
+                        Sy_mod(i, j, k) = Sy(i, j, k);
+                        int count = 0;
+                        for (int i_n = -1; i_n < 2; i_n++) {
+                            for (int j_n = -1; j_n < 2; j_n++) {
+                                if (local_avail(i_n + 1, j_n + 1)) {
+                                    amrex::Real patch = Sy_ext * Sy(i + i_n, j + j_n, k) / denom;
+                                    borrowing_y_inds[ps + count] = ps + count;
+                                    FaceInfoBox::addConnectedNeighbor(i_n, j_n, ps + count,
+                                                                      borrowing_y_neigh_faces);
+                                    borrowing_y_area[ps + count] = patch;
+
+                                    flag_info_face_y(i + i_n, j + j_n, k) = 2;
+                                    Sy_mod(i, j, k) += patch;
+                                    Sy_mod(i + i_n, j + j_n, k) -= patch;
+                                    count += 1;
+                                }
+                            }
+                        }
+                        flag_ext_face_y(i, j, k) = false;
+                    }
+#elif defined(WARPX_DIM_3D)
                     amrex::Real Sy_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                                           lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
                     amrex::Real Sy_ext = Sy_stab - Sy(i, j, k);
@@ -944,6 +1136,9 @@ WarpX::ComputeEightWaysExtensions() {
                         }
                         flag_ext_face_y(i, j, k) = false;
                     }
+#else
+                    amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
+#endif
                 }
             },
             amrex::Scan::Type::exclusive);

@@ -97,14 +97,15 @@ MCCProcess::readCrossSectionFile (
                                   amrex::Gpu::HostVector<amrex::Real>& sigmas )
 {
     std::ifstream infile(cross_section_file);
+    if(!infile.is_open()) amrex::Abort("Failed to open cross-section data file");
+
     double energy, sigma;
     while (infile >> energy >> sigma) {
         energies.push_back(energy);
         sigmas.push_back(sigma);
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(energies.size() > 1,
-        "Failed to read cross-section data from file."
-    );
+    if (infile.bad()) amrex::Abort("Failed to read cross-section data from file.");
+    infile.close();
 }
 
 void
