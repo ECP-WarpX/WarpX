@@ -11,6 +11,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -130,6 +131,9 @@ WarpX::LoadBalance ()
     {
         mypc->Redistribute();
         mypc->defineAllParticleTiles();
+
+        // redistribute particle boundary buffer
+        m_particle_boundary_buffer->redistribute();
 
         // diagnostics & reduced diagnostics
         // not yet needed:
