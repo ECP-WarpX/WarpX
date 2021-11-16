@@ -550,7 +550,7 @@ WarpX::ComputeEightWaysExtensions() {
                     amrex::Array2D<amrex::Real, 0, 2, 0, 2> local_avail{};
                     for(int i_loc = 0; i_loc <= 2; i_loc++){
                         for(int j_loc = 0; j_loc <= 2; j_loc++){
-                            auto flag = GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim);
+                            auto const flag = GetNeigh(flag_info_face, i, j, k, i_loc - 1, j_loc - 1, idim);
                             local_avail(i_loc, j_loc) = flag == 1 || flag == 2;
                         }
                     }
