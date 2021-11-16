@@ -142,7 +142,14 @@ WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
 
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+#ifdef WARPX_DIM_XZ
+    // In 2D we change the extrema of the for loop so that we only have the case idim=1
+    for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+#elif defined(WARPX_DIM_3D)
+        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+#else
+        amrex::Abort("CountExtFaces: Only implemented in 2D3V and 3D3V");
+#endif
         amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
         amrex::ReduceData<int> reduce_data(reduce_ops);
         for (amrex::MFIter mfi(*m_flag_ext_face[maxLevel()][idim]); mfi.isValid(); ++mfi) {
@@ -371,7 +378,14 @@ WarpX::ComputeOneWayExtensions() {
     const amrex::Real dz = cell_size[2];
 
     // Do the extensions
-    for(int idim = 0; idim < AMREX_SPACEDIM; idim++){
+#ifdef WARPX_DIM_XZ
+    // In 2D we change the extrema of the for loop so that we only have the case idim=1
+    for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+#elif defined(WARPX_DIM_3D)
+        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+#else
+        amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
+#endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
             amrex::Box const &box = mfi.validbox();
@@ -483,7 +497,14 @@ WarpX::ComputeEightWaysExtensions() {
     const amrex::Real dz = cell_size[2];
 
     // Do the extensions
-    for(int idim = 0; idim < AMREX_SPACEDIM; idim++){
+#ifdef WARPX_DIM_XZ
+    // In 2D we change the extrema of the for loop so that we only have the case idim=1
+    for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+#elif defined(WARPX_DIM_3D)
+        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+#else
+        amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
+#endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
             amrex::Box const &box = mfi.validbox();
