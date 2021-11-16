@@ -108,7 +108,7 @@ void BTDiagnostics::DerivedInitData ()
         DefineCellCenteredMultiFab(lev);
     }
 
-    /** Allocate vector of particle buffer vectors for each snapshot */
+    /* Allocate vector of particle buffer vectors for each snapshot */
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
     if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
