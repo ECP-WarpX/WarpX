@@ -33,8 +33,10 @@ this system reduces to the Berenger PML medium, while adding the additional
 constraint :math:`\sigma _{x}=\sigma _{y}=\sigma _{x}^{*}=\sigma _{y}^{*}=0`
 leads to the system of Maxwell equations in vacuum.
 
-[Sec:analytic theory, propa plane wave]Propagation of a Plane Wave in an APML Medium
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _theory-bc-propa-plane-wave:
+
+Propagation of a Plane Wave in an APML Medium
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We consider a plane wave of magnitude (:math:`E_{0},H_{zx0},H_{zy0}`)
 and pulsation :math:`\omega` propagating in the APML medium with an
