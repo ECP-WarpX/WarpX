@@ -211,7 +211,7 @@ public:
                     m_fusion_type, engine);
 
 #if (defined WARPX_DIM_RZ)
-          T_R const u1xbuf_new = u1x[I1[i1]];
+          amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
           u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
           u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
