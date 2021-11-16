@@ -144,6 +144,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(txye_file_name, std::ios::binary);
         if(!inp) Abort("Failed to open txye file");
+        inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
         //Uniform grid flag
         char flag;
@@ -291,6 +292,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         //Read data chunk
         std::ifstream inp(m_params.txye_file_name, std::ios::binary);
         if(!inp) Abort("Failed to open txye file");
+        inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
         auto skip_amount = 1 +
             3*sizeof(uint32_t) +
             m_params.t_coords.size()*sizeof(double) +

@@ -70,6 +70,7 @@ WarpX::Evolve (int numsteps)
 
     static Real evolve_time = 0;
 
+    const int step_begin = istep[0];
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
@@ -339,7 +340,7 @@ WarpX::Evolve (int numsteps)
                         << " DT = " << dt[0] << "\n";
             amrex::Print()<< "Evolve time = " << evolve_time
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
-                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
+                      << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
@@ -407,6 +408,10 @@ WarpX::OneStep_nosub (Real cur_time)
         }
         PushPSATD();
 
+        if (do_pml) {
+            DampPML();
+        }
+
         if (use_hybrid_QED) {
             FillBoundaryE(guard_cells.ng_alloc_EB);
             FillBoundaryB(guard_cells.ng_alloc_EB);
@@ -427,7 +432,6 @@ WarpX::OneStep_nosub (Real cur_time)
         NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
-            DampPML();
             NodalSyncPML();
         }
     } else {

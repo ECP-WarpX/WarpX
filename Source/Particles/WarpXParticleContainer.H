@@ -281,8 +281,8 @@ public:
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
-    amrex::Real self_fields_required_precision =
-        amrex::Real(1.e-11);
+    amrex::Real self_fields_required_precision = amrex::Real(1.e-11);
+    amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 

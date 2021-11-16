@@ -327,9 +327,9 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
+    InitPML();
     if (do_pml)
     {
-        InitPML();
         for (int lev = 0; lev < nlevs; ++lev) {
             if (pml[lev])
                 pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));

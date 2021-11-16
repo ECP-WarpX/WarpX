@@ -177,6 +177,7 @@ bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::do_electrostatic;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
+Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
 int WarpX::self_fields_verbosity = 2;
 
@@ -632,6 +633,7 @@ WarpX::ReadParameters ()
             // Note that with the relativistic version, these parameters would be
             // input for each species.
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
+            queryWithParser(pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
             queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
@@ -1184,13 +1186,15 @@ WarpX::ReadParameters ()
                 "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
         }
 
-        constexpr int zdir = AMREX_SPACEDIM - 1;
-        if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped ||
-            WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped ) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                WarpX::field_boundary_lo[zdir] == WarpX::field_boundary_hi[zdir],
-                "field boundary in both lo and hi must be set to Damped for PSATD"
-            );
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+        {
+            if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped ) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpX::field_boundary_lo[dir] == WarpX::field_boundary_hi[dir],
+                    "field boundary in both lo and hi must be set to Damped for PSATD"
+                );
+            }
         }
 
         // Whether to fill the guard cells with inverse FFTs:
@@ -1461,7 +1465,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::fft_do_time_averaging,
         WarpX::isAnyBoundaryPML(),
         WarpX::do_pml_in_domain,
-        WarpX::pml_ncell);
+        WarpX::pml_ncell,
+        this->refRatio());
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
@@ -1641,11 +1646,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             Venl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Venl[x]"));
             Venl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Venl[y]"));
             Venl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Venl[z]"));
-            // DISCLAIMER: ECTRhofield is NOT the charge density. This multifab is needed only by the ect
-            // solver and it represents the electromotive force density. The name ECTRhofield has been used
-            // to comply with the notation of the paper
-            // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
-            // and below).
+
             ECTRhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[x]"));
             ECTRhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[y]"));
             ECTRhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[z]"));

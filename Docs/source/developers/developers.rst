@@ -17,6 +17,7 @@ Implementation Details
    qed
    portability
    warning_logger
+   python
 
 .. tip::
 

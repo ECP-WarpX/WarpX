@@ -200,6 +200,7 @@ WarpX::InitDiagnostics () {
                                                slice_realbox,
                                                particle_slice_width_lab);
     }
+    reduced_diags->InitData();
 }
 
 void
@@ -489,13 +490,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
 #ifdef AMREX_USE_EB
     if(lev==maxLevel()) {
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
-            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+
             ComputeEdgeLengths();
             ComputeFaceAreas();
             ScaleEdges();
             ScaleAreas();
-            ComputeDistanceToEB();
 
             const auto &period = Geom(lev).periodicity();
             WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][0], guard_cells.ng_alloc_EB, period);
@@ -519,6 +521,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 ComputeFaceExtensions();
             }
         }
+
+        ComputeDistanceToEB();
+
     }
 #endif
 
@@ -650,7 +655,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     if (costs[lev]) {
-        for (int i : costs[lev]->IndexArray()) {
+        const auto iarr = costs[lev]->IndexArray();
+        for (int i : iarr) {
             (*costs[lev])[i] = 0.0;
             WarpX::setLoadBalanceEfficiency(lev, -1);
         }

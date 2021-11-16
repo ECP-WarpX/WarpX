@@ -51,7 +51,8 @@ guardCellManager::Init (
     const bool fft_do_time_averaging,
     const bool do_pml,
     const int do_pml_in_domain,
-    const int pml_ncell)
+    const int pml_ncell,
+    const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -94,16 +95,21 @@ guardCellManager::Init (
     int ngJy = ngy_tmp;
     int ngJz = ngz_tmp;
 
-    // When calling the moving window (with one level of refinement),  we shift
-    // the fine grid by 2 cells ; therefore, we need at least 2 guard cells
-    // on level 1. This may not be necessary for level 0.
+    // When calling the moving window (with one level of refinement), we shift
+    // the fine grid by a number of cells equal to the ref_ratio in the moving
+    // window direction.
     if (do_moving_window) {
-        ngx = std::max(ngx,2);
-        ngy = std::max(ngy,2);
-        ngz = std::max(ngz,2);
-        ngJx = std::max(ngJx,2);
-        ngJy = std::max(ngJy,2);
-        ngJz = std::max(ngJz,2);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
+            "The number of grow cells for the moving window currently assumes 2 levels max.");
+        const int nlevs = ref_ratios.size()+1;
+        int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
+
+        ngx = std::max(ngx,max_r);
+        ngy = std::max(ngy,max_r);
+        ngz = std::max(ngz,max_r);
+        ngJx = std::max(ngJx,max_r);
+        ngJy = std::max(ngJy,max_r);
+        ngJz = std::max(ngJz,max_r);
     }
 
 #if (AMREX_SPACEDIM == 3)
