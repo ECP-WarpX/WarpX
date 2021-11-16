@@ -59,6 +59,7 @@ struct SelectParticles
         return Flag;
     }
 
+    /** Object to extract the positions of the macroparticles inside a ParallelFor kernel */
     GetParticlePosition m_get_position;
     /** Z coordinate in boosted frame that corresponds to a give snapshot*/
     amrex::Real m_current_z_boost;
