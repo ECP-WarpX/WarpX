@@ -547,19 +547,16 @@ void
 WarpX::FillBoundaryE (const int lev, PatchType patch_type, amrex::IntVect ng)
 {
     std::array<amrex::MultiFab*,3> mf;
-    std::array<amrex::MultiFab*,3> mf_pml;
     amrex::Periodicity period;
 
     if (patch_type == PatchType::fine)
     {
         mf     = {Efield_fp[lev][0].get(), Efield_fp[lev][1].get(), Efield_fp[lev][2].get()};
-        mf_pml = pml[lev]->GetE_fp();
         period = Geom(lev).periodicity();
     }
     else
     {
         mf     = {Efield_cp[lev][0].get(), Efield_cp[lev][1].get(), Efield_cp[lev][2].get()};
-        mf_pml = pml[lev]->GetE_cp();
         period = Geom(lev-1).periodicity();
     }
 
@@ -567,16 +564,20 @@ WarpX::FillBoundaryE (const int lev, PatchType patch_type, amrex::IntVect ng)
     // Fill guard cells in PML
     if (do_pml && pml[lev]->ok())
     {
+        std::array<amrex::MultiFab*,3> mf_pml =
+            (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+
         pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
         pml[lev]->FillBoundaryE(patch_type);
     }
 
     // Fill guard cells in valid domain
-    for (int i = 0; i < AMREX_SPACEDIM; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             ng <= mf[i]->nGrowVect(),
             "Error: in FillBoundaryE, requested more guard cells than allocated");
+
         amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
         WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
     }
