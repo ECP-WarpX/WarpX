@@ -1,6 +1,6 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
-# Copyright 2019-2020 Yinjian Zhao
+# Copyright 2019-2021 Yinjian Zhao
 #
 # This file is part of WarpX.
 #
@@ -15,6 +15,7 @@
 # tolerance: 1.0e-30
 # Possible running time: ~ 1.0 s
 
+import os
 import sys
 import yt
 import numpy as np
@@ -50,5 +51,5 @@ print('error = ', error)
 print('tolerance = ', tolerance)
 assert(error < tolerance)
 
-test_name = last_fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
