@@ -1,4 +1,4 @@
-/* Copyright 2019 David Grote
+/* Copyright 2021 David Grote
  *
  *
  * This file is part of WarpX.
@@ -17,19 +17,12 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
-#include <AMReX_FabArray.H>
-#include <AMReX_FabFactory.H>
-#include <AMReX_GpuContainers.H>
-#include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
 
 #include <AMReX_BaseFwd.H>
 
 #include <array>
-#include <memory>
 #include <string>
-#include <vector>
 
 enum struct PatchType : int;
 
@@ -45,14 +38,11 @@ public:
 
     std::array<amrex::MultiFab*,2> GetE_fp ();
     std::array<amrex::MultiFab*,2> GetB_fp ();
-    std::array<amrex::MultiFab*,2> GetE_cp ();
-    std::array<amrex::MultiFab*,2> GetB_cp ();
 
 #ifdef WARPX_USE_PSATD
     void PushPSATD (const int lev);
 #endif
 
-    void FillBoundary ();
     void FillBoundaryE ();
     void FillBoundaryB ();
     void FillBoundaryE (PatchType patch_type);
@@ -64,7 +54,6 @@ public:
     ~PML_RZ () = default;
 
 private:
-    bool m_ok;
 
     const int m_ncell;
     const int m_do_pml_in_domain;

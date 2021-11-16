@@ -1,5 +1,4 @@
-/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
- * Maxence Thevenet, Remi Lehe, Weiqun Zhang
+/* Copyright 2021 David Grote
  *
  *
  * This file is part of WarpX.
@@ -9,67 +8,50 @@
 #include "PML_RZ.H"
 
 #include "BoundaryConditions/PML_RZ.H"
-#include "BoundaryConditions/PMLComponent.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 #endif
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
-#include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
-#include <AMReX_BoxList.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_FArrayBox.H>
-#include <AMReX_FBI.H>
 #include <AMReX_FabArrayBase.H>
 #include <AMReX_Geometry.H>
-#include <AMReX_GpuControl.H>
-#include <AMReX_GpuDevice.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
 #include <AMReX_IndexType.H>
 #include <AMReX_MFIter.H>
-#include <AMReX_ParmParse.H>
 #include <AMReX_RealVect.H>
-#include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
 
-#include <algorithm>
 #include <cmath>
 #include <memory>
-#include <utility>
 
 using namespace amrex;
 
-PML_RZ::PML_RZ (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
-                const Geometry* geom, const int ncell, const int do_pml_in_domain)
+PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::DistributionMapping& grid_dm,
+                const amrex::Geometry* geom, const int ncell, const int do_pml_in_domain)
     : m_ncell(ncell),
       m_do_pml_in_domain(do_pml_in_domain),
       m_geom(geom)
 {
 
-    m_ok = true;
+    const amrex::MultiFab & Er_fp = WarpX::GetInstance().getEfield_fp(lev,0);
+    const amrex::MultiFab & Et_fp = WarpX::GetInstance().getEfield_fp(lev,1);
+    pml_E_fp[0] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Er_fp.ixType().toIntVect() ), grid_dm,
+                                                     Er_fp.nComp(), Er_fp.nGrow() );
+    pml_E_fp[1] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Et_fp.ixType().toIntVect() ), grid_dm,
+                                                     Et_fp.nComp(), Et_fp.nGrow() );
 
-    auto & Er_fp = WarpX::GetInstance().getEfield_fp(lev,0);
-    auto & Et_fp = WarpX::GetInstance().getEfield_fp(lev,1);
-    pml_E_fp[0] = std::make_unique<MultiFab>( amrex::convert( grid_ba, Er_fp.ixType().toIntVect() ), grid_dm,
-                                              Er_fp.nComp(), Er_fp.nGrow() );
-    pml_E_fp[1] = std::make_unique<MultiFab>( amrex::convert( grid_ba, Et_fp.ixType().toIntVect() ), grid_dm,
-                                              Et_fp.nComp(), Et_fp.nGrow() );
-
-    auto & Br_fp = WarpX::GetInstance().getBfield_fp(lev,0);
-    auto & Bt_fp = WarpX::GetInstance().getBfield_fp(lev,1);
-    pml_B_fp[0] = std::make_unique<MultiFab>( amrex::convert( grid_ba, Br_fp.ixType().toIntVect() ), grid_dm,
-                                              Br_fp.nComp(), Br_fp.nGrow() );
-    pml_B_fp[1] = std::make_unique<MultiFab>( amrex::convert( grid_ba, Bt_fp.ixType().toIntVect() ), grid_dm,
-                                              Bt_fp.nComp(), Bt_fp.nGrow() );
+    const amrex::MultiFab & Br_fp = WarpX::GetInstance().getBfield_fp(lev,0);
+    const amrex::MultiFab & Bt_fp = WarpX::GetInstance().getBfield_fp(lev,1);
+    pml_B_fp[0] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Br_fp.ixType().toIntVect() ), grid_dm,
+                                                     Br_fp.nComp(), Br_fp.nGrow() );
+    pml_B_fp[1] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Bt_fp.ixType().toIntVect() ), grid_dm,
+                                                     Bt_fp.nComp(), Bt_fp.nGrow() );
 
     pml_E_fp[0]->setVal(0.0);
     pml_E_fp[1]->setVal(0.0);
@@ -79,9 +61,9 @@ PML_RZ::PML_RZ (const int lev, const BoxArray& grid_ba, const DistributionMappin
 }
 
 void
-PML_RZ::ApplyDamping(const std::array<amrex::MultiFab*,3>& E_fp,
-                     const std::array<amrex::MultiFab*,3>& B_fp,
-                     amrex::Real dt)
+PML_RZ::ApplyDamping (const std::array<amrex::MultiFab*,3>& E_fp,
+                      const std::array<amrex::MultiFab*,3>& B_fp,
+                      amrex::Real dt)
 {
 
     const amrex::Real dr = m_geom->CellSize(0);
@@ -102,7 +84,7 @@ PML_RZ::ApplyDamping(const std::array<amrex::MultiFab*,3>& E_fp,
 
         // Get the tileboxes from Efield and Bfield so that they include the guard cells
         // They are all the same, cell centered
-        amrex::Box tilebox = amrex::convert((*E_fp[1])[mfi].box(), E_fp[0]->ixType().toIntVect());
+        amrex::Box tilebox = amrex::convert((*E_fp[0])[mfi].box(), E_fp[0]->ixType().toIntVect());
 
         // Box for the whole simulation domain
         amrex::Box const& domain = m_geom->Domain();
@@ -141,23 +123,16 @@ PML_RZ::ApplyDamping(const std::array<amrex::MultiFab*,3>& E_fp,
     }
 }
 
-std::array<MultiFab*,2>
+std::array<amrex::MultiFab*,2>
 PML_RZ::GetE_fp ()
 {
     return {pml_E_fp[0].get(), pml_E_fp[1].get()};
 }
 
-std::array<MultiFab*,2>
+std::array<amrex::MultiFab*,2>
 PML_RZ::GetB_fp ()
 {
     return {pml_B_fp[0].get(), pml_B_fp[1].get()};
-}
-
-void
-PML_RZ::FillBoundary ()
-{
-    FillBoundaryE();
-    FillBoundaryB();
 }
 
 void
@@ -171,8 +146,8 @@ PML_RZ::FillBoundaryE (PatchType patch_type)
 {
     if (patch_type == PatchType::fine && pml_E_fp[0] && pml_E_fp[0]->nGrowVect().max() > 0)
     {
-        const auto& period = m_geom->periodicity();
-        Vector<MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get()/*,pml_E_fp[2].get()*/};
+        const amrex::Periodicity& period = m_geom->periodicity();
+        Vector<amrex::MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get()};
         amrex::FillBoundary(mf, period);
     }
 }
@@ -188,8 +163,8 @@ PML_RZ::FillBoundaryB (PatchType patch_type)
 {
     if (patch_type == PatchType::fine && pml_B_fp[0])
     {
-        const auto& period = m_geom->periodicity();
-        Vector<MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get()/*,pml_B_fp[2].get()*/};
+        const amrex::Periodicity& period = m_geom->periodicity();
+        Vector<amrex::MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get()};
         amrex::FillBoundary(mf, period);
     }
 }
@@ -223,8 +198,8 @@ void
 PML_RZ::PushPSATD (const int lev)
 {
     // Update the fields on the fine and coarse patch
-    auto& warpx = WarpX::GetInstance();
-    auto & solver = warpx.get_spectral_solver_fp(lev);
+    WarpX& warpx = WarpX::GetInstance();
+    SpectralSolverRZ& solver = warpx.get_spectral_solver_fp(lev);
     PushPMLPSATDSinglePatchRZ(lev, solver, pml_E_fp, pml_B_fp);
 }
 

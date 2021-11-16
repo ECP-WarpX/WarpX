@@ -26,6 +26,11 @@ import checksumAPI
 filename = sys.argv[1]
 ds = yt.load( filename )
 
+# yt 4.0+ has rounding issues with our domain data:
+# RuntimeError: yt attempted to read outside the boundaries
+#               of a non-periodic domain along dimension 0.
+if 'force_periodicity' in dir(ds): ds.force_periodicity()
+
 # Check that the field is low enough
 ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Ex_array = ad0['boxlib', 'Ex'].to_ndarray()

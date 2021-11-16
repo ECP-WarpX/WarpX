@@ -503,9 +503,9 @@ public:
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     void DampPML ();
-    void DampPML (int lev);
-    void DampPML (int lev, PatchType patch_type);
-    void DampPML_Cartesian (int lev, PatchType patch_type);
+    void DampPML (const int lev);
+    void DampPML (const int lev, PatchType patch_type);
+    void DampPML_Cartesian (const int lev, PatchType patch_type);
 
     void DampJPML ();
     void DampJPML (int lev);

@@ -46,14 +46,14 @@ WarpX::DampPML ()
 }
 
 void
-WarpX::DampPML (int lev)
+WarpX::DampPML (const int lev)
 {
     DampPML(lev, PatchType::fine);
     if (lev > 0) DampPML(lev, PatchType::coarse);
 }
 
 void
-WarpX::DampPML (int lev, PatchType patch_type)
+WarpX::DampPML (const int lev, PatchType patch_type)
 {
     if (!do_pml) return;
 
@@ -72,7 +72,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
 }
 
 void
-WarpX::DampPML_Cartesian (int lev, PatchType patch_type)
+WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
 {
     const bool dive_cleaning = WarpX::do_pml_dive_cleaning;
     const bool divb_cleaning = WarpX::do_pml_divb_cleaning;
