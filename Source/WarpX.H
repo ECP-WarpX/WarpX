@@ -834,7 +834,7 @@ private:
     void EvolveEM(int numsteps);
 
     void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng);
-    void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryE (const int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
 

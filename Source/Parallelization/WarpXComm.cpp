@@ -544,59 +544,41 @@ WarpX::FillBoundaryE(int lev, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
+WarpX::FillBoundaryE (const int lev, PatchType patch_type, amrex::IntVect ng)
 {
+    std::array<amrex::MultiFab*,3> mf;
+    std::array<amrex::MultiFab*,3> mf_pml;
+    amrex::Periodicity period;
+
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            pml[lev]->Exchange(pml[lev]->GetE_fp(),
-                               {Efield_fp[lev][0].get(),
-                                Efield_fp[lev][1].get(),
-                                Efield_fp[lev][2].get()},
-                               patch_type,
-                               do_pml_in_domain);
-            pml[lev]->FillBoundaryE(patch_type);
-        }
-
-        const auto& period = Geom(lev).periodicity();
-        if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Efield_fp[lev][0].get(),Efield_fp[lev][1].get(),Efield_fp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, period);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_fp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryE, requested more guard cells than allocated");
-            WarpXCommUtil::FillBoundary(*Efield_fp[lev][0], ng, period);
-            WarpXCommUtil::FillBoundary(*Efield_fp[lev][1], ng, period);
-            WarpXCommUtil::FillBoundary(*Efield_fp[lev][2], ng, period);
-        }
+        mf     = {Efield_fp[lev][0].get(), Efield_fp[lev][1].get(), Efield_fp[lev][2].get()};
+        mf_pml = pml[lev]->GetE_fp();
+        period = Geom(lev).periodicity();
     }
-    else if (patch_type == PatchType::coarse)
+    else
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            pml[lev]->Exchange(pml[lev]->GetE_cp(),
-                               {Efield_cp[lev][0].get(),
-                                Efield_cp[lev][1].get(),
-                                Efield_cp[lev][2].get()},
-                               patch_type,
-                               do_pml_in_domain);
-            pml[lev]->FillBoundaryE(patch_type);
-        }
-        const auto& cperiod = Geom(lev-1).periodicity();
-        if ( safe_guard_cells ) {
-            Vector<MultiFab*> mf{Efield_cp[lev][0].get(),Efield_cp[lev][1].get(),Efield_cp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, cperiod);
+        mf     = {Efield_cp[lev][0].get(), Efield_cp[lev][1].get(), Efield_cp[lev][2].get()};
+        mf_pml = pml[lev]->GetE_cp();
+        period = Geom(lev-1).periodicity();
+    }
 
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_cp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryE, requested more guard cells than allocated");
-            WarpXCommUtil::FillBoundary(*Efield_cp[lev][0], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Efield_cp[lev][1], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Efield_cp[lev][2], ng, cperiod);
-        }
+    // Exchange data between valid domain and PML
+    // Fill guard cells in PML
+    if (do_pml && pml[lev]->ok())
+    {
+        pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
+        pml[lev]->FillBoundaryE(patch_type);
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < AMREX_SPACEDIM; ++i)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryE, requested more guard cells than allocated");
+        amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
     }
 }
 
