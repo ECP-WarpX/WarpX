@@ -1271,7 +1271,6 @@ public:
     */
     void ComputeEightWaysExtensions();
 
-
 private:
     void ScrapeParticles ();
 
