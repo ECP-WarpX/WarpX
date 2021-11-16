@@ -486,13 +486,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
 #ifdef AMREX_USE_EB
     if(lev==maxLevel()) {
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
-            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+
             ComputeEdgeLengths();
             ComputeFaceAreas();
             ScaleEdges();
             ScaleAreas();
-            ComputeDistanceToEB();
 
             const auto &period = Geom(lev).periodicity();
             WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][0], guard_cells.ng_alloc_EB, period);
@@ -516,6 +517,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 ComputeFaceExtensions();
             }
         }
+
+        ComputeDistanceToEB();
+
     }
 #endif
 
