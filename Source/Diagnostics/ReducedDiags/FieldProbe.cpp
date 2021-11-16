@@ -110,7 +110,6 @@ FieldProbe::FieldProbe (std::string rd_name)
 
             // write header row
             int c = 0;
-            ofs << "#";
             ofs << "[" << c++ << "]step()";
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
@@ -121,26 +120,26 @@ FieldProbe::FieldProbe (std::string rd_name)
             {
                 u_map =
                 {
-                    {FieldProbePIdx::Ex , " (V*s/m) "},
-                    {FieldProbePIdx::Ey , " (V*s/m) "},
-                    {FieldProbePIdx::Ez , " (V*s/m) "},
-                    {FieldProbePIdx::Bx , " (T*s) "},
-                    {FieldProbePIdx::By , " (T*s) "},
-                    {FieldProbePIdx::Bz , " (T*s) "},
-                    {FieldProbePIdx::S , " (W*s/m^2) "}
+                    {FieldProbePIdx::Ex , "-(V*s/m)"},
+                    {FieldProbePIdx::Ey , "-(V*s/m)"},
+                    {FieldProbePIdx::Ez , "-(V*s/m)"},
+                    {FieldProbePIdx::Bx , "-(T*s)"},
+                    {FieldProbePIdx::By , "-(T*s)"},
+                    {FieldProbePIdx::Bz , "-(T*s)"},
+                    {FieldProbePIdx::S , "-(W*s/m^2)"}
                 };
             }
             else
             {
                 u_map =
                 {
-                    {FieldProbePIdx::Ex , " (V/m) "},
-                    {FieldProbePIdx::Ey , " (V/m) "},
-                    {FieldProbePIdx::Ez , " (V/m) "},
-                    {FieldProbePIdx::Bx , " (T) "},
-                    {FieldProbePIdx::By , " (T) "},
-                    {FieldProbePIdx::Bz , " (T) "},
-                    {FieldProbePIdx::S , " (W/m^2) "}
+                    {FieldProbePIdx::Ex , "-(V/m)"},
+                    {FieldProbePIdx::Ey , "-(V/m)"},
+                    {FieldProbePIdx::Ez , "-(V/m)"},
+                    {FieldProbePIdx::Bx , "-(T)"},
+                    {FieldProbePIdx::By , "-(T)"},
+                    {FieldProbePIdx::Bz , "-(T)"},
+                    {FieldProbePIdx::S , "-(W/m^2)"}
                 };
             }
             for (int lev = 0; lev < nLevel; ++lev)
@@ -148,11 +147,11 @@ FieldProbe::FieldProbe (std::string rd_name)
 //                ofs << m_sep;
 //                ofs << "[" << c++ << "]part_id" + std::to_string(lev);
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_x_lev" + std::to_string(lev) + " (m) ";
+                ofs << "[" << c++ << "]part_x_lev" + std::to_string(lev) + "-(m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_y_lev" + std::to_string(lev) + " (m) ";
+                ofs << "[" << c++ << "]part_y_lev" + std::to_string(lev) + "-(m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_z_lev" + std::to_string(lev) + " (m) ";
+                ofs << "[" << c++ << "]part_z_lev" + std::to_string(lev) + "-(m)";
                 ofs << m_sep;
                 ofs << "[" << c++ << "]part_Ex_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ex];
                 ofs << m_sep;
@@ -202,7 +201,6 @@ void FieldProbe::InitData ()
         amrex::Vector<amrex::ParticleReal> xpos;
         amrex::Vector<amrex::ParticleReal> ypos;
         amrex::Vector<amrex::ParticleReal> zpos;
-
         if (ParallelDescriptor::IOProcessor())
         {
 
@@ -474,37 +472,10 @@ void FieldProbe::ComputeDiags (int step)
             localsize.resize(1,0);
             localsize[0] = m_data.size();
 
-std::cout << "LOCALSIZE = "<< localsize[0] << "\n";
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,
                                               length_vector.data(), 1,
                                               amrex::ParallelDescriptor::IOProcessorNumber());
-
-            // IO processor sums values from length_array to get size of total output array.
-            /* displs records the size of each m_data as well as previous displs. This array
-             * tells Gatherv where in the m_data_out array allocation to write incomming data. */
-/*
-            long total_data_size = 0;
-            int *displs = NULL;
-            if (amrex::ParallelDescriptor::IOProcessor()) {
-                displs = (int *) malloc( mpisize * sizeof(int));
-                displs[0] = 0;
-                total_data_size += length_array[0];
-                for (int i=1; i<mpisize; i++) {
-                    displs[i] += displs[i-1] + length_array[i-1];
-                    total_data_size += length_array[i];
-                }
-
-                // valid particles are counted (for all MPI ranks) to inform output processes as to size of output
-                m_valid_particles = total_data_size / noutputs;
-                m_data_out = (amrex::Real *) malloc( total_data_size * sizeof(amrex::Real));
-            }
-
-            // gather m_data of varied lengths from all processors. Prints to m_data_out
-            MPI_Gatherv(m_data.data(), my_vec_size, MPI_DOUBLE,
-                        m_data_out, length_array, displs, MPI_DOUBLE,
-                        amrex::ParallelDescriptor::IOProcessorNumber(), amrex::ParallelDescriptor::Communicator());
-*/
 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
@@ -525,9 +496,6 @@ std::cout << "LOCALSIZE = "<< localsize[0] << "\n";
             }
 // risize receive buffer (resize, initialize 0)
             // gather m_data of varied lengths from all processors. Prints to m_data_out
-
-std::cout << "LOCALSIZE = "<< localsize[0] << "\n";
-
             amrex::ParallelDescriptor::Gatherv(m_data.data(), localsize[0],
                                                m_data_out.data(), length_vector, displs_vector,
                                                amrex::ParallelDescriptor::IOProcessorNumber());
@@ -541,25 +509,23 @@ void FieldProbe::WriteToFile (int step) const
 {
     if (ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())
     {
-std::cout<< static_cast<double>(m_data_out[1]) << " y val \n";
         // open file
         std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
                std::ofstream::out | std::ofstream::app};
 
-        // write step
-        ofs << step+1;
-
-        ofs << m_sep;
-
         // set precision
-        ofs << std::fixed << std::setprecision(14) << std::scientific;
-
-        // write time
-        ofs << WarpX::GetInstance().gett_new(0);
+        //ofs << std::fixed << std::setprecision(14) << std::scientific;
 
         // loop over num valid particles and write
         for (int i = 0; (i < m_valid_particles); i++)
         {
+            ofs << std::fixed << std::defaultfloat;
+            ofs << step+1;
+            ofs << m_sep;
+            ofs << std::fixed << std::setprecision(14) << std::scientific;
+            // write time
+            ofs << WarpX::GetInstance().gett_new(0);
+
             for (int k = 0; k < noutputs; k++)
             {
             ofs << m_sep;
@@ -567,8 +533,6 @@ std::cout<< static_cast<double>(m_data_out[1]) << " y val \n";
             }
             ofs << std::endl;
         } // end loop over data size
-        // end line
-        ofs << std::endl;
     // close file
     ofs.close();
     }

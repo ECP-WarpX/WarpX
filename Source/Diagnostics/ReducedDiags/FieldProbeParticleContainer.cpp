@@ -108,8 +108,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
 #elif (AMREX_SPACEDIM == 2)
         amrex::ignore_unused(y) ;
         p.pos(0) = x[i];
-        p.pos(1) = 0;
-        p.pos(2) = z[i];
+        p.pos(1) = z[i];
 #endif
         // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);
