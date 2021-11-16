@@ -1966,8 +1966,8 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
 
-Back-Transformed Diagnostics (customized output)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Back-Transformed Diagnostics (legacy output)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
 
