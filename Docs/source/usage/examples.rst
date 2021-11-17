@@ -90,3 +90,10 @@ PICMI test cases included that can be used as a reference:
 * :download:`Langmuir plasma wave test in 3d <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rt.py>`
 * :download:`Langmuir plasma wave test in RZ <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
 * :download:`Langmuir plasma wave test in 2D <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir2d.py>`
+
+Manipulating fields via Python
+------------------------------
+
+An example of using Python to access the simulation charge density, solve the Poisson equation (using ``superLU``) and write the resulting electrostatic potential back to the simulation is given in the input file below. This example uses the ``fields.py`` module included in the ``pywarpx`` library.
+
+* :download:`Direct Poisson solver example <../../../Examples/Physics_applications/capacitive_discharge/PICMI_inputs_2d.py>`

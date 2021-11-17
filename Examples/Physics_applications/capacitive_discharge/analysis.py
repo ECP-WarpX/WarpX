@@ -14,5 +14,5 @@ import checksumAPI
 
 my_check = checksumAPI.evaluate_checksum(
     'background_mcc', 'Python_background_mcc_plt00050',
-    do_particles=True, rtol=7.5e-2
+    do_particles=True, rtol=2.5e-3
 )

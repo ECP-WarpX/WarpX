@@ -1035,17 +1035,46 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
-    //EB grid info
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
+    //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
+    //! EB: Areas of the mesh faces
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+
+    /** EB: for every mesh face flag_info_face contains a:
+     *           * 0 if the face needs to be extended
+     *          * 1 if the face is large enough to lend area to other faces
+     *          * 2 if the face is actually intruded by other face
+     * It is initialized in WarpX::MarkCells
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face;
+    /** EB: for every mesh face face flag_ext_face contains a:
+     *          * 1 if the face needs to be extended
+     *          * 0 otherwise
+     * It is initialized in WarpX::MarkCells and then modified in WarpX::ComputeOneWayExtensions
+     * and in WarpX::ComputeEightWaysExtensions
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
+    /** EB: m_area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
+     * contains the area of the enlarged face
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
+    /** EB: m_borrowing contains the info about the enlarged cells, i.e. for every enlarged cell it
+     * contains the info of which neighbors are being intruded (and the amount of borrowed area).
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
-    //This is just needed for the ECT solver
+    /** ECTRhofield is needed only by the ect
+     * solver and it contains the electromotive force density for every mesh face.
+     * The name ECTRhofield has been used to comply with the notation of the paper
+     * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
+     * and below).
+     * Although it's called rho it has nothing to do with the charge density!
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
+    /** Venl contains the electromotive force for every mesh face, i.e. every entry is
+     * the corresponding entry in ECTRhofield multiplied by the total area (possibly with enlargement)
+     * This is only used for the ECT solver.*/
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
 
     //EB level set
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
@@ -1270,7 +1299,6 @@ public:
     * \brief Do the eight-ways extension
     */
     void ComputeEightWaysExtensions();
-
 
 private:
     void ScrapeParticles ();
