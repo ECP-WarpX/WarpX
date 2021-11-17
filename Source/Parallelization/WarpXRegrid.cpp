@@ -184,7 +184,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                     RemakeMultiFab(ECTRhofield[lev][idim], dm, false);
                     m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
                 }
-
             }
 #endif
         }
@@ -201,20 +200,26 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
                                                        {1,1,1}, // Not clear how many ghost cells we need yet
                                                        amrex::EBSupport::full);
-        ComputeEdgeLengths();
-        ComputeFaceAreas();
-        ScaleEdges();
-        ScaleAreas();
-        ComputeDistanceToEB();
 
-        // Since we have reset m_borrowing we need to recompute the extensions.
-        // To do so we need to recompute m_flag_ext_face since it has been changed
-        // since the last time ComputeFaceExtensions has been called. For this reason
-        // we call MarkCells before ComputeFaceExtensions
-        if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
-            MarkCells();
-            ComputeFaceExtensions();
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
+
+            ComputeEdgeLengths();
+            ComputeFaceAreas();
+            ScaleEdges();
+            ScaleAreas();
+
+            // Since we have reset m_borrowing we need to recompute the extensions.
+            // To do so we need to recompute m_flag_ext_face since it has been changed
+            // since the last time ComputeFaceExtensions was called. For this reason
+            // we call MarkCells before ComputeFaceExtensions
+            if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+                MarkCells();
+                ComputeFaceExtensions();
+            }
         }
+        ComputeDistanceToEB();
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif

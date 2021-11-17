@@ -113,6 +113,7 @@ sim.step(max_steps)
 ################################################
 
 from pywarpx import _libwarpx
+from mpi4py import MPI as mpi
 
 my_id = _libwarpx.libwarpx.warpx_getMyProc()
 
@@ -127,7 +128,8 @@ for arr in scraped_steps:
 weights = _libwarpx.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)
 n = sum(len(arr) for arr in weights)
 print(f"Number of electrons in this proc's buffer (proc #{my_id}): {n}")
-assert n == 306
+n_sum =  mpi.COMM_WORLD.allreduce(n, op=mpi.SUM)
+assert n_sum == 612
 
 # clear the particle buffer
 _libwarpx.libwarpx.warpx_clearParticleBoundaryBuffer()
