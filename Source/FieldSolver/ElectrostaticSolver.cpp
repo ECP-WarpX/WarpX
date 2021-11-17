@@ -172,7 +172,10 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    if (warpx_py_poissonsolver) warpx_py_poissonsolver();
+    if (warpx_py_poissonsolver) {
+        WARPX_PROFILE("warpx_py_poissonsolver");
+        warpx_py_poissonsolver();
+    }
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
