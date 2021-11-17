@@ -10,6 +10,7 @@
 
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -210,12 +211,29 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             ScaleEdges();
             ScaleAreas();
 
+            const auto &period = Geom(lev).periodicity();
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][0], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][1], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][2], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][0], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][1], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][2], guard_cells.ng_alloc_EB, period);
+
             // Since we have reset m_borrowing we need to recompute the extensions.
             // To do so we need to recompute m_flag_ext_face since it has been changed
             // since the last time ComputeFaceExtensions was called. For this reason
             // we call MarkCells before ComputeFaceExtensions
             if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][2], guard_cells.ng_alloc_EB, period);
                 MarkCells();
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][2], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][2], guard_cells.ng_alloc_EB, period);
                 ComputeFaceExtensions();
             }
         }
