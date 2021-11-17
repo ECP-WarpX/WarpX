@@ -284,7 +284,7 @@ using namespace amrex;
      */
     void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
                             const int lev, PatchType patch_type,
-                            bool split_pml_field = false);
+                            const bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell

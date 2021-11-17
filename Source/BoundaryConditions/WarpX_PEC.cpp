@@ -25,7 +25,7 @@ PEC::isAnyBoundaryPEC() {
 
 void
 PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
-                       PatchType patch_type, bool split_pml_field)
+                       PatchType patch_type, const bool split_pml_field)
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
@@ -148,6 +148,10 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
         amrex::Array4<amrex::Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
+        // For B-field used in Maxwell's update, nodal flag plus cells that particles
+        // gather fields from in the guard-cell region are included.
+        // Note that for simulations without particles or laser, ng_field_gather is 0
+        // and the guard-cell values of the B-field multifab will not be modified.
         amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), ng_fieldgather);
         amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), ng_fieldgather);
         amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), ng_fieldgather);
