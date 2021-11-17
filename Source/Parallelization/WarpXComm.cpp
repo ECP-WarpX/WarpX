@@ -1329,11 +1329,11 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
         // This is not actually needed with RZ PSATD since the
         // arrays are always cell centered. Keep for now since
         // it may be useful if the PML is used with FDTD
-        const auto& pml_rz_E = pml_rz[lev]->GetE_fp();
-        const auto& pml_rz_B = pml_rz[lev]->GetB_fp();
+        const std::array<amrex::MultiFab*,2> pml_rz_E = pml_rz[lev]->GetE_fp();
+        const std::array<amrex::MultiFab*,2> pml_rz_B = pml_rz[lev]->GetB_fp();
 
         // Always synchronize nodal points
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         pml_rz_E[0]->OverrideSync(period);
         pml_rz_E[1]->OverrideSync(period);
         pml_rz_B[0]->OverrideSync(period);

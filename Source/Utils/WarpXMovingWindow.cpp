@@ -182,8 +182,8 @@ WarpX::MoveWindow (const int step, bool move_j)
             }
 #ifdef WARPX_DIM_RZ
             if (pml_rz[lev] && dim < 2) {
-                const std::array<MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
-                const std::array<MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
+                const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
+                const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
                 shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir);
                 shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir);
             }
@@ -410,19 +410,19 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
         // longitudinal region. FillBoundary normally does not update these cells.
         // This update is needed so that the cells at the end of the FABs are updated appropriately
         // with the data shifted from the nieghboring FAB. Without this update, the RZ PML becomes
-        // unstable in with the moving grid.
-        // This code creates a temporary MultiFab using a BoxList the has all of its boxes grown
-        // to include the guard cells, so that the guard cells become effictively valid cells.
+        // unstable with the moving grid.
+        // This code creates a temporary MultiFab using a BoxList where the radial size of all of
+        // its boxes is increased so that the radial guard cells are included in the boxes valid domain.
         // The temporary MultiFab is setup to refer to the data of the original Multifab (this can
         // be done since the shape of the data is all the same, just the indexing is different).
-        BoxList bl;
+        amrex::BoxList bl;
         for (int i = 0, N=ba.size(); i < N; ++i) {
             bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
         }
-        BoxArray rba(std::move(bl));
-        MultiFab rmf(rba, dm, mf.nComp(), IntVect(0,mf.nGrowVect()[1]), MFInfo().SetAlloc(false));
+        amrex::BoxArray rba(std::move(bl));
+        amrex::MultiFab rmf(rba, dm, mf.nComp(), IntVect(0,mf.nGrowVect()[1]), MFInfo().SetAlloc(false));
 
-        for (MFIter mfi(mf); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
             rmf.setFab(mfi, FArrayBox(mf[mfi], amrex::make_alias, 0, mf.nComp()));
         }
         rmf.FillBoundary(false);

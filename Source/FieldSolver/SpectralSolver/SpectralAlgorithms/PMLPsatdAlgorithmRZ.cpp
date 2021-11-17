@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PMLPsatdAlgorithmRZ.H"
+#include "FieldSolver/SpectralSolver/SpectralHankelTransform/HankelTransform.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -60,7 +61,7 @@ PMLPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
         amrex::Array4<const amrex::Real> const& S_ck_arr = S_ck_coef[mfi].array();
 
         // Extract pointers for the k vectors
-        auto const & kr_modes = f.getKrArray(mfi);
+        HankelTransform::RealVector const & kr_modes = f.getKrArray(mfi);
         amrex::Real const* kr_arr = kr_modes.dataPtr();
         int const nr = bx.length(0);
 
@@ -129,7 +130,7 @@ void PMLPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
         amrex::Array4<amrex::Real> const& C = C_coef[mfi].array();
         amrex::Array4<amrex::Real> const& S_ck = S_ck_coef[mfi].array();
 
-        auto const & kr_modes = f.getKrArray(mfi);
+        HankelTransform::RealVector const & kr_modes = f.getKrArray(mfi);
         amrex::Real const* kr_arr = kr_modes.dataPtr();
         int const nr = bx.length(0);
         amrex::Real const dt = m_dt;
@@ -147,7 +148,7 @@ void PMLPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
 
             // Calculate coefficients
             constexpr amrex::Real c = PhysConst::c;
-            if (k_norm != 0){
+            if (k_norm != 0._rt){
                 C(i,j,k,mode) = std::cos(c*k_norm*dt);
                 S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
             } else { // Handle k_norm = 0, by using the analytical limit
