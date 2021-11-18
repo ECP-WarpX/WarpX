@@ -65,7 +65,7 @@ field_diag = picmi.FieldDiagnostic(
     period = 10,
     data_list = ['phi'],
     write_dir = '.',
-    warpx_file_prefix = f'Python_particle_attr_access_plt'
+    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if unique else ''}plt"
 )
 
 ##########################
