@@ -1288,8 +1288,8 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
                                                       pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
         const std::array<amrex::MultiFab*,3>& pml_B = (patch_type == PatchType::fine) ?
                                                       pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        amrex::MultiFab* const& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        amrex::MultiFab* const& pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
+        amrex::MultiFab* const pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+        amrex::MultiFab* const pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
 
         // Always synchronize nodal points
         const amrex::Periodicity& period = Geom(lev).periodicity();
