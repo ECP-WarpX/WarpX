@@ -748,7 +748,7 @@ public:
     /**
      * \brief
      * This function initializes and calculates grid quantities used along with
-     * EBs such as edge lengths, facec areas, distance to EB, etc. It also
+     * EBs such as edge lengths, face areas, distance to EB, etc. It also
      * appropriately communicates EB data to guard cells.
      *
      * \param[in] lev, level of the Multifabs that is initialized
