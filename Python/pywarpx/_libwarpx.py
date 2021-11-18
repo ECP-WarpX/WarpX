@@ -33,7 +33,7 @@ except ImportError:
 # --- Is there a better way of handling constants?
 clight = 2.99792458e+8 # m/s
 
-libwarpx_initialized = False
+warpx_initialized = False
 
 def _get_package_root():
     '''
@@ -323,7 +323,7 @@ def initialize(argv=None, mpi_comm=None):
         libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
-    libwarpx_initialized = True
+    warpx_initialized = True
 
 
 @atexit.register
@@ -334,7 +334,7 @@ def finalize(finalize_mpi=1):
     the end of your script.
 
     '''
-    if libwarpx_initialized == True:
+    if warpx_initialized == True:
         libwarpx.warpx_finalize()
         libwarpx.amrex_finalize(finalize_mpi)
 
