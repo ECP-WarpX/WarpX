@@ -276,7 +276,7 @@ private:
   std::unique_ptr<openPMD::Series> m_Series;
 
   /** To set particle meta-data for the openpmd dump. */
-  bool m_ParticleSetUp = true;
+  bool m_doParticleSetUp = true;
 
   /** This is the output directory
    *
