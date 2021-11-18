@@ -1,9 +1,19 @@
 from pywarpx import picmi
 import numpy as np
 
+import argparse
 import sys
 
-unique = int(sys.argv[1])
+# Create the parser and add the argument
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-u', '--unique', type=int, default=0,
+    help="Whether injected particles should be treated as unique"
+)
+
+# Parse the input
+args, left = parser.parse_known_args()
+sys.argv = sys.argv[:1] + left
 
 ##########################
 # numerics parameters
@@ -65,7 +75,7 @@ field_diag = picmi.FieldDiagnostic(
     period = 10,
     data_list = ['phi'],
     write_dir = '.',
-    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if unique else ''}plt"
+    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
 )
 
 ##########################
@@ -114,7 +124,7 @@ def add_particles():
 
     _libwarpx.add_particles(
         species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
-        w=w, newPid=newPid, unique_particles=unique
+        w=w, newPid=newPid, unique_particles=args.unique
     )
 
 callbacks.installbeforestep(add_particles)
@@ -130,7 +140,7 @@ sim.step(max_steps - 1)
 # are properly set
 ##########################
 
-assert (_libwarpx.get_particle_count('electrons') == 270 / (2 - unique))
+assert (_libwarpx.get_particle_count('electrons') == 270 / (2 - args.unique))
 assert (_libwarpx.get_particle_comp_index('electrons', 'w') == 0)
 assert (_libwarpx.get_particle_comp_index('electrons', 'newPid') == 4)
 
