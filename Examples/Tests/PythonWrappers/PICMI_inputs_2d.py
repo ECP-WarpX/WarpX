@@ -1,10 +1,7 @@
 import numpy as np
-from scipy.constants import c
 from pywarpx import picmi
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
-
-constants = picmi.constants
 
 # Number of time steps
 max_steps = 100
@@ -120,7 +117,6 @@ def compute_minmax(data):
 
 # Plot fields data either in valid domain or in PML
 def plot_data(it, data, edge, pml, title, name):
-    global toplot, fig, axs, caxs
     fig, ax = plt.subplots(nrows = 1, ncols = 1, gridspec_kw = dict(wspace = 0.5), figsize = [6,5])
     cax = make_axes_locatable(ax).append_axes('right', size='5%', pad='5%')
     vmin, vmax = compute_minmax(data)
@@ -156,7 +152,7 @@ def plot_data(it, data, edge, pml, title, name):
     figname = 'figure_' + name + '.png'
     fig.savefig(figname, dpi = 100)
 
-# Initialize fields data and apply smoothing
+# Initialize fields data (unit pulse) and apply smoothing
 def init_data(data):
     data[nx//2,nz//2] = 1.
     data[2:nx-1,:] *= 0.5
