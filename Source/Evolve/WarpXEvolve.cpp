@@ -407,6 +407,10 @@ WarpX::OneStep_nosub (Real cur_time)
         }
         PushPSATD();
 
+        if (do_pml) {
+            DampPML();
+        }
+
         if (use_hybrid_QED) {
             FillBoundaryE(guard_cells.ng_alloc_EB);
             FillBoundaryB(guard_cells.ng_alloc_EB);
@@ -427,7 +431,6 @@ WarpX::OneStep_nosub (Real cur_time)
         NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
-            DampPML();
             NodalSyncPML();
         }
     } else {

@@ -252,7 +252,7 @@ libwarpx.$(PYDIM).so: $(objForExecs)
 ifeq ($(USE_CUDA),TRUE)
 	$(SILENT) $(CXX) $(LINKFLAGS) $(SHARED_OPTION) -Xlinker=$(SHARED_OPTION) -Xlinker=-fPIC -o $@ $^ $(LDFLAGS) $(libraries)
 else
-	$(SILENT) $(CXX) $(SHARED_OPTION) -fPIC -o $@ $^ $(LDFLAGS) $(libraries)
+	$(SILENT) $(CXX) $(LINKFLAGS) $(SHARED_OPTION) -fPIC -o $@ $^ $(LDFLAGS) $(libraries)
 endif
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 	@echo SUCCESS
