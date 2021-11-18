@@ -593,7 +593,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #else
             const Real inv_dz = 1._rt/dx[0];
 #endif
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
             const Box& tbx  = mfi.tilebox( E[lev][0]->ixType().toIntVect() );
 #endif
 #if (AMREX_SPACEDIM == 3)
@@ -602,7 +602,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             const Box& tbz  = mfi.tilebox( E[lev][2]->ixType().toIntVect() );
 
             const auto& phi_arr = phi[lev]->array(mfi);
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
             const auto& Ex_arr = (*E[lev][0])[mfi].array();
 #endif
 #if (AMREX_SPACEDIM == 3)

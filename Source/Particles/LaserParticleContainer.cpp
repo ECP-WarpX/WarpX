@@ -735,7 +735,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
 {
     const auto GetPosition = GetParticlePosition(pti);
 
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     Real tmp_u_X_0 = m_u_X[0];
     Real tmp_u_X_2 = m_u_X[2];
     Real tmp_position_0 = m_position[0];

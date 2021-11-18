@@ -18,7 +18,7 @@ void interp (int j, int k, int l,
     Real const wx = static_cast<Real>(type[0]) * static_cast<amrex::Real>(j-jg*r_ratio) * rr;
     Real const owx = 1.0_rt-wx;
 
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     int const kg = amrex::coarsen(k,r_ratio);
     Real const wy = static_cast<Real>(type[1]) * static_cast<amrex::Real>(k-kg*r_ratio) * rr;
     Real const owy = 1.0_rt-wy;

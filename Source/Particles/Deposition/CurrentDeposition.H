@@ -92,7 +92,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
 #endif
 #if (defined WARPX_DIM_3D)
@@ -171,7 +171,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 
             // --- Compute shape factors
             Compute_shape_factor< depos_order > const compute_shape_factor;
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
             // x direction
             // Get particle position after 1/2 push back in position
 #if (defined WARPX_DIM_RZ)
@@ -209,7 +209,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
             int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
             int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
-#endif //AMREX_SPACEDIM > 1
+#endif //AMREX_SPACEDIM >= 2
 
 #if (defined WARPX_DIM_3D)
             // y direction

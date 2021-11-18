@@ -29,7 +29,7 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
     // Compute inverse Lorentz factor
     const amrex::Real inv_gamma = 1._rt/std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Update positions over one time step
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     x += ux * inv_gamma * dt;
 #else
     amrex::ignore_unused(x);

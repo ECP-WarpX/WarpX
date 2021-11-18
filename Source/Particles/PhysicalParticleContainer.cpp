@@ -189,7 +189,7 @@ namespace
         ) noexcept
     {
         p.pos(0) = 0._rt;
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
         p.pos(1) = 0._rt;
 #endif
 #if (AMREX_SPACEDIM == 3)
@@ -289,7 +289,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // If old particle positions should be saved add the needed components
     pp_species_name.query("save_previous_position", m_save_previous_position);
     if (m_save_previous_position) {
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
         AddRealComp("prev_x");
 #endif
 #if (AMREX_SPACEDIM == 3)
@@ -2498,7 +2498,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* y_old = nullptr;
     ParticleReal* z_old = nullptr;
     if (save_previous_position) {
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
         x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
 #else
     amrex::ignore_unused(x_old);
@@ -2539,7 +2539,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         getPosition(ip, xp, yp, zp);
 
         if (save_previous_position) {
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
             x_old[ip] = xp;
 #endif
 #if (AMREX_SPACEDIM == 3)

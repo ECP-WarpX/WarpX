@@ -590,7 +590,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
     m_inv_dz_lab_ = 1.0_rt / m_dz_lab_;
     int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     int Nx_lab = geom.Domain().length(0);
 #endif
 #if (AMREX_SPACEDIM == 3)
@@ -668,7 +668,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                           ( (1._rt+m_beta_boost_)*m_gamma_boost_);
         auto Nz_slice_lab = static_cast<int>(
             (zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
         auto Nx_slice_lab = static_cast<int>(
             (current_slice_hi[0] - current_slice_lo[0] ) /
             geom.CellSize(0));
@@ -1228,7 +1228,7 @@ createLabFrameDirectories() {
             const auto lo = lbound(m_buff_box_);
             for (int comp = 0; comp < m_ncomp_to_dump_; ++comp) {
                 output_create_field(m_file_name, m_mesh_field_names_[comp],
-#if ( AMREX_SPACEDIM > 1 )
+#if ( AMREX_SPACEDIM >= 2 )
                                     m_prob_ncells_lab_[0],
 #else
                                     1,
@@ -1554,7 +1554,7 @@ AddPartDataToParticleBuffer(
         int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
 
         // Compute extent of the reduced domain +/- user-defined physical width
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
         Real const xmin = m_diag_domain_lab_.lo(0)-m_particle_slice_dx_lab_;
         Real const xmax = m_diag_domain_lab_.hi(0)+m_particle_slice_dx_lab_;
 #endif
@@ -1569,7 +1569,7 @@ AddPartDataToParticleBuffer(
         [=] AMREX_GPU_DEVICE(int i)
         {
             Flag[i] = 0;
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
             if ( x_temp[i] >= (xmin) &&
                  x_temp[i] <= (xmax) )
 #endif

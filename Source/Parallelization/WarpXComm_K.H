@@ -675,7 +675,7 @@ void warpx_interp (const int j,
 
     // Staggering (s = 0 if cell-centered, s = 1 if nodal)
     const int sj = (dst_nodal) ? src_stag[0] : dst_stag[0];
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     const int sk = (dst_nodal) ? src_stag[1] : dst_stag[1];
 #endif
 #if (AMREX_SPACEDIM == 3)
@@ -684,7 +684,7 @@ void warpx_interp (const int j,
 
     // Interpolate along j,k,l only if source MultiFab is staggered along j,k,l
     const bool interp_j = (sj == 0);
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     const bool interp_k = (sk == 0);
 #endif
 #if (AMREX_SPACEDIM == 3)
@@ -806,7 +806,7 @@ void warpx_interp (const int j,
         amrex::Abort("PSATD not implemented in 1D");
 #endif
 
-#if (AMREX_SPACEDIM > 1) // 1D not implemented for PSATD
+#if (AMREX_SPACEDIM >= 2) // 1D not implemented for PSATD
         amrex::Real cj = 1.0_rt;
         amrex::Real ck = 1.0_rt;
         amrex::Real cl = 1.0_rt;

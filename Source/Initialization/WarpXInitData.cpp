@@ -86,7 +86,7 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
             klo += domlo[2];
             khi += domlo[2];
 #endif
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
             for (int j = 0; j < numprocs[1]; ++j) {
                 int jlo = (j < extra[1]) ? j*(sz[1]+1) : (j*sz[1]+extra[1]);
                 int jhi = (j < extra[1]) ? jlo+(sz[1]+1)-1 : jlo+sz[1]-1;

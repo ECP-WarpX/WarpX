@@ -301,7 +301,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                                    / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])                               ) );
     // Take the max of 0 and num_zcells_lab
     int Nz_lab = std::max( 0, num_zcells_lab );
-#if (AMREX_SPACEDIM > 1)
+#if (AMREX_SPACEDIM >= 2)
     // Number of lab-frame cells in x-direction at level, lev
     const int num_xcells_lab = static_cast<int>( floor (
                                   ( diag_dom.hi(0) - diag_dom.lo(0) )
