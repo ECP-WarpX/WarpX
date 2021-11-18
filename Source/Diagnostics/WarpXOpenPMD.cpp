@@ -679,7 +679,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
          auto const numParticleOnTile = pti.numParticles();
          uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+
+         // Do not call storeChunk() with zero-sized particle tiles:
+         //   https://github.com/openPMD/openPMD-api/issues/1147
          if (numParticleOnTile == 0) continue;
+
          // get position and particle ID from aos
          // note: this implementation iterates the AoS 4x...
          // if we flush late as we do now, we can also copy out the data in one go

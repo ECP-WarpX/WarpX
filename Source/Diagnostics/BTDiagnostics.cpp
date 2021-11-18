@@ -184,7 +184,9 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
     // computed and packed every timstep, except at initialization when step == -1, or when
-    // force_flush is set to true.
+    // force_flush is set to true, because we dont need to redundantly re-compute
+    // buffers when force_flush = true. We only need to dump the buffers when
+    // force_flush=true. Note that the BTD computation is performed every timestep (step>=0)
     if (step < 0 ) {
         return false;
     } else if (force_flush) {
