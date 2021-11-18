@@ -33,6 +33,8 @@ except ImportError:
 # --- Is there a better way of handling constants?
 clight = 2.99792458e+8 # m/s
 
+libwarpx_initialized = False
+
 def _get_package_root():
     '''
     Get the path to the installation location (where libwarpx.so would be installed).
@@ -321,6 +323,8 @@ def initialize(argv=None, mpi_comm=None):
         libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
+    libwarpx_initialized = True
+
 
 @atexit.register
 def finalize(finalize_mpi=1):
@@ -330,8 +334,9 @@ def finalize(finalize_mpi=1):
     the end of your script.
 
     '''
-    libwarpx.warpx_finalize()
-    libwarpx.amrex_finalize(finalize_mpi)
+    if libwarpx_initialized == True:
+        libwarpx.warpx_finalize()
+        libwarpx.amrex_finalize(finalize_mpi)
 
 
 def evolve(num_steps=-1):
