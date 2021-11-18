@@ -85,9 +85,6 @@ sim.add_diagnostic(field_diag)
 # Write input file to run with compiled version
 sim.write_input_file(file_name = 'inputs_2d')
 
-import pywarpx
-import pywarpx.fields as pwxf
-
 # Whether to include guard cells in data returned by Python wrappers
 include_ghosts = 1
 
@@ -97,6 +94,7 @@ def get_data():
     global Ey, Eypml, By, Bypml
     global Ez, Ezpml, Bz, Bzpml
     global F, Fpml, G, Gpml
+    import pywarpx.fields as pwxf
     Ex = pwxf.ExFPWrapper(include_ghosts = include_ghosts)
     Ey = pwxf.EyFPWrapper(include_ghosts = include_ghosts)
     Ez = pwxf.EzFPWrapper(include_ghosts = include_ghosts)
