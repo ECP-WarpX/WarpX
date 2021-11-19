@@ -321,7 +321,7 @@ void Filter::DoFilter (const Box& tbx,
                                                           +tmp(i+ix,j-iy,k,scomp+n)
                                                           +tmp(i-ix,j+iy,k,scomp+n)
                                                           +tmp(i+ix,j+iy,k,scomp+n));
-#else
+#elif (AMREX_SPACEDIM == 1)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
                                                           +tmp(i+ix,j,k,scomp+n));
 #endif
