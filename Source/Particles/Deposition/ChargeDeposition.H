@@ -58,16 +58,22 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dzi = 1.0_rt/dx[2];
+#if (AMREX_SPACEDIM == 1)
+    const amrex::Real invvol = dzi;
+#endif
 #if (AMREX_SPACEDIM == 2)
+    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real invvol = dxi*dzi;
 #elif (defined WARPX_DIM_3D)
+    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
+#endif
 #if (defined WARPX_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
@@ -105,6 +111,8 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             GetPosition(ip, xp, yp, zp);
 
             // --- Compute shape factors
+            Compute_shape_factor< depos_order > const compute_shape_factor;
+#if (AMREX_SPACEDIM >= 2)
             // x direction
             // Get particle position in grid coordinates
 #if (defined WARPX_DIM_RZ)
@@ -128,13 +136,12 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             // i: leftmost grid point that the particle touches
             amrex::Real sx[depos_order + 1] = {0._rt};
             int i = 0;
-            Compute_shape_factor< depos_order > const compute_shape_factor;
             if (rho_type[0] == NODE) {
                 i = compute_shape_factor(sx, x);
             } else if (rho_type[0] == CELL) {
                 i = compute_shape_factor(sx, x - 0.5_rt);
             }
-
+#endif //AMREX_SPACEDIM >= 2
 #if (defined WARPX_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
@@ -157,6 +164,13 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             }
 
             // Deposit charge into rho_arr
+#if (defined WARPX_DIM_1D_Z)
+            for (int iz=0; iz<=depos_order; iz++){
+                amrex::Gpu::Atomic::AddNoRet(
+                    &rho_arr(lo.x+k+iz, 0, 0, 0),
+                    sz[iz]*wq);
+            }
+#endif
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
