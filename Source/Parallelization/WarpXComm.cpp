@@ -979,7 +979,9 @@ WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
         IntVect ng_depos_J = get_ng_depos_J();
         if (WarpX::do_current_centering)
         {
-#if   (AMREX_SPACEDIM == 2)
+#if   (AMREX_SPACEDIM == 1)
+            ng_depos_J[0] += WarpX::current_centering_noz / 2;
+#elif (AMREX_SPACEDIM == 2)
             ng_depos_J[0] += WarpX::current_centering_nox / 2;
             ng_depos_J[1] += WarpX::current_centering_noz / 2;
 #elif (AMREX_SPACEDIM == 3)

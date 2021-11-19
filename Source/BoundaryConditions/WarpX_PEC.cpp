@@ -80,6 +80,9 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -90,6 +93,9 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -99,6 +105,9 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
 #endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
@@ -163,6 +172,9 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -173,6 +185,9 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
 #endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
@@ -182,6 +197,9 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
 #endif
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;

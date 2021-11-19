@@ -15,6 +15,7 @@ import os
 # Get relevant environment variables
 arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
 
+ci_regular_cartesian_1d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_1D') == 'TRUE'
 ci_regular_cartesian_2d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_2D') == 'TRUE'
 ci_regular_cartesian_3d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_3D') == 'TRUE'
 ci_psatd = os.environ.get('WARPX_CI_PSATD', 'TRUE') == 'TRUE'
@@ -109,6 +110,15 @@ def select_tests(blocks, match_string_list, do_test):
             blocks = [ block for block in blocks if match_string in block ]
     return blocks
 
+if ci_regular_cartesian_1d:
+    test_blocks = select_tests(test_blocks, ['dim = 1'], True)
+    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
+    test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
+
 if ci_regular_cartesian_2d:
     test_blocks = select_tests(test_blocks, ['dim = 2'], True)
     test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
@@ -119,8 +129,7 @@ if ci_regular_cartesian_2d:
     test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_regular_cartesian_3d:
-    test_blocks = select_tests(test_blocks, ['dim = 2'], False)
-    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['dim = 3'], True)
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
