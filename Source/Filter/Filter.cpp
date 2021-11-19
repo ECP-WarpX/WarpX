@@ -157,7 +157,7 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
-#else
+#elif (AMREX_SPACEDIM == 1)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
