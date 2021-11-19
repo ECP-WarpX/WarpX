@@ -164,7 +164,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         BoxArray const& nba = Bfield_aux[lev][0]->boxArray();
         BoxArray const& cnba = amrex::coarsen(nba,2);
         DistributionMapping const& dm = Bfield_aux[lev][0]->DistributionMap();
-        auto const& cperiod = Geom(lev-1).periodicity();
+        amrex::Periodicity const& cperiod = Geom(lev-1).periodicity();
 
         // Bfield
         {
@@ -286,7 +286,7 @@ WarpX::UpdateAuxilaryDataSameType ()
 {
     for (int lev = 1; lev <= finest_level; ++lev)
     {
-        const auto& crse_period = Geom(lev-1).periodicity();
+        const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
         const IntVect& ng = Bfield_cp[lev][0]->nGrowVect();
         const DistributionMapping& dm = Bfield_cp[lev][0]->DistributionMap();
 
@@ -567,7 +567,7 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
 #endif
         }
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Efield_fp[lev][0].get(),Efield_fp[lev][1].get(),Efield_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
@@ -591,7 +591,7 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
                                 do_pml_in_domain);
             pml[lev]->FillBoundaryE(patch_type);
         }
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Efield_cp[lev][0].get(),Efield_cp[lev][1].get(),Efield_cp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, cperiod);
@@ -638,7 +638,7 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
 #endif
         }
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Bfield_fp[lev][0].get(),Bfield_fp[lev][1].get(),Bfield_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
@@ -663,7 +663,7 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
                         do_pml_in_domain);
         pml[lev]->FillBoundaryB(patch_type);
         }
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Bfield_cp[lev][0].get(),Bfield_cp[lev][1].get(),Bfield_cp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, cperiod);
@@ -696,7 +696,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
          }
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
@@ -716,7 +716,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
          }
 
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Efield_avg_cp[lev][0].get(),Efield_avg_cp[lev][1].get(),Efield_avg_cp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, cperiod);
@@ -749,7 +749,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
           {
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
           }
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
@@ -769,7 +769,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
           }
 
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, cperiod);
@@ -882,7 +882,7 @@ WarpX::FillBoundaryAux (IntVect ng)
 void
 WarpX::FillBoundaryAux (int lev, IntVect ng)
 {
-    const auto& period = Geom(lev).periodicity();
+    const amrex::Periodicity& period = Geom(lev).periodicity();
     WarpXCommUtil::FillBoundary(*Efield_aux[lev][0], ng, period);
     WarpXCommUtil::FillBoundary(*Efield_aux[lev][1], ng, period);
     WarpXCommUtil::FillBoundary(*Efield_aux[lev][2], ng, period);
@@ -990,8 +990,9 @@ void
 WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const auto& period = Geom(glev).periodicity();
-    auto& j = (patch_type == PatchType::fine) ? current_fp[lev] : current_cp[lev];
+    const amrex::Periodicity& period = Geom(glev).periodicity();
+    std::array<std::unique_ptr<amrex::MultiFab>,3>& j = (patch_type == PatchType::fine) ?
+                                                        current_fp[lev] : current_cp[lev];
     for (int idim = 0; idim < 3; ++idim) {
         IntVect ng = j[idim]->nGrowVect();
         IntVect ng_depos_J = get_ng_depos_J();
@@ -1042,7 +1043,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
         // When there are current buffers, unlike coarse patch,
         // we don't care about the final state of them.
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         for (int idim = 0; idim < 3; ++idim) {
             MultiFab mf(current_fp[lev][idim]->boxArray(),
                         current_fp[lev][idim]->DistributionMap(), current_fp[lev][idim]->nComp(), 0);
@@ -1133,7 +1134,7 @@ void
 WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    auto& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
+    std::unique_ptr<amrex::MultiFab>& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
     if (r == nullptr) return;
     ApplyFilterandSumBoundaryRho(lev, glev, *r, icomp, ncomp);
 }
@@ -1141,7 +1142,7 @@ WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, i
 void
 WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
 {
-    const auto& period = Geom(glev).periodicity();
+    const amrex::Periodicity& period = Geom(glev).periodicity();
     IntVect ng = rho.nGrowVect();
     IntVect ng_depos_rho = get_ng_depos_rho();
     if (use_filter) {
@@ -1179,7 +1180,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
 
     if (lev < finest_level){
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         MultiFab mf(rho_fp[lev]->boxArray(),
                     rho_fp[lev]->DistributionMap(),
                     ncomp, 0);
@@ -1252,14 +1253,14 @@ WarpX::NodalSyncJ (int lev, PatchType patch_type)
 
     if (patch_type == PatchType::fine)
     {
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         WarpXCommUtil::OverrideSync(*current_fp[lev][0], period);
         WarpXCommUtil::OverrideSync(*current_fp[lev][1], period);
         WarpXCommUtil::OverrideSync(*current_fp[lev][2], period);
     }
     else if (patch_type == PatchType::coarse)
     {
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         WarpXCommUtil::OverrideSync(*current_cp[lev][0], cperiod);
         WarpXCommUtil::OverrideSync(*current_cp[lev][1], cperiod);
         WarpXCommUtil::OverrideSync(*current_cp[lev][2], cperiod);
@@ -1273,13 +1274,13 @@ WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
 
     if (patch_type == PatchType::fine && rho_fp[lev])
     {
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         MultiFab rhof(*rho_fp[lev], amrex::make_alias, icomp, ncomp);
         WarpXCommUtil::OverrideSync(rhof, period);
     }
     else if (patch_type == PatchType::coarse && rho_cp[lev])
     {
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         MultiFab rhoc(*rho_cp[lev], amrex::make_alias, icomp, ncomp);
         WarpXCommUtil::OverrideSync(rhoc, cperiod);
     }
@@ -1302,13 +1303,15 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
 {
     if (pml[lev] && pml[lev]->ok())
     {
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        const auto& pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
+        const std::array<amrex::MultiFab*,3>& pml_E = (patch_type == PatchType::fine) ?
+                                                      pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+        const std::array<amrex::MultiFab*,3>& pml_B = (patch_type == PatchType::fine) ?
+                                                      pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+        amrex::MultiFab* const pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+        amrex::MultiFab* const pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
 
         // Always synchronize nodal points
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         WarpXCommUtil::OverrideSync(*pml_E[0], period);
         WarpXCommUtil::OverrideSync(*pml_E[1], period);
         WarpXCommUtil::OverrideSync(*pml_E[2], period);

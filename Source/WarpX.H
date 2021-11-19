@@ -681,6 +681,7 @@ public:
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
+    const amrex::IntVect get_ng_fieldgather () const {return guard_cells.ng_FieldGather;}
 
     /** Coarsest-level Domain Decomposition
      *
@@ -752,6 +753,16 @@ public:
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
+
+    /**
+     * \brief
+     * This function initializes and calculates grid quantities used along with
+     * EBs such as edge lengths, face areas, distance to EB, etc. It also
+     * appropriately communicates EB data to guard cells.
+     *
+     * \param[in] lev, level of the Multifabs that is initialized
+     */
+    void InitializeEBGridData(int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`

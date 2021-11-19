@@ -103,8 +103,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
-        phi[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 1);
+        rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
     }
 
@@ -172,7 +172,10 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    if (warpx_py_poissonsolver) warpx_py_poissonsolver();
+    if (warpx_py_poissonsolver) {
+        WARPX_PROFILE("warpx_py_poissonsolver");
+        warpx_py_poissonsolver();
+    }
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
@@ -269,7 +272,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
 
         amrex::BoxArray nba = boxArray(lev);
         nba.enclosedCells(); // Get cell centered array (correct?)
-        sigma[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 0);
+        sigma[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 0);
         for ( MFIter mfi(*sigma[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
             const amrex::Box& tbx = mfi.tilebox();
@@ -318,7 +321,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
     // Define the linear operator (Poisson operator)
-    MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
+    MLNodeLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
 
     for (int lev = 0; lev <= max_level; ++lev) {
         linop.setSigma( lev, *sigma[lev] );
@@ -413,7 +416,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     for (int lev = 0; lev <= max_level; ++lev) {
       eb_factory[lev] = &WarpX::fieldEBFactory(lev);
     }
-    MLEBNodeFDLaplacian linop( Geom(), boxArray(), dmap, info, eb_factory);
+    MLEBNodeFDLaplacian linop( Geom(), boxArray(), DistributionMap(), info, eb_factory);
 
     // Note: this assumes that the beam is propagating along
     // one of the axes of the grid, i.e. that only *one* of the Cartesian
