@@ -117,7 +117,7 @@ struct CartesianNodalAlgorithm {
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
         return 0.5_rt*inv_dy*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
         ignore_unused(i, j, k, coefs_y, ncomp, F);
         return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
 #endif
