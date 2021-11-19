@@ -136,6 +136,8 @@ _LP_LP_c_char = ctypes.POINTER(_LP_c_char)
 
 # this is a function for converting a ctypes pointer to a numpy array
 def _array1d_from_pointer(pointer, dtype, size):
+    if not pointer:
+        raise Exception(f'_array1d_from_pointer: pointer is a nullptr')
     if sys.version_info.major >= 3:
         # from where do I import these? this might only work for CPython...
         #PyBuf_READ  = 0x100
@@ -559,6 +561,8 @@ def get_particle_structs(species_name, level):
 
     particle_data = []
     for i in range(num_tiles.value):
+        if particles_per_tile[i] == 0:
+            continue
         arr = _array1d_from_pointer(data[i], _p_dtype, particles_per_tile[i])
         particle_data.append(arr)
 
@@ -900,6 +904,8 @@ def get_particle_boundary_buffer_structs(species_name, boundary, level):
 
     particle_data = []
     for i in range(num_tiles.value):
+        if particles_per_tile[i] == 0:
+            continue
         arr = _array1d_from_pointer(data[i], _p_dtype, particles_per_tile[i])
         particle_data.append(arr)
 
