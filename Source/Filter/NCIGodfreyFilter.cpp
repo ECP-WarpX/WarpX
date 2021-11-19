@@ -21,9 +21,9 @@
 #include <vector>
 
 using namespace amrex;
-#if (AMREX_SPACEDIM != 1) //1D not implemented
 
 NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdtodz, bool nodal_gather){
+#if (AMREX_SPACEDIM >= 2)
     // Store parameters into class data members
     m_coeff_set = coeff_set;
     m_cdtodz = cdtodz;
@@ -36,10 +36,15 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
     stencil_length_each_dir = {1,5};
     slen = {1,5,1};
 #endif
+#else
+    amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
+    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
+#endif
 }
 
 void NCIGodfreyFilter::ComputeStencils(){
 
+#if (AMREX_SPACEDIM >= 2)
     using namespace warpx::nci_godfrey;
 
     // Sanity checks: filter length shoulz be 5 in z
@@ -129,5 +134,7 @@ void NCIGodfreyFilter::ComputeStencils(){
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_z.begin());
 
     Gpu::synchronize();
+#else
+    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
+#endif
 }
-#endif //1D
