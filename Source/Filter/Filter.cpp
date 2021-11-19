@@ -92,7 +92,9 @@ void Filter::DoFilter (const Box& tbx,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
+#if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
+#endif
 #if (AMREX_SPACEDIM == 3)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
@@ -129,7 +131,7 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
-#else
+#elif (AMREX_SPACEDIM == 2)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -155,6 +157,32 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
+#elif (AMREX_SPACEDIM == 1)
+    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    {
+        Real d = 0.0;
+
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
+        for         (int iz=0; iz < slen_local.z; ++iz){
+            for     (int iy=0; iy < slen_local.y; ++iy){
+                for (int ix=0; ix < slen_local.x; ++ix){
+                    Real sss = sz[iy];
+                    d += sss*( src_zeropad(i-ix,j,k,scomp+n)
+                              +src_zeropad(i+ix,j,k,scomp+n));
+                }
+            }
+        }
+
+        dst(i,j,k,dcomp+n) = d;
+    });
+#else
+    amrex::Abort("Filter not implemented for the current geometry!");
 #endif
 }
 
@@ -247,7 +275,9 @@ void Filter::DoFilter (const Box& tbx,
     const auto lo = amrex::lbound(tbx);
     const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
+#if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
+#endif
 #if (AMREX_SPACEDIM == 3)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
@@ -267,8 +297,10 @@ void Filter::DoFilter (const Box& tbx,
                 for (int ix=0; ix < slen.x; ++ix){
 #if (AMREX_SPACEDIM == 3)
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-#else
+#elif (AMREX_SPACEDIM == 2)
                     Real sss = sx[ix]*sz[iy];
+#else
+                    Real sss = sz[ix];
 #endif
                     // 3 nested loop on 3D array
                     for         (int k = lo.z; k <= hi.z; ++k) {
@@ -284,11 +316,16 @@ void Filter::DoFilter (const Box& tbx,
                                                           +tmp(i+ix,j-iy,k+iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k+iz,scomp+n)
                                                           +tmp(i+ix,j+iy,k+iz,scomp+n));
-#else
+#elif (AMREX_SPACEDIM == 2)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k,scomp+n)
                                                           +tmp(i+ix,j-iy,k,scomp+n)
                                                           +tmp(i-ix,j+iy,k,scomp+n)
                                                           +tmp(i+ix,j+iy,k,scomp+n));
+#elif (AMREX_SPACEDIM == 1)
+                                dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
+                                                          +tmp(i+ix,j,k,scomp+n));
+#else
+    amrex::Abort("Filter not implemented for the current geometry!");
 #endif
                             }
                         }

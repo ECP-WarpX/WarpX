@@ -109,8 +109,10 @@ Diagnostics::BaseReadParameters ()
     if (warpx.do_moving_window) {
 #if (AMREX_SPACEDIM == 3)
     amrex::Vector<int> dim_map {0, 1, 2};
-#else
+#elif (AMREX_SPACEDIM == 2)
     amrex::Vector<int> dim_map {0, 2};
+#else
+    amrex::Vector<int> dim_map {2};
 #endif
        if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
            // Convert user-defined lo and hi for diagnostics to account for boosted-frame
