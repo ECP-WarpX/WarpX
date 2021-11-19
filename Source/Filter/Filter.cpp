@@ -181,6 +181,8 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
+#else
+    amrex::Abort("Filter not implemented for the current geometry!");
 #endif
 }
 
