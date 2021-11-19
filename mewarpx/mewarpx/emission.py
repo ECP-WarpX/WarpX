@@ -1451,7 +1451,7 @@ class ArbitraryEmitter2D(Emitter):
         ax.set_yticklabels(np.round(major_yticks * y_step, 8))
 
 
-        ax.grid(b=True, which="minor")
+        ax.grid(visible=True, which="minor")
         ax.set_aspect(mwxrun.dx/mwxrun.dz, adjustable='box')
         fig.tight_layout()
         fig.savefig(f"{self.conductor.name}_contour_plot.png")

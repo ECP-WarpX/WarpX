@@ -147,7 +147,7 @@ class FieldDiagnostic(WarpXDiagnostic):
 
             # deposit the charge density for each species
             for species in self.species_list:
-                data = (
+                data = np.abs(
                     mwxrun.get_gathered_rho_grid(
                         species_name=species.name, include_ghosts=False
                     ) / mwxconstants.e * 1e-6
@@ -266,7 +266,14 @@ class FieldDiagnostic(WarpXDiagnostic):
 
     def do_post_processing(self):
         if mwxrun.me == 0:
-            constants = picmi.constants
+            # we need to overwrite self.plot and the function
+            # self.get_fileprefix in order to properly do the post-process
+            # plotting
+            self.plot = True
+            self.get_fileprefix = (
+                lambda title: os.path.join(self.write_dir, title)
+            )
+
             data_dirs = glob.glob(os.path.join(
                 self.write_dir, self.kwargs['name'] + '*'
             ))
@@ -281,6 +288,7 @@ class FieldDiagnostic(WarpXDiagnostic):
                 logger.info(f"Reading {datafolder}\n")
                 ds = yt.load( datafolder )
 
+                timestep = datafolder[-5:]
                 grid_data = ds.covering_grid(
                     level=0, left_edge=ds.domain_left_edge,
                     dims=ds.domain_dimensions
@@ -294,16 +302,17 @@ class FieldDiagnostic(WarpXDiagnostic):
                             ""
                         )
                     )
-                    data = np.mean(
-                        grid_data[parameter].to_ndarray()[:, :, 0], axis=0
-                    ) / constants.q_e
+                    data = np.array(grid_data[parameter].to_ndarray()[:, :, 0])
 
-                    fig, ax = plt.subplots(1, 1, figsize=(14, 14))
-                    template = "rho" if "rho" in parameter else "phi"
-                    plotting.ArrayPlot(
-                            array=data,
-                            template=template, xaxis='z', yaxis='x', ax=ax,
-                            plot_name=plot_name
-                        )
-                    fig.savefig(plot_name + '.png', dpi=self.dpi)
-                    plt.close()
+                    if parameter == "phi":
+                        plottype = "phi"
+                    else:
+                        plottype = "rho"
+                        data = data / mwxconstants.e * 1e-6
+
+                    self.process_field(
+                        data=data,
+                        titlestr=parameter+"_"+timestep,
+                        plottype=plottype, draw_image=True, default_ticks=True,
+                        draw_contourlines=False
+                    )
