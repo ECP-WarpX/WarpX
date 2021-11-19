@@ -307,8 +307,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         num_particles_per_cell_each_dim.push_back(1);
 #endif
 #if WARPX_DIM_1D_Z
-        num_particles_per_cell_each_dim.push_back(1);
-        num_particles_per_cell_each_dim.push_back(1);
+        num_particles_per_cell_each_dim.push_back(1); // overwrite 2nd number with 1
+        num_particles_per_cell_each_dim.push_back(1); // overwrite 3rd number with 1
 #endif
 #if WARPX_DIM_RZ
         if (WarpX::n_rz_azimuthal_modes > 1) {
