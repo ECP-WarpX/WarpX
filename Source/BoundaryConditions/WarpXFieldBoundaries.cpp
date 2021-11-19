@@ -1,4 +1,5 @@
 #include "WarpX.H"
+#include "BoundaryConditions/PML.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Evolve/WarpXDtType.H"
 #include "WarpX_PEC.H"
@@ -25,9 +26,23 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
-            PEC::ApplyPECtoEfield( Efield_fp[lev], lev, patch_type);
+            PEC::ApplyPECtoEfield( { get_pointer_Efield_fp(lev, 0),
+                                     get_pointer_Efield_fp(lev, 1),
+                                     get_pointer_Efield_fp(lev, 2) }, lev, patch_type);
+            if (WarpX::isAnyBoundaryPML()) {
+                // apply pec on split E-fields in PML region
+                const bool split_pml_field = true;
+                PEC::ApplyPECtoEfield( pml[lev]->GetE_fp(), lev, patch_type, split_pml_field);
+            }
         } else {
-            PEC::ApplyPECtoEfield( Efield_cp[lev], lev, patch_type);
+            PEC::ApplyPECtoEfield( { get_pointer_Efield_cp(lev, 0),
+                                     get_pointer_Efield_cp(lev, 1),
+                                     get_pointer_Efield_cp(lev, 2) }, lev, patch_type);
+            if (WarpX::isAnyBoundaryPML()) {
+                // apply pec on split E-fields in PML region
+                const bool split_pml_field = true;
+                PEC::ApplyPECtoEfield( pml[lev]->GetE_cp(), lev, patch_type, split_pml_field);
+            }
         }
     }
 }
@@ -36,9 +51,13 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
-            PEC::ApplyPECtoBfield( Bfield_fp[lev], lev, patch_type);
+            PEC::ApplyPECtoBfield( { get_pointer_Bfield_fp(lev, 0),
+                                     get_pointer_Bfield_fp(lev, 1),
+                                     get_pointer_Bfield_fp(lev, 2) }, lev, patch_type);
         } else {
-            PEC::ApplyPECtoBfield( Bfield_cp[lev], lev, patch_type);
+            PEC::ApplyPECtoBfield( { get_pointer_Bfield_cp(lev, 0),
+                                     get_pointer_Bfield_cp(lev, 1),
+                                     get_pointer_Bfield_cp(lev, 2) }, lev, patch_type);
         }
     }
 

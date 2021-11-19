@@ -496,6 +496,11 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
         new_lo[1] = current_lo[1] + warpx.m_galilean_shift[2];
         new_hi[1] = current_hi[1] + warpx.m_galilean_shift[2];
     }
+#elif (AMREX_SPACEDIM == 1 )
+    {
+        new_lo[0] = current_lo[0] + warpx.m_galilean_shift[2];
+        new_hi[0] = current_hi[0] + warpx.m_galilean_shift[2];
+    }
 #endif
     // Update RealBox of geometry with galilean-shifted boundary
     for (int lev = 0; lev < nmax_lev; ++lev) {
