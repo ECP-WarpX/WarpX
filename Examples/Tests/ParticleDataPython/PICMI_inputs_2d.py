@@ -7,7 +7,7 @@ import sys
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-u', '--unique', type=int, default=0,
+    '-u', '--unique', action='store_true',
     help="Whether injected particles should be treated as unique"
 )
 
