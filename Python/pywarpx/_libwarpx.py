@@ -600,7 +600,7 @@ def get_particle_arrays(species_name, comp_name, level):
     particle_data = []
     for i in range(num_tiles.value):
         if not data[i]:
-            raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
+            continue
         arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
         try:
             # This fails on some versions of numpy
@@ -952,7 +952,7 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
     particle_data = []
     for i in range(num_tiles.value):
         if not data[i]:
-            raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
+            continue
         arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
         try:
             # This fails on some versions of numpy
@@ -994,7 +994,7 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
         shape = tuple([shapes[shapesize*i + d] for d in range(shapesize)])
         # --- The data is stored in Fortran order, hence shape is reversed and a transpose is taken.
         if not data[i]:
-            raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
+            continue
         arr = np.ctypeslib.as_array(data[i], shape[::-1]).T
         try:
             # This fails on some versions of numpy
