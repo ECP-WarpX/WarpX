@@ -746,6 +746,16 @@ public:
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
 
+    /**
+     * \brief
+     * This function initializes and calculates grid quantities used along with
+     * EBs such as edge lengths, face areas, distance to EB, etc. It also
+     * appropriately communicates EB data to guard cells.
+     *
+     * \param[in] lev, level of the Multifabs that is initialized
+     */
+    void InitializeEBGridData(int lev);
+
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
      * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized

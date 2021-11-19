@@ -112,6 +112,20 @@ void ParticleBoundaryBuffer::printNumParticles () const {
 #endif
 }
 
+void ParticleBoundaryBuffer::redistribute () {
+    for (int i = 0; i < numBoundaries(); ++i)
+    {
+        auto& buffer = m_particle_containers[i];
+        for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
+        {
+            auto& species_buffer = buffer[ispecies];
+            if (species_buffer.isDefined()) {
+                species_buffer.Redistribute();
+            }
+        }
+    }
+}
+
 void ParticleBoundaryBuffer::clearParticles () {
     for (int i = 0; i < numBoundaries(); ++i)
     {
