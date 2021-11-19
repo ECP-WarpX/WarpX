@@ -131,7 +131,9 @@ def test_field_diag(plot_on_diag_steps):
     # verify that the post processing image was created
     if post_processing:
         print("Verifying that all plots were created...")
-        for i in range(0, STEPS - 1, DIAG_STEPS):
+        # Start at 1st diagnostic (at step 0 all data arrays are 0 and are
+        # therefore skipped)
+        for i in range(DIAG_STEPS, STEPS - 1, DIAG_STEPS):
             for param in DIAG_DATA_LIST:
                 assert os.path.isfile(
                     os.path.join(

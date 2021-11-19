@@ -164,6 +164,8 @@ class DiodeRun_V1(object):
     NZ = None
     # should the direct solver be used?
     DIRECT_SOLVER = False
+    # steps between doing load-balancing. If <1 load balancing will not be done
+    LOAD_BALANCE_INTERVALS = 0
 
     def __init__(self, dim=1, rz=False, **kwargs):
         for kw in list(kwargs.keys()):
@@ -608,6 +610,8 @@ class DiodeRun_V1(object):
 
     def init_simulation(self):
         logger.info("### Init Simulation Setup ###")
+        if self.LOAD_BALANCE_INTERVALS > 0:
+            mwxrun.simulation.load_balance_intervals = self.LOAD_BALANCE_INTERVALS
         mwxrun.simulation.solver = self.solver
         mwxrun.simulation.max_steps = self.TOTAL_TIMESTEPS
 

@@ -5,6 +5,10 @@ Version, Physics version, Date,        List of changes
 
 - Merge ``upstream/development`` (git hash ``430c972``) into memaster.
 
+**Bugfixes**:
+
+- Fix bug in post-processing of field diagnostic ``yt`` data where the average
+  values along axis 0 was plotted instead of the full data array.
 "
 2.0.3, 2, 11/18/2021, "
 
