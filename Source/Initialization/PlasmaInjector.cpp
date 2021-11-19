@@ -294,7 +294,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
         // For 1D, only one is expected. The second and third are overwritten with 1.
-#if WARPX_DIM_1D_Z
+#if defined(WARPX_DIM_1D_Z)
         constexpr int num_required_ppc_each_dim = 1;
 #elif WARPX_DIM_XZ
         constexpr int num_required_ppc_each_dim = 2;
