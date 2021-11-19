@@ -728,7 +728,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         ptile_tmp.resize(ptile.numParticles());
 
         Box box = pti.validbox();
-        box.grow(1);
+        box.grow(ng_rho);
         amrex::IntVect bin_size = WarpX::sort_bin_size;
         int ntiles = numTilesInBox(box, true, bin_size);
 
