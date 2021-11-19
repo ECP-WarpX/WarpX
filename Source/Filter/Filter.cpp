@@ -324,6 +324,8 @@ void Filter::DoFilter (const Box& tbx,
 #elif (AMREX_SPACEDIM == 1)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
                                                           +tmp(i+ix,j,k,scomp+n));
+#else
+    amrex::Abort("Filter not implemented for the current geometry!");
 #endif
                             }
                         }
