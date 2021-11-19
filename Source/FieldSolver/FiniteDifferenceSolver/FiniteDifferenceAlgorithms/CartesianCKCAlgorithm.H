@@ -73,7 +73,7 @@ struct CartesianCKCAlgorithm {
         constexpr Real alphay=0._rt;
 #elif defined WARPX_DIM_1D_Z
         Real const alphaz = inv_dz;
-        // Other coefficients are 0 in 2D Cartesian
+        // Other coefficients are 0 in 1D Cartesian
         // (and will actually not be used in the stencil)
         constexpr Real gammax=0._rt, gammay=0._rt, gammaz=0._rt;
         constexpr Real betaxy=0._rt, betazy=0._rt, betayx=0._rt, betayz=0._rt, betaxz=0._rt, betazx=0._rt;
