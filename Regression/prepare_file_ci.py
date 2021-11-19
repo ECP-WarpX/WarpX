@@ -130,7 +130,6 @@ if ci_regular_cartesian_2d:
 
 if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['dim = 3'], True)
-    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
