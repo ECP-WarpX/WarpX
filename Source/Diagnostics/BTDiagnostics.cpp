@@ -322,7 +322,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 #elif (AMREX_SPACEDIM == 2)
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
 #else
-    m_snapshot_ncells_lab[i_buffer] = amrex::IntVect({Nz_lab});
+    m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
 }
 
