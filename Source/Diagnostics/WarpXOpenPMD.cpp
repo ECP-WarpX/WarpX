@@ -187,7 +187,9 @@ namespace detail
     getParticlePositionComponentLabels ()
     {
         using vs = std::vector< std::string >;
-#if defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_1D_Z)
+        vs const positionComponents{"z"};
+#elif defined(WARPX_DIM_XZ)
         vs const positionComponents{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // note: although we internally store particle positions
@@ -197,7 +199,7 @@ namespace detail
         //       Other attributes like momentum are consequently
         //       stored in x,y,z internally.
         vs const positionComponents{"x", "y", "z"};
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
         vs const positionComponents{"x", "y", "z"};
 #else
 #   error Unknown WarpX dimensionality.
@@ -216,7 +218,9 @@ namespace detail
         using vs = std::vector< std::string >;
 
         // Fortran order of the index labels for the AMReX FArrayBox
-#if defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_1D_Z)
+        vs const axisLabels{"z"};
+#elif defined(WARPX_DIM_XZ)
         vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // if we are start to write individual modes
