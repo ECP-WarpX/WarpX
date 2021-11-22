@@ -960,9 +960,11 @@ WarpX::ReadParameters ()
                     noz = particle_shape;
                 }
 #ifdef AMREX_USE_EB
-                if (particle_shape != 1)
+                if (particle_shape > 1)
                 {
-                    amrex::Abort("\nalgo.particle_shape can only be 1 with embedded boundaries");
+                    this->RecordWarning("Particles",
+                        "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+                        "particles are close to embedded boundaries");
                 }
 #endif
             }
