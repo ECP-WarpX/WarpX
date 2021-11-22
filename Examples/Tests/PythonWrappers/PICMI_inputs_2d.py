@@ -184,33 +184,33 @@ init_data(G)
 sim.step(max_steps-1)
 
 # Plot E
-plot_data(max_steps-1, Ex, edge, pml = False, title = 'Ex', name = 'Ex')
-plot_data(max_steps-1, Ey, edge, pml = False, title = 'Ey', name = 'Ey')
-plot_data(max_steps-1, Ez, edge, pml = False, title = 'Ez', name = 'Ez')
+plot_data(max_steps-1, Ex, pml = False, title = 'Ex', name = 'Ex')
+plot_data(max_steps-1, Ey, pml = False, title = 'Ey', name = 'Ey')
+plot_data(max_steps-1, Ez, pml = False, title = 'Ez', name = 'Ez')
 
 # Plot B
-plot_data(max_steps-1, Bx, edge, pml = False, title = 'Bx', name = 'Bx')
-plot_data(max_steps-1, By, edge, pml = False, title = 'By', name = 'By')
-plot_data(max_steps-1, Bz, edge, pml = False, title = 'Bz', name = 'Bz')
+plot_data(max_steps-1, Bx, pml = False, title = 'Bx', name = 'Bx')
+plot_data(max_steps-1, By, pml = False, title = 'By', name = 'By')
+plot_data(max_steps-1, Bz, pml = False, title = 'Bz', name = 'Bz')
 
 # Plot E in PML
-plot_data(max_steps-1, Expml[:,:,0], edge, pml = True, title = 'Exy in PML', name = 'Exy')
-plot_data(max_steps-1, Expml[:,:,1], edge, pml = True, title = 'Exz in PML', name = 'Exz')
-plot_data(max_steps-1, Expml[:,:,2], edge, pml = True, title = 'Exx in PML', name = 'Exx')
-plot_data(max_steps-1, Eypml[:,:,0], edge, pml = True, title = 'Eyz in PML', name = 'Eyz')
-plot_data(max_steps-1, Eypml[:,:,1], edge, pml = True, title = 'Eyx in PML', name = 'Eyx')
-plot_data(max_steps-1, Eypml[:,:,2], edge, pml = True, title = 'Eyy in PML', name = 'Eyy') # zero
-plot_data(max_steps-1, Ezpml[:,:,0], edge, pml = True, title = 'Ezx in PML', name = 'Ezx')
-plot_data(max_steps-1, Ezpml[:,:,1], edge, pml = True, title = 'Ezy in PML', name = 'Ezy') # zero
-plot_data(max_steps-1, Ezpml[:,:,2], edge, pml = True, title = 'Ezz in PML', name = 'Ezz')
+plot_data(max_steps-1, Expml[:,:,0], pml = True, title = 'Exy in PML', name = 'Exy')
+plot_data(max_steps-1, Expml[:,:,1], pml = True, title = 'Exz in PML', name = 'Exz')
+plot_data(max_steps-1, Expml[:,:,2], pml = True, title = 'Exx in PML', name = 'Exx')
+plot_data(max_steps-1, Eypml[:,:,0], pml = True, title = 'Eyz in PML', name = 'Eyz')
+plot_data(max_steps-1, Eypml[:,:,1], pml = True, title = 'Eyx in PML', name = 'Eyx')
+plot_data(max_steps-1, Eypml[:,:,2], pml = True, title = 'Eyy in PML', name = 'Eyy') # zero
+plot_data(max_steps-1, Ezpml[:,:,0], pml = True, title = 'Ezx in PML', name = 'Ezx')
+plot_data(max_steps-1, Ezpml[:,:,1], pml = True, title = 'Ezy in PML', name = 'Ezy') # zero
+plot_data(max_steps-1, Ezpml[:,:,2], pml = True, title = 'Ezz in PML', name = 'Ezz')
 
 # Plot B in PML
-plot_data(max_steps-1, Bxpml[:,:,0], edge, pml = True, title = 'Bxy in PML', name = 'Bxy')
-plot_data(max_steps-1, Bxpml[:,:,1], edge, pml = True, title = 'Bxz in PML', name = 'Bxz')
-plot_data(max_steps-1, Bxpml[:,:,2], edge, pml = True, title = 'Bxx in PML', name = 'Bxx')
-plot_data(max_steps-1, Bypml[:,:,0], edge, pml = True, title = 'Byz in PML', name = 'Byz')
-plot_data(max_steps-1, Bypml[:,:,1], edge, pml = True, title = 'Byx in PML', name = 'Byx')
-plot_data(max_steps-1, Bypml[:,:,2], edge, pml = True, title = 'Byy in PML', name = 'Byy') # zero
-plot_data(max_steps-1, Bzpml[:,:,0], edge, pml = True, title = 'Bzx in PML', name = 'Bzx')
-plot_data(max_steps-1, Bzpml[:,:,1], edge, pml = True, title = 'Bzy in PML', name = 'Bzy') # zero
-plot_data(max_steps-1, Bzpml[:,:,2], edge, pml = True, title = 'Bzz in PML', name = 'Bzz')
+plot_data(max_steps-1, Bxpml[:,:,0], pml = True, title = 'Bxy in PML', name = 'Bxy')
+plot_data(max_steps-1, Bxpml[:,:,1], pml = True, title = 'Bxz in PML', name = 'Bxz')
+plot_data(max_steps-1, Bxpml[:,:,2], pml = True, title = 'Bxx in PML', name = 'Bxx')
+plot_data(max_steps-1, Bypml[:,:,0], pml = True, title = 'Byz in PML', name = 'Byz')
+plot_data(max_steps-1, Bypml[:,:,1], pml = True, title = 'Byx in PML', name = 'Byx')
+plot_data(max_steps-1, Bypml[:,:,2], pml = True, title = 'Byy in PML', name = 'Byy') # zero
+plot_data(max_steps-1, Bzpml[:,:,0], pml = True, title = 'Bzx in PML', name = 'Bzx')
+plot_data(max_steps-1, Bzpml[:,:,1], pml = True, title = 'Bzy in PML', name = 'Bzy') # zero
+plot_data(max_steps-1, Bzpml[:,:,2], pml = True, title = 'Bzz in PML', name = 'Bzz')
