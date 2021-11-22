@@ -17,6 +17,7 @@
 #include <AMReX_REAL.H>
 
 #include <cmath>
+#include <limits>
 
 namespace {
     // Define shortcuts for frequently-used type names
