@@ -149,7 +149,8 @@ def init_data(data):
     data[:,2:nz-1] += 0.5 * (data[:,1:nz-2] + data[:,3:nz])
 
 # Advance simulation for one time step
-sim.step(1)
+sim.initialize_inputs()
+sim.initialize_warpx()
 
 # Get fields data using Python wrappers
 import pywarpx.fields as pwxf
@@ -181,7 +182,7 @@ init_data(F)
 init_data(G)
 
 # Advance simulation until last time step
-sim.step(max_steps-1)
+sim.step(max_steps)
 
 # Plot E
 plot_data(max_steps-1, Ex, pml = False, title = 'Ex', name = 'Ex')
