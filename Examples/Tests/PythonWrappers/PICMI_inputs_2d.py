@@ -92,7 +92,7 @@ def compute_minmax(data):
     return (vmin, vmax)
 
 # Plot fields data either in valid domain or in PML
-def plot_data(it, data, pml, title, name):
+def plot_data(data, pml, title, name):
     fig, ax = plt.subplots(nrows = 1, ncols = 1, gridspec_kw = dict(wspace = 0.5), figsize = [6,5])
     cax = make_axes_locatable(ax).append_axes('right', size='5%', pad='5%')
     lw  = 0.8
@@ -185,33 +185,33 @@ init_data(G)
 sim.step(max_steps)
 
 # Plot E
-plot_data(max_steps-1, Ex, pml = False, title = 'Ex', name = 'Ex')
-plot_data(max_steps-1, Ey, pml = False, title = 'Ey', name = 'Ey')
-plot_data(max_steps-1, Ez, pml = False, title = 'Ez', name = 'Ez')
+plot_data(Ex, pml = False, title = 'Ex', name = 'Ex')
+plot_data(Ey, pml = False, title = 'Ey', name = 'Ey')
+plot_data(Ez, pml = False, title = 'Ez', name = 'Ez')
 
 # Plot B
-plot_data(max_steps-1, Bx, pml = False, title = 'Bx', name = 'Bx')
-plot_data(max_steps-1, By, pml = False, title = 'By', name = 'By')
-plot_data(max_steps-1, Bz, pml = False, title = 'Bz', name = 'Bz')
+plot_data(Bx, pml = False, title = 'Bx', name = 'Bx')
+plot_data(By, pml = False, title = 'By', name = 'By')
+plot_data(Bz, pml = False, title = 'Bz', name = 'Bz')
 
 # Plot E in PML
-plot_data(max_steps-1, Expml[:,:,0], pml = True, title = 'Exy in PML', name = 'Exy')
-plot_data(max_steps-1, Expml[:,:,1], pml = True, title = 'Exz in PML', name = 'Exz')
-plot_data(max_steps-1, Expml[:,:,2], pml = True, title = 'Exx in PML', name = 'Exx')
-plot_data(max_steps-1, Eypml[:,:,0], pml = True, title = 'Eyz in PML', name = 'Eyz')
-plot_data(max_steps-1, Eypml[:,:,1], pml = True, title = 'Eyx in PML', name = 'Eyx')
-plot_data(max_steps-1, Eypml[:,:,2], pml = True, title = 'Eyy in PML', name = 'Eyy') # zero
-plot_data(max_steps-1, Ezpml[:,:,0], pml = True, title = 'Ezx in PML', name = 'Ezx')
-plot_data(max_steps-1, Ezpml[:,:,1], pml = True, title = 'Ezy in PML', name = 'Ezy') # zero
-plot_data(max_steps-1, Ezpml[:,:,2], pml = True, title = 'Ezz in PML', name = 'Ezz')
+plot_data(Expml[:,:,0], pml = True, title = 'Exy in PML', name = 'Exy')
+plot_data(Expml[:,:,1], pml = True, title = 'Exz in PML', name = 'Exz')
+plot_data(Expml[:,:,2], pml = True, title = 'Exx in PML', name = 'Exx')
+plot_data(Eypml[:,:,0], pml = True, title = 'Eyz in PML', name = 'Eyz')
+plot_data(Eypml[:,:,1], pml = True, title = 'Eyx in PML', name = 'Eyx')
+plot_data(Eypml[:,:,2], pml = True, title = 'Eyy in PML', name = 'Eyy') # zero
+plot_data(Ezpml[:,:,0], pml = True, title = 'Ezx in PML', name = 'Ezx')
+plot_data(Ezpml[:,:,1], pml = True, title = 'Ezy in PML', name = 'Ezy') # zero
+plot_data(Ezpml[:,:,2], pml = True, title = 'Ezz in PML', name = 'Ezz')
 
 # Plot B in PML
-plot_data(max_steps-1, Bxpml[:,:,0], pml = True, title = 'Bxy in PML', name = 'Bxy')
-plot_data(max_steps-1, Bxpml[:,:,1], pml = True, title = 'Bxz in PML', name = 'Bxz')
-plot_data(max_steps-1, Bxpml[:,:,2], pml = True, title = 'Bxx in PML', name = 'Bxx')
-plot_data(max_steps-1, Bypml[:,:,0], pml = True, title = 'Byz in PML', name = 'Byz')
-plot_data(max_steps-1, Bypml[:,:,1], pml = True, title = 'Byx in PML', name = 'Byx')
-plot_data(max_steps-1, Bypml[:,:,2], pml = True, title = 'Byy in PML', name = 'Byy') # zero
-plot_data(max_steps-1, Bzpml[:,:,0], pml = True, title = 'Bzx in PML', name = 'Bzx')
-plot_data(max_steps-1, Bzpml[:,:,1], pml = True, title = 'Bzy in PML', name = 'Bzy') # zero
-plot_data(max_steps-1, Bzpml[:,:,2], pml = True, title = 'Bzz in PML', name = 'Bzz')
+plot_data(Bxpml[:,:,0], pml = True, title = 'Bxy in PML', name = 'Bxy')
+plot_data(Bxpml[:,:,1], pml = True, title = 'Bxz in PML', name = 'Bxz')
+plot_data(Bxpml[:,:,2], pml = True, title = 'Bxx in PML', name = 'Bxx')
+plot_data(Bypml[:,:,0], pml = True, title = 'Byz in PML', name = 'Byz')
+plot_data(Bypml[:,:,1], pml = True, title = 'Byx in PML', name = 'Byx')
+plot_data(Bypml[:,:,2], pml = True, title = 'Byy in PML', name = 'Byy') # zero
+plot_data(Bzpml[:,:,0], pml = True, title = 'Bzx in PML', name = 'Bzx')
+plot_data(Bzpml[:,:,1], pml = True, title = 'Bzy in PML', name = 'Bzy') # zero
+plot_data(Bzpml[:,:,2], pml = True, title = 'Bzz in PML', name = 'Bzz')
