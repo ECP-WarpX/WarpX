@@ -184,7 +184,9 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
+#if (AMREX_SPACEDIM >= 2)
         int jdim = (idim+1) % AMREX_SPACEDIM;
+#endif
 #if (AMREX_SPACEDIM == 3)
         int kdim = (idim+2) % AMREX_SPACEDIM;
 #endif
@@ -198,6 +200,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 direct_faces.push_back(kv.first);
             }
+#if (AMREX_SPACEDIM >= 2)
             else if (amrex::grow(grid_box, jdim, ncell).intersects(box))
             {
                 side_faces.push_back(kv.first);
@@ -227,8 +230,10 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 corners.push_back(kv.first);
             }
+#endif
         }
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : corners)
         {
             const Box& grid_box = grids[gid];
@@ -261,6 +266,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): corners, how did this happen?\n");
             }
         }
+#endif
 
 #if (AMREX_SPACEDIM == 3)
         for (auto gid : side_side_edges)
@@ -302,6 +308,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
         }
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : side_faces)
         {
             const Box& grid_box = grids[gid];
@@ -317,6 +324,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): side_faces, how did this happen?\n");
             }
         }
+#endif
 
         for (auto gid : direct_faces)
         {
@@ -369,7 +377,12 @@ SigmaBox::ComputePMLFactorsB (const Real* a_dx, Real dt)
         N[idim] = sigma_star[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -398,7 +411,12 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
         N[idim] = sigma[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -524,6 +542,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif (AMREX_SPACEDIM == 2)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif (AMREX_SPACEDIM == 1)
+        IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
         // Set the number of guard cells to the maximum of each field

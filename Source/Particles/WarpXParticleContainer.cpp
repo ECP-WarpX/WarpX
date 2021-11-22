@@ -109,12 +109,16 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     // The boundary conditions are read in in ReadBCParams but a child class
     // can allow these value to be overwritten if different boundary
     // conditions are desired for a specific species
+#ifndef WARPX_DIM_1D_Z
     m_boundary_conditions.SetBoundsX(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
+#endif
 #ifdef WARPX_DIM_3D
     m_boundary_conditions.SetBoundsY(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
     m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[2], WarpX::particle_boundary_hi[2]);
-#else
+#elif WARPX_DIM_XZ || WARPX_DIM_RZ
     m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[1], WarpX::particle_boundary_hi[1]);
+#else
+    m_boundary_conditions.SetBoundsZ(WarpX::particle_boundary_lo[0], WarpX::particle_boundary_hi[0]);
 #endif
     m_boundary_conditions.BuildReflectionModelParsers();
 }
@@ -212,6 +216,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(0) = x[i];
 #endif
         p.pos(1) = z[i];
+#else //AMREX_SPACEDIM == 1
+        amrex::ignore_unused(x,y);
+        p.pos(0) = z[i];
 #endif
 
         pinned_tile.push_back(p);
@@ -325,7 +332,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // deposit part of its current in a neighboring box. However, this should catch particles
     // traveling many cells away, for example with algorithms that allow for large time steps.
 
-#if   (AMREX_SPACEDIM == 2)
+#if   (AMREX_SPACEDIM == 1)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2));
+#elif   (AMREX_SPACEDIM == 2)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2),
                                                        static_cast<int>(WarpX::noz/2));
 #elif (AMREX_SPACEDIM == 3)
@@ -608,7 +617,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // are not trivial, this check might be too strict and we might need to relax it, as currently
     // done for the current deposition.
 
-#if   (AMREX_SPACEDIM == 2)
+#if   (AMREX_SPACEDIM == 1)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2+1));
+#elif   (AMREX_SPACEDIM == 2)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
                                                        static_cast<int>(WarpX::noz/2+1));
 #elif (AMREX_SPACEDIM == 3)
@@ -1132,8 +1143,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
         {
             auto GetPosition = GetParticlePosition(pti);
             auto SetPosition = SetParticlePosition(pti);
+#ifndef WARPX_DIM_1D_Z
             const Real xmin = Geom(lev).ProbLo(0);
             const Real xmax = Geom(lev).ProbHi(0);
+#endif
 #ifdef WARPX_DIM_3D
             const Real ymin = Geom(lev).ProbLo(1);
             const Real ymax = Geom(lev).ProbHi(1);
@@ -1163,7 +1176,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
                     bool particle_lost = false;
-                    ApplyParticleBoundaries::apply_boundaries(x, xmin, xmax,
+                    ApplyParticleBoundaries::apply_boundaries(
+#ifndef WARPX_DIM_1D_Z
+                                                              x, xmin, xmax,
+#endif
 #ifdef WARPX_DIM_3D
                                                               y, ymin, ymax,
 #endif
