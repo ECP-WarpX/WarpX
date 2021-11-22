@@ -134,6 +134,12 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[1] == amrex::Real(0),
         "Laser propagation direction must be 0 along y in 2D");
 #endif
+#ifdef WARPX_DIM_1D_Z
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[0] == amrex::Real(0),
+        "Laser propagation direction must be 0 along x in 1D");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[1] == amrex::Real(0),
+        "Laser propagation direction must be 0 along y in 2D");
+#endif
 
     // Plane normal
     Real s = 1.0_rt / std::sqrt(m_nvec[0]*m_nvec[0] + m_nvec[1]*m_nvec[1] + m_nvec[2]*m_nvec[2]);
@@ -168,8 +174,11 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
     m_u_X = m_p_X;
     m_u_Y = m_p_Y;
-#else
+#elif (defined WARPX_DIM_XZ)
     m_u_X = CrossProduct({0., 1., 0.}, m_nvec);
+    m_u_Y = {0., 1., 0.};
+#elif (defined WARPX_DIM_1D_Z)
+    m_u_X = {1., 0., 0.};
     m_u_Y = {0., 1., 0.};
 #endif
 
@@ -192,7 +201,10 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         // Sanity checks
         int dir = WarpX::moving_window_dir;
         std::vector<Real> windir(3, 0.0);
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+        windir[2] = 1.0;
+        amrex::ignore_unused(dir);
+#elif (AMREX_SPACEDIM==2)
         windir[2*dir] = 1.0;
 #else
         windir[dir] = 1.0;
@@ -243,8 +255,10 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
     // Convert updated_position to Real* to use RealBox::contains().
 #if (AMREX_SPACEDIM == 3)
     const Real* p_pos = m_updated_position.dataPtr();
-#else
+#elif (AMREX_SPACEDIM == 2)
     const Real p_pos[2] = {m_updated_position[0], m_updated_position[2]};
+#else
+    const Real p_pos[1] = {m_updated_position[2]};
 #endif
     if ( injection_box.contains(p_pos) ){
         // Update laser_injection_box with current value
@@ -278,6 +292,13 @@ LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
         // which has 3 components, for both 2D and 3D simulations.
         m_updated_position[2*dir] -= WarpX::beta_boost *
             WarpX::boost_direction[2*dir] * PhysConst::c * dt;
+#elif ( AMREX_SPACEDIM == 1 )
+        // In 1D, dir=0 corresponds to z
+        // This needs to be converted in order to index `boost_direction`
+        // which has 3 components, for 1D, 2D, and 3D simulations.
+        m_updated_position[2] -= WarpX::beta_boost *
+            WarpX::boost_direction[2] * PhysConst::c * dt;
+        amrex::ignore_unused(dir);
 #endif
     }
 }
@@ -317,12 +338,13 @@ LaserParticleContainer::InitData (int lev)
         m_position = m_updated_position;
     }
 
+#if (AMREX_SPACEDIM >= 2)
     auto Transform = [&](int const i, int const j) -> Vector<Real>{
 #if (AMREX_SPACEDIM == 3)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt))*m_u_X[0] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[0],
                  m_position[1] + (S_X*(Real(i)+0.5_rt))*m_u_X[1] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[1],
                  m_position[2] + (S_X*(Real(i)+0.5_rt))*m_u_X[2] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[2] };
-#else
+#elif (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(j);
 #   if (defined WARPX_DIM_RZ)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt)),
@@ -335,18 +357,21 @@ LaserParticleContainer::InitData (int lev)
 #   endif
 #endif
     };
+#endif
 
     // Given the "lab" frame coordinates, return the real coordinates in the laser plane coordinates
     auto InverseTransform = [&](const Vector<Real>& pos) -> Vector<Real>{
 #if (AMREX_SPACEDIM == 3)
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[1]*(pos[1]-m_position[1])+m_u_X[2]*(pos[2]-m_position[2]),
                 m_u_Y[0]*(pos[0]-m_position[0])+m_u_Y[1]*(pos[1]-m_position[1])+m_u_Y[2]*(pos[2]-m_position[2])};
-#else
+#elif (AMREX_SPACEDIM == 2)
 #   if (defined WARPX_DIM_RZ)
         return {pos[0]-m_position[0], 0.0_rt};
 #   else
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[2]*(pos[2]-m_position[2]), 0.0_rt};
 #   endif
+#else
+        return {m_u_X[2]*(pos[2]-m_position[2]), 0.0_rt};
 #endif
     };
 
@@ -374,11 +399,14 @@ LaserParticleContainer::InitData (int lev)
         compute_min_max(prob_hi[0], prob_lo[1], prob_hi[2]);
         compute_min_max(prob_lo[0], prob_hi[1], prob_hi[2]);
         compute_min_max(prob_hi[0], prob_hi[1], prob_hi[2]);
-#else
+#elif (AMREX_SPACEDIM == 2)
         compute_min_max(prob_lo[0], 0.0, prob_lo[1]);
         compute_min_max(prob_hi[0], 0.0, prob_lo[1]);
         compute_min_max(prob_lo[0], 0.0, prob_hi[1]);
         compute_min_max(prob_hi[0], 0.0, prob_hi[1]);
+#else
+        compute_min_max(0.0, 0.0, prob_lo[0]);
+        compute_min_max(0.0, 0.0, prob_hi[0]);
 #endif
     }
 
@@ -404,8 +432,10 @@ LaserParticleContainer::InitData (int lev)
             }
         }
     }
-#else
+#elif (AMREX_SPACEDIM == 2)
     BoxArray plane_ba { Box {IntVect(plane_lo[0],0), IntVect(plane_hi[0],0)} };
+#else
+    BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
 #endif
 
     amrex::Vector<amrex::Real> particle_x, particle_y, particle_z, particle_w;
@@ -419,11 +449,17 @@ LaserParticleContainer::InitData (int lev)
             const Box& bx = plane_ba[i];
             for (IntVect cell = bx.smallEnd(); cell <= bx.bigEnd(); bx.next(cell))
             {
+#if (AMREX_SPACEDIM >= 2)
                 const Vector<Real>& pos = Transform(cell[0], cell[1]);
+#else
+                const Vector<Real>& pos = { 0.0_rt, 0.0_rt, m_position[2] };
+#endif
 #if (AMREX_SPACEDIM == 3)
                 const Real* x = pos.dataPtr();
-#else
+#elif (AMREX_SPACEDIM == 2)
                 const Real x[2] = {pos[0], pos[2]};
+#else
+                const Real x[1] = {pos[2]};
 #endif
                 if (m_laser_injection_box.contains(x))
                 {
@@ -583,6 +619,7 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
+
             if (rho && ! skip_deposition) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
@@ -636,7 +673,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
     Sy = std::min(std::min(dx[0]/(std::abs(m_u_Y[0])+eps),
                            dx[1]/(std::abs(m_u_Y[1])+eps)),
                            dx[2]/(std::abs(m_u_Y[2])+eps));
-#else
+#elif (AMREX_SPACEDIM == 2)
 #   if (defined WARPX_DIM_RZ)
     Sx = dx[0];
 #   else
@@ -644,6 +681,10 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
                   dx[2]/(std::abs(m_u_X[2])+eps));
 #   endif
     Sy = 1.0;
+#else
+    Sx = 1.0;
+    Sy = 1.0;
+    amrex::ignore_unused(eps);
 #endif
 }
 
@@ -694,6 +735,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
 {
     const auto GetPosition = GetParticlePosition(pti);
 
+#if (AMREX_SPACEDIM >= 2)
     Real tmp_u_X_0 = m_u_X[0];
     Real tmp_u_X_2 = m_u_X[2];
     Real tmp_position_0 = m_position[0];
@@ -704,6 +746,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
     Real tmp_u_Y_1 = m_u_Y[1];
     Real tmp_u_Y_2 = m_u_Y[2];
     Real tmp_position_1 = m_position[1];
+#endif
 #endif
 
     amrex::ParallelFor(
@@ -724,6 +767,9 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
             pplane_Xp[i] =
                 tmp_u_X_0 * (x - tmp_position_0) +
                 tmp_u_X_2 * (z - tmp_position_2);
+            pplane_Yp[i] = 0.;
+#elif (AMREX_SPACEDIM == 1)
+            pplane_Xp[i] = 0.;
             pplane_Yp[i] = 0.;
 #endif
         }
@@ -792,7 +838,9 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             // Push the the particle positions
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
+#if !(defined WARPX_DIM_1D_Z)
             x += vx * dt;
+#endif
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
             y += vy * dt;
 #endif
