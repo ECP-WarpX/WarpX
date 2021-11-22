@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pywarpx.fields as pwxf
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from pywarpx import picmi
 
@@ -153,6 +152,7 @@ def init_data(data):
 sim.step(1)
 
 # Get fields data using Python wrappers
+import pywarpx.fields as pwxf
 Ex = pwxf.ExFPWrapper(include_ghosts = include_ghosts)
 Ey = pwxf.EyFPWrapper(include_ghosts = include_ghosts)
 Ez = pwxf.EzFPWrapper(include_ghosts = include_ghosts)
