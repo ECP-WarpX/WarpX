@@ -959,6 +959,12 @@ WarpX::ReadParameters ()
                     noy = particle_shape;
                     noz = particle_shape;
                 }
+#ifdef AMREX_USE_EB
+                if (particle_shape != 1)
+                {
+                    amrex::Abort("\nalgo.particle_shape can only be 1 with embedded boundaries");
+                }
+#endif
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
