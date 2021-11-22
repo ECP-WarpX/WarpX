@@ -214,7 +214,7 @@ public:
                                                            p_num_products_device[0];
                     ProtonBoronFusionInitializeMomentum(soa_1, soa_2, soa_products_data[0],
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
-                                                        product_start_index, m1, m2);
+                                                        product_start_index, m1, m2, engine);
                 }
             }
         });
