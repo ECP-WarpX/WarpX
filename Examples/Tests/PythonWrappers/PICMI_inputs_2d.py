@@ -93,19 +93,13 @@ def compute_minmax(data):
     return (vmin, vmax)
 
 # Plot fields data either in valid domain or in PML
-def plot_data(it, data, edge, pml, title, name):
+def plot_data(it, data, pml, title, name):
     fig, ax = plt.subplots(nrows = 1, ncols = 1, gridspec_kw = dict(wspace = 0.5), figsize = [6,5])
     cax = make_axes_locatable(ax).append_axes('right', size='5%', pad='5%')
-    vmin, vmax = compute_minmax(data)
-    im = ax.imshow(data, origin = 'lower', extent = edge, vmin = vmin, vmax = vmax, cmap = 'seismic')
-    ax.set_xlabel('x')
-    ax.set_ylabel('z')
-    ax.set_title(title)
-    fig.colorbar(im, cax = cax)
-    # Draw PMLs and ghost regions
     lw  = 0.8
     ls = '-'
     if (pml):
+        # Draw PMLs and ghost regions
         ax.axvline(x = 0       , linewidth = lw, color = 'grey' , linestyle = ls)
         ax.axvline(x = 0+nxg   , linewidth = lw, color = 'black', linestyle = ls)
         ax.axvline(x = -nxpml  , linewidth = lw, color = 'grey' , linestyle = ls)
@@ -118,14 +112,32 @@ def plot_data(it, data, edge, pml, title, name):
         ax.axhline(y = nz      , linewidth = lw, color = 'grey' , linestyle = ls)
         ax.axhline(y = nz-nzg  , linewidth = lw, color = 'black', linestyle = ls)
         ax.axhline(y = nz+nzpml, linewidth = lw, color = 'grey' , linestyle = ls)
+        # Set extent and sliced data
+        extent = np.array([-nxg-nxpml, nx+nxpml+nxg, -nzg-nzpml, nz+nzpml+nzg])
+        X = data[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg].transpose()
     else:
+        # Draw ghost regions
         ax.axvline(x = 0       , linewidth = lw, color = 'grey' , linestyle = ls)
         ax.axvline(x = nx      , linewidth = lw, color = 'grey' , linestyle = ls)
         ax.axhline(y = 0       , linewidth = lw, color = 'grey' , linestyle = ls)
         ax.axhline(y = nz      , linewidth = lw, color = 'grey' , linestyle = ls)
-    # Plot title
+        # Set extent and sliced data
+        extent = np.array([-nxg, nx+nxg, -nzg, nz+nzg])
+        X = data[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
+    # Min and max for colorbar
+    vmin, vmax = compute_minmax(X)
+    # Display data as image
+    im = ax.imshow(X = X, origin = 'lower', extent = extent, vmin = vmin, vmax = vmax, cmap = 'seismic')
+    # Add colorbar to plot
+    fig.colorbar(im, cax = cax)
+    # Set label for x- and y-axis, set title
+    ax.set_xlabel('x')
+    ax.set_ylabel('z')
+    ax.set_title(title)
+    # Set plot title
     suptitle = 'PML in (x,z), 4 grids 64 x 64'
     plt.suptitle(suptitle)
+    # Save figure
     figname = 'figure_' + name + '.png'
     fig.savefig(figname, dpi = 100)
 
@@ -172,85 +184,33 @@ init_data(G)
 sim.step(max_steps-1)
 
 # Plot E
-edge = np.array([-nxg, nx+nxg, -nzg, nz+nzg])
-# Ex
-data = Ex[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
-plot_data(max_steps-1, data, edge, pml = False, title = 'Ex', name = 'Ex')
-# Ey
-data = Ey[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
-plot_data(max_steps-1, data, edge, pml = False, title = 'Ey', name = 'Ey')
-# Ez
-data = Ez[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
-plot_data(max_steps-1, data, edge, pml = False, title = 'Ez', name = 'Ez')
+plot_data(max_steps-1, Ex, edge, pml = False, title = 'Ex', name = 'Ex')
+plot_data(max_steps-1, Ey, edge, pml = False, title = 'Ey', name = 'Ey')
+plot_data(max_steps-1, Ez, edge, pml = False, title = 'Ez', name = 'Ez')
 
 # Plot B
-edge = np.array([-nxg, nx+nxg, -nzg, nz+nzg])
-# Bx
-data = Bx[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
-plot_data(max_steps-1, data, edge, pml = False, title = 'Bx', name = 'Bx')
-# By
-data = By[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
-plot_data(max_steps-1, data, edge, pml = False, title = 'By', name = 'By')
-# Bz
-data = Bz[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
-plot_data(max_steps-1, data, edge, pml = False, title = 'Bz', name = 'Bz')
+plot_data(max_steps-1, Bx, edge, pml = False, title = 'Bx', name = 'Bx')
+plot_data(max_steps-1, By, edge, pml = False, title = 'By', name = 'By')
+plot_data(max_steps-1, Bz, edge, pml = False, title = 'Bz', name = 'Bz')
 
 # Plot E in PML
-edge = np.array([-nxg-nxpml, nx+nxpml+nxg, -nzg-nzpml, nz+nzpml+nzg])
-# Exy
-data = Expml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,0].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Exy in PML', name = 'Exy')
-# Exz
-data = Expml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,1].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Exz in PML', name = 'Exz')
-# Exx
-data = Expml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,2].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Exx in PML', name = 'Exx')
-# Eyz
-data = Eypml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,0].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Eyz in PML', name = 'Eyz')
-# Eyx
-data = Eypml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,1].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Eyx in PML', name = 'Eyx')
-# Eyy is zero
-#data = Eypml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,2].transpose()
-#plot_data(max_steps-1, data, edge, pml = True, title = 'Eyy in PML', name = 'Eyy')
-# Ezx
-data = Ezpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,0].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Ezx in PML', name = 'Ezx')
-# Ezy is zero
-#data = Ezpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,1].transpose()
-#plot_data(max_steps-1, data, edge, pml = True, title = 'Ezy in PML', name = 'Ezy')
-# Ezz
-data = Ezpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,2].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Ezz in PML', name = 'Ezz')
+plot_data(max_steps-1, Expml[:,:,0], edge, pml = True, title = 'Exy in PML', name = 'Exy')
+plot_data(max_steps-1, Expml[:,:,1], edge, pml = True, title = 'Exz in PML', name = 'Exz')
+plot_data(max_steps-1, Expml[:,:,2], edge, pml = True, title = 'Exx in PML', name = 'Exx')
+plot_data(max_steps-1, Eypml[:,:,0], edge, pml = True, title = 'Eyz in PML', name = 'Eyz')
+plot_data(max_steps-1, Eypml[:,:,1], edge, pml = True, title = 'Eyx in PML', name = 'Eyx')
+plot_data(max_steps-1, Eypml[:,:,2], edge, pml = True, title = 'Eyy in PML', name = 'Eyy') # zero
+plot_data(max_steps-1, Ezpml[:,:,0], edge, pml = True, title = 'Ezx in PML', name = 'Ezx')
+plot_data(max_steps-1, Ezpml[:,:,1], edge, pml = True, title = 'Ezy in PML', name = 'Ezy') # zero
+plot_data(max_steps-1, Ezpml[:,:,2], edge, pml = True, title = 'Ezz in PML', name = 'Ezz')
 
 # Plot B in PML
-edge = np.array([-nxg-nxpml, nx+nxpml+nxg, -nzg-nzpml, nz+nzpml+nzg])
-# Bxy
-data = Bxpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,0].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Bxy in PML', name = 'Bxy')
-# Bxz
-data = Bxpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,1].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Bxz in PML', name = 'Bxz')
-# Bxx
-data = Bxpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,2].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Bxx in PML', name = 'Bxx')
-# Byz
-data = Bypml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,0].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Byz in PML', name = 'Byz')
-# Byx
-data = Bypml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,1].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Byx in PML', name = 'Byx')
-# Byy is zero
-#data = Bypml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,2].transpose()
-#plot_data(max_steps-1, data, edge, pml = True, title = 'Byy in PML', name = 'Byy')
-# Bzx
-data = Bzpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,0].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Bzx in PML', name = 'Bzx')
-# Bzy is zero
-#data = Bzpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,1].transpose()
-#plot_data(max_steps-1, data, edge, pml = True, title = 'Bzy in PML', name = 'Bzy')
-# Bzz
-data = Bzpml[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg,2].transpose()
-plot_data(max_steps-1, data, edge, pml = True, title = 'Bzz in PML', name = 'Bzz')
+plot_data(max_steps-1, Bxpml[:,:,0], edge, pml = True, title = 'Bxy in PML', name = 'Bxy')
+plot_data(max_steps-1, Bxpml[:,:,1], edge, pml = True, title = 'Bxz in PML', name = 'Bxz')
+plot_data(max_steps-1, Bxpml[:,:,2], edge, pml = True, title = 'Bxx in PML', name = 'Bxx')
+plot_data(max_steps-1, Bypml[:,:,0], edge, pml = True, title = 'Byz in PML', name = 'Byz')
+plot_data(max_steps-1, Bypml[:,:,1], edge, pml = True, title = 'Byx in PML', name = 'Byx')
+plot_data(max_steps-1, Bypml[:,:,2], edge, pml = True, title = 'Byy in PML', name = 'Byy') # zero
+plot_data(max_steps-1, Bzpml[:,:,0], edge, pml = True, title = 'Bzx in PML', name = 'Bzx')
+plot_data(max_steps-1, Bzpml[:,:,1], edge, pml = True, title = 'Bzy in PML', name = 'Bzy') # zero
+plot_data(max_steps-1, Bzpml[:,:,2], edge, pml = True, title = 'Bzz in PML', name = 'Bzz')
