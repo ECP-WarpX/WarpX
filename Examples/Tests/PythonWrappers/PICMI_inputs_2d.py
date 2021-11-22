@@ -1,7 +1,8 @@
 import numpy as np
-from pywarpx import picmi
 import matplotlib.pyplot as plt
+import pywarpx.fields as pwxf
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+from pywarpx import picmi
 
 # Number of time steps
 max_steps = 100
@@ -85,30 +86,6 @@ sim.write_input_file(file_name = 'inputs_2d')
 # Whether to include guard cells in data returned by Python wrappers
 include_ghosts = 1
 
-# Get fields data using Python wrappers
-def get_data():
-    global Ex, Expml, Bx, Bxpml
-    global Ey, Eypml, By, Bypml
-    global Ez, Ezpml, Bz, Bzpml
-    global F, Fpml, G, Gpml
-    import pywarpx.fields as pwxf
-    Ex = pwxf.ExFPWrapper(include_ghosts = include_ghosts)
-    Ey = pwxf.EyFPWrapper(include_ghosts = include_ghosts)
-    Ez = pwxf.EzFPWrapper(include_ghosts = include_ghosts)
-    Bx = pwxf.BxFPWrapper(include_ghosts = include_ghosts)
-    By = pwxf.ByFPWrapper(include_ghosts = include_ghosts)
-    Bz = pwxf.BzFPWrapper(include_ghosts = include_ghosts)
-    F  = pwxf.FFPWrapper(include_ghosts = include_ghosts)
-    G  = pwxf.GFPWrapper(include_ghosts = include_ghosts)
-    Expml = pwxf.ExFPPMLWrapper(include_ghosts = include_ghosts)
-    Eypml = pwxf.EyFPPMLWrapper(include_ghosts = include_ghosts)
-    Ezpml = pwxf.EzFPPMLWrapper(include_ghosts = include_ghosts)
-    Bxpml = pwxf.BxFPPMLWrapper(include_ghosts = include_ghosts)
-    Bypml = pwxf.ByFPPMLWrapper(include_ghosts = include_ghosts)
-    Bzpml = pwxf.BzFPPMLWrapper(include_ghosts = include_ghosts)
-    Fpml  = pwxf.FFPPMLWrapper(include_ghosts = include_ghosts)
-    Gpml  = pwxf.GFPPMLWrapper(include_ghosts = include_ghosts)
-
 # Compute min and max of fields data
 def compute_minmax(data):
     vmin = -max(abs(data.min()), abs(data.max()))
@@ -160,9 +137,26 @@ def init_data(data):
     data[:,2:nz-1] *= 0.5
     data[:,2:nz-1] += 0.5 * (data[:,1:nz-2] + data[:,3:nz])
 
-# Advance simulation for one time step and get fields data
+# Advance simulation for one time step
 sim.step(1)
-get_data()
+
+# Get fields data using Python wrappers
+Ex = pwxf.ExFPWrapper(include_ghosts = include_ghosts)
+Ey = pwxf.EyFPWrapper(include_ghosts = include_ghosts)
+Ez = pwxf.EzFPWrapper(include_ghosts = include_ghosts)
+Bx = pwxf.BxFPWrapper(include_ghosts = include_ghosts)
+By = pwxf.ByFPWrapper(include_ghosts = include_ghosts)
+Bz = pwxf.BzFPWrapper(include_ghosts = include_ghosts)
+F  = pwxf.FFPWrapper(include_ghosts = include_ghosts)
+G  = pwxf.GFPWrapper(include_ghosts = include_ghosts)
+Expml = pwxf.ExFPPMLWrapper(include_ghosts = include_ghosts)
+Eypml = pwxf.EyFPPMLWrapper(include_ghosts = include_ghosts)
+Ezpml = pwxf.EzFPPMLWrapper(include_ghosts = include_ghosts)
+Bxpml = pwxf.BxFPPMLWrapper(include_ghosts = include_ghosts)
+Bypml = pwxf.ByFPPMLWrapper(include_ghosts = include_ghosts)
+Bzpml = pwxf.BzFPPMLWrapper(include_ghosts = include_ghosts)
+Fpml  = pwxf.FFPPMLWrapper(include_ghosts = include_ghosts)
+Gpml  = pwxf.GFPPMLWrapper(include_ghosts = include_ghosts)
 
 # Initialize fields data in valid domain
 init_data(Ex)
