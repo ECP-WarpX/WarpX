@@ -276,7 +276,9 @@ void BeamRelevant::ComputeDiags (int step)
                 const ParticleReal p_uz = p.rdata(PIdx::uz);
                 const ParticleReal p_us = p_ux*p_ux + p_uy*p_uy + p_uz*p_uz;
                 const ParticleReal p_gm = std::sqrt(1.0_rt+p_us*inv_c2);
+#if (AMREX_SPACEDIM >= 2)
                 const ParticleReal p_pos0 = p.pos(0);
+#endif
                 const ParticleReal p_w = p.rdata(PIdx::w);
 
 #if (defined WARPX_DIM_1D_Z)

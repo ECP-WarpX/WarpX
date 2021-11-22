@@ -330,19 +330,25 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
+#if (AMREX_SPACEDIM == 1)
+    amrex::ignore_unused(idx_t_left, Yp, t);
+#endif
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
+#if (AMREX_SPACEDIM >= 2)
     const auto tmp_e_max = m_common_params.e_max;
+#endif
     const auto tmp_x_min = m_params.h_x_coords.front();
     const auto tmp_x_max = m_params.h_x_coords.back();
 #if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
     const auto tmp_y_min = m_params.h_y_coords.front();
     const auto tmp_y_max = m_params.h_y_coords.back();
 #endif
-    const auto tmp_nx = m_params.nx;
 #if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
     const auto tmp_ny = m_params.ny;
 #endif
+#if (AMREX_SPACEDIM >= 2)
+    const auto tmp_nx = m_params.nx;
     const auto p_E_data = m_params.E_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
@@ -352,6 +358,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const auto t_right = idx_t_right*
         (m_params.t_coords.back()-m_params.t_coords.front())/(m_params.nt-1) +
         m_params.t_coords.front();
+#endif
 
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
@@ -368,6 +375,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             return;
         }
 #endif
+#if (AMREX_SPACEDIM >= 2)
         //Find indices and coordinates along x
         const int temp_idx_x_right = static_cast<int>(
             ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
@@ -378,6 +386,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
         const auto x_1 =
             idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
+#endif
 
 #if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
         //Find indices and coordinates along y
@@ -437,26 +446,35 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
+#if (AMREX_SPACEDIM == 1)
+    amrex::ignore_unused(idx_t_left, t);
+#endif
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
+#if (AMREX_SPACEDIM >= 2)
     const auto tmp_e_max = m_common_params.e_max;
+#endif
     const auto tmp_x_min = m_params.h_x_coords.front();
     const auto tmp_x_max = m_params.h_x_coords.back();
 #if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
     const auto tmp_y_min = m_params.h_y_coords.front();
     const auto tmp_y_max = m_params.h_y_coords.back();
 #endif
+#if (AMREX_SPACEDIM >= 2)
     const auto p_x_coords = m_params.d_x_coords.dataPtr();
     const int tmp_x_coords_size = static_cast<int>(m_params.d_x_coords.size());
+#endif
 #if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
     const auto p_y_coords = m_params.d_y_coords.dataPtr();
     const int tmp_y_coords_size = static_cast<int>(m_params.d_y_coords.size());
 #endif
+#if (AMREX_SPACEDIM >= 2)
     const auto p_E_data = m_params.E_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
     const auto t_left = m_params.t_coords[idx_t_left];
     const auto t_right = m_params.t_coords[idx_t_right];
+#endif
 
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
@@ -476,11 +494,13 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
         amrex::ignore_unused(Yp);
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
         //Find indices along x
         auto const p_x_right = WarpXUtilAlgo::upper_bound(
                 p_x_coords, p_x_coords+tmp_x_coords_size, Xp[ip]);
         const int idx_x_right = p_x_right - p_x_coords;
         const int idx_x_left = idx_x_right - 1;
+#endif
 
 #if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
         //Find indices along y
