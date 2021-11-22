@@ -760,7 +760,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         auto pstruct_ptr = aos().dataPtr();
 
         Box box = pti.validbox();
-        box.grow(1);
+        box.grow(ng_rho);
         amrex::IntVect bin_size = WarpX::sort_bin_size;
 
         const auto offsets_ptr = bins.offsetsPtr();
