@@ -160,10 +160,9 @@ def plot_data(data, pml, title, name):
 # Initialize fields data (unit pulse) and apply smoothing
 def init_data(data):
     data[nx//2,nz//2] = 1.
-    data[2:nx-1,:] *= 0.5
-    data[2:nx-1,:] += 0.5 * (data[1:nx-2,:] + data[3:nx,:])
-    data[:,2:nz-1] *= 0.5
-    data[:,2:nz-1] += 0.5 * (data[:,1:nz-2] + data[:,3:nz])
+    impulse_1d = np.array([1./4., 1./2., 1./4.])
+    impulse = np.outer(impulse_1d, impulse_1d)
+    data[nx//2-1:nx//2+2,nz//2-1:nz//2+2] = impulse
 
 # Advance simulation for one time step
 sim.initialize_inputs()
