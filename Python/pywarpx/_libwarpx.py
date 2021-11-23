@@ -46,7 +46,7 @@ def _get_package_root():
             return ''
         cur = os.path.dirname(cur)
 
-# --- Use geometry to determine whether to import the 2D or 3D version.
+# --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
 # --- This assumes that the input is setup before this module is imported,
 # --- which should normally be the case.
 # --- Default to 3D if geometry is not setup yet.
@@ -824,6 +824,8 @@ def _get_boundary_number(boundary):
         dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
     elif geometry_dim == '2d':
         dimensions = {'x' : 0, 'z' : 1}
+    elif geometry_dim == '1d':
+        dimensions = {'z' : 0}
     else:
         raise NotImplementedError("RZ is not supported for particle scraping.")
 
@@ -838,7 +840,12 @@ def _get_boundary_number(boundary):
             raise RuntimeError(f'Unknown boundary specified: {boundary}')
         boundary_num = 2 * dim_num + side
     else:
-        boundary_num = 4 if geometry_dim == '2d' else 6
+        if geometry_dim == '3d':
+            boundary_num = 6
+        elif geometry_dim == '2d':
+            boundary_num = 4
+        elif geometry_dim == '1d':
+            boundary_num = 2
 
     return boundary_num
 
