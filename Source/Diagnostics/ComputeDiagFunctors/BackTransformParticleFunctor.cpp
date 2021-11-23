@@ -83,6 +83,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
     // get particle slice
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
+    if (tmp_particle_data.size() == 0) return;
     int total_particles_added = 0;
     for (int lev = 0; lev < nlevs; ++lev) {
         amrex::Real t_boost = warpx.gett_new(0);
