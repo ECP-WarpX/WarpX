@@ -96,33 +96,50 @@ def plot_data(data, pml, title, name):
     fig, ax = plt.subplots(nrows = 1, ncols = 1, gridspec_kw = dict(wspace = 0.5), figsize = [6,5])
     cax = make_axes_locatable(ax).append_axes('right', size='5%', pad='5%')
     lw  = 0.8
-    ls = '-'
+    ls = '--'
     if (pml):
         # Draw PMLs and ghost regions
-        ax.axvline(x = 0       , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axvline(x = 0+nxg   , linewidth = lw, color = 'black', linestyle = ls)
-        ax.axvline(x = -nxpml  , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axvline(x = nx      , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axvline(x = nx-nxg  , linewidth = lw, color = 'black', linestyle = ls)
-        ax.axvline(x = nx+nxpml, linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axhline(y = 0       , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axhline(y = 0+nzg   , linewidth = lw, color = 'black', linestyle = ls)
-        ax.axhline(y = -nzpml  , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axhline(y = nz      , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axhline(y = nz-nzg  , linewidth = lw, color = 'black', linestyle = ls)
-        ax.axhline(y = nz+nzpml, linewidth = lw, color = 'grey' , linestyle = ls)
+        ax.axvline(x = 0       , linewidth = lw, linestyle = ls)
+        ax.axvline(x = 0+nxg   , linewidth = lw, linestyle = ls)
+        ax.axvline(x = -nxpml  , linewidth = lw, linestyle = ls)
+        ax.axvline(x = nx      , linewidth = lw, linestyle = ls)
+        ax.axvline(x = nx-nxg  , linewidth = lw, linestyle = ls)
+        ax.axvline(x = nx+nxpml, linewidth = lw, linestyle = ls)
+        ax.axhline(y = 0       , linewidth = lw, linestyle = ls)
+        ax.axhline(y = 0+nzg   , linewidth = lw, linestyle = ls)
+        ax.axhline(y = -nzpml  , linewidth = lw, linestyle = ls)
+        ax.axhline(y = nz      , linewidth = lw, linestyle = ls)
+        ax.axhline(y = nz-nzg  , linewidth = lw, linestyle = ls)
+        ax.axhline(y = nz+nzpml, linewidth = lw, linestyle = ls)
+        # Annotations
+        ax.annotate('PML', xy = (-nxpml//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('PML', xy = (nx+nxpml//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('PML', xy = (nx//2,-nzpml//2), rotation = 'horizontal', ha = 'center', va = 'center')
+        ax.annotate('PML', xy = (nx//2,nz+nzpml//2), rotation = 'horizontal', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (-nxpml-nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (nx-nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (nx+nxpml+nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (nx//2,nzg//2), rotation = 'horizontal', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (nx//2,-nzpml-nzg//2), rotation = 'horizontal', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (nx//2,nz-nzg//2), rotation = 'horizontal', ha = 'center', va = 'center')
+        ax.annotate('PML ghost', xy = (nx//2,nz+nzpml+nzg//2), rotation = 'horizontal', ha = 'center', va = 'center')
         # Set extent and sliced data
         extent = np.array([-nxg-nxpml, nx+nxpml+nxg, -nzg-nzpml, nz+nzpml+nzg])
-        X = data[-nxg-nxpml:nx+nxpml+nxg,-nzg-nzpml:nz+nzpml+nzg].transpose()
     else:
         # Draw ghost regions
-        ax.axvline(x = 0       , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axvline(x = nx      , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axhline(y = 0       , linewidth = lw, color = 'grey' , linestyle = ls)
-        ax.axhline(y = nz      , linewidth = lw, color = 'grey' , linestyle = ls)
+        ax.axvline(x = 0       , linewidth = lw, linestyle = ls)
+        ax.axvline(x = nx      , linewidth = lw, linestyle = ls)
+        ax.axhline(y = 0       , linewidth = lw, linestyle = ls)
+        ax.axhline(y = nz      , linewidth = lw, linestyle = ls)
+        # Annotations
+        ax.annotate('ghost', xy = (-nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('ghost', xy = (nx+nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
+        ax.annotate('ghost', xy = (nx//2,-nzg//2), rotation = 'horizontal', ha = 'center', va = 'center')
+        ax.annotate('ghost', xy = (nx//2,nz+nzg//2), rotation = 'horizontal', ha = 'center', va = 'center')
         # Set extent and sliced data
         extent = np.array([-nxg, nx+nxg, -nzg, nz+nzg])
-        X = data[-nxg:nx+nxg,-nzg:nz+nzg].transpose()
+    X = data[:,:].transpose()
     # Min and max for colorbar
     vmin, vmax = compute_minmax(X)
     # Display data as image
@@ -194,6 +211,10 @@ plot_data(Bx, pml = False, title = 'Bx', name = 'Bx')
 plot_data(By, pml = False, title = 'By', name = 'By')
 plot_data(Bz, pml = False, title = 'Bz', name = 'Bz')
 
+# F and G
+plot_data(F, pml = False, title = 'F', name = 'F')
+plot_data(G, pml = False, title = 'G', name = 'G')
+
 # Plot E in PML
 plot_data(Expml[:,:,0], pml = True, title = 'Exy in PML', name = 'Exy')
 plot_data(Expml[:,:,1], pml = True, title = 'Exz in PML', name = 'Exz')
@@ -215,3 +236,11 @@ plot_data(Bypml[:,:,2], pml = True, title = 'Byy in PML', name = 'Byy') # zero
 plot_data(Bzpml[:,:,0], pml = True, title = 'Bzx in PML', name = 'Bzx')
 plot_data(Bzpml[:,:,1], pml = True, title = 'Bzy in PML', name = 'Bzy') # zero
 plot_data(Bzpml[:,:,2], pml = True, title = 'Bzz in PML', name = 'Bzz')
+
+# Plot F and G in PML
+plot_data(Fpml[:,:,0], pml = True, title = 'Fx in PML', name = 'Fx')
+plot_data(Fpml[:,:,1], pml = True, title = 'Fy in PML', name = 'Fy')
+plot_data(Fpml[:,:,2], pml = True, title = 'Fz in PML', name = 'Fz')
+plot_data(Gpml[:,:,0], pml = True, title = 'Gx in PML', name = 'Gx')
+plot_data(Gpml[:,:,1], pml = True, title = 'Gy in PML', name = 'Gy')
+plot_data(Gpml[:,:,2], pml = True, title = 'Gz in PML', name = 'Gz')
