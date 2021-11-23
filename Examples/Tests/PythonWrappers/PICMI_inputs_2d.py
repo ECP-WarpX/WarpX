@@ -87,8 +87,8 @@ include_ghosts = 1
 
 # Compute min and max of fields data
 def compute_minmax(data):
-    vmin = -max(abs(data.min()), abs(data.max()))
-    vmax =  max(abs(data.min()), abs(data.max()))
+    vmax = np.abs(data).max()
+    vmin = -vmax
     return (vmin, vmax)
 
 # Plot fields data either in valid domain or in PML
@@ -159,7 +159,6 @@ def plot_data(data, pml, title, name):
 
 # Initialize fields data (unit pulse) and apply smoothing
 def init_data(data):
-    data[nx//2,nz//2] = 1.
     impulse_1d = np.array([1./4., 1./2., 1./4.])
     impulse = np.outer(impulse_1d, impulse_1d)
     data[nx//2-1:nx//2+2,nz//2-1:nz//2+2] = impulse
@@ -243,3 +242,50 @@ plot_data(Fpml[:,:,2], pml = True, title = 'Fz in PML', name = 'Fz')
 plot_data(Gpml[:,:,0], pml = True, title = 'Gx in PML', name = 'Gx')
 plot_data(Gpml[:,:,1], pml = True, title = 'Gy in PML', name = 'Gy')
 plot_data(Gpml[:,:,2], pml = True, title = 'Gz in PML', name = 'Gz')
+
+# Check values with benchmarks
+def check_values(benchmark, data, rtol, atol):
+    passed = np.allclose(benchmark, np.sum(np.abs(data[:,:])), rtol = rtol, atol = atol)
+    assert(passed)
+
+rtol = 1e-09
+atol = 1e-12
+
+# E
+passed = check_values(1013263608.6369569, Ex[:,:], rtol, atol)
+passed = check_values(717278253.4505507 , Ey[:,:], rtol, atol)
+passed = check_values(717866566.5718911 , Ez[:,:], rtol, atol)
+# B
+passed = check_values(3.0214509313437636, Bx[:,:], rtol, atol)
+passed = check_values(3.0242765102729985, By[:,:], rtol, atol)
+passed = check_values(3.0214509326970465, Bz[:,:], rtol, atol)
+# F and G
+passed = check_values(3.0188584528062377, F[:,:], rtol, atol)
+passed = check_values(1013672631.8764204, G[:,:], rtol, atol)
+# E in PML
+passed = check_values(364287936.1526477 , Expml[:,:,0], rtol, atol)
+passed = check_values(183582351.3212558 , Expml[:,:,1], rtol, atol)
+passed = check_values(190065766.41491824, Expml[:,:,2], rtol, atol)
+passed = check_values(440581905.9336025 , Eypml[:,:,0], rtol, atol)
+passed = check_values(178117293.6629357 , Eypml[:,:,1], rtol, atol)
+passed = check_values(0.0               , Eypml[:,:,2], rtol, atol)
+passed = check_values(430277101.26568377, Ezpml[:,:,0], rtol, atol)
+passed = check_values(0.0               , Ezpml[:,:,1], rtol, atol)
+passed = check_values(190919663.2167449 , Ezpml[:,:,2], rtol, atol)
+# B in PML
+passed = check_values(1.0565189315366146 , Bxpml[:,:,0], rtol, atol)
+passed = check_values(0.4618191395098556 , Bxpml[:,:,1], rtol, atol)
+passed = check_values(0.6849858273929585 , Bxpml[:,:,2], rtol, atol)
+passed = check_values(1.7228584190213505 , Bypml[:,:,0], rtol, atol)
+passed = check_values(0.47697331996765685, Bypml[:,:,1], rtol, atol)
+passed = check_values(0.0                , Bypml[:,:,2], rtol, atol)
+passed = check_values(1.5183380774611628 , Bzpml[:,:,0], rtol, atol)
+passed = check_values(0.0                , Bzpml[:,:,1], rtol, atol)
+passed = check_values(0.6849858291863835 , Bzpml[:,:,2], rtol, atol)
+# F and G in PML
+passed = check_values(1.7808748509425263, Fpml[:,:,0], rtol, atol)
+passed = check_values(0.0               , Fpml[:,:,1], rtol, atol)
+passed = check_values(0.4307845604625681, Fpml[:,:,2], rtol, atol)
+passed = check_values(536552745.42701197, Gpml[:,:,0], rtol, atol)
+passed = check_values(0.0               , Gpml[:,:,1], rtol, atol)
+passed = check_values(196016270.97767758, Gpml[:,:,2], rtol, atol)
