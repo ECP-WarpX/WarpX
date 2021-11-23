@@ -243,7 +243,7 @@ plot_data(Gpml[:,:,0], pml = True, title = 'Gx in PML', name = 'Gx')
 plot_data(Gpml[:,:,1], pml = True, title = 'Gy in PML', name = 'Gy')
 plot_data(Gpml[:,:,2], pml = True, title = 'Gz in PML', name = 'Gz')
 
-# Check values with benchmarks
+# Check values with benchmarks (precomputed from the same Python arrays)
 def check_values(benchmark, data, rtol, atol):
     passed = np.allclose(benchmark, np.sum(np.abs(data[:,:])), rtol = rtol, atol = atol)
     assert(passed)
