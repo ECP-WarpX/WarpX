@@ -1298,7 +1298,9 @@ MultiParticleContainer::doQEDSchwinger ()
 // Get cell volume. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    const auto dV = geom.CellSize(0); // TODO: scale properly
+#elif (AMREX_SPACEDIM == 2)
     const auto dV = geom.CellSize(0) * geom.CellSize(1)
         * m_qed_schwinger_y_size;
 #elif (AMREX_SPACEDIM == 3)

@@ -803,6 +803,7 @@ void warpx_interp (const int j,
     else // PSATD (finite-order interpolation)
     {
 #if (AMREX_SPACEDIM == 1)
+        amrex::ignore_unused(stencil_coeffs_z);
         amrex::Abort("PSATD not implemented in 1D");
 #endif
 

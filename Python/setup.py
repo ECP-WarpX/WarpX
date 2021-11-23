@@ -24,7 +24,7 @@ argparser.add_argument('--with-lib-dir', type=str, default=None, help='Install w
 args, unknown = argparser.parse_known_args()
 sys.argv = [sys.argv[0]] + unknown
 
-allowed_dims = ["2d", "3d", "rz"]
+allowed_dims = ["1d", "2d", "3d", "rz"]
 
 # Allow to control options via environment vars.
 # Work-around for https://github.com/pypa/setuptools/issues/1712

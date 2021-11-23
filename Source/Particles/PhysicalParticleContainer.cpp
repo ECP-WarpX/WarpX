@@ -1816,12 +1816,12 @@ PhysicalParticleContainer::applyNCIFilter (
     const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
 
 #if (AMREX_SPACEDIM == 1)
-    const Box& tbox = amrex::grow(box,{static_cast<int>(WarpX::noz)});
+    const Box& tbox = amrex::grow(box, static_cast<int>(WarpX::noz));
 #elif (AMREX_SPACEDIM == 2)
-    const Box& tbox = amrex::grow(box,{static_cast<int>(WarpX::nox),
+    const Box& tbox = amrex::grow(box, {static_cast<int>(WarpX::nox),
                 static_cast<int>(WarpX::noz)});
 #else
-    const Box& tbox = amrex::grow(box,{static_cast<int>(WarpX::nox),
+    const Box& tbox = amrex::grow(box, {static_cast<int>(WarpX::nox),
                 static_cast<int>(WarpX::noy),
                 static_cast<int>(WarpX::noz)});
 #endif

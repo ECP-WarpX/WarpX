@@ -1435,7 +1435,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
 #if   (AMREX_SPACEDIM == 1)
-    amrex::RealVect dx({WarpX::CellSize(lev)[2]});
+    amrex::RealVect dx(WarpX::CellSize(lev)[2]);
 #elif   (AMREX_SPACEDIM == 2)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
 #elif (AMREX_SPACEDIM == 3)
@@ -1964,11 +1964,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                         const amrex::DistributionMapping& dm,
                                         const std::array<Real,3>& dx)
 {
-#if (AMREX_SPACEDIM == 3)
-    RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
-#endif
 
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
@@ -2017,6 +2013,8 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
     RealVect dx_vect(dx[0], dx[1], dx[2]);
 #elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
+#elif (AMREX_SPACEDIM == 1)
+    RealVect dx_vect(dx[2]);
 #endif
 
     amrex::Real solver_dt = dt[lev];
