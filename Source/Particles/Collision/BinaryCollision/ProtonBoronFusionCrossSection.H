@@ -105,5 +105,4 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     return cross_section_b*barn_to_sqm;
 }
 
-
 #endif // PROTON_BORON_FUSION_CROSS_SECTION_H

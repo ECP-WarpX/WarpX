@@ -60,6 +60,16 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     //    12,13: emittance x,z
     //       14: charge
     m_data.resize(15, 0.0_rt);
+#elif (defined WARPX_DIM_1D_Z)
+    //       0 : mean z
+    //   1,2,3 : mean px,py,pz
+    //       4 : gamma
+    //       5 : rms z
+    //   6,7,8 : rms px,py,pz
+    //       9 : rms gamma
+    //      10 : emittance z
+    //      11 : charge
+    m_data.resize(12, 0.0_rt);
 #endif
 
     if (ParallelDescriptor::IOProcessor())
@@ -112,6 +122,23 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             ofs << "[" << c++ << "]emittance_x(m)";   ofs << m_sep;
             ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
             ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
+#elif (defined WARPX_DIM_1D_Z)
+            int c = 0;
+            ofs << "#";
+            ofs << "[" << c++ << "]step()";           ofs << m_sep;
+            ofs << "[" << c++ << "]time(s)";          ofs << m_sep;
+            ofs << "[" << c++ << "]z_mean(m)";        ofs << m_sep;
+            ofs << "[" << c++ << "]px_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]py_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]pz_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_mean()";     ofs << m_sep;
+            ofs << "[" << c++ << "]z_rms(m)";         ofs << m_sep;
+            ofs << "[" << c++ << "]px_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]py_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]pz_rms(kg*m/s)";   ofs << m_sep;
+            ofs << "[" << c++ << "]gamma_rms()";      ofs << m_sep;
+            ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
 #endif
             // close file
             ofs.close();
@@ -143,6 +170,8 @@ void BeamRelevant::ComputeDiags (int step)
     int const index_z = 2;
 #elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
     int const index_z = 1;
+#elif (defined WARPX_DIM_1D_Z)
+    int const index_z = 0;
 #endif
 
     // loop over species
@@ -247,14 +276,22 @@ void BeamRelevant::ComputeDiags (int step)
                 const ParticleReal p_uz = p.rdata(PIdx::uz);
                 const ParticleReal p_us = p_ux*p_ux + p_uy*p_uy + p_uz*p_uz;
                 const ParticleReal p_gm = std::sqrt(1.0_rt+p_us*inv_c2);
-                const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_w = p.rdata(PIdx::w);
 
-#if (defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_1D_Z)
+                const ParticleReal p_x = 0.0;
+                const ParticleReal p_y = 0.0;
+#elif (defined WARPX_DIM_RZ)
+                const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_theta = p.rdata(PIdx::theta);
                 const ParticleReal p_x = p_pos0*std::cos(p_theta);
                 const ParticleReal p_y = p_pos0*std::sin(p_theta);
+#elif (defined WARPX_DIM_XZ)
+                const ParticleReal p_pos0 = p.pos(0);
+                const ParticleReal p_x = p_pos0;
+                const ParticleReal p_y = 0.0;
 #else
+                const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_pos1 = p.pos(1);
                 const ParticleReal p_x = p_pos0;
                 const ParticleReal p_y = p_pos1;
@@ -351,6 +388,20 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[13] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
         m_data[14] = charge;
         amrex::ignore_unused(y_mean, y_ms, yuy);
+#elif (defined WARPX_DIM_1D_Z)
+        m_data[0]  = z_mean;
+        m_data[1]  = ux_mean * m;
+        m_data[2]  = uy_mean * m;
+        m_data[3]  = uz_mean * m;
+        m_data[4]  = gm_mean;
+        m_data[5]  = std::sqrt(z_ms);
+        m_data[6]  = std::sqrt(ux_ms) * m;
+        m_data[7]  = std::sqrt(uy_ms) * m;
+        m_data[8] = std::sqrt(uz_ms) * m;
+        m_data[9] = std::sqrt(gm_ms);
+        m_data[10] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
+        m_data[11] = charge;
+        amrex::ignore_unused(x_mean, x_ms, xux, y_mean, y_ms, yuy);
 #endif
     }
     // end loop over species

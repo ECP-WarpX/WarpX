@@ -79,16 +79,22 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dzi = 1.0_rt/dx[2];
+#if (AMREX_SPACEDIM == 1)
+    const amrex::Real invvol = dzi;
+#endif
 #if (AMREX_SPACEDIM == 2)
+    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real invvol = dxi*dzi;
 #elif (defined WARPX_DIM_3D)
+    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
+#endif
 #if (defined WARPX_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
@@ -164,6 +170,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             const amrex::Real wqz = wq*invvol*vz;
 
             // --- Compute shape factors
+            Compute_shape_factor< depos_order > const compute_shape_factor;
+#if (AMREX_SPACEDIM >= 2)
             // x direction
             // Get particle position after 1/2 push back in position
 #if (defined WARPX_DIM_RZ)
@@ -181,7 +189,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             double sx_cell[depos_order + 1] = {0.};
             int j_node = 0;
             int j_cell = 0;
-            Compute_shape_factor< depos_order > const compute_shape_factor;
             if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
                 j_node = compute_shape_factor(sx_node, xmid);
             }
@@ -202,6 +209,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
             int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
             int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
+#endif //AMREX_SPACEDIM >= 2
 
 #if (defined WARPX_DIM_3D)
             // y direction
@@ -258,6 +266,19 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             int const l_jz = ((jz_type[zdir] == NODE) ? l_node : l_cell);
 
             // Deposit current into jx_arr, jy_arr and jz_arr
+#if (defined WARPX_DIM_1D_Z)
+            for (int iz=0; iz<=depos_order; iz++){
+                amrex::Gpu::Atomic::AddNoRet(
+                    &jx_arr(lo.x+l_jx+iz, 0, 0, 0),
+                    sz_jx[iz]*wqx);
+                amrex::Gpu::Atomic::AddNoRet(
+                    &jy_arr(lo.x+l_jy+iz, 0, 0, 0),
+                    sz_jy[iz]*wqy);
+                amrex::Gpu::Atomic::AddNoRet(
+                    &jz_arr(lo.x+l_jz+iz, 0, 0, 0),
+                    sz_jz[iz]*wqz);
+            }
+#endif
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
@@ -367,11 +388,15 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
+#if !(defined WARPX_DIM_1D_Z)
     Real const dxi = 1.0_rt / dx[0];
-#if !(defined WARPX_DIM_RZ)
+#endif
+#if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
     Real const dtsdx0 = dt*dxi;
 #endif
+#if !(defined WARPX_DIM_1D_Z)
     Real const xmin = xyzmin[0];
+#endif
 #if (defined WARPX_DIM_3D)
     Real const dyi = 1.0_rt / dx[1];
     Real const dtsdy0 = dt*dyi;
@@ -389,6 +414,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     Real const invdtdx = 1.0_rt / (dt*dx[2]);
     Real const invdtdz = 1.0_rt / (dt*dx[0]);
     Real const invvol = 1.0_rt / (dx[0]*dx[2]);
+#elif (defined WARPX_DIM_1D_Z)
+    Real const invdtdz = 1.0_rt / (dt*dx[0]);
+    Real const invvol = 1.0_rt / (dx[2]);
 #endif
 
 #if (defined WARPX_DIM_RZ)
@@ -396,8 +424,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 
     Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
+#if !(defined WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
+#endif
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
 #if defined(WARPX_USE_GPUCLOCK)
@@ -429,7 +459,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
 
+#if !(defined WARPX_DIM_1D_Z)
             Real const wqx = wq*invdtdx;
+#endif
 #if (defined WARPX_DIM_3D)
             Real const wqy = wq*invdtdy;
 #endif
@@ -476,8 +508,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             double const x_old = (rp_old - xmin)*dxi;
 #else
             // Keep these double to avoid bug in single precision
+#if !(defined WARPX_DIM_1D_Z)
             double const x_new = (xp - xmin)*dxi;
             double const x_old = x_new - dtsdx0*uxp[ip]*gaminv;
+#endif
 #endif
 #if (defined WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
@@ -492,6 +526,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
 #elif (defined WARPX_DIM_XZ)
             Real const vy = uyp[ip]*gaminv;
+#elif (defined WARPX_DIM_1D_Z)
+            Real const vx = uxp[ip]*gaminv;
+            Real const vy = uyp[ip]*gaminv;
 #endif
 
             // Shape factor arrays
@@ -499,8 +536,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // to possibly hold the factor for the old particle
             // which can be at a different grid location.
             // Keep these double to avoid bug in single precision
+#if !(defined WARPX_DIM_1D_Z)
             double sx_new[depos_order + 3] = {0.};
             double sx_old[depos_order + 3] = {0.};
+#endif
 #if (defined WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
             double sy_new[depos_order + 3] = {0.};
@@ -516,8 +555,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             Compute_shape_factor< depos_order > compute_shape_factor;
             Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
 
+#if !(defined WARPX_DIM_1D_Z)
             const int i_new = compute_shape_factor(sx_new+1, x_new);
             const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
+#endif
 #if (defined WARPX_DIM_3D)
             const int j_new = compute_shape_factor(sy_new+1, y_new);
             const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new);
@@ -526,9 +567,11 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
 
             // computes min/max positions of current contributions
+#if !(defined WARPX_DIM_1D_Z)
             int dil = 1, diu = 1;
             if (i_old < i_new) dil = 0;
             if (i_old > i_new) diu = 0;
+#endif
 #if (defined WARPX_DIM_3D)
             int djl = 1, dju = 1;
             if (j_old < j_new) djl = 0;
@@ -636,6 +679,23 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
                 }
             }
+#elif (defined WARPX_DIM_1D_Z)
+
+            for (int k=dkl; k<=depos_order+2-dku; k++) {
+                amrex::Real sdxi = 0._rt;
+                sdxi += wq*vx*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
+                amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_new-1+k, 0, 0, 0), sdxi);
+            }
+            for (int k=dkl; k<=depos_order+2-dku; k++) {
+                amrex::Real sdyj = 0._rt;
+                sdyj += wq*vy*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
+                amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_new-1+k, 0, 0, 0), sdyj);
+            }
+            for (int k=dkl; k<=depos_order+1-dku; k++) {
+                amrex::Real sdzk = 0._rt;
+                sdzk += wqz*(sz_old[k] - sz_new[k]);
+                amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k_new-1+k, 0, 0, 0), sdzk);
+            }
 #endif
         }
     );
@@ -700,11 +760,18 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 #endif
 
+#if (defined WARPX_DIM_1D_Z)
+    amrex::ignore_unused(GetPosition,
+        wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
+        np_to_depose, dt, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+    amrex::Abort("Vay deposition not implemented in cartesian 1D geometry");
+#endif
+
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 
-#if !(defined WARPX_DIM_RZ)
+#if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 
     // If ion_lev is a null pointer, then do_ionization=0, else do_ionization=1
@@ -1001,6 +1068,6 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         amrex::The_Managed_Arena()->free(cost_real);
     }
 #   endif
-#endif // #if !(defined WARPX_DIM_RZ)
+#endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
 }
 #endif // CURRENTDEPOSITION_H_
