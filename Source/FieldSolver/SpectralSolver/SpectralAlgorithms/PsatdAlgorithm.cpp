@@ -112,6 +112,10 @@ PsatdAlgorithm::PsatdAlgorithm(
     {
         amrex::Abort("warpx.do_divb_cleaning = 1 not implemented for Galilean PSATD algorithms");
     }
+    if (time_averaging && !update_with_rho)
+    {
+        amrex::Abort("PSATD: warpx.time_averaging = 1 implemented only with psatd.update_with_rho = 1");
+    }
 }
 
 void

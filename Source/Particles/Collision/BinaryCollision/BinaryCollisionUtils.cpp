@@ -26,9 +26,9 @@ namespace BinaryCollisionUtils{
             auto& species1 = mypc->GetParticleContainerFromName(species_names[0]);
             auto& species2 = mypc->GetParticleContainerFromName(species_names[1]);
 
-            if ((species1.AmIA<PhysicalSpecies::hydrogen>() && species2.AmIA<PhysicalSpecies::boron>())
+            if ((species1.AmIA<PhysicalSpecies::hydrogen>() && species2.AmIA<PhysicalSpecies::boron11>())
                 ||
-                (species1.AmIA<PhysicalSpecies::boron>() && species2.AmIA<PhysicalSpecies::hydrogen>())
+                (species1.AmIA<PhysicalSpecies::boron11>() && species2.AmIA<PhysicalSpecies::hydrogen>())
                 )
             {
                 return NuclearFusionType::ProtonBoron;
