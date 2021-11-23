@@ -372,7 +372,7 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
+    amrex::Vector<amrex::Real> m_v_galilean = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;
