@@ -602,7 +602,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 #else
     // Nx_lab = 1;
     // Ny_lab = 1;
-    IntVect prob_ncells_lab({Nz_lab});
+    IntVect prob_ncells_lab(Nz_lab);
 #endif
     writeMetaData();
 
@@ -689,7 +689,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 #elif (AMREX_SPACEDIM == 2)
         amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
 #else
-        amrex::IntVect slice_ncells_lab({Nz_slice_lab});
+        amrex::IntVect slice_ncells_lab(Nz_slice_lab);
 #endif
 
         IntVect slice_lo(AMREX_D_DECL(0,0,0));

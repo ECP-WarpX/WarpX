@@ -23,19 +23,18 @@
 using namespace amrex;
 
 NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdtodz, bool nodal_gather){
-#if (AMREX_SPACEDIM >= 2)
     // Store parameters into class data members
     m_coeff_set = coeff_set;
     m_cdtodz = cdtodz;
     m_nodal_gather = nodal_gather;
+
     // NCI Godfrey filter has fixed size, and is applied along z only.
 #if (AMREX_SPACEDIM == 3)
     stencil_length_each_dir = {1,1,5};
     slen = {1,1,5};
-#else
+#elif (AMREX_SPACEDIM == 2)
     stencil_length_each_dir = {1,5};
     slen = {1,5,1};
-#endif
 #else
     amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
     amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
