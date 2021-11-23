@@ -959,14 +959,6 @@ WarpX::ReadParameters ()
                     noy = particle_shape;
                     noz = particle_shape;
                 }
-#ifdef AMREX_USE_EB
-                if (particle_shape > 1)
-                {
-                    this->RecordWarning("Particles",
-                        "when algo.particle_shape > 1, numerical artifacts will be present when\n"
-                        "particles are close to embedded boundaries");
-                }
-#endif
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
