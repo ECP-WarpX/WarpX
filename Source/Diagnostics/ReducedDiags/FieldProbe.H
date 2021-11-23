@@ -72,6 +72,9 @@ public:
 private:
     amrex::Real x_probe, y_probe, z_probe;
     amrex::Real x1_probe, y1_probe, z1_probe;
+    amrex::Real target_normal_x, target_normal_y, target_normal_z;
+    amrex::Real target_up_x, target_up_y, target_up_z;
+    amrex::Real detector_radius;
 
     //! counts number of particles for all MPI ranks
     long m_valid_particles {0};

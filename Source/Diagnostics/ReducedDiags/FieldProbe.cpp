@@ -91,6 +91,20 @@ FieldProbe::FieldProbe (std::string rd_name)
         getWithParser(pp_rd_name, "z1_probe", z1_probe);
         getWithParser(pp_rd_name, "resolution", m_resolution);
     }
+    else if (m_probe_geometry == DetectorGeometry::Plane)
+    {
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "y_probe", y_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
+        getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
+        getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
+        getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
+        getWithParser(pp_rd_name, "target_up_x", target_up_x);
+        getWithParser(pp_rd_name, "target_up_y", target_up_y);
+        getWithParser(pp_rd_name, "target_up_z", target_up_z);
+        getWithParser(pp_rd_name, "detector_radius", detector_radius);
+        getWithParser(pp_rd_name, "resolution", m_resolution);
+    }
     else
     {
     amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are point (0) and line (1).");
@@ -218,6 +232,58 @@ void FieldProbe::InitData ()
                 xpos.push_back(x_probe + (DetLineStepSize[0] * step));
                 ypos.push_back(y_probe + (DetLineStepSize[1] * step));
                 zpos.push_back(z_probe + (DetLineStepSize[2] * step));
+            }
+        }
+        m_probe.AddNParticles(0, xpos, ypos, zpos);
+    }
+    else if (m_probe_geometry == DetectorGeometry::Plane)
+    {
+        amrex::Vector<amrex::ParticleReal> xpos;
+        amrex::Vector<amrex::ParticleReal> ypos;
+        amrex::Vector<amrex::ParticleReal> zpos;
+        if (ParallelDescriptor::IOProcessor())
+        {
+
+            xpos.reserve(m_resolution * m_resolution);
+            ypos.reserve(m_resolution * m_resolution);
+            zpos.reserve(m_resolution * m_resolution);
+            // create vector orthonormal to input vectors
+            amrex::Real orthotarget[3]{
+                target_normal_y * target_up_z - target_normal_z * target_up_y,
+                target_normal_z * target_up_x - target_normal_x * target_up_z,
+                target_normal_x * target_up_y - target_normal_y * target_up_x};
+            // find upper left and lower right bounds of detector
+            amrex::Real direction[3]{
+                orthotarget[0] - target_up_x,
+                orthotarget[1] - target_up_y,
+                orthotarget[2] - target_up_z};
+            amrex::Real upperleft[3]{
+                x_probe - (direction[0] * detector_radius),
+                y_probe - (direction[1] * detector_radius),
+                z_probe - (direction[2] * detector_radius)};
+            amrex::Real lowerright[3]{
+                x_probe + (direction[0] * detector_radius),
+                y_probe + (direction[1] * detector_radius),
+                z_probe + (direction[2] * detector_radius)};
+            // create array containing point-to-point step size
+            amrex::Real DetPlaneStepSize[3]{
+                (lowerright[0] - upperleft[0]) / (m_resolution - 1),
+                (lowerright[1] - upperleft[1]) / (m_resolution - 1),
+                (lowerright[2] - upperleft[2]) / (m_resolution - 1)};
+            amrex::Real temp_pos[3]{};
+            // Target point on top of plane (arbitrarily top of plane perpendicular to yz)
+            // For each point along top of plane, fill in YZ's beneath, then push back
+            for ( int step = 0; step < m_resolution; step++)
+            {
+                temp_pos[0] = upperleft[0] + (DetPlaneStepSize[0] * step);
+                for ( int yzstep = 0; yzstep < m_resolution; yzstep++)
+                {
+                    temp_pos[1] = upperleft[1] + (DetPlaneStepSize[1] * yzstep);
+                    temp_pos[2] = upperleft[2] + (DetPlaneStepSize[2] * yzstep);
+                    xpos.push_back(temp_pos[0]);
+                    ypos.push_back(temp_pos[1]);
+                    zpos.push_back(temp_pos[2]);
+                }
             }
         }
         m_probe.AddNParticles(0, xpos, ypos, zpos);
