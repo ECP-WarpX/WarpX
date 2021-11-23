@@ -1158,11 +1158,7 @@ WarpX::ReadParameters ()
 
         if (do_dive_cleaning == true && update_with_rho == false)
         {
-            update_with_rho = true;
-            RecordWarning(
-                "PSATD",
-                "Setting psatd.update_with_rho = 1 because warpx.do_dive_cleaning = 1",
-                WarnPriority::low);
+            amrex::Abort("warpx.do_dive_cleaning = 1 not implemented with psatd.update_with_rho = 0");
         }
 
         if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
