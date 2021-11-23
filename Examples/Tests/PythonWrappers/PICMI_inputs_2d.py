@@ -163,7 +163,7 @@ def init_data(data):
     impulse = np.outer(impulse_1d, impulse_1d)
     data[nx//2-1:nx//2+2,nz//2-1:nz//2+2] = impulse
 
-# Advance simulation for one time step
+# Initialize inputs and WarpX instance
 sim.initialize_inputs()
 sim.initialize_warpx()
 
