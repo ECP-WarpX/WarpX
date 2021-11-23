@@ -912,7 +912,7 @@ void WarpX::InitializeEBGridData(int lev)
         ComputeDistanceToEB();
 
     }
-#elif
+#else
     amrex::ignore_unused(lev);
 #endif
 }
