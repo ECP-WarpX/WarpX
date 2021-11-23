@@ -7,6 +7,30 @@ Python package development use
 This describes how to compile and install WarpX, pywarpx, and mewarpx in order
 to make development changes require minimal recompilation.
 
+System Setup - CCache version
+-----------------------------
+
+If building for a CUDA GPU, versions of CCache before 4.2 have very
+weak support, and so provide minimal benefit. Thus, systems being used
+for development should install a later release of CCache. This is most
+easily done from its source code.
+
+.. code-block:: bash
+
+    mkdir ccache-tmp
+    cd ccache-tmp
+    git clone https://github.com/ccache/ccache/
+    mkdir ccache-build
+    cd ccache-build
+    cmake ../ccache
+    make -j
+    sudo make install
+
+The latter will install in ``/usr/local/bin``
+
+Then, do clean CMake configurations to pick up the path the to newer
+``ccache`` following the steps in the next section.
+
 Setup
 -----
 
