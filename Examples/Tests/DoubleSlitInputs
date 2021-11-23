@@ -1,0 +1,234 @@
+
+main, Resolution & Numerics
+#
+
+# time-scale with highly kinetic dynamics
+stop_time = 0.26e-12            # [s]
+# time-scale for converged ion energy
+#   notes: - effective acc. time depends on laser pulse
+#          - ions will start to leave the box
+#stop_time = 1.0e-12           # [s]
+
+#USE LOW RESOLUTION FOR TESTING
+# quick tests at ultra-low res. (CI)
+amr.n_cell = 4800 6800
+
+# proper resolution for 10 n_c excl. acc. length
+# (>=1x V100)
+#resolution x,z
+#amr.n_cell = 1650 1350
+
+# proper resolution for 30 n_c (dx<=3.33nm) incl. acc. length
+# (>=6x V100)
+#amr.n_cell = 7488 14720
+
+# simulation box, no MR
+#   note: increase z (space & cells) for converging ion energy
+amr.max_level = 0
+geometry.prob_lo = -15e-6 -2.5e-6
+geometry.prob_hi = 15e-6 40e-6
+
+# Boundary condition
+boundary.field_lo = periodic absorbing_silver_mueller
+boundary.field_hi = periodic absorbing_silver_mueller
+
+# Order of particle shape factors
+algo.particle_shape = 2
+
+# numerical tuning
+warpx.cfl = 0.999
+warpx.use_filter = 1          # bilinear current/charge filter
+
+# field solver yee (default) ckc psatd (fft)
+algo.maxwell_soler = yee
+
+#################################
+## Performance Tuning
+##
+## simple tuning:
+##   the numprocs product must be equal to the number of MPI ranks and splits
+##   the domain on the coarsest level equally into grids;
+##   slicing in the 2nd dimension is preferred for ideal performance
+##warpx.numprocs = 1 2   # 2 MPI ranks
+##warpx.numprocs = 1 4  # 4 MPI ranks
+#
+## detail tuning instead of warpx.numprocs:
+##   It is important to have enough cells in a block & grid, otherwise
+##   performance will suffer.
+##   Use larger values for GPUs, try to fill a GPU well with memory and place
+##   few large grids on each device (you can go as low as 1 large grid / device
+##   if you do not need load balancing).
+##   Slicing in the 2nd dimension is preferred for ideal performance
+##amr.blocking_factor = 64
+##amr.max_grid_size_x = 2688
+##amr.max_grid_size_y = 128  # this is confusingly named and means z in 2D
+#
+## load balancing
+##   The grid & block parameters above are needed for load balancing:
+##   an average of ~10 grids per MPI rank (and device) are a good granularity
+##   to allow efficient load-balancing as the simulation evolves
+algo.load_balance_intervals = 10
+algo.load_balance_costs_update = Heuristic
+#
+## particle bin-sorting on GPU (ideal defaults not investigated in 2D)
+##   Try larger values than the defaults below and report back! :)
+##warpx.sort_intervals = 4    # default on CPU: -1 (off); on GPU: 4
+##warpx.sort_bin_size = 1 1 1
+#
+#
+##################################
+## Target Profile
+##
+particles.species_names = electrons #hydrogen
+#
+## particle species
+##hydrogen.species_type = hydrogen
+##hydrogen.injection_style = NUniformPerCell
+##hydrogen.num_particles_per_cell_each_dim = 4 4
+##hydrogen.momentum_distribution_type = at_rest
+##hydrogen.zmin = -10.0e-6
+##hydrogen.zmax =  10.0e-6
+##hydrogen.profile = parse_density_function
+
+electrons.species_type = electron
+electrons.injection_style = NUniformPerCell
+electrons.num_particles_per_cell_each_dim = 64 4
+electrons.momentum_distribution_type = at_rest # no momentum for particles
+#electrons.ux_th = .01
+##electrons.uz_th = .01
+##electrons.zmin = -10.0e-6
+##electrons.zmax =  10.0e-6
+#
+## ionization physics (field ionization/ADK)
+##   [i1] none (fully pre-ionized):
+electrons.profile = parse_density_function
+##   [i2] field ionization (ADK):
+##hydrogen.do_field_ionization = 1
+##hydrogen.physical_element = H
+##hydrogen.ionization_initial_level = 0
+##hydrogen.ionization_product_species = electrons
+##electrons.profile = constant
+##electrons.density = 0.0
+#
+## collisional physics (binary MC model after Nanbu/Perez)
+##collisions.collision_names = c_eH c_ee c_HH
+##c_eH.species = electrons hydrogen
+##c_ee.species = electrons electrons
+##c_HH.species = hydrogen hydrogen
+##c_eH.CoulombLog = 15.9
+##c_ee.CoulombLog = 15.9
+##c_HH.CoulombLog = 15.9
+#
+## number density: "fully ionized" electron density as reference
+##   [material 1] cryogenic H2
+my_constants.nc    = 2.78712e28  # [m^-3]  1.11485e21 * 1.e6 / 0.2**2
+my_constants.n0    = 2      # [n_c]
+##   [material 2] liquid crystal
+##my_constants.n0    = 192
+##   [material 3] PMMA
+##my_constants.n0    = 230
+##   [material 4] Copper (ion density: 8.49e28/m^3; times ionization level)
+##my_constants.n0    = 1400
+#
+## profiles
+##   pre-plasma
+my_constants.sheetRadius    = 6.25e-9      # [m] 1 cell
+my_constants.slitDist = 1.2e-6          # [m] dist between slits = wavelength * 6
+my_constants.slitWidth = 12.5e-9       # [m] width of slits = 2 cells
+##   core: flat foil, cylinder or sphere
+##my_constants.r0 = 2.5e-6        # [m] radius or half-thickness
+#
+## [target 1] flat foil (thickness = 2*r0)
+electrons.density_function(x,y,z) = "nc*n0*(
+    if(abs(z)<=sheetRadius and (abs(x)<=((slitDist/2)-(slitWidth/2)) or abs(x)>=((slitDist/2)+(slitWidth/2))), 1.0, 0.0) )"
+#################################
+## Laser Pulse Profile
+##
+lasers.names        = laser1
+laser1.position     = 0. 0. -2.0e-6     # point the laser plane (antenna)
+laser1.direction    = 0. 0. 1.          # the plane's (antenna's) normal direction
+laser1.polarization = 0. 1. 0.          # the main polarization vector
+laser1.a0           = 0.0001             # maximum amplitude of the laser field [V/m]
+laser1.wavelength   = .2e-6              # central wavelength of the laser pulse [m]
+laser1.profile      = Gaussian
+laser1.profile_waist = 2.2e-5            # beam waist (E(w_0)=E_0/e) [m]
+laser1.profile_duration = 30.e-15       # pulse length (E(tau)=E_0/e; tau=tau_E=FWHM_I/1.17741) [s]
+laser1.profile_t_peak = 50.e-15         # time until peak intensity reached at the laser plane [s]
+laser1.profile_focal_distance = 2.0e-6  # focal distance from the antenna [m]
+
+#################################
+## Diagnostics
+##
+diagnostics.diags_names = diag1 #openPMDfw openPMDbw
+#
+diag1.intervals = 100
+diag1.diag_type = Full
+diag1.format = openpmd
+diag1.fields_to_plot = Ex Ez By jx jz rho rho_electrons #rho_hydrogen
+## reduce resolution of output fields
+##diag1.coarsening_ratio = 4 4
+diag1.write_species = 0
+##diag1.electrons.variables = w ux uy uz
+##diag1.hydrogen.variables = w ux uy uz
+## demonstration of a spatial and momentum filter
+##diag1.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
+##diag1.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
+#
+#################################
+## Reduced Diagnostics
+##
+#
+## histograms with 2.0 degree acceptance angle in fw direction
+## 2 deg * pi / 180 : 0.03490658503 rad
+## half-angle +/-   : 0.017453292515 rad
+warpx.reduced_diags_names                   = FP FP_line15 FP_line25 FP_line35  #histuH #histue histuzAll
+FP.type = FieldProbe
+FP.intervals = 100
+FP.integrate = 0
+FP.probe_geometry = 1
+FP.x_probe = -15e-6
+FP.y_probe = 0.
+FP.z_probe = 10e-6
+FP.x1_probe = 15e-6
+FP.y1_probe = 0.
+FP.z1_probe = 10e-6
+FP.resolution = 300
+
+FP_line15.type = FieldProbe
+FP_line15.intervals = 200
+FP_line15.integrate = 1
+FP_line15.probe_geometry = 1
+FP_line15.x_probe = -12e-6
+FP_line15.y_probe = 0.
+FP_line15.z_probe = 15e-6
+FP_line15.x1_probe = 12e-6
+FP_line15.y1_probe = 0.
+FP_line15.z1_probe = 15e-6
+FP_line15.resolution = 300
+
+FP_line25.type = FieldProbe
+FP_line25.intervals = 200
+FP_line25.integrate = 1
+FP_line25.probe_geometry = 1
+FP_line25.x_probe = -12e-6
+FP_line25.y_probe = 0.
+FP_line25.z_probe = 25e-6
+FP_line25.x1_probe = 12e-6
+FP_line25.y1_probe = 0.
+FP_line25.z1_probe = 25e-6
+FP_line25.resolution = 300
+
+FP_line35.type = FieldProbe
+FP_line35.intervals = 200
+FP_line35.integrate = 1
+FP_line35.probe_geometry = 1
+FP_line35.x_probe = -12e-6
+FP_line35.y_probe = 0.
+FP_line35.z_probe = 35e-6
+FP_line35.x1_probe = 12e-6
+FP_line35.y1_probe = 0.
+FP_line35.z1_probe = 35e-6
+FP_line35.resolution = 300
+
+authors = "Axel Huebl <axelhuebl@lbl.gov>"
+
