@@ -864,6 +864,7 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
 
 void WarpX::InitializeEBGridData(int lev)
 {
+#ifdef AMREX_USE_EB
     if(lev==maxLevel()) {
 
         //Throw a warning if EB is on and particle_shape > 1
@@ -911,4 +912,5 @@ void WarpX::InitializeEBGridData(int lev)
         ComputeDistanceToEB();
 
     }
+#endif
 }
