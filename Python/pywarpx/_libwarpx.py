@@ -46,7 +46,7 @@ def _get_package_root():
             return ''
         cur = os.path.dirname(cur)
 
-# --- Use geometry to determine whether to import the 2D or 3D version.
+# --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
 # --- This assumes that the input is setup before this module is imported,
 # --- which should normally be the case.
 # --- Default to 3D if geometry is not setup yet.
@@ -136,6 +136,8 @@ _LP_LP_c_char = ctypes.POINTER(_LP_c_char)
 
 # this is a function for converting a ctypes pointer to a numpy array
 def _array1d_from_pointer(pointer, dtype, size):
+    if not pointer:
+        raise Exception(f'_array1d_from_pointer: pointer is a nullptr')
     if sys.version_info.major >= 3:
         # from where do I import these? this might only work for CPython...
         #PyBuf_READ  = 0x100
@@ -562,6 +564,8 @@ def get_particle_structs(species_name, level):
 
     particle_data = []
     for i in range(num_tiles.value):
+        if particles_per_tile[i] == 0:
+            continue
         arr = _array1d_from_pointer(data[i], _p_dtype, particles_per_tile[i])
         particle_data.append(arr)
 
@@ -602,6 +606,10 @@ def get_particle_arrays(species_name, comp_name, level):
 
     particle_data = []
     for i in range(num_tiles.value):
+        if particles_per_tile[i] == 0:
+            continue
+        if not data[i]:
+            raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
         arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
         try:
             # This fails on some versions of numpy
@@ -819,6 +827,8 @@ def _get_boundary_number(boundary):
         dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
     elif geometry_dim == '2d':
         dimensions = {'x' : 0, 'z' : 1}
+    elif geometry_dim == '1d':
+        dimensions = {'z' : 0}
     else:
         raise NotImplementedError("RZ is not supported for particle scraping.")
 
@@ -833,7 +843,12 @@ def _get_boundary_number(boundary):
             raise RuntimeError(f'Unknown boundary specified: {boundary}')
         boundary_num = 2 * dim_num + side
     else:
-        boundary_num = 4 if geometry_dim == '2d' else 6
+        if geometry_dim == '3d':
+            boundary_num = 6
+        elif geometry_dim == '2d':
+            boundary_num = 4
+        elif geometry_dim == '1d':
+            boundary_num = 2
 
     return boundary_num
 
@@ -899,6 +914,8 @@ def get_particle_boundary_buffer_structs(species_name, boundary, level):
 
     particle_data = []
     for i in range(num_tiles.value):
+        if particles_per_tile[i] == 0:
+            continue
         arr = _array1d_from_pointer(data[i], _p_dtype, particles_per_tile[i])
         particle_data.append(arr)
 
@@ -952,6 +969,10 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
 
     particle_data = []
     for i in range(num_tiles.value):
+        if particles_per_tile[i] == 0:
+            continue
+        if not data[i]:
+            raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
         arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
         try:
             # This fails on some versions of numpy
@@ -992,6 +1013,10 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
     for i in range(size.value):
         shape = tuple([shapes[shapesize*i + d] for d in range(shapesize)])
         # --- The data is stored in Fortran order, hence shape is reversed and a transpose is taken.
+        if shape[::-1] == 0:
+            continue
+        if not data[i]:
+            raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
         arr = np.ctypeslib.as_array(data[i], shape[::-1]).T
         try:
             # This fails on some versions of numpy

@@ -74,7 +74,7 @@ class CMakeBuild(build_ext):
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
 
-        r_dim = re.search(r'warpx_(2|3|rz)(?:d*)', ext.name)
+        r_dim = re.search(r'warpx_(1|2|3|rz)(?:d*)', ext.name)
         dims = r_dim.group(1).upper()
 
         cmake_args = [
@@ -189,7 +189,7 @@ WARPX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
 WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
 WARPX_QED = env.pop('WARPX_QED', 'ON')
 WARPX_QED_TABLE_GEN = env.pop('WARPX_QED_TABLE_GEN', 'OFF')
-WARPX_DIMS = env.pop('WARPX_DIMS', '2;3;RZ')
+WARPX_DIMS = env.pop('WARPX_DIMS', '1;2;3;RZ')
 BUILD_PARALLEL = env.pop('BUILD_PARALLEL', '2')
 BUILD_SHARED_LIBS = env.pop('WARPX_BUILD_SHARED_LIBS',
                                    'OFF')
@@ -228,7 +228,7 @@ else:
 
 
 # for CMake
-cxx_modules = []     # values: warpx_2d, warpx_3d, warpx_rz
+cxx_modules = []     # values: warpx_1d, warpx_2d, warpx_3d, warpx_rz
 cmdclass = {}        # build extensions
 
 # externally pre-built: pick up pre-built WarpX libraries
@@ -276,7 +276,7 @@ setup(
     # CMake: self-built as extension module
     ext_modules=cxx_modules,
     cmdclass=cmdclass,
-    # scripts=['warpx_2d', 'warpx_3d', 'warpx_rz'],
+    # scripts=['warpx_1d', 'warpx_2d', 'warpx_3d', 'warpx_rz'],
     zip_safe=False,
     python_requires='>=3.6, <3.10',
     # tests_require=['pytest'],
@@ -293,7 +293,7 @@ setup(
     # cmdclass={'test': PyTest},
     # platforms='any',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Natural Language :: English',
         'Environment :: Console',
         'Intended Audience :: Science/Research',

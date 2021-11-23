@@ -160,8 +160,10 @@ namespace
         // Create a 3D, nx x ny x nz dataspace.
 #if (AMREX_SPACEDIM == 3)
         hsize_t dims[3] = {nx, ny, nz};
-#else
+#elif (AMREX_SPACEDIM == 2)
         hsize_t dims[3] = {nx, nz};
+#else
+        hsize_t dims[3] = {nz};
 #endif
         hid_t grid_space = H5Screate_simple(AMREX_SPACEDIM, dims, NULL);
 
@@ -422,11 +424,15 @@ namespace
         shift[0] = lo_x;
         shift[1] = lo_y;
         shift[2] = lo_z;
-#else
+#elif (AMREX_SPACEDIM == 2)
         hsize_t slab_offsets[2], slab_dims[2];
         int shift[2];
         shift[0] = lo_x;
         shift[1] = lo_z;
+#else
+        hsize_t slab_offsets[1], slab_dims[1];
+        int shift[1];
+        shift[0] = lo_z;
 #endif
         hid_t slab_dataspace;
 
@@ -584,13 +590,19 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
     m_inv_dz_lab_ = 1.0_rt / m_dz_lab_;
     int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
+#if (AMREX_SPACEDIM >= 2)
     int Nx_lab = geom.Domain().length(0);
+#endif
 #if (AMREX_SPACEDIM == 3)
     int Ny_lab = geom.Domain().length(1);
     IntVect prob_ncells_lab = {Nx_lab, Ny_lab, Nz_lab};
-#else
+#elif (AMREX_SPACEDIM == 2)
     // Ny_lab = 1;
     IntVect prob_ncells_lab = {Nx_lab, Nz_lab};
+#else
+    // Nx_lab = 1;
+    // Ny_lab = 1;
+    IntVect prob_ncells_lab(Nz_lab);
 #endif
     writeMetaData();
 
@@ -640,7 +652,6 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     for (int i = 0; i < N_slice_snapshots; ++i) {
 
-        IntVect slice_ncells_lab ;
 
         // To construct LabFrameSlice(), the location of lo() and hi() of the
         // reduced diag is computed using the user-defined values of the
@@ -657,6 +668,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                           ( (1._rt+m_beta_boost_)*m_gamma_boost_);
         auto Nz_slice_lab = static_cast<int>(
             (zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
+#if (AMREX_SPACEDIM >= 2)
         auto Nx_slice_lab = static_cast<int>(
             (current_slice_hi[0] - current_slice_lo[0] ) /
             geom.CellSize(0));
@@ -664,6 +676,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // if the x-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Nx_lab != Nx_slice_lab) Nx_slice_lab++;
+#endif
 #if (AMREX_SPACEDIM == 3)
         auto Ny_slice_lab = static_cast<int>(
             (current_slice_hi[1] - current_slice_lo[1]) /
@@ -672,9 +685,11 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // if the y-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Ny_lab != Ny_slice_lab) Ny_slice_lab++;
-        slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
+        amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
+#elif (AMREX_SPACEDIM == 2)
+        amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
 #else
-        slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
+        amrex::IntVect slice_ncells_lab(Nz_slice_lab);
 #endif
 
         IntVect slice_lo(AMREX_D_DECL(0,0,0));
@@ -1213,7 +1228,11 @@ createLabFrameDirectories() {
             const auto lo = lbound(m_buff_box_);
             for (int comp = 0; comp < m_ncomp_to_dump_; ++comp) {
                 output_create_field(m_file_name, m_mesh_field_names_[comp],
+#if ( AMREX_SPACEDIM >= 2 )
                                     m_prob_ncells_lab_[0],
+#else
+                                    1,
+#endif
 #if ( AMREX_SPACEDIM == 3 )
                                     m_prob_ncells_lab_[1],
 #else
@@ -1387,8 +1406,10 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
                  const int icomp = field_map_ptr[n];
 #if (AMREX_SPACEDIM == 3)
                  buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#else
+#elif (AMREX_SPACEDIM == 2)
                  buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
+#else
+                 buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
 #endif
              }
          );
@@ -1424,8 +1445,10 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
               const int icomp = field_map_ptr[n];
 #if (AMREX_SPACEDIM == 3)
               buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#else
+#elif (AMREX_SPACEDIM == 2)
               buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
+#else
+              buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
 #endif
            });
     }
@@ -1531,8 +1554,10 @@ AddPartDataToParticleBuffer(
         int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
 
         // Compute extent of the reduced domain +/- user-defined physical width
+#if (AMREX_SPACEDIM >= 2)
         Real const xmin = m_diag_domain_lab_.lo(0)-m_particle_slice_dx_lab_;
         Real const xmax = m_diag_domain_lab_.hi(0)+m_particle_slice_dx_lab_;
+#endif
 #if (AMREX_SPACEDIM == 3)
         Real const ymin = m_diag_domain_lab_.lo(1)-m_particle_slice_dx_lab_;
         Real const ymax = m_diag_domain_lab_.hi(1)+m_particle_slice_dx_lab_;
@@ -1544,8 +1569,11 @@ AddPartDataToParticleBuffer(
         [=] AMREX_GPU_DEVICE(int i)
         {
             Flag[i] = 0;
+#if (AMREX_SPACEDIM >= 2)
             if ( x_temp[i] >= (xmin) &&
-                 x_temp[i] <= (xmax) ) {
+                 x_temp[i] <= (xmax) )
+#endif
+            {
 #if (AMREX_SPACEDIM == 3)
                if (y_temp[i] >= (ymin) &&
                    y_temp[i] <= (ymax) )
