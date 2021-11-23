@@ -18,6 +18,7 @@ Abbreviations
 * **CI:** continuous integration, automated tests that we perform before a proposed code-change is accepted; see PR
 * **CPU:** `central processing unit <https://en.wikipedia.org/wiki/Central_processing_unit>`__, we usual mean a socket or generally the host-side of a computer (compared to the accelerator, e.g. GPU)
 * **DOE:** `The United States Department of Energy <https://en.wikipedia.org/wiki/United_States_Department_of_Energy>`__, the largest sponsor of national laboratory research in the United States of America
+* **ECT:** `Enlarged Cell Technique <https://ieeexplore.ieee.org/document/4463918>`__, an electromagnetic solver with accurate resolution of perfectly conducting embedded boundaries
 * **EB:** embedded boundary, boundary conditions inside the simulation box, e.g. following material surfaces
 * **EM:** electromagnetic, e.g. EM PIC
 * **ES:** electrostatic, e.g. ES PIC

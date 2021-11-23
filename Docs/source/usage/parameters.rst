@@ -453,8 +453,8 @@ m_u      unified atomic mass unit (Dalton)
 epsilon0 vacuum permittivity
 mu0      vacuum permeability
 clight   speed of light
+kb       Boltzmann's constant (J/K)
 pi       math constant pi
-kb       Boltzmann constant (J/K)
 ======== ===================
 
 See ``Source/Utils/WarpXConst.H`` for the values.
