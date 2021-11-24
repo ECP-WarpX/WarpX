@@ -33,8 +33,6 @@ except ImportError:
 # --- Is there a better way of handling constants?
 clight = 2.99792458e+8 # m/s
 
-warpx_initialized = False
-
 def _get_package_root():
     '''
     Get the path to the installation location (where libwarpx.so would be installed).
@@ -88,6 +86,9 @@ except OSError as e:
     else:
         print("Failed to load the libwarpx shared object library")
         raise
+
+# track whether libwarpx has been initialized
+libwarpx.initialized = False
 
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
@@ -325,7 +326,7 @@ def initialize(argv=None, mpi_comm=None):
         libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
-    warpx_initialized = True
+    libwarpx.initialized = True
 
 
 @atexit.register
@@ -336,7 +337,7 @@ def finalize(finalize_mpi=1):
     the end of your script.
 
     '''
-    if warpx_initialized == True:
+    if libwarpx.initialized == True:
         libwarpx.warpx_finalize()
         libwarpx.amrex_finalize(finalize_mpi)
 
