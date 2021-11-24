@@ -16,6 +16,7 @@ most of the pulse escapes the radial boundary. If the PML fails,
 the pulse will remain with in the domain.
 """
 import sys
+import os
 import numpy as np
 import yt
 yt.funcs.mylog.setLevel(0)
@@ -45,5 +46,5 @@ tolerance_abs = 2.
 print('tolerance_abs: ' + str(tolerance_abs))
 assert max_Efield < tolerance_abs
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
