@@ -186,15 +186,10 @@ WarpX::PSATDBackwardTransformF ()
         }
     }
 
-    // Damp F in the guard cells along z
-    constexpr int zdir = AMREX_SPACEDIM - 1;
-    if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped &&
-        WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped)
+    // Damp the field in the guard cells
+    for (int lev = 0; lev <= finest_level; ++lev)
     {
-        for (int lev = 0; lev <= finest_level; ++lev)
-        {
-            DampFieldsInGuards(F_fp[lev]);
-        }
+        DampFieldsInGuards(F_fp[lev]);
     }
 }
 
@@ -229,15 +224,10 @@ WarpX::PSATDBackwardTransformG ()
         }
     }
 
-    // Damp G in the guard cells along z
-    constexpr int zdir = AMREX_SPACEDIM - 1;
-    if (WarpX::field_boundary_lo[zdir] == FieldBoundaryType::Damped &&
-        WarpX::field_boundary_hi[zdir] == FieldBoundaryType::Damped)
+    // Damp the field in the guard cells
+    for (int lev = 0; lev <= finest_level; ++lev)
     {
-        for (int lev = 0; lev <= finest_level; ++lev)
-        {
-            DampFieldsInGuards(G_fp[lev]);
-        }
+        DampFieldsInGuards(G_fp[lev]);
     }
 }
 
