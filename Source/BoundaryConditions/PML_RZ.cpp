@@ -61,8 +61,8 @@ PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::Dist
 }
 
 void
-PML_RZ::ApplyDamping (const std::array<amrex::MultiFab*,3>& E_fp,
-                      const std::array<amrex::MultiFab*,3>& B_fp,
+PML_RZ::ApplyDamping (amrex::MultiFab* Et_fp, amrex::MultiFab* Ez_fp,
+                      amrex::MultiFab* Bt_fp, amrex::MultiFab* Bz_fp,
                       amrex::Real dt)
 {
 
@@ -72,19 +72,19 @@ PML_RZ::ApplyDamping (const std::array<amrex::MultiFab*,3>& E_fp,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-    for ( amrex::MFIter mfi(*E_fp[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    for ( amrex::MFIter mfi(*Et_fp, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
-        amrex::Array4<amrex::Real> const& Et_arr = E_fp[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& Ez_arr = E_fp[2]->array(mfi);
-        amrex::Array4<amrex::Real> const& Bt_arr = B_fp[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& Bz_arr = B_fp[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& Et_arr = Et_fp->array(mfi);
+        amrex::Array4<amrex::Real> const& Ez_arr = Ez_fp->array(mfi);
+        amrex::Array4<amrex::Real> const& Bt_arr = Bt_fp->array(mfi);
+        amrex::Array4<amrex::Real> const& Bz_arr = Bz_fp->array(mfi);
 
         amrex::Array4<amrex::Real> const& pml_Et_arr = pml_E_fp[1]->array(mfi);
         amrex::Array4<amrex::Real> const& pml_Bt_arr = pml_B_fp[1]->array(mfi);
 
         // Get the tileboxes from Efield and Bfield so that they include the guard cells
         // They are all the same, cell centered
-        amrex::Box tilebox = amrex::convert((*E_fp[0])[mfi].box(), E_fp[0]->ixType().toIntVect());
+        amrex::Box tilebox = amrex::convert((*Et_fp)[mfi].box(), Et_fp->ixType().toIntVect());
 
         // Box for the whole simulation domain
         amrex::Box const& domain = m_geom->Domain();
@@ -100,7 +100,7 @@ PML_RZ::ApplyDamping (const std::array<amrex::MultiFab*,3>& E_fp,
         }
         tilebox.setSmall(0, nr_damp_min + 1);
 
-        amrex::ParallelFor( tilebox, E_fp[0]->nComp(),
+        amrex::ParallelFor( tilebox, Et_fp->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
                 const amrex::Real rr = static_cast<amrex::Real>(i - nr_damp_min);
