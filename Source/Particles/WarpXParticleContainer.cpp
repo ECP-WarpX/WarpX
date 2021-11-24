@@ -816,7 +816,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const auto GetPosition = GetParticlePosition(pti, offset);
     const Geometry& geom = Geom(lev);
     Box box = pti.validbox();
-    box.grow(1);
+    box.grow(ng_rho);
 
     if (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
