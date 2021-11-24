@@ -24,7 +24,7 @@ grid = picmi.Cartesian1DGrid(number_of_cells = [nz],
                              moving_window_velocity = moving_window_velocity,
                              warpx_max_grid_size=32)
 
-solver = picmi.ElectromagneticSolver(grid=grid, cfl=0.9)
+solver = picmi.ElectromagneticSolver(grid=grid, cfl=0.999)
 
 beam_distribution = picmi.UniformDistribution(density = 1.e23,
                                               lower_bound = [None, None, -150.e-6],
