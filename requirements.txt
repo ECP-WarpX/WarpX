@@ -1,7 +1,11 @@
+# basic dependencies
 numpy~=1.15
 periodictable~=1.5
+
+# PICMI
 picmistandard==0.0.16
-#picmistandard @ git+https://github.com/picmi-standard/picmi.git@1dgrid#subdirectory=PICMI_Python
+#   for development against an unreleased PICMI version, use:
+#picmistandard @ git+https://github.com/picmi-standard/picmi.git#subdirectory=PICMI_Python
 # optional, some used for testing:
 # yt
 # openpmd-api
