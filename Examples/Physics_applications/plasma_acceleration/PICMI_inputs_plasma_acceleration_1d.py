@@ -17,8 +17,8 @@ max_steps = 10
 grid = picmi.Cartesian1DGrid(number_of_cells = [nz],
                              lower_bound = [zmin],
                              upper_bound = [zmax],
-                             lower_boundary_conditions = ['open'],
-                             upper_boundary_conditions = ['open'],
+                             lower_boundary_conditions = ['dirichlet'],
+                             upper_boundary_conditions = ['dirichlet'],
                              lower_boundary_conditions_particles = ['absorbing'],
                              upper_boundary_conditions_particles = ['absorbing'],
                              moving_window_velocity = moving_window_velocity,
@@ -27,13 +27,13 @@ grid = picmi.Cartesian1DGrid(number_of_cells = [nz],
 solver = picmi.ElectromagneticSolver(grid=grid, cfl=0.9)
 
 beam_distribution = picmi.UniformDistribution(density = 1.e23,
-                                              lower_bound = [-150.e-6],
-                                              upper_bound = [-100.e-6],
+                                              lower_bound = [None, None, -150.e-6],
+                                              upper_bound = [None, None, -100.e-6],
                                               directed_velocity = [0., 0., 1.e9])
 
 plasma_distribution = picmi.UniformDistribution(density = 1.e22,
-                                                lower_bound = [0.],
-                                                upper_bound = [None],
+                                                lower_bound = [None, None, 0.],
+                                                upper_bound = [None, None, None],
                                                 fill_in = True)
 
 beam = picmi.Species(particle_type='electron', name='beam', initial_distribution=beam_distribution)
