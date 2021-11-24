@@ -31,14 +31,14 @@ First, let's setup your Git environment and GitHub account.
 Make your own fork
 ^^^^^^^^^^^^^^^^^^
 
-First, fork the WarpX `"mainline" repo on GitHub <https://github.com/ECP-WarpX/WarpX>`__ by pressing press the *Fork* button on the top right of the page.
+First, fork the WarpX `"mainline" repo on GitHub <https://github.com/ECP-WarpX/WarpX>`__ by pressing the *Fork* button on the top right of the page.
 A fork is a copy of WarpX on GitHub, which is under your full control.
 
 Then, we create local copies, for development:
 
 .. code-block:: sh
 
-   # Clone your the mainline WarpX source code to your local computer.
+   # Clone the mainline WarpX source code to your local computer.
    # You cannot write to this repository, but you can read from it.
    git clone git@github.com:ECP-WarpX/WarpX.git
    cd WarpX
@@ -49,7 +49,8 @@ Then, we create local copies, for development:
    # Add your own fork. You can get this address on your fork's Github page.
    # Here is where you will publish new developments, so that they can be
    # reviewed and integrated into "mainline" later on.
-   git remote add <myGithubUsername> git@github.com:<myGithubUsername>/WarpX.git
+   # "myGithubUsername" needs to be replaced with your user name on GitHub.
+   git remote add myGithubUsername git@github.com:myGithubUsername/WarpX.git
 
 Now you are free to play with your fork (for additional information, you can visit the
 `Github fork help page <https://help.github.com/en/articles/fork-a-repo>`__).
@@ -62,12 +63,12 @@ Let's Develop
 ^^^^^^^^^^^^^
 
 You are all set!
-Now, he basic WarpX development workflow is:
+Now, the basic WarpX development workflow is:
 
-1. Implement your changes and push them on a new branch ``<branch_name>`` on your fork.
-2. Create a Pull Request from branch ``<branch_name>`` on your fork to branch ``development`` on the main WarpX repo.
+1. Implement your changes and push them on a new branch ``branch_name`` on your fork.
+2. Create a Pull Request from branch ``branch_name`` on your fork to branch ``development`` on the main WarpX repo.
 
-Create a branch ``<branch_name>`` (the branch name should reflect the piece of code you want to add, like ``fix-spectral-solver``) with
+Create a branch ``branch_name`` (the branch name should reflect the piece of code you want to add, like ``fix-spectral-solver``) with
 
 .. code-block:: sh
 
@@ -76,7 +77,7 @@ Create a branch ``<branch_name>`` (the branch name should reflect the piece of c
    git pull mainline development
 
    # create a fresh branch
-   git checkout -b <branch_name>
+   git checkout -b branch_name
 
 and do the coding you want.
 
@@ -86,7 +87,7 @@ It is probably a good time to look at the `AMReX documentation <https://amrex-co
 * AMReX Doxygen: https://amrex-codes.github.io/amrex/doxygen
 * PICSAR Doxygen: (todo)
 
-Once you are done developing, add the files you modified to the ``git`` *staging area* with
+Once you are done developing, add the files you created and/or modified to the ``git`` *staging area* with
 
 .. code-block:: sh
 
@@ -128,9 +129,9 @@ You can push them to your fork with
 
 .. code-block:: sh
 
-   git push -u <myGithubUsername> <branch_name>
+   git push -u myGithubUsername branch_name
 
-If you want to synchronize your branch with the ``development`` branch (this is useful when the ``development`` branch is being modified while you are working on ``<branch_name>``), you can use
+If you want to synchronize your branch with the ``development`` branch (this is useful when the ``development`` branch is being modified while you are working on ``branch_name``), you can use
 
 .. code-block:: sh
 
