@@ -12,6 +12,7 @@
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 #include "WarpXWrappers.H"
 #include "WarpX_py.H"
@@ -166,8 +167,14 @@ extern "C"
     {
         WarpX& warpx = WarpX::GetInstance();
         warpx.InitData();
-        if (warpx_py_afterinit) warpx_py_afterinit();
-        if (warpx_py_particleloader) warpx_py_particleloader();
+        if (warpx_py_afterinit) {
+            WARPX_PROFILE("warpx_py_afterinit");
+            warpx_py_afterinit();
+        }
+        if (warpx_py_particleloader) {
+            WARPX_PROFILE("warpx_py_particleloader");
+            warpx_py_particleloader();
+        }
     }
 
     void warpx_finalize ()

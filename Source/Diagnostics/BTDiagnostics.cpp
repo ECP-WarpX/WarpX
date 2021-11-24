@@ -301,6 +301,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                                    / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])                               ) );
     // Take the max of 0 and num_zcells_lab
     int Nz_lab = std::max( 0, num_zcells_lab );
+#if (AMREX_SPACEDIM >= 2)
     // Number of lab-frame cells in x-direction at level, lev
     const int num_xcells_lab = static_cast<int>( floor (
                                   ( diag_dom.hi(0) - diag_dom.lo(0) )
@@ -308,6 +309,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                               ) );
     // Take the max of 0 and num_ycells_lab
     int Nx_lab = std::max( 0, num_xcells_lab);
+#endif
 #if (AMREX_SPACEDIM == 3)
     // Number of lab-frame cells in the y-direction at level, lev
     const int num_ycells_lab = static_cast<int>( floor (
@@ -317,8 +319,10 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // Take the max of 0 and num_xcells_lab
     int Ny_lab = std::max( 0, num_ycells_lab );
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Ny_lab, Nz_lab};
-#else
+#elif (AMREX_SPACEDIM == 2)
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
+#else
+    m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
 }
 

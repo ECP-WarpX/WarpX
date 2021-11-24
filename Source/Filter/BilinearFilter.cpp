@@ -28,14 +28,14 @@ namespace {
         Vector<Real> old_s(1u+npass,0.);
         Vector<Real> new_s(1u+npass,0.);
 
-        old_s[0] = 1._rt;
+        old_s.at(0) = 1._rt;
         int jmax = 1;
         // Convolve the filter with itself npass times
         int const lastpass = static_cast<int>(npass+1u);
         for(int ipass=1; ipass< lastpass; ipass++){
             // element 0 has to be treated in its own way
-            new_s[0] = 0.5_rt * old_s[0];
-            if (1<jmax) new_s[0] += 0.5_rt * old_s[1];
+            new_s.at(0) = 0.5_rt * old_s.at(0);
+            if (1<jmax) new_s.at(0) += 0.5_rt * old_s.at(1);
             amrex::Real loc = 0._rt;
             // For each element j, apply the filter to
             // old_s to get new_s[j]. loc stores the tmp
@@ -43,8 +43,8 @@ namespace {
             for(int j=1; j<jmax+1; j++){
                 loc = 0.5_rt * old_s[j];
                 loc += 0.25_rt * old_s[j-1];
-                if (j<jmax) loc += 0.25_rt * old_s[j+1];
-                new_s[j] = loc;
+                if (j<jmax) loc += 0.25_rt * old_s.at(j+1);
+                new_s.at(j) = loc;
             }
             // copy new_s into old_s
             old_s = new_s;
@@ -53,7 +53,7 @@ namespace {
         }
         // we use old_s here to make sure the stencil
         // is corrent even when npass = 0
-        old_s[0] *= 0.5_rt; // because we will use it twice
+        old_s.at(0) *= 0.5_rt; // because we will use it twice
         stencil.resize(old_s.size());
         Gpu::copyAsync(Gpu::hostToDevice,old_s.begin(),old_s.end(),stencil.begin());
         amrex::Gpu::synchronize();
@@ -80,9 +80,17 @@ void BilinearFilter::ComputeStencils(){
     stencil_z.resize( 1u + npass_each_dir[1] );
     compute_stencil(stencil_x, npass_each_dir[0]);
     compute_stencil(stencil_z, npass_each_dir[1]);
+#elif (AMREX_SPACEDIM == 1)
+    // npass_each_dir = npass_z
+    stencil_z.resize( 1u + npass_each_dir[0] );
+    compute_stencil(stencil_z, npass_each_dir[0]);
 #endif
     slen = stencil_length_each_dir.dim3();
 #if (AMREX_SPACEDIM == 2)
+    slen.z = 1;
+#endif
+#if (AMREX_SPACEDIM == 1)
+    slen.y = 1;
     slen.z = 1;
 #endif
 }
