@@ -184,7 +184,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         int jdim = (idim+1) % AMREX_SPACEDIM;
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         int kdim = (idim+2) % AMREX_SPACEDIM;
 #endif
 
@@ -201,7 +201,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 side_faces.push_back(kv.first);
             }
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             else if (amrex::grow(grid_box, kdim, ncell).intersects(box))
             {
                 side_faces.push_back(kv.first);
@@ -234,7 +234,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
             Box lobox = amrex::adjCellLo(grid_box, idim, ncell);
             lobox.grow(jdim,ncell);
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             lobox.grow(kdim,ncell);
 #endif
             Box looverlap = lobox & box;
@@ -246,7 +246,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
             Box hibox = amrex::adjCellHi(grid_box, idim, ncell);
             hibox.grow(jdim,ncell);
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             hibox.grow(kdim,ncell);
 #endif
             Box hioverlap = hibox & box;
@@ -261,7 +261,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             }
         }
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         for (auto gid : side_side_edges)
         {
             const Box& grid_box = grids[gid];
@@ -304,7 +304,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
         for (auto gid : side_faces)
         {
             const Box& grid_box = grids[gid];
-#if (AMREX_SPACEDIM == 2)
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             const Box& overlap = amrex::grow(grid_box,jdim,ncell) & box;
 #else
             const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell),kdim,ncell) & box;
@@ -510,9 +510,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         pp_psatd.query("ny_guard", ngFFt_y);
         pp_psatd.query("nz_guard", ngFFt_z);
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif (AMREX_SPACEDIM == 2)
+#elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #endif
 
@@ -757,7 +757,7 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
         bx &= domain;
 
         Vector<Box> bndryboxes;
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         int kbegin = -1, kend = 1;
 #else
         int kbegin =  0, kend = 0;

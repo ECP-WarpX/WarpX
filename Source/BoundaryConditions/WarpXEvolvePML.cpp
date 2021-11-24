@@ -107,7 +107,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
             auto const& pml_Byfab = pml_B[1]->array(mfi);
             auto const& pml_Bzfab = pml_B[2]->array(mfi);
             amrex::Real const * AMREX_RESTRICT sigma_fac_x = sigba[mfi].sigma_fac[0].data();
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             amrex::Real const * AMREX_RESTRICT sigma_fac_y = sigba[mfi].sigma_fac[1].data();
             amrex::Real const * AMREX_RESTRICT sigma_fac_z = sigba[mfi].sigma_fac[2].data();
 #else
@@ -115,7 +115,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
             amrex::Real const * AMREX_RESTRICT sigma_fac_z = sigba[mfi].sigma_fac[1].data();
 #endif
             amrex::Real const * AMREX_RESTRICT sigma_star_fac_x = sigba[mfi].sigma_star_fac[0].data();
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             amrex::Real const * AMREX_RESTRICT sigma_star_fac_y = sigba[mfi].sigma_star_fac[1].data();
             amrex::Real const * AMREX_RESTRICT sigma_star_fac_z = sigba[mfi].sigma_star_fac[2].data();
 #else
@@ -123,7 +123,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
             amrex::Real const * AMREX_RESTRICT sigma_star_fac_z = sigba[mfi].sigma_star_fac[1].data();
 #endif
             int const x_lo = sigba[mfi].sigma_fac[0].lo();
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             int const y_lo = sigba[mfi].sigma_fac[1].lo();
             int const z_lo = sigba[mfi].sigma_fac[2].lo();
 #else
@@ -232,7 +232,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             auto const& pml_jzfab = pml_j[2]->array(mfi);
             const Real* sigma_cumsum_fac_j_x = sigba[mfi].sigma_cumsum_fac[0].data();
             const Real* sigma_star_cumsum_fac_j_x = sigba[mfi].sigma_star_cumsum_fac[0].data();
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             const Real* sigma_cumsum_fac_j_y = sigba[mfi].sigma_cumsum_fac[1].data();
             const Real* sigma_star_cumsum_fac_j_y = sigba[mfi].sigma_star_cumsum_fac[1].data();
             const Real* sigma_cumsum_fac_j_z = sigba[mfi].sigma_cumsum_fac[2].data();
@@ -248,7 +248,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             const Box& tjz  = mfi.tilebox( pml_j[2]->ixType().toIntVect() );
 
             int const x_lo = sigba[mfi].sigma_cumsum_fac[0].lo();
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             int const y_lo = sigba[mfi].sigma_cumsum_fac[1].lo();
             int const z_lo = sigba[mfi].sigma_cumsum_fac[2].lo();
 #else
@@ -257,7 +257,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 #endif
 
             int const xs_lo = sigba[mfi].sigma_star_cumsum_fac[0].lo();
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
             int const ys_lo = sigba[mfi].sigma_star_cumsum_fac[1].lo();
             int const zs_lo = sigba[mfi].sigma_star_cumsum_fac[2].lo();
 #else
