@@ -1191,7 +1191,7 @@ External fields
 
         * ``particles.Bz_external_particle_function(x,y,z,t)``
 
-      Note that the position is defined in cartesian coordinates, as a function of (x,y,z), even for RZ.
+      Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
 
     * ``repeated_plasma_lens``: apply a series of plasma lenses. The properties of the lenses are defined in the
       lab frame by the input parameters:
