@@ -378,6 +378,24 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     mlmg.setAlwaysUseBNorm(always_use_bnorm);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
                 required_precision, absolute_tolerance );
+
+#ifdef AMREX_USE_EB
+    // use amrex to directly calculate the electric field since with EB's the
+    // simple finite difference scheme in WarpX::computeE sometimes fails
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    {
+        for (int lev = 0; lev <= max_level; ++lev) {
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,2>{
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+            get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
+            get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
+        }
+    }
+#endif
+
 }
 
 #else
