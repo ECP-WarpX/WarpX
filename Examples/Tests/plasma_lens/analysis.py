@@ -9,8 +9,9 @@
 
 """
 This script tests the plasma lens.
-The input file sets up a series of plasma lens and propagates a particle through them.
-The final position is compared to the analytic solution.
+The input file sets up a series of plasma lens and propagates two particles through them.
+One particle is in the X plane, the other the Y plane.
+The final positions are compared to the analytic solutions.
 The motion is slow enough that relativistic effects are ignored.
 """
 
@@ -27,9 +28,10 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 ad = ds.all_data()
 
-# Get final position of the particles
+# Get final position of the particles.
 # There are two particles, one moves in x, the other in y.
-# The particles may not be in order, so determine which is which.
+# The particles may not be in order, so determine which is which
+# by looking at their max positions in the respective planes.
 i0 = np.argmax(np.abs(ad['electrons', 'particle_position_x'].v))
 i1 = np.argmax(np.abs(ad['electrons', 'particle_position_y'].v))
 
