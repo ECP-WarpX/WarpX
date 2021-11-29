@@ -320,6 +320,8 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     // set the boundary potential values if needed
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
+#ifndef AMREX_USE_EB
+
     // Define the linear operator (Poisson operator)
     MLNodeLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
 
@@ -341,6 +343,32 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
             "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
         );
     }
+
+#else
+
+    // With embedded boundary: extract EB info
+    LPInfo info;
+    Vector<EBFArrayBoxFactory const*> eb_factory;
+    eb_factory.resize(max_level+1);
+    for (int lev = 0; lev <= max_level; ++lev) {
+        eb_factory[lev] = &WarpX::fieldEBFactory(lev);
+    }
+    MLEBNodeFDLaplacian linop( Geom(), boxArray(), DistributionMap(), info, eb_factory);
+
+    // Note: this assumes that the beam is propagating along
+    // one of the axes of the grid, i.e. that only *one* of the Cartesian
+    // components of `beta` is non-negligible.
+    linop.setSigma({AMREX_D_DECL(
+        1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
+
+    // if the EB potential only depends on time, the potential can be passed
+    // as a float instead of a callable
+    if (field_boundary_handler.phi_EB_only_t) {
+        linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
+    }
+    else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
+
+#endif
 
     // Solve the Poisson equation
     linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
