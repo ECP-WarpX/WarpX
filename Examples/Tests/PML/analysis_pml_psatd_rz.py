@@ -42,6 +42,9 @@ print( f'max Ex = {max_Ex}' )
 print( f'max Ez = {max_Ez}' )
 max_Efield = max(max_Ex, max_Ez)
 
+# This tolerance was obtained empirically. As the simulation progresses, the field energy is leaking
+# out through PML so that the max field diminishes with time. When the PML is working properly,
+# the field level falls below 2 at the end of the simulation.
 tolerance_abs = 2.
 print('tolerance_abs: ' + str(tolerance_abs))
 assert max_Efield < tolerance_abs
