@@ -1164,7 +1164,7 @@ External fields
 
 * ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
-    magnetic fields repectively that are applied directly to the particles at every timestep.
+    magnetic fields respectively that are applied directly to the particles at every timestep.
     The field values are specified in the lab frame.
     With the default ``none`` style, no field is applied.
     Possible values are ``constant``, ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``, or
