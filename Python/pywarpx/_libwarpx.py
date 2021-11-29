@@ -326,13 +326,7 @@ def initialize(argv=None, mpi_comm=None):
         libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
-<<<<<<< HEAD
     libwarpx.initialized = True
-=======
-    # Necessary to write to module-scope variable
-    global warpx_initialized
-    warpx_initialized = True
->>>>>>> 57d2602a3b7a302ee5986dbe5d24119ceabe9f67
 
 
 @atexit.register
@@ -343,11 +337,7 @@ def finalize(finalize_mpi=1):
     the end of your script.
 
     '''
-<<<<<<< HEAD
-    if libwarpx.initialized == True:
-=======
-    if warpx_initialized:
->>>>>>> 57d2602a3b7a302ee5986dbe5d24119ceabe9f67
+    if libwarpx.initialized:
         libwarpx.warpx_finalize()
         libwarpx.amrex_finalize(finalize_mpi)
 
