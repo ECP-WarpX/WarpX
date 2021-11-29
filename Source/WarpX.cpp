@@ -745,11 +745,6 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
 
-        if (do_multi_J && isAnyBoundaryPML())
-        {
-            amrex::Abort("Multi-J algorithm not implemented with PMLs");
-        }
-
         // div(E) cleaning not implemented for PSATD solver
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
