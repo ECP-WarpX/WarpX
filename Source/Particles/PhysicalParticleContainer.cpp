@@ -1186,6 +1186,13 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 
     defineAllParticleTiles();
 
+    // Create temporary particle container to which particles will be added;
+    // we will then call Redistribute on this new container and finally
+    // add the new particles to the original container.
+    amrex::ParticleContainer<0,0,PIdx::nattribs> tmp_pc;
+    // TODO: How do I define runtime components for this new container?
+    // TODO: Do I need to call `defineAllParticleTiles` for that new?
+
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const int nlevs = numLevels();
@@ -1349,7 +1356,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 
         const int cpuid = ParallelDescriptor::MyProc();
 
-        auto& particle_tile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
+        auto& particle_tile = tmp_pc.GetParticles(lev)[std::make_pair(grid_id,tile_id)];
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ) {
             DefineAndReturnParticleTile(lev, grid_id, tile_id);
@@ -1551,7 +1558,11 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         }
     }
 
-    // The function that calls this is responsible for redistributing particles.
+    // Redistribute the new particles. (This eliminates invalid particles,
+    // and makes sure that particles are in the right box.)
+    tmp_pc.Redistribute();
+    // Add the particles to the current container
+    copyParticles(tmp_pc);
 }
 
 void
