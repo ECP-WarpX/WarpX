@@ -112,6 +112,10 @@ PsatdAlgorithm::PsatdAlgorithm(
     {
         amrex::Abort("PSATD: warpx.do_divb_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
     }
+    if (time_averaging && !update_with_rho)
+    {
+        amrex::Abort("PSATD: warpx.time_averaging = 1 implemented only with psatd.update_with_rho = 1");
+    }
 }
 
 void
