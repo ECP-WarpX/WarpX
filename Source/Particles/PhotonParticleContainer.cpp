@@ -132,8 +132,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const auto GetPosition = GetParticlePosition(pti, offset);
     auto SetPosition = SetParticlePosition(pti, offset);
 
-    const auto getExternalE = GetExternalEField(pti, offset);
-    const auto getExternalB = GetExternalBField(pti, offset);
+    const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
     amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
@@ -188,8 +187,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }
-            getExternalE(i, Exp, Eyp, Ezp);
-            getExternalB(i, Bxp, Byp, Bzp);
+            getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
