@@ -82,9 +82,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     const bool do_ionization = ion_lev;
     const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const amrex::Real invvol = dxi*dzi;
-#elif (defined WARPX_DIM_3D)
+#elif defined(WARPX_DIM_3D)
     const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
