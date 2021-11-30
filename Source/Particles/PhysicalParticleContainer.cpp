@@ -31,6 +31,7 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/ParticleBuffer.H"
 #include "Utils/IonizationEnergiesTable.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -1184,16 +1185,12 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         scale_fac = AMREX_D_TERM(dx[0], *dx[1], *dx[2])/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
     }
 
-    defineAllParticleTiles();
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Create temporary particle container to which particles will be added;
     // we will then call Redistribute on this new container and finally
     // add the new particles to the original container.
-    amrex::ParticleContainer<0,0,PIdx::nattribs> tmp_pc;
-    // TODO: How do I define runtime components for this new container?
-    // TODO: Do I need to call `defineAllParticleTiles` for that new?
-
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    auto tmp_pc = ParticleBuffer::getTmpPC<amrex::ArenaAllocator>(this);
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
@@ -1356,7 +1353,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 
         const int cpuid = ParallelDescriptor::MyProc();
 
-        auto& particle_tile = tmp_pc.GetParticles(lev)[std::make_pair(grid_id,tile_id)];
+        auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ) {
             DefineAndReturnParticleTile(lev, grid_id, tile_id);
