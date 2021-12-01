@@ -854,7 +854,6 @@ MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transf
 void
 MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
     auto species_names = GetSpeciesNames();
-    int speciesID = 0;
     bool found = 0;
     // Loop over species
     for (int i = 0; i < static_cast<int>(species_names.size()); ++i) {
