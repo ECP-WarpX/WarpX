@@ -1557,7 +1557,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     tmp_pc.Redistribute();
 
     // Add the particles to the current container, tile by tile
-    for (int lev=0; lev<=max_level; lev++) {
+    for (int lev=0; lev<numLevels(); lev++) {
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (not WarpX::serialize_ics)
 #endif
