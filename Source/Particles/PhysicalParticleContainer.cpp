@@ -1355,10 +1355,6 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 
         auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
 
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ) {
-            DefineAndReturnParticleTile(lev, grid_id, tile_id);
-        }
-
         auto old_size = particle_tile.GetArrayOfStructs().size();
         auto new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
@@ -1555,11 +1551,30 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         }
     }
 
-    // Redistribute the new particles. (This eliminates invalid particles,
-    // and makes sure that particles are in the right box.)
+    // Redistribute the new particles that were added to the temporary container.
+    // (This eliminates invalid particles, and makes sure that particles
+    // are in the right tile.)
     tmp_pc.Redistribute();
-    // Add the particles to the current container
-    copyParticles(tmp_pc);
+
+    // Add the particles to the current container, tile by tile
+    // TODO: Loop over levels
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (not WarpX::serialize_ics)
+#endif
+    for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+    {
+        // Extract tiles
+        const int grid_id = mfi.index();
+        const int tile_id = mfi.LocalTileIndex();
+        auto src_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
+        auto dst_tile = this->DefineAndReturnParticleTile(lev, grid_id, tile_id);
+
+        // Resize container and copy particles
+        auto old_size = dst_tile.numParticles();
+        auto n_new = src_tile.numParticles();
+        dst_tile.resize( old_size+n_new );
+        amrex::copyParticles(dst_tile, src_tile, 0, old_size, n_new);
+    }
 }
 
 void
