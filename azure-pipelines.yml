@@ -488,6 +488,7 @@ jobs:
 
 - job: macOS_pip_pypy_dev
   displayName: macOS PyPy from dev
+  timeoutInMinutes: 120
   pool:
     vmImage: macOS-10.15
   steps:
