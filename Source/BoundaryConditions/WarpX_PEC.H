@@ -115,7 +115,7 @@ using namespace amrex;
                 const bool isPECBoundary = ( (iside == 0)
                                         ? is_boundary_PEC(fbndry_lo, idim)
                                         : is_boundary_PEC(fbndry_hi, idim) );
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
                 //          icomp=1 is tangential to both x and z boundaries
                 //          The logic below ensures that the flags are set right for 2D
@@ -227,7 +227,7 @@ using namespace amrex;
                                         ? is_boundary_PEC(fbndry_lo, idim)
                                         : is_boundary_PEC(fbndry_hi, idim) );
                 if (isPECBoundary == true) {
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                     // For 2D : for icomp==1, (By in XZ, Btheta in RZ),
                     //          icomp=1 is not normal to x or z boundary
                     //          The logic below ensures that the flags are set right for 2D
