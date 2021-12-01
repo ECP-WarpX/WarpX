@@ -1165,11 +1165,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
+PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddPlasmaFlux()");
 
-    const Geometry& geom = Geom(lev);
+    const Geometry& geom = Geom(0);
     const amrex::RealBox& part_realbox = geom.ProbDomain();
 
     amrex::Real num_ppc_real = plasma_injector->num_particles_per_cell_real;
@@ -1185,7 +1185,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         scale_fac = AMREX_D_TERM(dx[0], *dx[1], *dx[2])/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
     }
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
     // Create temporary particle container to which particles will be added;
     // we will then call Redistribute on this new container and finally
@@ -1225,7 +1225,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
     info.SetDynamic(true);
 #pragma omp parallel if (not WarpX::serialize_ics)
 #endif
-    for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+    for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -1234,7 +1234,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         Real wt = amrex::second();
 
         const Box& tile_box = mfi.tilebox();
-        const RealBox tile_realbox = WarpX::getRealBox(tile_box, lev);
+        const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
 
         // Find the cells of part_realbox that overlap with tile_realbox
         // If there is no overlap, just go to the next tile in the loop
@@ -1353,7 +1353,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 
         const int cpuid = ParallelDescriptor::MyProc();
 
-        auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
+        auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(0, grid_id, tile_id);
 
         auto old_size = particle_tile.GetArrayOfStructs().size();
         auto new_size = old_size + max_new_particles;
@@ -1557,23 +1557,24 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
     tmp_pc.Redistribute();
 
     // Add the particles to the current container, tile by tile
-    // TODO: Loop over levels
+    for (int lev=0; lev<=max_level; lev++) {
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (not WarpX::serialize_ics)
 #endif
-    for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
-    {
-        // Extract tiles
-        const int grid_id = mfi.index();
-        const int tile_id = mfi.LocalTileIndex();
-        auto& src_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
-        auto& dst_tile = this->DefineAndReturnParticleTile(lev, grid_id, tile_id);
+        for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+        {
+            // Extract tiles
+            const int grid_id = mfi.index();
+            const int tile_id = mfi.LocalTileIndex();
+            auto& src_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
+            auto& dst_tile = DefineAndReturnParticleTile(lev, grid_id, tile_id);
 
-        // Resize container and copy particles
-        auto old_size = dst_tile.numParticles();
-        auto n_new = src_tile.numParticles();
-        dst_tile.resize( old_size+n_new );
-        amrex::copyParticles(dst_tile, src_tile, 0, old_size, n_new);
+            // Resize container and copy particles
+            auto old_size = dst_tile.numParticles();
+            auto n_new = src_tile.numParticles();
+            dst_tile.resize( old_size+n_new );
+            amrex::copyParticles(dst_tile, src_tile, 0, old_size, n_new);
+        }
     }
 }
 
@@ -2416,9 +2417,7 @@ void
 PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real dt)
 {
     if (plasma_injector->surface_flux) {
-        // Inject plasma on level 0. Paticles will be redistributed.
-        const int lev=0;
-        AddPlasmaFlux(lev, dt);
+        AddPlasmaFlux(dt);
     }
 }
 
