@@ -544,7 +544,7 @@ WarpX::FillBoundaryE(int lev, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryE (const int lev, PatchType patch_type, amrex::IntVect ng)
+WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -578,7 +578,7 @@ WarpX::FillBoundaryE (const int lev, PatchType patch_type, amrex::IntVect ng)
             ng <= mf[i]->nGrowVect(),
             "Error: in FillBoundaryE, requested more guard cells than allocated");
 
-        amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
         WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
     }
 }
@@ -591,7 +591,7 @@ WarpX::FillBoundaryB (int lev, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryB (const int lev, PatchType patch_type, amrex::IntVect ng)
+WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -625,7 +625,7 @@ WarpX::FillBoundaryB (const int lev, PatchType patch_type, amrex::IntVect ng)
             ng <= mf[i]->nGrowVect(),
             "Error: in FillBoundaryB, requested more guard cells than allocated");
 
-        amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
         WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
     }
 }
