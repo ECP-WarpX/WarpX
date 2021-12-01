@@ -1223,7 +1223,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
-#pragma omp parallel if (not WarpX::serialize_ics)
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
@@ -1559,7 +1559,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     // Add the particles to the current container, tile by tile
     for (int lev=0; lev<numLevels(); lev++) {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (not WarpX::serialize_ics)
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
         {
