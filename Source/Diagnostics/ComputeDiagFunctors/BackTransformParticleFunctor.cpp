@@ -17,7 +17,6 @@ SelectParticles::SelectParticles (const WarpXParIter& a_pti, TmpParticles& tmp_p
                                   int a_offset)
     : m_current_z_boost(current_z_boost), m_old_z_boost(old_z_boost)
 {
-    if (tmp_particle_data.size() == 0) return;
     m_get_position = GetParticlePosition(a_pti, a_offset);
 
     const auto lev = a_pti.GetLevel();
@@ -83,7 +82,6 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
     // get particle slice
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
-    if (tmp_particle_data.size() == 0) return;
     int total_particles_added = 0;
     for (int lev = 0; lev < nlevs; ++lev) {
         amrex::Real t_boost = warpx.gett_new(0);

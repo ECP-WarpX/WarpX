@@ -90,9 +90,26 @@ void BTDiagnostics::DerivedInitData ()
     }
 
     /* Allocate vector of particle buffer vectors for each snapshot */
-    const MultiParticleContainer& mpc = warpx.GetPartContainer();
-    // If not specified, dump all species
-    if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
+    MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // If not specified, and write species is not 0, dump all species
+    amrex::ParmParse pp_diag_name(m_diag_name);
+    int write_species = 1;
+    pp_diag_name.query("write_species", write_species);
+    if (m_output_species_names.size() == 0 and write_species == 1)
+        m_output_species_names = mpc.GetSpeciesNames();
+ 
+    if (m_output_species_names.size() > 0) {
+        m_do_back_transformed_particles = true;
+    } else {
+        m_do_back_transformed_particles = false;
+    }
+    // Turn on do_back_transformed_particles in the particle containers so that
+    // the tmp_particle_data is allocated and the data of the corresponding species is
+    // copied and stored in tmp_particle_data before particles are pushed.
+    for (auto const& species : m_output_species_names){
+        mpc.SetDoBackTransformedParticles(m_do_back_transformed_particles);
+        mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+    }
     m_particles_buffer.resize(m_num_buffers);
     m_output_species.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
