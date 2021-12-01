@@ -8,14 +8,14 @@ This section describes the handling of dimensionality in WarpX.
 Build Options
 -------------
 
-==========  ===================
+==========  ==========================
 Dimensions  CMake Option
-==========  ===================
-**3D3V**    ``WarpX_DIMS=3``
+==========  ==========================
+**3D3V**    ``WarpX_DIMS=3`` (default)
 **2D3V**    ``WarpX_DIMS=2``
 **1D3V**    ``WarpX_DIMS=1``
 **RZ**      ``WarpX_DIMS=RZ``
-==========  ===================
+==========  ==========================
 
 See :ref:`building from source <install-developers>` for further details.
 
