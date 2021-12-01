@@ -31,7 +31,6 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
 #include "Utils/IonizationEnergiesTable.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -73,6 +72,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Particle.H>
 #include <AMReX_ParticleContainerBase.H>
+#include <AMReX_AmrParticles.H>
 #include <AMReX_ParticleTile.H>
 #include <AMReX_Print.H>
 #include <AMReX_Random.H>
@@ -1190,7 +1190,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     // Create temporary particle container to which particles will be added;
     // we will then call Redistribute on this new container and finally
     // add the new particles to the original container.
-    auto tmp_pc = ParticleBuffer::getTmpPC<amrex::ArenaAllocator>(this);
+    amrex::AmrParticleContainer<0,0,PIdx::nattribs> tmp_pc(&WarpX::GetInstance());
+    for (int ic = 0; ic < NumRuntimeRealComps(); ++ic) { tmp_pc.AddRealComp(false); }
+    for (int ic = 0; ic < NumRuntimeIntComps(); ++ic) { tmp_pc.AddIntComp(false); }
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
