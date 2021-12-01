@@ -1566,8 +1566,8 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         // Extract tiles
         const int grid_id = mfi.index();
         const int tile_id = mfi.LocalTileIndex();
-        auto src_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
-        auto dst_tile = this->DefineAndReturnParticleTile(lev, grid_id, tile_id);
+        auto& src_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
+        auto& dst_tile = this->DefineAndReturnParticleTile(lev, grid_id, tile_id);
 
         // Resize container and copy particles
         auto old_size = dst_tile.numParticles();
