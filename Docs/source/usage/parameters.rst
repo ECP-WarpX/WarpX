@@ -320,6 +320,12 @@ Embedded Boundary Conditions
     the electric potential at the surface of the embedded boundary,
     as a function of  `x`, `y`, `z` and time.
 
+    .. warning::
+
+        This function is also evaluated inside the embedded boundary. For this
+        reason, it is important to define this function in such a way that
+        it is constant inside the embedded boundary.
+
 .. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
