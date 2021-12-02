@@ -67,10 +67,13 @@ def run_restart(checkpoint_directory="diags",
             return False, None, None
 
     # using next() gives only the first layer of subdirectories
-    checkpoints = sorted(
-        [f for f in next(os.walk(checkpoint_directory))[1]
+    checkpoints = [f for f in next(os.walk(checkpoint_directory))[1]
         if "old" not in f and f.startswith(checkpoint_prefix)]
-    )
+
+    # naturally sort checkpoints by extracting step number and converting to int
+    checkpoints = sorted(
+        checkpoints, key=lambda fname: int(fname.strip(checkpoint_prefix))
+        )
 
     if not checkpoints:
         if force:
