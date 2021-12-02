@@ -220,7 +220,7 @@ WarpX::ComputeFaceAreas () {
 #endif
             amrex::Box box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
             amrex::FabType fab_type = flags[mfi].getType(box);
-            box.grow(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
+            box.grow(m_face_areas[maxLevel()][idim]->nGrowVect());
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
