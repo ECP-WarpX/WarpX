@@ -24,12 +24,12 @@ void warpx_interp (int j, int k, int l,
 
     // Refinement ratio
     const int rj = rr[0];
-    const int rk = defined(WARPX_DIM_1D_Z) ? 1 : rr[1];
+    const int rk = (AMREX_SPACEDIM == 1) ? 1 : rr[1];
     const int rl = (AMREX_SPACEDIM <= 2) ? 1 : rr[2];
 
     // Staggering (0: cell-centered; 1: nodal)
     const int sj = arr_stag[0];
-    const int sk = defined(WARPX_DIM_1D_Z) ? 0 : arr_stag[1];
+    const int sk = (AMREX_SPACEDIM == 1)? 0 : arr_stag[1];
     const int sl = (AMREX_SPACEDIM <= 2) ? 0 : arr_stag[2];
 
     // Number of points used for interpolation from coarse grid to fine grid
