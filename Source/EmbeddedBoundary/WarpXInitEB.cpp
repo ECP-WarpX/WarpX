@@ -177,14 +177,6 @@ WarpX::ComputeEdgeLengths () {
             }
         }
     }
-    // Echange guard cells
-    for (int idim = 0; idim < 3; ++idim){
-#ifdef WARPX_DIM_XZ
-        if(idim == 1) continue;
-#endif
-        m_edge_lengths[maxLevel()][idim]->FillBoundary();
-    }
-
 #endif
 }
 
@@ -246,14 +238,6 @@ WarpX::ComputeFaceAreas () {
             }
         }
     }
-    // Echange guard cells
-    for (int idim = 0; idim < 3; ++idim){
-#ifdef WARPX_DIM_XZ
-        if(idim == 1) continue;
-#endif
-        m_face_areas[maxLevel()][idim]->FillBoundary();
-    }
-
 #endif
 }
 
