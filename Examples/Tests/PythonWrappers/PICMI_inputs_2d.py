@@ -128,10 +128,10 @@ def plot_data(data, pml, title, name):
         extent = np.array([-nxg-nxpml, nx+nxpml+nxg, -nzg-nzpml, nz+nzpml+nzg])
     else:
         # Draw ghost regions
-        ax.axvline(x = 0       , linewidth = lw, linestyle = ls)
-        ax.axvline(x = nx      , linewidth = lw, linestyle = ls)
-        ax.axhline(y = 0       , linewidth = lw, linestyle = ls)
-        ax.axhline(y = nz      , linewidth = lw, linestyle = ls)
+        ax.axvline(x = 0 , linewidth = lw, linestyle = ls)
+        ax.axvline(x = nx, linewidth = lw, linestyle = ls)
+        ax.axhline(y = 0 , linewidth = lw, linestyle = ls)
+        ax.axhline(y = nz, linewidth = lw, linestyle = ls)
         # Annotations
         ax.annotate('ghost', xy = (-nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
         ax.annotate('ghost', xy = (nx+nxg//2,nz//2), rotation = 'vertical', ha = 'center', va = 'center')
