@@ -1139,6 +1139,9 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto GetPosition = GetParticlePosition(pti);

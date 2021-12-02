@@ -111,6 +111,7 @@ namespace
         });
     }
 
+#if (AMREX_SPACEDIM != 1)
     static void FillZero (int idim, Sigma& sigma, Sigma& sigma_cumsum,
                           Sigma& sigma_star, Sigma& sigma_star_cumsum,
                           const Box& overlap)
@@ -136,7 +137,9 @@ namespace
             }
         });
     }
+#endif
 }
+
 
 SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta)
 {

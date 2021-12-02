@@ -750,15 +750,6 @@ WarpX::ReadParameters ()
             amrex::Abort("Multi-J algorithm not implemented with PMLs");
         }
 
-        // div(E) cleaning not implemented for PSATD solver
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-        {
-            if (do_multi_J == 0 && do_dive_cleaning == 1)
-            {
-                amrex::Abort("warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
-            }
-        }
-
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
@@ -774,16 +765,18 @@ WarpX::ReadParameters ()
 
         // If WarpX::do_dive_cleaning = 1, set also WarpX::do_pml_dive_cleaning = 1
         // (possibly overwritten by users in the input file, see query below)
-        if (do_dive_cleaning)
-        {
-            do_pml_dive_cleaning = 1;
-        }
+        if (do_dive_cleaning) do_pml_dive_cleaning = 1;
+
+        // If WarpX::do_divb_cleaning = 1, set also WarpX::do_pml_divb_cleaning = 1
+        // (possibly overwritten by users in the input file, see query below)
+        // TODO Implement div(B) cleaning in PML with FDTD and remove second if condition
+        if (do_divb_cleaning && maxwell_solver_id == MaxwellSolverAlgo::PSATD) do_pml_divb_cleaning = 1;
 
         // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
         pp_warpx.query("do_pml_divb_cleaning", do_pml_divb_cleaning);
 
-        // div(B) cleaning in PMLs not implemented for FDTD solver
+        // TODO Implement div(B) cleaning in PML with FDTD and remove ASSERT
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1153,7 +1146,7 @@ WarpX::ReadParameters ()
 #   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
-            update_with_rho = false; // standard PSATD
+            update_with_rho = (do_dive_cleaning) ? true : false; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
@@ -1162,6 +1155,11 @@ WarpX::ReadParameters ()
 
         // Overwrite update_with_rho with value set in input file
         pp_psatd.query("update_with_rho", update_with_rho);
+
+        if (do_dive_cleaning == true && update_with_rho == false)
+        {
+            amrex::Abort("warpx.do_dive_cleaning = 1 not implemented with psatd.update_with_rho = 0");
+        }
 
         if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
@@ -1435,7 +1433,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
 #if   (AMREX_SPACEDIM == 1)
-    amrex::RealVect dx({WarpX::CellSize(lev)[2]});
+    amrex::RealVect dx(WarpX::CellSize(lev)[2]);
 #elif   (AMREX_SPACEDIM == 2)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
 #elif (AMREX_SPACEDIM == 3)
@@ -1964,11 +1962,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                         const amrex::DistributionMapping& dm,
                                         const std::array<Real,3>& dx)
 {
-#if (AMREX_SPACEDIM == 3)
-    RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
-#endif
 
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
@@ -2017,6 +2011,8 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
     RealVect dx_vect(dx[0], dx[1], dx[2]);
 #elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
+#elif (AMREX_SPACEDIM == 1)
+    RealVect dx_vect(dx[2]);
 #endif
 
     amrex::Real solver_dt = dt[lev];
