@@ -127,8 +127,6 @@ void ElasticCollisionPerez (
            * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
            * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation ; 
            * there is a corresponding assert statement at initialization.) */
-          AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
-            "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
           T_R const theta = theta2[I2[i2]]-theta1[I1[i1]];
           T_R const u1xbuf = u1x[I1[i1]];
           u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
