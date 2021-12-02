@@ -119,13 +119,13 @@ void ElasticCollisionPerez (
       {
 
 #if (defined WARPX_DIM_RZ)
-          /* In RZ geometry, macroparticles can collide with other macroparticles 
+          /* In RZ geometry, macroparticles can collide with other macroparticles
            * in the same *cylindrical* cell. For this reason, collisions between macroparticles
-           * are actually not local in space. In this case, the underlying assumption is that 
-           * particles within the same cylindrical cell represent a cylindrically-symmetry 
-           * momentum distribution function. Therefore, here, we temporarily rotate the 
+           * are actually not local in space. In this case, the underlying assumption is that
+           * particles within the same cylindrical cell represent a cylindrically-symmetry
+           * momentum distribution function. Therefore, here, we temporarily rotate the
            * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
-           * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation ; 
+           * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
            * there is a corresponding assert statement at initialization.) */
           T_R const theta = theta2[I2[i2]]-theta1[I1[i1]];
           T_R const u1xbuf = u1x[I1[i1]];

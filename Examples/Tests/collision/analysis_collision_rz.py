@@ -8,8 +8,8 @@
 
 # This script tests the collision module in RZ.
 # Electrons are set with the same vr,
-# and thus particles are traveling locally in the same direction. 
-# Physically, the collision rate should therefore be very low. 
+# and thus particles are traveling locally in the same direction.
+# Physically, the collision rate should therefore be very low.
 # Thus the initial electron momentum will be compared with the final momentum.
 
 # Possible errors:
