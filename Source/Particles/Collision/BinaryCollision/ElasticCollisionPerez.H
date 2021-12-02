@@ -119,14 +119,14 @@ void ElasticCollisionPerez (
       {
 
 #if (defined WARPX_DIM_RZ)
-          /* When particles are having the same vr,
-           * their velocities would change after collision,
-           * because they may have different azimuth angles,
-           * but their velocities are not supposed to be changed.
-           * To fix this, we rotate one particle to be in parallel with the other particle,
-           * such that their velocities won't change after collision if they have the same vr.
-           * Then, we rotate that particle back.
-           * Note that this only works for the lowest RZ mode, i.e., axisymmetry. */
+          /* In RZ geometry, macroparticles can collide with other macroparticles 
+           * in the same *cylindrical* cell. For this reason, collisions between macroparticles
+           * are actually not local in space. In this case, the underlying assumption is that 
+           * particles within the same cylindrical cell represent a cylindrically-symmetry 
+           * momentum distribution function. Therefore, here, we temporarily rotate the 
+           * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
+           * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation ; 
+           * there is a corresponding assert statement at initialization.) */
           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
             "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
           T_R const theta = theta2[I2[i2]]-theta1[I1[i1]];
