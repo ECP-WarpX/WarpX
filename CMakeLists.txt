@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 21.11)
+project(WarpX VERSION 21.12)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -345,7 +345,7 @@ if(WarpX_LIB)
     endif()
     install(CODE "file(CREATE_LINK
         $<TARGET_FILE_NAME:shared>
-        ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
+        ${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
         COPY_ON_ERROR SYMBOLIC)")
 endif()
 
