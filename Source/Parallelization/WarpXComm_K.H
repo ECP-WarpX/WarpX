@@ -87,7 +87,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Bxg(jg  ,kg  ,0)
@@ -163,7 +163,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Byg(jg  ,kg  ,0)
@@ -241,7 +241,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Bzg(jg  ,kg  ,0)
@@ -318,7 +318,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Exg(jg  ,kg  ,0)
@@ -394,7 +394,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Eyg(jg  ,kg  ,0)
@@ -469,7 +469,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Ezg(jg  ,kg  ,0)
@@ -568,7 +568,7 @@ void warpx_interp (const int j,
     };
 
     // Avoid compiler warnings
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::ignore_unused(noy, stencil_coeffs_y);
 #endif
 
@@ -587,21 +587,21 @@ void warpx_interp (const int j,
     // Staggering (s = 0 if cell-centered, s = 1 if nodal)
     const int sj = (dst_nodal) ? src_stag[0] : dst_stag[0];
     const int sk = (dst_nodal) ? src_stag[1] : dst_stag[1];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const int sl = (dst_nodal) ? src_stag[2] : dst_stag[2];
 #endif
 
     // Interpolate along j,k,l only if source MultiFab is staggered along j,k,l
     const bool interp_j = (sj == 0);
     const bool interp_k = (sk == 0);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const bool interp_l = (sl == 0);
 #endif
 
     const int noj = nox;
-#if   (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int nok = noz;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const int nok = noy;
     const int nol = noz;
 #endif
@@ -609,9 +609,9 @@ void warpx_interp (const int j,
     // Additional normalization factor
     const amrex::Real wj = (interp_j) ? 0.5_rt : 1.0_rt;
     const amrex::Real wk = (interp_k) ? 0.5_rt : 1.0_rt;
-#if   (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     constexpr amrex::Real wl = 1.0_rt;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const amrex::Real wl = (interp_l) ? 0.5_rt : 1.0_rt;
 #endif
 
@@ -624,11 +624,11 @@ void warpx_interp (const int j,
     const int kmax = (interp_k) ? k + nok/2 + shift - 1 : k;
 
     // Min and max for interpolation loop along l
-#if   (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // l = 0 always
     const int lmin = l;
     const int lmax = l;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const int lmin = (interp_l) ? l - nol/2 + shift     : l;
     const int lmax = (interp_l) ? l + nol/2 + shift - 1 : l;
 #endif
@@ -701,16 +701,16 @@ void warpx_interp (const int j,
         amrex::Real cl = 1.0_rt;
 
         amrex::Real const* scj = stencil_coeffs_x;
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::Real const* sck = stencil_coeffs_z;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
         amrex::Real const* sck = stencil_coeffs_y;
         amrex::Real const* scl = stencil_coeffs_z;
 #endif
 
         for (int ll = 0; ll <= nl; ll++)
         {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             if (interp_l) cl = scl[ll];
 #endif
             for (int kk = 0; kk <= nk; kk++)
