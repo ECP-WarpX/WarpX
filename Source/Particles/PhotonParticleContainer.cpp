@@ -175,6 +175,10 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const int noy = (field_gathering_centering) ? WarpX::field_centering_noy : WarpX::noy;
     const int noz = (field_gathering_centering) ? WarpX::field_centering_noz : WarpX::noz;
 
+    const int shape_nox = WarpX::nox;
+    const int shape_noy = WarpX::noy;
+    const int shape_noz = WarpX::noz;
+
     amrex::ParallelFor(
         np_to_push,
         [=] AMREX_GPU_DEVICE (long i) {
@@ -192,7 +196,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                 {
                     doGatherFiniteCentering(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                         ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                        dx_arr, xyzmin_arr, lo, nox, noy, noz);
+                        dx_arr, xyzmin_arr, lo, nox, noy, noz, shape_nox, shape_noy, shape_noz);
                 }
                 else
                 {

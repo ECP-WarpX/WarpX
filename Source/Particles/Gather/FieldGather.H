@@ -623,28 +623,29 @@ void compute_centering_coefficients(amrex::GpuArray<amrex::Real, 8>& cc,
     }
 }
 
+// TODO Add Doxygen documentation
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void doGatherFiniteCentering (const amrex::ParticleReal xp,
-                              const amrex::ParticleReal yp,
-                              const amrex::ParticleReal zp,
-                              amrex::ParticleReal& Exp,
-                              amrex::ParticleReal& Eyp,
-                              amrex::ParticleReal& Ezp,
-                              amrex::ParticleReal& Bxp,
-                              amrex::ParticleReal& Byp,
-                              amrex::ParticleReal& Bzp,
-                              const amrex::Array4<amrex::Real const>& ex_arr,
-                              const amrex::Array4<amrex::Real const>& ey_arr,
-                              const amrex::Array4<amrex::Real const>& ez_arr,
-                              const amrex::Array4<amrex::Real const>& bx_arr,
-                              const amrex::Array4<amrex::Real const>& by_arr,
-                              const amrex::Array4<amrex::Real const>& bz_arr,
-                              const amrex::GpuArray<amrex::Real,3>& dxyz,
-                              const amrex::GpuArray<amrex::Real,3>& xyz_min,
-                              const amrex::Dim3& lo,
-                              const int nox,
-                              const int noy,
-                              const int noz)
+void doGatherFiniteCenteringSinglePart (const amrex::ParticleReal xp,
+                                        const amrex::ParticleReal yp,
+                                        const amrex::ParticleReal zp,
+                                        amrex::ParticleReal& Exp,
+                                        amrex::ParticleReal& Eyp,
+                                        amrex::ParticleReal& Ezp,
+                                        amrex::ParticleReal& Bxp,
+                                        amrex::ParticleReal& Byp,
+                                        amrex::ParticleReal& Bzp,
+                                        const amrex::Array4<amrex::Real const>& ex_arr,
+                                        const amrex::Array4<amrex::Real const>& ey_arr,
+                                        const amrex::Array4<amrex::Real const>& ez_arr,
+                                        const amrex::Array4<amrex::Real const>& bx_arr,
+                                        const amrex::Array4<amrex::Real const>& by_arr,
+                                        const amrex::Array4<amrex::Real const>& bz_arr,
+                                        const amrex::GpuArray<amrex::Real,3>& dxyz,
+                                        const amrex::GpuArray<amrex::Real,3>& xyz_min,
+                                        const amrex::Dim3& lo,
+                                        const int nox,
+                                        const int noy,
+                                        const int noz)
 {
     using namespace amrex;
 
@@ -754,6 +755,13 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
     amrex::Real cj = 1.0_rt;
     amrex::Real ck = 1.0_rt;
 
+    Exp = 0._rt;
+    Eyp = 0._rt;
+    Ezp = 0._rt;
+    Bxp = 0._rt;
+    Byp = 0._rt;
+    Bzp = 0._rt;
+
     for (int kk = 0; kk <= nk; kk++)
     {
 #if (AMREX_SPACEDIM == 3)
@@ -774,6 +782,141 @@ void doGatherFiniteCentering (const amrex::ParticleReal xp,
                 Bxp += ci * cj * ck * bx_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
                 Byp += ci * cj * ck * by_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
                 Bzp += ci * cj * ck * bz_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
+            }
+        }
+    }
+}
+
+// TODO Add Doxygen documentation
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void doGatherFiniteCentering (const amrex::ParticleReal xp,
+                              const amrex::ParticleReal yp,
+                              const amrex::ParticleReal zp,
+                              amrex::ParticleReal& Exp,
+                              amrex::ParticleReal& Eyp,
+                              amrex::ParticleReal& Ezp,
+                              amrex::ParticleReal& Bxp,
+                              amrex::ParticleReal& Byp,
+                              amrex::ParticleReal& Bzp,
+                              const amrex::Array4<amrex::Real const>& ex_arr,
+                              const amrex::Array4<amrex::Real const>& ey_arr,
+                              const amrex::Array4<amrex::Real const>& ez_arr,
+                              const amrex::Array4<amrex::Real const>& bx_arr,
+                              const amrex::Array4<amrex::Real const>& by_arr,
+                              const amrex::Array4<amrex::Real const>& bz_arr,
+                              const amrex::GpuArray<amrex::Real,3>& dxyz,
+                              const amrex::GpuArray<amrex::Real,3>& xyz_min,
+                              const amrex::Dim3& lo,
+                              const int nox,
+                              const int noy,
+                              const int noz,
+                              const int shape_nox,
+                              const int shape_noy,
+                              const int shape_noz)
+{
+    using namespace amrex::literals;
+
+#ifdef WARPX_DIM_XZ
+    amrex::ignore_unused(shape_noy);
+#endif
+
+    // Use only original particle position for linear shape factors
+    int nxp = 1;
+    int nyp = 1;
+    int nzp = 1;
+
+    // Use three particle positions for quadratic and cubic shape factors
+    if (shape_nox == 2 || shape_nox == 3) nxp = 3;
+#ifdef WARPX_DIM_3D
+    if (shape_noy == 2 || shape_noy == 3) nyp = 3;
+#endif
+    if (shape_noz == 2 || shape_noz == 3) nzp = 3;
+
+    amrex::Real xxp[3];
+    amrex::Real yyp[3];
+    amrex::Real zzp[3];
+
+    xxp[0] = xp;
+    yyp[0] = yp;
+    zzp[0] = zp;
+
+    amrex::Real sx[3];
+    amrex::Real sy[3];
+    amrex::Real sz[3];
+
+    sx[0] = 1._rt;
+    sy[0] = 1._rt;
+    sz[0] = 1._rt;
+
+    if (shape_nox == 2 || shape_nox == 3)
+    {
+        // dxyz[0] is dx
+        xxp[0] = xp - dxyz[0];
+        xxp[1] = xp;
+        xxp[2] = xp + dxyz[0];
+
+        // Spline coefficients for a spline centered in xp
+        sx[0] = (shape_nox == 2) ? 1._rt / 8._rt : 1._rt / 6._rt;
+        sx[1] = (shape_nox == 2) ? 3._rt / 4._rt : 2._rt / 3._rt;
+        sx[2] = (shape_nox == 2) ? 1._rt / 8._rt : 1._rt / 6._rt;
+    }
+
+#ifdef WARPX_DIM_3D
+    if (shape_noy == 2 || shape_noy == 3)
+    {
+        // dxyz[1] is dy
+        yyp[0] = yp - dxyz[1];
+        yyp[1] = yp;
+        yyp[2] = yp + dxyz[1];
+
+        // Spline coefficients for a spline centered in yp
+        sy[0] = (shape_noy == 2) ? 1._rt / 8._rt : 1._rt / 6._rt;
+        sy[1] = (shape_noy == 2) ? 3._rt / 4._rt : 2._rt / 3._rt;
+        sy[2] = (shape_noy == 2) ? 1._rt / 8._rt : 1._rt / 6._rt;
+    }
+#endif
+
+    if (shape_noz == 2 || shape_noz == 3)
+    {
+        // dxyz[2] is dz
+        zzp[0] = zp - dxyz[2];
+        zzp[1] = zp;
+        zzp[2] = zp + dxyz[2];
+
+        // Spline coefficients for a spline centered in zp
+        sz[0] = (shape_noz == 2) ? 1._rt / 8._rt : 1._rt / 6._rt;
+        sz[1] = (shape_noz == 2) ? 3._rt / 4._rt : 2._rt / 3._rt;
+        sz[2] = (shape_noz == 2) ? 1._rt / 8._rt : 1._rt / 6._rt;
+    }
+
+    amrex::ParticleReal Exp_tmp, Eyp_tmp, Ezp_tmp;
+    amrex::ParticleReal Bxp_tmp, Byp_tmp, Bzp_tmp;
+
+    for (int iz = 0; iz < nzp; iz++)
+    {
+        for (int iy = 0; iy < nyp; iy++)
+        {
+            for (int ix = 0; ix < nxp; ix++)
+            {
+                doGatherFiniteCenteringSinglePart(xxp[ix], yyp[iy], zzp[iz],
+                    Exp_tmp, Eyp_tmp, Ezp_tmp, Bxp_tmp, Byp_tmp, Bzp_tmp,
+                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                    dxyz, xyz_min, lo, nox, noy, noz);
+
+                Exp_tmp *= sx[ix] * sy[iy] * sz[iz];
+                Eyp_tmp *= sx[ix] * sy[iy] * sz[iz];
+                Ezp_tmp *= sx[ix] * sy[iy] * sz[iz];
+
+                Bxp_tmp *= sx[ix] * sy[iy] * sz[iz];
+                Byp_tmp *= sx[ix] * sy[iy] * sz[iz];
+                Bzp_tmp *= sx[ix] * sy[iy] * sz[iz];
+
+                Exp += Exp_tmp;
+                Eyp += Eyp_tmp;
+                Ezp += Ezp_tmp;
+                Bxp += Bxp_tmp;
+                Byp += Byp_tmp;
+                Bzp += Bzp_tmp;
             }
         }
     }

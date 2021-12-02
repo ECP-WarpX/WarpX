@@ -2143,6 +2143,10 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const int noy = (field_gathering_centering) ? WarpX::field_centering_noy : WarpX::noy;
             const int noz = (field_gathering_centering) ? WarpX::field_centering_noz : WarpX::noz;
 
+            const int shape_nox = WarpX::nox;
+            const int shape_noy = WarpX::noy;
+            const int shape_noz = WarpX::noz;
+
             amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
             {
                 amrex::ParticleReal xp, yp, zp;
@@ -2158,7 +2162,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                     {
                         doGatherFiniteCentering(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                             ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                            dx_arr, xyzmin_arr, lo, nox, noy, noz);
+                            dx_arr, xyzmin_arr, lo, nox, noy, noz, shape_nox, shape_noy, shape_noz);
                     }
                     else
                     {
@@ -2553,6 +2557,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const int noy = (field_gathering_centering) ? WarpX::field_centering_noy : WarpX::noy;
     const int noz = (field_gathering_centering) ? WarpX::field_centering_noz : WarpX::noz;
 
+    const int shape_nox = WarpX::nox;
+    const int shape_noy = WarpX::noy;
+    const int shape_noz = WarpX::noz;
+
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
         amrex::ParticleReal xp, yp, zp;
@@ -2578,7 +2586,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
             {
                 doGatherFiniteCentering(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                    dx_arr, xyzmin_arr, lo, nox, noy, noz);
+                    dx_arr, xyzmin_arr, lo, nox, noy, noz, shape_nox, shape_noy, shape_noz);
             }
             else
             {
