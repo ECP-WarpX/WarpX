@@ -1135,6 +1135,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 pa[PIdx::uy][ip] = u.y;
                 pa[PIdx::uz][ip] = u.z;
 
+                if (do_backward_propagation) {
+                  pa[PIdx::uz][ip] = -u.z;
+                }
+
 #if (AMREX_SPACEDIM == 3)
                 p.pos(0) = pos.x;
                 p.pos(1) = pos.y;
