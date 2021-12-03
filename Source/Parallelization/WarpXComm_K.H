@@ -87,7 +87,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * Bxg(jg  ,0,0)
@@ -101,7 +101,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     Real bf = 0.5_rt*(Bxf_zeropad(j-1,0,0) + Bxf_zeropad(j,0,0));
     amrex::ignore_unused(owy);
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Bxg(jg  ,kg  ,0)
@@ -177,7 +177,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * Byg(jg  ,0,0)
@@ -191,7 +191,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     Real bf = 0.5_rt*(Byf_zeropad(j-1,0,0) + Byf_zeropad(j,0,0));
     amrex::ignore_unused(owy);
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Byg(jg  ,kg  ,0)
@@ -269,7 +269,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * Bzg(jg  ,0,0)
@@ -283,7 +283,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Real bf =  Bzf_zeropad(j,0,0);
     amrex::ignore_unused(owy);
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * Bzg(jg  ,kg  ,0)
@@ -360,7 +360,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * Exg(jg  ,0,0)
@@ -374,7 +374,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     Real ef = Exf_zeropad(j,0,0);
     amrex::ignore_unused(owy);
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Exg(jg  ,kg  ,0)
@@ -452,7 +452,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 
 
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * Eyg(jg  ,0,0)
@@ -466,7 +466,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
     Real ef = Eyf_zeropad(j,0,0);
     amrex::ignore_unused(owy);
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Eyg(jg  ,kg  ,0)
@@ -541,7 +541,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real owy = 1.0_rt-wy;
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * Ezg(jg  ,0,0)
@@ -555,7 +555,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Real ef = 0.5_rt*(Ezf_zeropad(j-1,0,0) + Ezf_zeropad(j,0,0));
     amrex::ignore_unused(owy);
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * Ezg(jg  ,kg  ,0)
@@ -654,10 +654,10 @@ void warpx_interp (const int j,
     };
 
     // Avoid compiler warnings
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(nox, noy, stencil_coeffs_x, stencil_coeffs_y);
 #endif
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::ignore_unused(noy, stencil_coeffs_y);
 #endif
 
@@ -678,7 +678,7 @@ void warpx_interp (const int j,
 #if (AMREX_SPACEDIM >= 2)
     const int sk = (dst_nodal) ? src_stag[1] : dst_stag[1];
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const int sl = (dst_nodal) ? src_stag[2] : dst_stag[2];
 #endif
 
@@ -687,16 +687,16 @@ void warpx_interp (const int j,
 #if (AMREX_SPACEDIM >= 2)
     const bool interp_k = (sk == 0);
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const bool interp_l = (sl == 0);
 #endif
 
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     const int noj = noz;
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int noj = nox;
     const int nok = noz;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const int noj = nox;
     const int nok = noy;
     const int nol = noz;
@@ -704,13 +704,13 @@ void warpx_interp (const int j,
 
     // Additional normalization factor
     const amrex::Real wj = (interp_j) ? 0.5_rt : 1.0_rt;
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     constexpr amrex::Real wk = 1.0_rt;
     constexpr amrex::Real wl = 1.0_rt;
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const amrex::Real wk = (interp_k) ? 0.5_rt : 1.0_rt;
     constexpr amrex::Real wl = 1.0_rt;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const amrex::Real wk = (interp_k) ? 0.5_rt : 1.0_rt;
     const amrex::Real wl = (interp_l) ? 0.5_rt : 1.0_rt;
 #endif
@@ -720,7 +720,7 @@ void warpx_interp (const int j,
     const int jmax = (interp_j) ? j + noj/2 + shift - 1 : j;
 
     // Min and max for interpolation loop along k
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     // k = 0 always
     const int kmin = k;
     const int kmax = k;
@@ -734,7 +734,7 @@ void warpx_interp (const int j,
     // l = 0 always
     const int lmin = l;
     const int lmax = l;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const int lmin = (interp_l) ? l - nol/2 + shift     : l;
     const int lmax = (interp_l) ? l + nol/2 + shift - 1 : l;
 #endif
@@ -802,7 +802,7 @@ void warpx_interp (const int j,
 
     else // PSATD (finite-order interpolation)
     {
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
         amrex::ignore_unused(stencil_coeffs_z);
         amrex::Abort("PSATD not implemented in 1D");
 #endif
@@ -813,16 +813,16 @@ void warpx_interp (const int j,
         amrex::Real cl = 1.0_rt;
 
         amrex::Real const* scj = stencil_coeffs_x;
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::Real const* sck = stencil_coeffs_z;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
         amrex::Real const* sck = stencil_coeffs_y;
         amrex::Real const* scl = stencil_coeffs_z;
 #endif
 
         for (int ll = 0; ll <= nl; ll++)
         {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             if (interp_l) cl = scl[ll];
 #endif
             for (int kk = 0; kk <= nk; kk++)
