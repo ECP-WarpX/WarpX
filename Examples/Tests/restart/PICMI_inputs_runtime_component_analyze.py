@@ -97,6 +97,7 @@ for arg in sys.argv:
     if arg.startswith("amr.restart"):
         restart_file_name = arg.split("=")[1]
         sim.amr_restart = restart_file_name
+        sys.argv.remove(arg)
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(checkpoint)

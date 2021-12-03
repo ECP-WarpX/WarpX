@@ -662,6 +662,12 @@ void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 
 void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 {
+    // Make sure all MPI ranks wrote their files and closed it
+    // Note: additionally, since a Barrier does not guarantee a FS sync
+    //       on a parallel FS, we might need to add timeouts and retries
+    //       to the open calls below when running at scale.
+    amrex::ParallelDescriptor::Barrier();
+
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
     if (amrex::ParallelContext::IOProcessorSub()) {

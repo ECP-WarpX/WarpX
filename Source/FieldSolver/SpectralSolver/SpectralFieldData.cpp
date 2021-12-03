@@ -62,19 +62,13 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
             Bx_avg = c++; By_avg = c++; Bz_avg = c++;
         }
 
+        if (dive_cleaning) F = c++;
+
+        if (divb_cleaning) G = c++;
+
         if (J_linear_in_time)
         {
             Jx_new = c++; Jy_new = c++; Jz_new = c++;
-
-            if (dive_cleaning)
-            {
-                F = c++;
-            }
-
-            if (divb_cleaning)
-            {
-                G = c++;
-            }
         }
     }
     else // PML
