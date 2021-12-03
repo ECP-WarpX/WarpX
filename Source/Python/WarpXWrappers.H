@@ -86,6 +86,8 @@ extern "C" {
 
     amrex::Real warpx_getProbHi(int dir);
 
+    amrex::Real warpx_getCellSize(int dir, int lev);
+
     long warpx_getNumParticles(const char* char_species_name);
 
     amrex::ParticleReal** warpx_getParticleStructs(
