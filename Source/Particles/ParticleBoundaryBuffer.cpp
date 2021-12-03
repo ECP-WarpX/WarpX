@@ -232,7 +232,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 int timestep = warpx_instance.getistep(0);
                 using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
-                    [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip) noexcept
+                    [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)
+                    /* NVCC 11.3.109 chokes in C++17 on this: noexcept */
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);

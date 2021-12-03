@@ -87,6 +87,9 @@ except OSError as e:
         print("Failed to load the libwarpx shared object library")
         raise
 
+# track whether libwarpx has been initialized
+libwarpx.initialized = False
+
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
 libwarpx.warpx_ParticleReal_size.restype = ctypes.c_int
@@ -326,6 +329,8 @@ def initialize(argv=None, mpi_comm=None):
         libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
+    libwarpx.initialized = True
+
 
 @atexit.register
 def finalize(finalize_mpi=1):
@@ -335,8 +340,9 @@ def finalize(finalize_mpi=1):
     the end of your script.
 
     '''
-    libwarpx.warpx_finalize()
-    libwarpx.amrex_finalize(finalize_mpi)
+    if libwarpx.initialized:
+        libwarpx.warpx_finalize()
+        libwarpx.amrex_finalize(finalize_mpi)
 
 
 def evolve(num_steps=-1):
