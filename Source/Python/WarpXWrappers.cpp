@@ -101,9 +101,6 @@ namespace
     }
 }
 
-extern "C"
-{
-
     int warpx_Real_size()
     {
         return (int)sizeof(amrex::Real);
@@ -728,5 +725,3 @@ extern "C"
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         mypc.Redistribute();
     }
-
-}
