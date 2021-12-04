@@ -496,6 +496,7 @@ jobs:
       brew update || true
       brew install pypy3 gcc libomp openblas
       export OPENBLAS="$(brew --prefix openblas)"
+      export PATH=${PATH}:"$(brew --prefix gcc)"/bin
       pypy3 -m pip install -U pip --user
       pypy3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
   - script: |
