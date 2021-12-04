@@ -39,7 +39,7 @@ def I_envelope (x, lam = 0.2e-6, a = 0.3e-6, D = 1.7e-6):
         (
               (np.pi * a / lam)*np.sin(np.arctan(x / D))
         )
-        / 
+        /
         (
               (np.pi * a / lam)*np.sin(np.arctan(x / D))
         )
