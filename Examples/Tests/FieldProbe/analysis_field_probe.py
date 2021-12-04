@@ -30,7 +30,8 @@ S=df.query('`[0]step()` == 500')['[11]part_S_lev0-(W*s/m^2)']
 ixvals=x.to_numpy()
 svals=S.to_numpy()
 
-# Default intensity is highest measured value
+# Default intensity is highest measured value for plane
+# wave interacting with single slit
 I_0 = np.max(S)
 def I_envelope (x, lam = 0.2e-6, a = 0.3e-6, D = 1.7e-6):
     return (
