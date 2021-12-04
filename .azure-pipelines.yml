@@ -56,7 +56,7 @@ jobs:
       python -m pipx install cmake
       python -m pipx ensurepath
       export PATH="$HOME/.local/bin:$PATH"
-      python -m pip install --upgrade matplotlib mpi4py numpy scipy yt
+      python -m pip install --upgrade matplotlib mpi4py numpy scipy pandas yt
       export CEI_SUDO="sudo"
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
       sudo chmod a+x /usr/local/bin/cmake-easyinstall

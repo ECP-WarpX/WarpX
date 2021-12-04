@@ -67,7 +67,7 @@ If you also want to run runtime tests and added Python (``spack add python`` and
 
 .. code-block:: bash
 
-   python -m pip install matplotlib==3.2.2 yt scipy numpy openpmd-api
+   python -m pip install matplotlib==3.2.2 yt scipy pandas numpy openpmd-api
 
 If you want to run the ``./run_test.sh`` :ref:`test script <developers-testing>`, which uses our legacy GNUmake build system, you need to set the following environment hints after ``spack env activate warpx-dev`` for dependent software:
 
@@ -118,7 +118,7 @@ Without MPI:
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy scipy yt fftw matplotlib mamba ninja
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw matplotlib mamba ninja
    conda activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
@@ -127,7 +127,7 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api=*=mpi_openmpi* python numpy scipy yt fftw=*=mpi_openmpi* matplotlib mamba ninja openmpi
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api=*=mpi_openmpi* python numpy pandas scipy yt fftw=*=mpi_openmpi* matplotlib mamba ninja openmpi
    conda activate warpx-dev
 
 
@@ -137,4 +137,4 @@ Apt (Debian/Ubuntu)
 .. code-block:: bash
 
    sudo apt update
-   sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-scipy
+   sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-scipy

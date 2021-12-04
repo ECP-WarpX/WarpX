@@ -130,6 +130,7 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --upgrade wheel
    python3 -m pip install --upgrade cython
    python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
    python3 -m pip install --upgrade scipy
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade openpmd-api
