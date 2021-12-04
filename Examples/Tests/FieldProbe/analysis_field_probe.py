@@ -1,7 +1,6 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 #
 # Copyright 2021 Tiberius Rheaume
-#
 #
 # This file is part of WarpX.
 #
@@ -21,17 +20,17 @@ which can be solved analytically.
 import numpy as np
 import pandas as pd
 
-#Open data file
+# Open data file
 df = pd.read_csv(filename, sep=' ')
 df = df.sort_values(by=['[2]part_x_lev0-(m)'])
 
-#Select position and Intensity of timestep 500
+# Select position and Intensity of timestep 500
 x=df.query('`[0]step()` == 500')['[2]part_x_lev0-(m)']
 S=df.query('`[0]step()` == 500')['[11]part_S_lev0-(W*s/m^2)']
 ixvals=x.to_numpy()
 svals=S.to_numpy()
 
-#Default intensity is highest measured value
+# Default intensity is highest measured value
 I_0 = np.max(S)
 def I_envelope (x, lam = 0.2e-6, a = 0.3e-6, D = 1.7e-6):
     return (
@@ -45,10 +44,10 @@ def I_envelope (x, lam = 0.2e-6, a = 0.3e-6, D = 1.7e-6):
         )
     )**2
 
-#Count non-outlyer values away from simulation boundaries
+# Count non-outlyer values away from simulation boundaries
 counter=np.arange(60,140,2)
 
-#Count average error from expected values
+# Count average error from expected values
 error=0
 for a in counter:
     b=(I_0 * I_envelope(xvals[a]))
@@ -56,8 +55,8 @@ for a in counter:
     error+=abs(((c-b)/b))*100
 averror = error/(len(counter)-1)
 
-#average error range set at 5%
-if averror > 5:
-    print('Average error greater than 5%')
+# average error range set at 2.5%
+if averror > 2.5:
+    print('Average error greater than 2.5%')
 
-assert averror < 5
+assert averror < 2.5
