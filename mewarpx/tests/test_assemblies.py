@@ -268,7 +268,7 @@ def test_two_embedded_cylinders_scraping():
     # Initialize each run with consistent, randomly-chosen, rseed. Use a random
     # seed instead for initial dataframe generation.
     # np.random.seed()
-    np.random.seed(42147825)
+    np.random.seed(42147820)
 
     # Specific numbers match older run for consistency
     D_CA = 1  # m
@@ -345,8 +345,8 @@ def test_two_embedded_cylinders_scraping():
     cylinder2.record_scrapedparticles()
     cyl2_scraped = cylinder2.get_scrapedparticles()
 
-    assert np.allclose(cyl1_scraped['n'], np.array([3, 38]))
-    assert np.allclose(cyl2_scraped['n'], np.array([1, 48]))
+    assert np.allclose(cyl1_scraped['n'], np.array([2, 40]))
+    assert np.allclose(cyl2_scraped['n'], np.array([5, 46]))
 
     #######################################################################
     # Check rho results against reference data                            #
