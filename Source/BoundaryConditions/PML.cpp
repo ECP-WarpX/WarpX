@@ -491,19 +491,22 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     // Note that this is okay to build pml inside domain for a single patch, or joint patches
     // with same [min,max]. But it does not support multiple disjoint refinement patches.
     Box domain0 = grid_ba.minimalBox();
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        if (do_pml_Lo[idim]){
-            domain0.growLo(idim, -ncell);
-        }
-        if (do_pml_Hi[idim]){
-            domain0.growHi(idim, -ncell);
+    if (do_pml_in_domain) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (do_pml_Lo[idim]){
+                domain0.growLo(idim, -ncell);
+            }
+            if (do_pml_Hi[idim]){
+                domain0.growHi(idim, -ncell);
+            }
         }
     }
-    const BoxArray grid_ba_reduced = BoxArray(grid_ba.boxList().intersect(domain0));
+    const BoxArray grid_ba_reduced = (do_pml_in_domain) ?
+        BoxArray(grid_ba.boxList().intersect(domain0)) : grid_ba;
 
-    const BoxArray& ba = (do_pml_in_domain)?
-          MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
-          MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+    const BoxArray& ba = MakeBoxArray(domain0, *geom, grid_ba_reduced, ncell,
+                                      do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+
     if (ba.empty()) {
         m_ok = false;
         return;
@@ -657,24 +660,27 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
         // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches, similar to fine patch.
         amrex::Box domain1 = grid_cba.minimalBox();
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (do_pml_Lo[idim]){
-                // ncell is divided by refinement ratio to ensure that the
-                // physical width of the PML region is equal in fine and coarse patch
-                domain1.growLo(idim, -ncell/ref_ratio[idim]);
-            }
-            if (do_pml_Hi[idim]){
-                // ncell is divided by refinement ratio to ensure that the
-                // physical width of the PML region is equal in fine and coarse patch
-                domain1.growHi(idim, -ncell/ref_ratio[idim]);
+        if (do_pml_in_domain) {
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if (do_pml_Lo[idim]){
+                    // ncell is divided by refinement ratio to ensure that the
+                    // physical width of the PML region is equal in fine and coarse patch
+                    domain1.growLo(idim, -ncell/ref_ratio[idim]);
+                }
+                if (do_pml_Hi[idim]){
+                    // ncell is divided by refinement ratio to ensure that the
+                    // physical width of the PML region is equal in fine and coarse patch
+                    domain1.growHi(idim, -ncell/ref_ratio[idim]);
+                }
             }
         }
-        const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain1));
+        const BoxArray grid_cba_reduced = (do_pml_in_domain) ?
+            BoxArray(grid_cba.boxList().intersect(domain1)) : grid_cba;
 
         // Assuming that refinement ratio is equal in all dimensions
-        const BoxArray& cba = (do_pml_in_domain) ?
-            MakeBoxArray(*cgeom, grid_cba_reduced, ncell/ref_ratio[0], do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
-            MakeBoxArray(*cgeom, grid_cba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+        const BoxArray& cba = MakeBoxArray(domain1, *cgeom, grid_cba_reduced,
+                                           ncell/ref_ratio[0], do_pml_in_domain, do_pml_Lo,
+                                           do_pml_Hi);
         DistributionMapping cdm{cba};
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
@@ -759,9 +765,58 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 }
 
 BoxArray
-PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
+PML::MakeBoxArray (const amrex::Box& regular_domain,
+                   const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
                    int ncell, int do_pml_in_domain,
                    const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
+{
+    if (regular_domain.numPts() == grid_ba.numPts()) {
+        return MakeBoxArray_single(regular_domain, grid_ba, ncell, do_pml_Lo, do_pml_Hi);
+    } else {
+        return MakeBoxArray_multiple(geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+    }
+}
+
+BoxArray
+PML::MakeBoxArray_single (const amrex::Box& regular_domain, const amrex::BoxArray& grid_ba,
+                          int ncell, const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
+{
+    BoxList bl;
+    for (int i = 0, N = grid_ba.size(); i < N; ++i) {
+        Box const& b = grid_ba[i];
+        for (OrientationIter oit; oit.isValid(); ++oit) { // Iteration over all faces
+            Orientation ori = oit();
+            const int idim = ori.coordDir();
+            bool pml_bndry = false;
+            if (ori.isLow() && do_pml_Lo[idim]) {
+                pml_bndry = b.smallEnd(idim) == regular_domain.smallEnd(idim);
+            } else if (ori.isHigh() && do_pml_Hi[idim]) {
+                pml_bndry = b.bigEnd(idim) == regular_domain.bigEnd(idim);
+            }
+            if (pml_bndry) {
+                Box bbox = amrex::adjCell(b, ori, ncell);
+                for (int jdim = 0; jdim < idim; ++jdim) {
+                    if (do_pml_Lo[jdim] &&
+                        bbox.smallEnd(jdim) == regular_domain.smallEnd(jdim)) {
+                        bbox.growLo(jdim, ncell);
+                    }
+                    if (do_pml_Hi[jdim] &&
+                        bbox.bigEnd(jdim) == regular_domain.bigEnd(jdim)) {
+                        bbox.growHi(jdim, ncell);
+                    }
+                }
+                bl.push_back(bbox);
+            }
+        }
+    }
+
+    return BoxArray(std::move(bl));
+}
+
+BoxArray
+PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
+                            int ncell, int do_pml_in_domain,
+                            const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
 {
     Box domain = geom.Domain();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
