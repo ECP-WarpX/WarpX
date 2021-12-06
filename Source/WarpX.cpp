@@ -12,7 +12,6 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "BoundaryConditions/PML_RZ.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -22,6 +21,7 @@
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "BoundaryConditions/PML_RZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif // RZ ifdef
@@ -320,7 +320,7 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     pml_rz.resize(nlevs_max);
 #endif
     costs.resize(nlevs_max);
@@ -2221,7 +2221,7 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
     }
 }
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
 PML_RZ*
 WarpX::GetPML_RZ (int lev)
 {

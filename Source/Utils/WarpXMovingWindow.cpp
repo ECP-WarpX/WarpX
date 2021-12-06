@@ -9,7 +9,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "BoundaryConditions/PML_RZ.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
@@ -186,7 +188,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*pml_B[dim], geom[lev], num_shift, dir);
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir);
             }
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
             if (pml_rz[lev] && dim < 2) {
                 const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
@@ -416,7 +418,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
         })
     }
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     if (WarpX::GetInstance().getPMLRZ()) {
         // This does the exchange of data in the corner guard cells, the cells that are in the
         // guard region both radially and longitudinally. These are the PML cells in the overlapping

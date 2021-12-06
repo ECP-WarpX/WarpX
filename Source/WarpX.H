@@ -13,7 +13,6 @@
 #define WARPX_H_
 
 #include "BoundaryConditions/PML_fwd.H"
-#include "BoundaryConditions/PML_RZ_fwd.H"
 #include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
@@ -26,6 +25,7 @@
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
+#       include "BoundaryConditions/PML_RZ_fwd.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
@@ -347,7 +347,7 @@ public:
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
 #endif
 
@@ -530,7 +530,7 @@ public:
     void NodalSyncPML (int lev, PatchType patch_type);
 
     PML* GetPML (int lev);
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     PML_RZ* GetPML_RZ (int lev);
 #endif
 
@@ -1137,7 +1137,7 @@ private:
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
     amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
 

@@ -9,7 +9,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "BoundaryConditions/PML_RZ.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/IntervalsParser.H"
@@ -559,7 +561,7 @@ WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
                                     do_pml_in_domain);
                 pml[lev]->FillBoundaryE(patch_type);
             }
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
             if (pml_rz[lev])
             {
                 pml_rz[lev]->FillBoundaryE(patch_type);
@@ -630,7 +632,7 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
                                   do_pml_in_domain);
             pml[lev]->FillBoundaryB(patch_type);
             }
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
             if (pml_rz[lev])
             {
                 pml_rz[lev]->FillBoundaryB(patch_type);
@@ -1328,7 +1330,7 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
         }
     }
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     if (pml_rz[lev])
     {
         // This is not actually needed with RZ PSATD since the

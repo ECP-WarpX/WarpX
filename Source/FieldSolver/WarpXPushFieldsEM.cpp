@@ -9,13 +9,13 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "BoundaryConditions/PML_RZ.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #if defined(WARPX_USE_PSATD)
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "BoundaryConditions/PML_RZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
