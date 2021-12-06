@@ -109,7 +109,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     amrex::IntVect const jy_type = jy_fab.box().type();
     amrex::IntVect const jz_type = jz_fab.box().type();
 
-    constexpr int zdir = (AMREX_SPACEDIM - 1);
+    constexpr int zdir = WARPX_ZINDEX;
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
