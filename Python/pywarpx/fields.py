@@ -81,6 +81,7 @@ class _MultiFABWrapper(object):
         - direction: In 3d, one of 'x', 'y', or 'z'.
                      In 2d, Cartesian, one of 'x', or 'z'.
                      In RZ, one of 'r', or 'z'
+                     In Z, 'z'.
         """
 
         try:
@@ -93,6 +94,9 @@ class _MultiFABWrapper(object):
             elif _libwarpx.geometry_dim == 'rz':
                 idir = ['r', 'z'].index(direction)
                 celldir = 2*idir
+            elif _libwarpx.geometry_dim == '1d':
+                idir = ['z'].index(direction)
+                celldir = idir
         except ValueError:
             raise Exception('Inappropriate direction given')
 
@@ -135,7 +139,9 @@ class _MultiFABWrapper(object):
                 index.append(slice(None))
             index = tuple(index)
 
-        if self.dim == 2:
+        if self.dim == 1:
+            return self._getitem1d(index)
+        elif self.dim == 2:
             return self._getitem2d(index)
         elif self.dim == 3:
             return self._getitem3d(index)
@@ -349,6 +355,78 @@ class _MultiFABWrapper(object):
 
         return resultglobal[tuple(sss)]
 
+    def _getitem1d(self, index):
+        """Returns slices of a 1D decomposed array,
+        """
+
+        lovects, ngrow = self._getlovects()
+        hivects, ngrow = self._gethivects()
+        fields = self._getfields()
+
+        iz = index[0]
+
+        if len(fields[0].shape) > self.dim:
+            ncomps = fields[0].shape[-1]
+        else:
+            ncomps = 1
+
+        if len(index) > self.dim:
+            if ncomps > 1:
+                ic = index[2]
+            else:
+                raise Exception('Too many indices given')
+        else:
+            ic = None
+
+        izmin = lovects[0,:].min()
+        izmax = hivects[0,:].max()
+
+        if npes > 1:
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+
+        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 0)
+
+        # --- Setup the size of the array to be returned and create it.
+        # --- Space is added for multiple components if needed.
+        sss = (max(0, izstop - izstart))
+        if ncomps > 1 and ic is None:
+            sss = tuple([sss] + [ncomps])
+        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
+
+        datalist = []
+        for i in range(len(fields)):
+
+            # --- The ix1, 2 etc are relative to global indexing
+            iz1 = max(izstart, lovects[0,i])
+            iz2 = min(izstop, lovects[0,i] + fields[i].shape[0])
+
+            if iz1 < iz2:
+
+                sss = (slice(iz1 - lovects[0,i], iz2 - lovects[0,i]))
+                if ic is not None:
+                    sss = tuple(list(sss) + [ic])
+
+                vslice = (slice(iz1 - izstart, iz2 - izstart))
+
+                datalist.append((vslice, fields[i][sss]))
+
+        if npes == 1:
+            all_datalist = [datalist]
+        else:
+            all_datalist = comm_world.allgather(datalist)
+
+        for datalist in all_datalist:
+            for vslice, ff in datalist:
+                resultglobal[vslice] = ff
+
+        # --- Now remove any of the reduced dimensions.
+        sss = [slice(None)]
+        if not isinstance(iz, slice):
+            sss[0] = 0
+
+        return resultglobal[tuple(sss)]
+
     def __setitem__(self, index, value):
         """Sets slices of a decomposed array. The shape of
       the input object depends on the number of arguments specified, which can
@@ -365,6 +443,8 @@ class _MultiFABWrapper(object):
                 index.append(slice(None))
             index = tuple(index)
 
+        if self.dim == 1:
+            return self._setitem1d(index, value)
         if self.dim == 2:
             return self._setitem2d(index, value)
         elif self.dim == 3:
@@ -508,6 +588,63 @@ class _MultiFABWrapper(object):
                 if isinstance(value, np.ndarray):
                     vslice = (slice(ix1 - ixstart, ix2 - ixstart),
                               slice(iz1 - izstart, iz2 - izstart))
+                    fields[i][sss] = value3d[vslice]
+                else:
+                    fields[i][sss] = value
+
+    def _setitem1d(self, index, value):
+        """Sets slices of a decomposed 2D array.
+        """
+        iz = index[0]
+
+        lovects, ngrow = self._getlovects()
+        hivects, ngrow = self._gethivects()
+        fields = self._getfields()
+
+        if len(fields[0].shape) > self.dim:
+            ncomps = fields[0].shape[-1]
+        else:
+            ncomps = 1
+
+        if len(index) > self.dim:
+            if ncomps > 1:
+                ic = index[1]
+            else:
+                raise Exception('Too many indices given')
+        else:
+            ic = None
+
+        izmin = lovects[0,:].min()
+        izmax = hivects[0,:].max()
+
+        if npes > 1:
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+
+        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 0)
+
+        # --- Add extra dimensions so that the input has the same number of
+        # --- dimensions as array.
+        if isinstance(value, np.ndarray):
+            value3d = np.array(value, copy=False)
+            sss = list(value3d.shape)
+            if not isinstance(iz, slice): sss[0:0] = [1]
+            value3d.shape = sss
+
+        for i in range(len(fields)):
+
+            # --- The ix1, 2 etc are relative to global indexing
+            iz1 = max(izstart, lovects[0,i])
+            iz2 = min(izstop, lovects[0,i] + fields[i].shape[0])
+
+            if iz1 < iz2:
+
+                sss = (slice(iz1 - lovects[0,i], iz2 - lovects[0,i]))
+                if ic is not None:
+                    sss = tuple([sss] + [ic])
+
+                if isinstance(value, np.ndarray):
+                    vslice = (slice(iz1 - izstart, iz2 - izstart))
                     fields[i][sss] = value3d[vslice]
                 else:
                     fields[i][sss] = value
