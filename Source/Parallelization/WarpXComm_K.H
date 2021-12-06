@@ -29,7 +29,7 @@ void warpx_interp (int j, int k, int l,
 
     // Staggering (0: cell-centered; 1: nodal)
     const int sj = arr_stag[0];
-    const int sk = (AMREX_SPACEDIM == 1)? 0 : arr_stag[1];
+    const int sk = (AMREX_SPACEDIM == 1) ? 0 : arr_stag[1];
     const int sl = (AMREX_SPACEDIM <= 2) ? 0 : arr_stag[2];
 
     // Number of points used for interpolation from coarse grid to fine grid
