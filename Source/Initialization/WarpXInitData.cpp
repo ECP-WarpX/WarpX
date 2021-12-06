@@ -866,9 +866,21 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
     }
 }
 
-void WarpX::InitializeEBGridData(int lev)
+void WarpX::InitializeEBGridData (int lev)
 {
-    if(lev==maxLevel()) {
+#ifdef AMREX_USE_EB
+    if (lev == maxLevel()) {
+
+        // Throw a warning if EB is on and particle_shape > 1
+        bool flag_eb_on = not fieldEBFactory(lev).isAllRegular();
+
+        if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
+        {
+            this->RecordWarning("Particles",
+                                "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+                                "particles are close to embedded boundaries");
+        }
+
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
@@ -904,4 +916,7 @@ void WarpX::InitializeEBGridData(int lev)
         ComputeDistanceToEB();
 
     }
+#else
+    amrex::ignore_unused(lev);
+#endif
 }
