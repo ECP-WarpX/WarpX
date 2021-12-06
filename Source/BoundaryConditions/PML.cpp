@@ -111,6 +111,7 @@ namespace
         });
     }
 
+#if (AMREX_SPACEDIM != 1)
     static void FillZero (int idim, Sigma& sigma, Sigma& sigma_cumsum,
                           Sigma& sigma_star, Sigma& sigma_star_cumsum,
                           const Box& overlap)
@@ -136,7 +137,9 @@ namespace
             }
         });
     }
+#endif
 }
+
 
 SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta)
 {
@@ -184,8 +187,10 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
+#if (AMREX_SPACEDIM >= 2)
         int jdim = (idim+1) % AMREX_SPACEDIM;
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
         int kdim = (idim+2) % AMREX_SPACEDIM;
 #endif
 
@@ -198,11 +203,12 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 direct_faces.push_back(kv.first);
             }
+#if (AMREX_SPACEDIM >= 2)
             else if (amrex::grow(grid_box, jdim, ncell).intersects(box))
             {
                 side_faces.push_back(kv.first);
             }
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             else if (amrex::grow(grid_box, kdim, ncell).intersects(box))
             {
                 side_faces.push_back(kv.first);
@@ -227,15 +233,17 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 corners.push_back(kv.first);
             }
+#endif
         }
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : corners)
         {
             const Box& grid_box = grids[gid];
 
             Box lobox = amrex::adjCellLo(grid_box, idim, ncell);
             lobox.grow(jdim,ncell);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             lobox.grow(kdim,ncell);
 #endif
             Box looverlap = lobox & box;
@@ -247,7 +255,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
             Box hibox = amrex::adjCellHi(grid_box, idim, ncell);
             hibox.grow(jdim,ncell);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             hibox.grow(kdim,ncell);
 #endif
             Box hioverlap = hibox & box;
@@ -261,8 +269,9 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): corners, how did this happen?\n");
             }
         }
+#endif
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         for (auto gid : side_side_edges)
         {
             const Box& grid_box = grids[gid];
@@ -302,10 +311,11 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
         }
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : side_faces)
         {
             const Box& grid_box = grids[gid];
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             const Box& overlap = amrex::grow(grid_box,jdim,ncell) & box;
 #else
             const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell),kdim,ncell) & box;
@@ -317,6 +327,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): side_faces, how did this happen?\n");
             }
         }
+#endif
 
         for (auto gid : direct_faces)
         {
@@ -369,7 +380,12 @@ SigmaBox::ComputePMLFactorsB (const Real* a_dx, Real dt)
         N[idim] = sigma_star[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -398,7 +414,12 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
         N[idim] = sigma[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -520,10 +541,12 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif defined(WARPX_DIM_1D_Z)
+        IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
         // Set the number of guard cells to the maximum of each field
@@ -773,7 +796,7 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
         bx &= domain;
 
         Vector<Box> bndryboxes;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         int kbegin = -1, kend = 1;
 #else
         int kbegin =  0, kend = 0;

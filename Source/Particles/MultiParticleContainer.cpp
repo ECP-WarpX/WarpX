@@ -357,6 +357,10 @@ MultiParticleContainer::ReadParameters ()
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
+#ifdef WARPX_DIM_1D_Z
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+                            "ERROR: use_fdtd_nci_corr is not supported in 1D");
+#endif
 
         ParmParse pp_lasers("lasers");
         pp_lasers.queryarr("names", lasers_names);
@@ -1303,11 +1307,16 @@ MultiParticleContainer::doQEDSchwinger ()
 #ifdef WARPX_DIM_RZ
     amrex::Abort("Schwinger process not implemented in rz geometry");
 #endif
+#ifdef WARPX_DIM_1D_Z
+    amrex::Abort("Schwinger process not implemented in 1D geometry");
+#endif
 
 // Get cell volume. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    const auto dV = geom.CellSize(0); // TODO: scale properly
+#elif (AMREX_SPACEDIM == 2)
     const auto dV = geom.CellSize(0) * geom.CellSize(1)
         * m_qed_schwinger_y_size;
 #elif (AMREX_SPACEDIM == 3)

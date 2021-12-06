@@ -112,12 +112,15 @@ guardCellManager::Init (
         ngJz = std::max(ngJz,max_r);
     }
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     ng_alloc_EB = IntVect(ngx,ngy,ngz);
     ng_alloc_J = IntVect(ngJx,ngJy,ngJz);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+#elif defined(WARPX_DIM_1D_Z)
+    ng_alloc_EB = IntVect(ngz);
+    ng_alloc_J = IntVect(ngJz);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
@@ -194,10 +197,12 @@ guardCellManager::Init (
         queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif defined(WARPX_DIM_1D_Z)
+        IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
 #ifdef WARPX_DIM_RZ

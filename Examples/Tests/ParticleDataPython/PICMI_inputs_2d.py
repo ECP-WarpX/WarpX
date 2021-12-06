@@ -1,19 +1,19 @@
-from mpi4py import MPI
 from pywarpx import picmi
 import numpy as np
 
-##########################
-# MPI communicator setup
-##########################
+import argparse
+import sys
 
-# split processor 0 into separate communicator from others
-comm_world = MPI.COMM_WORLD
-rank = comm_world.Get_rank()
-if rank == 0:
-    color = 0
-else:
-    color = 1
-new_comm = comm_world.Split(color)
+# Create the parser and add the argument
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-u', '--unique', action='store_true',
+    help="Whether injected particles should be treated as unique"
+)
+
+# Parse the input
+args, left = parser.parse_known_args()
+sys.argv = sys.argv[:1] + left
 
 ##########################
 # numerics parameters
@@ -75,7 +75,7 @@ field_diag = picmi.FieldDiagnostic(
     period = 10,
     data_list = ['phi'],
     write_dir = '.',
-    warpx_file_prefix = f'Python_particle_attr_access_plt_{color}'
+    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
 )
 
 ##########################
@@ -98,7 +98,7 @@ sim.add_species(
 sim.add_diagnostic(field_diag)
 
 sim.initialize_inputs()
-sim.initialize_warpx(mpi_comm=new_comm)
+sim.initialize_warpx()
 
 ##########################
 # python particle data access
@@ -108,9 +108,11 @@ from pywarpx import _libwarpx, callbacks
 
 _libwarpx.add_real_comp('electrons', 'newPid')
 
+my_id = _libwarpx.libwarpx.warpx_getMyProc()
+
 def add_particles():
 
-    nps = 10
+    nps = 10 * (my_id + 1)
     x = np.random.rand(nps) * 0.03
     y = np.zeros(nps)
     z = np.random.random(nps) * 0.03
@@ -122,7 +124,7 @@ def add_particles():
 
     _libwarpx.add_particles(
         species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
-        w=w, newPid=newPid, unique_particles=(not color)
+        w=w, newPid=newPid, unique_particles=args.unique
     )
 
 callbacks.installbeforestep(add_particles)
@@ -131,16 +133,14 @@ callbacks.installbeforestep(add_particles)
 # simulation run
 ##########################
 
-sim.step(max_steps - 1, mpi_comm=new_comm)
+sim.step(max_steps - 1)
 
 ##########################
-# check that the new PIDs are properly set
+# check that the new PIDs
+# are properly set
 ##########################
 
-if color == 0:
-    assert (_libwarpx.get_particle_count('electrons') == 90)
-else:
-    assert (_libwarpx.get_particle_count('electrons') == 90)
+assert (_libwarpx.get_particle_count('electrons') == 270 / (2 - args.unique))
 assert (_libwarpx.get_particle_comp_index('electrons', 'w') == 0)
 assert (_libwarpx.get_particle_comp_index('electrons', 'newPid') == 4)
 

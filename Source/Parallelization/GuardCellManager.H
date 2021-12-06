@@ -11,6 +11,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
+#include <AMReX_Vector.H>
 
 /**
  * \brief This class computes and stores the number of guard cells needed for

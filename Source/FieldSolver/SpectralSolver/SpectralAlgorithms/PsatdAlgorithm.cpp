@@ -103,14 +103,18 @@ PsatdAlgorithm::PsatdAlgorithm(
         InitializeSpectralCoefficientsAvgLin(spectral_kspace, dm, dt);
     }
 
-    if (dive_cleaning && !J_linear_in_time)
+    if (dive_cleaning && m_is_galilean)
     {
-        amrex::Abort("PSATD: warpx.do_dive_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+        amrex::Abort("warpx.do_dive_cleaning = 1 not implemented for Galilean PSATD algorithms");
     }
 
-    if (divb_cleaning && !J_linear_in_time)
+    if (divb_cleaning && m_is_galilean)
     {
-        amrex::Abort("PSATD: warpx.do_divb_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+        amrex::Abort("warpx.do_divb_cleaning = 1 not implemented for Galilean PSATD algorithms");
+    }
+    if (time_averaging && !update_with_rho)
+    {
+        amrex::Abort("PSATD: warpx.time_averaging = 1 implemented only with psatd.update_with_rho = 1");
     }
 }
 
@@ -292,6 +296,30 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                                    - I * T2 * S_ck * (kx * Ey_old - ky * Ex_old)
                                    + I * X1 * (kx * Jy - ky * Jx);
 
+            if (dive_cleaning)
+            {
+                const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;
+                const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
+
+                fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
+                fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
+                fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
+
+                fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
+                    - X1 * ((rho_new - rho_old) / dt + I * k_dot_J);
+            }
+
+            if (divb_cleaning)
+            {
+                const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
+
+                fields(i,j,k,Idx.Bx) += I * S_ck * G_old * kx;
+                fields(i,j,k,Idx.By) += I * S_ck * G_old * ky;
+                fields(i,j,k,Idx.Bz) += I * S_ck * G_old * kz;
+
+                fields(i,j,k,Idx.G) = C * G_old + I * c2 * S_ck * k_dot_B;
+            }
+
             if (J_linear_in_time)
             {
                 const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
@@ -308,27 +336,9 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
                 if (dive_cleaning)
                 {
-                    const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;
                     const Complex k_dot_dJ = kx * (Jx_new - Jx) + ky * (Jy_new - Jy) + kz * (Jz_new - Jz);
-                    const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
 
-                    fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
-                    fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
-                    fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
-
-                    fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
-                        - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
-                }
-
-                if (divb_cleaning)
-                {
-                    const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
-
-                    fields(i,j,k,Idx.Bx) += I * S_ck * G_old * kx;
-                    fields(i,j,k,Idx.By) += I * S_ck * G_old * ky;
-                    fields(i,j,k,Idx.Bz) += I * S_ck * G_old * kz;
-
-                    fields(i,j,k,Idx.G) = C * G_old + I * c2 * S_ck * k_dot_B;
+                    fields(i,j,k,Idx.F) += -I * X2/c2 * k_dot_dJ;
                 }
 
                 if (time_averaging)

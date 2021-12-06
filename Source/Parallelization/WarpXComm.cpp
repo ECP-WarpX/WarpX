@@ -998,10 +998,12 @@ WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
         IntVect ng_depos_J = get_ng_depos_J();
         if (WarpX::do_current_centering)
         {
-#if   (AMREX_SPACEDIM == 2)
+#if   defined(WARPX_DIM_1D_Z)
+            ng_depos_J[0] += WarpX::current_centering_noz / 2;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             ng_depos_J[0] += WarpX::current_centering_nox / 2;
             ng_depos_J[1] += WarpX::current_centering_noz / 2;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             ng_depos_J[0] += WarpX::current_centering_nox / 2;
             ng_depos_J[1] += WarpX::current_centering_noy / 2;
             ng_depos_J[2] += WarpX::current_centering_noz / 2;
@@ -1052,10 +1054,10 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             IntVect ng_depos_J = get_ng_depos_J();
             if (WarpX::do_current_centering)
             {
-#if   (AMREX_SPACEDIM == 2)
+#if   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 ng_depos_J[0] += WarpX::current_centering_nox / 2;
                 ng_depos_J[1] += WarpX::current_centering_noz / 2;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
                 ng_depos_J[0] += WarpX::current_centering_nox / 2;
                 ng_depos_J[1] += WarpX::current_centering_noy / 2;
                 ng_depos_J[2] += WarpX::current_centering_noz / 2;
