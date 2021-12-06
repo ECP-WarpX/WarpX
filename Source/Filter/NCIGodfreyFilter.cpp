@@ -27,18 +27,23 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
     m_coeff_set = coeff_set;
     m_cdtodz = cdtodz;
     m_nodal_gather = nodal_gather;
+
     // NCI Godfrey filter has fixed size, and is applied along z only.
 #if (AMREX_SPACEDIM == 3)
     stencil_length_each_dir = {1,1,5};
     slen = {1,1,5};
-#else
+#elif (AMREX_SPACEDIM == 2)
     stencil_length_each_dir = {1,5};
     slen = {1,5,1};
+#else
+    amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
+    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
 #endif
 }
 
 void NCIGodfreyFilter::ComputeStencils(){
 
+#if (AMREX_SPACEDIM >= 2)
     using namespace warpx::nci_godfrey;
 
     // Sanity checks: filter length shoulz be 5 in z
@@ -128,4 +133,7 @@ void NCIGodfreyFilter::ComputeStencils(){
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_z.begin());
 
     Gpu::synchronize();
+#else
+    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
+#endif
 }

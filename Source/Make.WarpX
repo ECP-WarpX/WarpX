@@ -58,12 +58,18 @@ include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
 ifeq ($(DIM),3)
   DEFINES += -DWARPX_DIM_3D
-else
+endif
+
+ifeq ($(DIM),2)
 ifeq ($(USE_RZ),TRUE)
   DEFINES += -DWARPX_DIM_RZ
 else
   DEFINES += -DWARPX_DIM_XZ
 endif
+endif
+
+ifeq ($(DIM),1)
+  DEFINES += -DWARPX_DIM_1D_Z
 endif
 
 -include Make.package
@@ -246,7 +252,7 @@ libwarpx.$(PYDIM).so: $(objForExecs)
 ifeq ($(USE_CUDA),TRUE)
 	$(SILENT) $(CXX) $(LINKFLAGS) $(SHARED_OPTION) -Xlinker=$(SHARED_OPTION) -Xlinker=-fPIC -o $@ $^ $(LDFLAGS) $(libraries)
 else
-	$(SILENT) $(CXX) $(SHARED_OPTION) -fPIC -o $@ $^ $(LDFLAGS) $(libraries)
+	$(SILENT) $(CXX) $(LINKFLAGS) $(SHARED_OPTION) -fPIC -o $@ $^ $(LDFLAGS) $(libraries)
 endif
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 	@echo SUCCESS

@@ -54,7 +54,7 @@ grid = picmi.Cartesian3DGrid(
     upper_boundary_conditions=['none', 'none', 'none'],
     lower_boundary_conditions_particles=['open', 'open', 'open'],
     upper_boundary_conditions_particles=['open', 'open', 'open'],
-    warpx_max_grid_size = 128
+    warpx_max_grid_size = 32
 )
 
 solver = picmi.ElectromagneticSolver(
@@ -86,7 +86,9 @@ sim = picmi.Simulation(
     solver = solver,
     max_steps = max_steps,
     warpx_embedded_boundary=embedded_boundary,
-    verbose=True
+    verbose=True,
+    warpx_load_balance_intervals=40,
+    warpx_load_balance_efficiency_ratio_threshold=0.9
 )
 
 sim.add_species(
@@ -111,9 +113,12 @@ sim.step(max_steps)
 ################################################
 
 from pywarpx import _libwarpx
+from mpi4py import MPI as mpi
+
+my_id = _libwarpx.libwarpx.warpx_getMyProc()
 
 n = _libwarpx.get_particle_boundary_buffer_size("electrons", 'eb')
-print("Number of electrons in buffer:", n)
+print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 612
 
 scraped_steps = _libwarpx.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
@@ -121,11 +126,14 @@ for arr in scraped_steps:
     assert all(arr > 40)
 
 weights = _libwarpx.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)
-assert sum(len(arr) for arr in weights) == 612
+n = sum(len(arr) for arr in weights)
+print(f"Number of electrons in this proc's buffer (proc #{my_id}): {n}")
+n_sum =  mpi.COMM_WORLD.allreduce(n, op=mpi.SUM)
+assert n_sum == 612
 
 # clear the particle buffer
 _libwarpx.libwarpx.warpx_clearParticleBoundaryBuffer()
 # confirm that the buffer was cleared
 n = _libwarpx.get_particle_boundary_buffer_size("electrons", 'eb')
-print("Number of electrons in buffer:", n)
+print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 0

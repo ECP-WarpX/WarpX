@@ -30,3 +30,42 @@ jobs:
     - name: Build
       run: |
         cmake --build build -j 2
+
+  ascent:
+    name: Ascent
+    runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
+    env:
+      CXX: g++
+      CC: gcc
+      CMAKE_PREFIX_PATH: /ascent/install-debug/lib/cmake/
+    container:
+      image: alpinedav/ascent:ascent-ubuntu-18_2021-11-02-sha458045
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure
+      run: |
+        . /ascent_docker_setup_env.sh
+        cmake -S . -B build   \
+            -DWarpX_ASCENT=ON \
+            -DWarpX_COMPUTE=NOACC
+    - name: Build
+      run: |
+        . /ascent_docker_setup_env.sh
+        cmake --build build -j 2
+    - name: Test
+      run: |
+        cp Examples/Physics_applications/laser_acceleration/inputs_3d .
+        cp Examples/Physics_applications/laser_acceleration/3d_ascent_actions.yaml ascent_actions.yaml
+        mpiexec -n 2 ./build/bin/warpx \
+          inputs_3d                    \
+            max_step = 40              \
+            diag1.intervals = 30:40:10 \
+            diag1.format = ascent
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ascent-test-artifacts
+        path: |
+          *.png
+          conduit_*
+        if-no-files-found: error

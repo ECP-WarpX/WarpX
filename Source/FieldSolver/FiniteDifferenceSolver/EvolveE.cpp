@@ -176,7 +176,6 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
                     - PhysConst::mu0 * jy(i, j, k) );
-
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){

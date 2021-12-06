@@ -449,7 +449,7 @@ void
 WarpX::PrintLocalWarnings(const std::string& when)
 {
     WARPX_PROFILE("WarpX::PrintLocalWarnings");
-    const auto warn_string = m_p_warn_manager->print_local_warnings(when);
+    const std::string warn_string = m_p_warn_manager->print_local_warnings(when);
     amrex::AllPrint() << warn_string;
 }
 
@@ -457,7 +457,7 @@ void
 WarpX::PrintGlobalWarnings(const std::string& when)
 {
     WARPX_PROFILE("WarpX::PrintGlobalWarnings");
-    const auto warn_string = m_p_warn_manager->print_global_warnings(when);
+    const std::string warn_string = m_p_warn_manager->print_global_warnings(when);
     amrex::Print() << warn_string;
 }
 
@@ -659,7 +659,9 @@ WarpX::ReadParameters ()
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
         queryArrWithParser(pp_warpx, "filter_npass_each_dir", parse_filter_npass_each_dir, 0, AMREX_SPACEDIM);
         filter_npass_each_dir[0] = parse_filter_npass_each_dir[0];
+#if (AMREX_SPACEDIM >= 2)
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
+#endif
 #if (AMREX_SPACEDIM == 3)
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
@@ -1432,7 +1434,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
-#if   (AMREX_SPACEDIM == 2)
+#if   (AMREX_SPACEDIM == 1)
+    amrex::RealVect dx(WarpX::CellSize(lev)[2]);
+#elif   (AMREX_SPACEDIM == 2)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
 #elif (AMREX_SPACEDIM == 3)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
@@ -1493,7 +1497,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     amrex::IntVect F_nodal_flag, G_nodal_flag;
 
     // Set nodal flags
-#if   (AMREX_SPACEDIM == 2)
+#if   (AMREX_SPACEDIM == 1)
+    // AMReX convention: x = missing dimension, y = missing dimension, z = only dimension
+    Ex_nodal_flag = IntVect(1);
+    Ey_nodal_flag = IntVect(1);
+    Ez_nodal_flag = IntVect(0);
+    Bx_nodal_flag = IntVect(0);
+    By_nodal_flag = IntVect(0);
+    Bz_nodal_flag = IntVect(1);
+    jx_nodal_flag = IntVect(1);
+    jy_nodal_flag = IntVect(1);
+    jz_nodal_flag = IntVect(0);
+#elif   (AMREX_SPACEDIM == 2)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
     Ex_nodal_flag = IntVect(0,1);
     Ey_nodal_flag = IntVect(1,1);
@@ -1637,11 +1652,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             Venl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Venl[x]"));
             Venl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Venl[y]"));
             Venl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Venl[z]"));
-            // DISCLAIMER: ECTRhofield is NOT the charge density. This multifab is needed only by the ect
-            // solver and it represents the electromotive force density. The name ECTRhofield has been used
-            // to comply with the notation of the paper
-            // https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
-            // and below).
+
             ECTRhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[x]"));
             ECTRhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[y]"));
             ECTRhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[z]"));
@@ -1953,11 +1964,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                         const amrex::DistributionMapping& dm,
                                         const std::array<Real,3>& dx)
 {
-#if (AMREX_SPACEDIM == 3)
-    RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
-#endif
 
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
@@ -2006,6 +2013,8 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
     RealVect dx_vect(dx[0], dx[1], dx[2]);
 #elif (AMREX_SPACEDIM == 2)
     RealVect dx_vect(dx[0], dx[2]);
+#elif (AMREX_SPACEDIM == 1)
+    RealVect dx_vect(dx[2]);
 #endif
 
     amrex::Real solver_dt = dt[lev];
@@ -2038,21 +2047,21 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 std::array<Real,3>
 WarpX::CellSize (int lev)
 {
-    const auto& gm = GetInstance().Geom(lev);
+    const amrex::Geometry& gm = GetInstance().Geom(lev);
     const Real* dx = gm.CellSize();
 #if (AMREX_SPACEDIM == 3)
     return { dx[0], dx[1], dx[2] };
 #elif (AMREX_SPACEDIM == 2)
     return { dx[0], 1.0, dx[1] };
 #else
-    static_assert(AMREX_SPACEDIM != 1, "1D is not supported");
+    return { 1.0, 1.0, dx[0] };
 #endif
 }
 
 amrex::RealBox
 WarpX::getRealBox(const Box& bx, int lev)
 {
-    const auto& gm = GetInstance().Geom(lev);
+    const amrex::Geometry& gm = GetInstance().Geom(lev);
     const RealBox grid_box{bx, gm.CellSize(), gm.ProbLo()};
     return( grid_box );
 }
@@ -2069,6 +2078,9 @@ WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int 
 
 #elif (AMREX_SPACEDIM == 2)
     return { xyzmin[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), xyzmin[1] + galilean_shift[2] };
+
+#elif (AMREX_SPACEDIM == 1)
+    return { std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::lowest(), xyzmin[0] + galilean_shift[2] };
 #endif
 }
 
@@ -2081,6 +2093,8 @@ WarpX::UpperCorner(const Box& bx, int lev)
     return { xyzmax[0], xyzmax[1], xyzmax[2] };
 #elif (AMREX_SPACEDIM == 2)
     return { xyzmax[0], std::numeric_limits<Real>::max(), xyzmax[1] };
+#elif (AMREX_SPACEDIM == 1)
+    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] };
 #endif
 }
 
@@ -2120,10 +2134,10 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         const Box& bx = mfi.tilebox();
-        auto const& Bxfab = B[0]->array(mfi);
-        auto const& Byfab = B[1]->array(mfi);
-        auto const& Bzfab = B[2]->array(mfi);
-        auto const& divBfab = divB.array(mfi);
+        amrex::Array4<const amrex::Real> const& Bxfab = B[0]->array(mfi);
+        amrex::Array4<const amrex::Real> const& Byfab = B[1]->array(mfi);
+        amrex::Array4<const amrex::Real> const& Bzfab = B[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& divBfab = divB.array(mfi);
 
         ParallelFor(bx,
         [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -2158,10 +2172,10 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.growntilebox(ngrow);
-        auto const& Bxfab = B[0]->array(mfi);
-        auto const& Byfab = B[1]->array(mfi);
-        auto const& Bzfab = B[2]->array(mfi);
-        auto const& divBfab = divB.array(mfi);
+        amrex::Array4<const amrex::Real> const& Bxfab = B[0]->array(mfi);
+        amrex::Array4<const amrex::Real> const& Byfab = B[1]->array(mfi);
+        amrex::Array4<const amrex::Real> const& Bzfab = B[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& divBfab = divB.array(mfi);
 
         ParallelFor(bx,
         [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -2209,7 +2223,7 @@ WarpX::getPMLdirections() const
 #endif
     if( do_pml )
     {
-        for( auto i = 0u; i < dirsWithPML.size() / 2u; ++i )
+        for( unsigned int i = 0u; i < dirsWithPML.size() / 2u; ++i )
         {
             dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[i]);
             dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[i]);
@@ -2248,7 +2262,7 @@ WarpX::BuildBufferMasks ()
                 const int physbnd = 1;
                 const int interior = 1;
                 const Box& dom = Geom(lev).Domain();
-                const auto& period = Geom(lev).periodicity();
+                const amrex::Periodicity& period = Geom(lev).periodicity();
                 tmp.BuildMask(dom, period, covered, notcovered, physbnd, interior);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -2276,11 +2290,23 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
                                const amrex::IArrayBox &guard_mask, const int ng )
 {
     bool setnull;
-    const auto lo = amrex::lbound( tbx );
-    const auto hi = amrex::ubound( tbx );
+    const amrex::Dim3 lo = amrex::lbound( tbx );
+    const amrex::Dim3 hi = amrex::ubound( tbx );
     Array4<int> msk = buffer_mask.array();
     Array4<int const> gmsk = guard_mask.array();
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+    int k = lo.z;
+    int j = lo.y;
+    for (int i = lo.x; i <= hi.x; ++i) {
+        setnull = false;
+        // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+        for (int ii = i-ng; ii <= i+ng; ++ii) {
+            if ( gmsk(ii,j,k) == 0 ) setnull = true;
+        }
+        if ( setnull ) msk(i,j,k) = 0;
+        else           msk(i,j,k) = 1;
+    }
+#elif (AMREX_SPACEDIM == 2)
     int k = lo.z;
     for     (int j = lo.y; j <= hi.y; ++j) {
         for (int i = lo.x; i <= hi.x; ++i) {
