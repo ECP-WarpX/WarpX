@@ -23,7 +23,7 @@ A very common tape filesystem is HPSS, e.g., on `NERSC <https://docs.nersc.gov/f
 * **Create** an archive of a simulation: ``htar -cvf 2021/reproduce_paper/sim_042.tar /global/cfs/cdirs/m1234/ahuebl/reproduce_paper/sim_042``
 
   * This *copies* all files over to the tape filesystem and stores them as a single ``.tar`` archive
-  * The first argument for here will be the new archive ``.tar`` file on the archive file systm, all following arguments (can be multiple, separated by a space) are locations to directories and files on the parallel file system.
+  * The first argument here will be the new archive ``.tar`` file on the archive file system, all following arguments (can be multiple, separated by a space) are locations to directories and files on the parallel file system.
   * Don't be confused, these tools also create an index ``.tar.idx`` file along it; just leave that file be and don't interact with it
 * **Restore** things:
 
