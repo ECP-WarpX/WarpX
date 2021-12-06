@@ -119,7 +119,7 @@ Without MPI:
 .. code-block:: bash
 
    conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy scipy yt fftw matplotlib mamba ninja
-   conda activate warpx-dev
+   source activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
 
@@ -127,8 +127,16 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api=*=mpi_openmpi* python numpy scipy yt fftw=*=mpi_openmpi* matplotlib mamba ninja openmpi
-   conda activate warpx-dev
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_openmpi*" python numpy scipy yt "fftw=*=mpi_openmpi*" matplotlib mamba ninja openmpi
+   source activate warpx-dev
+
+For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
+
+.. code-block:: bash
+
+   export FFTW_HOME=${CONDA_PREFIX}
+   export BLASPP_HOME=${CONDA_PREFIX}
+   export LAPACKPP_HOME=${CONDA_PREFIX}
 
 
 Apt (Debian/Ubuntu)
