@@ -139,18 +139,195 @@ class _MultiFABWrapper(object):
                 index.append(slice(None))
             index = tuple(index)
 
+        lovects, ngrow = self._getlovects()
+        hivects, ngrow = self._gethivects()
+        fields = self._getfields()
+
+        ix, iy, iz = self._get_idxs(index)
+
+        if len(fields[0].shape) > self.dim:
+            ncomps = fields[0].shape[-1]
+        else:
+            ncomps = 1
+
+        if len(index) > self.dim:
+            if ncomps > 1:
+                ic = index[-1]
+            else:
+                raise Exception('Too many indices given')
+        else:
+            ic = None
+
+        ixmin, iymin, izmin = self._get_idx_mins(lovects)
+        ixmax, iymax, izmax = self._get_idx_maxs(hivects)
+
+        if npes > 1:
+            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
+            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+
+        # --- Setup the size of the array to be returned.
         if self.dim == 1:
-            return self._getitem1d(index)
+            ixstart, ixstop = None, None
+            iystart, iystop = None, None
+            izstart, izstop = self._find_start_stop(iz, izmin, izmax, 0)
+
+            sss = [max(0, izstop - izstart)]
+
         elif self.dim == 2:
-            return self._getitem2d(index)
+            ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+            iystart, iystop = None, None
+            izstart, izstop = self._find_start_stop(iz, izmin, izmax, 1)
+
+            sss = (max(0, ixstop - ixstart),
+                   max(0, izstop - izstart))
+
         elif self.dim == 3:
-            return self._getitem3d(index)
+            ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+            iystart, iystop = self._find_start_stop(iy, iymin, iymax, 1)
+            izstart, izstop = self._find_start_stop(iz, izmin, izmax, 2)
+
+            sss = (max(0, ixstop - ixstart),
+                   max(0, iystop - iystart),
+                   max(0, izstop - izstart))
+
+        # --- Space is added for multiple components if needed.
+        if ncomps > 1 and ic is None:
+            sss = tuple(list(sss) + [ncomps])
+        # --- Create the array to be returned.
+        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
+
+        datalist = []
+        for i in range(len(fields)):
+            sss, vslice = self._get_vslice(
+                lovects, fields[i].shape, ixstart, ixstop, iystart,
+                iystop, izstart, izstop, ic
+            )
+            if vslice is not None:
+                datalist.append((vslice, fields[i][sss]))
+
+        if npes == 1:
+            all_datalist = [datalist]
+        else:
+            all_datalist = comm_world.allgather(datalist)
+
+        for datalist in all_datalist:
+            for vslice, ff in datalist:
+                resultglobal[vslice] = ff
+
+        # --- Now remove any of the reduced dimensions.
+        if self.dim == 1:
+            sss = [slice(None)]
+            if not isinstance(iz, slice):
+                sss[0] = 0
+        elif self.dim == 2:
+            sss = [slice(None), slice(None)]
+            if not isinstance(ix, slice):
+                sss[0] = 0
+            if not isinstance(iz, slice):
+                sss[1] = 0
+        elif self.dim == 3:
+            sss = [slice(None), slice(None), slice(None)]
+            if not isinstance(ix, slice):
+                sss[0] = 0
+            if not isinstance(iy, slice):
+                sss[1] = 0
+            if not isinstance(iz, slice):
+                sss[2] = 0
+
+        return resultglobal[tuple(sss)]
+
+    def __setitem__(self, index, value):
+        """Sets slices of a decomposed array. The shape of
+      the input object depends on the number of arguments specified, which can
+      be from none to all three.
+        - value: input array (must be supplied)
+        """
+        if index == Ellipsis:
+            index = tuple(self.dim*[slice(None)])
+
+        if len(index) < self.dim:
+            # --- Add extra dims to index if needed
+            index = list(index)
+            for i in range(len(index), self.dim):
+                index.append(slice(None))
+            index = tuple(index)
+
+        lovects, ngrow = self._getlovects()
+        hivects, ngrow = self._gethivects()
+        fields = self._getfields()
+
+        ix, iy, iz = self._get_idxs(index)
+
+        if len(index) > self.dim:
+            if ncomps > 1:
+                ic = index[-1]
+            else:
+                raise Exception('Too many indices given')
+        else:
+            ic = None
+
+        ixmin, iymin, izmin = self._get_idx_mins(lovects)
+        ixmax, iymax, izmax = self._get_idx_maxs(hivects)
+
+        if npes > 1:
+            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
+            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
+            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
+            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+
+        # --- Add extra dimensions so that the input has the same number of
+        # --- dimensions as array.
+        if self.dim == 1:
+            ixstart, ixstop = None, None
+            iystart, iystop = None, None
+            izstart, izstop = self._find_start_stop(iz, izmin, izmax, 0)
+
+        elif self.dim == 2:
+            ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+            iystart, iystop = None, None
+            izstart, izstop = self._find_start_stop(iz, izmin, izmax, 1)
+
+        elif self.dim == 3:
+            ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
+            iystart, iystop = self._find_start_stop(iy, iymin, iymax, 1)
+            izstart, izstop = self._find_start_stop(iz, izmin, izmax, 2)
+
+        if isinstance(value, np.ndarray):
+            value3d = np.array(value, copy=False)
+            sss = list(value3d.shape)
+            if self.dim == 1:
+                if not isinstance(iz, slice): sss[0:0] = [1]
+            elif self.dim == 2:
+                if not isinstance(ix, slice): sss[0:0] = [1]
+                if not isinstance(iz, slice): sss[1:1] = [1]
+            elif self.dim == 3:
+                if not isinstance(ix, slice): sss[0:0] = [1]
+                if not isinstance(iy, slice): sss[1:1] = [1]
+                if not isinstance(iz, slice): sss[2:2] = [1]
+            value3d.shape = sss
+
+        for i in range(len(fields)):
+            sss, vslice = self._get_vslice(
+                lovects, fields[i].shape, ixstart, ixstop, iystart,
+                iystop, izstart, izstop, ic
+            )
+            if vslice is not None:
+                if isinstance(value, np.ndarray):
+                    fields[i][sss] = value3d[vslice]
+                else:
+                    fields[i][sss] = value
 
     def _find_start_stop(self, ii, imin, imax, d):
         """Given the input index, calculate the start and stop range of the indices.
         - ii: input index, either a slice object or an integer
-        - imin: the global lowest lovect value in the specified diretion
-        - imax: the global highest hivect value in the specified diretion
+        - imin: the global lowest lovect value in the specified direction
+        - imax: the global highest hivect value in the specified direction
         - d: the direction, an integer, 0, 1, or 2
         If ii is a slice, the start and stop values are used directly,
         unless they are None, then the lower or upper bound is used.
@@ -172,482 +349,80 @@ class _MultiFABWrapper(object):
         assert imin <= iistop <= imax + self.overlaps[d], Exception(f'Dimension {d} upper index is out of bounds')
         return iistart, iistop
 
-    def _getitem3d(self, index):
-        """Returns slices of a 3D decomposed array,
-        """
-
-        lovects, ngrow = self._getlovects()
-        hivects, ngrow = self._gethivects()
-        fields = self._getfields()
-
-        ix = index[0]
-        iy = index[1]
-        iz = index[2]
-
-        if len(fields[0].shape) > self.dim:
-            ncomps = fields[0].shape[-1]
-        else:
-            ncomps = 1
-
-        if len(index) > self.dim:
-            if ncomps > 1:
-                ic = index[-1]
-            else:
-                raise Exception('Too many indices given')
-        else:
-            ic = None
-
-        ixmin = lovects[0,:].min()
-        ixmax = hivects[0,:].max()
-        iymin = lovects[1,:].min()
-        iymax = hivects[1,:].max()
-        izmin = lovects[2,:].min()
-        izmax = hivects[2,:].max()
-
-        if npes > 1:
-            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
-            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
-            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
-            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
-            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
-            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
-
-        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
-        iystart, iystop = self._find_start_stop(iy, iymin, iymax, 1)
-        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 2)
-
-        # --- Setup the size of the array to be returned and create it.
-        # --- Space is added for multiple components if needed.
-        sss = (max(0, ixstop - ixstart),
-               max(0, iystop - iystart),
-               max(0, izstop - izstart))
-        if ncomps > 1 and ic is None:
-            sss = tuple(list(sss) + [ncomps])
-        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
-
-        datalist = []
-        for i in range(len(fields)):
-
-            # --- The ix1, 2 etc are relative to global indexing
-            ix1 = max(ixstart, lovects[0,i])
-            ix2 = min(ixstop, lovects[0,i] + fields[i].shape[0])
-            iy1 = max(iystart, lovects[1,i])
-            iy2 = min(iystop, lovects[1,i] + fields[i].shape[1])
-            iz1 = max(izstart, lovects[2,i])
-            iz2 = min(izstop, lovects[2,i] + fields[i].shape[2])
-
-            if ix1 < ix2 and iy1 < iy2 and iz1 < iz2:
-
-                sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
-                       slice(iy1 - lovects[1,i], iy2 - lovects[1,i]),
-                       slice(iz1 - lovects[2,i], iz2 - lovects[2,i]))
-                if ic is not None:
-                    sss = tuple(list(sss) + [ic])
-
-                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
-                          slice(iy1 - iystart, iy2 - iystart),
-                          slice(iz1 - izstart, iz2 - izstart))
-
-                datalist.append((vslice, fields[i][sss]))
-
-        if npes == 1:
-            all_datalist = [datalist]
-        else:
-            all_datalist = comm_world.allgather(datalist)
-
-        for datalist in all_datalist:
-            for vslice, ff in datalist:
-                resultglobal[vslice] = ff
-
-        # --- Now remove any of the reduced dimensions.
-        sss = [slice(None), slice(None), slice(None)]
-        if not isinstance(ix, slice):
-            sss[0] = 0
-        if not isinstance(iy, slice):
-            sss[1] = 0
-        if not isinstance(iz, slice):
-            sss[2] = 0
-
-        return resultglobal[tuple(sss)]
-
-    def _getitem2d(self, index):
-        """Returns slices of a 2D decomposed array,
-        """
-
-        lovects, ngrow = self._getlovects()
-        hivects, ngrow = self._gethivects()
-        fields = self._getfields()
-
-        ix = index[0]
-        iz = index[1]
-
-        if len(fields[0].shape) > self.dim:
-            ncomps = fields[0].shape[-1]
-        else:
-            ncomps = 1
-
-        if len(index) > self.dim:
-            if ncomps > 1:
-                ic = index[2]
-            else:
-                raise Exception('Too many indices given')
-        else:
-            ic = None
-
-        ixmin = lovects[0,:].min()
-        ixmax = hivects[0,:].max()
-        izmin = lovects[1,:].min()
-        izmax = hivects[1,:].max()
-
-        if npes > 1:
-            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
-            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
-            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
-            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
-
-        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
-        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 1)
-
-        # --- Setup the size of the array to be returned and create it.
-        # --- Space is added for multiple components if needed.
-        sss = (max(0, ixstop - ixstart),
-               max(0, izstop - izstart))
-        if ncomps > 1 and ic is None:
-            sss = tuple(list(sss) + [ncomps])
-        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
-
-        datalist = []
-        for i in range(len(fields)):
-
-            # --- The ix1, 2 etc are relative to global indexing
-            ix1 = max(ixstart, lovects[0,i])
-            ix2 = min(ixstop, lovects[0,i] + fields[i].shape[0])
-            iz1 = max(izstart, lovects[1,i])
-            iz2 = min(izstop, lovects[1,i] + fields[i].shape[1])
-
-            if ix1 < ix2 and iz1 < iz2:
-
-                sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
-                       slice(iz1 - lovects[1,i], iz2 - lovects[1,i]))
-                if ic is not None:
-                    sss = tuple(list(sss) + [ic])
-
-                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
-                          slice(iz1 - izstart, iz2 - izstart))
-
-                datalist.append((vslice, fields[i][sss]))
-
-        if npes == 1:
-            all_datalist = [datalist]
-        else:
-            all_datalist = comm_world.allgather(datalist)
-
-        for datalist in all_datalist:
-            for vslice, ff in datalist:
-                resultglobal[vslice] = ff
-
-        # --- Now remove any of the reduced dimensions.
-        sss = [slice(None), slice(None)]
-        if not isinstance(ix, slice):
-            sss[0] = 0
-        if not isinstance(iz, slice):
-            sss[1] = 0
-
-        return resultglobal[tuple(sss)]
-
-    def _getitem1d(self, index):
-        """Returns slices of a 1D decomposed array,
-        """
-
-        lovects, ngrow = self._getlovects()
-        hivects, ngrow = self._gethivects()
-        fields = self._getfields()
-
-        iz = index[0]
-
-        if len(fields[0].shape) > self.dim:
-            ncomps = fields[0].shape[-1]
-        else:
-            ncomps = 1
-
-        if len(index) > self.dim:
-            if ncomps > 1:
-                ic = index[2]
-            else:
-                raise Exception('Too many indices given')
-        else:
-            ic = None
-
-        izmin = lovects[0,:].min()
-        izmax = hivects[0,:].max()
-
-        if npes > 1:
-            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
-            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
-
-        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 0)
-
-        # --- Setup the size of the array to be returned and create it.
-        # --- Space is added for multiple components if needed.
-        sss = (max(0, izstop - izstart))
-        if ncomps > 1 and ic is None:
-            sss = tuple([sss] + [ncomps])
-        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
-
-        datalist = []
-        for i in range(len(fields)):
-
-            # --- The ix1, 2 etc are relative to global indexing
-            iz1 = max(izstart, lovects[0,i])
-            iz2 = min(izstop, lovects[0,i] + fields[i].shape[0])
-
-            if iz1 < iz2:
-
-                sss = (slice(iz1 - lovects[0,i], iz2 - lovects[0,i]))
-                if ic is not None:
-                    sss = tuple(list(sss) + [ic])
-
-                vslice = (slice(iz1 - izstart, iz2 - izstart))
-
-                datalist.append((vslice, fields[i][sss]))
-
-        if npes == 1:
-            all_datalist = [datalist]
-        else:
-            all_datalist = comm_world.allgather(datalist)
-
-        for datalist in all_datalist:
-            for vslice, ff in datalist:
-                resultglobal[vslice] = ff
-
-        # --- Now remove any of the reduced dimensions.
-        sss = [slice(None)]
-        if not isinstance(iz, slice):
-            sss[0] = 0
-
-        return resultglobal[tuple(sss)]
-
-    def __setitem__(self, index, value):
-        """Sets slices of a decomposed array. The shape of
-      the input object depends on the number of arguments specified, which can
-      be from none to all three.
-        - value: input array (must be supplied)
-        """
-        if index == Ellipsis:
-            index = tuple(self.dim*[slice(None)])
-
-        if len(index) < self.dim:
-            # --- Add extra dims to index if needed
-            index = list(index)
-            for i in range(len(index), self.dim):
-                index.append(slice(None))
-            index = tuple(index)
-
+    def _get_idxs(self, index):
         if self.dim == 1:
-            return self._setitem1d(index, value)
-        if self.dim == 2:
-            return self._setitem2d(index, value)
+            return None, None, index[0]
+        elif self.dim == 2:
+            return index[0], None, index[1]
         elif self.dim == 3:
-            return self._setitem3d(index, value)
+            return index[0], index[1], index[2]
 
-    def _setitem3d(self, index, value):
-        """Sets slices of a decomposed 3D array.
-        """
-        ix = index[0]
-        iy = index[1]
-        iz = index[2]
+    def _get_idx_mins(self, lovects):
+        if self.dim == 1:
+            return 0, 0, lovects[0,:].min()
+        elif self.dim == 2:
+            return lovects[0,:].min(), 0, lovects[1,:].min()
+        elif self.dim == 3:
+            return lovects[0,:].min(), lovects[1,:].min(), lovects[2,:].min()
 
-        lovects, ngrow = self._getlovects()
-        hivects, ngrow = self._gethivects()
-        fields = self._getfields()
+    def _get_idx_maxs(self, hivects):
+        if self.dim == 1:
+            return 0, 0, hivects[0,:].max()
+        elif self.dim == 2:
+            return hivects[0,:].max(), 0, hivects[1,:].max()
+        elif self.dim == 3:
+            return hivects[0,:].max(), hivects[1,:].max(), hivects[2,:].max()
 
-        if len(index) > self.dim:
-            if ncomps > 1:
-                ic = index[-1]
-            else:
-                raise Exception('Too many indices given')
-        else:
-            ic = None
-
-        ixmin = lovects[0,:].min()
-        ixmax = hivects[0,:].max()
-        iymin = lovects[1,:].min()
-        iymax = hivects[1,:].max()
-        izmin = lovects[2,:].min()
-        izmax = hivects[2,:].max()
-
-        if npes > 1:
-            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
-            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
-            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
-            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
-            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
-            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
-
-        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
-        iystart, iystop = self._find_start_stop(iy, iymin, iymax, 1)
-        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 2)
-
-        # --- Add extra dimensions so that the input has the same number of
-        # --- dimensions as array.
-        if isinstance(value, np.ndarray):
-            value3d = np.array(value, copy=False)
-            sss = list(value3d.shape)
-            if not isinstance(ix, slice): sss[0:0] = [1]
-            if not isinstance(iy, slice): sss[1:1] = [1]
-            if not isinstance(iz, slice): sss[2:2] = [1]
-            value3d.shape = sss
-
-        for i in range(len(fields)):
-
+    def _get_vslice(self, lovects, fields_shape, ixstart, ixstop, iystart,
+                    iystop, izstart, izstop, ic):
             # --- The ix1, 2 etc are relative to global indexing
-            ix1 = max(ixstart, lovects[0,i])
-            ix2 = min(ixstop, lovects[0,i] + fields[i].shape[0])
-            iy1 = max(iystart, lovects[1,i])
-            iy2 = min(iystop, lovects[1,i] + fields[i].shape[1])
-            iz1 = max(izstart, lovects[2,i])
-            iz2 = min(izstop, lovects[2,i] + fields[i].shape[2])
+            if self.dim == 1:
+                ix1, ix2 = 0, 1
+                iy1, iy2 = 0, 1
+                iz1 = max(izstart, lovects[0,i])
+                iz2 = min(izstop, lovects[0,i] + fields_shape[0])
+            elif self.dim == 2:
+                ix1 = max(ixstart, lovects[0,i])
+                ix2 = min(ixstop, lovects[0,i] + fields_shape[0])
+                iy1, iy2 = 0, 1
+                iz1 = max(izstart, lovects[1,i])
+                iz2 = min(izstop, lovects[1,i] + fields_shape[1])
+            elif self.dim == 3:
+                ix1 = max(ixstart, lovects[0,i])
+                ix2 = min(ixstop, lovects[0,i] + fields_shape[0])
+                iy1 = max(iystart, lovects[1,i])
+                iy2 = min(iystop, lovects[1,i] + fields_shape[1])
+                iz1 = max(izstart, lovects[2,i])
+                iz2 = min(izstop, lovects[2,i] + fields_shape[2])
 
             if ix1 < ix2 and iy1 < iy2 and iz1 < iz2:
 
-                sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
-                       slice(iy1 - lovects[1,i], iy2 - lovects[1,i]),
-                       slice(iz1 - lovects[2,i], iz2 - lovects[2,i]))
+                if self.dim == 1:
+                    sss = (slice(iz1 - lovects[0,i], iz2 - lovects[0,i]))
+                elif self.dim == 2:
+                    sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
+                           slice(iz1 - lovects[1,i], iz2 - lovects[1,i]))
+                elif self.dim == 3:
+                    sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
+                           slice(iy1 - lovects[1,i], iy2 - lovects[1,i]),
+                           slice(iz1 - lovects[2,i], iz2 - lovects[2,i]))
+
                 if ic is not None:
                     sss = tuple(list(sss) + [ic])
 
-                if isinstance(value, np.ndarray):
+                if self.dim == 1:
+                    vslice = (slice(iz1 - izstart, iz2 - izstart))
+                elif self.dim == 2:
+                    vslice = (slice(ix1 - ixstart, ix2 - ixstart),
+                              slice(iz1 - izstart, iz2 - izstart))
+                elif self.dim == 3:
                     vslice = (slice(ix1 - ixstart, ix2 - ixstart),
                               slice(iy1 - iystart, iy2 - iystart),
                               slice(iz1 - izstart, iz2 - izstart))
-                    fields[i][sss] = value3d[vslice]
-                else:
-                    fields[i][sss] = value
 
-    def _setitem2d(self, index, value):
-        """Sets slices of a decomposed 2D array.
-        """
-        ix = index[0]
-        iz = index[1]
-
-        lovects, ngrow = self._getlovects()
-        hivects, ngrow = self._gethivects()
-        fields = self._getfields()
-
-        if len(fields[0].shape) > self.dim:
-            ncomps = fields[0].shape[-1]
-        else:
-            ncomps = 1
-
-        if len(index) > self.dim:
-            if ncomps > 1:
-                ic = index[2]
+                return sss, vslice
             else:
-                raise Exception('Too many indices given')
-        else:
-            ic = None
-
-        ixmin = lovects[0,:].min()
-        ixmax = hivects[0,:].max()
-        izmin = lovects[1,:].min()
-        izmax = hivects[1,:].max()
-
-        if npes > 1:
-            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
-            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
-            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
-            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
-
-        ixstart, ixstop = self._find_start_stop(ix, ixmin, ixmax, 0)
-        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 1)
-
-        # --- Add extra dimensions so that the input has the same number of
-        # --- dimensions as array.
-        if isinstance(value, np.ndarray):
-            value3d = np.array(value, copy=False)
-            sss = list(value3d.shape)
-            if not isinstance(ix, slice): sss[0:0] = [1]
-            if not isinstance(iz, slice): sss[1:1] = [1]
-            value3d.shape = sss
-
-        for i in range(len(fields)):
-
-            # --- The ix1, 2 etc are relative to global indexing
-            ix1 = max(ixstart, lovects[0,i])
-            ix2 = min(ixstop, lovects[0,i] + fields[i].shape[0])
-            iz1 = max(izstart, lovects[1,i])
-            iz2 = min(izstop, lovects[1,i] + fields[i].shape[1])
-
-            if ix1 < ix2 and iz1 < iz2:
-
-                sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
-                       slice(iz1 - lovects[1,i], iz2 - lovects[1,i]))
-                if ic is not None:
-                    sss = tuple(list(sss) + [ic])
-
-                if isinstance(value, np.ndarray):
-                    vslice = (slice(ix1 - ixstart, ix2 - ixstart),
-                              slice(iz1 - izstart, iz2 - izstart))
-                    fields[i][sss] = value3d[vslice]
-                else:
-                    fields[i][sss] = value
-
-    def _setitem1d(self, index, value):
-        """Sets slices of a decomposed 2D array.
-        """
-        iz = index[0]
-
-        lovects, ngrow = self._getlovects()
-        hivects, ngrow = self._gethivects()
-        fields = self._getfields()
-
-        if len(fields[0].shape) > self.dim:
-            ncomps = fields[0].shape[-1]
-        else:
-            ncomps = 1
-
-        if len(index) > self.dim:
-            if ncomps > 1:
-                ic = index[1]
-            else:
-                raise Exception('Too many indices given')
-        else:
-            ic = None
-
-        izmin = lovects[0,:].min()
-        izmax = hivects[0,:].max()
-
-        if npes > 1:
-            izmin = comm_world.allreduce(izmin, op=mpi.MIN)
-            izmax = comm_world.allreduce(izmax, op=mpi.MAX)
-
-        izstart, izstop = self._find_start_stop(iz, izmin, izmax, 0)
-
-        # --- Add extra dimensions so that the input has the same number of
-        # --- dimensions as array.
-        if isinstance(value, np.ndarray):
-            value3d = np.array(value, copy=False)
-            sss = list(value3d.shape)
-            if not isinstance(iz, slice): sss[0:0] = [1]
-            value3d.shape = sss
-
-        for i in range(len(fields)):
-
-            # --- The ix1, 2 etc are relative to global indexing
-            iz1 = max(izstart, lovects[0,i])
-            iz2 = min(izstop, lovects[0,i] + fields[i].shape[0])
-
-            if iz1 < iz2:
-
-                sss = (slice(iz1 - lovects[0,i], iz2 - lovects[0,i]))
-                if ic is not None:
-                    sss = tuple([sss] + [ic])
-
-                if isinstance(value, np.ndarray):
-                    vslice = (slice(iz1 - izstart, iz2 - izstart))
-                    fields[i][sss] = value3d[vslice]
-                else:
-                    fields[i][sss] = value
+                return None, None
 
 
 def ExWrapper(level=0, include_ghosts=False):
