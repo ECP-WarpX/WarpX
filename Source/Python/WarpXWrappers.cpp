@@ -101,9 +101,6 @@ namespace
     }
 }
 
-extern "C"
-{
-
     int warpx_Real_size()
     {
         return (int)sizeof(amrex::Real);
@@ -461,14 +458,14 @@ extern "C"
     WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldCPLoVects_PML, GetG_cp)
     WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldFPLoVects_PML, GetG_fp)
 
-    int* warpx_getF_pml_nodal_flag()
+    int* warpx_getF_pml_nodal_flag ()
     {
         auto * pml = WarpX::GetInstance().GetPML(0);
         if (!pml) return nullptr;
         return getFieldNodalFlagData(pml->GetF_fp());
     }
 
-    int* warpx_getG_pml_nodal_flag()
+    int* warpx_getG_pml_nodal_flag ()
     {
         auto * pml = WarpX::GetInstance().GetPML(0);
         if (!pml) return nullptr;
@@ -728,5 +725,3 @@ extern "C"
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         mypc.Redistribute();
     }
-
-}
