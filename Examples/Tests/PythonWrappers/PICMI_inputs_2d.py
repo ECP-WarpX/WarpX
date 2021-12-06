@@ -89,7 +89,7 @@ include_ghosts = 1
 def compute_minmax(data):
     vmax = np.abs(data).max()
     vmin = -vmax
-    return (vmin, vmax)
+    return vmin, vmax
 
 # Plot fields data either in valid domain or in PML
 def plot_data(data, pml, title, name):
@@ -97,7 +97,7 @@ def plot_data(data, pml, title, name):
     cax = make_axes_locatable(ax).append_axes('right', size='5%', pad='5%')
     lw  = 0.8
     ls = '--'
-    if (pml):
+    if pml:
         # Draw PMLs and ghost regions
         ax.axvline(x = 0       , linewidth = lw, linestyle = ls)
         ax.axvline(x = 0+nxg   , linewidth = lw, linestyle = ls)
