@@ -343,9 +343,14 @@ if(WarpX_LIB)
     else()
         set(mod_ext "so")
     endif()
+    if(IS_ABSOLUTE CMAKE_INSTALL_LIBDIR)
+        set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
+    else()
+        set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+    endif()
     install(CODE "file(CREATE_LINK
         $<TARGET_FILE_NAME:shared>
-        ${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
+        ${ABS_INSTALL_LIB_DIR}/libwarpx.${lib_suffix}.${mod_ext}
         COPY_ON_ERROR SYMBOLIC)")
 endif()
 
