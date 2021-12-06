@@ -203,11 +203,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
             p.id() = id;
         }
         p.cpu() = ParallelDescriptor::MyProc();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
         p.pos(2) = z[i];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
         theta[i-ibegin] = std::atan2(y[i], x[i]);
@@ -332,12 +332,12 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // deposit part of its current in a neighboring box. However, this should catch particles
     // traveling many cells away, for example with algorithms that allow for large time steps.
 
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2));
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2),
                                                        static_cast<int>(WarpX::noz/2));
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2),
                                                        static_cast<int>(WarpX::noy/2),
                                                        static_cast<int>(WarpX::noz/2));
@@ -617,12 +617,12 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // are not trivial, this check might be too strict and we might need to relax it, as currently
     // done for the current deposition.
 
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2+1));
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
                                                        static_cast<int>(WarpX::noz/2+1));
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
                                                        static_cast<int>(WarpX::noy/2+1),
                                                        static_cast<int>(WarpX::noz/2+1));

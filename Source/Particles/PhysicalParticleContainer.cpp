@@ -141,11 +141,11 @@ namespace
                          const XDim3& r, const IntVect& iv) noexcept
     {
         XDim3 pos;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = lo_corner[1] + (iv[1]+r.y)*dx[1];
         pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = 0.0_rt;
 #if   defined WARPX_DIM_XZ
@@ -192,7 +192,7 @@ namespace
 #if (AMREX_SPACEDIM >= 2)
         p.pos(1) = 0._rt;
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         p.pos(2) = 0._rt;
 #endif
         pa[PIdx::w ][ip] = 0._rt;
@@ -292,7 +292,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #if (AMREX_SPACEDIM >= 2)
         AddRealComp("prev_x");
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         AddRealComp("prev_y");
 #endif
         AddRealComp("prev_z");
@@ -433,17 +433,17 @@ PhysicalParticleContainer::AddGaussianBeam (
             npart /= 4;
         }
         for (long i = 0; i < npart; ++i) {
-#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
             const Real x = amrex::RandomNormal(x_m, x_rms);
             const Real y = amrex::RandomNormal(y_m, y_rms);
             const Real z = amrex::RandomNormal(z_m, z_rms);
-#elif (defined WARPX_DIM_XZ)
+#elif defined(WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
             const Real x = amrex::RandomNormal(x_m, x_rms);
             constexpr Real y = 0._prt;
             const Real z = amrex::RandomNormal(z_m, z_rms);
-#elif (defined WARPX_DIM_1D_Z)
+#elif defined(WARPX_DIM_1D_Z)
             const Real weight = q_tot/(npart*charge*x_rms*y_rms);
             constexpr Real x = 0._prt;
             constexpr Real y = 0._prt;
@@ -519,7 +519,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
         auto const npart = ps["position"]["x"].getExtent()[0];
-#if !(defined WARPX_DIM_1D_Z)
+#if !defined(WARPX_DIM_1D_Z)
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
 #endif
@@ -562,13 +562,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-#if !(defined WARPX_DIM_1D_Z)
+#if !defined(WARPX_DIM_1D_Z)
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
 #else
             ParticleReal const x = 0.0_prt;
 #endif
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
-#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
 #else
             ParticleReal const y = 0.0_prt;
@@ -726,11 +726,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     Real scale_fac = 0.0_rt;
 
     if(num_ppc != 0){
-#if AMREX_SPACEDIM==3
+#if defined(WARPX_DIM_3D)
         scale_fac = dx[0]*dx[1]*dx[2]/num_ppc;
-#elif AMREX_SPACEDIM==2
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         scale_fac = dx[0]*dx[1]/num_ppc;
-#elif AMREX_SPACEDIM==1
+#elif defined(WARPX_DIM_1D_Z)
         scale_fac = dx[0]/num_ppc;
 #endif
     }
@@ -860,10 +860,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pcounts[index] = num_ppc;
                 }
             }
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);
 #endif
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
 #endif
         });
@@ -968,7 +968,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
                     ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
@@ -978,7 +978,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                                                    );
                     continue;
                 }
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
@@ -1135,11 +1135,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 pa[PIdx::uy][ip] = u.y;
                 pa[PIdx::uz][ip] = u.z;
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                 p.pos(0) = pos.x;
                 p.pos(1) = pos.y;
                 p.pos(2) = pos.z;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 #ifdef WARPX_DIM_RZ
                 pa[PIdx::theta][ip] = theta;
 #endif
@@ -1324,9 +1324,9 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
                     pcounts[index] = num_ppc_int;
                 }
             }
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
             amrex::ignore_unused(j,k);
 #endif
         });
@@ -1436,12 +1436,12 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
                 const amrex::Real t_fract = amrex::Random(engine)*dt;
                 UpdatePosition(pos.x, pos.y, pos.z, u.x, u.y, u.z, t_fract);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
                     p.id() = -1;
                     continue;
                 }
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     p.id() = -1;
@@ -1526,11 +1526,11 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
                 pa[PIdx::uy][ip] = u.y;
                 pa[PIdx::uz][ip] = u.z;
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                 p.pos(0) = pos.x;
                 p.pos(1) = pos.y;
                 p.pos(2) = pos.z;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 #ifdef WARPX_DIM_RZ
                 pa[PIdx::theta][ip] = theta;
 #endif
@@ -1815,9 +1815,9 @@ PhysicalParticleContainer::applyNCIFilter (
     const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
     const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     const Box& tbox = amrex::grow(box, static_cast<int>(WarpX::noz));
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const Box& tbox = amrex::grow(box, {static_cast<int>(WarpX::nox),
                 static_cast<int>(WarpX::noz)});
 #else
@@ -1847,7 +1847,7 @@ PhysicalParticleContainer::applyNCIFilter (
     byeli = filtered_By.elixir();
     nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_By, By, filtered_By.box());
     by_ptr = &filtered_By;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     // Filter Ey
     filtered_Ey.resize(amrex::convert(tbox,Ey.box().ixType()));
     eyeli = filtered_Ey.elixir();
@@ -1885,13 +1885,13 @@ PhysicalParticleContainer::SplitParticles (int lev)
     long np_split;
     if(split_type==0)
     {
-        if (AMREX_SPACEDIM == 3){
+        #if defined(WARPX_DIM_3D)
            np_split = 8;
-        } else if (AMREX_SPACEDIM == 2){
+        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
            np_split = 4;
-        } else {
+        #else
            np_split = 2;
-        }
+        #endif
     } else {
         np_split = 2*AMREX_SPACEDIM;
     }
@@ -1931,7 +1931,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                 // If particle is tagged, split it and put the
                 // split particles in local arrays psplit_x etc.
                 np_split_to_add += np_split;
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                 // Split particle in two along z axis
                 // 2 particles in 1d, split_type doesn't matter? Discuss with Remi
                 for (int ishift = -1; ishift < 2; ishift +=2 ){
@@ -1944,7 +1944,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                     psplit_uz.push_back( uzp[i] );
                     psplit_w.push_back( wp[i]/np_split );
                 }
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 if (split_type==0){
                     // Split particle in two along each diagonals
                     // 4 particles in 2d
@@ -1982,7 +1982,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                         psplit_w.push_back( wp[i]/np_split );
                     }
                 }
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
                 if (split_type==0){
                     // Split particle in two along each diagonals
                     // 8 particles in 3d
@@ -2201,9 +2201,9 @@ PhysicalParticleContainer::GetParticleSlice (
     WARPX_PROFILE("PhysicalParticleContainer::GetParticleSlice()");
 
     // Assume that the boost in the positive z direction.
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     AMREX_ALWAYS_ASSERT(direction == 0);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT(direction == 1);
 #else
     AMREX_ALWAYS_ASSERT(direction == 2);
@@ -2503,7 +2503,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #else
     amrex::ignore_unused(x_old);
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
 #else
     amrex::ignore_unused(y_old);
@@ -2542,7 +2542,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #if (AMREX_SPACEDIM >= 2)
             x_old[ip] = xp;
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             y_old[ip] = yp;
 #endif
             z_old[ip] = zp;
