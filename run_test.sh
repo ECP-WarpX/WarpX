@@ -29,6 +29,9 @@ set -eu -o pipefail
 tests_arg=$*
 tests_run=${tests_arg:+--tests=${tests_arg}}
 
+# environment options
+WARPX_CI_TMP=${WARPX_CI_TMP:-""}
+
 # Remove contents and link to a previous test directory (intentionally two arguments)
 rm -rf test_dir/* test_dir
 # Create a temporary test directory
