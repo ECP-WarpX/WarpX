@@ -368,13 +368,13 @@ WarpX::InitNCICorrector ()
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
             amrex::Real dz, cdtodz;
-            if defined(WARPX_DIM_3D){
+#if defined(WARPX_DIM_3D)
                 dz = dx[2];
-            }else ifdefined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ){
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 dz = dx[1];
-            }else{
+#else
                 dz = dx[0];
-            }
+#endif
             cdtodz = PhysConst::c * dt[lev] / dz;
 
             // Initialize Godfrey filters
