@@ -265,7 +265,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         }
 #endif
         if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
-            flux_normal_axis = AMREX_SPACEDIM-1;
+            flux_normal_axis = WARPX_ZINDEX;
         }
 #ifdef WARPX_DIM_3D
         std::string flux_normal_axis_help = "'x', 'y', or 'z'.";

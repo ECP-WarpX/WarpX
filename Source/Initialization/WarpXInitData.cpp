@@ -324,7 +324,7 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
     // Sanity checks: can use zmax_plasma_to_compute_max_step only if
     // the moving window and the boost are all in z direction.
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
+        WarpX::moving_window_dir == WARPX_ZINDEX,
         "Can use zmax_plasma_to_compute_max_step only if " +
         "moving window along z. TODO: all directions.");
     if (gamma_boost > 1){
@@ -338,7 +338,7 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
 
     // Lower end of the simulation domain. All quantities are given in boosted
     // frame except zmax_plasma_to_compute_max_step.
-    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
+    const Real zmin_domain_boost = a_geom.ProbLo(WARPX_ZINDEX);
     // End of the plasma: Transform input argument
     // zmax_plasma_to_compute_max_step to boosted frame.
     const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
