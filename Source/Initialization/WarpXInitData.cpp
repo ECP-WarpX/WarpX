@@ -76,7 +76,7 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
         const IntVect sz = domlen / numprocs;
         const IntVect extra = domlen - sz*numprocs;
         BoxList bl;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         for (int k = 0; k < numprocs[2]; ++k) {
             // The first extra[2] blocks get one extra cell with a total of
             // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
@@ -368,9 +368,9 @@ WarpX::InitNCICorrector ()
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
             amrex::Real dz, cdtodz;
-            if (AMREX_SPACEDIM == 3){
+            if defined(WARPX_DIM_3D){
                 dz = dx[2];
-            }else if(AMREX_SPACEDIM == 2){
+            }else ifdefined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ){
                 dz = dx[1];
             }else{
                 dz = dx[0];
@@ -669,12 +669,12 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real y = 0._rt;
@@ -695,18 +695,18 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #ifdef AMREX_USE_EB
                 if(geom_data_y(i, j, k)<=0) return;
 #endif
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
@@ -721,18 +721,18 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #ifdef AMREX_USE_EB
                 if(geom_data_z(i, j, k)<=0) return;
 #endif
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
