@@ -32,14 +32,19 @@ tests_run=${tests_arg:+--tests=${tests_arg}}
 # Remove contents and link to a previous test directory (intentionally two arguments)
 rm -rf test_dir/* test_dir
 # Create a temporary test directory
-tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
-if [ $? -ne 0 ]; then
-    echo "Cannot create temporary directory"
-    exit 1
+if [ -z "${WARPX_CI_TMP}" ]; then
+    tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
+    if [ $? -ne 0 ]; then
+        echo "Cannot create temporary directory"
+        exit 1
+    fi
+else
+    tmp_dir=${WARPX_CI_TMP}
 fi
 
 # Copy WarpX into current test directory
-mkdir ${tmp_dir}/warpx
+rm -rf ${tmp_dir}/warpx
+mkdir -p ${tmp_dir}/warpx
 cp -r ./* ${tmp_dir}/warpx
 
 # Link the test directory
