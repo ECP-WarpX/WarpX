@@ -82,7 +82,6 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::Array4<amrex::Real> const& rho_arr = rho_fab.array();
     amrex::IntVect const rho_type = rho_fab.box().type();
 
-    constexpr int zdir = (AMREX_SPACEDIM - 1);
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
@@ -157,9 +156,9 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real z = (zp - zmin)*dzi;
             amrex::Real sz[depos_order + 1] = {0._rt};
             int k = 0;
-            if (rho_type[zdir] == NODE) {
+            if (rho_type[WARPX_ZINDEX] == NODE) {
                 k = compute_shape_factor(sz, z);
-            } else if (rho_type[zdir] == CELL) {
+            } else if (rho_type[WARPX_ZINDEX] == CELL) {
                 k = compute_shape_factor(sz, z - 0.5_rt);
             }
 

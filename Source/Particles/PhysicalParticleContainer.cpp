@@ -72,6 +72,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Particle.H>
 #include <AMReX_ParticleContainerBase.H>
+#include <AMReX_AmrParticles.H>
 #include <AMReX_ParticleTile.H>
 #include <AMReX_Print.H>
 #include <AMReX_Random.H>
@@ -1164,11 +1165,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
+PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddPlasmaFlux()");
 
-    const Geometry& geom = Geom(lev);
+    const Geometry& geom = Geom(0);
     const amrex::RealBox& part_realbox = geom.ProbDomain();
 
     amrex::Real num_ppc_real = plasma_injector->num_particles_per_cell_real;
@@ -1184,9 +1185,15 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         scale_fac = AMREX_D_TERM(dx[0], *dx[1], *dx[2])/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
     }
 
-    defineAllParticleTiles();
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    // Create temporary particle container to which particles will be added;
+    // we will then call Redistribute on this new container and finally
+    // add the new particles to the original container.
+    PhysicalParticleContainer tmp_pc(&WarpX::GetInstance());
+    for (int ic = 0; ic < NumRuntimeRealComps(); ++ic) { tmp_pc.AddRealComp(false); }
+    for (int ic = 0; ic < NumRuntimeIntComps(); ++ic) { tmp_pc.AddIntComp(false); }
+    tmp_pc.defineAllParticleTiles();
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
@@ -1219,9 +1226,9 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
     }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
-#pragma omp parallel if (not WarpX::serialize_ics)
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+    for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -1230,7 +1237,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         Real wt = amrex::second();
 
         const Box& tile_box = mfi.tilebox();
-        const RealBox tile_realbox = WarpX::getRealBox(tile_box, lev);
+        const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
 
         // Find the cells of part_realbox that overlap with tile_realbox
         // If there is no overlap, just go to the next tile in the loop
@@ -1349,11 +1356,7 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
 
         const int cpuid = ParallelDescriptor::MyProc();
 
-        auto& particle_tile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ) {
-            DefineAndReturnParticleTile(lev, grid_id, tile_id);
-        }
+        auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(0, grid_id, tile_id);
 
         auto old_size = particle_tile.GetArrayOfStructs().size();
         auto new_size = old_size + max_new_particles;
@@ -1551,7 +1554,31 @@ PhysicalParticleContainer::AddPlasmaFlux (int lev, amrex::Real dt)
         }
     }
 
-    // The function that calls this is responsible for redistributing particles.
+    // Redistribute the new particles that were added to the temporary container.
+    // (This eliminates invalid particles, and makes sure that particles
+    // are in the right tile.)
+    tmp_pc.Redistribute();
+
+    // Add the particles to the current container, tile by tile
+    for (int lev=0; lev<numLevels(); lev++) {
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+        {
+            // Extract tiles
+            const int grid_id = mfi.index();
+            const int tile_id = mfi.LocalTileIndex();
+            auto& src_tile = tmp_pc.DefineAndReturnParticleTile(lev, grid_id, tile_id);
+            auto& dst_tile = DefineAndReturnParticleTile(lev, grid_id, tile_id);
+
+            // Resize container and copy particles
+            auto old_size = dst_tile.numParticles();
+            auto n_new = src_tile.numParticles();
+            dst_tile.resize( old_size+n_new );
+            amrex::copyParticles(dst_tile, src_tile, 0, old_size, n_new);
+        }
+    }
 }
 
 void
@@ -2390,9 +2417,7 @@ void
 PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real dt)
 {
     if (plasma_injector->surface_flux) {
-        // Inject plasma on level 0. Paticles will be redistributed.
-        const int lev=0;
-        AddPlasmaFlux(lev, dt);
+        AddPlasmaFlux(dt);
     }
 }
 

@@ -91,7 +91,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 #endif
     const amrex::Real zmin = xyzmin[2];
 
-    constexpr int zdir = (AMREX_SPACEDIM - 1);
+    constexpr int zdir = WARPX_ZINDEX;
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 

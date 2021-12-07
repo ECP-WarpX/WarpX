@@ -318,7 +318,9 @@ Embedded Boundary Conditions
 * ``warpx.eb_potential(x,y,z,t)`` (`string`)
     Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
     the electric potential at the surface of the embedded boundary,
-    as a function of  `x`, `y`, `z` and time.
+    as a function of  `x`, `y`, `z` and time. This function is also evaluated
+    inside the embedded boundary. For this reason, it is important to define
+    this function in such a way that it is constant inside the embedded boundary.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -1295,6 +1297,8 @@ Collision initialization
 
 WarpX provides a relativistic elastic Monte Carlo binary collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
+since the current implementation of the collision module assumes axisymmetry.
 A non-relativistic Monte Carlo treatment for particles colliding
 with a neutral, uniform background gas is also available. The implementation follows the so-called
 null collision strategy discussed for example in `Birdsall (IEEE Transactions on

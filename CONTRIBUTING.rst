@@ -15,67 +15,91 @@ If you are new to git, you can follow one of these tutorials:
 - `Learn git with bitbucket <https://www.atlassian.com/git/tutorials/learn-git-with-bitbucket-cloud>`_
 - `git - the simple guide <http://rogerdudler.github.io/git-guide/>`_
 
-Make your own fork and create a branch on it
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure your GitHub Account & Development Machine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The basic WarpX workflow is:
+First, let's setup your Git environment and GitHub account.
 
-1. Fork the main repo (or update it if you already created it).
-2. Implement your changes and push them on a new branch ``<branch_name>`` on your fork.
-3. Create a Pull Request from branch ``<branch_name>`` on your fork to branch ``development`` on the main WarpX repo.
+1. Go to https://github.com/settings/profile and add your real name and affiliation
+2. Go to https://github.com/settings/emails and add & verify the professional e-mails you want to be associated with.
+3. Configure ``git`` on the machine you develop on to *use the same spelling of your name and email*:
 
-First, let us setup your local git repo. Make your own fork of the main (``upstream``) WarpX repo:
-on the `WarpX Github page <https://github.com/ECP-WarpX/WarpX>`_, press the fork button.
-Then, you can execute:
+   - ``git config --global user.name "FIRSTNAME LASTNAME"``
+   - ``git config --global user.email EMAIL@EXAMPLE.com``
+4. Go to https://github.com/settings/keys and add the SSH public key of the machine you develop on. (Check out the GitHub guide to `generating SSH keys <https://docs.github.com/articles/generating-an-ssh-key/>`__ or `troubleshoot common SSH problems <https://docs.github.com/ssh-issues/>`__. )
+
+Make your own fork
+^^^^^^^^^^^^^^^^^^
+
+First, fork the WarpX `"mainline" repo on GitHub <https://github.com/ECP-WarpX/WarpX>`__ by pressing the *Fork* button on the top right of the page.
+A fork is a copy of WarpX on GitHub, which is under your full control.
+
+Then, we create local copies, for development:
 
 .. code-block:: sh
 
-   # These 4 first lines are the same as for a standard WarpX install
-   mkdir warpx_directory
-   cd warpx_directory
-   git clone --branch development https://github.com/ECP-WarpX/picsar.git
-   git clone --branch development https://github.com/AMReX-Codes/amrex.git
+   # Clone the mainline WarpX source code to your local computer.
+   # You cannot write to this repository, but you can read from it.
+   git clone git@github.com:ECP-WarpX/WarpX.git
+   cd WarpX
 
-   # Clone your fork on your local computer. You can get this address on your fork's Github page.
-   git clone https://github.com/<myGithubUsername>/WarpX.git
-   cd warpx
-   # Keep track of the main WarpX repo, to remain up-to-date.
-   git remote add upstream https://github.com/ECP-WarpX/WarpX.git
+   # rename what we just cloned: call it "mainline"
+   git remote rename origin mainline
+
+   # Add your own fork. You can get this address on your fork's Github page.
+   # Here is where you will publish new developments, so that they can be
+   # reviewed and integrated into "mainline" later on.
+   # "myGithubUsername" needs to be replaced with your user name on GitHub.
+   git remote add myGithubUsername git@github.com:myGithubUsername/WarpX.git
 
 Now you are free to play with your fork (for additional information, you can visit the
-`Github fork help page <https://help.github.com/en/articles/fork-a-repo>`_).
+`Github fork help page <https://help.github.com/en/articles/fork-a-repo>`__).
 
 .. note::
 
-   You do not have to re-do the setup above every time.
-   Instead, in the future, all you need is to update the ``development`` branch on your fork with:
+   We only need to do the above steps for the first time.
 
-   .. code-block:: sh
+Let's Develop
+^^^^^^^^^^^^^
 
-      git checkout development
-      git pull upstream development
+You are all set!
+Now, the basic WarpX development workflow is:
 
-Make sure you are on WarpX ``development`` branch with
+1. Implement your changes and push them on a new branch ``branch_name`` on your fork.
+2. Create a Pull Request from branch ``branch_name`` on your fork to branch ``development`` on the main WarpX repo.
+
+Create a branch ``branch_name`` (the branch name should reflect the piece of code you want to add, like ``fix-spectral-solver``) with
 
 .. code-block:: sh
 
+   # start from an up-to-date development branch
    git checkout development
+   git pull mainline development
 
-in the WarpX directory.
-
-Create a branch ``<branch_name>`` (the branch name should reflect the piece of code you want to add, like ``fix_spectral_solver``) with
-
-.. code-block:: sh
-
-   git checkout -b <branch_name>
+   # create a fresh branch
+   git checkout -b branch_name
 
 and do the coding you want.
-It is probably a good time to look at the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/>`_ and at the `AMReX Doxygen reference <https://ccse.lbl.gov/pub/AMReX_Docs/index.html>`_.
-Add the files you work on to the git staging area with
+
+It is probably a good time to look at the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/>`_ and at the Doxygen reference pages:
+
+* WarpX Doxygen: https://warpx.readthedocs.io/en/latest/_static/doxyhtml
+* AMReX Doxygen: https://amrex-codes.github.io/amrex/doxygen
+* PICSAR Doxygen: (todo)
+
+Once you are done developing, add the files you created and/or modified to the ``git`` *staging area* with
 
 .. code-block:: sh
 
    git add <file_I_created> <and_file_I_modified>
+
+
+Build your changes
+^^^^^^^^^^^^^^^^^^
+
+If you changed C++ files, then now is a good time to test those changes by compiling WarpX locally.
+Follow the `developer instructions in our manual <https://warpx.readthedocs.io/en/latest/install/cmake.html>`__ to set up a local development environment, then compile and `run <https://warpx.readthedocs.io/en/latest/usage/how_to_run.html>`__ WarpX.
+
 
 Commit & push your changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -84,22 +108,34 @@ Periodically commit your changes with
 
 .. code-block:: sh
 
-   git commit -m "This is a 50-char description to explain my work"
+   git commit
 
-The commit message (between quotation marks) is super important in order to follow the developments and identify bugs.
+The commit message (between quotation marks) is super important in order to follow the developments during code-review and identify bugs.
+A typical format is:
+
+.. code-block::
+
+   This is a short, 40-character title
+
+   After a newline, you can write arbitray paragraphs. You
+   usually limit the lines to 70 characters, but if you don't, then
+   nothing bad will happen.
+
+   The most important part is really that you find a descriptive title
+   and add an empty newline after it.
 
 For the moment, commits are on your local repo only.
 You can push them to your fork with
 
 .. code-block:: sh
 
-   git push -u origin <branch_name>
+   git push -u myGithubUsername branch_name
 
-If you want to synchronize your branch with the ``development`` branch (this is useful when the ``development`` branch is being modified while you are working on ``<branch_name>``), you can use
+If you want to synchronize your branch with the ``development`` branch (this is useful when the ``development`` branch is being modified while you are working on ``branch_name``), you can use
 
 .. code-block:: sh
 
-   git pull upstream development
+   git pull mainline development
 
 and fix any conflict that may occur.
 
@@ -120,8 +156,8 @@ Right after you push changes, a banner should appear on the Github page of your 
 - Press ``Create pull request``.
   Now you can navigate through your PR, which highlights the changes you made.
 
-Please DO NOT write large Pull Requests, as they are very difficult and time-consuming to review.
-As much as possible, split them into small targeted PRs.
+Please DO NOT write large pull requests, as they are very difficult and time-consuming to review.
+As much as possible, split them into small, targeted PRs.
 For example, if find typos in the documentation open a pull request that only fixes typos.
 If you want to fix a bug, make a small pull request that only fixes a bug.
 
@@ -131,7 +167,6 @@ Submit tests, documentation changes and implementation of a feature together for
 
 Even before your work is ready to merge, it can be convenient to create a PR (so you can use Github tools to visualize your changes).
 In this case, please put the ``[WIP]`` tag (for Work-In-Progress) at the beginning of the PR title.
-Another tag you may want to use is ``[mini]``, if your changes are very few lines and quick to review.
 You can also use the GitHub project tab in your fork to organize the work into separate tasks/PRs and share it with the WarpX community to get feedback.
 
 Include a test to your PR
@@ -146,7 +181,7 @@ Include documentation about your PR
 """""""""""""""""""""""""""""""""""
 
 Now, let users know about your new feature by describing its usage in the `WarpX documentation <https://warpx.readthedocs.io>`_.
-Our documentation uses `Sphinx <http://www.sphinx-doc.org/en/master/usage/quickstart.html>`_, and it is located in ``Docs/``.
+Our documentation uses `Sphinx <http://www.sphinx-doc.org/en/master/usage/quickstart.html>`_, and it is located in ``Docs/source/``.
 For instance, if you introduce a new runtime parameter in the input file, you can add it to :ref:`Docs/source/running_cpp/parameters.rst <running-cpp-parameters>`.
 If Sphinx is installed on your computer, you should be able to generate the html documentation with
 

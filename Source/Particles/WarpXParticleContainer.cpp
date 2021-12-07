@@ -1139,6 +1139,9 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto GetPosition = GetParticlePosition(pti);
@@ -1151,8 +1154,8 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
             const Real ymin = Geom(lev).ProbLo(1);
             const Real ymax = Geom(lev).ProbHi(1);
 #endif
-            const Real zmin = Geom(lev).ProbLo(AMREX_SPACEDIM-1);
-            const Real zmax = Geom(lev).ProbHi(AMREX_SPACEDIM-1);
+            const Real zmin = Geom(lev).ProbLo(WARPX_ZINDEX);
+            const Real zmax = Geom(lev).ProbHi(WARPX_ZINDEX);
 
             ParticleTileType& ptile = ParticlesAt(lev, pti);
             ParticleType * const pp = ptile.GetArrayOfStructs()().data();
