@@ -30,6 +30,9 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
     for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
         amrex::ParmParse pp_collision_name(collision_names[i]);
 
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
+        "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
+
         // For legacy, pairwisecoulomb is the default
         std::string type = "pairwisecoulomb";
 
