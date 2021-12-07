@@ -199,10 +199,9 @@ public:
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
-     * @param[in] lev the index of the refinement level
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (int lev, amrex::Real dt);
+    void AddPlasmaFlux (amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
                                     amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
