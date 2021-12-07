@@ -122,6 +122,105 @@ class _MultiFABWrapper(object):
 
         return np.arange(nn)*dd + shift
 
+    def _find_start_stop(self, ii, imin, imax, d):
+        """Given the input index, calculate the start and stop range of the indices.
+        - ii: input index, either a slice object or an integer
+        - imin: the global lowest lovect value in the specified direction
+        - imax: the global highest hivect value in the specified direction
+        - d: the direction, an integer, 0, 1, or 2
+        If ii is a slice, the start and stop values are used directly,
+        unless they are None, then the lower or upper bound is used.
+        An assertion checks if the indices are within the bounds.
+        """
+        if isinstance(ii, slice):
+            if ii.start is None:
+                iistart = imin
+            else:
+                iistart = ii.start
+            if ii.stop is None:
+                iistop = imax + self.overlaps[d]
+            else:
+                iistop = ii.stop
+        else:
+            iistart = ii
+            iistop = ii + 1
+        assert imin <= iistart <= imax + self.overlaps[d], Exception(f'Dimension {d} lower index is out of bounds')
+        assert imin <= iistop <= imax + self.overlaps[d], Exception(f'Dimension {d} upper index is out of bounds')
+        return iistart, iistop
+
+    def _get_indices(self, index):
+        if self.dim == 1:
+            return None, None, index[0]
+        elif self.dim == 2:
+            return index[0], None, index[1]
+        elif self.dim == 3:
+            return index[0], index[1], index[2]
+
+    def _get_min_indices(self, lovects):
+        if self.dim == 1:
+            return 0, 0, lovects[0,:].min()
+        elif self.dim == 2:
+            return lovects[0,:].min(), 0, lovects[1,:].min()
+        elif self.dim == 3:
+            return lovects[0,:].min(), lovects[1,:].min(), lovects[2,:].min()
+
+    def _get_max_indices(self, hivects):
+        if self.dim == 1:
+            return 0, 0, hivects[0,:].max()
+        elif self.dim == 2:
+            return hivects[0,:].max(), 0, hivects[1,:].max()
+        elif self.dim == 3:
+            return hivects[0,:].max(), hivects[1,:].max(), hivects[2,:].max()
+
+    def _get_vslice(self, lovects, fields_shape, ixstart, ixstop, iystart,
+                    iystop, izstart, izstop, ic):
+        # --- The ix1, 2 etc are relative to global indexing
+        if self.dim == 1:
+            ix1, ix2 = 0, 1
+            iy1, iy2 = 0, 1
+            iz1 = max(izstart, lovects[0])
+            iz2 = min(izstop, lovects[0] + fields_shape[0])
+        elif self.dim == 2:
+            ix1 = max(ixstart, lovects[0])
+            ix2 = min(ixstop, lovects[0] + fields_shape[0])
+            iy1, iy2 = 0, 1
+            iz1 = max(izstart, lovects[1])
+            iz2 = min(izstop, lovects[1] + fields_shape[1])
+        elif self.dim == 3:
+            ix1 = max(ixstart, lovects[0])
+            ix2 = min(ixstop, lovects[0] + fields_shape[0])
+            iy1 = max(iystart, lovects[1])
+            iy2 = min(iystop, lovects[1] + fields_shape[1])
+            iz1 = max(izstart, lovects[2])
+            iz2 = min(izstop, lovects[2] + fields_shape[2])
+
+        if ix1 < ix2 and iy1 < iy2 and iz1 < iz2:
+
+            if self.dim == 1:
+                sss = (slice(iz1 - lovects[0], iz2 - lovects[0]))
+                vslice = (slice(iz1 - izstart, iz2 - izstart))
+
+            elif self.dim == 2:
+                sss = (slice(ix1 - lovects[0], ix2 - lovects[0]),
+                       slice(iz1 - lovects[1], iz2 - lovects[1]))
+                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
+                          slice(iz1 - izstart, iz2 - izstart))
+
+            elif self.dim == 3:
+                sss = (slice(ix1 - lovects[0], ix2 - lovects[0]),
+                       slice(iy1 - lovects[1], iy2 - lovects[1]),
+                       slice(iz1 - lovects[2], iz2 - lovects[2]))
+                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
+                          slice(iy1 - iystart, iy2 - iystart),
+                          slice(iz1 - izstart, iz2 - izstart))
+
+            if ic is not None:
+                sss = tuple(list(sss) + [ic])
+
+            return sss, vslice
+        else:
+            return None, None
+
     def __getitem__(self, index):
         """Returns slices of a decomposed array, The shape of
         the object returned depends on the number of ix, iy and iz specified, which
@@ -143,7 +242,7 @@ class _MultiFABWrapper(object):
         hivects, ngrow = self._gethivects()
         fields = self._getfields()
 
-        ix, iy, iz = self._get_idxs(index)
+        ix, iy, iz = self._get_indices(index)
 
         if len(fields[0].shape) > self.dim:
             ncomps = fields[0].shape[-1]
@@ -158,8 +257,8 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        ixmin, iymin, izmin = self._get_idx_mins(lovects)
-        ixmax, iymax, izmax = self._get_idx_maxs(hivects)
+        ixmin, iymin, izmin = self._get_min_indices(lovects)
+        ixmax, iymax, izmax = self._get_max_indices(hivects)
 
         if npes > 1:
             izmin = comm_world.allreduce(izmin, op=mpi.MIN)
@@ -262,7 +361,7 @@ class _MultiFABWrapper(object):
         hivects, ngrow = self._gethivects()
         fields = self._getfields()
 
-        ix, iy, iz = self._get_idxs(index)
+        ix, iy, iz = self._get_indices(index)
 
         if len(fields[0].shape) > self.dim:
             ncomps = fields[0].shape[-1]
@@ -277,8 +376,8 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        ixmin, iymin, izmin = self._get_idx_mins(lovects)
-        ixmax, iymax, izmax = self._get_idx_maxs(hivects)
+        ixmin, iymin, izmin = self._get_min_indices(lovects)
+        ixmax, iymax, izmax = self._get_max_indices(hivects)
 
         if npes > 1:
             izmin = comm_world.allreduce(izmin, op=mpi.MIN)
@@ -331,105 +430,6 @@ class _MultiFABWrapper(object):
                     fields[i][sss] = value3d[vslice]
                 else:
                     fields[i][sss] = value
-
-    def _find_start_stop(self, ii, imin, imax, d):
-        """Given the input index, calculate the start and stop range of the indices.
-        - ii: input index, either a slice object or an integer
-        - imin: the global lowest lovect value in the specified direction
-        - imax: the global highest hivect value in the specified direction
-        - d: the direction, an integer, 0, 1, or 2
-        If ii is a slice, the start and stop values are used directly,
-        unless they are None, then the lower or upper bound is used.
-        An assertion checks if the indices are within the bounds.
-        """
-        if isinstance(ii, slice):
-            if ii.start is None:
-                iistart = imin
-            else:
-                iistart = ii.start
-            if ii.stop is None:
-                iistop = imax + self.overlaps[d]
-            else:
-                iistop = ii.stop
-        else:
-            iistart = ii
-            iistop = ii + 1
-        assert imin <= iistart <= imax + self.overlaps[d], Exception(f'Dimension {d} lower index is out of bounds')
-        assert imin <= iistop <= imax + self.overlaps[d], Exception(f'Dimension {d} upper index is out of bounds')
-        return iistart, iistop
-
-    def _get_idxs(self, index):
-        if self.dim == 1:
-            return None, None, index[0]
-        elif self.dim == 2:
-            return index[0], None, index[1]
-        elif self.dim == 3:
-            return index[0], index[1], index[2]
-
-    def _get_idx_mins(self, lovects):
-        if self.dim == 1:
-            return 0, 0, lovects[0,:].min()
-        elif self.dim == 2:
-            return lovects[0,:].min(), 0, lovects[1,:].min()
-        elif self.dim == 3:
-            return lovects[0,:].min(), lovects[1,:].min(), lovects[2,:].min()
-
-    def _get_idx_maxs(self, hivects):
-        if self.dim == 1:
-            return 0, 0, hivects[0,:].max()
-        elif self.dim == 2:
-            return hivects[0,:].max(), 0, hivects[1,:].max()
-        elif self.dim == 3:
-            return hivects[0,:].max(), hivects[1,:].max(), hivects[2,:].max()
-
-    def _get_vslice(self, lovects, fields_shape, ixstart, ixstop, iystart,
-                    iystop, izstart, izstop, ic):
-        # --- The ix1, 2 etc are relative to global indexing
-        if self.dim == 1:
-            ix1, ix2 = 0, 1
-            iy1, iy2 = 0, 1
-            iz1 = max(izstart, lovects[0])
-            iz2 = min(izstop, lovects[0] + fields_shape[0])
-        elif self.dim == 2:
-            ix1 = max(ixstart, lovects[0])
-            ix2 = min(ixstop, lovects[0] + fields_shape[0])
-            iy1, iy2 = 0, 1
-            iz1 = max(izstart, lovects[1])
-            iz2 = min(izstop, lovects[1] + fields_shape[1])
-        elif self.dim == 3:
-            ix1 = max(ixstart, lovects[0])
-            ix2 = min(ixstop, lovects[0] + fields_shape[0])
-            iy1 = max(iystart, lovects[1])
-            iy2 = min(iystop, lovects[1] + fields_shape[1])
-            iz1 = max(izstart, lovects[2])
-            iz2 = min(izstop, lovects[2] + fields_shape[2])
-
-        if ix1 < ix2 and iy1 < iy2 and iz1 < iz2:
-
-            if self.dim == 1:
-                sss = (slice(iz1 - lovects[0], iz2 - lovects[0]))
-                vslice = (slice(iz1 - izstart, iz2 - izstart))
-
-            elif self.dim == 2:
-                sss = (slice(ix1 - lovects[0], ix2 - lovects[0]),
-                       slice(iz1 - lovects[1], iz2 - lovects[1]))
-                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
-                          slice(iz1 - izstart, iz2 - izstart))
-
-            elif self.dim == 3:
-                sss = (slice(ix1 - lovects[0], ix2 - lovects[0]),
-                       slice(iy1 - lovects[1], iy2 - lovects[1]),
-                       slice(iz1 - lovects[2], iz2 - lovects[2]))
-                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
-                          slice(iy1 - iystart, iy2 - iystart),
-                          slice(iz1 - izstart, iz2 - izstart))
-
-            if ic is not None:
-                sss = tuple(list(sss) + [ic])
-
-            return sss, vslice
-        else:
-            return None, None
 
 
 def ExWrapper(level=0, include_ghosts=False):
