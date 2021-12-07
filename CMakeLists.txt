@@ -395,7 +395,7 @@ endif()
 #
 
 # calling `python -m pip wheel .` and install re-using the build directory
-# note: this is mainly for our CI Python regression scrips, users and package
+# note: this is mainly for our CI Python regression scripts, users and package
 #       managers should just use `python -m pip wheel .` and `... install *whl`
 #       directly
 set(PYINSTALLOPTIONS "" CACHE STRING "Additional parameters to pass to `pip install`")
