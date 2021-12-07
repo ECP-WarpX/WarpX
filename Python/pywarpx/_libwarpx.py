@@ -111,10 +111,10 @@ class LibWarpX():
 
         if _Real_size == 8:
             c_real = ctypes.c_double
-            _numpy_real_dtype = 'f8'
+            self._numpy_real_dtype = 'f8'
         else:
             c_real = ctypes.c_float
-            _numpy_real_dtype = 'f4'
+            self._numpy_real_dtype = 'f4'
 
         if _ParticleReal_size == 8:
             c_particlereal = ctypes.c_double
