@@ -885,9 +885,7 @@ void WarpX::InitializeEBGridData (int lev)
             ComputeFaceAreas();
             ScaleEdges();
             ScaleAreas();
-
-            const auto &period = Geom(lev).periodicity();
-
+            
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
                 MarkCells();
                 ComputeFaceExtensions();
