@@ -1455,21 +1455,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
 
 #ifdef AMREX_USE_EB
-#ifdef WARPX_DIM_3D
-        amrex::Vector<int> fs_guard{guard_cells.ng_FieldSolver[0],
-                                guard_cells.ng_FieldSolver[1],
-                                guard_cells.ng_FieldSolver[2]};
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::Vector<int> fs_guard{guard_cells.ng_FieldSolver[0],
-                                    guard_cells.ng_FieldSolver[1],
-                                    guard_cells.ng_FieldSolver[1]};
-#elif defined(WARPX_DIM_1D_Z)
-        amrex::Vector<int> fs_guard{guard_cells.ng_FieldSolver[0],
-                                guard_cells.ng_FieldSolver[0],
-                                guard_cells.ng_FieldSolver[0]};
-#endif
+        int max_guard = guard_cells.ng_FieldSolver.max();
         m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                                       fs_guard,
+                                                       {max_guard, max_guard, max_guard},
                                                        amrex::EBSupport::full);
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
