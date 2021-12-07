@@ -75,18 +75,18 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
-#if (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real dxi = 1.0_rt/dx[0];
 #endif
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const amrex::Real dyi = 1.0_rt/dx[1];
 #endif
 
-#if (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
     const amrex::Real zmin = xyzmin[2];
@@ -100,7 +100,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     Compute_shape_factor< depos_order > const compute_shape_factor;
     Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
 
-#if (AMREX_SPACEDIM == 2 || AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM >= 2)
     // x direction
     // Get particle position
 #ifdef WARPX_DIM_RZ
@@ -149,7 +149,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int const j_bz = ((bz_type[0] == NODE) ? j_node_v : j_cell_v);
 #endif
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     // y direction
     const amrex::Real y = (yp-ymin)*dyi;
     amrex::Real sy_node[depos_order + 1];
@@ -227,7 +227,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // order can differ for each component of each field
     // when galerkin_interpolation is set to 1
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     // Gather field on particle Eyp from field on grid ey_arr
     // Gather field on particle Exp from field on grid ex_arr
     // Gather field on particle Bzp from field on grid bz_arr
@@ -252,7 +252,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
             by_arr(lo.x+l_by+iz, 0, 0, 0);
     }
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){
@@ -356,7 +356,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     Byp = costheta*Byp + sintheta*Bxp_save;
 #endif
 
-#else // (AMREX_SPACEDIM == 3)
+#else // defined(WARPX_DIM_3D)
     // Gather field on particle Exp from field on grid ex_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
