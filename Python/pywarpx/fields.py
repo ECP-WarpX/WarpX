@@ -152,7 +152,7 @@ class _MultiFABWrapper(object):
 
         if len(index) > self.dim:
             if ncomps > 1:
-                ic = index[-1]
+                ic = index[self.dim]
             else:
                 raise Exception('Too many indices given')
         else:
@@ -162,12 +162,14 @@ class _MultiFABWrapper(object):
         ixmax, iymax, izmax = self._get_idx_maxs(hivects)
 
         if npes > 1:
-            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
-            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
-            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
-            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
             izmin = comm_world.allreduce(izmin, op=mpi.MIN)
             izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+            if self.dim > 1:
+                ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+                ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            if self.dim == 3:
+                iymin = comm_world.allreduce(iymin, op=mpi.MIN)
+                iymax = comm_world.allreduce(iymax, op=mpi.MAX)
 
         # --- Setup the size of the array to be returned.
         if self.dim == 1:
@@ -203,7 +205,7 @@ class _MultiFABWrapper(object):
         datalist = []
         for i in range(len(fields)):
             sss, vslice = self._get_vslice(
-                lovects, fields[i].shape, ixstart, ixstop, iystart,
+                lovects[:,i], fields[i].shape, ixstart, ixstop, iystart,
                 iystop, izstart, izstop, ic
             )
             if vslice is not None:
@@ -242,8 +244,8 @@ class _MultiFABWrapper(object):
 
     def __setitem__(self, index, value):
         """Sets slices of a decomposed array. The shape of
-      the input object depends on the number of arguments specified, which can
-      be from none to all three.
+        the input object depends on the number of arguments specified, which can
+        be from none to all three.
         - value: input array (must be supplied)
         """
         if index == Ellipsis:
@@ -262,9 +264,14 @@ class _MultiFABWrapper(object):
 
         ix, iy, iz = self._get_idxs(index)
 
+        if len(fields[0].shape) > self.dim:
+            ncomps = fields[0].shape[-1]
+        else:
+            ncomps = 1
+
         if len(index) > self.dim:
             if ncomps > 1:
-                ic = index[-1]
+                ic = index[self.dim]
             else:
                 raise Exception('Too many indices given')
         else:
@@ -274,12 +281,14 @@ class _MultiFABWrapper(object):
         ixmax, iymax, izmax = self._get_idx_maxs(hivects)
 
         if npes > 1:
-            ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
-            ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
-            iymin = comm_world.allreduce(iymin, op=mpi.MIN)
-            iymax = comm_world.allreduce(iymax, op=mpi.MAX)
             izmin = comm_world.allreduce(izmin, op=mpi.MIN)
             izmax = comm_world.allreduce(izmax, op=mpi.MAX)
+            if self.dim > 1:
+                ixmin = comm_world.allreduce(ixmin, op=mpi.MIN)
+                ixmax = comm_world.allreduce(ixmax, op=mpi.MAX)
+            if self.dim == 3:
+                iymin = comm_world.allreduce(iymin, op=mpi.MIN)
+                iymax = comm_world.allreduce(iymax, op=mpi.MAX)
 
         # --- Add extra dimensions so that the input has the same number of
         # --- dimensions as array.
@@ -314,7 +323,7 @@ class _MultiFABWrapper(object):
 
         for i in range(len(fields)):
             sss, vslice = self._get_vslice(
-                lovects, fields[i].shape, ixstart, ixstop, iystart,
+                lovects[:,i], fields[i].shape, ixstart, ixstop, iystart,
                 iystop, izstart, izstop, ic
             )
             if vslice is not None:
@@ -375,54 +384,52 @@ class _MultiFABWrapper(object):
 
     def _get_vslice(self, lovects, fields_shape, ixstart, ixstop, iystart,
                     iystop, izstart, izstop, ic):
-            # --- The ix1, 2 etc are relative to global indexing
+        # --- The ix1, 2 etc are relative to global indexing
+        if self.dim == 1:
+            ix1, ix2 = 0, 1
+            iy1, iy2 = 0, 1
+            iz1 = max(izstart, lovects[0])
+            iz2 = min(izstop, lovects[0] + fields_shape[0])
+        elif self.dim == 2:
+            ix1 = max(ixstart, lovects[0])
+            ix2 = min(ixstop, lovects[0] + fields_shape[0])
+            iy1, iy2 = 0, 1
+            iz1 = max(izstart, lovects[1])
+            iz2 = min(izstop, lovects[1] + fields_shape[1])
+        elif self.dim == 3:
+            ix1 = max(ixstart, lovects[0])
+            ix2 = min(ixstop, lovects[0] + fields_shape[0])
+            iy1 = max(iystart, lovects[1])
+            iy2 = min(iystop, lovects[1] + fields_shape[1])
+            iz1 = max(izstart, lovects[2])
+            iz2 = min(izstop, lovects[2] + fields_shape[2])
+
+        if ix1 < ix2 and iy1 < iy2 and iz1 < iz2:
+
             if self.dim == 1:
-                ix1, ix2 = 0, 1
-                iy1, iy2 = 0, 1
-                iz1 = max(izstart, lovects[0,i])
-                iz2 = min(izstop, lovects[0,i] + fields_shape[0])
+                sss = (slice(iz1 - lovects[0], iz2 - lovects[0]))
+                vslice = (slice(iz1 - izstart, iz2 - izstart))
+
             elif self.dim == 2:
-                ix1 = max(ixstart, lovects[0,i])
-                ix2 = min(ixstop, lovects[0,i] + fields_shape[0])
-                iy1, iy2 = 0, 1
-                iz1 = max(izstart, lovects[1,i])
-                iz2 = min(izstop, lovects[1,i] + fields_shape[1])
+                sss = (slice(ix1 - lovects[0], ix2 - lovects[0]),
+                       slice(iz1 - lovects[1], iz2 - lovects[1]))
+                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
+                          slice(iz1 - izstart, iz2 - izstart))
+
             elif self.dim == 3:
-                ix1 = max(ixstart, lovects[0,i])
-                ix2 = min(ixstop, lovects[0,i] + fields_shape[0])
-                iy1 = max(iystart, lovects[1,i])
-                iy2 = min(iystop, lovects[1,i] + fields_shape[1])
-                iz1 = max(izstart, lovects[2,i])
-                iz2 = min(izstop, lovects[2,i] + fields_shape[2])
+                sss = (slice(ix1 - lovects[0], ix2 - lovects[0]),
+                       slice(iy1 - lovects[1], iy2 - lovects[1]),
+                       slice(iz1 - lovects[2], iz2 - lovects[2]))
+                vslice = (slice(ix1 - ixstart, ix2 - ixstart),
+                          slice(iy1 - iystart, iy2 - iystart),
+                          slice(iz1 - izstart, iz2 - izstart))
 
-            if ix1 < ix2 and iy1 < iy2 and iz1 < iz2:
+            if ic is not None:
+                sss = tuple(list(sss) + [ic])
 
-                if self.dim == 1:
-                    sss = (slice(iz1 - lovects[0,i], iz2 - lovects[0,i]))
-                elif self.dim == 2:
-                    sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
-                           slice(iz1 - lovects[1,i], iz2 - lovects[1,i]))
-                elif self.dim == 3:
-                    sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
-                           slice(iy1 - lovects[1,i], iy2 - lovects[1,i]),
-                           slice(iz1 - lovects[2,i], iz2 - lovects[2,i]))
-
-                if ic is not None:
-                    sss = tuple(list(sss) + [ic])
-
-                if self.dim == 1:
-                    vslice = (slice(iz1 - izstart, iz2 - izstart))
-                elif self.dim == 2:
-                    vslice = (slice(ix1 - ixstart, ix2 - ixstart),
-                              slice(iz1 - izstart, iz2 - izstart))
-                elif self.dim == 3:
-                    vslice = (slice(ix1 - ixstart, ix2 - ixstart),
-                              slice(iy1 - iystart, iy2 - iystart),
-                              slice(iz1 - izstart, iz2 - izstart))
-
-                return sss, vslice
-            else:
-                return None, None
+            return sss, vslice
+        else:
+            return None, None
 
 
 def ExWrapper(level=0, include_ghosts=False):
