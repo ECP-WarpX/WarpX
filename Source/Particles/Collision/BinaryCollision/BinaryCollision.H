@@ -268,7 +268,7 @@ public:
             int const nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
@@ -419,7 +419,7 @@ public:
             int nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
