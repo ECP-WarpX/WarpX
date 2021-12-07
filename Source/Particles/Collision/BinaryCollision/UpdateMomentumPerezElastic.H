@@ -36,11 +36,14 @@ void UpdateMomentumPerezElastic (
     amrex::RandomEngine const& engine)
 {
 
+    T_R const diffx = amrex::Math::abs(u1x-u2x);
+    T_R const diffy = amrex::Math::abs(u1y-u2y);
+    T_R const diffz = amrex::Math::abs(u1z-u2z);
+    T_R const diffm = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
+    T_R const summm = std::sqrt(u1x*u1x+u1y*u1y+u1z*u1z) + std::sqrt(u2x*u2x+u2y*u2y+u2z*u2z);
     // If g = u1 - u2 = 0, do not collide.
-    if ( amrex::Math::abs(u1x-u2x) < std::numeric_limits<T_R>::min() &&
-         amrex::Math::abs(u1y-u2y) < std::numeric_limits<T_R>::min() &&
-         amrex::Math::abs(u1z-u2z) < std::numeric_limits<T_R>::min() )
-    { return; }
+    // Or if the relative difference is less than 1.0e-10.
+    if ( diffm < std::numeric_limits<T_R>::min() || diffm/summm < 1.0e-10 ) { return; }
 
     T_R constexpr inv_c2 = T_R(1.0) / ( PhysConst::c * PhysConst::c );
 

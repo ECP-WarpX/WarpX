@@ -55,11 +55,11 @@ struct GetParticlePosition
     using RType = amrex::ParticleReal;
 
     const PType* AMREX_RESTRICT m_structs = nullptr;
-#if (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
     const RType* m_theta = nullptr;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     static constexpr RType m_y_default = RType(0.0);
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     static constexpr RType m_x_default = RType(0.0);
     static constexpr RType m_y_default = RType(0.0);
 #endif
@@ -78,7 +78,7 @@ struct GetParticlePosition
     {
         const auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;
-#if (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
         const auto& soa = a_pti.GetStructOfArrays();
         m_theta = soa.GetRealData(PIdx::theta).dataPtr() + a_offset;
 #endif
@@ -152,14 +152,14 @@ struct SetParticlePosition
     using RType = amrex::ParticleReal;
 
     PType* AMREX_RESTRICT m_structs;
-#if (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
     RType* AMREX_RESTRICT m_theta;
 #endif
     SetParticlePosition (WarpXParIter& a_pti, int a_offset = 0) noexcept
     {
         auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;
-#if (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
         auto& soa = a_pti.GetStructOfArrays();
         m_theta = soa.GetRealData(PIdx::theta).dataPtr() + a_offset;
 #endif

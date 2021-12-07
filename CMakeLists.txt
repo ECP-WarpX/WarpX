@@ -260,13 +260,13 @@ if(WarpX_QED)
 endif()
 
 if(WarpX_DIMS STREQUAL 3)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
 elseif(WarpX_DIMS STREQUAL 2)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ WARPX_ZINDEX=1)
 elseif(WarpX_DIMS STREQUAL 1)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_1D_Z)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_1D_Z WARPX_ZINDEX=0)
 elseif(WarpX_DIMS STREQUAL RZ)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
 endif()
 
 if(WarpX_GPUCLOCK)
@@ -343,9 +343,14 @@ if(WarpX_LIB)
     else()
         set(mod_ext "so")
     endif()
+    if(IS_ABSOLUTE CMAKE_INSTALL_LIBDIR)
+        set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
+    else()
+        set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+    endif()
     install(CODE "file(CREATE_LINK
         $<TARGET_FILE_NAME:shared>
-        ${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
+        ${ABS_INSTALL_LIB_DIR}/libwarpx.${lib_suffix}.${mod_ext}
         COPY_ON_ERROR SYMBOLIC)")
 endif()
 

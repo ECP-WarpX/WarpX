@@ -117,7 +117,7 @@ BTDiagnostics::ReadParameters ()
         "The moving window must not stop when using the boosted frame diagnostic.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
         "The moving window must start at step zero for the boosted frame diagnostic.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == AMREX_SPACEDIM-1,
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == WARPX_ZINDEX,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd",
@@ -524,7 +524,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             amrex::Real cellsize;
-            if (idim < AMREX_SPACEDIM-1) {
+            if (idim < WARPX_ZINDEX) {
                 cellsize = warpx.Geom(lev).CellSize(idim);
             } else {
                 cellsize = dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);

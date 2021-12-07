@@ -32,6 +32,7 @@ Macro               3D3V         2D3V         1D3V         RZ
 ``WARPX_DIM_1D_Z``  *undefined*  *undefined*  **defined**  *undefined*
 ``WARPX_DIM_XZ``    *undefined*  **defined**  *undefined*  *undefined*
 ``WARPX_DIM_RZ``    *undefined*  *undefined*  *undefined*  **defined**
+``WARPX_ZINDEX``    ``2``        ``1``        ``0``        ``1``
 ==================  ===========  ===========  ===========  ===========
 
 At the same time, the following conventions will apply:
