@@ -345,8 +345,8 @@ def test_two_embedded_cylinders_scraping():
     cylinder2.record_scrapedparticles()
     cyl2_scraped = cylinder2.get_scrapedparticles()
 
-    assert np.allclose(cyl1_scraped['n'], np.array([3, 40]))
-    assert np.allclose(cyl2_scraped['n'], np.array([5, 45]))
+    assert np.allclose(cyl1_scraped['n'], np.array([2, 40]))
+    assert np.allclose(cyl2_scraped['n'], np.array([5, 46]))
 
     #######################################################################
     # Check rho results against reference data                            #
