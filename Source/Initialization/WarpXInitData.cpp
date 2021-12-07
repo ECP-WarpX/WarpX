@@ -885,7 +885,7 @@ void WarpX::InitializeEBGridData (int lev)
             ComputeFaceAreas();
             ScaleEdges();
             ScaleAreas();
-            
+
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
                 MarkCells();
                 ComputeFaceExtensions();
