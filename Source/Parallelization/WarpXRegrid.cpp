@@ -46,54 +46,6 @@
 
 using namespace amrex;
 
-/**
- *  \brief Function that creates a DistributionMapping "similar" to that of a MultiFab.
- *
- *  "Similar" means that, if a box in "ba" intersects with any of the
- *  boxes in the BoxArray associated with "mf", taking "ngrow" ghost cells into account,
- *  then that box will be assigned to the proc owning the one it has the maximum amount
- *  of overlap with.
- *
- *  @param[in] ba The BoxArray we want to generate a DistributionMapping for.
- *  @param[in] mf The MultiFab we want said DistributionMapping to be similar to.
- *  @param[in] ng The number of grow cells to use when computing intersection / overlap
- *  @return The computed DistributionMapping.
- */
-amrex::DistributionMapping makeSimilarDM (const amrex::BoxArray& ba,
-                                          const amrex::MultiFab& mf,
-                                          const amrex::IntVect& ng)
-{
-    amrex::Vector<int> pmap(ba.size());
-    const amrex::DistributionMapping& mf_dm = mf.DistributionMap();
-    const amrex::BoxArray& mf_ba = mf.boxArray();
-
-    for (amrex::Long i = 0; i < ba.size(); ++i) {
-        amrex::Box box = ba[i];
-        box.grow(ng);
-        bool first_only = false;
-        auto isects = mf_ba.intersections(box, first_only, ng);
-        if (isects.empty()) {
-            // no intersection found, revert to round-robin
-            int nprocs = amrex::ParallelContext::NProcsSub();
-            pmap[i] = i % nprocs;
-        } else {
-            amrex::Long max_overlap = 0;
-            int max_overlap_index = -1;
-            for (const auto& isect : isects) {
-                int gid = isect.first;
-                amrex::Box isect_box = isect.second;
-                if (isect_box.numPts() > max_overlap) {
-                    max_overlap = isect_box.numPts();
-                    max_overlap_index = gid;
-                }
-            }
-            AMREX_ASSERT(max_overlap > 0);
-            pmap[i] = mf_dm[max_overlap_index];
-        }
-    }
-    return amrex::DistributionMapping(pmap);
-}
-
 void
 WarpX::LoadBalance ()
 {

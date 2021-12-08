@@ -227,6 +227,23 @@ private:
                                          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 
     static void CopyToPML (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom);
+
+    /**
+     *  \brief Function that creates a DistributionMapping "similar" to that of a MultiFab.
+     *
+     *  "Similar" means that, if a box in "ba" intersects with any of the
+     *  boxes in the BoxArray associated with "mf", taking "ngrow" ghost cells into account,
+     *  then that box will be assigned to the proc owning the one it has the maximum amount
+     *  of overlap with.
+     *
+     *  @param[in] ba The BoxArray we want to generate a DistributionMapping for.
+     *  @param[in] mf The MultiFab we want said DistributionMapping to be similar to.
+     *  @param[in] ng The number of grow cells to use when computing intersection / overlap
+     *  @return The computed DistributionMapping.
+     */
+    static amrex::DistributionMapping MakeSimilarDM (const amrex::BoxArray& ba,
+                                                     const amrex::MultiFab& mf,
+                                                     const amrex::IntVect& ng);
 };
 
 #ifdef WARPX_USE_PSATD

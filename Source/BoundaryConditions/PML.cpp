@@ -1105,6 +1105,41 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
   WarpXCommUtil::ParallelCopy(pml, reg, 0, 0, 1, IntVect(0), ngp, period);
 }
 
+amrex::DistributionMapping PML::MakeSimilarDM (const amrex::BoxArray& ba,
+                                               const amrex::MultiFab& mf,
+                                               const amrex::IntVect& ng)
+{
+    amrex::Vector<int> pmap(ba.size());
+    const amrex::DistributionMapping& mf_dm = mf.DistributionMap();
+    const amrex::BoxArray& mf_ba = mf.boxArray();
+
+    for (amrex::Long i = 0; i < ba.size(); ++i) {
+        amrex::Box box = ba[i];
+        box.grow(ng);
+        bool first_only = false;
+        auto isects = mf_ba.intersections(box, first_only, ng);
+        if (isects.empty()) {
+            // no intersection found, revert to round-robin
+            int nprocs = amrex::ParallelContext::NProcsSub();
+            pmap[i] = i % nprocs;
+        } else {
+            amrex::Long max_overlap = 0;
+            int max_overlap_index = -1;
+            for (const auto& isect : isects) {
+                int gid = isect.first;
+                amrex::Box isect_box = isect.second;
+                if (isect_box.numPts() > max_overlap) {
+                    max_overlap = isect_box.numPts();
+                    max_overlap_index = gid;
+                }
+            }
+            AMREX_ASSERT(max_overlap > 0);
+            pmap[i] = mf_dm[max_overlap_index];
+        }
+    }
+    return amrex::DistributionMapping(pmap);
+}
+
 void
 PML::FillBoundary ()
 {
