@@ -3,11 +3,11 @@ Version, Physics version, Date,        List of changes
 
 **Other changes**:
 
-- Merge ``upstream/development`` (git hash ``76e75f9``) into memaster.
+- Merge ``upstream/development`` (git hash ``c76787d``) into memaster.
   Specifically useful change is that Azure tests now cache previous builds
   which substantially reduces the time to complete CI tests.
 - Changed reference for ``test_two_embedded_cylinders_scraping`` CI test again
-  since the new test values also causes a failure when run with Python3.9
+  since the new test values also causes a failure when run on circleCI.
 "
 2.0.6, 2, 12/7/2021, "
 
