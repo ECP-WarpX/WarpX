@@ -23,7 +23,7 @@ Optional dependencies include:
 - `openPMD-api 0.14.2+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`__
-- `CCache <https://ccache.dev>`__: to speed up rebuilds (needs 3.7.9+ for CUDA)
+- `CCache <https://ccache.dev>`__: to speed up rebuilds (For CUDA support, needs version 3.7.9+ and 4.2+ is recommended)
 - `Ninja <https://ninja-build.org>`__: for faster parallel compiles
 
 
@@ -119,7 +119,7 @@ Without MPI:
 .. code-block:: bash
 
    conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy scipy yt fftw matplotlib mamba ninja
-   conda activate warpx-dev
+   source activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
 
@@ -127,8 +127,16 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api=*=mpi_openmpi* python numpy scipy yt fftw=*=mpi_openmpi* matplotlib mamba ninja openmpi
-   conda activate warpx-dev
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_openmpi*" python numpy scipy yt "fftw=*=mpi_openmpi*" matplotlib mamba ninja openmpi
+   source activate warpx-dev
+
+For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
+
+.. code-block:: bash
+
+   export FFTW_HOME=${CONDA_PREFIX}
+   export BLASPP_HOME=${CONDA_PREFIX}
+   export LAPACKPP_HOME=${CONDA_PREFIX}
 
 
 Apt (Debian/Ubuntu)
@@ -138,3 +146,9 @@ Apt (Debian/Ubuntu)
 
    sudo apt update
    sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-scipy
+
+   # optional:
+   # for CUDA, either install
+   #   https://developer.nvidia.com/cuda-downloads (preferred)
+   # or, if your Debian/Ubuntu is new enough, use the packages
+   #   sudo apt install nvidia-cuda-dev libcub-dev

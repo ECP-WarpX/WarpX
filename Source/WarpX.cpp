@@ -568,7 +568,7 @@ WarpX::ReadParameters ()
             }
 #endif
             else if (s == "z" || s == "Z") {
-                moving_window_dir = AMREX_SPACEDIM-1;
+                moving_window_dir = WARPX_ZINDEX;
             }
             else {
                 const std::string msg = "Unknown moving_window_dir: "+s;
@@ -750,15 +750,6 @@ WarpX::ReadParameters ()
             amrex::Abort("Multi-J algorithm not implemented with PMLs");
         }
 
-        // div(E) cleaning not implemented for PSATD solver
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-        {
-            if (do_multi_J == 0 && do_dive_cleaning == 1)
-            {
-                amrex::Abort("warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
-            }
-        }
-
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
@@ -774,16 +765,18 @@ WarpX::ReadParameters ()
 
         // If WarpX::do_dive_cleaning = 1, set also WarpX::do_pml_dive_cleaning = 1
         // (possibly overwritten by users in the input file, see query below)
-        if (do_dive_cleaning)
-        {
-            do_pml_dive_cleaning = 1;
-        }
+        if (do_dive_cleaning) do_pml_dive_cleaning = 1;
+
+        // If WarpX::do_divb_cleaning = 1, set also WarpX::do_pml_divb_cleaning = 1
+        // (possibly overwritten by users in the input file, see query below)
+        // TODO Implement div(B) cleaning in PML with FDTD and remove second if condition
+        if (do_divb_cleaning && maxwell_solver_id == MaxwellSolverAlgo::PSATD) do_pml_divb_cleaning = 1;
 
         // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
         pp_warpx.query("do_pml_divb_cleaning", do_pml_divb_cleaning);
 
-        // div(B) cleaning in PMLs not implemented for FDTD solver
+        // TODO Implement div(B) cleaning in PML with FDTD and remove ASSERT
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1153,7 +1146,7 @@ WarpX::ReadParameters ()
 #   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
-            update_with_rho = false; // standard PSATD
+            update_with_rho = (do_dive_cleaning) ? true : false; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
@@ -1162,6 +1155,11 @@ WarpX::ReadParameters ()
 
         // Overwrite update_with_rho with value set in input file
         pp_psatd.query("update_with_rho", update_with_rho);
+
+        if (do_dive_cleaning == true && update_with_rho == false)
+        {
+            amrex::Abort("warpx.do_dive_cleaning = 1 not implemented with psatd.update_with_rho = 0");
+        }
 
         if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
@@ -1690,12 +1688,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, ncomps, ngF.max(), tag("F_fp"));
+        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, ncomps, ngF, tag("F_fp"));
     }
 
     if (do_divb_cleaning)
     {
-        G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, ncomps, ngG.max(), tag("G_fp"));
+        G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, ncomps, ngG, tag("G_fp"));
     }
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
