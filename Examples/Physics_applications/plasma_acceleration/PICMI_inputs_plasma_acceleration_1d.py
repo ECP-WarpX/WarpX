@@ -10,9 +10,9 @@ zmax = +200.e-6
 
 moving_window_velocity = [0., 0., constants.c]
 
-number_per_cell_each_dim = [2, 1, 1]
+number_per_cell_each_dim = [10]
 
-max_steps = 10
+max_steps = 1000
 
 grid = picmi.Cartesian1DGrid(number_of_cells = [nz],
                              lower_bound = [zmin],
