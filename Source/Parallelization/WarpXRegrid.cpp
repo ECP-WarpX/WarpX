@@ -88,7 +88,7 @@ amrex::DistributionMapping makeSimilarDM (const amrex::BoxArray& ba,
                 }
             }
             AMREX_ASSERT(max_overlap > 0);
-            pmap[i] = mf_dm[i];
+            pmap[i] = mf_dm[max_overlap_index];
         }
     }
     return amrex::DistributionMapping(pmap);
