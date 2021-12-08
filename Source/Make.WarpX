@@ -57,19 +57,19 @@ endif
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
 ifeq ($(DIM),3)
-  DEFINES += -DWARPX_DIM_3D
+  DEFINES += -DWARPX_DIM_3D -DWARPX_ZINDEX=2
 endif
 
 ifeq ($(DIM),2)
 ifeq ($(USE_RZ),TRUE)
-  DEFINES += -DWARPX_DIM_RZ
+  DEFINES += -DWARPX_DIM_RZ -DWARPX_ZINDEX=1
 else
-  DEFINES += -DWARPX_DIM_XZ
+  DEFINES += -DWARPX_DIM_XZ -DWARPX_ZINDEX=1
 endif
 endif
 
 ifeq ($(DIM),1)
-  DEFINES += -DWARPX_DIM_1D_Z
+  DEFINES += -DWARPX_DIM_1D_Z -DWARPX_ZINDEX=0
 endif
 
 -include Make.package

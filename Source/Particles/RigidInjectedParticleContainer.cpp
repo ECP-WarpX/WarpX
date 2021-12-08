@@ -283,9 +283,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
     // particles have crossed the inject plane.
     const Real* plo = Geom(lev).ProbLo();
     const Real* phi = Geom(lev).ProbHi();
-    const int zdir = AMREX_SPACEDIM-1;
-    done_injecting_lev = ((zinject_plane_levels[lev] < plo[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
-                           (zinject_plane_levels[lev] > phi[zdir] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c <= 0.));
+    done_injecting_lev = ((zinject_plane_levels[lev] < plo[WARPX_ZINDEX] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
+                           (zinject_plane_levels[lev] > phi[WARPX_ZINDEX] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c <= 0.));
 
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
@@ -330,8 +329,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const auto getPosition = GetParticlePosition(pti);
 
-            const auto getExternalE = GetExternalEField(pti);
-            const auto getExternalB = GetExternalBField(pti);
+            const auto getExternalEB = GetExternalEBField(pti);
 
             const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,m_v_galilean,lev);
 
@@ -401,8 +399,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
-                getExternalE(ip, Exp, Eyp, Ezp);
-                getExternalB(ip, Bxp, Byp, Bzp);
+                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
                 amrex::Real qp = q;
                 if (ion_lev) { qp *= ion_lev[ip]; }
