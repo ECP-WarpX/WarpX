@@ -784,13 +784,16 @@ PML::MakeBoxArray_single (const amrex::Box& regular_domain, const amrex::BoxArra
     BoxList bl;
     for (int i = 0, N = grid_ba.size(); i < N; ++i) {
         Box const& b = grid_ba[i];
-        for (OrientationIter oit; oit.isValid(); ++oit) { // Iteration over all faces
+        for (OrientationIter oit; oit.isValid(); ++oit) {
+            // In 3d, a Box has 6 faces.  This iterates over the 6 faces.
+            // 3 of them are on the lower side and the others are on the
+            // higher side.
             Orientation ori = oit();
-            const int idim = ori.coordDir();
+            const int idim = ori.coordDir(); // either 0 or 1 or 2 (i.e., x, y, z-direction)
             bool pml_bndry = false;
-            if (ori.isLow() && do_pml_Lo[idim]) {
+            if (ori.isLow() && do_pml_Lo[idim]) {  // This is one of the lower side faces.
                 pml_bndry = b.smallEnd(idim) == regular_domain.smallEnd(idim);
-            } else if (ori.isHigh() && do_pml_Hi[idim]) {
+            } else if (ori.isHigh() && do_pml_Hi[idim]) { // This is one of the higher side faces.
                 pml_bndry = b.bigEnd(idim) == regular_domain.bigEnd(idim);
             }
             if (pml_bndry) {
