@@ -772,7 +772,7 @@ PML::MakeBoxArray (const amrex::Box& regular_domain,
 {
     if (regular_domain.numPts() == grid_ba.numPts()) {
         return MakeBoxArray_single(regular_domain, grid_ba, ncell, do_pml_Lo, do_pml_Hi);
-    } else {
+    } else { // the union of the regular grids is *not* a single rectangular domain
         return MakeBoxArray_multiple(geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
     }
 }
