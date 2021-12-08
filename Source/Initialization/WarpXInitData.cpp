@@ -76,7 +76,7 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
         const IntVect sz = domlen / numprocs;
         const IntVect extra = domlen - sz*numprocs;
         BoxList bl;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         for (int k = 0; k < numprocs[2]; ++k) {
             // The first extra[2] blocks get one extra cell with a total of
             // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
@@ -320,7 +320,7 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
     // Sanity checks: can use zmax_plasma_to_compute_max_step only if
     // the moving window and the boost are all in z direction.
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
+        WarpX::moving_window_dir == WARPX_ZINDEX,
         "Can use zmax_plasma_to_compute_max_step only if " +
         "moving window along z. TODO: all directions.");
     if (gamma_boost > 1){
@@ -334,7 +334,7 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
 
     // Lower end of the simulation domain. All quantities are given in boosted
     // frame except zmax_plasma_to_compute_max_step.
-    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
+    const Real zmin_domain_boost = a_geom.ProbLo(WARPX_ZINDEX);
     // End of the plasma: Transform input argument
     // zmax_plasma_to_compute_max_step to boosted frame.
     const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
@@ -368,13 +368,13 @@ WarpX::InitNCICorrector ()
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
             amrex::Real dz, cdtodz;
-            if (AMREX_SPACEDIM == 3){
+#if defined(WARPX_DIM_3D)
                 dz = dx[2];
-            }else if(AMREX_SPACEDIM == 2){
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 dz = dx[1];
-            }else{
+#else
                 dz = dx[0];
-            }
+#endif
             cdtodz = PhysConst::c * dt[lev] / dz;
 
             // Initialize Godfrey filters
@@ -669,12 +669,12 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real y = 0._rt;
@@ -695,18 +695,18 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #ifdef AMREX_USE_EB
                 if(geom_data_y(i, j, k)<=0) return;
 #endif
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
@@ -721,18 +721,18 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #ifdef AMREX_USE_EB
                 if(geom_data_z(i, j, k)<=0) return;
 #endif
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
@@ -862,9 +862,21 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
     }
 }
 
-void WarpX::InitializeEBGridData(int lev)
+void WarpX::InitializeEBGridData (int lev)
 {
-    if(lev==maxLevel()) {
+#ifdef AMREX_USE_EB
+    if (lev == maxLevel()) {
+
+        // Throw a warning if EB is on and particle_shape > 1
+        bool flag_eb_on = not fieldEBFactory(lev).isAllRegular();
+
+        if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
+        {
+            this->RecordWarning("Particles",
+                                "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+                                "particles are close to embedded boundaries");
+        }
+
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
@@ -900,4 +912,7 @@ void WarpX::InitializeEBGridData(int lev)
         ComputeDistanceToEB();
 
     }
+#else
+    amrex::ignore_unused(lev);
+#endif
 }

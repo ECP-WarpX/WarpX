@@ -29,17 +29,25 @@ set -eu -o pipefail
 tests_arg=$*
 tests_run=${tests_arg:+--tests=${tests_arg}}
 
+# environment options
+WARPX_CI_TMP=${WARPX_CI_TMP:-""}
+
 # Remove contents and link to a previous test directory (intentionally two arguments)
 rm -rf test_dir/* test_dir
 # Create a temporary test directory
-tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
-if [ $? -ne 0 ]; then
-    echo "Cannot create temporary directory"
-    exit 1
+if [ -z "${WARPX_CI_TMP}" ]; then
+    tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
+    if [ $? -ne 0 ]; then
+        echo "Cannot create temporary directory"
+        exit 1
+    fi
+else
+    tmp_dir=${WARPX_CI_TMP}
 fi
 
 # Copy WarpX into current test directory
-mkdir ${tmp_dir}/warpx
+rm -rf ${tmp_dir}/warpx
+mkdir -p ${tmp_dir}/warpx
 cp -r ./* ${tmp_dir}/warpx
 
 # Link the test directory
@@ -51,10 +59,10 @@ echo "cd $PWD"
 
 # Clone PICSAR, AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 29584112a13ab086dc64edfdc99a217431ed8db7 && cd -
+cd amrex && git checkout --detach 60fe729fe2ba65ebffc88c0af18743c254d3992c && cd -
 # Use QED brach for QED tests
 git clone https://github.com/ECP-WarpX/picsar.git
-cd picsar && git checkout --detach 8ff12fbf118b9aba7cfe602cb1a5e6da32bf7eef && cd -
+cd picsar && git checkout --detach 7b5449f92a4b30a095cc4a67f0a8b1fc69680e15 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
