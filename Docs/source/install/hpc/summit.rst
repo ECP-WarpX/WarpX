@@ -41,7 +41,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    # required dependencies
    module load cmake/3.20.2
    module load gcc/9.3.0
-   module load cuda/11.0.3
+   module load cuda/11.3.1
 
    # optional: faster re-builds
    module load ccache
