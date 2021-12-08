@@ -597,6 +597,9 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
 
+        self.divE_cleaning = kw.pop('warpx_divE_cleaning', None)
+        self.divB_cleaning = kw.pop('warpx_divB_cleaning', None)
+
         if self.method == 'PSATD':
             self.psatd_periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
