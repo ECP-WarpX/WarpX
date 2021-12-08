@@ -26,6 +26,13 @@ endif()
 #endif()
 
 
+# C++ Standard in Superbuilds #################################################
+#
+# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# openPMD-api until they increase their requirement.
+set_cxx17_superbuild()
+
+
 # CCache Support ##############################################################
 #
 # this is an optional tool that stores compiled object files; allows fast
