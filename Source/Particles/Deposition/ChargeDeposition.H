@@ -176,6 +176,8 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
           IntVect iv = IntVect(
                                int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
                                int(amrex::Math::floor((zp-plo[1])*dxiarr[1])));
+#elif defined(WARPX_DIM_1D)
+          IntVect iv = IntVect(int(amrex::Math::floor((zp-plo[0])*dxiarr[0])));
 #endif
           iv += domain.smallEnd();
           getTileIndex(iv, box, true, bin_size, buffer_box);
