@@ -74,6 +74,8 @@ class WarpX(Bucket):
         return argv
 
     def init(self, mpi_comm=None):
+        from . import _libwarpx
+        _libwarpx.load_libwarpx()
         from . import wx
         argv = ['warpx'] + self.create_argv_list()
         wx.initialize(argv, mpi_comm=mpi_comm)

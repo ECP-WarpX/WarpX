@@ -30,112 +30,16 @@ except ImportError:
     MPI = None
     _MPI_Comm_type = ctypes.c_void_p
 
-# --- Is there a better way of handling constants?
-clight = 2.99792458e+8 # m/s
-
-def _get_package_root():
-    '''
-    Get the path to the installation location (where libwarpx.so would be installed).
-    '''
-    cur = os.path.abspath(__file__)
-    while True:
-        name = os.path.basename(cur)
-        if name == 'pywarpx':
-            return cur
-        elif not name:
-            return ''
-        cur = os.path.dirname(cur)
-
-# --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
-# --- This assumes that the input is setup before this module is imported,
-# --- which should normally be the case.
-# --- Default to 3D if geometry is not setup yet.
-try:
-    _prob_lo = geometry.prob_lo
-    _coord_sys = geometry.coord_sys
-except AttributeError:
-    geometry_dim = '3d'
-else:
-    if _coord_sys == 0:
-        geometry_dim = '%dd'%len(_prob_lo)
-    elif _coord_sys == 1:
-        geometry_dim = 'rz'
-    else:
-        raise Exception('Undefined coordinate system %d'%_coord_sys)
-    del _prob_lo, _coord_sys
-
+# LibC Import
 if platform.system() == 'Windows':
     path_libc = _find_library('msvcrt')
 else:
     path_libc = _find_library('c')
 _libc = ctypes.CDLL(path_libc)
 
-# this is a plain C/C++ shared library, not a Python module
-if os.name == 'nt':
-    mod_ext = "dll"
-else:
-    mod_ext = "so"
-libname = "libwarpx.{0}.{1}".format(geometry_dim, mod_ext)
+# --- Is there a better way of handling constants?
+clight = 2.99792458e+8 # m/s
 
-try:
-    libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), libname))
-except OSError as e:
-    value = e.args[0]
-    if f'{libname}: cannot open shared object file: No such file or directory' in value:
-        raise Exception(f'"{libname}" was not installed. Installation instructions can be found here https://warpx.readthedocs.io/en/latest/install/users.html') from e
-    else:
-        print("Failed to load the libwarpx shared object library")
-        raise
-
-# track whether libwarpx has been initialized
-libwarpx.initialized = False
-
-# WarpX can be compiled using either double or float
-libwarpx.warpx_Real_size.restype = ctypes.c_int
-libwarpx.warpx_ParticleReal_size.restype = ctypes.c_int
-
-_Real_size = libwarpx.warpx_Real_size()
-_ParticleReal_size = libwarpx.warpx_ParticleReal_size()
-
-if _Real_size == 8:
-    c_real = ctypes.c_double
-    _numpy_real_dtype = 'f8'
-else:
-    c_real = ctypes.c_float
-    _numpy_real_dtype = 'f4'
-
-if _ParticleReal_size == 8:
-    c_particlereal = ctypes.c_double
-    _numpy_particlereal_dtype = 'f8'
-else:
-    c_particlereal = ctypes.c_float
-    _numpy_particlereal_dtype = 'f4'
-
-dim = libwarpx.warpx_SpaceDim()
-
-# our particle data type, depends on _ParticleReal_size
-_p_struct = [(d, _numpy_particlereal_dtype) for d in 'xyz'[:dim]] + [('id', 'i4'), ('cpu', 'i4')]
-_p_dtype = np.dtype(_p_struct, align=True)
-
-_numpy_to_ctypes = {}
-_numpy_to_ctypes[_numpy_particlereal_dtype] = c_particlereal
-_numpy_to_ctypes['i4'] = ctypes.c_int
-
-class Particle(ctypes.Structure):
-    _fields_ = [(v[0], _numpy_to_ctypes[v[1]]) for v in _p_struct]
-
-
-# some useful typenames
-_LP_particle_p = ctypes.POINTER(ctypes.POINTER(Particle))
-_LP_c_int = ctypes.POINTER(ctypes.c_int)
-_LP_LP_c_int = ctypes.POINTER(_LP_c_int)
-_LP_c_void_p = ctypes.POINTER(ctypes.c_void_p)
-_LP_c_real = ctypes.POINTER(c_real)
-_LP_LP_c_real = ctypes.POINTER(_LP_c_real)
-_LP_c_particlereal = ctypes.POINTER(c_particlereal)
-_LP_LP_c_particlereal = ctypes.POINTER(_LP_c_particlereal)
-_LP_c_char = ctypes.POINTER(ctypes.c_char)
-_LP_LP_c_char = ctypes.POINTER(_LP_c_char)
 
 # this is a function for converting a ctypes pointer to a numpy array
 def _array1d_from_pointer(pointer, dtype, size):
@@ -156,126 +60,281 @@ def _array1d_from_pointer(pointer, dtype, size):
     return np.frombuffer(buf, dtype=dtype, count=size)
 
 
-# set the arg and return types of the wrapped functions
-libwarpx.amrex_init.argtypes = (ctypes.c_int, _LP_LP_c_char)
-libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MPI_Comm_type)
-libwarpx.warpx_getParticleStructs.restype = _LP_particle_p
-libwarpx.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
-libwarpx.warpx_getParticleCompIndex.restype = ctypes.c_int
-libwarpx.warpx_getEfield.restype = _LP_LP_c_real
-libwarpx.warpx_getEfieldLoVects.restype = _LP_c_int
-libwarpx.warpx_getEfieldCP.restype = _LP_LP_c_real
-libwarpx.warpx_getEfieldCPLoVects.restype = _LP_c_int
-libwarpx.warpx_getEfieldFP.restype = _LP_LP_c_real
-libwarpx.warpx_getEfieldFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getEfieldCP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getEfieldCPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getEfieldFP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getEfieldFPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getBfield.restype = _LP_LP_c_real
-libwarpx.warpx_getBfieldLoVects.restype = _LP_c_int
-libwarpx.warpx_getBfieldCP.restype = _LP_LP_c_real
-libwarpx.warpx_getBfieldCPLoVects.restype = _LP_c_int
-libwarpx.warpx_getBfieldFP.restype = _LP_LP_c_real
-libwarpx.warpx_getBfieldFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getBfieldCP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getBfieldCPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getBfieldFP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getBfieldFPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getCurrentDensity.restype = _LP_LP_c_real
-libwarpx.warpx_getCurrentDensityLoVects.restype = _LP_c_int
-libwarpx.warpx_getCurrentDensityCP.restype = _LP_LP_c_real
-libwarpx.warpx_getCurrentDensityCPLoVects.restype = _LP_c_int
-libwarpx.warpx_getCurrentDensityFP.restype = _LP_LP_c_real
-libwarpx.warpx_getCurrentDensityFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getCurrentDensityCP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getCurrentDensityFPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getChargeDensityCP.restype = _LP_LP_c_real
-libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
-libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
-libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getPhiFP.restype = _LP_LP_c_real
-libwarpx.warpx_getPhiFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getFfieldCP.restype = _LP_LP_c_real
-libwarpx.warpx_getFfieldCPLoVects.restype = _LP_c_int
-libwarpx.warpx_getFfieldFP.restype = _LP_LP_c_real
-libwarpx.warpx_getFfieldFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getFfieldCP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getFfieldCPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getFfieldFP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getFfieldFPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getGfieldCP.restype = _LP_LP_c_real
-libwarpx.warpx_getGfieldCPLoVects.restype = _LP_c_int
-libwarpx.warpx_getGfieldFP.restype = _LP_LP_c_real
-libwarpx.warpx_getGfieldFPLoVects.restype = _LP_c_int
-libwarpx.warpx_getGfieldCP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getGfieldCPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getGfieldFP_PML.restype = _LP_LP_c_real
-libwarpx.warpx_getGfieldFPLoVects_PML.restype = _LP_c_int
-libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
-libwarpx.warpx_getParticleBoundaryBufferStructs.restype = _LP_LP_c_particlereal
-libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
-libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
+class UninitializedLibwarpx(object):
 
-libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getEz_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getBx_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getBy_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getBz_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getJx_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getJy_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getJz_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getPhi_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getF_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getG_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getF_pml_nodal_flag.restype = _LP_c_int
-libwarpx.warpx_getG_pml_nodal_flag.restype = _LP_c_int
+    """This class is initialized so that a nice error message can be printed if
+    the C libwarpx DLL is accessed before it is loaded.
+    """
 
-#libwarpx.warpx_getPMLSigma.restype = _LP_c_real
-#libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
-#libwarpx.warpx_ComputePMLFactors.argtypes = (ctypes.c_int, c_real)
-libwarpx.warpx_addNParticles.argtypes = (ctypes.c_char_p, ctypes.c_int,
-                                         _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
-                                         _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
-                                         _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
-                                         _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
-                                         _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
-                                         _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
-                                         ctypes.c_int,
-                                         _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
-                                         ctypes.c_int)
+    def __getattr__(self, item):
+        raise AttributeError(
+            "Attempted to get or call an item from libwarpx before it was "
+            "loaded. Please use the load_libwarpx() function before "
+            "doing so."
+        )
 
-libwarpx.warpx_getProbLo.restype = c_real
-libwarpx.warpx_getProbHi.restype = c_real
-libwarpx.warpx_getCellSize.restype = c_real
-libwarpx.warpx_getistep.restype = ctypes.c_int
-libwarpx.warpx_gett_new.restype = c_real
-libwarpx.warpx_getdt.restype = c_real
-libwarpx.warpx_maxStep.restype = ctypes.c_int
-libwarpx.warpx_stopTime.restype = c_real
-libwarpx.warpx_finestLevel.restype = ctypes.c_int
-libwarpx.warpx_getMyProc.restype = ctypes.c_int
-libwarpx.warpx_getNProcs.restype = ctypes.c_int
 
-libwarpx.warpx_EvolveE.argtypes = [c_real]
-libwarpx.warpx_EvolveB.argtypes = [c_real]
-libwarpx.warpx_FillBoundaryE.argtypes = []
-libwarpx.warpx_FillBoundaryB.argtypes = []
-libwarpx.warpx_UpdateAuxilaryData.argtypes = []
-libwarpx.warpx_SyncCurrent.argtypes = []
-libwarpx.warpx_PushParticlesandDepose.argtypes = [c_real]
-libwarpx.warpx_getProbLo.argtypes = [ctypes.c_int]
-libwarpx.warpx_getProbHi.argtypes = [ctypes.c_int]
-libwarpx.warpx_getCellSize.argtypes = [ctypes.c_int, ctypes.c_int]
-libwarpx.warpx_getistep.argtypes = [ctypes.c_int]
-libwarpx.warpx_setistep.argtypes = [ctypes.c_int, ctypes.c_int]
-libwarpx.warpx_gett_new.argtypes = [ctypes.c_int]
-libwarpx.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
-libwarpx.warpx_getdt.argtypes = [ctypes.c_int]
+class LWXInfo(object):
+
+    """LWXInfo holds lots of information about the libwarpx DLL. Rather than
+    hold these all as module globals, they're set in this class.
+    """
+
+    def __init__(self):
+        # Track whether libwarpx has been loaded
+        self.libwarpx_loaded = False
+        # Track whether WarpX has been initialized
+        self.initialized = False
+
+    def __getattr__(self, item):
+        """__getattr__ is only run if an item isn't already assigned to the
+        object. If someone just used the wrong attribute name, we use the
+        standard behavior, but print a specialized error if libwarpx is not
+        yet loaded.
+        """
+        if not self.libwarpx_loaded:
+            raise AttributeError(
+                "Attempted to access a libwarpx property from lwxinfo before "
+                "libwarpx was loaded. Please use the load_libwarpx() function "
+                "before doing so."
+            )
+        else:
+            return self.__getattribute__(item)
+
+
+class Particle(ctypes.Structure):
+
+    """Particle has fields defined in load_libwarpx()."""
+
+    pass
+
+
+libwarpx = UninitializedLibwarpx()
+lwxinfo = LWXInfo()
+
+
+def _get_package_root():
+    '''
+    Get the path to the installation location (where libwarpx.so would be installed).
+    '''
+    cur = os.path.abspath(__file__)
+    while True:
+        name = os.path.basename(cur)
+        if name == 'pywarpx':
+            return cur
+        elif not name:
+            return ''
+        cur = os.path.dirname(cur)
+
+
+def load_libwarpx():
+    """Load the libwarpx DLL."""
+    global libwarpx
+    # --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
+    try:
+        _prob_lo = geometry.prob_lo
+        _coord_sys = geometry.coord_sys
+    except AttributeError:
+        raise RuntimeError(
+            "Geometry must be set before load_libwarpx is called."
+        )
+
+    if _coord_sys == 0:
+        lwxinfo.geometry_dim = '%dd'%len(_prob_lo)
+    elif _coord_sys == 1:
+        lwxinfo.geometry_dim = 'rz'
+    else:
+        raise Exception('Undefined coordinate system %d'%_coord_sys)
+
+    # this is a plain C/C++ shared library, not a Python module
+    if os.name == 'nt':
+        mod_ext = "dll"
+    else:
+        mod_ext = "so"
+    libname = "libwarpx.{0}.{1}".format(lwxinfo.geometry_dim, mod_ext)
+
+    try:
+        libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), libname))
+    except OSError as e:
+        value = e.args[0]
+        if f'{libname}: cannot open shared object file: No such file or directory' in value:
+            raise Exception(f'"{libname}" was not installed. Installation instructions can be found here https://warpx.readthedocs.io/en/latest/install/users.html') from e
+        else:
+            print("Failed to load the libwarpx shared object library")
+            raise
+
+    # WarpX can be compiled using either double or float
+    libwarpx.warpx_Real_size.restype = ctypes.c_int
+    libwarpx.warpx_ParticleReal_size.restype = ctypes.c_int
+
+    lwxinfo._Real_size = libwarpx.warpx_Real_size()
+    lwxinfo._ParticleReal_size = libwarpx.warpx_ParticleReal_size()
+
+    if lwxinfo._Real_size == 8:
+        lwxinfo.c_real = ctypes.c_double
+        lwxinfo._numpy_real_dtype = 'f8'
+    else:
+        lwxinfo.c_real = ctypes.c_float
+        lwxinfo._numpy_real_dtype = 'f4'
+
+    if lwxinfo._ParticleReal_size == 8:
+        lwxinfo.c_particlereal = ctypes.c_double
+        lwxinfo._numpy_particlereal_dtype = 'f8'
+    else:
+        lwxinfo.c_particlereal = ctypes.c_float
+        lwxinfo._numpy_particlereal_dtype = 'f4'
+
+    lwxinfo.dim = libwarpx.warpx_SpaceDim()
+
+    # our particle data type, depends on _ParticleReal_size
+    lwxinfo._p_struct = [(d, lwxinfo._numpy_particlereal_dtype) for d in 'xyz'[:lwxinfo.dim]] + [('id', 'i4'), ('cpu', 'i4')]
+    lwxinfo._p_dtype = np.dtype(lwxinfo._p_struct, align=True)
+
+    lwxinfo._numpy_to_ctypes = {}
+    lwxinfo._numpy_to_ctypes[lwxinfo._numpy_particlereal_dtype] = lwxinfo.c_particlereal
+    lwxinfo._numpy_to_ctypes['i4'] = ctypes.c_int
+
+    Particle._fields_ = [(v[0], lwxinfo._numpy_to_ctypes[v[1]]) for v in lwxinfo._p_struct]
+
+
+    # some useful typenames
+    lwxinfo._LP_particle_p = ctypes.POINTER(ctypes.POINTER(Particle))
+    lwxinfo._LP_c_int = ctypes.POINTER(ctypes.c_int)
+    lwxinfo._LP_LP_c_int = ctypes.POINTER(lwxinfo._LP_c_int)
+    lwxinfo._LP_c_void_p = ctypes.POINTER(ctypes.c_void_p)
+    lwxinfo._LP_c_real = ctypes.POINTER(lwxinfo.c_real)
+    lwxinfo._LP_LP_c_real = ctypes.POINTER(lwxinfo._LP_c_real)
+    lwxinfo._LP_c_particlereal = ctypes.POINTER(lwxinfo.c_particlereal)
+    lwxinfo._LP_LP_c_particlereal = ctypes.POINTER(lwxinfo._LP_c_particlereal)
+    lwxinfo._LP_c_char = ctypes.POINTER(ctypes.c_char)
+    lwxinfo._LP_LP_c_char = ctypes.POINTER(lwxinfo._LP_c_char)
+
+
+    # set the arg and return types of the wrapped functions
+    libwarpx.amrex_init.argtypes = (ctypes.c_int, lwxinfo._LP_LP_c_char)
+    libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, lwxinfo._LP_LP_c_char, _MPI_Comm_type)
+    libwarpx.warpx_getParticleStructs.restype = lwxinfo._LP_particle_p
+    libwarpx.warpx_getParticleArrays.restype = lwxinfo._LP_LP_c_particlereal
+    libwarpx.warpx_getParticleCompIndex.restype = ctypes.c_int
+    libwarpx.warpx_getEfield.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getEfieldLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getEfieldCP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getEfieldCPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getEfieldFP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getEfieldFPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getEfieldCP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getEfieldCPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getEfieldFP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getEfieldFPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBfield.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getBfieldLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBfieldCP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getBfieldCPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBfieldFP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getBfieldFPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBfieldCP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getBfieldCPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBfieldFP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getBfieldFPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getCurrentDensity.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getCurrentDensityLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getCurrentDensityCP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getCurrentDensityCPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getCurrentDensityFP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getCurrentDensityFPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getCurrentDensityCP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getCurrentDensityCPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getCurrentDensityFP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getCurrentDensityFPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getChargeDensityCP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getChargeDensityCPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getChargeDensityFP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getChargeDensityFPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getPhiFP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getPhiFPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getFfieldCP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getFfieldCPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getFfieldFP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getFfieldFPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getFfieldCP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getFfieldCPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getFfieldFP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getFfieldFPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getGfieldCP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getGfieldCPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getGfieldFP.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getGfieldFPLoVects.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getGfieldCP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getGfieldCPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getGfieldFP_PML.restype = lwxinfo._LP_LP_c_real
+    libwarpx.warpx_getGfieldFPLoVects_PML.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
+    libwarpx.warpx_getParticleBoundaryBufferStructs.restype = lwxinfo._LP_LP_c_particlereal
+    libwarpx.warpx_getParticleBoundaryBuffer.restype = lwxinfo._LP_LP_c_particlereal
+    libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = lwxinfo._LP_LP_c_int
+
+    libwarpx.warpx_getEx_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getEy_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getEz_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBx_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBy_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getBz_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getJx_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getJy_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getJz_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getRho_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getPhi_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getF_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getG_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getF_pml_nodal_flag.restype = lwxinfo._LP_c_int
+    libwarpx.warpx_getG_pml_nodal_flag.restype = lwxinfo._LP_c_int
+
+    #libwarpx.warpx_getPMLSigma.restype = lwxinfo._LP_c_real
+    #libwarpx.warpx_getPMLSigmaStar.restype = lwxinfo._LP_c_real
+    #libwarpx.warpx_ComputePMLFactors.argtypes = (ctypes.c_int, lwxinfo.c_real)
+    libwarpx.warpx_addNParticles.argtypes = (
+        ctypes.c_char_p, ctypes.c_int,
+        _ndpointer(lwxinfo.c_particlereal, flags="C_CONTIGUOUS"),
+        _ndpointer(lwxinfo.c_particlereal, flags="C_CONTIGUOUS"),
+        _ndpointer(lwxinfo.c_particlereal, flags="C_CONTIGUOUS"),
+        _ndpointer(lwxinfo.c_particlereal, flags="C_CONTIGUOUS"),
+        _ndpointer(lwxinfo.c_particlereal, flags="C_CONTIGUOUS"),
+        _ndpointer(lwxinfo.c_particlereal, flags="C_CONTIGUOUS"),
+        ctypes.c_int,
+        _ndpointer(lwxinfo.c_particlereal, flags="C_CONTIGUOUS"),
+        ctypes.c_int
+    )
+
+    libwarpx.warpx_getProbLo.restype = lwxinfo.c_real
+    libwarpx.warpx_getProbHi.restype = lwxinfo.c_real
+    libwarpx.warpx_getCellSize.restype = lwxinfo.c_real
+    libwarpx.warpx_getistep.restype = ctypes.c_int
+    libwarpx.warpx_gett_new.restype = lwxinfo.c_real
+    libwarpx.warpx_getdt.restype = lwxinfo.c_real
+    libwarpx.warpx_maxStep.restype = ctypes.c_int
+    libwarpx.warpx_stopTime.restype = lwxinfo.c_real
+    libwarpx.warpx_finestLevel.restype = ctypes.c_int
+    libwarpx.warpx_getMyProc.restype = ctypes.c_int
+    libwarpx.warpx_getNProcs.restype = ctypes.c_int
+
+    libwarpx.warpx_EvolveE.argtypes = [lwxinfo.c_real]
+    libwarpx.warpx_EvolveB.argtypes = [lwxinfo.c_real]
+    libwarpx.warpx_FillBoundaryE.argtypes = []
+    libwarpx.warpx_FillBoundaryB.argtypes = []
+    libwarpx.warpx_UpdateAuxilaryData.argtypes = []
+    libwarpx.warpx_SyncCurrent.argtypes = []
+    libwarpx.warpx_PushParticlesandDepose.argtypes = [lwxinfo.c_real]
+    libwarpx.warpx_getProbLo.argtypes = [ctypes.c_int]
+    libwarpx.warpx_getProbHi.argtypes = [ctypes.c_int]
+    libwarpx.warpx_getCellSize.argtypes = [ctypes.c_int, ctypes.c_int]
+    libwarpx.warpx_getistep.argtypes = [ctypes.c_int]
+    libwarpx.warpx_setistep.argtypes = [ctypes.c_int, ctypes.c_int]
+    libwarpx.warpx_gett_new.argtypes = [ctypes.c_int]
+    libwarpx.warpx_sett_new.argtypes = [ctypes.c_int, lwxinfo.c_real]
+    libwarpx.warpx_getdt.argtypes = [ctypes.c_int]
+
+    # lwxinfo tracks if libwarpx is loaded for pretty errors
+    lwxinfo.libwarpx_loaded = True
 
 def get_nattr():
     '''
@@ -298,7 +357,7 @@ def get_nattr_species(species_name):
 def amrex_init(argv, mpi_comm=None):
     # --- Construct the ctype list of strings to pass in
     argc = len(argv)
-    argvC = (_LP_c_char * (argc+1))()
+    argvC = (lwxinfo._LP_c_char * (argc+1))()
     for i, arg in enumerate(argv):
         enc_arg = arg.encode('utf-8')
         argvC[i] = ctypes.create_string_buffer(enc_arg)
@@ -322,11 +381,11 @@ def initialize(argv=None, mpi_comm=None):
     amrex_init(argv, mpi_comm)
     libwarpx.warpx_ConvertLabParamsToBoost()
     libwarpx.warpx_ReadBCParams()
-    if geometry_dim == 'rz':
+    if lwxinfo.geometry_dim == 'rz':
         libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
-    libwarpx.initialized = True
+    lwxinfo.initialized = True
 
 
 @atexit.register
@@ -337,7 +396,7 @@ def finalize(finalize_mpi=1):
     the end of your script.
 
     '''
-    if libwarpx.initialized:
+    if lwxinfo.initialized:
         libwarpx.warpx_finalize()
         libwarpx.amrex_finalize(finalize_mpi)
 
@@ -360,12 +419,12 @@ def evolve(num_steps=-1):
 
 
 def getProbLo(direction):
-    assert 0 <= direction < dim, 'Inappropriate direction specified'
+    assert 0 <= direction < lwxinfo.dim, 'Inappropriate direction specified'
     return libwarpx.warpx_getProbLo(direction)
 
 
 def getProbHi(direction):
-    assert 0 <= direction < dim, 'Inappropriate direction specified'
+    assert 0 <= direction < lwxinfo.dim, 'Inappropriate direction specified'
     return libwarpx.warpx_getProbHi(direction)
 
 
@@ -558,7 +617,7 @@ def get_particle_structs(species_name, level):
 
     '''
 
-    particles_per_tile = _LP_c_int()
+    particles_per_tile = lwxinfo._LP_c_int()
     num_tiles = ctypes.c_int(0)
     data = libwarpx.warpx_getParticleStructs(
         ctypes.c_char_p(species_name.encode('utf-8')), level,
@@ -569,7 +628,7 @@ def get_particle_structs(species_name, level):
     for i in range(num_tiles.value):
         if particles_per_tile[i] == 0:
             continue
-        arr = _array1d_from_pointer(data[i], _p_dtype, particles_per_tile[i])
+        arr = _array1d_from_pointer(data[i], lwxinfo._p_dtype, particles_per_tile[i])
         particle_data.append(arr)
 
     _libc.free(particles_per_tile)
@@ -599,7 +658,7 @@ def get_particle_arrays(species_name, comp_name, level):
 
     '''
 
-    particles_per_tile = _LP_c_int()
+    particles_per_tile = lwxinfo._LP_c_int()
     num_tiles = ctypes.c_int(0)
     data = libwarpx.warpx_getParticleArrays(
         ctypes.c_char_p(species_name.encode('utf-8')),
@@ -634,9 +693,9 @@ def get_particle_x(species_name, level=0):
 
     '''
     structs = get_particle_structs(species_name, level)
-    if geometry_dim == '3d' or geometry_dim == '2d':
+    if lwxinfo.geometry_dim == '3d' or lwxinfo.geometry_dim == '2d':
         return [struct['x'] for struct in structs]
-    elif geometry_dim == 'rz':
+    elif lwxinfo.geometry_dim == 'rz':
         return [struct['x']*np.cos(theta) for struct, theta in zip(structs, get_particle_theta(species_name))]
 
 
@@ -648,9 +707,9 @@ def get_particle_y(species_name, level=0):
 
     '''
     structs = get_particle_structs(species_name, level)
-    if geometry_dim == '3d' or geometry_dim == '2d':
+    if lwxinfo.geometry_dim == '3d' or lwxinfo.geometry_dim == '2d':
         return [struct['y'] for struct in structs]
-    elif geometry_dim == 'rz':
+    elif lwxinfo.geometry_dim == 'rz':
         return [struct['x']*np.sin(theta) for struct, theta in zip(structs, get_particle_theta(species_name))]
 
 
@@ -662,11 +721,11 @@ def get_particle_r(species_name, level=0):
 
     '''
     structs = get_particle_structs(species_name, level)
-    if geometry_dim == 'rz':
+    if lwxinfo.geometry_dim == 'rz':
         return [struct['x'] for struct in structs]
-    elif geometry_dim == '3d':
+    elif lwxinfo.geometry_dim == '3d':
         return [np.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
-    elif geometry_dim == '2d':
+    elif lwxinfo.geometry_dim == '2d':
         raise Exception('get_particle_r: There is no r coordinate with 2D Cartesian')
 
 
@@ -678,9 +737,9 @@ def get_particle_z(species_name, level=0):
 
     '''
     structs = get_particle_structs(species_name, level)
-    if geometry_dim == '3d':
+    if lwxinfo.geometry_dim == '3d':
         return [struct['z'] for struct in structs]
-    elif geometry_dim == 'rz' or geometry_dim == '2d':
+    elif lwxinfo.geometry_dim == 'rz' or lwxinfo.geometry_dim == '2d':
         return [struct['y'] for struct in structs]
 
 
@@ -757,12 +816,12 @@ def get_particle_theta(species_name, level=0):
     theta on each tile.
 
     '''
-
-    if geometry_dim == 'rz':
+    structs = get_particle_structs(species_name, level)
+    if lwxinfo.geometry_dim == 'rz':
         return get_particle_arrays(species_name, 'theta', level)
-    elif geometry_dim == '3d':
+    elif lwxinfo.geometry_dim == '3d':
         return [np.arctan2(struct['y'], struct['x']) for struct in structs]
-    elif geometry_dim == '2d':
+    elif lwxinfo.geometry_dim == '2d':
         raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
 
 
@@ -826,11 +885,11 @@ def _get_boundary_number(boundary):
 
     Integer index in the boundary scraper buffer for the given boundary.
     '''
-    if geometry_dim == '3d':
+    if lwxinfo.geometry_dim == '3d':
         dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
-    elif geometry_dim == '2d':
+    elif lwxinfo.geometry_dim == '2d':
         dimensions = {'x' : 0, 'z' : 1}
-    elif geometry_dim == '1d':
+    elif lwxinfo.geometry_dim == '1d':
         dimensions = {'z' : 0}
     else:
         raise NotImplementedError("RZ is not supported for particle scraping.")
@@ -846,11 +905,11 @@ def _get_boundary_number(boundary):
             raise RuntimeError(f'Unknown boundary specified: {boundary}')
         boundary_num = 2 * dim_num + side
     else:
-        if geometry_dim == '3d':
+        if lwxinfo.geometry_dim == '3d':
             boundary_num = 6
-        elif geometry_dim == '2d':
+        elif lwxinfo.geometry_dim == '2d':
             boundary_num = 4
-        elif geometry_dim == '1d':
+        elif lwxinfo.geometry_dim == '1d':
             boundary_num = 2
 
     return boundary_num
@@ -907,7 +966,7 @@ def get_particle_boundary_buffer_structs(species_name, boundary, level):
 
     '''
 
-    particles_per_tile = _LP_c_int()
+    particles_per_tile = lwxinfo._LP_c_int()
     num_tiles = ctypes.c_int(0)
     data = libwarpx.warpx_getParticleBoundaryBufferStructs(
             ctypes.c_char_p(species_name.encode('utf-8')),
@@ -919,7 +978,7 @@ def get_particle_boundary_buffer_structs(species_name, boundary, level):
     for i in range(num_tiles.value):
         if particles_per_tile[i] == 0:
             continue
-        arr = _array1d_from_pointer(data[i], _p_dtype, particles_per_tile[i])
+        arr = _array1d_from_pointer(data[i], lwxinfo._p_dtype, particles_per_tile[i])
         particle_data.append(arr)
 
     _libc.free(particles_per_tile)
@@ -954,7 +1013,7 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
         A List of numpy arrays.
 
     '''
-    particles_per_tile = _LP_c_int()
+    particles_per_tile = lwxinfo._LP_c_int()
     num_tiles = ctypes.c_int(0)
     if comp_name == 'step_scraped':
         data = libwarpx.warpx_getParticleBoundaryBufferScrapedSteps(
@@ -993,10 +1052,10 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
     """
      Generic routine to fetch the list of field data arrays.
     """
-    shapes = _LP_c_int()
+    shapes = lwxinfo._LP_c_int()
     size = ctypes.c_int(0)
     ncomps = ctypes.c_int(0)
-    ngrowvect = _LP_c_int()
+    ngrowvect = lwxinfo._LP_c_int()
     if direction is None:
         data = warpx_func(level,
                           ctypes.byref(size), ctypes.byref(ncomps),
@@ -1008,9 +1067,9 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
     if not data:
         raise Exception('object was not initialized')
 
-    ngvect = [ngrowvect[i] for i in range(dim)]
+    ngvect = [ngrowvect[i] for i in range(lwxinfo.dim)]
     grid_data = []
-    shapesize = dim
+    shapesize = lwxinfo.dim
     if ncomps.value > 1:
         shapesize += 1
     for i in range(size.value):
@@ -1029,7 +1088,7 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
         if include_ghosts:
             grid_data.append(arr)
         else:
-            grid_data.append(arr[tuple([slice(ngvect[d], -ngvect[d]) for d in range(dim)])])
+            grid_data.append(arr[tuple([slice(ngvect[d], -ngvect[d]) for d in range(lwxinfo.dim)])])
 
     _libc.free(shapes)
     _libc.free(data)
@@ -1757,7 +1816,7 @@ def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfun
     assert(0 <= level and level <= libwarpx.warpx_finestLevel())
 
     size = ctypes.c_int(0)
-    ngrowvect = _LP_c_int()
+    ngrowvect = lwxinfo._LP_c_int()
     if direction is None:
         data = getlovectsfunc(level, ctypes.byref(size), ctypes.byref(ngrowvect))
     else:
@@ -1766,7 +1825,7 @@ def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfun
     if not data:
         raise Exception('object was not initialized')
 
-    lovects_ref = np.ctypeslib.as_array(data, (size.value, dim))
+    lovects_ref = np.ctypeslib.as_array(data, (size.value, lwxinfo.dim))
 
     # --- Make a copy of the data to avoid memory problems
     # --- Also, take the transpose to give shape (dims, number of grids)
@@ -1774,10 +1833,10 @@ def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfun
 
     ng = []
     if include_ghosts:
-        for d in range(dim):
+        for d in range(lwxinfo.dim):
             ng.append(ngrowvect[d])
     else:
-        for d in range(dim):
+        for d in range(lwxinfo.dim):
             ng.append(0)
             lovects[d,:] += ngrowvect[d]
 
@@ -2383,7 +2442,7 @@ def _get_nodal_flag(getdatafunc):
     if not data:
         raise Exception('object was not initialized')
 
-    nodal_flag_ref = np.ctypeslib.as_array(data, (dim,))
+    nodal_flag_ref = np.ctypeslib.as_array(data, (lwxinfo.dim,))
 
     # --- Make a copy of the data to avoid memory problems
     nodal_flag = nodal_flag_ref.copy()
