@@ -270,7 +270,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             }
 
             // Deposit charge into rho_tmp
-#if (defined WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z)
             for (int iz=0; iz<=depos_order; iz++){
                 amrex::Gpu::Atomic::AddNoRet(
                     &rho_tmp(lo.x+k+iz, 0, 0, 0),
