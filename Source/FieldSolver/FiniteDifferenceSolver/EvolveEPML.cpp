@@ -192,7 +192,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             const Real* sigmaj_y = sigba[mfi].sigma[1].data();
             const Real* sigmaj_z = sigba[mfi].sigma[2].data();
             int const x_lo = sigba[mfi].sigma[0].lo();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             int const y_lo = sigba[mfi].sigma[1].lo();
             int const z_lo = sigba[mfi].sigma[2].lo();
 #else
