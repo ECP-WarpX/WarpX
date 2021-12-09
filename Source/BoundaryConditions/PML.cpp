@@ -1111,7 +1111,7 @@ amrex::DistributionMapping PML::MakeSimilarDM (const amrex::BoxArray& ba,
 {
     amrex::Vector<int> pmap(ba.size());
     const amrex::DistributionMapping& mf_dm = mf.DistributionMap();
-    const amrex::BoxArray& mf_ba = mf.boxArray();
+    const amrex::BoxArray& mf_ba = amrex::convert(mf.boxArray(),ba.ixType());
 
     for (amrex::Long i = 0; i < ba.size(); ++i) {
         amrex::Box box = ba[i];
@@ -1137,7 +1137,7 @@ amrex::DistributionMapping PML::MakeSimilarDM (const amrex::BoxArray& ba,
             pmap[i] = mf_dm[max_overlap_index];
         }
     }
-    return amrex::DistributionMapping(pmap);
+    return amrex::DistributionMapping(std::move(pmap));
 }
 
 void
