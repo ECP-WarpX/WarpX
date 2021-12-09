@@ -323,6 +323,9 @@ namespace
     WARPX_GET_FIELD(warpx_getBfieldCP, WarpX::GetInstance().get_pointer_Bfield_cp)
     WARPX_GET_FIELD(warpx_getBfieldFP, WarpX::GetInstance().get_pointer_Bfield_fp)
 
+    WARPX_GET_FIELD(warpx_getEdgeLengths, WarpX::GetInstance().get_pointer_edge_lengths)
+    WARPX_GET_FIELD(warpx_getFaceAreas, WarpX::GetInstance().get_pointer_face_areas)
+
     WARPX_GET_FIELD(warpx_getCurrentDensity, WarpX::GetInstance().get_pointer_current_fp)
     WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().get_pointer_current_fp)
@@ -338,6 +341,9 @@ namespace
     WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().get_pointer_current_fp)
     WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().get_pointer_current_fp)
+
+    WARPX_GET_LOVECTS(warpx_getEdgeLengthsLoVects, WarpX::GetInstance().get_pointer_edge_lengths)
+    WARPX_GET_LOVECTS(warpx_getFaceAreasLoVects, WarpX::GetInstance().get_pointer_face_areas)
 
     int* warpx_getEx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,0) );}
     int* warpx_getEy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,1) );}

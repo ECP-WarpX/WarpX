@@ -172,6 +172,12 @@ extern "C" {
   int* warpx_getCurrentDensityCPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getCurrentDensityFPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
 
+  amrex::Real** warpx_getEdgeLengths (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
+  int* warpx_getEdgeLengthsLoVects (int lev, int direction, int *return_size, int **ngrowvect);
+
+  amrex::Real** warpx_getFaceAreas (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
+  int* warpx_getFaceAreasLoVects (int lev, int direction, int *return_size, int **ngrowvect);
+
   int* warpx_getEx_nodal_flag ();
   int* warpx_getEy_nodal_flag ();
   int* warpx_getEz_nodal_flag ();

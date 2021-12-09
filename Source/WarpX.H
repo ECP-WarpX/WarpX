@@ -321,6 +321,9 @@ public:
     amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
     amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
 
+    amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) { return m_edge_lengths[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) { return m_face_areas[lev][direction].get(); }
+
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
     const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
