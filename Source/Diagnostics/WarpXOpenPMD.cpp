@@ -776,7 +776,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
-            const auto [std::ignore, newRecord] = addedRecords.insert(record_name);
+            [[maybe_unused]] const auto [_, newRecord] = addedRecords.insert(record_name);
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 if( record_name == "weighting" )
@@ -798,7 +798,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
-            const auto [std::ignore, newRecord] = addedRecords.insert(record_name);
+            [[maybe_unused]] const auto [_, newRecord] = addedRecords.insert(record_name);
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 currRecord.setAttribute( "macroWeighted", 0u );
