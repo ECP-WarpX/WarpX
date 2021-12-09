@@ -116,7 +116,7 @@ option(WarpX_IPO                                "Compile WarpX with interprocedu
 #   builds AMReX from source (default) or finds an existing install
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
 #   suppress warnings in AMReX headers (use -isystem instead of -I)
-make_third_party_includes_system(AMReX::amrex AMReX)
+warpx_make_third_party_includes_system(AMReX::amrex AMReX)
 
 # PICSAR
 #   builds PICSAR from source
