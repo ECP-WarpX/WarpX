@@ -234,8 +234,8 @@ if(WarpX_PSATD)
 endif()
 
 if(WarpX_OPENPMD)
-    target_compile_definitions(WarpX PUBLIC WARPX_USE_OPENPMD)
-    target_link_libraries(WarpX PUBLIC openPMD::openPMD)
+    target_compile_definitions(ablastr PUBLIC WARPX_USE_OPENPMD)
+    target_link_libraries(ablastr PUBLIC openPMD::openPMD)
 endif()
 
 if(WarpX_QED)
