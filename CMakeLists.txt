@@ -147,6 +147,7 @@ add_library(ablastr OBJECT)
 # ABLASTR library
 set(_BUILDINFO_SRC ablastr)
 set(_ALL_TARGETS WarpX ablastr)
+add_library(WarpX::ablastr ALIAS ablastr)
 
 # executable application
 #   note: we currently avoid a dependency on a core library
