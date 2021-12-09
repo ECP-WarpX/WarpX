@@ -570,7 +570,7 @@ WarpX::ReadParameters ()
             }
 #endif
             else if (s == "z" || s == "Z") {
-                moving_window_dir = AMREX_SPACEDIM-1;
+                moving_window_dir = WARPX_ZINDEX;
             }
             else {
                 const std::string msg = "Unknown moving_window_dir: "+s;

@@ -142,7 +142,7 @@ class SpectralFieldData
         // a cell-centered grid in real space, instead of a nodal grid
         SpectralShiftFactor xshift_FFTfromCell, xshift_FFTtoCell,
                             zshift_FFTfromCell, zshift_FFTtoCell;
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
 #endif
 

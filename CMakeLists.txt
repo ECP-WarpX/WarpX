@@ -1,6 +1,6 @@
 # Preamble ####################################################################
 #
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.17.0)
 project(WarpX VERSION 21.12)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
@@ -19,11 +19,18 @@ endif()
 # AMReX 21.06+ supports CUDA_ARCHITECTURES with CMake 3.20+
 # CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
 # https://cmake.org/cmake/help/latest/policy/CMP0104.html
-if(CMAKE_VERSION VERSION_LESS 3.20)
+#if(CMAKE_VERSION VERSION_LESS 3.20)
     if(POLICY CMP0104)
         cmake_policy(SET CMP0104 OLD)
     endif()
-endif()
+#endif()
+
+
+# C++ Standard in Superbuilds #################################################
+#
+# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# openPMD-api until they increase their requirement.
+set_cxx17_superbuild()
 
 
 # CCache Support ##############################################################
@@ -192,9 +199,9 @@ add_subdirectory(Source/Particles)
 add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
 
-# C++ properties: at least a C++14 capable compiler is needed
+# C++ properties: at least a C++17 capable compiler is needed
 foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-    target_compile_features(${warpx_tgt} PUBLIC cxx_std_14)
+    target_compile_features(${warpx_tgt} PUBLIC cxx_std_17)
 endforeach()
 set_target_properties(${_ALL_TARGETS} PROPERTIES
     CXX_EXTENSIONS OFF
@@ -236,15 +243,13 @@ if(WarpX_COMPUTE STREQUAL CUDA)
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
         setup_target_for_cuda_compilation(${warpx_tgt})
     endforeach()
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
-        foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-            target_compile_features(${warpx_tgt} PUBLIC cuda_std_14)
-        endforeach()
-        set_target_properties(${_ALL_TARGETS} PROPERTIES
-            CUDA_EXTENSIONS OFF
-            CUDA_STANDARD_REQUIRED ON
-        )
-    endif()
+    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
+        target_compile_features(${warpx_tgt} PUBLIC cuda_std_17)
+    endforeach()
+    set_target_properties(${_ALL_TARGETS} PROPERTIES
+        CUDA_EXTENSIONS OFF
+        CUDA_STANDARD_REQUIRED ON
+    )
 endif()
 
 # fancy binary name for build variants
@@ -260,13 +265,13 @@ if(WarpX_QED)
 endif()
 
 if(WarpX_DIMS STREQUAL 3)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
 elseif(WarpX_DIMS STREQUAL 2)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ WARPX_ZINDEX=1)
 elseif(WarpX_DIMS STREQUAL 1)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_1D_Z)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_1D_Z WARPX_ZINDEX=0)
 elseif(WarpX_DIMS STREQUAL RZ)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
 endif()
 
 if(WarpX_GPUCLOCK)
@@ -343,9 +348,14 @@ if(WarpX_LIB)
     else()
         set(mod_ext "so")
     endif()
+    if(IS_ABSOLUTE CMAKE_INSTALL_LIBDIR)
+        set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
+    else()
+        set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+    endif()
     install(CODE "file(CREATE_LINK
         $<TARGET_FILE_NAME:shared>
-        ${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
+        ${ABS_INSTALL_LIB_DIR}/libwarpx.${lib_suffix}.${mod_ext}
         COPY_ON_ERROR SYMBOLIC)")
 endif()
 
