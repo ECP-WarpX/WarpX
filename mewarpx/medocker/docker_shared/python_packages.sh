@@ -43,6 +43,11 @@ ${INSTALL_CMD} \
      pykern \
      yt
 
+# Importing matplotlib.pyplot creates cache files for fonts. This should
+# prevent random failures we were seeing where in many-thread MPI runs some
+# processes were unable to obtain a lock file to create said cache files.
+python3 -c "import matplotlib.pyplot"
+
 ${INSTALL_CMD} scikit-image
 
 # This is necessary for S3 copying
