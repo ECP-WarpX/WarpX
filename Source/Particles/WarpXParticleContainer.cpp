@@ -602,7 +602,12 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         WarpX& warpx = WarpX::GetInstance();
         const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-        const amrex::IntVect& ref_ratio = WarpX::RefRatio(depos_lev);
+        amrex::IntVect ref_ratio;
+        if (lev == depos_lev) {
+            ref_ratio = IntVect(AMREX_D_DECL(1, 1, 1 ));
+        } else {
+            ref_ratio = WarpX::RefRatio(depos_lev);
+        }
         const int nc = WarpX::ncomps;
 
         // Get tile box where charge is deposited.
