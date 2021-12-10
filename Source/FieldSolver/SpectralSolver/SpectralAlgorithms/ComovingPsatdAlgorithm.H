@@ -89,7 +89,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
 
         // k vectors
         KVectorComponent kx_vec;
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         KVectorComponent ky_vec;
 #endif
         KVectorComponent kz_vec;

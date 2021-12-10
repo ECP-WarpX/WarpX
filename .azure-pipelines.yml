@@ -50,43 +50,41 @@ jobs:
   # - for a refresh the key has to change, e.g., hash of a tracked file in the key
   - task: Cache@2
     inputs:
-      key: 'Ccache | "$(System.JobName)" | cmake/dependencies/AMReX.cmake | run_test.sh'
+      key: 'Ccache | "$(System.JobName)" | .azure-pipelines.yml | cmake/dependencies/AMReX.cmake | run_test.sh'
       restoreKeys: |
-         Ccache | "$(System.JobName)" | cmake/dependencies/AMReX.cmake | run_test.sh
-         Ccache | "$(System.JobName)" | cmake/dependencies/AMReX.cmake
-         Ccache | "$(System.JobName)"
-         Ccache
+         Ccache | "$(System.JobName)" | .azure-pipelines.yml | cmake/dependencies/AMReX.cmake | run_test.sh
+         Ccache | "$(System.JobName)" | .azure-pipelines.yml | cmake/dependencies/AMReX.cmake
+         Ccache | "$(System.JobName)" | .azure-pipelines.yml
       path: /home/vsts/.ccache
       cacheHitVar: CCACHE_CACHE_RESTORED
     displayName: Cache Ccache Objects
 
   - task: Cache@2
     inputs:
-      key: 'Python3 | "$(System.JobName)" | run_test.sh'
+      key: 'Python3 | "$(System.JobName)" | .azure-pipelines.yml | run_test.sh'
       restoreKeys: |
-         Python3 | "$(System.JobName)" | run_test.sh
-         Python3 | "$(System.JobName)"
-         Python3
+         Python3 | "$(System.JobName)" | .azure-pipelines.yml | run_test.sh
+         Python3 | "$(System.JobName)" | .azure-pipelines.yml
       path: /home/vsts/.local/lib/python3.8
       cacheHitVar: PYTHON38_CACHE_RESTORED
     displayName: Cache Python Libraries
 
   - bash: |
+      set -eu -o pipefail
       cat /proc/cpuinfo | grep "model name" | sort -u
       df -h
-      sudo apt install -y ccache gcc gfortran g++ openmpi-bin libopenmpi-dev \
+      sudo apt install -y ccache curl gcc gfortran git g++ openmpi-bin libopenmpi-dev \
         libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
         python3 python3-pip python3-venv python3-setuptools libblas-dev liblapack-dev
       ccache --set-config=max_size=10.0G
-      sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
-      sudo update-alternatives --set python /usr/bin/python3
-      python -m pip install --upgrade pip
-      python -m pip install --upgrade wheel
-      python -m pip install --upgrade pipx
-      python -m pipx install cmake
-      python -m pipx ensurepath
+      python3 -m pip install --upgrade pip
+      python3 -m pip install --upgrade setuptools
+      python3 -m pip install --upgrade wheel
+      python3 -m pip install --upgrade virtualenv
+      python3 -m pip install --upgrade pipx
+      python3 -m pipx install cmake
+      python3 -m pipx ensurepath
       export PATH="$HOME/.local/bin:$PATH"
-      python -m pip install --upgrade matplotlib mpi4py numpy scipy yt
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
       if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
@@ -95,14 +93,16 @@ jobs:
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)         \
           -DCMAKE_VERBOSE_MAKEFILE=ON                           \
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
-        python -m pip install --upgrade openpmd-api
+        python3 -m pip install --upgrade openpmd-api
       fi
       if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" || "${WARPX_CI_PYTHON_MAIN:-FALSE}" == "TRUE" ]]; then
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
+          -DCMAKE_CXX_STANDARD=17                       \
           -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
+          -DCMAKE_CXX_STANDARD=17                       \
           -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
       fi
       rm -rf ${CEI_TMP}
@@ -110,6 +110,7 @@ jobs:
     displayName: 'Install dependencies'
 
   - bash: |
+      set -eu -o pipefail
       df -h
       ./run_test.sh
       rm -rf ${WARPX_CI_TMP}

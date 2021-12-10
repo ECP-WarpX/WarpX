@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import os
 import sys
 import re
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -9,7 +10,7 @@ import checksumAPI
 fn = sys.argv[1]
 
 # Get name of the test
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 # Run checksum regression test
 if re.search( 'single_precision', fn ):
