@@ -292,7 +292,7 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
 #ifdef AMREX_USE_GPU
     amrex::ignore_unused(local_rho);
     // GPU, no tiling: rho_fab points to the full rho array
-    MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
+    amrex::MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
     auto & rho_fab = rhoi.get(pti);
 #else
     tb.grow(ng_rho);
