@@ -99,6 +99,10 @@ There are three steps to follow to add a new automated test (illustrated here fo
 
 If you re-use an existing input file, you can add arguments to ``runtime_params``, like ``runtime_params = amr.max_level=1 amr.n_cell=32 512 max_step=100 plasma_e.zmin=-200.e-6``.
 
+.. note::
+
+   If you added ``analysisRoutine = Examples/analysis_default_regression.py``, then run the new test case locally and add the :ref:`checksum <developers-checksum>` file for the expected output.
+
 Useful tool for plotfile comparison: ``fcompare``
 --------------------------------------------------
 
