@@ -343,7 +343,7 @@ def _array1d_from_pointer(pointer, dtype, size):
 
 def getNProcs():
     '''
-    
+
     Get the number of processors
 
     '''
