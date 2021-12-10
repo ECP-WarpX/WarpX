@@ -216,13 +216,17 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
 template <typename PC>
 void DepositChargeDoIt (typename PC::ParIterType& pti,
-                      typename PC::RealVector& wp,
-                      const int * const ion_lev,
-                      amrex::MultiFab* rho, int icomp,
-                      const long offset, const long np_to_depose,
-                      amrex::FArrayBox& local_rho, int lev, int depos_lev,
-                      amrex::Real charge, int nox, int noy, int noz,
-                      const amrex::Vector<amrex::Real>& v_galilean)
+                        typename PC::RealVector& wp,
+                        const int * const ion_lev,
+                        amrex::MultiFab* rho, const int icomp,
+                        const long offset, const long np_to_depose,
+                        amrex::FArrayBox& local_rho, const int lev, const int depos_lev,
+                        const amrex::Real charge, const int nox, const int noy, const int noz,
+                        const amrex::IntVect& ng_rho, const std::array<amrex::Real,3>& dx,
+                        const amrex::IntVect& ref_ratio, const int nc,
+                        const std::array<amrex::Real, 3>& xyzmin,
+                        amrex::Real* cost, const int n_rz_azimuthal_modes,
+                        const long load_balance_costs_update_algo)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -230,10 +234,6 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
 
     // If no particles, do not do anything
     if (np_to_depose == 0) return;
-
-    // Number of guard cells for local deposition of rho
-    WarpX& warpx = WarpX::GetInstance();
-    const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
 
     // Extract deposition order and check that particles shape fits within the guard cells.
     // NOTE: In specific situations where the staggering of rho and the charge deposition algorithm
@@ -263,9 +263,6 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
-    const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-    const amrex::Real q = charge;
-
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::ChargeDeposition", blp_ppc_chd);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Accumulate", blp_accumulate);
 
@@ -276,7 +273,6 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
     if (lev == depos_lev) {
         tilebox = pti.tilebox();
     } else {
-        const amrex::IntVect& ref_ratio = WarpX::RefRatio(depos_lev);
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
@@ -286,8 +282,6 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
 #endif
 
     tilebox.grow(ng_rho);
-
-    const int nc = WarpX::ncomps;
 
 #ifdef AMREX_USE_GPU
     amrex::ignore_unused(local_rho);
@@ -308,50 +302,26 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
 
     const auto GetPosition = GetParticlePosition(pti, offset);
 
-    // Lower corner of tile box physical domain
-    // Note that this includes guard cells since it is after tilebox.ngrow
-    amrex::Real cur_time = warpx.gett_new(lev);
-    amrex::Real dt = warpx.getdt(lev);
-    const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-    // Take into account Galilean shift
-    amrex::Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
-    amrex::Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift;
-    if (icomp==0){
-        galilean_shift = {
-            v_galilean[0]*time_shift_rho_old,
-            v_galilean[1]*time_shift_rho_old,
-            v_galilean[2]*time_shift_rho_old };
-    } else{
-        galilean_shift = {
-            v_galilean[0]*time_shift_rho_new,
-            v_galilean[1]*time_shift_rho_new,
-            v_galilean[2]*time_shift_rho_new };
-    }
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
-
     // Indices of the lower bound
     const amrex::Dim3 lo = lbound(tilebox);
 
     WARPX_PROFILE_VAR_START(blp_ppc_chd);
-    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
-    amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
     if        (nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes, cost,
-                                    WarpX::load_balance_costs_update_algo);
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, charge,
+                                    n_rz_azimuthal_modes, cost,
+                                    load_balance_costs_update_algo);
     } else if (nox == 2){
         doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes, cost,
-                                    WarpX::load_balance_costs_update_algo);
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, charge,
+                                    n_rz_azimuthal_modes, cost,
+                                    load_balance_costs_update_algo);
     } else if (nox == 3){
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes, cost,
-                                    WarpX::load_balance_costs_update_algo);
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, charge,
+                                    n_rz_azimuthal_modes, cost,
+                                    load_balance_costs_update_algo);
     }
     WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
 
