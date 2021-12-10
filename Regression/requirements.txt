@@ -1,0 +1,5 @@
+matplotlib
+mpi4py
+numpy
+scipy
+yt
