@@ -53,7 +53,7 @@ field_diag = picmi.FieldDiagnostic(name = 'diag1',
                                    period = max_steps,
                                    data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
                                    write_dir = '.',
-                                   warpx_file_prefix = 'Python_PlasmaAcceleration_plt')
+                                   warpx_file_prefix = 'Python_PlasmaAcceleration1d_plt')
 
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
                                      period = max_steps,
