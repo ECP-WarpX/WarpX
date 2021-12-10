@@ -737,7 +737,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                    {
                        Box tbx;
                        auto iv = getParticleCell(p, plo, dxi, domain);
-                       AMREX_ALWAYS_ASSERT(box.contains(iv)); // remove later
+                       AMREX_ASSERT(box.contains(iv));
                        auto tid = getTileIndex(iv, box, true, bin_size, tbx);
                        return static_cast<unsigned int>(tid);
                    });
@@ -773,10 +773,10 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                                    const auto& p = pstruct_ptr[bin_start];
                                    Box tbx;
                                    auto iv = getParticleCell(p, plo, dxi, domain);
-                                   AMREX_ALWAYS_ASSERT(box.contains(iv)); // remove later
+                                   AMREX_ASSERT(box.contains(iv));
                                    auto tid = getTileIndex(iv, box, true, bin_size, tbx);
-                                   AMREX_ALWAYS_ASSERT(tid == ibin); // remove later
-                                   AMREX_ALWAYS_ASSERT(tbx.contains(iv)); // remove later
+                                   AMREX_ASSERT(tid == ibin);
+                                   AMREX_ASSERT(tbx.contains(iv));
                                    tbox_ptr[ibin] = tbx;
                                }
                            });
