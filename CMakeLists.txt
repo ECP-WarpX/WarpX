@@ -191,6 +191,7 @@ if(WarpX_APP)
     target_sources(app PRIVATE Source/main.cpp)
 endif()
 
+add_subdirectory(Source/ABLASTR)
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/EmbeddedBoundary)
