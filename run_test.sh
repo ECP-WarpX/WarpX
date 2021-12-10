@@ -57,6 +57,12 @@ ln -s ${tmp_dir} test_dir
 cd test_dir
 echo "cd $PWD"
 
+# Prepare a virtual environment
+rm -rf py-venv
+python3 -m venv py-venv
+source py-venv/bin/activate
+python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
+
 # Clone PICSAR, AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
 cd amrex && git checkout --detach 60fe729fe2ba65ebffc88c0af18743c254d3992c && cd -
@@ -73,7 +79,7 @@ git clone https://github.com/ECP-WarpX/regression_testing.git
 mkdir -p rt-WarpX/WarpX-benchmarks
 cd warpx/Regression
 echo "cd $PWD"
-python prepare_file_ci.py
+python3 prepare_file_ci.py
 cp ci-tests.ini ../../rt-WarpX
 cp -r Checksum ../../regression_testing/
 
@@ -82,8 +88,13 @@ cd ../../regression_testing/
 echo "cd $PWD"
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-  python regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-  python regtest.py ../rt-WarpX/ci-tests.ini --no_update all
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all
 fi
+
+# clean up python virtual environment
+cd ../
+echo "cd $PWD"
+deactivate
