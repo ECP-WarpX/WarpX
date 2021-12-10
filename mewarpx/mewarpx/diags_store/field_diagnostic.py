@@ -137,7 +137,7 @@ class FieldDiagnostic(WarpXDiagnostic):
             # assume that rho_fp still holds the net charge density
             data = (
                 mwxrun.get_gathered_rho_grid(include_ghosts=False)
-                / mwxconstants.e * 1e-6
+                * 1e-6
             )[:,:,0]
             self.process_field(
                 data=data,
@@ -147,15 +147,15 @@ class FieldDiagnostic(WarpXDiagnostic):
 
             # deposit the charge density for each species
             for species in self.species_list:
-                data = np.abs(
+                data = (
                     mwxrun.get_gathered_rho_grid(
                         species_name=species.name, include_ghosts=False
-                    ) / mwxconstants.e * 1e-6
+                    ) / species.sq * 1e-6
                 )[:,:,0]
                 self.process_field(
                     data=data,
-                    titlestr=f'{species.name} charge density',
-                    plottype='rho', draw_image=True, default_ticks=True,
+                    titlestr=f'{species.name} particle density',
+                    plottype='n', draw_image=True, default_ticks=True,
                     draw_contourlines=False)
 
         logger.info("Finished analyzing fields")

@@ -2,31 +2,31 @@
  WarpX Job Information
 ==============================================================================
 number of MPI processes: 1
+number of threads:       1
 
 
 ==============================================================================
  Build Information
 ==============================================================================
-build date:    2021-10-26 22:37:11.970878
-build machine: Linux localhost.localdomain 5.3.11-100.fc29.x86_64 #1 SMP Tue Nov 12 20:41:25 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
-build dir:     /home/roelof/repository/ME_WarpX
-AMReX dir:     /home/roelof/software/amrex
+build date:    Dec  9 2021 16:18:43
+build machine: Linux penning 5.11.0-38-generic #42~20.04.1-Ubuntu SMP Tue Sep 28 20:41:07 UTC 2021 x86_64
+build dir:     /home/kzhu/Documents/build/warpx
+AMReX dir:     /home/kzhu/Documents/build/warpx/_deps/fetchedamrex-src
 
-COMP:          gcc
-COMP version:  8.3.1
+COMP:          GNU
+COMP version:  9.3.0
 
-C++ compiler:  mpicxx
-C++ flags:      -Werror=return-type -g -O3 -Wall -Wextra -Wpedantic -Wnull-dereference -Wfloat-conversion -Wshadow -Woverloaded-virtual -std=c++14  -pthread -fPIC  -DBL_USE_MPI -DAMREX_USE_MPI -DAMREX_MPI_THREAD_MULTIPLE -DBL_NO_FORT -DAMREX_GIT_VERSION="21.10-50-gaf8429793bc5" -DBL_SPACEDIM=2 -DAMREX_SPACEDIM=2 -DBL_FORT_USE_UNDERSCORE -DAMREX_FORT_USE_UNDERSCORE -DBL_Linux -DAMREX_Linux -DAMREX_PARTICLES -DAMREX_USE_EB -DNDEBUG -DOMPI_SKIP_MPICXX -DWARPX_DIM_XZ -DAMREX_PARTICLES -DWARPX_GIT_VERSION="21.10-264-gafdc3852329a-dirty" -DPICSAR_GIT_VERSION="0ea93e3f83e5" -DPICSAR_NO_ASSUMED_ALIGNMENT -DWARPX -Itmp_build_dir/s/2d.gnu.MTMPI.Lib.EB.EXE -I. -I./Source -I./Source/Particles/Filter -I/home/roelof/software/amrex/Src/Base -I/home/roelof/software/amrex/Src/Base/Parser -I/home/roelof/software/amrex/Src/Particle -I/home/roelof/software/amrex/Src/Boundary -I/home/roelof/software/amrex/Src/AmrCore -I/home/roelof/software/amrex/Src/LinearSolvers/MLMG -I/home/roelof/software/amrex/Src/EB -I/home/roelof/software/amrex/Tools/C_scripts 
+C++ compiler:  /usr/bin/c++
+C++ flags:     -I/home/kzhu/Documents/repos/warpx/Source -O3 -DNDEBUG
 
-Fortran comp:  mpif90
-Fortran flags:  -g -O3 -ffree-line-length-none -fno-range-check -fno-second-underscore -fimplicit-none -fPIC
+Fortran comp:  
+Fortran flags: 
 
-Link flags:    -Xlinker -rpath -Xlinker '/home/roelof/repository/ME_WarpX'  -L. 
-Libraries:      -m64 -O2 -fPIC -Wl,-z,noexecstack -I/usr/include/mpich-x86_64 -I/usr/lib64/gfortran/modules/mpich -L/usr/lib64/mpich/lib -lmpifort -Wl,-rpath -Wl,/usr/lib64/mpich/lib -Wl,--enable-new-dtags -lmpi -lmpicxx -lmpi 
+Link flags:    
+Libraries:     
 
-WarpX  git describe: 21.10-264-gafdc3852-dirty
-AMReX  git describe: 21.10-50-gaf8429793
-PICSAR git describe: 0ea93e3f
+WarpX  git describe: 21.12-221-g6e70533eb7cc-dirty
+AMReX  git describe: 21.12-7-g60fe729fe2ba
 
 
 ==============================================================================

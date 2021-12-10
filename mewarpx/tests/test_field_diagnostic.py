@@ -115,12 +115,12 @@ def test_field_diag(plot_on_diag_steps):
         for species in [species.name for species in mwxrun.simulation.species]:
             n_data = len(glob.glob(
                 os.path.join(
-                    run.field_diag.write_dir, f"{species}_charge_density_*.npy"
+                    run.field_diag.write_dir, f"{species}_particle_density_*.npy"
                 )
             ))
             n_plots = len(glob.glob(
                 os.path.join(
-                    run.field_diag.write_dir, f"{species}_charge_density_*.png"
+                    run.field_diag.write_dir, f"{species}_particle_density_*.png"
                 )
             ))
             assert n_data == 5

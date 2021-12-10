@@ -211,6 +211,7 @@ def test_extra_steps_after_restart():
 
     additional_steps = 8
 
+    # restart from checkpoint created by test_create_checkpoints
     mwxrun.init_run(
         restart=True,
         checkpoint_dir=os.path.join(testing_util.test_dir, "checkpoint"),
@@ -228,6 +229,7 @@ def test_extra_steps_after_restart():
     restart_net_charge_density = np.load(os.path.join(
         run.field_diag.write_dir, "Net_charge_density_0000000008.npy"
     ))
+    # compare against data from test_create_checkpoints
     original_net_charge_density = np.load(os.path.join(
         testing_util.test_dir, "checkpoint", "Net_charge_density_0000000008.npy"
     ))
@@ -260,7 +262,7 @@ def test_checkpoints_fluxdiag():
     run.init_runinfo()
     run.init_fluxdiag()
 
-    # Run the main WARP loop
+    # Run the main WarpX loop
     mwxrun.simulation.step()
 
     # load flux diagnostic from a completed run for comparison

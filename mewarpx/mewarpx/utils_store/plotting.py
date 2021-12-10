@@ -77,6 +77,14 @@ class ArrayPlot(object):
                 '_linthreshper': 5,
                 'linportion': 0.05,
             },
+            'n': {
+                'titlestr': 'Particle number density',
+                'titleunits': 'cm$^{3}$',
+                'linthresh': None,
+                '_linthreshmin': 1,
+                '_linthreshper': 5,
+                'linportion': 0.05,
+            },
             'barrier': {
                 'title': 'Potential energy profiles',
                 'ylabel': 'Barrier index (eV)',
