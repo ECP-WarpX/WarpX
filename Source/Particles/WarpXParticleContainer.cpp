@@ -733,7 +733,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         int ntiles = numTilesInBox(box, true, bin_size);
 
         bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
-                   [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) noexcept -> unsigned int
+                   [=] AMREX_GPU_DEVICE (const ParticleType& p) noexcept -> unsigned int
                    {
                        Box tbx;
                        auto iv = getParticleCell(p, plo, dxi, domain);
