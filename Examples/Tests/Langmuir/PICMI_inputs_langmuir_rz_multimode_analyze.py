@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from pywarpx import picmi
+from pywarpx import picmi, libwarpx, fields
 
 constants = picmi.constants
 
@@ -140,8 +140,6 @@ sim.step()
 
 
 # Below is WarpX specific code to check the results.
-import pywarpx
-from pywarpx.fields import *
 
 def calcEr( z, r, k0, w0, wp, t, epsilons) :
     """
@@ -176,12 +174,12 @@ def calcEz( z, r, k0, w0, wp, t, epsilons) :
     return( Ez_array )
 
 # Current time of the simulation
-t0 = pywarpx._libwarpx.libwarpx.warpx_gett_new(0)
+t0 = libwarpx.warpx_gett_new(0)
 
 # Get the raw field data. Note that these are the real and imaginary
 # parts of the fields for each azimuthal mode.
-Ex_sim_wrap = ExWrapper()
-Ez_sim_wrap = EzWrapper()
+Ex_sim_wrap = fields.ExWrapper()
+Ez_sim_wrap = fields.EzWrapper()
 Ex_sim_modes = Ex_sim_wrap[...]
 Ez_sim_modes = Ez_sim_wrap[...]
 

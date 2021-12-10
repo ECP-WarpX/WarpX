@@ -152,7 +152,7 @@ class CallbackFunctions(object):
             # Note that the _c_func must be saved.
             _CALLBACK_FUNC_0 = ctypes.CFUNCTYPE(None)
             self._c_func = _CALLBACK_FUNC_0(self)
-            callback_setter = getattr(libwarpx, f'warpx_set_callback_py_{self.name}')
+            callback_setter = getattr(libwarpx.libwarpx_so, f'warpx_set_callback_py_{self.name}')
             callback_setter(self._c_func)
         if isinstance(f,types.MethodType):
             # --- If the function is a method of a class instance, then save a full
@@ -279,7 +279,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
                 vmin = numpy.min(vlist)
                 vmax = numpy.max(vlist)
                 ff.write('  %10.4f  %10.4f'%(vmin,vmax))
-            it = libwarpx.warpx_getistep(0)
+            it = libwarpx.libwarpx_so.warpx_getistep(0)
             if it > 0:
                 ff.write('   %10.4f'%(vsum/npes/(it)))
             ff.write('\n')

@@ -31,28 +31,34 @@ except ImportError:
     _MPI_Comm_type = ctypes.c_void_p
 
 if platform.system() == 'Windows':
-    path_libc = _find_library('msvcrt')
+    _path_libc = _find_library('msvcrt')
 else:
-    path_libc = _find_library('c')
-_libc = ctypes.CDLL(path_libc)
+    _path_libc = _find_library('c')
+_libc = ctypes.CDLL(_path_libc)
 _LP_c_int = ctypes.POINTER(ctypes.c_int)
 _LP_c_char = ctypes.POINTER(ctypes.c_char)
 
 class LibWarpX():
+    """This class manages the warpx shared object, the library from the compiled C++ code.
+    It will only load the library when it is referenced, and this can only be done after
+    the geometry is defined so that the version of the library that is needed can be determined.
+    Once loaded, all of the setting of function call interfaces is setup.
+    """
     def __init__(self):
-        self.library_loaded = False
 
-        # track whether amrex and warpx have been initialized
+        # Track whether amrex and warpx have been initialized
         self.initialized = False
 
-
     def __getattr__(self, attribute):
-        if not self.library_loaded:
+        if attribute == 'libwarpx_so':
+            # If the 'libwarpx_so' is referenced, load it.
+            # Once loaded, it gets added to the dictionary so this code won't be called again.
             self.load_library()
-        try:
             return self.__dict__[attribute]
-        except KeyError:
-            return getattr(self.libwarpx_so, attribute)
+        else:
+            # For any other attribute, call the built-in routine - this should always
+            # return an AttributeException.
+            return self.__getattribute__(attribute)
 
     def _get_package_root(self):
         '''
@@ -68,7 +74,6 @@ class LibWarpX():
             cur = os.path.dirname(cur)
 
     def load_library(self):
-        self.library_loaded = True
 
         # --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
         # --- The geometry must be setup before the lib warpx shared object can be loaded.
@@ -76,7 +81,7 @@ class LibWarpX():
             _prob_lo = geometry.prob_lo
             _coord_sys = geometry.coord_sys
         except AttributeError:
-            raise Exception('The geometry must be setup before the WarpX shared object can be accessesd')
+            raise Exception('The shared object could not be loaded. The geometry must be setup before the WarpX shared object can be accessesd. The geometry determines which version of the shared object to load.')
 
         if _coord_sys == 0:
             self.geometry_dim = '%dd'%len(_prob_lo)
@@ -336,6 +341,21 @@ def _array1d_from_pointer(pointer, dtype, size):
         buf = buffer_from_memory(pointer, dtype.itemsize*size)
     return np.frombuffer(buf, dtype=dtype, count=size)
 
+def getNProcs():
+    '''
+    
+    Get the number of processors
+
+    '''
+    return libwarpx.libwarpx_so.warpx_getNProcs()
+
+def getMyProc():
+    '''
+
+    Get the number of the processor
+
+    '''
+    return libwarpx.libwarpx_so.warpx_getMyProc()
 
 def get_nattr():
     '''
@@ -344,7 +364,7 @@ def get_nattr():
 
     '''
     # --- The -3 is because the comps include the velocites
-    return libwarpx.warpx_nComps() - 3
+    return libwarpx.libwarpx_so.warpx_nComps() - 3
 
 def get_nattr_species(species_name):
     '''
@@ -352,7 +372,7 @@ def get_nattr_species(species_name):
     Get the number of real attributes for the given species.
 
     '''
-    return libwarpx.warpx_nCompsSpecies(
+    return libwarpx.libwarpx_so.warpx_nCompsSpecies(
         ctypes.c_char_p(species_name.encode('utf-8')))
 
 def amrex_init(argv, mpi_comm=None):
@@ -364,11 +384,11 @@ def amrex_init(argv, mpi_comm=None):
         argvC[i] = ctypes.create_string_buffer(enc_arg)
 
     if mpi_comm is None or MPI is None:
-        libwarpx.amrex_init(argc, argvC)
+        libwarpx.libwarpx_so.amrex_init(argc, argvC)
     else:
         comm_ptr = MPI._addressof(mpi_comm)
         comm_val = _MPI_Comm_type.from_address(comm_ptr)
-        libwarpx.amrex_init_with_inited_mpi(argc, argvC, comm_val)
+        libwarpx.libwarpx_so.amrex_init_with_inited_mpi(argc, argvC, comm_val)
 
 def initialize(argv=None, mpi_comm=None):
     '''
@@ -380,11 +400,11 @@ def initialize(argv=None, mpi_comm=None):
     if argv is None:
         argv = sys.argv
     amrex_init(argv, mpi_comm)
-    libwarpx.warpx_ConvertLabParamsToBoost()
-    libwarpx.warpx_ReadBCParams()
+    libwarpx.libwarpx_so.warpx_ConvertLabParamsToBoost()
+    libwarpx.libwarpx_so.warpx_ReadBCParams()
     if libwarpx.geometry_dim == 'rz':
-        libwarpx.warpx_CheckGriddingForRZSpectral()
-    libwarpx.warpx_init()
+        libwarpx.libwarpx_so.warpx_CheckGriddingForRZSpectral()
+    libwarpx.libwarpx_so.warpx_init()
 
     libwarpx.initialized = True
 
@@ -398,9 +418,20 @@ def finalize(finalize_mpi=1):
 
     '''
     if libwarpx.initialized:
-        libwarpx.warpx_finalize()
-        libwarpx.amrex_finalize(finalize_mpi)
+        libwarpx.libwarpx_so.warpx_finalize()
+        libwarpx.libwarpx_so.amrex_finalize(finalize_mpi)
 
+def getistep(level=0):
+    '''
+
+    Get the current time step number for the specified level
+
+    Parameter
+    ---------
+
+    level : the refinement level to reference
+    '''
+    return warpx_getistep(level)
 
 def evolve(num_steps=-1):
     '''
@@ -416,23 +447,23 @@ def evolve(num_steps=-1):
 
     '''
 
-    libwarpx.warpx_evolve(num_steps);
+    libwarpx.libwarpx_so.warpx_evolve(num_steps);
 
 
 def getProbLo(direction):
     assert 0 <= direction < libwarpx.dim, 'Inappropriate direction specified'
-    return libwarpx.warpx_getProbLo(direction)
+    return libwarpx.libwarpx_so.warpx_getProbLo(direction)
 
 
 def getProbHi(direction):
     assert 0 <= direction < libwarpx.dim, 'Inappropriate direction specified'
-    return libwarpx.warpx_getProbHi(direction)
+    return libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
 
 def getCellSize(direction, level=0):
     assert 0 <= direction < 3, 'Inappropriate direction specified'
-    assert 0 <= level and level <= libwarpx.warpx_finestLevel(), 'Inappropriate level specified'
-    return libwarpx.warpx_getCellSize(direction, level)
+    assert 0 <= level and level <= libwarpx.libwarpx_so.warpx_finestLevel(), 'Inappropriate level specified'
+    return libwarpx.libwarpx_so.warpx_getCellSize(direction, level)
 
 
 #def get_sigma(direction):
@@ -444,7 +475,7 @@ def getCellSize(direction, level=0):
 #    '''
 #
 #    size = ctypes.c_int(0)
-#    data = libwarpx.warpx_getPMLSigma(direction, ctypes.byref(size))
+#    data = libwarpx.libwarpx_so.warpx_getPMLSigma(direction, ctypes.byref(size))
 #    arr = np.ctypeslib.as_array(data, (size.value,))
 #    arr.setflags(write=1)
 #    return arr
@@ -459,7 +490,7 @@ def getCellSize(direction, level=0):
 #    '''
 #
 #    size = ctypes.c_int(0)
-#    data = libwarpx.warpx_getPMLSigmaStar(direction, ctypes.byref(size))
+#    data = libwarpx.libwarpx_so.warpx_getPMLSigmaStar(direction, ctypes.byref(size))
 #    arr = np.ctypeslib.as_array(data, (size.value,))
 #    arr.setflags(write=1)
 #    return arr
@@ -474,7 +505,7 @@ def getCellSize(direction, level=0):
 #
 #    '''
 #
-#    libwarpx.warpx_ComputePMLFactors(lev, dt)
+#    libwarpx.libwarpx_so.warpx_ComputePMLFactors(lev, dt)
 
 def add_particles(species_name, x=None, y=None, z=None, ux=None, uy=None, uz=None, w=None,
                   unique_particles=True, **kwargs):
@@ -568,7 +599,7 @@ def add_particles(species_name, x=None, y=None, z=None, ux=None, uy=None, uz=Non
         # --- The -3 is because components 1 to 3 are velocities
         attr[:,get_particle_comp_index(species_name, key)-3] = vals
 
-    libwarpx.warpx_addNParticles(
+    libwarpx.libwarpx_so.warpx_addNParticles(
         ctypes.c_char_p(species_name.encode('utf-8')), x.size,
         x, y, z, ux, uy, uz, nattr, attr, unique_particles
     )
@@ -591,7 +622,7 @@ def get_particle_count(species_name):
         An integer count of the number of particles
 
     '''
-    return libwarpx.warpx_getNumParticles(
+    return libwarpx.libwarpx_so.warpx_getNumParticles(
         ctypes.c_char_p(species_name.encode('utf-8'))
     )
 
@@ -620,7 +651,7 @@ def get_particle_structs(species_name, level):
 
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
-    data = libwarpx.warpx_getParticleStructs(
+    data = libwarpx.libwarpx_so.warpx_getParticleStructs(
         ctypes.c_char_p(species_name.encode('utf-8')), level,
         ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
     )
@@ -661,7 +692,7 @@ def get_particle_arrays(species_name, comp_name, level):
 
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
-    data = libwarpx.warpx_getParticleArrays(
+    data = libwarpx.libwarpx_so.warpx_getParticleArrays(
         ctypes.c_char_p(species_name.encode('utf-8')),
         ctypes.c_char_p(comp_name.encode('utf-8')),
         level, ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
@@ -845,7 +876,7 @@ def get_particle_comp_index(species_name, pid_name):
         Integer corresponding to the index of the requested attribute
 
     '''
-    return libwarpx.warpx_getParticleCompIndex(
+    return libwarpx.libwarpx_so.warpx_getParticleCompIndex(
         ctypes.c_char_p(species_name.encode('utf-8')),
         ctypes.c_char_p(pid_name.encode('utf-8'))
     )
@@ -864,7 +895,7 @@ def add_real_comp(species_name, pid_name, comm=True):
         comm           : should the component be communicated
 
     '''
-    libwarpx.warpx_addRealComp(
+    libwarpx.libwarpx_so.warpx_addRealComp(
         ctypes.c_char_p(species_name.encode('utf-8')),
         ctypes.c_char_p(pid_name.encode('utf-8')), comm
     )
@@ -889,7 +920,7 @@ def get_particle_boundary_buffer_size(species_name, boundary):
         The number of particles scraped so far from a boundary and of a species.
 
     '''
-    return libwarpx.warpx_getParticleBoundaryBufferSize(
+    return libwarpx.libwarpx_so.warpx_getParticleBoundaryBufferSize(
         ctypes.c_char_p(species_name.encode('utf-8')),
         libwarpx.get_boundary_number(boundary)
     )
@@ -923,7 +954,7 @@ def get_particle_boundary_buffer_structs(species_name, boundary, level):
 
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
-    data = libwarpx.warpx_getParticleBoundaryBufferStructs(
+    data = libwarpx.libwarpx_so.warpx_getParticleBoundaryBufferStructs(
             ctypes.c_char_p(species_name.encode('utf-8')),
             libwarpx.get_boundary_number(boundary), level,
             ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
@@ -971,13 +1002,13 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
     particles_per_tile = _LP_c_int()
     num_tiles = ctypes.c_int(0)
     if comp_name == 'step_scraped':
-        data = libwarpx.warpx_getParticleBoundaryBufferScrapedSteps(
+        data = libwarpx.libwarpx_so.warpx_getParticleBoundaryBufferScrapedSteps(
             ctypes.c_char_p(species_name.encode('utf-8')),
             libwarpx.get_boundary_number(boundary), level,
             ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
         )
     else:
-        data = libwarpx.warpx_getParticleBoundaryBuffer(
+        data = libwarpx.libwarpx_so.warpx_getParticleBoundaryBuffer(
             ctypes.c_char_p(species_name.encode('utf-8')),
             libwarpx.get_boundary_number(boundary), level,
             ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
@@ -1075,7 +1106,7 @@ def get_mesh_electric_field(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getEfield, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getEfield, level, direction, include_ghosts)
 
 
 def get_mesh_electric_field_cp(level, direction, include_ghosts=True):
@@ -1102,7 +1133,7 @@ def get_mesh_electric_field_cp(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getEfieldCP, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getEfieldCP, level, direction, include_ghosts)
 
 
 def get_mesh_electric_field_fp(level, direction, include_ghosts=True):
@@ -1129,7 +1160,7 @@ def get_mesh_electric_field_fp(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getEfieldFP, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getEfieldFP, level, direction, include_ghosts)
 
 
 def get_mesh_electric_field_cp_pml(level, direction, include_ghosts=True):
@@ -1157,7 +1188,7 @@ def get_mesh_electric_field_cp_pml(level, direction, include_ghosts=True):
     '''
 
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getEfieldCP_PML, level, direction, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getEfieldCP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1187,7 +1218,7 @@ def get_mesh_electric_field_fp_pml(level, direction, include_ghosts=True):
     '''
 
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getEfieldFP_PML, level, direction, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getEfieldFP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1217,7 +1248,7 @@ def get_mesh_magnetic_field(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getBfield, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getBfield, level, direction, include_ghosts)
 
 
 def get_mesh_magnetic_field_cp(level, direction, include_ghosts=True):
@@ -1244,7 +1275,7 @@ def get_mesh_magnetic_field_cp(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getBfieldCP, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getBfieldCP, level, direction, include_ghosts)
 
 
 def get_mesh_magnetic_field_fp(level, direction, include_ghosts=True):
@@ -1271,7 +1302,7 @@ def get_mesh_magnetic_field_fp(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getBfieldFP, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getBfieldFP, level, direction, include_ghosts)
 
 
 def get_mesh_magnetic_field_cp_pml(level, direction, include_ghosts=True):
@@ -1299,7 +1330,7 @@ def get_mesh_magnetic_field_cp_pml(level, direction, include_ghosts=True):
     '''
 
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getBfieldCP_PML, level, direction, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getBfieldCP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1329,7 +1360,7 @@ def get_mesh_magnetic_field_fp_pml(level, direction, include_ghosts=True):
     '''
 
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getBfieldFP_PML, level, direction, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getBfieldFP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1357,7 +1388,7 @@ def get_mesh_current_density(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getCurrentDensity, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getCurrentDensity, level, direction, include_ghosts)
 
 
 def get_mesh_current_density_cp(level, direction, include_ghosts=True):
@@ -1384,7 +1415,7 @@ def get_mesh_current_density_cp(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityCP, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getCurrentDensityCP, level, direction, include_ghosts)
 
 
 def get_mesh_current_density_fp(level, direction, include_ghosts=True):
@@ -1411,7 +1442,7 @@ def get_mesh_current_density_fp(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityFP, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getCurrentDensityFP, level, direction, include_ghosts)
 
 
 def get_mesh_current_density_cp_pml(level, direction, include_ghosts=True):
@@ -1439,7 +1470,7 @@ def get_mesh_current_density_cp_pml(level, direction, include_ghosts=True):
     '''
 
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityCP_PML, level, direction, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getCurrentDensityCP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1469,7 +1500,7 @@ def get_mesh_current_density_fp_pml(level, direction, include_ghosts=True):
     '''
 
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1497,7 +1528,7 @@ def get_mesh_charge_density_cp(level, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getChargeDensityCP, level, None, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getChargeDensityCP, level, None, include_ghosts)
 
 
 def get_mesh_charge_density_fp(level, include_ghosts=True):
@@ -1523,7 +1554,7 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getChargeDensityFP, level, None, include_ghosts)
 
 
 def get_mesh_phi_fp(level, include_ghosts=True):
@@ -1548,7 +1579,7 @@ def get_mesh_phi_fp(level, include_ghosts=True):
         A List of numpy arrays.
 
     '''
-    return _get_mesh_field_list(libwarpx.warpx_getPhiFP, level, None, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getPhiFP, level, None, include_ghosts)
 
 
 def get_mesh_F_cp(level, include_ghosts=True):
@@ -1574,7 +1605,7 @@ def get_mesh_F_cp(level, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getFfieldCP, level, None, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getFfieldCP, level, None, include_ghosts)
 
 
 def get_mesh_F_fp(level, include_ghosts=True):
@@ -1600,7 +1631,7 @@ def get_mesh_F_fp(level, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getFfieldFP, level, None, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getFfieldFP, level, None, include_ghosts)
 
 
 def get_mesh_F_fp_pml(level, include_ghosts=True):
@@ -1626,7 +1657,7 @@ def get_mesh_F_fp_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getFfieldFP_PML, level, None, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getFfieldFP_PML, level, None, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1654,7 +1685,7 @@ def get_mesh_F_cp_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getFfieldCP_PML, level, None, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getFfieldCP_PML, level, None, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1682,7 +1713,7 @@ def get_mesh_G_cp(level, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getGfieldCP, level, None, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getGfieldCP, level, None, include_ghosts)
 
 
 def get_mesh_G_fp(level, include_ghosts=True):
@@ -1708,7 +1739,7 @@ def get_mesh_G_fp(level, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getGfieldFP, level, None, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getGfieldFP, level, None, include_ghosts)
 
 
 def get_mesh_G_cp_pml(level, include_ghosts=True):
@@ -1734,7 +1765,7 @@ def get_mesh_G_cp_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getGfieldCP_PML, level, None, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getGfieldCP_PML, level, None, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1762,13 +1793,13 @@ def get_mesh_G_fp_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_field_list(libwarpx.warpx_getGfieldFP_PML, level, None, include_ghosts)
+        return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getGfieldFP_PML, level, None, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
 
 
 def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
-    assert(0 <= level and level <= libwarpx.warpx_finestLevel())
+    assert(0 <= level and level <= libwarpx.libwarpx_so.warpx_finestLevel())
 
     size = ctypes.c_int(0)
     ngrowvect = _LP_c_int()
@@ -1821,7 +1852,7 @@ def get_mesh_electric_field_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getEfieldLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getEfieldLoVects)
 
 
 def get_mesh_electric_field_cp_lovects(level, direction, include_ghosts=True):
@@ -1843,7 +1874,7 @@ def get_mesh_electric_field_cp_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getEfieldCPLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getEfieldCPLoVects)
 
 
 def get_mesh_electric_field_fp_lovects(level, direction, include_ghosts=True):
@@ -1865,7 +1896,7 @@ def get_mesh_electric_field_fp_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getEfieldFPLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getEfieldFPLoVects)
 
 
 def get_mesh_electric_field_cp_lovects_pml(level, direction, include_ghosts=True):
@@ -1888,7 +1919,7 @@ def get_mesh_electric_field_cp_lovects_pml(level, direction, include_ghosts=True
 
     '''
     try:
-        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getEfieldCPLoVects_PML)
+        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getEfieldCPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1913,7 +1944,7 @@ def get_mesh_electric_field_fp_lovects_pml(level, direction, include_ghosts=True
 
     '''
     try:
-        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getEfieldFPLoVects_PML)
+        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getEfieldFPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -1939,7 +1970,7 @@ def get_mesh_magnetic_field_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getBfieldLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getBfieldLoVects)
 
 
 def get_mesh_magnetic_field_cp_lovects(level, direction, include_ghosts=True):
@@ -1961,7 +1992,7 @@ def get_mesh_magnetic_field_cp_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getBfieldCPLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getBfieldCPLoVects)
 
 
 def get_mesh_magnetic_field_fp_lovects(level, direction, include_ghosts=True):
@@ -1983,7 +2014,7 @@ def get_mesh_magnetic_field_fp_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getBfieldFPLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getBfieldFPLoVects)
 
 
 def get_mesh_magnetic_field_cp_lovects_pml(level, direction, include_ghosts=True):
@@ -2006,7 +2037,7 @@ def get_mesh_magnetic_field_cp_lovects_pml(level, direction, include_ghosts=True
 
     '''
     try:
-        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getBfieldCPLoVects_PML)
+        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getBfieldCPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2031,7 +2062,7 @@ def get_mesh_magnetic_field_fp_lovects_pml(level, direction, include_ghosts=True
 
     '''
     try:
-        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getBfieldFPLoVects_PML)
+        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getBfieldFPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2055,7 +2086,7 @@ def get_mesh_current_density_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getCurrentDensityLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getCurrentDensityLoVects)
 
 
 def get_mesh_current_density_cp_lovects(level, direction, include_ghosts=True):
@@ -2077,7 +2108,7 @@ def get_mesh_current_density_cp_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getCurrentDensityCPLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getCurrentDensityCPLoVects)
 
 def get_mesh_current_density_fp_lovects(level, direction, include_ghosts=True):
     '''
@@ -2098,7 +2129,7 @@ def get_mesh_current_density_fp_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getCurrentDensityFPLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getCurrentDensityFPLoVects)
 
 
 def get_mesh_current_density_cp_lovects_pml(level, direction, include_ghosts=True):
@@ -2121,7 +2152,7 @@ def get_mesh_current_density_cp_lovects_pml(level, direction, include_ghosts=Tru
 
     '''
     try:
-        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getCurrentDensityCPLoVects_PML)
+        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getCurrentDensityCPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2145,7 +2176,7 @@ def get_mesh_current_density_fp_lovects_pml(level, direction, include_ghosts=Tru
 
     '''
     try:
-        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getCurrentDensityFPLoVects_PML)
+        return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getCurrentDensityFPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2168,7 +2199,7 @@ def get_mesh_charge_density_cp_lovects(level, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityCPLoVects)
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getChargeDensityCPLoVects)
 
 
 def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
@@ -2189,7 +2220,7 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityFPLoVects)
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getChargeDensityFPLoVects)
 
 
 def get_mesh_phi_fp_lovects(level, include_ghosts=True):
@@ -2210,7 +2241,7 @@ def get_mesh_phi_fp_lovects(level, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getPhiFPLoVects)
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getPhiFPLoVects)
 
 
 def get_mesh_F_cp_lovects(level, include_ghosts=True):
@@ -2231,7 +2262,7 @@ def get_mesh_F_cp_lovects(level, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldCPLoVects)
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getFfieldCPLoVects)
 
 
 def get_mesh_F_fp_lovects(level, include_ghosts=True):
@@ -2252,7 +2283,7 @@ def get_mesh_F_fp_lovects(level, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldFPLoVects)
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getFfieldFPLoVects)
 
 
 def get_mesh_F_cp_lovects_pml(level, include_ghosts=True):
@@ -2274,7 +2305,7 @@ def get_mesh_F_cp_lovects_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldCPLoVects_PML)
+        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getFfieldCPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2298,7 +2329,7 @@ def get_mesh_F_fp_lovects_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getFfieldFPLoVects_PML)
+        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getFfieldFPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2321,7 +2352,7 @@ def get_mesh_G_cp_lovects(level, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getGfieldCPLoVects)
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getGfieldCPLoVects)
 
 
 def get_mesh_G_fp_lovects(level, include_ghosts=True):
@@ -2342,7 +2373,7 @@ def get_mesh_G_fp_lovects(level, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getGfieldFPLoVects)
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getGfieldFPLoVects)
 
 
 def get_mesh_G_cp_lovects_pml(level, include_ghosts=True):
@@ -2364,7 +2395,7 @@ def get_mesh_G_cp_lovects_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getGfieldCPLoVects_PML)
+        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getGfieldCPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2388,7 +2419,7 @@ def get_mesh_G_fp_lovects_pml(level, include_ghosts=True):
 
     '''
     try:
-        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getGfieldFPLoVects_PML)
+        return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.libwarpx_so.warpx_getGfieldFPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
 
@@ -2411,97 +2442,97 @@ def get_Ex_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Ex along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getEx_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getEx_nodal_flag)
 
 
 def get_Ey_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Ey along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getEy_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getEy_nodal_flag)
 
 
 def get_Ez_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Ez along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getEz_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getEz_nodal_flag)
 
 
 def get_Bx_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Bx along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getBx_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getBx_nodal_flag)
 
 
 def get_By_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for By along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getBy_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getBy_nodal_flag)
 
 
 def get_Bz_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Bz along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getBz_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getBz_nodal_flag)
 
 
 def get_Jx_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Jx along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getJx_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getJx_nodal_flag)
 
 
 def get_Jy_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Jy along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getJy_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getJy_nodal_flag)
 
 
 def get_Jz_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Jz along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getJz_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getJz_nodal_flag)
 
 
 def get_Rho_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Rho along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getRho_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getRho_nodal_flag)
 
 def get_Phi_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for Phi along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getPhi_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getPhi_nodal_flag)
 
 def get_F_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for F along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getF_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getF_nodal_flag)
 
 def get_G_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for G along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getG_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getG_nodal_flag)
 
 def get_F_pml_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for F in the PML along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getF_pml_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getF_pml_nodal_flag)
 
 def get_G_pml_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for G in the PML along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_getG_pml_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_getG_pml_nodal_flag)

@@ -86,10 +86,10 @@ class WarpX(Bucket):
         _libwarpx.finalize(finalize_mpi)
 
     def getProbLo(self, direction):
-        return _libwarpx.libwarpx.warpx_getProbLo(direction)
+        return _libwarpx.libwarpx.libwarpx_so.warpx_getProbLo(direction)
 
     def getProbHi(self, direction):
-        return _libwarpx.libwarpx.warpx_getProbHi(direction)
+        return _libwarpx.libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
     def write_inputs(self, filename='inputs', **kw):
         argv = self.create_argv_list()
