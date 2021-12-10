@@ -164,7 +164,7 @@ endif()
 if(WarpX_LIB)
     add_library(shared MODULE)
     add_library(WarpX::shared ALIAS shared)
-    target_link_libraries(shared PUBLIC WarpX ablastr)
+    target_link_libraries(shared PUBLIC WarpX)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
@@ -179,6 +179,7 @@ target_include_directories(WarpX PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
 )
 target_include_directories(ablastr PUBLIC
+    # future: own directory root
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
 )
 
@@ -257,6 +258,14 @@ if(WarpX_COMPUTE STREQUAL CUDA)
     set_target_properties(${_ALL_TARGETS} PROPERTIES
         CUDA_EXTENSIONS OFF
         CUDA_STANDARD_REQUIRED ON
+    )
+endif()
+
+# avoid building all object files if we are only used as ABLASTR library
+if(NOT WarpX_APP AND NOT WarpX_LIB)
+    set_target_properties(WarpX PROPERTIES
+        EXCLUDE_FROM_ALL 1
+        EXCLUDE_FROM_DEFAULT_BUILD 1
     )
 endif()
 
