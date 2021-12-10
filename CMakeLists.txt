@@ -222,8 +222,8 @@ if(WarpX_IPO)
 endif()
 
 # link dependencies
-target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
 target_link_libraries(ablastr PUBLIC WarpX::thirdparty::AMReX)
+target_link_libraries(WarpX PUBLIC ablastr)
 
 if(WarpX_PSATD)
     target_link_libraries(ablastr PUBLIC WarpX::thirdparty::FFT)
