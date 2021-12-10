@@ -23,21 +23,6 @@ jobs:
 
   strategy:
     matrix:
-      cartesian1d:
-        WARPX_CI_REGULAR_CARTESIAN_1D: 'TRUE'
-        WARPX_CI_PSATD: 'FALSE'
-      cartesian2d:
-        WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
-      cartesian3d:
-        WARPX_CI_REGULAR_CARTESIAN_3D: 'TRUE'
-      python:
-        WARPX_CI_PYTHON_MAIN: 'TRUE'
-      single_precision:
-        WARPX_CI_SINGLE_PRECISION: 'TRUE'
-      rz_or_nompi:
-        WARPX_CI_RZ_OR_NOMPI: 'TRUE'
-      qed:
-        WARPX_CI_QED: 'TRUE'
       embedded_boundary:
         WARPX_CI_EB: 'TRUE'
 
@@ -110,9 +95,9 @@ jobs:
     displayName: 'Install dependencies'
 
   - bash: |
-      set -eu -o pipefail
       df -h
-      ./run_test.sh
+      ./run_test.sh Python_particle_scrape
+      cat ${WARPX_CI_TMP}/rt-WarpX/WarpX-tests/$(date +%Y-%m-%d)/Python_particle_scrape/*.out
       rm -rf ${WARPX_CI_TMP}
       df -h
     displayName: 'Build & test'
