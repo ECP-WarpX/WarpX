@@ -241,6 +241,8 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
     // done for the current deposition.
 
 #if   defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(nox);
+    amrex::ignore_unused(noy);
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(noz/2+1));
 #elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::ignore_unused(noy);
