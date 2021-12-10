@@ -24,8 +24,8 @@ struct Compute_shape_factor
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int operator()(
-        [[maybe_unused]] T* const sx,
-        [[maybe_unused]] T xmid) const
+        T* const sx,
+        T xmid) const
     {
         if constexpr (depos_order == 0){
             const auto j = static_cast<int>(xmid + T(0.5));
@@ -59,6 +59,8 @@ struct Compute_shape_factor
             return j-1;
         }
         else{
+            static_assert(false, "Unknown particle shape selected in Compute_shape_factor");
+            amrex::ignore_unused(sx, xmid);
             return 0;
         }
     }
@@ -77,9 +79,9 @@ struct Compute_shifted_shape_factor
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int operator()(
-        [[maybe_unused]] T* const sx,
-        [[maybe_unused]] const T x_old,
-        [[maybe_unused]] const int i_new) const
+        T* const sx,
+        const T x_old,
+        const int i_new) const
     {
         if constexpr (depos_order == 1){
             const auto i = static_cast<int>(x_old);
@@ -111,6 +113,8 @@ struct Compute_shifted_shape_factor
             return i - 1;
         }
         else{
+            static_assert(false, "Unknown particle shape selected in Compute_shifted_shape_factor");
+            amrex::ignore_unused(sx, x_old, i_new);
             return 0;
         }
     }
