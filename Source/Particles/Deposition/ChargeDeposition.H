@@ -53,7 +53,7 @@ void addLocalToGlobal (const amrex::Box& bx,
  * \param lo            : Index lower bounds of domain.
  * \param q             : species charge.
  * \param n_rz_azimuthal_modes: Number of azimuthal modes when using RZ geometry.
- * \param cost: Pointer to (load balancing) cost corresponding to box where present particles deposit current.
+ * \param cost: Pointer to (load balancing) cost corresponding to box where present particles deposit charge.
  * \param load_balance_costs_update_algo: Selected method for updating load balance costs.
  */
 template <int depos_order>
