@@ -40,10 +40,10 @@ _LP_c_char = ctypes.POINTER(ctypes.c_char)
 
 class LibWarpX():
     def __init__(self):
-        self.__dict__['library_loaded'] = False
+        self.library_loaded = False
 
         # track whether amrex and warpx have been initialized
-        self.__dict__['initialized'] = False
+        self.initialized = False
 
 
     def __getattr__(self, attribute):
@@ -52,9 +52,9 @@ class LibWarpX():
         try:
             return self.__dict__[attribute]
         except KeyError:
-            return getattr(self.libwarpx, attribute)
+            return getattr(self.libwarpx_so, attribute)
 
-    def get_package_root(self):
+    def _get_package_root(self):
         '''
         Get the path to the installation location (where libwarpx.so would be installed).
         '''
@@ -87,13 +87,13 @@ class LibWarpX():
 
         # this is a plain C/C++ shared library, not a Python module
         if os.name == 'nt':
-            mod_ext = "dll"
+            mod_ext = 'dll'
         else:
-            mod_ext = "so"
-        libname = "libwarpx.{0}.{1}".format(self.geometry_dim, mod_ext)
+            mod_ext = 'so'
+        libname = f'libwarpx.{self.geometry_dim}.{mod_ext}'
 
         try:
-            self.libwarpx = ctypes.CDLL(os.path.join(self.get_package_root(), libname))
+            self.libwarpx_so = ctypes.CDLL(os.path.join(self._get_package_root(), libname))
         except OSError as e:
             value = e.args[0]
             if f'{libname}: cannot open shared object file: No such file or directory' in value:
@@ -103,11 +103,11 @@ class LibWarpX():
                 raise
 
         # WarpX can be compiled using either double or float
-        self.libwarpx.warpx_Real_size.restype = ctypes.c_int
-        self.libwarpx.warpx_ParticleReal_size.restype = ctypes.c_int
+        self.libwarpx_so.warpx_Real_size.restype = ctypes.c_int
+        self.libwarpx_so.warpx_ParticleReal_size.restype = ctypes.c_int
 
-        _Real_size = self.libwarpx.warpx_Real_size()
-        _ParticleReal_size = self.libwarpx.warpx_ParticleReal_size()
+        _Real_size = self.libwarpx_so.warpx_Real_size()
+        _ParticleReal_size = self.libwarpx_so.warpx_ParticleReal_size()
 
         if _Real_size == 8:
             c_real = ctypes.c_double
@@ -123,7 +123,7 @@ class LibWarpX():
             c_particlereal = ctypes.c_float
             _numpy_particlereal_dtype = 'f4'
 
-        self.dim = self.libwarpx.warpx_SpaceDim()
+        self.dim = self.libwarpx_so.warpx_SpaceDim()
 
         # our particle data type, depends on _ParticleReal_size
         _p_struct = [(d, _numpy_particlereal_dtype) for d in 'xyz'[:self.dim]] + [('id', 'i4'), ('cpu', 'i4')]
@@ -147,88 +147,88 @@ class LibWarpX():
         _LP_LP_c_char = ctypes.POINTER(_LP_c_char)
 
         # set the arg and return types of the wrapped functions
-        self.libwarpx.amrex_init.argtypes = (ctypes.c_int, _LP_LP_c_char)
-        self.libwarpx.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MPI_Comm_type)
-        self.libwarpx.warpx_getParticleStructs.restype = _LP_particle_p
-        self.libwarpx.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
-        self.libwarpx.warpx_getParticleCompIndex.restype = ctypes.c_int
-        self.libwarpx.warpx_getEfield.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getEfieldLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getEfieldCP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getEfieldCPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getEfieldFP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getEfieldFPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getEfieldCP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getEfieldCPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getEfieldFP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getEfieldFPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getBfield.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getBfieldLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getBfieldCP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getBfieldCPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getBfieldFP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getBfieldFPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getBfieldCP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getBfieldCPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getBfieldFP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getBfieldFPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getCurrentDensity.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getCurrentDensityLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getCurrentDensityCP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getCurrentDensityCPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getCurrentDensityFP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getCurrentDensityFPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getCurrentDensityCP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getCurrentDensityFPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getChargeDensityCP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getPhiFP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getPhiFPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getFfieldCP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getFfieldCPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getFfieldFP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getFfieldFPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getFfieldCP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getFfieldCPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getFfieldFP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getFfieldFPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getGfieldCP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getGfieldCPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getGfieldFP.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getGfieldFPLoVects.restype = _LP_c_int
-        self.libwarpx.warpx_getGfieldCP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getGfieldCPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getGfieldFP_PML.restype = _LP_LP_c_real
-        self.libwarpx.warpx_getGfieldFPLoVects_PML.restype = _LP_c_int
-        self.libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
-        self.libwarpx.warpx_getParticleBoundaryBufferStructs.restype = _LP_LP_c_particlereal
-        self.libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
-        self.libwarpx.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
+        self.libwarpx_so.amrex_init.argtypes = (ctypes.c_int, _LP_LP_c_char)
+        self.libwarpx_so.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MPI_Comm_type)
+        self.libwarpx_so.warpx_getParticleStructs.restype = _LP_particle_p
+        self.libwarpx_so.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
+        self.libwarpx_so.warpx_getParticleCompIndex.restype = ctypes.c_int
+        self.libwarpx_so.warpx_getEfield.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getEfieldLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getEfieldCP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getEfieldCPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getEfieldFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getEfieldFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getEfieldCP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getEfieldCPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getEfieldFP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getEfieldFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBfield.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getBfieldLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBfieldCP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getBfieldCPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBfieldFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getBfieldFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBfieldCP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getBfieldCPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBfieldFP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getBfieldFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensity.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getCurrentDensityLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensityCP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getCurrentDensityCPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensityFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getCurrentDensityFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensityCP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getCurrentDensityFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getChargeDensityCP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getChargeDensityFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getPhiFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getPhiFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getFfieldCP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getFfieldCPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getFfieldFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getFfieldFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getFfieldCP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getFfieldCPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getFfieldFP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getFfieldFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getGfieldCP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getGfieldCPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getGfieldFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getGfieldFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getGfieldCP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getGfieldCPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getGfieldFP_PML.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getGfieldFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
+        self.libwarpx_so.warpx_getParticleBoundaryBufferStructs.restype = _LP_LP_c_particlereal
+        self.libwarpx_so.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
+        self.libwarpx_so.warpx_getParticleBoundaryBufferScrapedSteps.restype = _LP_LP_c_int
 
-        self.libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getEz_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getBx_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getBy_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getBz_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getJx_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getJy_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getJz_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getPhi_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getF_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getG_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getF_pml_nodal_flag.restype = _LP_c_int
-        self.libwarpx.warpx_getG_pml_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getEx_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getEy_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getEz_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBx_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBy_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getBz_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getJx_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getJy_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getJz_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getRho_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getPhi_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getF_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getG_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getF_pml_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getG_pml_nodal_flag.restype = _LP_c_int
 
-        #self.libwarpx.warpx_getPMLSigma.restype = _LP_c_real
-        #self.libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
-        #self.libwarpx.warpx_ComputePMLFactors.argtypes = (ctypes.c_int, c_real)
-        self.libwarpx.warpx_addNParticles.argtypes = (ctypes.c_char_p, ctypes.c_int,
+        #self.libwarpx_so.warpx_getPMLSigma.restype = _LP_c_real
+        #self.libwarpx_so.warpx_getPMLSigmaStar.restype = _LP_c_real
+        #self.libwarpx_so.warpx_ComputePMLFactors.argtypes = (ctypes.c_int, c_real)
+        self.libwarpx_so.warpx_addNParticles.argtypes = (ctypes.c_char_p, ctypes.c_int,
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
@@ -239,33 +239,33 @@ class LibWarpX():
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
                                                       ctypes.c_int)
 
-        self.libwarpx.warpx_getProbLo.restype = c_real
-        self.libwarpx.warpx_getProbHi.restype = c_real
-        self.libwarpx.warpx_getCellSize.restype = c_real
-        self.libwarpx.warpx_getistep.restype = ctypes.c_int
-        self.libwarpx.warpx_gett_new.restype = c_real
-        self.libwarpx.warpx_getdt.restype = c_real
-        self.libwarpx.warpx_maxStep.restype = ctypes.c_int
-        self.libwarpx.warpx_stopTime.restype = c_real
-        self.libwarpx.warpx_finestLevel.restype = ctypes.c_int
-        self.libwarpx.warpx_getMyProc.restype = ctypes.c_int
-        self.libwarpx.warpx_getNProcs.restype = ctypes.c_int
+        self.libwarpx_so.warpx_getProbLo.restype = c_real
+        self.libwarpx_so.warpx_getProbHi.restype = c_real
+        self.libwarpx_so.warpx_getCellSize.restype = c_real
+        self.libwarpx_so.warpx_getistep.restype = ctypes.c_int
+        self.libwarpx_so.warpx_gett_new.restype = c_real
+        self.libwarpx_so.warpx_getdt.restype = c_real
+        self.libwarpx_so.warpx_maxStep.restype = ctypes.c_int
+        self.libwarpx_so.warpx_stopTime.restype = c_real
+        self.libwarpx_so.warpx_finestLevel.restype = ctypes.c_int
+        self.libwarpx_so.warpx_getMyProc.restype = ctypes.c_int
+        self.libwarpx_so.warpx_getNProcs.restype = ctypes.c_int
 
-        self.libwarpx.warpx_EvolveE.argtypes = [c_real]
-        self.libwarpx.warpx_EvolveB.argtypes = [c_real]
-        self.libwarpx.warpx_FillBoundaryE.argtypes = []
-        self.libwarpx.warpx_FillBoundaryB.argtypes = []
-        self.libwarpx.warpx_UpdateAuxilaryData.argtypes = []
-        self.libwarpx.warpx_SyncCurrent.argtypes = []
-        self.libwarpx.warpx_PushParticlesandDepose.argtypes = [c_real]
-        self.libwarpx.warpx_getProbLo.argtypes = [ctypes.c_int]
-        self.libwarpx.warpx_getProbHi.argtypes = [ctypes.c_int]
-        self.libwarpx.warpx_getCellSize.argtypes = [ctypes.c_int, ctypes.c_int]
-        self.libwarpx.warpx_getistep.argtypes = [ctypes.c_int]
-        self.libwarpx.warpx_setistep.argtypes = [ctypes.c_int, ctypes.c_int]
-        self.libwarpx.warpx_gett_new.argtypes = [ctypes.c_int]
-        self.libwarpx.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
-        self.libwarpx.warpx_getdt.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_EvolveE.argtypes = [c_real]
+        self.libwarpx_so.warpx_EvolveB.argtypes = [c_real]
+        self.libwarpx_so.warpx_FillBoundaryE.argtypes = []
+        self.libwarpx_so.warpx_FillBoundaryB.argtypes = []
+        self.libwarpx_so.warpx_UpdateAuxilaryData.argtypes = []
+        self.libwarpx_so.warpx_SyncCurrent.argtypes = []
+        self.libwarpx_so.warpx_PushParticlesandDepose.argtypes = [c_real]
+        self.libwarpx_so.warpx_getProbLo.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_getProbHi.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_getCellSize.argtypes = [ctypes.c_int, ctypes.c_int]
+        self.libwarpx_so.warpx_getistep.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_setistep.argtypes = [ctypes.c_int, ctypes.c_int]
+        self.libwarpx_so.warpx_gett_new.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
+        self.libwarpx_so.warpx_getdt.argtypes = [ctypes.c_int]
 
     def get_boundary_number(self, boundary):
         '''
@@ -311,7 +311,6 @@ class LibWarpX():
                 boundary_num = 2
 
         return boundary_num
-
 
 
 libwarpx = LibWarpX()
