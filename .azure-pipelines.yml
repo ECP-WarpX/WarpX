@@ -50,23 +50,21 @@ jobs:
   # - for a refresh the key has to change, e.g., hash of a tracked file in the key
   - task: Cache@2
     inputs:
-      key: 'Ccache | "$(System.JobName)" | cmake/dependencies/AMReX.cmake | run_test.sh'
+      key: 'Ccache | "$(System.JobName)" | .azure-pipelines.yml | cmake/dependencies/AMReX.cmake | run_test.sh'
       restoreKeys: |
-         Ccache | "$(System.JobName)" | cmake/dependencies/AMReX.cmake | run_test.sh
-         Ccache | "$(System.JobName)" | cmake/dependencies/AMReX.cmake
-         Ccache | "$(System.JobName)"
-         Ccache
+         Ccache | "$(System.JobName)" | .azure-pipelines.yml | cmake/dependencies/AMReX.cmake | run_test.sh
+         Ccache | "$(System.JobName)" | .azure-pipelines.yml | cmake/dependencies/AMReX.cmake
+         Ccache | "$(System.JobName)" | .azure-pipelines.yml
       path: /home/vsts/.ccache
       cacheHitVar: CCACHE_CACHE_RESTORED
     displayName: Cache Ccache Objects
 
   - task: Cache@2
     inputs:
-      key: 'Python3 | "$(System.JobName)" | run_test.sh'
+      key: 'Python3 | "$(System.JobName)" | .azure-pipelines.yml | run_test.sh'
       restoreKeys: |
-         Python3 | "$(System.JobName)" | run_test.sh
-         Python3 | "$(System.JobName)"
-         Python3
+         Python3 | "$(System.JobName)" | .azure-pipelines.yml | run_test.sh
+         Python3 | "$(System.JobName)" | .azure-pipelines.yml
       path: /home/vsts/.local/lib/python3.8
       cacheHitVar: PYTHON38_CACHE_RESTORED
     displayName: Cache Python Libraries
@@ -80,6 +78,7 @@ jobs:
         python3 python3-pip python3-venv python3-setuptools libblas-dev liblapack-dev
       ccache --set-config=max_size=10.0G
       python3 -m pip install --upgrade pip
+      python3 -m pip install --upgrade setuptools
       python3 -m pip install --upgrade wheel
       python3 -m pip install --upgrade pipx
       python3 -m pipx install cmake
