@@ -775,6 +775,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                                    auto iv = getParticleCell(p, plo, dxi, domain);
                                    AMREX_ASSERT(box.contains(iv));
                                    auto tid = getTileIndex(iv, box, true, bin_size, tbx);
+                                   amrex::ignore_unused(tid);
                                    AMREX_ASSERT(tid == ibin);
                                    AMREX_ASSERT(tbx.contains(iv));
                                    tbox_ptr[ibin] = tbx;
