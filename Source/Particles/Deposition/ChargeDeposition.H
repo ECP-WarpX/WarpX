@@ -243,6 +243,7 @@ void DepositChargeDoIt (typename PC::ParIterType& pti,
 #if   defined(WARPX_DIM_1D_Z)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(noz/2+1));
 #elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    amrex::ignore_unused(noy);
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(nox/2+1),
                                                        static_cast<int>(noz/2+1));
 #elif defined(WARPX_DIM_3D)
