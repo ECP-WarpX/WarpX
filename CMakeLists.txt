@@ -164,7 +164,7 @@ endif()
 if(WarpX_LIB)
     add_library(shared MODULE)
     add_library(WarpX::shared ALIAS shared)
-    target_link_libraries(shared PUBLIC WarpX)
+    target_link_libraries(shared PUBLIC WarpX ablastr)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
@@ -312,7 +312,7 @@ endif()
 
 # <cmath>: M_PI
 if(WIN32)
-    target_compile_definitions(ablastr PRIVATE _USE_MATH_DEFINES)
+    target_compile_definitions(ablastr PUBLIC _USE_MATH_DEFINES)
 endif()
 
 
