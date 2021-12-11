@@ -380,16 +380,16 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // get the potential at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
+    phi_bc_values_lo[WARPX_ZINDEX] = field_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[WARPX_ZINDEX] = field_boundary_handler.potential_zhi(gett_new(0));
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
     phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
-#if (AMREX_SPACEDIM==2)
-    phi_bc_values_lo[1] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_handler.potential_zhi(gett_new(0));
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
+    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
+    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
     phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
     phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
-    phi_bc_values_lo[2] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[2] = field_boundary_handler.potential_zhi(gett_new(0));
 #endif
 
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
@@ -400,9 +400,9 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
 
     // Set the value of beta
     amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#   if (AMREX_SPACEDIM==1)
+#   if defined(WARPX_DIM_1D_Z)
         {{ beta[2] }};  // beta_x and beta_z
-#   elif (AMREX_SPACEDIM==2)
+#   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         {{ beta[0], beta[2] }};  // beta_x and beta_z
 #   else
         {{ beta[0], beta[1], beta[2] }};
@@ -465,19 +465,19 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
     {
         for (int lev = 0; lev <= max_level; ++lev) {
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,1>{
                     get_pointer_Efield_fp(lev, 2)
                     }}
             );
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,2>{
                     get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
                     }}
             );
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,3>{
                     get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 1),
@@ -586,11 +586,11 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
 #else
@@ -599,7 +599,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #if (AMREX_SPACEDIM >= 2)
             const Box& tbx  = mfi.tilebox( E[lev][0]->ixType().toIntVect() );
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             const Box& tby  = mfi.tilebox( E[lev][1]->ixType().toIntVect() );
 #endif
             const Box& tbz  = mfi.tilebox( E[lev][2]->ixType().toIntVect() );
@@ -608,7 +608,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #if (AMREX_SPACEDIM >= 2)
             const auto& Ex_arr = (*E[lev][0])[mfi].array();
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             const auto& Ey_arr = (*E[lev][1])[mfi].array();
 #endif
             const auto& Ez_arr = (*E[lev][2])[mfi].array();
@@ -619,7 +619,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
             // Calculate the electric field
             // Use discretized derivative that matches the staggering of the grid.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
@@ -646,7 +646,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
                 }
             );
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ParallelFor( tbx, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
@@ -703,11 +703,11 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
 #else
@@ -730,7 +730,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
             // Calculate the magnetic field
             // Use discretized derivative that matches the staggering of the grid.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
@@ -754,7 +754,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k)));
                 }
             );
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (

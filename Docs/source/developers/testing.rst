@@ -77,8 +77,9 @@ Add a test to the suite
 There are three steps to follow to add a new automated test (illustrated here for PML boundary conditions):
 
 * An input file for your test, in folder `Example/Tests/...`. For the PML test, the input file is at ``Examples/Tests/PML/inputs_2d``. You can also re-use an existing input file (even better!) and pass specific parameters at runtime (see below).
-* A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see ``Examples/Tests/PML/analysis_pml_yee.py``. It typically ends with Python statement `assert( error<0.01 )`.
-* Add an entry to [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini), so that a WarpX simulation runs your test in the continuous integration process, and the Python script is executed to assess the correctness. For the PML test, the entry is
+* A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see ``Examples/Tests/PML/analysis_pml_yee.py``. It typically ends with Python statement ``assert( error<0.01 )``.
+* If you need a new Python package dependency for testing, add it in ``Regression/requirements.txt``
+* Add an entry to ``Regression/WarpX-tests.ini``, so that a WarpX simulation runs your test in the continuous integration process, and the Python script is executed to assess the correctness. For the PML test, the entry is
 
 .. code-block::
 
@@ -98,6 +99,10 @@ There are three steps to follow to add a new automated test (illustrated here fo
    analysisRoutine = Examples/Tests/PML/analysis_pml_yee.py
 
 If you re-use an existing input file, you can add arguments to ``runtime_params``, like ``runtime_params = amr.max_level=1 amr.n_cell=32 512 max_step=100 plasma_e.zmin=-200.e-6``.
+
+.. note::
+
+   If you added ``analysisRoutine = Examples/analysis_default_regression.py``, then run the new test case locally and add the :ref:`checksum <developers-checksum>` file for the expected output.
 
 Useful tool for plotfile comparison: ``fcompare``
 --------------------------------------------------
