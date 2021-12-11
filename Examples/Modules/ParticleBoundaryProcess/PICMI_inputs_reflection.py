@@ -117,16 +117,16 @@ n = pywarpx.get_particle_boundary_buffer_size("electrons", 'z_hi')
 print("Number of electrons in upper buffer:", n)
 assert n == 63
 
-n = _pyarpx.get_particle_boundary_buffer_size("electrons", 'z_lo')
+n = pywarpx.get_particle_boundary_buffer_size("electrons", 'z_lo')
 print("Number of electrons in lower buffer:", n)
 assert n == 67
 
-scraped_steps = _pyarpx.get_particle_boundary_buffer("electrons", 'z_hi', 'step_scraped', 0)
+scraped_steps = pywarpx.get_particle_boundary_buffer("electrons", 'z_hi', 'step_scraped', 0)
 for arr in scraped_steps:
     # print(arr)
     assert all(arr == 4)
 
-scraped_steps = _pyarpx.get_particle_boundary_buffer("electrons", 'z_lo', 'step_scraped', 0)
+scraped_steps = pywarpx.get_particle_boundary_buffer("electrons", 'z_lo', 'step_scraped', 0)
 for arr in scraped_steps:
     # print(arr)
     assert all(arr == 8)

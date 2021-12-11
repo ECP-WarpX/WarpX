@@ -75,6 +75,11 @@ class LibWarpX():
 
     def load_library(self):
 
+        if 'libwarpx_so' in self.__dict__:
+            raise RuntimeError(
+                "Invalid attempt to load libwarpx_so library multiple times."
+            )
+
         # --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
         # --- The geometry must be setup before the lib warpx shared object can be loaded.
         try:
@@ -432,6 +437,14 @@ def getistep(level=0):
     level : the refinement level to reference
     '''
     return warpx_getistep(level)
+
+def gett_new(level=0):
+    '''
+
+    Get the next time for the specified level
+
+    '''
+    return libwarpx.libwarpx_so.warpx_gett_new(level)
 
 def evolve(num_steps=-1):
     '''
@@ -1032,6 +1045,15 @@ def get_particle_boundary_buffer(species_name, boundary, comp_name, level):
     _libc.free(particles_per_tile)
     _libc.free(data)
     return particle_data
+
+
+def clearParticleBoundaryBuffer():
+    '''
+
+    Clear the buffer that holds the particles lost at the boundaries.
+
+    '''
+    libwarpx.libwarpx_so.warpx_clearParticleBoundaryBuffer()
 
 
 def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
