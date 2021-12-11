@@ -1,4 +1,4 @@
-/* Copyright 2019 Maxence Thevenet, Michael Rowan
+/* Copyright 2019-2021 Maxence Thevenet, Michael Rowan, Luca Fedeli, Axel Huebl
  *
  * This file is part of WarpX.
  *
@@ -6,6 +6,10 @@
  */
 #ifndef SHAPEFACTORS_H_
 #define SHAPEFACTORS_H_
+
+#include <AMReX.H>
+#include <AMReX_GpuQualifiers.H>
+
 
 /**
  *  Compute shape factor and return index of leftmost cell where
