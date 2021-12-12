@@ -26,9 +26,9 @@ sudo apt-get update
 sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
 
 # activate now via
-set +e
+set +eu
 source /opt/intel/oneapi/setvars.sh
-set -e
+set -eu
 
 # cmake-easyinstall
 sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY

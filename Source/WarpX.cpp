@@ -1086,21 +1086,36 @@ WarpX::ReadParameters ()
                     "\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
 
+        // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
+        amrex::ParmParse pp_warpx("warpx");
+        const bool boosted_frame = pp_warpx.query("gamma_boost", gamma_boost);
+
         // Check whether the default Galilean velocity should be used
         bool use_default_v_galilean = false;
         pp_psatd.query("use_default_v_galilean", use_default_v_galilean);
-        if (use_default_v_galilean) {
+        if (use_default_v_galilean == true && boosted_frame == true)
+        {
             m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
-        } else {
+        }
+        else if (use_default_v_galilean == true && boosted_frame == false)
+        {
+            amrex::Abort("psatd.use_default_v_galilean = 1 can be used only if warpx.gamma_boost is also set");
+        }
+        else
+        {
             queryArrWithParser(pp_psatd, "v_galilean", m_v_galilean, 0, 3);
         }
 
         // Check whether the default comoving velocity should be used
         bool use_default_v_comoving = false;
         pp_psatd.query("use_default_v_comoving", use_default_v_comoving);
-        if (use_default_v_comoving)
+        if (use_default_v_comoving == true && boosted_frame == true)
         {
             m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
+        }
+        else if (use_default_v_comoving == true && boosted_frame == false)
+        {
+            amrex::Abort("psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set");
         }
         else
         {
