@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef ABLASTR_H_
-#define ABLASTR_H_
+#ifndef ABLASTR_DEPOSIT_CHARGE_H_
+#define ABLASTR_DEPOSIT_CHARGE_H_
 
 #include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -18,7 +18,7 @@
 
 #include <AMReX.H>
 
-namespace ABLASTR {
+namespace ablastr {
 
 /* \brief Perform charge deposition for the particles on a tile.
  *
@@ -173,7 +173,7 @@ void DepositCharge (typename PC::ParIterType& pti,
 #endif
 }
 
-}  // ABLASTR::
+}  // ablastr::
 
-#endif // ABLASTR_H_
+#endif // ABLASTR_DEPOSIT_CHARGE_H_
 
