@@ -486,22 +486,22 @@ jobs:
 #      pypy3 -c "from pywarpx import picmi"
 #      pypy3 -m pywarpx --help
 
-- job: macOS_pip_pypy_dev
-  displayName: macOS PyPy from dev
-  timeoutInMinutes: 120
-  pool:
-    vmImage: macOS-10.15
-  steps:
-  - script: |
-      brew update || true
-      brew install pypy3 gcc libomp openblas
-      export OPENBLAS="$(brew --prefix openblas)"
-      export PATH=${PATH}:"$(brew --prefix gcc)"/bin
-      pypy3 -m pip install -U pip --user
-      pypy3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
-  - script: |
-      pypy3 -c "from pywarpx import picmi"
-#      pypy3 -m pywarpx --help
+#- job: macOS_pip_pypy_dev
+#  displayName: macOS PyPy from dev
+#  timeoutInMinutes: 120
+#  pool:
+#    vmImage: macOS-10.15
+#  steps:
+#  - script: |
+#      brew update || true
+#      brew install pypy3 gcc libomp openblas
+#      export OPENBLAS="$(brew --prefix openblas)"
+#      export PATH=${PATH}:"$(brew --prefix gcc)"/bin
+#      pypy3 -m pip install -U pip --user
+#      pypy3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+#  - script: |
+#      pypy3 -c "from pywarpx import picmi"
+##      pypy3 -m pywarpx --help
 
 #- job: macOS_pip_pypi_mpich
 #  displayName: macOS pip from PyPI w/ MPICH
