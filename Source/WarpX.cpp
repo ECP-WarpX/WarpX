@@ -1437,14 +1437,6 @@ WarpX::ClearLevel (int lev)
 void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
-#ifdef AMREX_USE_EB
-    m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                             {1,1,1}, // Not clear how many ghost cells we need yet
-                                             amrex::EBSupport::full);
-#else
-    m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
-#endif
-
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
 #if   (AMREX_SPACEDIM == 1)
@@ -1475,6 +1467,17 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::do_multi_J,
         WarpX::fft_do_time_averaging,
         this->refRatio());
+
+
+#ifdef AMREX_USE_EB
+        int max_guard = guard_cells.ng_FieldSolver.max();
+        m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                                       {max_guard, max_guard, max_guard},
+                                                       amrex::EBSupport::full);
+#else
+        m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+#endif
+
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
@@ -1633,42 +1636,42 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC
            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
-            m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
-            m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
-            m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
-            m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
-            m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
-            m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
+            m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[x]"));
+            m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[y]"));
+            m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[z]"));
+            m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[x]"));
+            m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[y]"));
+            m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[z]"));
         }
         constexpr int nc_ls = 1;
         constexpr int ng_ls = 2;
         m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
         if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
-            m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
-            m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[y]"));
-            m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[z]"));
-            m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
-            m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
-            m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
-            m_flag_info_face[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[x]"));
-            m_flag_info_face[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[y]"));
-            m_flag_info_face[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_info_face[z]"));
-            m_flag_ext_face[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[x]"));
-            m_flag_ext_face[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[y]"));
-            m_flag_ext_face[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_flag_ext_face[z]"));
-            m_area_mod[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[x]"));
-            m_area_mod[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[y]"));
-            m_area_mod[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_area_mod[z]"));
+            m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[x]"));
+            m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[y]"));
+            m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[z]"));
+            m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[x]"));
+            m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[y]"));
+            m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[z]"));
+            m_flag_info_face[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[x]"));
+            m_flag_info_face[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[y]"));
+            m_flag_info_face[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[z]"));
+            m_flag_ext_face[lev][0] = std::make_unique<iMultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[x]"));
+            m_flag_ext_face[lev][1] = std::make_unique<iMultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[y]"));
+            m_flag_ext_face[lev][2] = std::make_unique<iMultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[z]"));
+            m_area_mod[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_area_mod[x]"));
+            m_area_mod[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_area_mod[y]"));
+            m_area_mod[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_area_mod[z]"));
             m_borrowing[lev][0] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bx_nodal_flag), dm);
             m_borrowing[lev][1] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, By_nodal_flag), dm);
             m_borrowing[lev][2] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bz_nodal_flag), dm);
-            Venl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("Venl[x]"));
-            Venl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("Venl[y]"));
-            Venl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("Venl[z]"));
+            Venl[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("Venl[x]"));
+            Venl[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("Venl[y]"));
+            Venl[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("Venl[z]"));
 
-            ECTRhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[x]"));
-            ECTRhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[y]"));
-            ECTRhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("ECTRhofield[z]"));
+            ECTRhofield[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("ECTRhofield[x]"));
+            ECTRhofield[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("ECTRhofield[y]"));
+            ECTRhofield[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("ECTRhofield[z]"));
             ECTRhofield[lev][0]->setVal(0.);
             ECTRhofield[lev][1]->setVal(0.);
             ECTRhofield[lev][2]->setVal(0.);
