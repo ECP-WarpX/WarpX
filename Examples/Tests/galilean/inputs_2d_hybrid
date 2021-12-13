@@ -98,7 +98,7 @@ beam.uz_th = 0.
 beam.zinject_plane = 0.5e-3
 beam.rigid_advance = true
 
-lasers.names = laser1 
+lasers.names = laser1
 laser1.profile = Gaussian
 laser1.position = 0. 0. -0.1e-6
 laser1.direction = 0. 0. 1.
