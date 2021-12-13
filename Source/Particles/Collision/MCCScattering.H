@@ -196,7 +196,8 @@ public:
     *
     * @param[in] energy_cost energy cost of ionization
     * @param[in] mass1 mass of the colliding species
-    * @param[in] ion_vel_std ...?
+    * @param[in] ion_vel_std standard deviation of ion velocity distribution; for
+    *                        a Maxwellian distribution it should equal sqrt(kB*T/m)
     */
     ImpactIonizationTransformFunc(
         amrex::Real energy_cost, amrex::Real mass1, amrex::Real ion_vel_std
