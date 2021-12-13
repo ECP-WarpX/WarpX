@@ -23,9 +23,9 @@ jobs:
         .github/workflows/dependencies/icc.sh
     - name: build WarpX
       run: |
-        set +e
+        set +eu
         source /opt/intel/oneapi/setvars.sh
-        set -e
+        set -eu
         export CXX=$(which icpc)
         export CC=$(which icc)
 

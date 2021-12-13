@@ -121,8 +121,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     }
 
     //Find left and right time indices
-    int idx_t_left, idx_t_right;
-    std::tie(idx_t_left, idx_t_right) = find_left_right_time_indices(t);
+    const auto [idx_t_left, idx_t_right] = find_left_right_time_indices(t);
 
     if(idx_t_left <  m_params.first_time_index){
         Abort("Something bad has happened with the simulation time");

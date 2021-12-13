@@ -70,13 +70,13 @@ And install ADIOS2, BLAS++ and LAPACK++:
    # BLAS++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/blaspp.git src/blaspp
    rm -rf src/blaspp-knl-build
-   cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-knl-install
+   cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-knl-install
    cmake --build src/blaspp-knl-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-knl-build
-   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-knl-install
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-knl-install
    cmake --build src/lapackpp-knl-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
@@ -132,13 +132,13 @@ And install ADIOS2, BLAS++ and LAPACK++:
    # BLAS++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/blaspp.git src/blaspp
    rm -rf src/blaspp-haswell-build
-   cmake -S src/blaspp -B src/blaspp-haswell-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-haswell-install
+   cmake -S src/blaspp -B src/blaspp-haswell-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-haswell-install
    cmake --build src/blaspp-haswell-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-haswell-build
-   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-haswell-install
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-haswell-install
    cmake --build src/lapackpp-haswell-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:

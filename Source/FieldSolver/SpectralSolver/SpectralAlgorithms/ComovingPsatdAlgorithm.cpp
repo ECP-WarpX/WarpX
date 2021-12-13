@@ -35,7 +35,7 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument nodal = false is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, false)),
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
        ky_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, false)),
        kz_vec(spectral_kspace.getModifiedKComponent(dm, 2, -1, false)),
 #else
@@ -86,7 +86,7 @@ ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -111,7 +111,7 @@ ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             // k vector values
             const amrex::Real kx_mod = modified_kx_arr[i];
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
             const amrex::Real ky_mod = modified_ky_arr[j];
             const amrex::Real kz_mod = modified_kz_arr[k];
 #else
@@ -169,7 +169,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
         // Extract pointers for the k vectors
         const amrex::Real* kx_mod = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* kx     = kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         const amrex::Real* ky_mod = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* ky     = ky_vec[mfi].dataPtr();
 #endif
@@ -187,7 +187,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
 
         // Store comoving velocity
         const amrex::Real vx = m_v_comoving[0];
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         const amrex::Real vy = m_v_comoving[1];
 #endif
         const amrex::Real vz = m_v_comoving[2];
@@ -198,7 +198,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
             // Calculate norm of finite-order k vector
             const amrex::Real knorm_mod = std::sqrt(
                 std::pow(kx_mod[i], 2) +
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
                 std::pow(ky_mod[j], 2) +
                 std::pow(kz_mod[k], 2));
 #else
@@ -207,7 +207,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
             // Calculate norm of infinite-order k vector
             const amrex::Real knorm = std::sqrt(
                 std::pow(kx[i], 2) +
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
                 std::pow(ky[j], 2) +
                 std::pow(kz[k], 2));
 #else
@@ -224,7 +224,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
 
             // Calculate dot product of k vector with comoving velocity
             const amrex::Real kv = kx[i]*vx +
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
                 ky[j]*vy + kz[k]*vz;
 #else
                 kz[j]*vz;
@@ -441,7 +441,7 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* const kx_arr = kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* const ky_arr = ky_vec[mfi].dataPtr();
 #endif
@@ -469,7 +469,7 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
             // k vector values, and coefficients
             const amrex::Real kx_mod = modified_kx_arr[i];
             const amrex::Real kx = kx_arr[i];
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
             const amrex::Real ky_mod = modified_ky_arr[j];
             const amrex::Real kz_mod = modified_kz_arr[k];
             const amrex::Real ky = ky_arr[j];
