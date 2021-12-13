@@ -193,7 +193,7 @@ int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
 
-int WarpX::do_similar_dm_pml = 0;
+int WarpX::do_similar_dm_pml = 1;
 
 #ifdef AMREX_USE_GPU
 int WarpX::do_device_synchronize = 1;
