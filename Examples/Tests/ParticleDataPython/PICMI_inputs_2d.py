@@ -107,7 +107,7 @@ sim.initialize_warpx()
 
 pywarpx.add_real_comp('electrons', 'newPid')
 
-my_id = pywarpx.libwarpx.libwarpx_so.warpx_getMyProc()
+my_id = pywarpx.getMyProc()
 
 def add_particles():
 

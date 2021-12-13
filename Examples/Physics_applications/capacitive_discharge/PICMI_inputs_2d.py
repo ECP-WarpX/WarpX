@@ -5,7 +5,8 @@
 
 import numpy as np
 from scipy.sparse import csc_matrix, linalg as sla
-from pywarpx import picmi, callbacks, libwarpx, fields
+import pywarpx
+from pywarpx import picmi, callbacks, fields
 
 constants = picmi.constants
 
@@ -173,7 +174,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
         right_voltage = eval(
             self.right_voltage,
-            {'t':libwarpx.libwarpx_so.warpx_gett_new(0), 'sin':np.sin, 'pi':np.pi}
+            {'t':pywarpx.gett_new(0), 'sin':np.sin, 'pi':np.pi}
         )
         left_voltage = 0.0
 
