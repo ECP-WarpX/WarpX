@@ -271,7 +271,7 @@ def test_two_embedded_cylinders_scraping():
     np.random.seed(42147820)
 
     # Specific numbers match older run for consistency
-    D_CA = 1  # m
+    D_CA = 0.025  # m
     NX = 64
     NZ = 64
     run = diode_setup.DiodeRun_V1(
@@ -282,10 +282,12 @@ def test_two_embedded_cylinders_scraping():
         NZ=NZ,
         # This gives equal spacing in x & z
         PERIOD=D_CA * NX / NZ,
-        DT=1e-9,
-        TOTAL_TIMESTEPS=4,
-        DIAG_STEPS=4,
+        DT=1e-10,
+        TOTAL_TIMESTEPS=15,
+        DIAG_STEPS=15,
         FIELD_DIAG_DATA_LIST=['phi'],
+        # FIELD_DIAG_PLOT=True,
+        INERT_GAS_TYPE='positron'
     )
     # Only the functions we change from defaults are listed here
     run.setup_run(
@@ -302,12 +304,12 @@ def test_two_embedded_cylinders_scraping():
 
     # Install the embedded boundaries
     cylinder1 = assemblies.Cylinder(
-        center_x=-0.25, center_z=0.5, radius=0.1,
-        V=-2.0, T=300, WF=4.7, name="Cylinder1"
+        center_x=-0.25*D_CA, center_z=0.5*D_CA, radius=0.1*D_CA,
+        V=-0.5, T=300, WF=4.7, name="Cylinder1"
     )
     cylinder2 = assemblies.Cylinder(
-        center_x=0.25, center_z=0.5, radius=0.1,
-        V=5.0, T=300, WF=4.7, name="Cylinder2"
+        center_x=0.25*D_CA, center_z=0.5*D_CA, radius=0.1*D_CA,
+        V=0.2, T=300, WF=4.7, name="Cylinder2"
     )
 
     # Initialize solver
@@ -318,11 +320,11 @@ def test_two_embedded_cylinders_scraping():
 
     # Inject particles in the simulation
     volemitter = emission.ZSinDistributionVolumeEmitter(
-        T=1550, zmin=0, zmax=run.D_CA,
+        T=3000, zmin=0, zmax=run.D_CA,
     )
     emission.PlasmaInjector(
         emitter=volemitter, species1=run.electrons, species2=run.ions,
-        npart=2000, plasma_density=1e19,
+        npart=4000, plasma_density=1e14,
     )
 
     # Initialize the simulation
@@ -341,12 +343,12 @@ def test_two_embedded_cylinders_scraping():
     cylinder1.record_scrapedparticles()
     cyl1_scraped = cylinder1.get_scrapedparticles()
 
-    cylinder2.init_scrapedparticles(cylinder1.fields)
+    cylinder2.init_scrapedparticles(cylinder2.fields)
     cylinder2.record_scrapedparticles()
     cyl2_scraped = cylinder2.get_scrapedparticles()
 
-    assert np.allclose(cyl1_scraped['n'], np.array([2, 40]))
-    assert np.allclose(cyl2_scraped['n'], np.array([5, 46]))
+    assert np.allclose(cyl1_scraped['n'], np.array([3, 0]))
+    assert np.allclose(cyl2_scraped['n'], np.array([1, 2]))
 
     #######################################################################
     # Check rho results against reference data                            #

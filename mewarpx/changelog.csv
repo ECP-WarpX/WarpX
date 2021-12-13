@@ -1,5 +1,18 @@
 Version, Physics version, Date,        List of changes
-2.0.7, 2, In progress, "
+2.0.8, 2, In progress, "
+
+**Other changes**:
+
+- Changed ``pytest`` parameter ``boxed`` to ``forked`` due to deprecation in
+  new versions.
+- Added ``positron`` as an 'inert gas' option in
+  :class:`mewarpx.setups_store.diode_setup.DiodeRun_V1` in order to have 'ions'
+  with dynamics that match the electrons.
+- Changed resolution for ``test_two_embedded_cylinders_scraping`` CI test since
+  it was found that the previous test had overflows in the fieldsolve which
+  probably caused the differences in results on different machines.
+"
+2.0.7, 2, 12/10/2021, "
 
 **Other changes**:
 

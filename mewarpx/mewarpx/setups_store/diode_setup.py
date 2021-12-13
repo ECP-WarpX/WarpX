@@ -399,7 +399,7 @@ class DiodeRun_V1(object):
 
     def init_inert_gas(self):
         logger.info("### Init Inert Gas Ions ###")
-        if self.INERT_GAS_TYPE not in ['He', 'Ar', 'Xe']:
+        if self.INERT_GAS_TYPE not in ['He', 'Ar', 'Xe', 'positron']:
             raise NotImplementedError(
                 f"Inert gas is not yet implemented in mewarpx with "
                 f"INERT_GAS_TYPE = {self.INERT_GAS_TYPE}"
