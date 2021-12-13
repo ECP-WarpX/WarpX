@@ -191,6 +191,12 @@ extern "C" {
   int* warpx_getPhi_nodal_flag ();
   int* warpx_getF_nodal_flag ();
   int* warpx_getG_nodal_flag ();
+  int* warpx_get_edge_lengths_x_nodal_flag ();
+  int* warpx_get_edge_lengths_y_nodal_flag ();
+  int* warpx_get_edge_lengths_z_nodal_flag ();
+  int* warpx_get_face_areas_x_nodal_flag ();
+  int* warpx_get_face_areas_y_nodal_flag ();
+  int* warpx_get_face_areas_z_nodal_flag ();
 
   amrex::Real** warpx_getChargeDensityCP (int lev, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getChargeDensityFP (int lev, int *return_size, int *ncomps, int **ngrowvect, int **shapes);

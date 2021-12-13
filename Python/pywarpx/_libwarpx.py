@@ -238,6 +238,12 @@ libwarpx.warpx_getF_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getG_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getF_pml_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getG_pml_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_edge_lengths_x_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_edge_lengths_y_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_edge_lengths_z_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_face_areas_x_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_face_areas_y_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_face_areas_z_nodal_flag.restype = _LP_c_int
 
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
@@ -2582,6 +2588,42 @@ def get_G_nodal_flag():
     This returns a 1d array of the nodal flags for G along each direction. A 1 means node centered, and 0 cell centered.
     '''
     return _get_nodal_flag(libwarpx.warpx_getG_nodal_flag)
+
+def get_edge_lengths_x_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the x edge lengths along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_x_nodal_flag)
+
+def get_edge_lengths_y_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the y edge lengths along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_y_nodal_flag)
+
+def get_edge_lengths_z_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the z edge lengths along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_z_nodal_flag)
+
+def get_face_areas_x_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the x face areas along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_face_areas_x_nodal_flag)
+
+def get_face_areas_y_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the y face areas along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_face_areas_y_nodal_flag)
+
+def get_face_areas_z_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the z face areas along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_face_areas_z_nodal_flag)
 
 def get_F_pml_nodal_flag():
     '''

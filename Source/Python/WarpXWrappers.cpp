@@ -358,6 +358,12 @@ namespace
     int* warpx_getPhi_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_phi_fp(0) );}
     int* warpx_getF_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_F_fp(0) );}
     int* warpx_getG_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_G_fp(0) );}
+    int* warpx_get_edge_lengths_x_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_edge_lengths(0, 0) );}
+    int* warpx_get_edge_lengths_y_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_edge_lengths(0, 1) );}
+    int* warpx_get_edge_lengths_z_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_edge_lengths(0, 2) );}
+    int* warpx_get_face_areas_x_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_face_areas(0, 0) );}
+    int* warpx_get_face_areas_y_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_face_areas(0, 1) );}
+    int* warpx_get_face_areas_z_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_face_areas(0, 2) );}
 
 #define WARPX_GET_SCALAR(SCALAR, GETTER) \
     amrex::Real** SCALAR(int lev, \
