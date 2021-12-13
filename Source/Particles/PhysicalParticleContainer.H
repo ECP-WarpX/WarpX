@@ -101,7 +101,7 @@ public:
      * \param t current physical time
      * \param dt time step by which particles are advanced
      * \param a_dt_type type of time step (used for sub-cycling)
-     * \param skip_deposition ...?
+     * \param skip_deposition Skip the charge and current deposition.
      *
      * Evolve iterates over particle iterator (each box) and performs filtering,
      * field gather, particle push and current deposition for all particles

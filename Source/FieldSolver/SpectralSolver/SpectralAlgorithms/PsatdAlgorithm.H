@@ -38,15 +38,15 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] norder_y order of the spectral solver along y
          * \param[in] norder_z order of the spectral solver along z
          * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
-         * \param[in] fill_guards ...?
+         * \param[in] fill_guards Update the guard cells (in addition to the valid cell) when pushing the fields in time
          * \param[in] v_galilean Galilean velocity (three-dimensional array)
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
          * \param[in] J_linear_in_time whether to use two currents computed at the beginning and the end
          *            of the time interval (instead of using one current computed at half time)
-         * \param[in] dive_cleaning ...?
-         * \param[in] divb_cleaning ...?
+         * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
+         * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
         PsatdAlgorithm (
             const SpectralKSpace& spectral_kspace,

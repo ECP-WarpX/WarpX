@@ -38,12 +38,12 @@ public:
      * \param nci_corr_stencil stencil of NCI corrector
      * \param maxwell_solver_id if of Maxwell solver
      * \param max_level max level of the simulation
-     * \param v_galilean ...?
-     * \param v_comoving ...?
-     * \param safe_guard_cells ...?
-     * \param do_electrostatic ...?
-     * \param do_multi_J ...?
-     * \param fft_do_time_averaging ...?
+     * \param v_galilean Velocity used in the Galilean PSATD scheme
+     * \param v_comoving Velocity used in the comoving PSATD scheme
+     * \param safe_guard_cells Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
+     * \param do_electrostatic Whether to run in electrostatic mode i.e. solving the Poisson equation instead of the Maxwell equations.
+     * \param do_multi_J Whether to use the multi-J PSATD scheme
+     * \param fft_do_time_averaging Whether to average the E and B field in time (with PSATD) before interpolating them onto the macro-particles
      * \param ref_ratios mesh refinement ratios between mesh-refinement levels
      */
     void Init(

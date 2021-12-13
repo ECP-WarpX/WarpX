@@ -47,7 +47,7 @@ class SpectralSolver
          * \param[in] norder_y spectral order along y
          * \param[in] norder_z spectral order along z
          * \param[in] nodal whether the spectral solver is applied to a nodal or staggered grid
-         * \param[in] fill_guards ...?
+         * \param[in] fill_guards Update the guard cells (in addition to the valid cell) when pushing the fields in time
          * \param[in] v_galilean three-dimensional vector containing the components of the Galilean
          *                       velocity for the standard or averaged Galilean PSATD solvers
          * \param[in] v_comoving three-dimensional vector containing the components of the comoving
