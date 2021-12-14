@@ -179,4 +179,3 @@ void DepositCharge (typename PC::ParIterType& pti,
 } // namespace ablastr
 
 #endif // ABLASTR_DEPOSIT_CHARGE_H_
-
