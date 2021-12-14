@@ -1707,8 +1707,8 @@ Numerics and algorithms
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
-* ``warpx.do_device_synchronize`` (`int`) optional (default `1`)
-    When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
+* ``warpx.do_device_synchronize`` (`bool`) optional (default `1`)
+    When running in an accelerated platform, whether to call a ``amrex::Gpu::synchronize()`` around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
 * ``warpx.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)

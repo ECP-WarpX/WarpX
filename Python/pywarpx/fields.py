@@ -682,6 +682,48 @@ def GFPWrapper(level=0, include_ghosts=False):
                             get_nodal_flag=_libwarpx.get_G_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
+def EdgeLengthsxWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0,
+                            get_lovects=_libwarpx.get_mesh_edge_lengths_lovects,
+                            get_fabs=_libwarpx.get_mesh_edge_lengths,
+                            get_nodal_flag=_libwarpx.get_edge_lengths_x_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def EdgeLengthsyWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1,
+                            get_lovects=_libwarpx.get_mesh_edge_lengths_lovects,
+                            get_fabs=_libwarpx.get_mesh_edge_lengths,
+                            get_nodal_flag=_libwarpx.get_edge_lengths_y_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def EdgeLengthszWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2,
+                            get_lovects=_libwarpx.get_mesh_edge_lengths_lovects,
+                            get_fabs=_libwarpx.get_mesh_edge_lengths,
+                            get_nodal_flag=_libwarpx.get_edge_lengths_z_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def FaceAreasxWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0,
+                            get_lovects=_libwarpx.get_mesh_face_areas_lovects,
+                            get_fabs=_libwarpx.get_mesh_face_areas,
+                            get_nodal_flag=_libwarpx.get_face_areas_x_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def FaceAreasyWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1,
+                            get_lovects=_libwarpx.get_mesh_face_areas_lovects,
+                            get_fabs=_libwarpx.get_mesh_face_areas,
+                            get_nodal_flag=_libwarpx.get_face_areas_y_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def FaceAreaszWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2,
+                            get_lovects=_libwarpx.get_mesh_face_areas_lovects,
+                            get_fabs=_libwarpx.get_mesh_face_areas,
+                            get_nodal_flag=_libwarpx.get_face_areas_z_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def ExCPPMLWrapper(level=1, include_ghosts=False):
     assert level>0, Exception('Coarse patch only available on levels > 0')
     return _MultiFABWrapper(direction=0,
