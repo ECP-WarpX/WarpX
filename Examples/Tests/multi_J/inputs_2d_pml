@@ -12,8 +12,8 @@ geometry.prob_lo = -100e-6 -220e-6
 geometry.prob_hi =  100e-6   10e-6
 
 # Boundary condition
-boundary.field_lo = periodic damped
-boundary.field_hi = periodic damped
+boundary.field_lo = periodic pml
+boundary.field_hi = periodic pml
 
 # Algorithms
 algo.current_deposition = direct
@@ -38,7 +38,7 @@ warpx.moving_window_dir = z
 warpx.moving_window_v = 1.
 
 # Spectral solver
-psatd.do_time_averaging = 1
+psatd.do_time_averaging = 0
 psatd.J_linear_in_time = 1
 psatd.update_with_rho = 1
 
