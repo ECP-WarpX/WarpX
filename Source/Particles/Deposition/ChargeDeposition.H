@@ -169,8 +169,7 @@ void doChargeDepositionFiniteCentering (const GetParticlePosition& GetPosition,
 
                     if (not_out_of_bound)
                     {
-                        amrex::Gpu::Atomic::AddNoRet(&rho_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
-                                                     ci * cj * ck * wq);
+                        amrex::Gpu::Atomic::AddNoRet(&rho_arr(i,j,k), ci * cj * ck * wq);
                     }
                 }
             }

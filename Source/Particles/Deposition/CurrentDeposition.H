@@ -208,20 +208,17 @@ void doDepositionFiniteCentering(const GetParticlePosition& GetPosition,
 
                     if (not_out_of_bound_jx)
                     {
-                        amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
-                                                     ci * cj * ck * wqx);
+                        amrex::Gpu::Atomic::AddNoRet(&jx_arr(i,j,k), ci * cj * ck * wqx);
                     }
 
                     if (not_out_of_bound_jy)
                     {
-                        amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
-                                                     ci * cj * ck * wqy);
+                        amrex::Gpu::Atomic::AddNoRet(&jy_arr(i,j,k), ci * cj * ck * wqy);
                     }
 
                     if (not_out_of_bound_jz)
                     {
-                        amrex::Gpu::Atomic::AddNoRet(&jz_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
-                                                     ci * cj * ck * wqz);
+                        amrex::Gpu::Atomic::AddNoRet(&jz_arr(i,j,k), ci * cj * ck * wqz);
                     }
                 }
             }
