@@ -860,7 +860,6 @@ MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name,
         // If species name matches, set back-transformed particles parameters
         if (species_names[i] == species_name) {
            found = 1;
-           speciesID = i;
            auto& pc = allcontainers[i];
            pc->SetDoBackTransformedParticles(do_back_transformed_particles);
         }
