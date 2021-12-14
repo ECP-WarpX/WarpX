@@ -1,4 +1,4 @@
-/* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
+/* Copyright 2019 Axel Huebl, Andrew Myers, David Grote, Maxence Thevenet
  * Weiqun Zhang
  *
  * This file is part of WarpX.
@@ -12,6 +12,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
 #endif
