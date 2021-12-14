@@ -380,16 +380,16 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     // get the potential at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
+    phi_bc_values_lo[WARPX_ZINDEX] = field_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[WARPX_ZINDEX] = field_boundary_handler.potential_zhi(gett_new(0));
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
     phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    phi_bc_values_lo[1] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_handler.potential_zhi(gett_new(0));
 #elif defined(WARPX_DIM_3D)
+    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
+    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
     phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
     phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
-    phi_bc_values_lo[2] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[2] = field_boundary_handler.potential_zhi(gett_new(0));
 #endif
 
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
