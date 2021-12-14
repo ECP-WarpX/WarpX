@@ -96,15 +96,15 @@ public:
     * @param[in] opt_depth_functor functor to re-initialize the optical depth of the source particles
     * @param[in] opt_depth_runtime_comp index of the optical depth component of the source species
     * @param[in] emission_functor functor to generate photons and update momentum of the source particles
-    * @param[in] a_pti ...?
+    * @param[in] a_pti particle iterator to iterate over electrons or positrons undergoing QED photon emission process
     * @param[in] lev   the mesh-refinement level
     * @param[in] ngE   ...?
-    * @param[in] exfab ...?
-    * @param[in] eyfab ...?
-    * @param[in] ezfab ...?
-    * @param[in] bxfab ...?
-    * @param[in] byfab ...?
-    * @param[in] bzfab ...?
+    * @param[in] exfab constant reference to the FArrayBox of the x component of the electric field
+    * @param[in] eyfab constant reference to the FArrayBox of the y component of the electric field
+    * @param[in] ezfab constant reference to the FArrayBox of the z component of the electric field
+    * @param[in] bxfab constant reference to the FArrayBox of the x component of the magnetic field
+    * @param[in] byfab constant reference to the FArrayBox of the y component of the magnetic field
+    * @param[in] bzfab constant reference to the FArrayBox of the z component of the magnetic field
     * @param[in] v_galilean ...?
     * @param[in] a_offset ...?
     */

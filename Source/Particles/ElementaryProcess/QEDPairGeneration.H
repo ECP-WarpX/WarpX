@@ -85,15 +85,15 @@ public:
     * lookup tables. Therefore, it should be rather lightweight to copy.
     *
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
-    * @param[in] a_pti ...?
+    * @param[in] a_pti particle iterator to iterate over photons undergoing QED pair generation process
     * @param[in] lev   the mesh-refinement level
     * @param[in] ngE   ...?
-    * @param[in] exfab ...?
-    * @param[in] eyfab ...?
-    * @param[in] ezfab ...?
-    * @param[in] bxfab ...?
-    * @param[in] byfab ...?
-    * @param[in] bzfab ...?
+    * @param[in] exfab constant reference to the FArrayBox of the x component of the electric field
+    * @param[in] eyfab constant reference to the FArrayBox of the y component of the electric field
+    * @param[in] ezfab constant reference to the FArrayBox of the z component of the electric field
+    * @param[in] bxfab constant reference to the FArrayBox of the x component of the magnetic field
+    * @param[in] byfab constant reference to the FArrayBox of the y component of the magnetic field
+    * @param[in] bzfab constant reference to the FArrayBox of the z component of the magnetic field
     * @param[in] v_galilean ...?
     * @param[in] a_offset ...?
     */
