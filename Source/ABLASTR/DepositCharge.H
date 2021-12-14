@@ -21,7 +21,7 @@
 
 namespace ablastr {
 
-/* \brief Perform charge deposition for the particles on a tile.
+/** Perform charge deposition for the particles on a tile.
  *
  * \tparam PC a type of amrex::ParticleContainer
  *
