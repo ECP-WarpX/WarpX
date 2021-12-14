@@ -436,7 +436,7 @@ def getistep(level=0):
 
     level : the refinement level to reference
     '''
-    return warpx_getistep(level)
+    return libwarpx.libwarpx_so.warpx_getistep(level)
 
 def gett_new(level=0):
     '''
