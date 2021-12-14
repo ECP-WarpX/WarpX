@@ -1,4 +1,4 @@
-/* Copyright 2019 Axel Huebl, Andrew Myers
+/* Copyright 2019-2021 Axel Huebl, Andrew Myers
  *
  * This file is part of WarpX.
  *
@@ -7,16 +7,17 @@
 #ifndef ABLASTR_DEPOSIT_CHARGE_H_
 #define ABLASTR_DEPOSIT_CHARGE_H_
 
+#include "ABLASTR/ProfilerWrapper.H"
 #include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Particles/Deposition/ChargeDeposition.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
 #endif
 
 #include <AMReX.H>
+
 
 namespace ablastr {
 
@@ -50,20 +51,22 @@ namespace ablastr {
                particles deposit current. If nullptr, costs are not updated.
  * \param n_rz_azimuthal_modes number of azimuthal modes in use, irrelevant outside RZ geometry.
  * \param load_balance_costs_update_algo selected method for updating load balance costs.
+ * \param do_device_synchronize call amrex::Gpu::synchronize() for tiny profiler regions
  */
 template <typename PC>
 void DepositCharge (typename PC::ParIterType& pti,
-                        typename PC::RealVector& wp,
-                        const int * const ion_lev,
-                        amrex::MultiFab* rho, const int icomp, const int nc,
-                        const long offset, const long np_to_depose,
-                        amrex::FArrayBox& local_rho, const int lev, const int depos_lev,
-                        const amrex::Real charge, const int nox, const int noy, const int noz,
-                        const amrex::IntVect& ng_rho, const std::array<amrex::Real,3>& dx,
-                        const std::array<amrex::Real, 3>& xyzmin,
-                        const amrex::IntVect& ref_ratio,
-                        amrex::Real* cost, const int n_rz_azimuthal_modes,
-                        const long load_balance_costs_update_algo)
+                    typename PC::RealVector& wp,
+                    const int * const ion_lev,
+                    amrex::MultiFab* rho, const int icomp, const int nc,
+                    const long offset, const long np_to_depose,
+                    amrex::FArrayBox& local_rho, const int lev, const int depos_lev,
+                    const amrex::Real charge, const int nox, const int noy, const int noz,
+                    const amrex::IntVect& ng_rho, const std::array<amrex::Real,3>& dx,
+                    const std::array<amrex::Real, 3>& xyzmin,
+                    const amrex::IntVect& ref_ratio,
+                    amrex::Real* cost, const int n_rz_azimuthal_modes,
+                    const long load_balance_costs_update_algo,
+                    const bool do_device_synchronize)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -103,8 +106,8 @@ void DepositCharge (typename PC::ParIterType& pti,
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
-    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::ChargeDeposition", blp_ppc_chd);
-    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Accumulate", blp_accumulate);
+    ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::ChargeDeposition", blp_ppc_chd, do_device_synchronize);
+    ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Accumulate", blp_accumulate, do_device_synchronize);
 
     // Get tile box where charge is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -145,7 +148,7 @@ void DepositCharge (typename PC::ParIterType& pti,
     // Indices of the lower bound
     const amrex::Dim3 lo = lbound(tilebox);
 
-    WARPX_PROFILE_VAR_START(blp_ppc_chd);
+    ABLASTR_PROFILE_VAR_START(blp_ppc_chd, do_device_synchronize);
 
     if        (nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
@@ -163,17 +166,17 @@ void DepositCharge (typename PC::ParIterType& pti,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
     }
-    WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
+    ABLASTR_PROFILE_VAR_STOP(blp_ppc_chd, do_device_synchronize);
 
 #ifndef AMREX_USE_GPU
     // CPU, tiling: atomicAdd local_rho into rho
-    WARPX_PROFILE_VAR_START(blp_accumulate);
+    ABLASTR_PROFILE_VAR_START(blp_accumulate, do_device_synchronize);
     (*rho)[pti].atomicAdd(local_rho, tb, tb, 0, icomp*nc, nc);
-    WARPX_PROFILE_VAR_STOP(blp_accumulate);
+    ABLASTR_PROFILE_VAR_STOP(blp_accumulate, do_device_synchronize);
 #endif
 }
 
-}  // ablastr::
+} // namespace ablastr
 
 #endif // ABLASTR_DEPOSIT_CHARGE_H_
 
