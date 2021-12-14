@@ -102,7 +102,7 @@ class SpectralBaseAlgorithm
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         KVectorComponent modified_ky_vec;
 #endif
         KVectorComponent modified_kz_vec;
