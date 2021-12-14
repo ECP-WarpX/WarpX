@@ -163,52 +163,62 @@ void doDepositionFiniteCentering(const GetParticlePosition& GetPosition,
         amrex::Real cj = 1.0_rt;
         amrex::Real ck = 1.0_rt;
 
-        bool not_out_of_bound = false;
+        // TODO Find how to do this better
+        bool not_out_of_bound_jx = false;
+        bool not_out_of_bound_jy = false;
+        bool not_out_of_bound_jz = false;
+        const amrex::Dim3 lo_jx = lbound(jx_arr);
+        const amrex::Dim3 hi_jx = ubound(jx_arr);
+        const amrex::Dim3 lo_jy = lbound(jy_arr);
+        const amrex::Dim3 hi_jy = ubound(jy_arr);
+        const amrex::Dim3 lo_jz = lbound(jz_arr);
+        const amrex::Dim3 hi_jz = ubound(jz_arr);
 
+        int i, j, k;
         for (int kk = 0; kk <= nk; kk++)
         {
+            k = lo.z + kmin + kk;
 #if (AMREX_SPACEDIM == 3)
             ck = sck[kk];
 #endif
+            // TODO Find how to do this better
+            not_out_of_bound_jx = (k >= lo_jx.z && k <= hi_jx.z);
+            not_out_of_bound_jy = (k >= lo_jy.z && k <= hi_jy.z);
+            not_out_of_bound_jz = (k >= lo_jz.z && k <= hi_jz.z);
+
             for (int jj = 0; jj <= nj; jj++)
             {
+                j = lo.y + jmin + jj;
                 cj = scj[jj];
+
+                // TODO Find how to do this better
+                not_out_of_bound_jx = not_out_of_bound_jx && (j >= lo_jx.y && j <= hi_jx.y);
+                not_out_of_bound_jy = not_out_of_bound_jy && (j >= lo_jy.y && j <= hi_jy.y);
+                not_out_of_bound_jz = not_out_of_bound_jz && (j >= lo_jz.y && j <= hi_jz.y);
 
                 for (int ii = 0; ii <= ni; ii++)
                 {
+                    i = lo.x + imin + ii;
                     ci = sci[ii];
 
-                    not_out_of_bound =  (lo.x+imin+ii >= lbound(jx_arr).x
-                                     &&  lo.x+imin+ii <= ubound(jx_arr).x)
-                                     && (lo.y+jmin+jj >= lbound(jx_arr).y
-                                     &&  lo.y+jmin+jj <= ubound(jx_arr).y)
-                                     && (lo.z+kmin+kk >= lbound(jx_arr).z
-                                     &&  lo.z+kmin+kk <= ubound(jx_arr).z);
-                    if (not_out_of_bound)
+                    // TODO Find how to do this better
+                    not_out_of_bound_jx = not_out_of_bound_jx && (i >= lo_jx.x && i <= hi_jx.x);
+                    not_out_of_bound_jy = not_out_of_bound_jy && (i >= lo_jy.x && i <= hi_jy.x);
+                    not_out_of_bound_jz = not_out_of_bound_jz && (i >= lo_jz.x && i <= hi_jz.x);
+
+                    if (not_out_of_bound_jx)
                     {
                         amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
                                                      ci * cj * ck * wqx);
                     }
 
-                    not_out_of_bound =  (lo.x+imin+ii >= lbound(jy_arr).x
-                                     &&  lo.x+imin+ii <= ubound(jy_arr).x)
-                                     && (lo.y+jmin+jj >= lbound(jy_arr).y
-                                     &&  lo.y+jmin+jj <= ubound(jy_arr).y)
-                                     && (lo.z+kmin+kk >= lbound(jy_arr).z
-                                     &&  lo.z+kmin+kk <= ubound(jy_arr).z);
-                    if (not_out_of_bound)
+                    if (not_out_of_bound_jy)
                     {
                         amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
                                                      ci * cj * ck * wqy);
                     }
 
-                    not_out_of_bound =  (lo.x+imin+ii >= lbound(jz_arr).x
-                                     &&  lo.x+imin+ii <= ubound(jz_arr).x)
-                                     && (lo.y+jmin+jj >= lbound(jz_arr).y
-                                     &&  lo.y+jmin+jj <= ubound(jz_arr).y)
-                                     && (lo.z+kmin+kk >= lbound(jz_arr).z
-                                     &&  lo.z+kmin+kk <= ubound(jz_arr).z);
-                    if (not_out_of_bound)
+                    if (not_out_of_bound_jz)
                     {
                         amrex::Gpu::Atomic::AddNoRet(&jz_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
                                                      ci * cj * ck * wqz);
@@ -1266,5 +1276,4 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #   endif
 #endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
 }
-
 #endif // CURRENTDEPOSITION_H_

@@ -136,27 +136,37 @@ void doChargeDepositionFiniteCentering (const GetParticlePosition& GetPosition,
         amrex::Real cj = 1.0_rt;
         amrex::Real ck = 1.0_rt;
 
+        // TODO Find how to do this better
         bool not_out_of_bound = false;
+        const amrex::Dim3 lo_rho = lbound(rho_arr);
+        const amrex::Dim3 hi_rho = ubound(rho_arr);
 
+        int i, j, k;
         for (int kk = 0; kk <= nk; kk++)
         {
+            k = lo.z + kmin + kk;
 #if (AMREX_SPACEDIM == 3)
             ck = sck[kk];
 #endif
+            // TODO Find how to do this better
+            not_out_of_bound = (k >= lo_rho.z && k <= hi_rho.z);
+
             for (int jj = 0; jj <= nj; jj++)
             {
+                j = lo.y + jmin + jj;
                 cj = scj[jj];
+
+                // TODO Find how to do this better
+                not_out_of_bound = not_out_of_bound && (j >= lo_rho.y && j <= hi_rho.y);
 
                 for (int ii = 0; ii <= ni; ii++)
                 {
+                    i = lo.x + imin + ii;
                     ci = sci[ii];
 
-                    not_out_of_bound =  (lo.x+imin+ii >= lbound(rho_arr).x
-                                     &&  lo.x+imin+ii <= ubound(rho_arr).x)
-                                     && (lo.y+jmin+jj >= lbound(rho_arr).y
-                                     &&  lo.y+jmin+jj <= ubound(rho_arr).y)
-                                     && (lo.z+kmin+kk >= lbound(rho_arr).z
-                                     &&  lo.z+kmin+kk <= ubound(rho_arr).z);
+                    // TODO Find how to do this better
+                    not_out_of_bound =  not_out_of_bound && (i >= lo_rho.x && i <= hi_rho.x);
+
                     if (not_out_of_bound)
                     {
                         amrex::Gpu::Atomic::AddNoRet(&rho_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
