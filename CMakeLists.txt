@@ -1,6 +1,6 @@
 # Preamble ####################################################################
 #
-cmake_minimum_required(VERSION 3.17.0)
+cmake_minimum_required(VERSION 3.18.0)
 project(WarpX VERSION 21.12)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
@@ -116,7 +116,7 @@ option(WarpX_IPO                                "Compile WarpX with interprocedu
 #   builds AMReX from source (default) or finds an existing install
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
 #   suppress warnings in AMReX headers (use -isystem instead of -I)
-make_third_party_includes_system(AMReX::amrex AMReX)
+warpx_make_third_party_includes_system(AMReX::amrex AMReX)
 
 # PICSAR
 #   builds PICSAR from source
@@ -140,14 +140,14 @@ endif()
 
 # Targets #####################################################################
 #
-if(NOT WarpX_APP AND NOT WarpX_LIB)
-    message(FATAL_ERROR "Need to build at least WarpX app or "
-                        "library/Python bindings")
-endif()
-
 # collect all objects for compilation
 add_library(WarpX OBJECT)
-set(_ALL_TARGETS WarpX)
+add_library(ablastr OBJECT)
+
+# ABLASTR library
+set(_BUILDINFO_SRC ablastr)
+set(_ALL_TARGETS WarpX ablastr)
+add_library(WarpX::ablastr ALIAS ablastr)
 
 # executable application
 #   note: we currently avoid a dependency on a core library
@@ -155,7 +155,7 @@ set(_ALL_TARGETS WarpX)
 if(WarpX_APP)
     add_executable(app)
     add_executable(WarpX::app ALIAS app)
-    target_link_libraries(app PRIVATE WarpX)
+    target_link_libraries(app PRIVATE WarpX ablastr)
     set(_BUILDINFO_SRC app)
     list(APPEND _ALL_TARGETS app)
 endif()
@@ -164,11 +164,11 @@ endif()
 if(WarpX_LIB)
     add_library(shared MODULE)
     add_library(WarpX::shared ALIAS shared)
-    target_link_libraries(shared PUBLIC WarpX)
+    target_link_libraries(shared PUBLIC WarpX ablastr)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
-    set_target_properties(WarpX shared PROPERTIES
+    set_target_properties(WarpX ablastr shared PROPERTIES
         POSITION_INDEPENDENT_CODE ON
         WINDOWS_EXPORT_ALL_SYMBOLS ON
     )
@@ -176,6 +176,10 @@ endif()
 
 # own headers
 target_include_directories(WarpX PUBLIC
+    $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+)
+target_include_directories(ablastr PUBLIC
+    # future: own directory root
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
 )
 
@@ -219,32 +223,32 @@ if(WarpX_IPO)
 endif()
 
 # link dependencies
-target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
+target_link_libraries(ablastr PUBLIC WarpX::thirdparty::AMReX)
+target_link_libraries(WarpX PUBLIC ablastr)
 
 if(WarpX_PSATD)
-    target_link_libraries(WarpX PUBLIC WarpX::thirdparty::FFT)
+    target_link_libraries(ablastr PUBLIC WarpX::thirdparty::FFT)
     if(WarpX_DIMS STREQUAL RZ)
-        target_link_libraries(WarpX PUBLIC blaspp)
-        target_link_libraries(WarpX PUBLIC lapackpp)
+        target_link_libraries(ablastr PUBLIC blaspp)
+        target_link_libraries(ablastr PUBLIC lapackpp)
     endif()
 endif()
 
 if(WarpX_OPENPMD)
-    target_compile_definitions(WarpX PUBLIC WARPX_USE_OPENPMD)
-    target_link_libraries(WarpX PUBLIC openPMD::openPMD)
+    target_compile_definitions(ablastr PUBLIC WARPX_USE_OPENPMD)
+    target_link_libraries(ablastr PUBLIC openPMD::openPMD)
 endif()
 
 if(WarpX_QED)
-    target_compile_definitions(WarpX PUBLIC WARPX_QED)
+    target_compile_definitions(ablastr PUBLIC WARPX_QED)
     if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(WarpX PUBLIC WARPX_QED_TABLE_GEN)
+        target_compile_definitions(ablastr PUBLIC WARPX_QED_TABLE_GEN)
     endif()
-    target_link_libraries(WarpX PUBLIC PXRMP_QED::PXRMP_QED)
+    target_link_libraries(ablastr PUBLIC PXRMP_QED::PXRMP_QED)
 endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties
 if(WarpX_COMPUTE STREQUAL CUDA)
-    setup_target_for_cuda_compilation(WarpX)
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
         setup_target_for_cuda_compilation(${warpx_tgt})
     endforeach()
@@ -257,6 +261,14 @@ if(WarpX_COMPUTE STREQUAL CUDA)
     )
 endif()
 
+# avoid building all object files if we are only used as ABLASTR library
+if(NOT WarpX_APP AND NOT WarpX_LIB)
+    set_target_properties(WarpX PROPERTIES
+        EXCLUDE_FROM_ALL 1
+        EXCLUDE_FROM_DEFAULT_BUILD 1
+    )
+endif()
+
 # fancy binary name for build variants
 set_warpx_binary_name()
 
@@ -264,43 +276,43 @@ set_warpx_binary_name()
 # Defines #####################################################################
 #
 get_source_version(WarpX ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(WarpX PUBLIC WARPX_GIT_VERSION="${WarpX_GIT_VERSION}")
+target_compile_definitions(ablastr PUBLIC WARPX_GIT_VERSION="${WarpX_GIT_VERSION}")
 if(WarpX_QED)
-    target_compile_definitions(WarpX PUBLIC PICSAR_GIT_VERSION="${PXRMP_QED_GIT_VERSION}")
+    target_compile_definitions(ablastr PUBLIC PICSAR_GIT_VERSION="${PXRMP_QED_GIT_VERSION}")
 endif()
 
 if(WarpX_DIMS STREQUAL 3)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
+    target_compile_definitions(ablastr PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
 elseif(WarpX_DIMS STREQUAL 2)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ WARPX_ZINDEX=1)
+    target_compile_definitions(ablastr PUBLIC WARPX_DIM_XZ WARPX_ZINDEX=1)
 elseif(WarpX_DIMS STREQUAL 1)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_1D_Z WARPX_ZINDEX=0)
+    target_compile_definitions(ablastr PUBLIC WARPX_DIM_1D_Z WARPX_ZINDEX=0)
 elseif(WarpX_DIMS STREQUAL RZ)
-    target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
+    target_compile_definitions(ablastr PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
 endif()
 
 if(WarpX_GPUCLOCK)
-    target_compile_definitions(WarpX PUBLIC WARPX_USE_GPUCLOCK)
+    target_compile_definitions(ablastr PUBLIC WARPX_USE_GPUCLOCK)
 endif()
 
 if(WarpX_OPENPMD)
-    target_compile_definitions(WarpX PUBLIC WARPX_USE_OPENPMD)
+    target_compile_definitions(ablastr PUBLIC WARPX_USE_OPENPMD)
 endif()
 
 if(WarpX_QED)
-    target_compile_definitions(WarpX PUBLIC WARPX_QED)
+    target_compile_definitions(ablastr PUBLIC WARPX_QED)
     if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(WarpX PUBLIC WarpX_QED_TABLE_GEN)
+        target_compile_definitions(ablastr PUBLIC WarpX_QED_TABLE_GEN)
     endif()
 endif()
 
 if(WarpX_PSATD)
-    target_compile_definitions(WarpX PUBLIC WARPX_USE_PSATD)
+    target_compile_definitions(ablastr PUBLIC WARPX_USE_PSATD)
 endif()
 
 # <cmath>: M_PI
 if(WIN32)
-    target_compile_definitions(WarpX PRIVATE _USE_MATH_DEFINES)
+    target_compile_definitions(ablastr PUBLIC _USE_MATH_DEFINES)
 endif()
 
 
@@ -353,7 +365,7 @@ if(WarpX_LIB)
     else()
         set(mod_ext "so")
     endif()
-    if(IS_ABSOLUTE CMAKE_INSTALL_LIBDIR)
+    if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
         set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
     else()
         set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
