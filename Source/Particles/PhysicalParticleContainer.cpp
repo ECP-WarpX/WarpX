@@ -2509,8 +2509,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = ( (WarpX::do_back_transformed_diagnostics
-                     && do_back_transformed_diagnostics)
-                     && (a_dt_type!=DtType::SecondHalf)
+                     && do_back_transformed_diagnostics
+                     && a_dt_type!=DtType::SecondHalf)
                   || (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf)) );
 
     int* AMREX_RESTRICT ion_lev = nullptr;
