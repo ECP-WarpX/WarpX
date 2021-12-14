@@ -496,6 +496,11 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 WarpX::n_rz_azimuthal_modes, cost,
                 WarpX::load_balance_costs_update_algo);
         }
+    } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Centering) {
+        doDepositionFiniteCentering(GetPosition, wp.dataPtr() + offset,
+            uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset,
+            ion_lev, jx_fab, jy_fab, jz_fab, np_to_depose, dt*relative_time, dx, xyzmin, lo, q,
+            WarpX::current_centering_nox, WarpX::current_centering_noy, WarpX::current_centering_noz);
     } else {
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
@@ -714,22 +719,29 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
     amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
-    if        (WarpX::nox == 1){
-        doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes, cost,
-                                    WarpX::load_balance_costs_update_algo);
-    } else if (WarpX::nox == 2){
-        doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes, cost,
-                                    WarpX::load_balance_costs_update_algo);
-    } else if (WarpX::nox == 3){
-        doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
-                                    WarpX::n_rz_azimuthal_modes, cost,
-                                    WarpX::load_balance_costs_update_algo);
+    if (WarpX::charge_deposition_algo == ChargeDepositionAlgo::Standard) {
+        if        (WarpX::nox == 1){
+            doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                        rho_fab, np_to_depose, dx, xyzmin, lo, q,
+                                        WarpX::n_rz_azimuthal_modes, cost,
+                                        WarpX::load_balance_costs_update_algo);
+        } else if (WarpX::nox == 2){
+            doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                        rho_fab, np_to_depose, dx, xyzmin, lo, q,
+                                        WarpX::n_rz_azimuthal_modes, cost,
+                                        WarpX::load_balance_costs_update_algo);
+        } else if (WarpX::nox == 3){
+            doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                        rho_fab, np_to_depose, dx, xyzmin, lo, q,
+                                        WarpX::n_rz_azimuthal_modes, cost,
+                                        WarpX::load_balance_costs_update_algo);
+        }
+    } else if (WarpX::charge_deposition_algo == ChargeDepositionAlgo::Centering) {
+            doChargeDepositionFiniteCentering(GetPosition, wp.dataPtr()+offset, ion_lev,
+                rho_fab, np_to_depose, dx, xyzmin, lo, q, WarpX::charge_centering_nox,
+                WarpX::charge_centering_noy, WarpX::charge_centering_noz);
     }
+
     WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
 
 #ifndef AMREX_USE_GPU

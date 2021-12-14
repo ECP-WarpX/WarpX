@@ -48,11 +48,13 @@ const std::map<std::string, int> current_deposition_algo_to_int = {
     {"esirkepov", CurrentDepositionAlgo::Esirkepov },
     {"direct",    CurrentDepositionAlgo::Direct },
     {"vay",       CurrentDepositionAlgo::Vay },
+    {"centering", CurrentDepositionAlgo::Centering },
     {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD below
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {
     {"standard",   ChargeDepositionAlgo::Standard },
+    {"centering",  ChargeDepositionAlgo::Centering },
     {"default",    ChargeDepositionAlgo::Standard }
 };
 

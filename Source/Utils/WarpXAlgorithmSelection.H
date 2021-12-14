@@ -65,14 +65,16 @@ struct CurrentDepositionAlgo {
     enum {
          Esirkepov = 0,
          Direct = 1,
-         Vay = 2
+         Vay = 2,
+         Centering = 3
     };
 };
 
 struct ChargeDepositionAlgo {
     // Only the Standard algorithm is implemented
     enum {
-         Standard = 0
+         Standard = 0,
+         Centering = 1
     };
 };
 

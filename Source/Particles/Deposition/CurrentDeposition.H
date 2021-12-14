@@ -11,6 +11,7 @@
 #include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
+#include "Utils/FiniteCentering.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
@@ -22,6 +23,201 @@
 #include <AMReX_REAL.H>
 
 using namespace amrex::literals;
+
+// TODO Add Doxygen
+AMREX_FORCE_INLINE
+void doDepositionFiniteCentering(const GetParticlePosition& GetPosition,
+                                 const amrex::ParticleReal * const wp,
+                                 const amrex::ParticleReal * const uxp,
+                                 const amrex::ParticleReal * const uyp,
+                                 const amrex::ParticleReal * const uzp,
+                                 const int * const ion_lev,
+                                 amrex::FArrayBox& jx_fab,
+                                 amrex::FArrayBox& jy_fab,
+                                 amrex::FArrayBox& jz_fab,
+                                 const long np_to_depose,
+                                 const amrex::Real relative_t,
+                                 const std::array<amrex::Real,3>& dxyz,
+                                 const std::array<amrex::Real,3>& xyz_min,
+                                 const amrex::Dim3 lo,
+                                 const amrex::Real q,
+                                 const int nox,
+                                 const int noy,
+                                 const int noz)
+{
+#if (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(noy);
+#endif
+
+    // Whether ion_lev is a null pointer (do_ionization = 0) or a real pointer (do_ionization = 1)
+    const bool do_ionization = ion_lev;
+
+    const amrex::Real dxi = 1.0_rt / dxyz[0];
+    const amrex::Real dzi = 1.0_rt / dxyz[2];
+#if defined(WARPX_DIM_XZ)
+    const amrex::Real invvol = dxi * dzi;
+#elif defined(WARPX_DIM_3D)
+    const amrex::Real dyi = 1.0_rt / dxyz[1];
+    const amrex::Real invvol = dxi * dyi * dzi;
+#endif
+
+    const amrex::Real inv_c2 = 1.0_rt/(PhysConst::c * PhysConst::c);
+
+    amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
+    amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
+    amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
+
+    amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long idxp)
+    {
+        // Get particle quantities
+        const amrex::Real gaminv = 1.0_rt / std::sqrt(1.0_rt + uxp[idxp] * uxp[idxp] * inv_c2
+                                                      + uyp[idxp] * uyp[idxp] * inv_c2
+                                                      + uzp[idxp] * uzp[idxp] * inv_c2);
+
+        amrex::Real wq = (do_ionization) ? q * wp[idxp] * ion_lev[idxp] : q * wp[idxp];
+
+        const amrex::Real vx  = uxp[idxp] * gaminv;
+        const amrex::Real vy  = uyp[idxp] * gaminv;
+        const amrex::Real vz  = uzp[idxp] * gaminv;
+
+        // Particle current in each direction
+        const amrex::Real wqx = wq * invvol * vx;
+        const amrex::Real wqy = wq * invvol * vy;
+        const amrex::Real wqz = wq * invvol * vz;
+
+        amrex::ParticleReal xp, yp, zp;
+        GetPosition(idxp, xp, yp, zp);
+
+        const amrex::Real x = ((xp - xyz_min[0]) + relative_t * vx) * dxi;
+#if (AMREX_SPACEDIM == 3)
+        const amrex::Real y = ((yp - xyz_min[1]) + relative_t * vy) * dyi;
+#endif
+        const amrex::Real z = ((zp - xyz_min[2]) + relative_t * vz) * dzi;
+
+        // Compute largest nearest integer index
+        const int ip = static_cast<int>(std::ceil(x));
+#if   (AMREX_SPACEDIM == 2)
+        const int jp = static_cast<int>(std::ceil(z));
+        const int kp = 0;
+#elif (AMREX_SPACEDIM == 3)
+        const int jp = static_cast<int>(std::ceil(y));
+        const int kp = static_cast<int>(std::ceil(z));
+#endif
+
+        const int noi = nox;
+#if   (AMREX_SPACEDIM == 2)
+        const int noj = noz;
+#elif (AMREX_SPACEDIM == 3)
+        const int noj = noy;
+        const int nok = noz;
+#endif
+
+        // Min and max for interpolation loop along i
+        const int imin = ip - noi/2;
+        const int imax = ip + noi/2 - 1;
+
+        // Min and max for interpolation loop along j
+        const int jmin = jp - noj/2;
+        const int jmax = jp + noj/2 - 1;
+
+        // Min and max for interpolation loop along k
+#if   (AMREX_SPACEDIM == 2)
+        // kp = 0 always
+        const int kmin = kp;
+        const int kmax = kp;
+#elif (AMREX_SPACEDIM == 3)
+        const int kmin = kp - nok/2;
+        const int kmax = kp + nok/2 - 1;
+#endif
+
+        // Number of interpolation points
+        const int ni = imax - imin;
+        const int nj = jmax - jmin;
+        const int nk = kmax - kmin;
+
+        // Compute difference r in each direction
+        // (r always negative, by construction)
+        const amrex::Real ri = x - ip;
+#if   (AMREX_SPACEDIM == 2)
+        const amrex::Real rj = z - jp;
+#elif (AMREX_SPACEDIM == 3)
+        const amrex::Real rj = y - jp;
+        const amrex::Real rk = z - kp;
+#endif
+
+        // Compute centering coefficients
+        // TODO Currently using maximum size to fix GPU builds, needs to be optimized
+        amrex::GpuArray<amrex::Real, 8> sci;
+        amrex::GpuArray<amrex::Real, 8> scj;
+#if (AMREX_SPACEDIM == 3)
+        amrex::GpuArray<amrex::Real, 8> sck;
+#endif
+
+        FiniteCentering::compute_centering_coefficients(sci, ri, noi);
+        FiniteCentering::compute_centering_coefficients(scj, rj, noj);
+#if (AMREX_SPACEDIM == 3)
+        FiniteCentering::compute_centering_coefficients(sck, rk, nok);
+#endif
+
+        amrex::Real ci = 1.0_rt;
+        amrex::Real cj = 1.0_rt;
+        amrex::Real ck = 1.0_rt;
+
+        bool not_out_of_bound = false;
+
+        for (int kk = 0; kk <= nk; kk++)
+        {
+#if (AMREX_SPACEDIM == 3)
+            ck = sck[kk];
+#endif
+            for (int jj = 0; jj <= nj; jj++)
+            {
+                cj = scj[jj];
+
+                for (int ii = 0; ii <= ni; ii++)
+                {
+                    ci = sci[ii];
+
+                    not_out_of_bound =  (lo.x+imin+ii >= lbound(jx_arr).x
+                                     &&  lo.x+imin+ii <= ubound(jx_arr).x)
+                                     && (lo.y+jmin+jj >= lbound(jx_arr).y
+                                     &&  lo.y+jmin+jj <= ubound(jx_arr).y)
+                                     && (lo.z+kmin+kk >= lbound(jx_arr).z
+                                     &&  lo.z+kmin+kk <= ubound(jx_arr).z);
+                    if (not_out_of_bound)
+                    {
+                        amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
+                                                     ci * cj * ck * wqx);
+                    }
+
+                    not_out_of_bound =  (lo.x+imin+ii >= lbound(jy_arr).x
+                                     &&  lo.x+imin+ii <= ubound(jy_arr).x)
+                                     && (lo.y+jmin+jj >= lbound(jy_arr).y
+                                     &&  lo.y+jmin+jj <= ubound(jy_arr).y)
+                                     && (lo.z+kmin+kk >= lbound(jy_arr).z
+                                     &&  lo.z+kmin+kk <= ubound(jy_arr).z);
+                    if (not_out_of_bound)
+                    {
+                        amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
+                                                     ci * cj * ck * wqy);
+                    }
+
+                    not_out_of_bound =  (lo.x+imin+ii >= lbound(jz_arr).x
+                                     &&  lo.x+imin+ii <= ubound(jz_arr).x)
+                                     && (lo.y+jmin+jj >= lbound(jz_arr).y
+                                     &&  lo.y+jmin+jj <= ubound(jz_arr).y)
+                                     && (lo.z+kmin+kk >= lbound(jz_arr).z
+                                     &&  lo.z+kmin+kk <= ubound(jz_arr).z);
+                    if (not_out_of_bound)
+                    {
+                        amrex::Gpu::Atomic::AddNoRet(&jz_arr(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk),
+                                                     ci * cj * ck * wqz);
+                    }
+                }
+            }
+        }
+    });
+}
 
 /**
  * \brief Current Deposition for thread thread_num
@@ -1070,4 +1266,5 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #   endif
 #endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
 }
+
 #endif // CURRENTDEPOSITION_H_

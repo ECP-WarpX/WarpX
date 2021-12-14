@@ -239,6 +239,11 @@ public:
     static int current_centering_noy;
     static int current_centering_noz;
 
+    // Order of finite-order centering of charge (from particle positions to nodal grid)
+    static int charge_centering_nox;
+    static int charge_centering_noy;
+    static int charge_centering_noz;
+
     // Number of modes for the RZ multimode version
     static int n_rz_azimuthal_modes;
     static int ncomps;

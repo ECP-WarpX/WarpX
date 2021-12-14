@@ -148,6 +148,11 @@ int WarpX::current_centering_nox = 2;
 int WarpX::current_centering_noy = 2;
 int WarpX::current_centering_noz = 2;
 
+// Order of finite-order centering of charge (from particle positions to nodal grid)
+int WarpX::charge_centering_nox = 2;
+int WarpX::charge_centering_noy = 2;
+int WarpX::charge_centering_noz = 2;
+
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
@@ -1009,11 +1014,19 @@ WarpX::ReadParameters ()
                 queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
             }
 
-            // Read order of finite-order centering of currents (nodal to staggered)
-            if (WarpX::do_current_centering) {
+            // Read order of finite-order centering of currents
+            // (from nodal grid to staggered grid or from particle positions to nodal grid)
+            if (WarpX::do_current_centering || WarpX::current_deposition_algo == CurrentDepositionAlgo::Centering) {
                 queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
                 queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
                 queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
+            }
+
+            // Read order of finite-order centering of charge (from particle positions to nodal grid)
+            if (WarpX::charge_deposition_algo == ChargeDepositionAlgo::Centering) {
+                queryWithParser(pp_interpolation, "charge_centering_nox", charge_centering_nox);
+                queryWithParser(pp_interpolation, "charge_centering_noy", charge_centering_noy);
+                queryWithParser(pp_interpolation, "charge_centering_noz", charge_centering_noz);
             }
 
             if (maxLevel() > 0)
