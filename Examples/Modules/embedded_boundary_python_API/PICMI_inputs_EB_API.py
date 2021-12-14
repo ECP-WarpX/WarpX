@@ -249,4 +249,3 @@ print("Area of the middle z-slice:", Sz_slice)
 assert np.isclose(Sz_slice, Sz_slice_true, rtol=1e-05, atol=1e-08)
 
 sim.step(1)
-
