@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Test if MPI_communicator is correctly passed from Python to CPP
 # --- This test should be run with MPI enabled
 # --- Inputs taken from langmuir_2d. Runs 10 steps, and will check

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Input file to test the saving of old particle positions
 
 import numpy as np

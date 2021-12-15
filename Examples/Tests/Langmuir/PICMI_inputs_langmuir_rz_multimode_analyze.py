@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # This is a script that analyses the multimode simulation results.
 # This simulates a RZ multimode periodic plasma wave.
 # The electric field from the simulation is compared to the analytic value

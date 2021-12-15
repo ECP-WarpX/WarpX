@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Input file to test the particle scraper and the Python wrappers
 # --- to access the buffer of scraped particles.
 
