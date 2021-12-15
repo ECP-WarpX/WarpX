@@ -11,7 +11,7 @@
 #SBATCH -J WarpX
 #SBATCH -A <proj>
 # for m3906 LBNL/AMP users: for large runs, comment in
-#S BATCH -q early_science
+##SBATCH -q early_science
 #SBATCH -C gpu
 #SBATCH -c 32
 #SBATCH --ntasks-per-node=4
