@@ -29,7 +29,7 @@ struct SchwingerFilterFunc
      * @param[in] j index of the cell in the second direction.
      * @param[in] k index of the cell in the third direction.
      * @param[in] engine the random number state and factory
-     * @return ...?
+     * @return the number of pairs created in the cell.
      */
     template <typename FABs>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
