@@ -197,7 +197,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 #if defined(WARPX_DIM_3D)
             jobInfoFile << "   -z: " << "interior" << "\n";
             jobInfoFile << "   +z: " << "interior" << "\n";
-        #endif
+#endif
 
         jobInfoFile << "\n\n";
 
