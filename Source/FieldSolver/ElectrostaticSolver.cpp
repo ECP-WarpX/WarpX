@@ -366,6 +366,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
 
     // Solve the Poisson equation
     linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
+    linop.setRZ(true);
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
