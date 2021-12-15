@@ -562,9 +562,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         ngf = ngFFT;
     }
 
-    int max_guard = 2;
-
 #ifdef AMREX_USE_EB
+    int max_guard = 2;
     pml_field_factory = amrex::makeEBFabFactory(*geom, ba, dm,
                                               {max_guard, max_guard, max_guard},
                                               amrex::EBSupport::full);
