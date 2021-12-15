@@ -562,9 +562,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         ngf = ngFFT;
     }
 
-    int max_guard = 2;
-
 #ifdef AMREX_USE_EB
+    int max_guard = 2;
     pml_field_factory = amrex::makeEBFabFactory(*geom, ba, dm,
                                               {max_guard, max_guard, max_guard},
                                               amrex::EBSupport::full);
@@ -632,8 +631,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
         WarpX::ComputeFaceAreas(pml_face_areas, eb_fact);
         std::array<amrex::Real,3> cellsize = {AMREX_D_DECL(geom->CellSize()[0],geom->CellSize()[1],geom->CellSize()[2])};
-        WarpX::ScaleEdges(pml_edge_lengths, cellsize, eb_fact);
-        WarpX::ScaleAreas(pml_face_areas, cellsize, eb_fact);
+        WarpX::ScaleEdges(pml_edge_lengths, cellsize);
+        WarpX::ScaleAreas(pml_face_areas, cellsize);
 
     }
 #endif
@@ -1409,28 +1408,3 @@ PushPMLPSATDSinglePatch (
     }
 }
 #endif
-
-void
-PML::print_pml(){
-    bool flag_cp = false;
-
-    for (int idim = 0; idim < 1; ++idim) {
-        for (amrex::MFIter mfi(*pml_face_areas[0]); mfi.isValid(); ++mfi) {
-            amrex::Box box = mfi.tilebox(pml_face_areas[0]->ixType().toIntVect(), pml_face_areas[0]->nGrowVect());
-            //if (flag_cp and lev > 0) {
-            //    box.coarsen(refRatio(lev - 1));
-            //}
-            auto lo = amrex::lbound(box);
-            auto hi = amrex::ubound(box);
-            std::cout << "=======================" << std::endl;
-            auto const &toprint_arr = pml_face_areas[0]->array(mfi);
-            int k = (hi.z + lo.z) / 2;
-            for (int i = lo.x; i <= hi.x; i++) {
-                for (int j = lo.y; j <= hi.y; j++) {
-                    std::cout << toprint_arr(i, j, k) << "\t";
-                }
-                std::cout << std::endl;
-            }
-        }
-    }
-}

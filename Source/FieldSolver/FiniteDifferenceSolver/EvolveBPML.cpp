@@ -49,7 +49,7 @@ void FiniteDifferenceSolver::EvolveBPML (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning);
+    amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning, face_areas);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
@@ -192,6 +192,10 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
         );
 
     }
+
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(face_areas);
+#endif
 
 }
 
