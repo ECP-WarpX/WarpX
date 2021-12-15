@@ -9,6 +9,9 @@
 
 #include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_REAL.H>
+
 // #ifdef WARPX_USE_GPUCLOCK
 
 #include <climits>
@@ -30,7 +33,7 @@ public:
     (const bool do_timing, amrex::Real* cost)
         : m_do_timing(do_timing)
 #else
-    (const bool, amrex::Real*)
+    (const bool do_timing, amrex::Real* cost)
 #endif
     {
 #if (defined AMREX_USE_GPU)
@@ -51,6 +54,8 @@ public:
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_do_timing == false,
                                           "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
 #   endif // WARPX_USE_GPUCLOCK
+#else  // AMREX_USE_GPU
+        amrex::ignore_unused(do_timing, cost);
 #endif // AMREX_USE_GPU
     }
 
