@@ -62,19 +62,13 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
             Bx_avg = c++; By_avg = c++; Bz_avg = c++;
         }
 
+        if (dive_cleaning) F = c++;
+
+        if (divb_cleaning) G = c++;
+
         if (J_linear_in_time)
         {
             Jx_new = c++; Jy_new = c++; Jz_new = c++;
-
-            if (dive_cleaning)
-            {
-                F = c++;
-            }
-
-            if (divb_cleaning)
-            {
-                G = c++;
-            }
         }
     }
     else // PML
@@ -129,7 +123,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
                                     ShiftType::TransformFromCellCentered);
     xshift_FFTtoCell = k_space.getSpectralShiftFactor(dm, 0,
                                     ShiftType::TransformToCellCentered);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     yshift_FFTfromCell = k_space.getSpectralShiftFactor(dm, 1,
                                     ShiftType::TransformFromCellCentered);
     yshift_FFTtoCell = k_space.getSpectralShiftFactor(dm, 1,
@@ -206,12 +200,12 @@ SpectralFieldData::ForwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
     const bool is_nodal_x = (stag[0] == amrex::IndexType::NODE) ? true : false;
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const bool is_nodal_y = (stag[1] == amrex::IndexType::NODE) ? true : false;
     const bool is_nodal_z = (stag[2] == amrex::IndexType::NODE) ? true : false;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const bool is_nodal_z = (stag[1] == amrex::IndexType::NODE) ? true : false;
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     const bool is_nodal_z = (stag[0] == amrex::IndexType::NODE) ? true : false;
 #endif
 
@@ -260,7 +254,7 @@ SpectralFieldData::ForwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
             const Complex* xshift_arr = xshift_FFTfromCell[mfi].dataPtr();
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             const Complex* yshift_arr = yshift_FFTfromCell[mfi].dataPtr();
 #endif
             const Complex* zshift_arr = zshift_FFTfromCell[mfi].dataPtr();
@@ -274,12 +268,12 @@ SpectralFieldData::ForwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
                 if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                 if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into the right index
@@ -312,26 +306,26 @@ SpectralFieldData::BackwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
     const bool is_nodal_x = mf.is_nodal(0);
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const bool is_nodal_y = mf.is_nodal(1);
     const bool is_nodal_z = mf.is_nodal(2);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const bool is_nodal_z = mf.is_nodal(1);
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     const bool is_nodal_z = mf.is_nodal(0);
 #endif
 
 #if (AMREX_SPACEDIM >= 2)
     const int si = (is_nodal_x) ? 1 : 0;
 #endif
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     const int si = (is_nodal_z) ? 1 : 0;
     const int sj = 0;
     const int sk = 0;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int sj = (is_nodal_z) ? 1 : 0;
     const int sk = 0;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const int sj = (is_nodal_y) ? 1 : 0;
     const int sk = (is_nodal_z) ? 1 : 0;
 #endif
@@ -359,7 +353,7 @@ SpectralFieldData::BackwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
             const Complex* xshift_arr = xshift_FFTtoCell[mfi].dataPtr();
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             const Complex* yshift_arr = yshift_FFTtoCell[mfi].dataPtr();
 #endif
             const Complex* zshift_arr = zshift_FFTtoCell[mfi].dataPtr();
@@ -373,12 +367,12 @@ SpectralFieldData::BackwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
                 if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                 if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into temporary array
@@ -400,25 +394,25 @@ SpectralFieldData::BackwardTransform (const int lev,
 
             // Total number of cells, including ghost cells (nj represents ny in 3D and nz in 2D)
             const int ni = mf_box.length(0);
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
             constexpr int nj = 1;
             constexpr int nk = 1;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             const int nj = mf_box.length(1);
             constexpr int nk = 1;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             const int nj = mf_box.length(1);
             const int nk = mf_box.length(2);
 #endif
             // Lower bound of the box (lo_j represents lo_y in 3D and lo_z in 2D)
             const int lo_i = amrex::lbound(mf_box).x;
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
             constexpr int lo_j = 0;
             constexpr int lo_k = 0;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             const int lo_j = amrex::lbound(mf_box).y;
             constexpr int lo_k = 0;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             const int lo_j = amrex::lbound(mf_box).y;
             const int lo_k = amrex::lbound(mf_box).z;
 #endif

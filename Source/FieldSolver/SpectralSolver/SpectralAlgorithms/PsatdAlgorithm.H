@@ -156,7 +156,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
 
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         KVectorComponent modified_ky_vec_centered;
 #endif
         KVectorComponent modified_kz_vec_centered;

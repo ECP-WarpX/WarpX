@@ -87,6 +87,9 @@ except OSError as e:
         print("Failed to load the libwarpx shared object library")
         raise
 
+# track whether libwarpx has been initialized
+libwarpx.initialized = False
+
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
 libwarpx.warpx_ParticleReal_size.restype = ctypes.c_int
@@ -211,6 +214,10 @@ libwarpx.warpx_getGfieldCP_PML.restype = _LP_LP_c_real
 libwarpx.warpx_getGfieldCPLoVects_PML.restype = _LP_c_int
 libwarpx.warpx_getGfieldFP_PML.restype = _LP_LP_c_real
 libwarpx.warpx_getGfieldFPLoVects_PML.restype = _LP_c_int
+libwarpx.warpx_getEdgeLengths.restype = _LP_LP_c_real
+libwarpx.warpx_getEdgeLengthsLoVects.restype = _LP_c_int
+libwarpx.warpx_getFaceAreas.restype = _LP_LP_c_real
+libwarpx.warpx_getFaceAreasLoVects.restype = _LP_c_int
 libwarpx.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
 libwarpx.warpx_getParticleBoundaryBufferStructs.restype = _LP_LP_c_particlereal
 libwarpx.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
@@ -231,6 +238,12 @@ libwarpx.warpx_getF_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getG_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getF_pml_nodal_flag.restype = _LP_c_int
 libwarpx.warpx_getG_pml_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_edge_lengths_x_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_edge_lengths_y_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_edge_lengths_z_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_face_areas_x_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_face_areas_y_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_get_face_areas_z_nodal_flag.restype = _LP_c_int
 
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
@@ -323,6 +336,8 @@ def initialize(argv=None, mpi_comm=None):
         libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
+    libwarpx.initialized = True
+
 
 @atexit.register
 def finalize(finalize_mpi=1):
@@ -332,8 +347,9 @@ def finalize(finalize_mpi=1):
     the end of your script.
 
     '''
-    libwarpx.warpx_finalize()
-    libwarpx.amrex_finalize(finalize_mpi)
+    if libwarpx.initialized:
+        libwarpx.warpx_finalize()
+        libwarpx.amrex_finalize(finalize_mpi)
 
 
 def evolve(num_steps=-1):
@@ -1747,6 +1763,60 @@ def get_mesh_G_fp_pml(level, include_ghosts=True):
         raise Exception('PML not initialized')
 
 
+def get_mesh_edge_lengths(level, direction, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh edge lengths
+    data on each grid for this process. This version returns the density on
+    the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        direction      : the component of the data you want
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getEdgeLengths, level, direction, include_ghosts)
+
+
+def get_mesh_face_areas(level, direction, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh face areas
+    data on each grid for this process. This version returns the density on
+    the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        direction      : the component of the data you want
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getFaceAreas, level, direction, include_ghosts)
+
+
 def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
     assert(0 <= level and level <= libwarpx.warpx_finestLevel())
 
@@ -2372,6 +2442,51 @@ def get_mesh_G_fp_lovects_pml(level, include_ghosts=True):
     except ValueError:
         raise Exception('PML not initialized')
 
+
+def get_mesh_edge_lengths_lovects(level, direction, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh edge lengths
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        direction      : the component of the data you want
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getEdgeLengthsLoVects)
+
+
+def get_mesh_face_areas_lovects(level, direction, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh face areas
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        direction      : the component of the data you want
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getFaceAreasLoVects)
+
+
 def _get_nodal_flag(getdatafunc):
     data = getdatafunc()
     if not data:
@@ -2473,6 +2588,42 @@ def get_G_nodal_flag():
     This returns a 1d array of the nodal flags for G along each direction. A 1 means node centered, and 0 cell centered.
     '''
     return _get_nodal_flag(libwarpx.warpx_getG_nodal_flag)
+
+def get_edge_lengths_x_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the x edge lengths along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_x_nodal_flag)
+
+def get_edge_lengths_y_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the y edge lengths along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_y_nodal_flag)
+
+def get_edge_lengths_z_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the z edge lengths along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_z_nodal_flag)
+
+def get_face_areas_x_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the x face areas along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_face_areas_x_nodal_flag)
+
+def get_face_areas_y_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the y face areas along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_face_areas_y_nodal_flag)
+
+def get_face_areas_z_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for the z face areas along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_get_face_areas_z_nodal_flag)
 
 def get_F_pml_nodal_flag():
     '''

@@ -135,8 +135,8 @@ WarpX::ComputeEdgeLengths () {
 #else
         amrex::Abort("ComputeEdgeLengths: Only implemented in 2D3V and 3D3V");
 #endif
-            const amrex::Box& box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
-                                                m_edge_lengths[maxLevel()][idim]->nGrowVect() );
+            amrex::Box box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
+                                         m_edge_lengths[maxLevel()][idim]->nGrowVect());
             amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
 
@@ -210,8 +210,8 @@ WarpX::ComputeFaceAreas () {
 #else
         amrex::Abort("ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
 #endif
-            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
-                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
+            amrex::Box box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
+                                         m_face_areas[maxLevel()][idim]->nGrowVect());
             amrex::FabType fab_type = flags[mfi].getType(box);
             auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {

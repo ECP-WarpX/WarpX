@@ -117,7 +117,7 @@ struct InjectorMomentumGaussianFlux
         // Note that in 2D, with m_flux_normal_axis == 1, uy is out of the plane and so Gaussian and uz is v*Gaussian
         amrex::Real const ux = (m_flux_normal_axis == 0 ? m_ux_th*ur : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
         amrex::Real const uy = (m_flux_normal_axis == 1 && AMREX_SPACEDIM==3 ? m_uy_th*ur : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
-        amrex::Real const uz = (m_flux_normal_axis == AMREX_SPACEDIM-1 ? m_uz_th*ur : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
+        amrex::Real const uz = (m_flux_normal_axis == WARPX_ZINDEX ? m_uz_th*ur : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
         return amrex::XDim3{ux, uy, uz};
     }
 
