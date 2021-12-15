@@ -70,9 +70,11 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
                                                             : pml[lev]->GetMultiSigmaBox_cp();
 
+#ifdef AMREX_USE_EB
         const auto& pml_edge_lenghts = pml[lev]->Get_edge_lengths();
         const auto& pml_face_areas = pml[lev]->Get_face_areas();
-
+#endif
+        
         const amrex::IntVect Ex_stag = pml_E[0]->ixType().toIntVect();
         const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
         const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
