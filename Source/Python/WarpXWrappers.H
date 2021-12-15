@@ -172,6 +172,12 @@ extern "C" {
   int* warpx_getCurrentDensityCPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getCurrentDensityFPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
 
+  amrex::Real** warpx_getEdgeLengths (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
+  int* warpx_getEdgeLengthsLoVects (int lev, int direction, int *return_size, int **ngrowvect);
+
+  amrex::Real** warpx_getFaceAreas (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
+  int* warpx_getFaceAreasLoVects (int lev, int direction, int *return_size, int **ngrowvect);
+
   int* warpx_getEx_nodal_flag ();
   int* warpx_getEy_nodal_flag ();
   int* warpx_getEz_nodal_flag ();
@@ -185,6 +191,12 @@ extern "C" {
   int* warpx_getPhi_nodal_flag ();
   int* warpx_getF_nodal_flag ();
   int* warpx_getG_nodal_flag ();
+  int* warpx_get_edge_lengths_x_nodal_flag ();
+  int* warpx_get_edge_lengths_y_nodal_flag ();
+  int* warpx_get_edge_lengths_z_nodal_flag ();
+  int* warpx_get_face_areas_x_nodal_flag ();
+  int* warpx_get_face_areas_y_nodal_flag ();
+  int* warpx_get_face_areas_z_nodal_flag ();
 
   amrex::Real** warpx_getChargeDensityCP (int lev, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getChargeDensityFP (int lev, int *return_size, int *ncomps, int **ngrowvect, int **shapes);

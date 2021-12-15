@@ -40,7 +40,7 @@ On the contrary, if warning messages are raised, the list should look as follows
    ********************************************************************************
 
 Here, ``GLOBAL`` indicates that warning messages are gathered across all the MPI ranks (specifically
-after the ``FIRSR STEP``).
+after the ``FIRST STEP``).
 
 Each entry of warning list respects the following format:
 
