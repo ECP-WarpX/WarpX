@@ -58,10 +58,8 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
     WARPX_PROFILE("WarpX::DampPML()");
 
-#ifdef AMREX_USE_EB
     const bool dive_cleaning = WarpX::do_pml_dive_cleaning;
     const bool divb_cleaning = WarpX::do_pml_divb_cleaning;
-#endif
 
     if (pml[lev]->ok())
     {
