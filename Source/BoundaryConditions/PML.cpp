@@ -1409,28 +1409,3 @@ PushPMLPSATDSinglePatch (
     }
 }
 #endif
-
-void
-PML::print_pml(){
-    bool flag_cp = false;
-
-    for (int idim = 0; idim < 1; ++idim) {
-        for (amrex::MFIter mfi(*pml_face_areas[0]); mfi.isValid(); ++mfi) {
-            amrex::Box box = mfi.tilebox(pml_face_areas[0]->ixType().toIntVect(), pml_face_areas[0]->nGrowVect());
-            //if (flag_cp and lev > 0) {
-            //    box.coarsen(refRatio(lev - 1));
-            //}
-            auto lo = amrex::lbound(box);
-            auto hi = amrex::ubound(box);
-            std::cout << "=======================" << std::endl;
-            auto const &toprint_arr = pml_face_areas[0]->array(mfi);
-            int k = (hi.z + lo.z) / 2;
-            for (int i = lo.x; i <= hi.x; i++) {
-                for (int j = lo.y; j <= hi.y; j++) {
-                    std::cout << toprint_arr(i, j, k) << "\t";
-                }
-                std::cout << std::endl;
-            }
-        }
-    }
-}
