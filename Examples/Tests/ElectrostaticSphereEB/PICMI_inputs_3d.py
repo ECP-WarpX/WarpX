@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 from pywarpx import picmi
+
 
 ##########################
 # physics parameters
@@ -6,6 +9,7 @@ from pywarpx import picmi
 
 V_domain_boundary = 0.0
 V_embedded_boundary = 1.0
+
 
 ##########################
 # numerics parameters
