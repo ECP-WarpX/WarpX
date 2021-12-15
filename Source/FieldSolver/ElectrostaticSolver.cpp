@@ -320,6 +320,21 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     // set the boundary potential values if needed
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
+    amrex::Real max_norm_b = 0.0;
+    for (int lev=0; lev < rho.size(); lev++){
+        rho[lev]->mult(-1._rt/PhysConst::ep0);
+        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
+    }
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+
+    bool always_use_bnorm = (max_norm_b > 0);
+    if (!always_use_bnorm) {
+        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        WarpX::GetInstance().RecordWarning(
+            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
+        );
+    }
+
 #ifndef AMREX_USE_EB
 
     // Define the linear operator (Poisson operator)
