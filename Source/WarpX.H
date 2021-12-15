@@ -1270,20 +1270,31 @@ public:
     */
 
 public:
-    void ComputeEdgeLengths ();
+    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+#ifdef AMREX_USE_EB
+                                    const amrex::EBFArrayBoxFactory& eb_fact);
+#else
+                                    const amrex::FabFactory<amrex::FArrayBox>& eb_fact);
+#endif
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    void ComputeFaceAreas ();
-    /**
+    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+#ifdef AMREX_USE_EB
+                                  const amrex::EBFArrayBoxFactory& eb_fact);
+#else
+                                  const amrex::FabFactory<amrex::FArrayBox>& eb_fact);
+#endif    /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    void ScaleEdges ();
+    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    void ScaleAreas ();
+    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
     *        The flags convention for m_flag_info_face is as follows

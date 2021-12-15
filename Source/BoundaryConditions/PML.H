@@ -175,14 +175,10 @@ public:
     void FillBoundaryB ();
     void FillBoundaryF ();
     void FillBoundaryG ();
-    void FillBoundaryEdgeLengths ();
-    void FillBoundaryFaceAreas ();
     void FillBoundaryE (PatchType patch_type);
     void FillBoundaryB (PatchType patch_type);
     void FillBoundaryF (PatchType patch_type);
     void FillBoundaryG (PatchType patch_type);
-    void FillBoundaryEdgeLengths (PatchType patch_type);
-    void FillBoundaryFaceAreas (PatchType patch_type);
 
     bool ok () const { return m_ok; }
 
@@ -230,6 +226,18 @@ private:
 #ifdef WARPX_USE_PSATD
     std::unique_ptr<SpectralSolver> spectral_solver_fp;
     std::unique_ptr<SpectralSolver> spectral_solver_cp;
+#endif
+
+    // Factory for field data
+    std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > pml_field_factory;
+
+    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory () const noexcept {
+        return *pml_field_factory;
+    }
+#ifdef AMREX_USE_EB
+    amrex::EBFArrayBoxFactory const& fieldEBFactory () const noexcept {
+        return static_cast<amrex::EBFArrayBoxFactory const&>(*pml_field_factory);
+    }
 #endif
 
     static amrex::BoxArray MakeBoxArray (const amrex::Geometry& geom,

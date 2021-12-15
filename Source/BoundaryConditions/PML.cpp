@@ -46,6 +46,9 @@
 #include <cmath>
 #include <memory>
 #include <utility>
+#ifdef AMREX_USE_EB
+#   include "AMReX_EBFabFactory.H"
+#endif
 
 using namespace amrex;
 
@@ -559,6 +562,16 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         ngf = ngFFT;
     }
 
+    int max_guard = 2;
+
+#ifdef AMREX_USE_EB
+    pml_field_factory = amrex::makeEBFabFactory(*geom, ba, dm,
+                                              {max_guard, max_guard, max_guard},
+                                              amrex::EBSupport::full);
+#else
+    pml_field_factory = std::make_unique<FArrayBoxFactory>();
+#endif
+
     // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
     const int ncompb = (m_divb_cleaning) ? 3 : 2;
@@ -598,13 +611,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     pml_face_areas[2] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, ngb );
 
-    pml_edge_lengths[0]->setVal(1.0);
-    pml_edge_lengths[1]->setVal(1.0);
-    pml_edge_lengths[2]->setVal(1.0);
-    pml_face_areas[0]->setVal(1.0);
-    pml_face_areas[1]->setVal(1.0);
-    pml_face_areas[2]->setVal(1.0);
-
     pml_j_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect() ), dm, 1, ngb );
     pml_j_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
@@ -615,6 +621,23 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     pml_j_fp[0]->setVal(0.0);
     pml_j_fp[1]->setVal(0.0);
     pml_j_fp[2]->setVal(0.0);
+
+#ifdef AMREX_USE_EB
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+        WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
+        WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+
+        auto const eb_fact = fieldEBFactory();
+
+        WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
+        WarpX::ComputeFaceAreas(pml_face_areas, eb_fact);
+        std::array<amrex::Real,3> cellsize = {AMREX_D_DECL(geom->CellSize()[0],geom->CellSize()[1],geom->CellSize()[2])};
+        WarpX::ScaleEdges(pml_edge_lengths, cellsize, eb_fact);
+        WarpX::ScaleAreas(pml_face_areas, cellsize, eb_fact);
+
+    }
+#endif
+
 
     if (m_dive_cleaning)
     {
@@ -1237,48 +1260,6 @@ PML::FillBoundaryG (PatchType patch_type)
     {
         const auto& period = m_cgeom->periodicity();
         WarpXCommUtil::FillBoundary(*pml_G_cp, period);
-    }
-}
-
-void
-PML::FillBoundaryEdgeLengths ()
-{
-    FillBoundaryEdgeLengths(PatchType::fine);
-}
-
-void
-PML::FillBoundaryEdgeLengths (PatchType patch_type)
-{
-    if (patch_type == PatchType::fine && pml_edge_lengths[0] && pml_edge_lengths[0]->nGrowVect().max() > 0)
-    {
-        const auto& period = m_geom->periodicity();
-        Vector<MultiFab*> mf{pml_edge_lengths[0].get(),pml_edge_lengths[1].get(),pml_edge_lengths[2].get()};
-        WarpXCommUtil::FillBoundary(mf, period);
-    }
-    else if (patch_type == PatchType::coarse)
-    {
-        amrex::Abort("PML::FillBoundaryEdgeLengths: EB and MR not yet implemented");
-    }
-}
-
-void
-PML::FillBoundaryFaceAreas ()
-{
-    FillBoundaryFaceAreas(PatchType::fine);
-}
-
-void
-PML::FillBoundaryFaceAreas (PatchType patch_type)
-{
-    if (patch_type == PatchType::fine && pml_face_areas[0] && pml_face_areas[0]->nGrowVect().max() > 0)
-    {
-        const auto& period = m_geom->periodicity();
-        Vector<MultiFab*> mf{pml_face_areas[0].get(),pml_face_areas[1].get(),pml_face_areas[2].get()};
-        WarpXCommUtil::FillBoundary(mf, period);
-    }
-    else if (patch_type == PatchType::coarse)
-    {
-        amrex::Abort("PML::FillBoundaryFaceAreas: EB and MR not yet implemented");
     }
 }
 
