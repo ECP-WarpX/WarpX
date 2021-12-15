@@ -38,7 +38,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] norder_y order of the spectral solver along y
          * \param[in] norder_z order of the spectral solver along z
          * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
-         * \param[in] fill_guards Update the guard cells (in addition to the valid cell) when pushing the fields in time
+         * \param[in] fill_guards Update the guard cells (in addition to the valid cells) when pushing the fields in time
          * \param[in] v_galilean Galilean velocity (three-dimensional array)
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
