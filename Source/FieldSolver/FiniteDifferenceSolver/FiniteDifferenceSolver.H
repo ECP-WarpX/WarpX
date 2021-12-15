@@ -107,12 +107,14 @@ class FiniteDifferenceSolver
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
+                      std::array< amrex::MultiFab*, 3 > const face_areas,
                       amrex::Real const dt,
                       const bool dive_cleaning);
 
        void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
                       std::array< amrex::MultiFab*, 3 > const Bfield,
                       std::array< amrex::MultiFab*, 3 > const Jfield,
+                      std::array< amrex::MultiFab*, 3 > const edge_lengths,
                       amrex::MultiFab* const Ffield,
                       MultiSigmaBox const& sigba,
                       amrex::Real const dt, bool pml_has_particles );
@@ -242,6 +244,7 @@ class FiniteDifferenceSolver
         void EvolveBPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Bfield,
             std::array< amrex::MultiFab*, 3 > const Efield,
+            std::array< amrex::MultiFab*, 3 > const face_areas,
             amrex::Real const dt,
             const bool dive_cleaning);
 
@@ -250,6 +253,7 @@ class FiniteDifferenceSolver
             std::array< amrex::MultiFab*, 3 > Efield,
             std::array< amrex::MultiFab*, 3 > const Bfield,
             std::array< amrex::MultiFab*, 3 > const Jfield,
+            std::array< amrex::MultiFab*, 3 > const edge_lengths,
             amrex::MultiFab* const Ffield,
             MultiSigmaBox const& sigba,
             amrex::Real const dt, bool pml_has_particles );

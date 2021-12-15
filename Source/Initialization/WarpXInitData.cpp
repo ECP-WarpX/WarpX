@@ -245,10 +245,7 @@ WarpX::InitPML ()
                              do_moving_window, pml_has_particles, do_pml_in_domain,
                              J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
-        if(do_pml){
-            pml[0]->FillBoundaryFaceAreas();
-            pml[0]->FillBoundaryEdgeLengths();
-        }
+
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -885,10 +882,12 @@ void WarpX::InitializeEBGridData (int lev)
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
 
-            ComputeEdgeLengths();
-            ComputeFaceAreas();
-            ScaleEdges();
-            ScaleAreas();
+            auto const eb_fact = fieldEBFactory(lev);
+
+            ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
+            ComputeFaceAreas(m_face_areas[lev], eb_fact);
+            ScaleEdges(m_edge_lengths[lev], CellSize(lev), eb_fact);
+            ScaleAreas(m_face_areas[lev], CellSize(lev), eb_fact);
 
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
                 MarkCells();
