@@ -709,26 +709,30 @@ void doGatherFiniteCenteringSinglePart (const amrex::ParticleReal xp,
     Byp = 0._rt;
     Bzp = 0._rt;
 
+    int i, j, k;
     for (int kk = 0; kk <= nk; kk++)
     {
+        k = lo.z + kmin + kk;
 #if (AMREX_SPACEDIM == 3)
         ck = sck[kk];
 #endif
         for (int jj = 0; jj <= nj; jj++)
         {
+            j = lo.y + jmin + jj;
             cj = scj[jj];
 
             for (int ii = 0; ii <= ni; ii++)
             {
+                i = lo.x + imin + ii;
                 ci = sci[ii];
 
-                Exp += ci * cj * ck * ex_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
-                Eyp += ci * cj * ck * ey_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
-                Ezp += ci * cj * ck * ez_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
+                Exp += ci * cj * ck * ex_arr_zeropad(i,j,k);
+                Eyp += ci * cj * ck * ey_arr_zeropad(i,j,k);
+                Ezp += ci * cj * ck * ez_arr_zeropad(i,j,k);
 
-                Bxp += ci * cj * ck * bx_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
-                Byp += ci * cj * ck * by_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
-                Bzp += ci * cj * ck * bz_arr_zeropad(lo.x+imin+ii,lo.y+jmin+jj,lo.z+kmin+kk);
+                Bxp += ci * cj * ck * bx_arr_zeropad(i,j,k);
+                Byp += ci * cj * ck * by_arr_zeropad(i,j,k);
+                Bzp += ci * cj * ck * bz_arr_zeropad(i,j,k);
             }
         }
     }
