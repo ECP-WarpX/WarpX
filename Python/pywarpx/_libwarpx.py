@@ -1856,7 +1856,7 @@ def get_mesh_edge_lengths(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getEdgeLengths, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getEdgeLengths, level, direction, include_ghosts)
 
 
 def get_mesh_face_areas(level, direction, include_ghosts=True):
@@ -1883,7 +1883,7 @@ def get_mesh_face_areas(level, direction, include_ghosts=True):
 
     '''
 
-    return _get_mesh_field_list(libwarpx.warpx_getFaceAreas, level, direction, include_ghosts)
+    return _get_mesh_field_list(libwarpx.libwarpx_so.warpx_getFaceAreas, level, direction, include_ghosts)
 
 
 def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
@@ -2531,7 +2531,7 @@ def get_mesh_edge_lengths_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getEdgeLengthsLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getEdgeLengthsLoVects)
 
 
 def get_mesh_face_areas_lovects(level, direction, include_ghosts=True):
@@ -2553,7 +2553,7 @@ def get_mesh_face_areas_lovects(level, direction, include_ghosts=True):
         A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
 
     '''
-    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getFaceAreasLoVects)
+    return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.libwarpx_so.warpx_getFaceAreasLoVects)
 
 
 def _get_nodal_flag(getdatafunc):
@@ -2662,37 +2662,37 @@ def get_edge_lengths_x_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for the x edge lengths along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_x_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_get_edge_lengths_x_nodal_flag)
 
 def get_edge_lengths_y_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for the y edge lengths along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_y_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_get_edge_lengths_y_nodal_flag)
 
 def get_edge_lengths_z_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for the z edge lengths along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_get_edge_lengths_z_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_get_edge_lengths_z_nodal_flag)
 
 def get_face_areas_x_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for the x face areas along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_get_face_areas_x_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_get_face_areas_x_nodal_flag)
 
 def get_face_areas_y_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for the y face areas along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_get_face_areas_y_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_get_face_areas_y_nodal_flag)
 
 def get_face_areas_z_nodal_flag():
     '''
     This returns a 1d array of the nodal flags for the z face areas along each direction. A 1 means node centered, and 0 cell centered.
     '''
-    return _get_nodal_flag(libwarpx.warpx_get_face_areas_z_nodal_flag)
+    return _get_nodal_flag(libwarpx.libwarpx_so.warpx_get_face_areas_z_nodal_flag)
 
 def get_F_pml_nodal_flag():
     '''
