@@ -280,9 +280,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 #ifdef AMREX_USE_EB
             const auto& pml_edge_lenghts = pml[lev]->Get_edge_lengths();
             const auto& pml_face_areas = pml[lev]->Get_face_areas();
-#endif
 
-#ifdef AMREX_USE_EB
             auto const& pml_lxfab = pml_edge_lenghts[0]->array(mfi);
             auto const& pml_lyfab = pml_edge_lenghts[1]->array(mfi);
             auto const& pml_lzfab = pml_edge_lenghts[2]->array(mfi);
