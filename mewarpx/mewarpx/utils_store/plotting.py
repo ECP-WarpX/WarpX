@@ -46,6 +46,8 @@ class ArrayPlot(object):
         "cmap": 'viridis',
         "default_ticks": False,
         "draw_cbar": True,
+        "cbar_shrink": 1.0,
+        "cbar_label": "",
         "draw_surface": False,
         "draw_image": True,
         "draw_contourlines": False,
@@ -149,7 +151,9 @@ class ArrayPlot(object):
             draw_fieldlines (bool): If True, draw field lines. Default False.
             xlabel (string), abscissa label
             ylabel (string), ordinate label
-            title (string): If specified, use only this title
+            title (string): If specified, use only this title. Otherwise the
+                title is constructed if None. Use empty string to remove the
+                title completely.
             titlestr (string): If title is not specified, the name of the
                 quantity to be used in the title.
             titleunits (string): If title is not specified, the name of the
@@ -174,6 +178,10 @@ class ArrayPlot(object):
                 shift such that leftmost point is at y=0.
             cmap (string): String for a matplotlib colormap. Default inferno.
             draw_cbar (bool): If True, draw color bar. Default True.
+            cbar_shrink (float): If < 1, shrink colorbar size, enlarge if > 1.
+                Default 1.0.
+            cbar_label (str): Label for the color bar if used. Default empty
+                string (no label).
             draw_surface (bool): If True, use ax.plot_surface() rather than
                 ax.contourf. Better display for 3D plots (do not use with 2D).
                 Default False.
@@ -210,6 +218,10 @@ class ArrayPlot(object):
         if self.template is not None:
             self.params.update(self.params['templates'][self.template])
         self.params.update(**kwargs)
+
+        # Needed before valmin/valmax fixed.
+        self.slice_array()
+        self.mod_array()
 
         self.valmin = self.params['valmin']
         self.valmax = self.params['valmax']
@@ -250,8 +262,6 @@ class ArrayPlot(object):
             ax = plt.gca()
         self.ax = ax
 
-        self.slice_array()
-        self.mod_array()
         self.set_plot_labels()
 
         if self.plot1d:
@@ -323,8 +333,11 @@ class ArrayPlot(object):
                            fontsize=self.params["labelsize"])
         self.ax.set_ylabel(self.params["ylabel"],
                            fontsize=self.params["labelsize"])
-        self.ax.set_title(self.params["title"],
-                          fontsize=self.params["titlesize"])
+        # Don't set title if empty string. (If None it was already rewritten
+        # above.)
+        if self.params["title"]:
+            self.ax.set_title(self.params["title"],
+                              fontsize=self.params["titlesize"])
 
     def plot_1d(self):
         if self.params["sweepaxlabel"] is None:
@@ -385,7 +398,7 @@ class ArrayPlot(object):
         self.ax.axis('scaled')
         if self.params["draw_cbar"]:
             cbar = plt.colorbar(self.contours, spacing='proportional',
-                                ax=self.ax)
+                                ax=self.ax, shrink=self.params["cbar_shrink"])
             if not self.params["default_ticks"]:
                 cbar.set_ticks(
                     [contour_points[ii] for ii in range(len(contour_points))])
@@ -394,6 +407,9 @@ class ArrayPlot(object):
                     if ii % (len(contour_points)
                              // self.params["ncontour_lines"]) == 0
                     else "" for ii in range(len(contour_points))])
+            if self.params["cbar_label"]:
+                cbar.set_label(self.params["cbar_label"],
+                               fontsize=self.params["labelsize"])
         if self.params["draw_contourlines"]:
             contours_drawn = [
                 contour_points[ii] for ii in range(len(contour_points))
