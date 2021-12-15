@@ -14,9 +14,9 @@
 #    include <AMReX_MLNodeLaplacian.H>
 #else
 #    include <AMReX_MLNodeTensorLaplacian.H>
-#    ifdef AMREX_USE_EB
-#        include <AMReX_MLEBNodeFDLaplacian.H>
-#    endif
+#endif
+#ifdef AMREX_USE_EB
+#    include <AMReX_MLEBNodeFDLaplacian.H>
 #endif
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>

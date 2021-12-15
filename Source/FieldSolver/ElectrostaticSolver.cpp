@@ -329,21 +329,6 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         linop.setSigma( lev, *sigma[lev] );
     }
 
-    amrex::Real max_norm_b = 0.0;
-    for (int lev=0; lev < rho.size(); lev++){
-        rho[lev]->mult(-1._rt/PhysConst::ep0);
-        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
-    }
-    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
-
-    bool always_use_bnorm = (max_norm_b > 0);
-    if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
-        WarpX::GetInstance().RecordWarning(
-            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
-        );
-    }
-
 #else
 
     // With embedded boundary: extract EB info
@@ -363,6 +348,21 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
 
 #endif
+
+    amrex::Real max_norm_b = 0.0;
+    for (int lev=0; lev < rho.size(); lev++){
+        rho[lev]->mult(-1._rt/PhysConst::ep0);
+        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
+    }
+    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
+
+    bool always_use_bnorm = (max_norm_b > 0);
+    if (!always_use_bnorm) {
+        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        WarpX::GetInstance().RecordWarning(
+            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
+        );
+    }
 
     // Solve the Poisson equation
     linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
