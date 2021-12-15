@@ -276,8 +276,11 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             const Real* sigma_cumsum_fac_j_z = sigba[mfi].sigma_cumsum_fac[1].data();
             const Real* sigma_star_cumsum_fac_j_z = sigba[mfi].sigma_star_cumsum_fac[1].data();
 #endif
+
+#ifdef AMREX_USE_EB
             const auto& pml_edge_lenghts = pml[lev]->Get_edge_lengths();
             const auto& pml_face_areas = pml[lev]->Get_face_areas();
+#endif
 
 #ifdef AMREX_USE_EB
             auto const& pml_lxfab = pml_edge_lenghts[0]->array(mfi);
