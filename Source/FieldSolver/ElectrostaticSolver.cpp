@@ -320,15 +320,6 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     // set the boundary potential values if needed
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
-#ifndef AMREX_USE_EB
-
-    // Define the linear operator (Poisson operator)
-    MLNodeLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
-
-    for (int lev = 0; lev <= max_level; ++lev) {
-        linop.setSigma( lev, *sigma[lev] );
-    }
-
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
@@ -342,6 +333,15 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         WarpX::GetInstance().RecordWarning(
             "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
         );
+    }
+
+#ifndef AMREX_USE_EB
+
+    // Define the linear operator (Poisson operator)
+    MLNodeLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
+
+    for (int lev = 0; lev <= max_level; ++lev) {
+        linop.setSigma( lev, *sigma[lev] );
     }
 
 #else
