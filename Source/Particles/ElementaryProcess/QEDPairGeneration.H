@@ -87,7 +87,7 @@ public:
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
     * @param[in] a_pti particle iterator to iterate over photons undergoing QED pair generation process
     * @param[in] lev   the mesh-refinement level
-    * @param[in] ngE   ...?
+    * @param[in] ngE   number of guard cells allocated for the E and B MultiFabs
     * @param[in] exfab constant reference to the FArrayBox of the x component of the electric field
     * @param[in] eyfab constant reference to the FArrayBox of the y component of the electric field
     * @param[in] ezfab constant reference to the FArrayBox of the z component of the electric field
