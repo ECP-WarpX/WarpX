@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # This is a script that adds particle components at runtime,
 # then performs checkpoint / restart and compares the result
 # to the original simulation.

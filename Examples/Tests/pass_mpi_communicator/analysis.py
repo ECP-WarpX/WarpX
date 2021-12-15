@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # This is a script that analyses the simulation results from
 # the script `PICMI_inputs_2d`.

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Input file for MCC testing. There is already a test of the MCC
 # --- functionality. This tests the PICMI interface for the MCC and
 # --- provides an example of how an external Poisson solver can be

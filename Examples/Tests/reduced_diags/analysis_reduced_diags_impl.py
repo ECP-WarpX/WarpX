@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2021 Luca Fedeli, Yinjian Zhao
 #

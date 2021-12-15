@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 """
 This script is used to test the results of the Galilean PSATD method and
 averaged Galilean PSATD method in WarpX.
