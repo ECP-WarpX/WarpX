@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
 # Copyright 2019 Luca Fedeli, Maxence Thevenet
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-# -*- coding: utf-8 -*-
 
 import numpy as np
 import scipy.special as spe
