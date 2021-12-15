@@ -73,4 +73,3 @@
         path: ./conduit_blueprint
         protocol: blueprint/mesh/hdf5
       type: relay
-
