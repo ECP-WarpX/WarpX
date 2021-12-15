@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from pywarpx import picmi
-
 import numpy as np
+
 import argparse
 import sys
 
