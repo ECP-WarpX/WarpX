@@ -95,7 +95,7 @@ public:
     * @param[in] byfab constant reference to the FArrayBox of the y component of the magnetic field
     * @param[in] bzfab constant reference to the FArrayBox of the z component of the magnetic field
     * @param[in] v_galilean vector components of the Galilean velocity (used with the Galilean PSATD solver)
-    * @param[in] a_offset ...?
+    * @param[in] a_offset offset to apply to the particle indices
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
                                 const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,

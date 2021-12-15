@@ -106,7 +106,7 @@ public:
     * @param[in] byfab constant reference to the FArrayBox of the y component of the magnetic field
     * @param[in] bzfab constant reference to the FArrayBox of the z component of the magnetic field
     * @param[in] v_galilean vector components of the Galilean velocity (used with the Galilean PSATD solver)
-    * @param[in] a_offset ...?
+    * @param[in] a_offset offset to apply to the particle indices
     */
     PhotonEmissionTransformFunc (
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
