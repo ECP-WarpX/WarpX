@@ -239,6 +239,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
 
     }
 
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
+
 }
 
 #endif // corresponds to ifndef WARPX_DIM_RZ
