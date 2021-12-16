@@ -58,9 +58,10 @@ public:
      *
      * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
      * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
-     * @param[in] I1 and I2 are the index arrays. They determine all elements that will be used.
-     * @param[in, out] soa_1 and soa_2 contain the struct of array data of the two species.
-     * @param[in] q1 and q2 are charges. m1 and m2 are masses.
+     * @param[in] I1,I2 index arrays. They determine all elements that will be used.
+     * @param[in,out] soa_1,soa_2 contain the struct of array data of the two species.
+     * @param[in] q1,q2 are charges.
+     * @param[in] m1,m2 are masses.
      * @param[in] dt is the time step length between two collision calls.
      * @param[in] dV is the volume of the corresponding cell.
      * @param[in] engine the random engine.
