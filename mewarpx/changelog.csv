@@ -1,11 +1,25 @@
 Version, Physics version, Date,        List of changes
-2.0.9, 2, In progress, "
+2.0.10, 2, In progress, "
+
+**Features**:
+
+- Additional options added to :class:`mewarpx.utils_store.plotting.ArrayPlot`
+  for colorbar and title
+- Print date, time and version upon initialization
+
+**Bugfixes**:
+
+- Fix to sorting to determine which old checkpoints to delete
+- Bounds in :class:`mewarpx.utils_store.plotting.ArrayPlot` are correctly
+  determined when offsets are present.
+"
+2.0.9, 2, 12/14/2021, "
 
 **Other changes**:
 
 - Merge ``upstream/development`` (git hash ``9685a3d``) into memaster.
 "
-2.0.8, 2, 12/14/2021, "
+2.0.8, 2, 12/13/2021, "
 
 **Other changes**:
 
@@ -77,7 +91,7 @@ Version, Physics version, Date,        List of changes
 
 **Physics changes**:
 
-- :func:`mewarpx.util_store.pulsing.linear_pulse_function` now uses ``fmod`` to
+- :func:`mewarpx.utils_store.pulsing.linear_pulse_function` now uses ``fmod`` to
   allow periodic voltage signals. The unit test for the pulsing function was
   updated accordingly.
 
@@ -167,7 +181,7 @@ Version, Physics version, Date,        List of changes
 **Other changes**:
 
 - The time-dependent voltage pulse function generated with
-  :func:`mewarpx.util_store.pulsing.linear_pulse_function` was changed to no
+  :func:`mewarpx.utils_store.pulsing.linear_pulse_function` was changed to no
   longer use variables in the expression. This is in order to be able to nest
   the voltage functions in ``if`` statements when multiple EBs are present.
 "

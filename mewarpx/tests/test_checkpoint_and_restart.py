@@ -19,6 +19,7 @@ DT = 7.5e-10
 
 P_INERT = 10
 
+
 def get_run():
     """Utility function to get the same run setup for all tests below."""
     from mewarpx.setups_store import diode_setup
@@ -57,6 +58,7 @@ def get_run():
         init_warpx=False
     )
     return run
+
 
 def test_create_checkpoints():
 
@@ -196,6 +198,7 @@ def test_restart_from_checkpoint(caplog, force, files_exist):
 
         assert end_step - start_step == new_max_steps
 
+
 def test_extra_steps_after_restart():
 
     mwxutil.init_libwarpx(ndim=2, rz=False)
@@ -237,11 +240,11 @@ def test_extra_steps_after_restart():
     assert np.allclose(restart_net_charge_density,
                        original_net_charge_density, rtol=0.1)
 
+
 def test_checkpoints_fluxdiag():
 
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from mewarpx.mwxrun import mwxrun
-    from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
     from mewarpx.diags_store.flux_diagnostic import FluxDiagFromFile
     from mewarpx.utils_store import testing_util
 

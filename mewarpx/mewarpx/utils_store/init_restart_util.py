@@ -3,36 +3,94 @@ Utility functions to start a run from a checkpoint or restart.
 """
 import os
 import shutil
-import glob
 import logging
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_CHECKPOINT_NAME = "checkpoint"
 
-default_checkpoint_name = "checkpoint"
 
-def clean_old_checkpoints(prefix=default_checkpoint_name, directory="diags",
-                          num_to_keep=0):
-    """
-    Utility function to remove old checkpoints.
+def get_sorted_checkpoints(checkpoint_directory, checkpoint_prefix):
+    """Function to return valid checkpoints for restarting or removing
+    checkpoints.
+
+    Also warns if any checkpoints with .old. exist, which shouldn't in normal
+    workflow.
 
     Arguments:
-        prefix (str): Name of the checkpoint directories.
-        directory (str): Look in this directory for checkpoint directories.
-        num_to_keep (int): Keep this many of the newest checkpoints.
+        checkpoint_directory (str): Look in this directory for checkpoint
+            directories. Default is ``diags``.
+        checkpoint_prefix (str): Look for a checkpoint directory starting
+            with this prefix to restart from.
+    Returns:
+        checkpoint_dirnames (list of str): List of checkpoint directory
+        strings, sorted by timestep from earliest to latest.
+    """
+    if ".old." in checkpoint_prefix:
+        raise RuntimeError(
+            f".old. in checkpoint_prefix {checkpoint_prefix} will break "
+            "restarts."
+        )
+
+    # Warn on checkpoints with old in name
+    # Using next() gives only the first layer of subdirectories
+    checkpoints_old = [
+        f for f in next(os.walk(checkpoint_directory))[1]
+        if ".old." in f and f.startswith(checkpoint_prefix)
+    ]
+    for d in checkpoints_old:
+        logger.warning(
+            f"A stale checkpoint file {d} exists, which is created when "
+            "the same checkpoint step is saved again. Please inspect run "
+            "history manually."
+        )
+
+    # Get list of valid checkpoints
+    checkpoints = [
+        f for f in next(os.walk(checkpoint_directory))[1]
+        if ".old." not in f and f.startswith(checkpoint_prefix)
+    ]
+
+    # Naturally sort checkpoints by extracting step number and converting to
+    # int
+    checkpoints = sorted(
+        checkpoints, key=lambda fname: int(fname.strip(checkpoint_prefix))
+    )
+    return checkpoints
+
+
+def clean_old_checkpoints(checkpoint_directory="diags",
+                          checkpoint_prefix=DEFAULT_CHECKPOINT_NAME,
+                          num_to_keep=1):
+    """Utility function to remove old checkpoints.
+
+    Arguments:
+        checkpoint_directory (str): Look in this directory for checkpoint
+            directories. Default is ``diags``.
+        checkpoint_prefix (str): Look for a checkpoint directory starting
+            with this prefix to restart from.
+        num_to_keep (int): Keep this many of the newest checkpoints. Default 1.
     """
     # handle the case where num_to_keep is 0 or None
     if not num_to_keep:
         num_to_keep = None
     else:
         num_to_keep *= -1
-    checkpoints = sorted(glob.glob(os.path.join(directory, f"{prefix}*")))
+
+    # Handle potentially good checkpoints
+    checkpoints = get_sorted_checkpoints(
+        checkpoint_directory=checkpoint_directory,
+        checkpoint_prefix=checkpoint_prefix
+    )
+
     for d in checkpoints[:num_to_keep]:
-        logger.info(f"Removing old checkpoint file {d}")
-        shutil.rmtree(d)
+        dirpath = os.path.join(checkpoint_directory, d)
+        logger.info(f"Removing old checkpoint file {dirpath}")
+        shutil.rmtree(dirpath)
+
 
 def run_restart(checkpoint_directory="diags",
-                checkpoint_prefix=default_checkpoint_name,
+                checkpoint_prefix=DEFAULT_CHECKPOINT_NAME,
                 force=False, additional_steps=None):
     """Attempts to restart a run by looking for checkpoint files
     starting with a prefix in the given directory.
@@ -66,14 +124,10 @@ def run_restart(checkpoint_directory="diags",
             logger.warning(f"{checkpoint_directory} directory does not exist!")
             return False, None, None
 
-    # using next() gives only the first layer of subdirectories
-    checkpoints = [f for f in next(os.walk(checkpoint_directory))[1]
-        if "old" not in f and f.startswith(checkpoint_prefix)]
-
-    # naturally sort checkpoints by extracting step number and converting to int
-    checkpoints = sorted(
-        checkpoints, key=lambda fname: int(fname.strip(checkpoint_prefix))
-        )
+    checkpoints = get_sorted_checkpoints(
+        checkpoint_directory=checkpoint_directory,
+        checkpoint_prefix=checkpoint_prefix
+    )
 
     if not checkpoints:
         if force:

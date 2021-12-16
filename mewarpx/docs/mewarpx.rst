@@ -22,6 +22,14 @@ mewarpx.assemblies module
    :undoc-members:
    :show-inheritance:
 
+mewarpx.diags module
+--------------------
+
+.. automodule:: mewarpx.diags
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 mewarpx.emission module
 -----------------------
 

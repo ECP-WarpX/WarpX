@@ -21,13 +21,18 @@ SETUP order:
     - Initialize any other mewarpx objects
     - Perform run with ``sim.step()``
 """
-import ctypes
-import numpy as np
-import logging
 import atexit
+import ctypes
+import datetime
+import logging
 import os.path
+import sys
+
+import numpy as np
 
 from pywarpx import _libwarpx, picmi, fields
+
+import mewarpx
 from mewarpx.utils_store import mwxconstants as constants
 from mewarpx.utils_store import parallel_util
 from mewarpx.utils_store import profileparser, init_restart_util
@@ -145,7 +150,7 @@ class MEWarpXRun(object):
         return self.dt
 
     def init_run(self, restart=None, checkpoint_dir="diags",
-                 checkpoint_prefix=init_restart_util.default_checkpoint_name,
+                 checkpoint_prefix=init_restart_util.DEFAULT_CHECKPOINT_NAME,
                  additional_steps=None):
         if self.initialized:
             raise RuntimeError(
@@ -170,8 +175,8 @@ class MEWarpXRun(object):
             self.n_procs = _libwarpx.libwarpx.warpx_getNProcs()
 
             # A level is needed for many things like level number. For now I'm
-            # statically setting the default level here. I'm not sure of pitfalls
-            # or how to handle it more generally yet.
+            # statically setting the default level here. I'm not sure of
+            # pitfalls or how to handle it more generally yet.
             self.lev = _libwarpx.libwarpx.warpx_finestLevel()
 
             self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
@@ -191,6 +196,18 @@ class MEWarpXRun(object):
             else:
                 logger.error("There was an error initializing the run!")
             raise
+
+        else:
+            logger.info(
+                "Successfully initialized WarpX at "
+                f"{str(datetime.datetime.now(datetime.timezone.utc))} UTC "
+                f"({str(datetime.datetime.now())} local). mewarpx version = "
+                f"{mewarpx.__version__} and physics version = "
+                f"{mewarpx.__physics_version__}."
+            )
+
+        # Ensure all initialization info printed before run starts
+        sys.stdout.flush()
 
     def _set_geom_str(self):
         """Set the geom_str variable corresponding to the geometry used.
@@ -287,9 +304,9 @@ class MEWarpXRun(object):
             self.simulation.step(self.step_interval)
 
     def get_domain_area(self):
-        """Return float of simulation domain area in X & Y directions or R depending
-        on geometry. Used to get the surface area over which current is emitted or
-        absorbed."""
+        """Return float of simulation domain area in X & Y directions or R
+        depending on geometry. Used to get the surface area over which current
+        is emitted or absorbed."""
         pos_lims = [mwxrun.xmin, mwxrun.xmax,
                     mwxrun.zmin, mwxrun.zmax]
 
@@ -299,7 +316,9 @@ class MEWarpXRun(object):
             return ((pos_lims[1] - pos_lims[0]) * (pos_lims[3] - pos_lims[2]))
         else:
             # TODO: implement RZ when needed
-            raise NotImplementedError("get_domain_area not implemented for RZ geometry")
+            raise NotImplementedError(
+                "get_domain_area not implemented for RZ geometry"
+            )
 
     def get_it(self):
         """Return the current integer iteration number."""
@@ -402,7 +421,8 @@ class MEWarpXRun(object):
         else:
             return expr
 
-    def move_particles_between_species(self, src_species_name, dst_species_name):
+    def move_particles_between_species(self, src_species_name,
+                                       dst_species_name):
         """Function to move particles from one particle container to another.
         Particles will be removed from the source particle container.
 
@@ -429,7 +449,9 @@ class MEWarpXRun(object):
             ctypes.c_char_p(species_name.encode('utf-8')), pre_fac, self.lev
         )
 
+
 mwxrun = MEWarpXRun()
+
 
 @atexit.register
 def exit_handler():

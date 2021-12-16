@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class CheckPointDiagnostic(WarpXDiagnostic):
     def __init__(self, diag_steps,
-                 name=init_restart_util.default_checkpoint_name,
+                 name=init_restart_util.DEFAULT_CHECKPOINT_NAME,
                  clear_old_checkpoints=True, **kwargs):
         """
         This class is a wrapper for creating checkpoints from which
@@ -75,7 +75,8 @@ class CheckPointDiagnostic(WarpXDiagnostic):
             return
 
         # Copy flux diagnostics, if present, to load when restarting.
-        if (self.flux_diag is not None
+        if (
+            self.flux_diag is not None
             and self.flux_diag.last_run_step == mwxrun.get_it() - 1
         ):
             if self.flux_diag.overwrite:
@@ -106,5 +107,5 @@ class CheckPointDiagnostic(WarpXDiagnostic):
 
         if self.clear_old_checkpoints:
             init_restart_util.clean_old_checkpoints(
-                prefix=self.name, num_to_keep=1
+                checkpoint_prefix=self.name, num_to_keep=1
             )
