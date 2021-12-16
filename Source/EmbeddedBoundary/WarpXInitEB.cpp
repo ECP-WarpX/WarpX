@@ -59,7 +59,7 @@ namespace {
         AMREX_GPU_HOST_DEVICE inline
         amrex::Real operator() (AMREX_D_DECL(amrex::Real x, amrex::Real y,
                                              amrex::Real z)) const noexcept {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             return m_parser(x,amrex::Real(0.0),y);
 #else
             return m_parser(x,y,z);
