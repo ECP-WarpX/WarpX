@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-
-from pywarpx import picmi, _libwarpx, fields
 import numpy as np
+import pywarpx
+from pywarpx import picmi, fields
 
 max_steps = 1
 unit = 1e-3
@@ -84,10 +84,10 @@ sim.initialize_inputs()
 
 sim.step(1)
 
-print("======== Testing _libwarpx.get_mesh_edge_lengths =========")
+print("======== Testing pywarpx.get_mesh_edge_lengths =========")
 
-ly_slice_x = np.array(_libwarpx.get_mesh_edge_lengths(0,1,include_ghosts=False)[0])[int(nx/2),:,:]
-lz_slice_x = np.array(_libwarpx.get_mesh_edge_lengths(0,2,include_ghosts=False)[0])[int(nx/2),:,:]
+ly_slice_x = np.array(pywarpx.get_mesh_edge_lengths(0,1,include_ghosts=False)[0])[int(nx/2),:,:]
+lz_slice_x = np.array(pywarpx.get_mesh_edge_lengths(0,2,include_ghosts=False)[0])[int(nx/2),:,:]
 
 n_edge_y_lo = int((ny - 30)/2)
 n_edge_y_hi = int(ny - (ny - 30)/2)
@@ -105,8 +105,8 @@ print("Perimeter of the middle x-slice:", perimeter_slice_x)
 assert np.isclose(perimeter_slice_x, perimeter_slice_x_true, rtol=1e-05, atol=1e-08)
 
 
-lx_slice_y = np.array(_libwarpx.get_mesh_edge_lengths(0,0,include_ghosts=False)[0])[:,int(ny/2),:]
-lz_slice_y = np.array(_libwarpx.get_mesh_edge_lengths(0,2,include_ghosts=False)[0])[:,int(ny/2),:]
+lx_slice_y = np.array(pywarpx.get_mesh_edge_lengths(0,0,include_ghosts=False)[0])[:,int(ny/2),:]
+lz_slice_y = np.array(pywarpx.get_mesh_edge_lengths(0,2,include_ghosts=False)[0])[:,int(ny/2),:]
 
 n_edge_x_lo = int((nx - 30)/2)
 n_edge_x_hi = int(nx - (nx - 30)/2)
@@ -125,8 +125,8 @@ print("Perimeter of the middle y-slice:", perimeter_slice_y)
 assert np.isclose(perimeter_slice_y, perimeter_slice_y_true, rtol=1e-05, atol=1e-08)
 
 
-lx_slice_z = np.array(_libwarpx.get_mesh_edge_lengths(0,0,include_ghosts=False)[0])[:,:,int(nz/2)]
-ly_slice_z = np.array(_libwarpx.get_mesh_edge_lengths(0,1,include_ghosts=False)[0])[:,:,int(nz/2)]
+lx_slice_z = np.array(pywarpx.get_mesh_edge_lengths(0,0,include_ghosts=False)[0])[:,:,int(nz/2)]
+ly_slice_z = np.array(pywarpx.get_mesh_edge_lengths(0,1,include_ghosts=False)[0])[:,:,int(nz/2)]
 
 n_edge_x_lo = int((nx - 30)/2)
 n_edge_x_hi = int(nx - (nx - 30)/2)
@@ -143,9 +143,9 @@ perimeter_slice_z_true = L_cavity*4
 print("Perimeter of the middle z-slice:", perimeter_slice_z)
 assert np.isclose(perimeter_slice_z, perimeter_slice_z_true, rtol=1e-05, atol=1e-08)
 
-print("======== Testing _libwarpx.get_mesh_face_areas =========")
+print("======== Testing pywarpx.get_mesh_face_areas =========")
 
-Sx_slice = np.sum(np.array(_libwarpx.get_mesh_face_areas(0,0,include_ghosts=False)[0])[int(nx/2),:,:])
+Sx_slice = np.sum(np.array(pywarpx.get_mesh_face_areas(0,0,include_ghosts=False)[0])[int(nx/2),:,:])
 dx = (xmax-xmin)/nx
 Ax = dx*dx
 Sx_slice_true = L_cavity*L_cavity - 2*Ax
@@ -153,7 +153,7 @@ print("Area of the middle x-slice:", Sx_slice)
 assert np.isclose(Sx_slice, Sx_slice_true, rtol=1e-05, atol=1e-08)
 
 
-Sy_slice = np.sum(np.array(_libwarpx.get_mesh_face_areas(0,1,include_ghosts=False)[0])[:,int(ny/2),:])
+Sy_slice = np.sum(np.array(pywarpx.get_mesh_face_areas(0,1,include_ghosts=False)[0])[:,int(ny/2),:])
 dy = (ymax-ymin)/ny
 Ay = dy*dy
 Sy_slice_true = L_cavity*L_cavity - 2*Ay
@@ -161,7 +161,7 @@ print("Area of the middle y-slice:", Sx_slice)
 assert np.isclose(Sy_slice, Sy_slice_true, rtol=1e-05, atol=1e-08)
 
 
-Sz_slice = np.sum(np.array(_libwarpx.get_mesh_face_areas(0,2,include_ghosts=False)[0])[:,:,int(nz/2)])
+Sz_slice = np.sum(np.array(pywarpx.get_mesh_face_areas(0,2,include_ghosts=False)[0])[:,:,int(nz/2)])
 dz = (zmax-zmin)/nz
 Az = dz*dz
 Sz_slice_true = L_cavity*L_cavity - 2*Az
