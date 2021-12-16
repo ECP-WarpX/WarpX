@@ -93,8 +93,8 @@ struct ParserFilter
 {
     /** constructor
      * \param a_is_active whether the test is active
-     * \param a_filter_parser ...?
-     * \param a_mass ...?
+     * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, and returning a value > 0.5 for selected particle
+     * \param a_mass mass of the particle species
      */
     ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
                  amrex::Real a_mass)
