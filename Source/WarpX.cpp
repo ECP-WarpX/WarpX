@@ -464,6 +464,9 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 void
 WarpX::ReadParameters ()
 {
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
+
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         queryWithParser(pp, "max_step", max_step);
