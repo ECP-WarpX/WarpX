@@ -120,7 +120,7 @@ def generate():
         f.write("amr.blocking_factor = 8\n")
         f.write("amr.max_grid_size = 8\n")
         f.write("amr.plot_int = 1\n")
-        f.write("geometry.coord_sys   = 0\n")
+        f.write("geometry.dims = 3\n")
         f.write("boundary.field_lo = periodic periodic periodic\n")
         f.write("boundary.field_hi = periodic periodic periodic\n")
         f.write("geometry.prob_lo = -0.5e-6 -0.5e-6 -0.5e-6\n")

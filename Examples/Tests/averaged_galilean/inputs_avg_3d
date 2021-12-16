@@ -10,9 +10,9 @@ amr.max_level = 0
 psatd.v_galilean = 0. 0. 0.99498743710662
 psatd.do_time_averaging  = 1
 
-geometry.coord_sys   = 0
-geometry.prob_lo     = -5. -5. -15.
-geometry.prob_hi     = 5. 5. 15.
+geometry.dims = 3
+geometry.prob_lo = -5. -5. -15.
+geometry.prob_hi = 5. 5. 15.
 
 #################################
 ###### Boundary Condition #######
