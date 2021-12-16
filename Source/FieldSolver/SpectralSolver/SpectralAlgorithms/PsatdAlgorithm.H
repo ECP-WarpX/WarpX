@@ -112,6 +112,19 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Real dt);
 
         /**
+         * \brief Initializes additional coefficients used in \c pushSpectralFields to update the E and B fields,
+         *        required only when using the multi-J algorithm
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
+         * \param[in] dt time step of the simulation
+         */
+        void InitializeSpectralCoefficientsMultiJ (
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm,
+            const amrex::Real dt);
+
+        /**
          * \brief Virtual function for current correction in Fourier space
          * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
          * This function overrides the virtual function \c CurrentCorrection in the
@@ -154,6 +167,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
         SpectralComplexCoefficients X5_coef, X6_coef;
+
+        // These real coefficients are allocated only with the multi-J algorithm
+        SpectralRealCoefficients X7_coef;
+        SpectralRealCoefficients X8_coef;
+        SpectralRealCoefficients X9_coef;
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;

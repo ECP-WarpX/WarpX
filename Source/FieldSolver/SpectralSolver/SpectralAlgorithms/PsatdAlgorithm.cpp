@@ -83,6 +83,14 @@ PsatdAlgorithm::PsatdAlgorithm(
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
+    if (do_multi_J)
+    {
+        X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        X8_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        X9_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        InitializeSpectralCoefficientsMultiJ(spectral_kspace, dm, dt);
+    }
+
     // Allocate these coefficients only with time averaging
     if (time_averaging && !do_multi_J)
     {
@@ -95,7 +103,7 @@ PsatdAlgorithm::PsatdAlgorithm(
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
     // Allocate these coefficients only with time averaging
-    // and with the assumption that J is linear in time
+    // and with the assumption that J is linear in time (always with multi-J algorithm)
     else if (time_averaging && do_multi_J)
     {
         X5_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
@@ -179,6 +187,16 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         {
             X5_arr = X5_coef[mfi].array();
             X6_arr = X6_coef[mfi].array();
+        }
+
+        amrex::Array4<const amrex::Real> X7_arr;
+        amrex::Array4<const amrex::Real> X8_arr;
+        amrex::Array4<const amrex::Real> X9_arr;
+        if (do_multi_J)
+        {
+            X7_arr = X7_coef[mfi].array();
+            X8_arr = X8_coef[mfi].array();
+            X9_arr = X9_coef[mfi].array();
         }
 
         // Extract pointers for the k vectors
@@ -322,13 +340,27 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             if (do_multi_J)
             {
+                const amrex::Real X7 = X7_arr(i,j,k);
+                const amrex::Real X8 = X8_arr(i,j,k);
+                const amrex::Real X9 = X9_arr(i,j,k);
+
+                const Complex rho_mid = fields(i,j,k,Idx.rho_mid);
                 const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
                 const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
                 const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
 
-                fields(i,j,k,Idx.Ex) += -X1 * (Jx_new - Jx) / dt;
-                fields(i,j,k,Idx.Ey) += -X1 * (Jy_new - Jy) / dt;
-                fields(i,j,k,Idx.Ez) += -X1 * (Jz_new - Jz) / dt;
+                fields(i,j,k,Idx.Ex) += -X1 * ((Jx_new - Jx) / dt + I * c2 * rho_mid * kx)
+                    - I * c2 / ep0 * X7 * rho_new * kx
+                    + I * c2 / ep0 * X8 * rho_old * kx
+                    - I * c2 / ep0 * X9 * rho_mid * kx;
+                fields(i,j,k,Idx.Ey) += -X1 * ((Jy_new - Jy) / dt + I * c2 * rho_mid * ky)
+                    - I * c2 / ep0 * X7 * rho_new * ky
+                    + I * c2 / ep0 * X8 * rho_old * ky
+                    - I * c2 / ep0 * X9 * rho_mid * ky;
+                fields(i,j,k,Idx.Ez) += -X1 * ((Jz_new - Jz) / dt + I * c2 * rho_mid * kz)
+                    - I * c2 / ep0 * X7 * rho_new * kz
+                    + I * c2 / ep0 * X8 * rho_old * kz
+                    - I * c2 / ep0 * X9 * rho_mid * kz;
 
                 fields(i,j,k,Idx.Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
                 fields(i,j,k,Idx.By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
@@ -887,6 +919,91 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAvgLin (
             else
             {
                 X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+            }
+        });
+    }
+}
+
+void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
+    const SpectralKSpace& spectral_kspace,
+    const amrex::DistributionMapping& dm,
+    const amrex::Real dt)
+{
+    const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
+
+    // Loop over boxes and allocate the corresponding coefficients for each box
+    for (amrex::MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
+    {
+        const amrex::Box& bx = ba[mfi];
+
+        // Extract pointers for the k vectors
+        const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
+#if defined(WARPX_DIM_3D)
+        const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
+#endif
+        const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
+
+        amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
+        amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
+
+        amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
+        amrex::Array4<amrex::Real> X8 = X8_coef[mfi].array();
+        amrex::Array4<amrex::Real> X9 = X9_coef[mfi].array();
+
+        // Loop over indices within one box
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            // Calculate norm of k vector
+            const amrex::Real knorm_s = std::sqrt(
+                std::pow(kx_s[i], 2) +
+#if defined(WARPX_DIM_3D)
+                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
+#else
+                std::pow(kz_s[j], 2));
+#endif
+            // Physical constants and imaginary unit
+            constexpr amrex::Real c = PhysConst::c;
+
+            // Auxiliary coefficients
+            const amrex::Real dt2 = dt * dt;
+            const amrex::Real dt3 = dt * dt2;
+
+            const amrex::Real om_s  = c * knorm_s;
+            const amrex::Real om2_s = om_s * om_s;
+            const amrex::Real om4_s = om2_s * om2_s;
+
+            if (om_s != 0.)
+            {
+                X7(i,j,k) = (om2_s * dt2 * C(i,j,k) + 8._rt * C(i,j,k)
+                            - 2._rt * c * om2_s * dt * S_ck(i,j,k) + 4._rt * c * om_s * S_ck(i,j,k)
+                            + om2_s * dt2 - 8._rt) / (2._rt * om4_s * dt2);
+            }
+            else
+            {
+                X7(i,j,k) = dt2 / 12._rt;
+            }
+
+            if (om_s != 0.)
+            {
+                X8(i,j,k) = (2._rt * om2_s * dt2 * (C(i,j,k) + 1._rt)
+                            - 4._rt * om2_s * dt * S_ck(i,j,k)
+                            + (C(i,j,k) - 1._rt) * (om2_s * dt2 - 8._rt)
+                            - 4._rt * om_s * S_ck(i,j,k) - 2._rt * om2_s * dt2 * S_ck(i,j,k)
+                            + 2._rt * om2_s * dt3) / (2._rt * om4_s * dt2);
+            }
+            else
+            {
+                X8(i,j,k) = dt2 * (2._rt * dt - 7._rt) / 12._rt;
+            }
+
+            if (om_s != 0.)
+            {
+                X9(i,j,k) = ((C(i,j,k) - 1._rt) * (om2_s * dt2 - 8._rt) - 4._rt * om_s * S_ck(i,j,k))
+                            / (om4_s * dt2);
+            }
+            else
+            {
+                X9(i,j,k) = -5._rt * dt2 / 6._rt;
             }
         });
     }
