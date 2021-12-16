@@ -568,6 +568,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                                               {max_guard_EB, max_guard_EB, max_guard_EB},
                                               amrex::EBSupport::full);
 #else
+    amrex::ignore_unused(max_guard_EB);
     pml_field_factory = std::make_unique<FArrayBoxFactory>();
 #endif
 
