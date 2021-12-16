@@ -38,6 +38,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ and cannot be overridden by further
          * derived classes.
          *
+         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
@@ -55,6 +56,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ and cannot be overridden by further
          * derived classes.
          *
+         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density

@@ -420,7 +420,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  * \tparam depos_order         deposition order
  * \tparam lower_in_v          lower shape order in parallel direction (Galerkin)
  * \param getPosition          A functor for returning the particle position.
- * \param getExternalEBField   A functor for assigning the external E and B fields.
+ * \param getExternalEB        A functor for assigning the external E and B fields.
  * \param Exp,Eyp,Ezp          Pointer to array of electric field on particles.
  * \param Bxp,Byp,Bzp          Pointer to array of magnetic field on particles.
  * \param exfab,eyfab,ezfab    Array4 of the electric field, either full array or tile.
