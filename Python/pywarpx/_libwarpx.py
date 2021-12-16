@@ -84,16 +84,16 @@ class LibWarpX():
         # --- The geometry must be setup before the lib warpx shared object can be loaded.
         try:
             _prob_lo = geometry.prob_lo
-            _coord_sys = geometry.coord_sys
+            _dims = geometry.dims
         except AttributeError:
             raise Exception('The shared object could not be loaded. The geometry must be setup before the WarpX shared object can be accessesd. The geometry determines which version of the shared object to load.')
 
-        if _coord_sys == 0:
-            self.geometry_dim = '%dd'%len(_prob_lo)
-        elif _coord_sys == 1:
+        if _dims == 'RZ':
             self.geometry_dim = 'rz'
+        elif (_dims == '1' or _dims == '2' or _dims == '3'):
+            self.geometry_dim = '%dd'%len(_prob_lo)
         else:
-            raise Exception('Undefined coordinate system %d'%_coord_sys)
+            raise Exception('Undefined geometry %d'%_dims)
 
         # this is a plain C/C++ shared library, not a Python module
         if os.name == 'nt':
