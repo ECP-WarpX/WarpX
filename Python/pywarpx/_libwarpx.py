@@ -311,8 +311,10 @@ class LibWarpX():
             dimensions = {'x' : 0, 'z' : 1}
         elif self.geometry_dim == '1d':
             dimensions = {'z' : 0}
+        elif self.geometry_dim == 'rz':
+            dimensions = {'r': 0, 'z': 1}
         else:
-            raise NotImplementedError("RZ is not supported for particle scraping.")
+            raise RuntimeError(f"Unknown simulation geometry: {self.geometry_dim}")
 
         if boundary != 'eb':
             boundary_parts = boundary.split("_")
