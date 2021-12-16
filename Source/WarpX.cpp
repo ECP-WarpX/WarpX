@@ -183,7 +183,6 @@ int WarpX::self_fields_verbosity = 2;
 int WarpX::do_subcycling = 0;
 int WarpX::do_multi_J = 0;
 int WarpX::do_multi_J_n_depositions;
-int WarpX::J_linear_in_time = 0;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -1088,7 +1087,6 @@ WarpX::ReadParameters ()
 
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
-        pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
         if (!fft_periodic_single_box && current_correction)
             amrex::Abort(
@@ -1200,12 +1198,9 @@ WarpX::ReadParameters ()
             {
                 amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
             }
-        }
 
-        if (J_linear_in_time)
-        {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
+                "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1");
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
@@ -2016,7 +2011,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   solver_dt,
                                                   update_with_rho,
                                                   fft_do_time_averaging,
-                                                  J_linear_in_time,
+                                                  do_multi_J,
                                                   do_dive_cleaning,
                                                   do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
@@ -2072,7 +2067,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
-                                                J_linear_in_time,
+                                                do_multi_J,
                                                 do_dive_cleaning,
                                                 do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);

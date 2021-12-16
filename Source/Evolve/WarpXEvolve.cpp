@@ -545,18 +545,14 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDForwardTransformRho(0, 1);
         }
 
-        // 4) Deposit J if needed
-        if (WarpX::J_linear_in_time)
-        {
-            // Deposit J at relative time -dt with time step dt
-            // (dt[0] denotes the time step on mesh refinement level 0)
-            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
-            mypc->DepositCurrent(current, dt[0], -dt[0]);
-            // Filter, exchange boundary, and interpolate across levels
-            SyncCurrent();
-            // Forward FFT of J
-            PSATDForwardTransformJ();
-        }
+        // 4) Deposit J at relative time -dt with time step dt
+        //    (dt[0] denotes the time step on mesh refinement level 0)
+        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+        mypc->DepositCurrent(current, dt[0], -dt[0]);
+        // Filter, exchange boundary, and interpolate across levels
+        SyncCurrent();
+        // Forward FFT of J
+        PSATDForwardTransformJ();
 
         // Number of depositions for multi-J scheme
         const int n_depose = WarpX::do_multi_J_n_depositions;
@@ -573,15 +569,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDMoveRhoNewToRhoOld();
 
             // Move J deposited previously, from new to old
-            // (when using assumption of J linear in time)
-            if (WarpX::J_linear_in_time) PSATDMoveJNewToJOld();
+            PSATDMoveJNewToJOld();
 
-            const amrex::Real t_depose = (WarpX::J_linear_in_time) ?
-                (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5)*sub_dt;
+            const amrex::Real t_depose = (i_depose-n_depose+1)*sub_dt;
 
             // Deposit new J at relative time t_depose with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
             mypc->DepositCurrent(current, dt[0], t_depose);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();

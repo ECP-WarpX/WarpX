@@ -39,7 +39,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     const amrex::Real dt,
     const bool update_with_rho,
     const bool time_averaging,
-    const bool J_linear_in_time,
+    const bool do_multi_J,
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
@@ -59,7 +59,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     m_dt(dt),
     m_update_with_rho(update_with_rho),
     m_time_averaging(time_averaging),
-    m_J_linear_in_time(J_linear_in_time),
+    m_do_multi_J(do_multi_J),
     m_dive_cleaning(dive_cleaning),
     m_divb_cleaning(divb_cleaning)
 {
@@ -84,7 +84,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
     // Allocate these coefficients only with time averaging
-    if (time_averaging && !J_linear_in_time)
+    if (time_averaging && !do_multi_J)
     {
         Psi1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         Psi2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
@@ -96,7 +96,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     }
     // Allocate these coefficients only with time averaging
     // and with the assumption that J is linear in time
-    else if (time_averaging && J_linear_in_time)
+    else if (time_averaging && do_multi_J)
     {
         X5_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
         X6_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
@@ -123,7 +123,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool update_with_rho  = m_update_with_rho;
     const bool time_averaging   = m_time_averaging;
-    const bool J_linear_in_time = m_J_linear_in_time;
+    const bool do_multi_J = m_do_multi_J;
     const bool dive_cleaning    = m_dive_cleaning;
     const bool divb_cleaning    = m_divb_cleaning;
     const bool is_galilean      = m_is_galilean;
@@ -163,7 +163,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         amrex::Array4<const Complex> Y3_arr;
         amrex::Array4<const Complex> Y4_arr;
 
-        if (time_averaging && !J_linear_in_time)
+        if (time_averaging && !do_multi_J)
         {
             Psi1_arr = Psi1_coef[mfi].array();
             Psi2_arr = Psi2_coef[mfi].array();
@@ -175,7 +175,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
         Array4<const Complex> X5_arr;
         Array4<const Complex> X6_arr;
-        if (time_averaging && J_linear_in_time)
+        if (time_averaging && do_multi_J)
         {
             X5_arr = X5_coef[mfi].array();
             X6_arr = X6_coef[mfi].array();
@@ -320,7 +320,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 fields(i,j,k,Idx.G) = C * G_old + I * c2 * S_ck * k_dot_B;
             }
 
-            if (J_linear_in_time)
+            if (do_multi_J)
             {
                 const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
                 const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
@@ -391,7 +391,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             }
 
             // Additional update equations for averaged Galilean algorithm
-            if (time_averaging && !J_linear_in_time)
+            if (time_averaging && !do_multi_J)
             {
                 // These coefficients are initialized in the function InitializeSpectralCoefficients below
                 const Complex Psi1 = Psi1_arr(i,j,k);

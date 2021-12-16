@@ -477,7 +477,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
-          const bool J_linear_in_time,
+          const bool do_multi_J,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
           int max_guard_EB,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
@@ -669,7 +669,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
-        amrex::ignore_unused(lev, dt, J_linear_in_time);
+        amrex::ignore_unused(lev, dt, do_multi_J);
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
 #   endif
@@ -690,7 +690,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
-            fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+            fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
     }
 
@@ -808,7 +808,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
-                fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+                fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
         }
     }
