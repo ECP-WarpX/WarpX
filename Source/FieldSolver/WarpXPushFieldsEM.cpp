@@ -317,6 +317,22 @@ WarpX::PSATDPushSpectralFields ()
 }
 
 void
+WarpX::PSATDMoveRhoNewToRhoMid ()
+{
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.rho_new, Idx.rho_mid);
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.rho_new, Idx.rho_mid);
+        }
+    }
+}
+
+void
 WarpX::PSATDMoveRhoNewToRhoOld ()
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;

@@ -86,7 +86,8 @@ class SpectralFieldIndex
     int Ex_avg = -1, Ey_avg = -1, Ez_avg = -1;
     int Bx_avg = -1, By_avg = -1, Bz_avg = -1;
 
-    // J linear in time
+    // Multi-J, div(E) and div(B) cleaning
+    int rho_mid = -1;
     int Jx_new = -1, Jy_new = -1, Jz_new = -1;
     int F = -1, G = -1;
 

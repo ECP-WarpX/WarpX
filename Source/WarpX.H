@@ -1351,6 +1351,11 @@ private:
     void PSATDForwardTransformRho (const int icomp, const int dcomp);
 
     /**
+     * \brief Copy rho_new to rho_mid in spectral space
+     */
+    void PSATDMoveRhoNewToRhoMid ();
+
+    /**
      * \brief Copy rho_new to rho_old in spectral space
      */
     void PSATDMoveRhoNewToRhoOld ();

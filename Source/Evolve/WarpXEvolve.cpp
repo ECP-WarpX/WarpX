@@ -565,9 +565,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Loop over multi-J depositions
         for (int i_depose = 0; i_depose < n_loop; i_depose++)
         {
-            // Move rho deposited previously, from new to old
-            PSATDMoveRhoNewToRhoOld();
-
             // Move J deposited previously, from new to old
             PSATDMoveJNewToJOld();
 
@@ -581,11 +578,24 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Forward FFT of J
             PSATDForwardTransformJ();
 
-            // Deposit new rho
+            // Deposit mid rho and new rho
             if (WarpX::update_with_rho)
             {
-                // Deposit rho at relative time (i_depose-n_depose+1)*sub_dt
-                mypc->DepositCharge(rho_fp, (i_depose-n_depose+1)*sub_dt);
+                // Move rho deposited previously, from new to old
+                PSATDMoveRhoNewToRhoOld();
+
+                // Deposit rho at relative time t_depose - 0.5 * sub_dt
+                mypc->DepositCharge(rho_fp, t_depose - 0.5 * sub_dt);
+                // Filter, exchange boundary, and interpolate across levels
+                SyncRho();
+                // Forward FFT of rho_new
+                PSATDForwardTransformRho(0, 1);
+
+                // Move rho deposited previously, from new to mid
+                PSATDMoveRhoNewToRhoMid();
+
+                // Deposit rho at relative time t_depose
+                mypc->DepositCharge(rho_fp, t_depose);
                 // Filter, exchange boundary, and interpolate across levels
                 SyncRho();
                 // Forward FFT of rho_new
