@@ -610,6 +610,13 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     pml_face_areas[2] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, ngb );
 
+    pml_edge_lengths[0]->setVal(1.0);
+    pml_edge_lengths[1]->setVal(1.0);
+    pml_edge_lengths[2]->setVal(1.0);
+    pml_face_areas[0]->setVal(1.0);
+    pml_face_areas[1]->setVal(1.0);
+    pml_face_areas[2]->setVal(1.0);
+
     pml_j_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect() ), dm, 1, ngb );
     pml_j_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
