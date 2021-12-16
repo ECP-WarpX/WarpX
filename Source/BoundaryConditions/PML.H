@@ -117,6 +117,7 @@ public:
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
          const bool J_linear_in_time,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+         int max_guard_EB,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 

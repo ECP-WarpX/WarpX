@@ -479,6 +479,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
           const bool J_linear_in_time,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+          int max_guard_EB,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
       m_divb_cleaning(do_pml_divb_cleaning),
@@ -563,9 +564,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     }
 
 #ifdef AMREX_USE_EB
-    int max_guard = 2;
     pml_field_factory = amrex::makeEBFabFactory(*geom, ba, dm,
-                                              {max_guard, max_guard, max_guard},
+                                              {max_guard_EB, max_guard_EB, max_guard_EB},
                                               amrex::EBSupport::full);
 #else
     pml_field_factory = std::make_unique<FArrayBoxFactory>();
