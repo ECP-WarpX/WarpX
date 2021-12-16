@@ -8,7 +8,7 @@ geometry.prob_lo     = -0.8 -0.8
 geometry.prob_hi     =  0.8  0.8
 warpx.cfl = 1
 
-boundary.field_lo = pml pml
+boundary.field_lo = pec pec
 boundary.field_hi = pec pec
 
 algo.maxwell_solver = ect
@@ -20,7 +20,7 @@ my_constants.zmax = 0.53
 my_constants.pi = 3.141592653589793
 my_constants.theta = pi/8
 
-warpx.eb_implicit_function = "x" #"xr=x*cos(-theta)+z*sin(-theta); zr=-x*sin(-theta)+z*cos(-theta); max(max(xr+xmin,-(xr+xmax)), max(zr+zmin,-(zr+zmax)))"
+warpx.eb_implicit_function = "xr=x*cos(-theta)+z*sin(-theta); zr=-x*sin(-theta)+z*cos(-theta); max(max(xr+xmin,-(xr+xmax)), max(zr+zmin,-(zr+zmax)))"
 
 my_constants.m = 0
 my_constants.p = 1
