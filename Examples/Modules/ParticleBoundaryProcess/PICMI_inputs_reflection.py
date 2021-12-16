@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Input file to test particle reflection off an absorbing boundary
 
 from pywarpx import picmi
