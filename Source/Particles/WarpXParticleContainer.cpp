@@ -9,7 +9,7 @@
  */
 #include "WarpXParticleContainer.H"
 
-#include "ABLASTR/DepositCharge.H"
+#include "ablastr/particles/DepositCharge.H"
 #include "Deposition/ChargeDeposition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
@@ -648,7 +648,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
         amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
-        ablastr::DepositCharge<WarpXParticleContainer>
+        ablastr::particles::deposit_charge<WarpXParticleContainer>
             (pti, wp, ion_lev, rho, icomp, nc, offset, np_to_depose,
              local_rho[thread_num], lev, depos_lev, this->charge,
              WarpX::nox, WarpX::noy, WarpX::noz, ng_rho, dx, xyzmin, ref_ratio,
