@@ -190,9 +190,6 @@ public:
 
     ~PML () = default;
 
-public:
-  void print_pml();
-
 private:
     bool m_ok;
 
