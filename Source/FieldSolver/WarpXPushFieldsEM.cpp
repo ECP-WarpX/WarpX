@@ -236,9 +236,9 @@ WarpX::PSATDForwardTransformJ ()
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
-    const int idx_jx = static_cast<int>(Idx.Jx_new);
-    const int idx_jy = static_cast<int>(Idx.Jy_new);
-    const int idx_jz = static_cast<int>(Idx.Jz_new);
+    const int idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+    const int idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+    const int idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
