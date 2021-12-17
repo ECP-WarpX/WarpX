@@ -227,7 +227,7 @@ namespace detail
         //vs const axisLabels{"r", "z"};
         // if we just write reconstructed 2D fields at theta=0
         vs const axisLabels{"x", "z"};
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
         vs const axisLabels{"x", "y", "z"};
 #else
 #   error Unknown WarpX dimensionality.
@@ -607,7 +607,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 #if AMREX_SPACEDIM>=2
           double(WarpX::nox),
 #endif
-#if AMREX_SPACEDIM==3
+#if defined(WARPX_DIM_3D)
           double(WarpX::noy),
 #endif
           double(WarpX::noz)
@@ -986,12 +986,12 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
 #if (AMREX_SPACEDIM >= 2)
               ss << ";numPasses_x=" << WarpX::filter_npass_each_dir[0];
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
               ss << ";numPasses_y=" << WarpX::filter_npass_each_dir[1];
               ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[2];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
               ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
               ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[0];
 #endif
               std::string currentSmoothingParameters = ss.str();

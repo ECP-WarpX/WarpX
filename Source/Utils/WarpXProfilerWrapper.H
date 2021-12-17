@@ -9,7 +9,7 @@
 #define WARPX_PROFILERWRAPPER_H_
 
 #include "WarpX.H"
-#include "ABLASTR/ProfilerWrapper.H"
+#include "ablastr/profiler/ProfilerWrapper.H"
 
 
 // `BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__)` and `SYNC_V_##vname` used to make unique names for
