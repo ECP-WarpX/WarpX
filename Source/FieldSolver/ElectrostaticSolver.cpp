@@ -288,7 +288,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
 #ifndef AMREX_USE_EB
 
     // Define the linear operator (Poisson operator)
-    MLNodeLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
+    MLEBNodeFDLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
 
 #else
 
