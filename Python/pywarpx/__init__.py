@@ -4,7 +4,6 @@
 #
 # License: BSD-3-Clause-LBNL
 
-from ._libwarpx import *  # noqa  # isort: skip
 from .Algo import algo
 from .Amr import amr
 from .Boundary import boundary

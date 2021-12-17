@@ -20,7 +20,6 @@ import glob
 import os
 
 import matplotlib
-import numpy as np
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
