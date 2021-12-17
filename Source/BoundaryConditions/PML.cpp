@@ -201,6 +201,7 @@ void SigmaBox::define_single (const Box& regdomain, int ncell,
                    olo, ohi, dlo, fac[idim]);
         }
 
+#if (AMREX_SPACEDIM != 1)
         // Mid
         olo = std::max(slo, dlo);
         ohi = std::min(shi, dhi);
@@ -209,6 +210,7 @@ void SigmaBox::define_single (const Box& regdomain, int ncell,
                      sigma_star[idim], sigma_star_cumsum[idim],
                      olo, ohi);
         }
+#endif
 
         // Hi
         olo = std::max(slo, dhi+1);
