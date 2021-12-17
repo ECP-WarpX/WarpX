@@ -216,6 +216,9 @@ public:
     //! perform field communications in single precision
     static int do_single_precision_comms;
 
+    //! used shared memory algorithm for charge deposition
+    static int do_shared_mem_charge_deposition;
+
     // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
     static amrex::IntVect fill_guards;
 

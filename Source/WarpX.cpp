@@ -121,6 +121,7 @@ bool WarpX::do_divb_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 int WarpX::do_single_precision_comms=0;
+int WarpX::do_shared_mem_charge_deposition=1;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -705,6 +706,7 @@ WarpX::ReadParameters ()
                                " to be 0, since WarpX was built in single precision.");
         }
 #endif
+        pp_warpx.query("do_shared_mem_charge_deposition", do_shared_mem_charge_deposition);
 
         pp_warpx.query("serialize_ics", serialize_ics);
         pp_warpx.query("refine_plasma", refine_plasma);
