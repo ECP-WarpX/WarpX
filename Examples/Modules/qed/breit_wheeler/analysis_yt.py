@@ -9,11 +9,12 @@
 
 import os
 import sys
-import yt
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-import checksumAPI
 
+import yt
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import analysis_core as ac
+import checksumAPI
 
 # This script is a frontend for the analysis routines
 # in analysis_core.py (please refer to this file for

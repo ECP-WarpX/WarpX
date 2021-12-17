@@ -17,13 +17,15 @@
 # - Compare theory and simulation, for both envelope and central frequency
 
 import yt ; yt.funcs.mylog.setLevel(50)
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from scipy.signal import hilbert
 import glob
 import os
+
+import matplotlib.pyplot as plt
+from scipy.signal import hilbert
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.065

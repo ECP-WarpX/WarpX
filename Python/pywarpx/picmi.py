@@ -8,12 +8,13 @@
 
 """Classes following the PICMI standard
 """
-import re
 import os
-import picmistandard
+import re
+
 import numpy as np
-import pywarpx
 import periodictable
+import picmistandard
+import pywarpx
 
 codename = 'warpx'
 picmistandard.register_codename(codename)

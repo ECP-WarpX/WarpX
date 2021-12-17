@@ -7,20 +7,25 @@
 # License: BSD-3-Clause-LBNL
 
 
+import re
 # This is a script that analyses the simulation results from
 # the script `inputs_field_PEC_mr_3d`. This simulates a sinusoindal wave.
 # The electric field (Ey) is a standing wave due to the PEC boundary condition,
 # and as a result, the minimum and maximum value after reflection would be two times the value at initialization due to constructive interference.
 # Additionally, the value of Ey at the boundary must be equal to zero.
 import sys
-import re
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import yt
+
 yt.funcs.mylog.setLevel(50)
-import numpy as np
 import os
+
+import numpy as np
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

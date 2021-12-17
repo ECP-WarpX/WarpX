@@ -5,22 +5,20 @@
 #
 # License: BSD-3-Clause-LBNL
 
-from .Bucket import Bucket
-from .Constants import my_constants
-from .Amr import amr
-from .Geometry import geometry
-from .Boundary import boundary
+from . import Particles, _libwarpx
 from .Algo import algo
-from .Langmuirwave import langmuirwave
-from .Interpolation import interpolation
-from .Lasers import lasers, lasers_list
-from . import Particles
-from .Particles import particles, particles_list
+from .Amr import amr
+from .Boundary import boundary
+from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
-from .PSATD import psatd
+from .Constants import my_constants
 from .Diagnostics import diagnostics
-
-from . import _libwarpx
+from .Geometry import geometry
+from .Interpolation import interpolation
+from .Langmuirwave import langmuirwave
+from .Lasers import lasers, lasers_list
+from .PSATD import psatd
+from .Particles import particles, particles_list
 
 
 class WarpX(Bucket):

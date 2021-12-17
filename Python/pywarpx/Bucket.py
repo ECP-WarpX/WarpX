@@ -7,6 +7,7 @@
 
 import numpy as np
 
+
 class Bucket(object):
     """
     The purpose of this class is to be a named bucket for holding attributes.

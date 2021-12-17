@@ -1,14 +1,14 @@
-import os
-import re
-import sys
-import platform
-import shutil
-import subprocess
-
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
 from distutils.command.build import build
 from distutils.version import LooseVersion
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
+
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 
 class CopyPreBuild(build):

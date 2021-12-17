@@ -4,12 +4,13 @@
 # This simulates a RZ multimode periodic plasma wave.
 # The electric field from the simulation is compared to the analytic value
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pywarpx
-from pywarpx import picmi, fields
+from pywarpx import fields, picmi
 
 constants = picmi.constants
 

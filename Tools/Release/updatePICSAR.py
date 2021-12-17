@@ -11,8 +11,10 @@
 import datetime
 from pathlib import Path
 import re
-import requests
 import sys
+
+import requests
+
 try:
     from configupdater import ConfigUpdater
 except ImportError:
