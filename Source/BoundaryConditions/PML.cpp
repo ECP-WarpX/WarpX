@@ -177,13 +177,13 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
     }
 
     if (regdomain.ok()) { // The union of the regular grids is a single box
-        define_single(box, regdomain, ncell, fac);
+        define_single(regdomain, ncell, fac);
     } else {
         define_multiple(box, grids, ncell, fac);
     }
 }
 
-void SigmaBox::define_single (const Box& box, const Box& regdomain, int ncell,
+void SigmaBox::define_single (const Box& regdomain, int ncell,
                               const Array<Real,AMREX_SPACEDIM>& fac)
 {
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {

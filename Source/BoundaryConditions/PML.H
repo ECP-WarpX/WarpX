@@ -44,7 +44,7 @@ struct SigmaBox
     SigmaBox (const amrex::Box& box, const amrex::BoxArray& grids,
               const amrex::Real* dx, int ncell, int delta, const amrex::Box& regdomain);
 
-    void define_single (const amrex::Box& box, const amrex::Box& regdomain, int ncell,
+    void define_single (const amrex::Box& regdomain, int ncell,
                         const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac);
     void define_multiple (const amrex::Box& box, const amrex::BoxArray& grids, int ncell,
                           const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac);
