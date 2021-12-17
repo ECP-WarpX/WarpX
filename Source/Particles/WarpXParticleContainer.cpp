@@ -423,7 +423,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Take into account Galilean shift
     Real cur_time = warpx.gett_new(lev);
     const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-    Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
+    Real time_shift = (cur_time + 0.5_rt*dt - time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift = {
         m_v_galilean[0]* time_shift,
         m_v_galilean[1]*time_shift,
@@ -827,13 +827,13 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
 
 std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
 
-    amrex::Real vx_total = 0.0;
-    amrex::Real vy_total = 0.0;
-    amrex::Real vz_total = 0.0;
+    amrex::Real vx_total = 0.0_rt;
+    amrex::Real vy_total = 0.0_rt;
+    amrex::Real vz_total = 0.0_rt;
 
     amrex::Long np_total = 0;
 
-    amrex::Real inv_clight_sq = 1.0/PhysConst::c/PhysConst::c;
+    amrex::Real inv_clight_sq = 1.0_rt/PhysConst::c/PhysConst::c;
 
     const int nLevels = finestLevel();
 
@@ -968,7 +968,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            Real wt = static_cast<amrex::Real>(amrex::second());
 
             //
             // Particle Push
@@ -996,7 +996,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*costs)[pti.index()], wt);
             }
         }

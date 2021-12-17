@@ -25,6 +25,7 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
                             amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
                             int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2]) noexcept
 {
+    using namespace amrex::literals;
 #if (defined WARPX_DIM_3D)
     amrex::Real x = (xp - plo[0]) * dxi[0];
     amrex::Real y = (yp - plo[1]) * dxi[1];
@@ -38,9 +39,9 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
     W[1][1] = y - j;
     W[2][1] = z - k;
 
-    W[0][0] = 1.0 - W[0][1];
-    W[1][0] = 1.0 - W[1][1];
-    W[2][0] = 1.0 - W[2][1];
+    W[0][0] = 1.0_rt - W[0][1];
+    W[1][0] = 1.0_rt - W[1][1];
+    W[2][0] = 1.0_rt - W[2][1];
 #elif (defined WARPX_DIM_XZ)
     amrex::Real x = (xp - plo[0]) * dxi[0];
     amrex::Real z = (zp - plo[1]) * dxi[1];
@@ -52,8 +53,8 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
     W[0][1] = x - i;
     W[1][1] = z - j;
 
-    W[0][0] = 1.0 - W[0][1];
-    W[1][0] = 1.0 - W[1][1];
+    W[0][0] = 1.0_rt - W[0][1];
+    W[1][0] = 1.0_rt - W[1][1];
 
     amrex::ignore_unused(yp);
 #else

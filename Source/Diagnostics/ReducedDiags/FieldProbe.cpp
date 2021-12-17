@@ -335,7 +335,7 @@ void FieldProbe::ComputeDiags (int step)
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
                     };
-                    amrex::ParticleReal const S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+                    amrex::ParticleReal const S = (1._prt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
                      * Determine whether or not to integrate field data.

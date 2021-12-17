@@ -785,7 +785,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        Real wt = static_cast<amrex::Real>(amrex::second());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, lev);
@@ -1156,7 +1156,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -1234,7 +1234,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        Real wt = static_cast<amrex::Real>(amrex::second());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
@@ -1549,7 +1549,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -1637,7 +1637,7 @@ PhysicalParticleContainer::Evolve (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            Real wt = static_cast<amrex::Real>(amrex::second());
 
             const Box& box = pti.validbox();
 
@@ -1807,7 +1807,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -2289,7 +2289,7 @@ PhysicalParticleContainer::GetParticleSlice (
                 const long np = pti.numParticles();
 
                 Real uzfrm = -WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
-                Real inv_c2 = 1.0/PhysConst::c/PhysConst::c;
+                Real inv_c2 = 1.0_rt/PhysConst::c/PhysConst::c;
 
                 FlagForPartCopy.resize(np);
                 IndexForPartCopy.resize(np);
@@ -2348,7 +2348,7 @@ PhysicalParticleContainer::GetParticleSlice (
                     if (Flag[i] == 1)
                     {
                          // Lorentz Transform particles to lab-frame
-                         const Real gamma_new_p = std::sqrt(1.0 + inv_c2*
+                         const Real gamma_new_p = std::sqrt(1.0_rt + inv_c2*
                                                   (uxpnew[i]*uxpnew[i]
                                                  + uypnew[i]*uypnew[i]
                                                  + uzpnew[i]*uzpnew[i]));
@@ -2356,7 +2356,7 @@ PhysicalParticleContainer::GetParticleSlice (
                          const Real z_new_p = gammaboost*(zp_new + betaboost*Phys_c*t_boost);
                          const Real uz_new_p = gammaboost*uzpnew[i] - gamma_new_p*uzfrm;
 
-                         const Real gamma_old_p = std::sqrt(1.0 + inv_c2*
+                         const Real gamma_old_p = std::sqrt(1.0_rt + inv_c2*
                                                   (uxpold[i]*uxpold[i]
                                                  + uypold[i]*uypold[i]
                                                  + uzpold[i]*uzpold[i]));
@@ -2666,8 +2666,8 @@ PhysicalParticleContainer::InitIonizationModule ()
         p_adk_power[i] = -(2*n_eff - 1);
         Real Uion = p_ionization_energies[i];
         p_adk_prefactor[i] = dt * wa * C2 * ( Uion/(2*UH) )
-            * std::pow(2*std::pow((Uion/UH),3./2)*Ea,2*n_eff - 1);
-        p_adk_exp_prefactor[i] = -2./3 * std::pow( Uion/UH,3./2) * Ea;
+            * std::pow(2*std::pow((Uion/UH),3._rt/2._rt)*Ea,2*n_eff - 1);
+        p_adk_exp_prefactor[i] = -2._rt/3._rt * std::pow( Uion/UH,3._rt/2._rt) * Ea;
     });
 
     Gpu::synchronize();

@@ -69,13 +69,13 @@ WarpX::Evolve (int numsteps)
 
     bool early_params_checked = false; // check typos in inputs after step 1
 
-    static Real evolve_time = 0;
+    static double evolve_time = 0;
 
     const int step_begin = istep[0];
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
-        Real evolve_time_beg_step = amrex::second();
+        Real evolve_time_beg_step = static_cast<amrex::Real>(amrex::second());
 
         multi_diags->NewIteration();
 
@@ -108,7 +108,7 @@ WarpX::Evolve (int numsteps)
                     // instantaneous costs)
                     for (int i : cost->IndexArray())
                     {
-                        (*cost)[i] *= (1. - 2./load_balance_intervals.localPeriod(step+1));
+                        (*cost)[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
                     }
                 }
             }
@@ -347,7 +347,7 @@ WarpX::Evolve (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        Real evolve_time_end_step = amrex::second();
+        Real evolve_time_end_step = static_cast<amrex::Real>(amrex::second());
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         if (verbose) {

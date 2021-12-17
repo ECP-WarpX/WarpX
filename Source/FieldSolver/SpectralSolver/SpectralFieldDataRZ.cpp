@@ -434,7 +434,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        amrex::Real wt = static_cast<amrex::Real>(amrex::second());
 
         // Perform the Hankel transform first.
         // tempHTransformedSplit includes the imaginary component of mode 0.
@@ -454,7 +454,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -490,7 +490,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        amrex::Real wt = static_cast<amrex::Real>(amrex::second());
 
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
 
@@ -518,7 +518,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -552,7 +552,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        amrex::Real wt = static_cast<amrex::Real>(amrex::second());
 
         amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
@@ -603,7 +603,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -636,7 +636,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        amrex::Real wt = static_cast<amrex::Real>(amrex::second());
 
         amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
@@ -698,7 +698,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -734,7 +734,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        amrex::Real wt = static_cast<amrex::Real>(amrex::second());
 
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
@@ -759,7 +759,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -778,7 +778,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        amrex::Real wt = static_cast<amrex::Real>(amrex::second());
 
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
@@ -807,7 +807,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }

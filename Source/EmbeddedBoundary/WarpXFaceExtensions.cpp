@@ -113,22 +113,24 @@ ComputeSStab(const int i, const int j, const int k,
              const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
              const int dim){
 
+    using namespace amrex::literals;
+
     if(dim == 0) {
-        return 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
-                               lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
+        return 0.5_rt * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
+                                  lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
     }else if(dim == 1){
 #ifdef WARPX_DIM_XZ
-        return 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
-                               lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+        return 0.5_rt * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                                  lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #elif defined(WARPX_DIM_3D)
-        return 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
-                               lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+        return 0.5_rt * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
+                                  lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #else
         amrex::Abort("ComputeSStab: Only implemented in 2D3V and 3D3V");
 #endif
     }else if(dim == 2){
-        return 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
-                               ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
+        return 0.5_rt * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
+                                  ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
     }
 
     amrex::Abort("ComputeSStab: dim must be 0, 1 or 2");
