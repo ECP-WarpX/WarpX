@@ -103,7 +103,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
 #else
     const amrex::IntVect range = rho->nGrowVect() - shape_extent;
 #endif
-#if !defined(AMREX_DEBUG) && !defined(AMREX_USE_ASSERTION)
+#if !(defined(AMREX_DEBUG) || defined(AMREX_USE_ASSERTION))
     amrex::ignore_unused(range);
 #endif
     AMREX_ASSERT_WITH_MESSAGE(
