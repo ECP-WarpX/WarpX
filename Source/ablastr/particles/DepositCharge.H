@@ -104,7 +104,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
     const amrex::IntVect range = rho->nGrowVect() - shape_extent;
 #endif
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    AMREX_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
