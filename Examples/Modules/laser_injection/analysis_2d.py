@@ -21,13 +21,11 @@ import os
 import sys
 
 import matplotlib
-import yt
-
 matplotlib.use('Agg')
-
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+import yt
 from scipy.signal import hilbert
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
