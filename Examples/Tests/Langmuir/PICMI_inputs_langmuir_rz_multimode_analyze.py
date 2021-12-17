@@ -5,10 +5,10 @@
 # The electric field from the simulation is compared to the analytic value
 
 import matplotlib
-import numpy as np
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
 import pywarpx
 from pywarpx import fields, picmi
 

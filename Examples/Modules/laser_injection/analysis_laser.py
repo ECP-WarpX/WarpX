@@ -8,13 +8,12 @@
 # License: BSD-3-Clause-LBNL
 
 
+import os
 import sys
 
 import matplotlib
 
 matplotlib.use('Agg')
-import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 

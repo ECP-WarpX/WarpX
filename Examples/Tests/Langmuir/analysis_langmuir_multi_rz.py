@@ -5,9 +5,7 @@
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-
-
-import re
+#
 # This is a script that analyses the simulation results from
 # the script `inputs.multi.rz.rt`. This simulates a RZ periodic plasma wave.
 # The electric field in the simulation is given (in theory) by:
@@ -15,6 +13,8 @@ import re
 # $$ E_z = -\partial_z \phi = - \epsilon \,\frac{mc^2}{e} k_0 \exp\left(-\frac{r^2}{w_0^2}\right) \cos(k_0 z) \sin(\omega_p t)
 # Unrelated to the Langmuir waves, we also test the plotfile particle filter function in this
 # analysis script.
+import os
+import re
 import sys
 
 import matplotlib
@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 import yt
 
 yt.funcs.mylog.setLevel(50)
-import os
 
 import numpy as np
 import post_processing_utils

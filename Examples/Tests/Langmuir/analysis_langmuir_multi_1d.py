@@ -6,13 +6,12 @@
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-
-
-import re
+#
 # This is a script that analyses the simulation results from
 # the script `inputs.multi.rt`. This simulates a 1D periodic plasma wave.
 # The electric field in the simulation is given (in theory) by:
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\sin(k_z z)\sin( \omega_p t)$$
+import re
 import sys
 
 import matplotlib

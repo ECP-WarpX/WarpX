@@ -11,13 +11,12 @@ This script checks the space-charge initialization routine, by
 verifying that the space-charge field of a Gaussian beam corresponds to
 the expected theoretical field.
 """
+import os
 import sys
 
 import matplotlib
 
 matplotlib.use('Agg')
-import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as scc
