@@ -82,10 +82,6 @@ WarpX::InitEB ()
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
-#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    amrex::Abort("InitEB: Embedded Boundaries are only implemented in 2D3V and 3D3V");
-#endif
-
     amrex::ParmParse pp_warpx("warpx");
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);
