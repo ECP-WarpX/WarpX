@@ -604,12 +604,14 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+        ngFFt_y = 0;
 #elif defined(WARPX_DIM_1D_Z)
-        IntVect ngFFT = IntVect(ngFFt_z);
+        ngFFt_x = 0;
+        ngFFt_y = 0;
 #endif
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 
         // Set the number of guard cells to the maximum of each field
         // (all fields should have the same number of guard cells)
