@@ -17,6 +17,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import yt
 import numpy as np
+import os
 import scipy.constants as scc
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -84,5 +85,5 @@ def check(E, E_th, label):
 
 check( Ex_array, Ex_th, 'Ex' )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, do_particles=False)

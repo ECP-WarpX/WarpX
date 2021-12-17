@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
+import os
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -75,7 +76,7 @@ print("tolerance_rel: " + str(tolerance_rel))
 assert( max_Ey_error_rel < tolerance_rel )
 assert( min_Ey_error_rel < tolerance_rel )
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 if re.search( 'single_precision', fn ):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)

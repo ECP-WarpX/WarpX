@@ -6,7 +6,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
-
+import os
 import sys
 import yt
 yt.funcs.mylog.setLevel(50)
@@ -17,6 +17,6 @@ import checksumAPI
 # Name of the plotfile
 fn = sys.argv[1]
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-4, do_particles=False)

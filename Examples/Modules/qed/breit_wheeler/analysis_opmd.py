@@ -7,7 +7,6 @@
 
 # -*- coding: utf-8 -*-
 
-
 import sys
 import openpmd_api as io
 #sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -64,7 +63,7 @@ def main():
 
     ac.check(dt, particle_data)
 
-    #test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
+    #test_name = os.path.split(os.getcwd())[1]
     #checksumAPI.evaluate_checksum(test_name, filename_end)
 
 if __name__ == "__main__":

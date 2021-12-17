@@ -10,6 +10,7 @@
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
+import os
 import scipy.constants as scc
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -68,5 +69,5 @@ sys.path.insert(0, '../../../../warpx/Examples/')
 from analysis_default_restart import check_restart
 check_restart(filename)
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

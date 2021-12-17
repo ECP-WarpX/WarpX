@@ -14,6 +14,7 @@
 import sys
 import yt
 import numpy as np
+import os
 from scipy.constants import c, m_e, m_p
 from scipy.constants import mu_0 as mu0
 from scipy.constants import epsilon_0 as eps0
@@ -301,5 +302,5 @@ def do_analysis(single_precision = False):
         assert(error[k] < tol)
         print()
 
-    test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, fn)

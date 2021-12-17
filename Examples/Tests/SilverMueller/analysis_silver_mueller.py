@@ -14,6 +14,7 @@ test check that the reflected field at the boundary is negligible.
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
+import os
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -31,5 +32,5 @@ assert np.all( abs(Ex) < max_reflection_amplitude )
 assert np.all( abs(Ey) < max_reflection_amplitude )
 assert np.all( abs(Ez) < max_reflection_amplitude )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

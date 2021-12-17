@@ -31,6 +31,7 @@
 #   (Cambridge University Press, Cambridge, 2004)
 
 import numpy as np
+import os
 import sys
 import yt
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -148,7 +149,7 @@ def check():
 
         assert( error_rel < tolerance_rel )
 
-    test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename)
 
 def generate():
