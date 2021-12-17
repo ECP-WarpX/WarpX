@@ -17,13 +17,13 @@
 # the simulation and it compares it with theory. It also checks that the
 # central frequency of the Fourier transform is the expected one.
 
+import os
 import sys
 
 import matplotlib
 import yt
 
 matplotlib.use('Agg')
-import os
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
