@@ -10,6 +10,7 @@
 
 import yt
 import numpy as np
+import os
 import sys
 import scipy.special as spe
 import scipy.integrate as integ
@@ -297,7 +298,7 @@ def check():
 
         print("*************\n")
 
-    test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
 
 def main():

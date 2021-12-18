@@ -23,6 +23,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 from scipy.signal import hilbert
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -198,7 +199,7 @@ def main():
 
     check_laser(filename_end)
 
-    test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
 
 if __name__ == "__main__":

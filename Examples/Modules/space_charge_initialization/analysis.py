@@ -17,6 +17,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import yt
 import numpy as np
+import os
 import scipy.constants as scc
 from scipy.special import gammainc
 yt.funcs.mylog.setLevel(0)
@@ -106,5 +107,5 @@ check( Ey_array, Ey_th, 'Ey' )
 if ds.dimensionality == 3:
     check( Ez_array, Ez_th, 'Ez' )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, do_particles=0)
