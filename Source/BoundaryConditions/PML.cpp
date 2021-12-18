@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <utility>
 
@@ -144,14 +145,14 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
-        sigma                [idim].resize(sz[idim]+1);
-        sigma_cumsum         [idim].resize(sz[idim]+1);
-        sigma_star           [idim].resize(sz[idim]+1);
-        sigma_star_cumsum    [idim].resize(sz[idim]+1);
-        sigma_fac            [idim].resize(sz[idim]+1);
-        sigma_cumsum_fac     [idim].resize(sz[idim]+1);
-        sigma_star_fac       [idim].resize(sz[idim]+1);
-        sigma_star_cumsum_fac[idim].resize(sz[idim]+1);
+        sigma                [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        sigma_cumsum         [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        sigma_star           [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        sigma_star_cumsum    [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        sigma_fac            [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        sigma_cumsum_fac     [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        sigma_star_fac       [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        sigma_star_cumsum_fac[idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
 
         sigma                [idim].m_lo = lo[idim];
         sigma                [idim].m_hi = hi[idim]+1;
@@ -670,6 +671,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     }
 
     Box single_domain_box = is_single_box_domain ? domain0 : Box();
+    // Empty box (i.e., Box()) means it's not a single box domain.
     sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(),
                                                ncell, delta, single_domain_box);
 
@@ -735,8 +737,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
         // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
-                                           cncells, do_pml_in_domain, do_pml_Lo,
-                                           do_pml_Hi);
+                                           cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
         DistributionMapping cdm{cba};
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
