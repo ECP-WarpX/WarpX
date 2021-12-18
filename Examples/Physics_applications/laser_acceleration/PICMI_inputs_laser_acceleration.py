@@ -114,7 +114,8 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = 10,
-                                      species = [electrons])
+                                      species = [electrons],
+                                      data_list = ['ux', 'uy', 'uz', 'weighting'])
 
 ##########################
 # simulation setup
@@ -143,4 +144,3 @@ sim.add_diagnostic(part_diag1)
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step(max_steps)
-

@@ -229,7 +229,9 @@ MultiParticleContainer::ReadParameters ()
         // must be provided in the input file.
         if (m_E_ext_particle_s == "repeated_plasma_lens" ||
             m_B_ext_particle_s == "repeated_plasma_lens") {
-            queryWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
+            getWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_repeated_plasma_lens_period > 0._rt,
+                                             "The period of the repeated plasma lens must be greater than zero");
             getArrWithParser(pp_particles, "repeated_plasma_lens_starts", h_repeated_plasma_lens_starts);
             getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", h_repeated_plasma_lens_lengths);
 
@@ -243,43 +245,25 @@ MultiParticleContainer::ReadParameters ()
                        h_repeated_plasma_lens_lengths.begin(), h_repeated_plasma_lens_lengths.end(),
                        d_repeated_plasma_lens_lengths.begin());
 
+            h_repeated_plasma_lens_strengths_E.resize(n_lenses);
+            h_repeated_plasma_lens_strengths_B.resize(n_lenses);
+
             if (m_E_ext_particle_s == "repeated_plasma_lens") {
                 getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_E", h_repeated_plasma_lens_strengths_E);
             }
             if (m_B_ext_particle_s == "repeated_plasma_lens") {
                 getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_B", h_repeated_plasma_lens_strengths_B);
             }
-            if (WarpX::gamma_boost > 1._rt) {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                     m_E_ext_particle_s == "repeated_plasma_lens" || m_E_ext_particle_s == "default",
-                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
-                     "must be either repeated_plasma_lens or unspecified");
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                     m_B_ext_particle_s == "repeated_plasma_lens" || m_B_ext_particle_s == "default",
-                     "With gamma_boost > 1, E_ext_particle_init_style and B_ext_particle_init_style"
-                     "must be either repeated_plasma_lens or unspecified");
-                if (m_E_ext_particle_s == "default") {
-                    m_E_ext_particle_s = "repeated_plasma_lens";
-                    h_repeated_plasma_lens_strengths_E.resize(n_lenses);
-                }
-                if (m_B_ext_particle_s == "default") {
-                    m_B_ext_particle_s = "repeated_plasma_lens";
-                    h_repeated_plasma_lens_strengths_B.resize(n_lenses);
-                }
-            }
 
-            if (m_E_ext_particle_s == "repeated_plasma_lens") {
-                d_repeated_plasma_lens_strengths_E.resize(n_lenses);
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                           h_repeated_plasma_lens_strengths_E.begin(), h_repeated_plasma_lens_strengths_E.end(),
-                           d_repeated_plasma_lens_strengths_E.begin());
-            }
-            if (m_B_ext_particle_s == "repeated_plasma_lens") {
-                d_repeated_plasma_lens_strengths_B.resize(n_lenses);
-                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                           h_repeated_plasma_lens_strengths_B.begin(), h_repeated_plasma_lens_strengths_B.end(),
-                           d_repeated_plasma_lens_strengths_B.begin());
-            }
+            d_repeated_plasma_lens_strengths_E.resize(n_lenses);
+            d_repeated_plasma_lens_strengths_B.resize(n_lenses);
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_strengths_E.begin(), h_repeated_plasma_lens_strengths_E.end(),
+                       d_repeated_plasma_lens_strengths_E.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_strengths_B.begin(), h_repeated_plasma_lens_strengths_B.end(),
+                       d_repeated_plasma_lens_strengths_B.begin());
+
             amrex::Gpu::synchronize();
         }
 
@@ -357,6 +341,10 @@ MultiParticleContainer::ReadParameters ()
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
+#ifdef WARPX_DIM_1D_Z
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+                            "ERROR: use_fdtd_nci_corr is not supported in 1D");
+#endif
 
         ParmParse pp_lasers("lasers");
         pp_lasers.queryarr("names", lasers_names);
@@ -369,14 +357,14 @@ MultiParticleContainer::ReadParameters ()
             ParmParse pp_qed_schwinger("qed_schwinger");
             pp_qed_schwinger.get("ele_product_species", m_qed_schwinger_ele_product_name);
             pp_qed_schwinger.get("pos_product_species", m_qed_schwinger_pos_product_name);
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             getWithParser(pp_qed_schwinger, "y_size",m_qed_schwinger_y_size);
 #endif
             queryWithParser(pp_qed_schwinger, "threshold_poisson_gaussian",
                                               m_qed_schwinger_threshold_poisson_gaussian);
             queryWithParser(pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
             queryWithParser(pp_qed_schwinger, "xmax", m_qed_schwinger_xmax);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             queryWithParser(pp_qed_schwinger, "ymin", m_qed_schwinger_ymin);
             queryWithParser(pp_qed_schwinger, "ymax", m_qed_schwinger_ymax);
 #endif
@@ -1303,14 +1291,19 @@ MultiParticleContainer::doQEDSchwinger ()
 #ifdef WARPX_DIM_RZ
     amrex::Abort("Schwinger process not implemented in rz geometry");
 #endif
+#ifdef WARPX_DIM_1D_Z
+    amrex::Abort("Schwinger process not implemented in 1D geometry");
+#endif
 
 // Get cell volume. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    const auto dV = geom.CellSize(0); // TODO: scale properly
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const auto dV = geom.CellSize(0) * geom.CellSize(1)
         * m_qed_schwinger_y_size;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     const auto dV = geom.CellSize(0) * geom.CellSize(1)
         * geom.CellSize(2);
 #endif
@@ -1389,7 +1382,7 @@ MultiParticleContainer::ComputeSchwingerGlobalBox () const
     constexpr int level_0 = 0;
     amrex::Geometry const & geom = warpx.Geom(level_0);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const amrex::Array<amrex::Real,3> schwinger_min{m_qed_schwinger_xmin,
                                                     m_qed_schwinger_ymin,
                                                     m_qed_schwinger_zmin};

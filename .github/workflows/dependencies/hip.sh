@@ -31,9 +31,9 @@ sudo apt-get install -y --no-install-recommends \
     ninja-build     \
     openmpi-bin     \
     rocm-dev        \
-    rocfft          \
-    rocprim         \
-    rocrand
+    rocfft-dev      \
+    rocprim-dev     \
+    rocrand-dev
 
 # activate
 #

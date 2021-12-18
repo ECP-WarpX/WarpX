@@ -83,8 +83,13 @@ void BTDiagnostics::DerivedInitData ()
     m_buffer_flush_counter.resize(m_num_buffers);
     // allocate vector of geometry objects corresponding to each snapshot
     m_geom_snapshot.resize( m_num_buffers );
+    m_snapshot_full.resize( m_num_buffers );
+    m_lastValidZSlice.resize( m_num_buffers );
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
+        // initialize snapshot full boolean to false
+        m_snapshot_full[i] = 0;
+        m_lastValidZSlice[i] = 0;
     }
 
     for (int lev = 0; lev < nmax_lev; ++lev) {
@@ -112,7 +117,7 @@ BTDiagnostics::ReadParameters ()
         "The moving window must not stop when using the boosted frame diagnostic.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
         "The moving window must start at step zero for the boosted frame diagnostic.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == AMREX_SPACEDIM-1,
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == WARPX_ZINDEX,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd",
@@ -156,9 +161,14 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
     // timestep < 0, i.e., at initialization time when step == -1
     if (step < 0 )
         return false;
-    // buffer for this lab snapshot is full, time to dump it and continue
-    // to collect more slices afterwards
-    else if (buffer_full(i_buffer))
+    // Do not call dump if the snapshot is already full and the files are closed.
+    else if (m_snapshot_full[i_buffer] == 1)
+        return false;
+    // If buffer for this lab snapshot is full then dump it and continue to collect
+    // slices afterwards; or
+    // If last z-slice in the lab-frame snapshot is filled, call dump to
+    // write the buffer and close the file.
+    else if (buffer_full(i_buffer) || m_lastValidZSlice[i_buffer] == 1)
         return true;
     // forced: at the end of the simulation
     // empty: either lab snapshot was already fully written and buffer was reset
@@ -291,6 +301,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                                    / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])                               ) );
     // Take the max of 0 and num_zcells_lab
     int Nz_lab = std::max( 0, num_zcells_lab );
+#if (AMREX_SPACEDIM >= 2)
     // Number of lab-frame cells in x-direction at level, lev
     const int num_xcells_lab = static_cast<int>( floor (
                                   ( diag_dom.hi(0) - diag_dom.lo(0) )
@@ -298,6 +309,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                               ) );
     // Take the max of 0 and num_ycells_lab
     int Nx_lab = std::max( 0, num_xcells_lab);
+#endif
 #if (AMREX_SPACEDIM == 3)
     // Number of lab-frame cells in the y-direction at level, lev
     const int num_ycells_lab = static_cast<int>( floor (
@@ -307,8 +319,10 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // Take the max of 0 and num_xcells_lab
     int Ny_lab = std::max( 0, num_ycells_lab );
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Ny_lab, Nz_lab};
-#else
+#elif (AMREX_SPACEDIM == 2)
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
+#else
+    m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
 }
 
@@ -442,9 +456,12 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev), m_max_box_size );
+                                             k_index_zlab(i_buffer, lev), m_max_box_size,
+                                             m_snapshot_full[i_buffer] );
 
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
+                // when the 0th z-index is filled, then set lastValidZSlice to 1
+                if (k_index_zlab(i_buffer, lev) == 0) m_lastValidZSlice[i_buffer] = 1;
             }
         }
     }
@@ -465,7 +482,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
     amrex::Real prob_domain_zmin_lab = m_prob_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-    int k_lab = static_cast<unsigned>( (
+    int k_lab = static_cast<int>(floor (
                           ( m_current_z_lab[i_buffer]
                             - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
@@ -473,7 +490,15 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
     return k_lab;
 }
 
+void
+BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
+{
+   if (m_snapshot_full[i_buffer] == 1) return;
+   // if the last valid z-index of the snapshot, which is 0, is filled, then
+   // set the snapshot full integer to 1
+   if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
 
+}
 
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
@@ -499,7 +524,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             amrex::Real cellsize;
-            if (idim < AMREX_SPACEDIM-1) {
+            if (idim < WARPX_ZINDEX) {
                 cellsize = warpx.Geom(lev).CellSize(idim);
             } else {
                 cellsize = dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
@@ -610,14 +635,14 @@ BTDiagnostics::Flush (int i_buffer)
         file_name = amrex::Concatenate(m_file_prefix,i_buffer,5);
         file_name = file_name+"/buffer";
     }
-    bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
-                               - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
+    SetSnapshotFullStatus(i_buffer);
+    bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species, nlev_output, file_name, m_file_min_digits,
-        m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F,
+        m_plot_raw_fields, m_plot_raw_fields_guards,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 
     if (m_format == "plotfile") {
@@ -637,6 +662,12 @@ void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 
 void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 {
+    // Make sure all MPI ranks wrote their files and closed it
+    // Note: additionally, since a Barrier does not guarantee a FS sync
+    //       on a parallel FS, we might need to add timeouts and retries
+    //       to the open calls below when running at scale.
+    amrex::ParallelDescriptor::Barrier();
+
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
     if (amrex::ParallelContext::IOProcessorSub()) {

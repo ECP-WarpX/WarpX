@@ -281,8 +281,8 @@ public:
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
-    amrex::Real self_fields_required_precision =
-        amrex::Real(1.e-11);
+    amrex::Real self_fields_required_precision = amrex::Real(1.e-11);
+    amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 
@@ -372,7 +372,7 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
+    amrex::Vector<amrex::Real> m_v_galilean = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;

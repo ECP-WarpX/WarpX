@@ -79,7 +79,8 @@ public:
     /**
      * \brief Constructor of the BinaryCollision class.
      *
-     * @param collision_name the name of the collision
+     * @param[in] collision_name the name of the collision
+     * @param[in] mypc Container of species involved
      *
      */
     BinaryCollision (std::string collision_name, MultiParticleContainer const * const mypc)
@@ -105,7 +106,6 @@ public:
 
     /** Perform the collisions
      *
-     * @param lev AMR level of the tile
      * @param cur_time Current time
      * @param mypc Container of species involved
      *
@@ -193,7 +193,8 @@ public:
 
     /** Perform all binary collisions within a tile
      *
-     * \param mfi iterator for multifab
+     * \param[in] lev the mesh-refinement level
+     * \param[in] mfi iterator for multifab
      * \param species_1 first species container
      * \param species_2 second species container
      * \param product_species_vector vector of pointers to product species containers
@@ -256,7 +257,9 @@ public:
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_XZ
+#if defined WARPX_DIM_1D_Z
+            auto dV = geom.CellSize(0);
+#elif defined WARPX_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
@@ -265,7 +268,7 @@ public:
             int const nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
@@ -291,8 +294,9 @@ public:
 
             // Start indices of the pairs in a cell. Will be used for particle creation.
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
-            const auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
-                                                     p_n_pairs_in_each_cell, pair_offsets.data());
+            const index_type n_total_pairs = (n_cells_products == 0) ? 0:
+                                                amrex::Scan::ExclusiveSum(n_cells_products,
+                                                    p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
@@ -404,7 +408,9 @@ public:
 
             const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_XZ
+#if defined WARPX_DIM_1D_Z
+            auto dV = geom.CellSize(0);
+#elif defined WARPX_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
@@ -413,7 +419,7 @@ public:
             int nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
@@ -444,8 +450,9 @@ public:
 
             // Start indices of the pairs in a cell. Will be used for particle creation
             amrex::Gpu::DeviceVector<index_type> pair_offsets(n_cells_products);
-            auto n_total_pairs = amrex::Scan::ExclusiveSum(n_cells_products,
-                                                     p_n_pairs_in_each_cell, pair_offsets.data());
+            const index_type n_total_pairs = (n_cells_products == 0) ? 0:
+                                                amrex::Scan::ExclusiveSum(n_cells_products,
+                                                    p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise

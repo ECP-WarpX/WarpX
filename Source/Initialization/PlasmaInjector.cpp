@@ -9,6 +9,8 @@
  */
 #include "PlasmaInjector.H"
 
+#include "Initialization/GetTemperature.H"
+#include "Initialization/GetVelocity.H"
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
@@ -79,10 +81,16 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
     const amrex::Geometry& geom = WarpX::GetInstance().Geom(0);
     if( geom.isPeriodic(0) ) {
+#       ifndef WARPX_DIM_1D_Z
         xmin = geom.ProbLo(0);
         xmax = geom.ProbHi(0);
+#       else
+        zmin = geom.ProbLo(0);
+        zmax = geom.ProbHi(0);
+#       endif
     }
 
+#   ifndef WARPX_DIM_1D_Z
     if( geom.isPeriodic(1) ) {
 #       ifndef WARPX_DIM_3D
         zmin = geom.ProbLo(1);
@@ -92,6 +100,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         ymax = geom.ProbHi(1);
 #       endif
     }
+#       endif
 
 #   ifdef WARPX_DIM_3D
     if( geom.isPeriodic(2) ) {
@@ -209,11 +218,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     else if (injection_style == "nrandompercell") {
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
+        if (WarpX::n_rz_azimuthal_modes > 1) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical gemoetry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
+        }
 #endif
         // Construct InjectorPosition with InjectorPositionRandom.
         h_inj_pos = std::make_unique<InjectorPosition>(
@@ -225,11 +236,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         surface_flux = true;
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
+        if (WarpX::n_rz_azimuthal_modes > 1) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
+        }
 #endif
         getWithParser(pp_species_name, "surface_flux_pos", surface_flux_pos);
         std::string flux_normal_axis_string;
@@ -240,25 +253,29 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             flux_normal_axis = 0;
         }
 #else
+#    ifndef WARPX_DIM_1D_Z
         if      (flux_normal_axis_string == "x" || flux_normal_axis_string == "X") {
             flux_normal_axis = 0;
         }
+#    endif
 #endif
 #ifdef WARPX_DIM_3D
-        else if (flux_normal_axis_string == "y" || flux_normal_axis_string == "Y") {
+        if (flux_normal_axis_string == "y" || flux_normal_axis_string == "Y") {
             flux_normal_axis = 1;
         }
 #endif
-        else if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
-            flux_normal_axis = AMREX_SPACEDIM-1;
+        if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
+            flux_normal_axis = WARPX_ZINDEX;
         }
 #ifdef WARPX_DIM_3D
         std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
 #else
 #    ifdef WARPX_DIM_RZ
         std::string flux_normal_axis_help = "'r' or 'z'.";
-#    else
+#    elif WARPX_DIM_XZ
         std::string flux_normal_axis_help = "'x' or 'z'.";
+#    else
+        std::string flux_normal_axis_help = "'z'.";
 #    endif
 #endif
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
@@ -276,7 +293,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     } else if (injection_style == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
-#if WARPX_DIM_XZ
+        // For 1D, only one is expected. The second and third are overwritten with 1.
+#if defined(WARPX_DIM_1D_Z)
+        constexpr int num_required_ppc_each_dim = 1;
+#elif defined(WARPX_DIM_XZ)
         constexpr int num_required_ppc_each_dim = 2;
 #else
         constexpr int num_required_ppc_each_dim = 3;
@@ -286,12 +306,18 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #if WARPX_DIM_XZ
         num_particles_per_cell_each_dim.push_back(1);
 #endif
+#if WARPX_DIM_1D_Z
+        num_particles_per_cell_each_dim.push_back(1); // overwrite 2nd number with 1
+        num_particles_per_cell_each_dim.push_back(1); // overwrite 3rd number with 1
+#endif
 #if WARPX_DIM_RZ
+        if (WarpX::n_rz_azimuthal_modes > 1) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_each_dim[1]>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles in the theta direction should be at least two times "
             "n_rz_azimuthal_modes (Please visit PR#765 for more information.)");
+        }
 #endif
         // Construct InjectorPosition from InjectorPositionRegular.
         h_inj_pos = std::make_unique<InjectorPosition>(
@@ -554,67 +580,19 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
                                              flux_normal_axis, flux_direction));
     } else if (mom_dist_s == "maxwell_boltzmann"){
-        amrex::Real beta = 0._rt;
-        amrex::Real theta = 10._rt;
-        int dir = 0;
-        std::string direction = "x";
-        queryWithParser(pp, "beta", beta);
-        if(beta < 0){
-            amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
-        }
-        queryWithParser(pp, "theta", theta);
-        pp.query("bulk_vel_dir", direction);
-        if(direction[0] == '-'){
-            beta = -beta;
-        }
-        if((direction == "x" || direction[1] == 'x') ||
-           (direction == "X" || direction[1] == 'X')){
-            dir = 0;
-        } else if ((direction == "y" || direction[1] == 'y') ||
-                   (direction == "Y" || direction[1] == 'Y')){
-            dir = 1;
-        } else if ((direction == "z" || direction[1] == 'z') ||
-                   (direction == "Z" || direction[1] == 'Z')){
-            dir = 2;
-        } else{
-            std::stringstream stringstream;
-            stringstream << "Cannot interpret <s_name>.bulk_vel_dir input '" << direction << "'. Please enter +/- x, y, or z with no whitespace between the sign and other character.";
-            direction = stringstream.str();
-            amrex::Abort(direction.c_str());
-        }
+        h_mom_temp = std::make_unique<TemperatureProperties>(pp);
+        GetTemperature getTemp(*h_mom_temp.get());
+        h_mom_vel = std::make_unique<VelocityProperties>(pp);
+        GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, theta, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "maxwell_juttner"){
-        amrex::Real beta = 0._rt;
-        amrex::Real theta = 10._rt;
-        int dir = 0;
-        std::string direction = "x";
-        queryWithParser(pp, "beta", beta);
-        if(beta < 0){
-            amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
-        }
-        queryWithParser(pp, "theta", theta);
-        pp.query("bulk_vel_dir", direction);
-        if(direction[0] == '-'){
-            beta = -beta;
-        }
-        if((direction == "x" || direction[1] == 'x') ||
-           (direction == "X" || direction[1] == 'X')){
-            dir = 0;
-        } else if ((direction == "y" || direction[1] == 'y') ||
-                   (direction == "Y" || direction[1] == 'Y')){
-            dir = 1;
-        } else if ((direction == "z" || direction[1] == 'z') ||
-                   (direction == "Z" || direction[1] == 'Z')){
-            dir = 2;
-        } else{
-            std::stringstream stringstream;
-            stringstream << "Cannot interpret <s_name>.bulk_vel_dir input '" << direction << "'. Please enter +/- x, y, or z with no whitespace between the sign and other character.";
-            direction = stringstream.str();
-            amrex::Abort(direction.c_str());
-        }
+        h_mom_temp = std::make_unique<TemperatureProperties>(pp);
+        GetTemperature getTemp(*h_mom_temp.get());
+        h_mom_vel = std::make_unique<VelocityProperties>(pp);
+        GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumJuttner.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, theta, beta, dir));
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "radial_expansion") {
         amrex::Real u_over_r = 0._rt;
         queryWithParser(pp, "u_over_r", u_over_r);

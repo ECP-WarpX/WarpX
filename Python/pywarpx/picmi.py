@@ -61,7 +61,7 @@ class Species(picmistandard.PICMI_Species):
                 else:
                     self.charge = self.charge_state*constants.q_e
             # Match a string of the format '#nXx', with the '#n' optional isotope number.
-            m = re.match('(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
+            m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
             if m is not None:
                 element = periodictable.elements.symbol(m['sym'])
                 if m['iso'] is not None:
@@ -82,6 +82,7 @@ class Species(picmistandard.PICMI_Species):
 
         # For the relativistic electrostatic solver
         self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
+        self.self_fields_absolute_tolerance = kw.pop('warpx_self_fields_absolute_tolerance', None)
         self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
@@ -126,6 +127,7 @@ class Species(picmistandard.PICMI_Species):
                                              initialize_self_fields = int(initialize_self_fields),
                                              boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
                                              self_fields_required_precision = self.self_fields_required_precision,
+                                             self_fields_absolute_tolerance = self.self_fields_absolute_tolerance,
                                              self_fields_max_iters = self.self_fields_max_iters,
                                              self_fields_verbosity = self.self_fields_verbosity,
                                              save_particles_at_xlo = self.save_particles_at_xlo,
@@ -401,7 +403,11 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.max_grid_size_y = kw.pop('warpx_max_grid_size_y', None)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+        self.blocking_factor_x = kw.pop('warpx_blocking_factor_x', None)
+        self.blocking_factor_y = kw.pop('warpx_blocking_factor_y', None)
 
         self.potential_xmin = None
         self.potential_xmax = None
@@ -416,7 +422,11 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.max_grid_size_y = self.max_grid_size_y
         pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.blocking_factor_x = self.blocking_factor_x
+        pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
@@ -453,10 +463,65 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
             pywarpx.amr.max_level = 0
 
 
+class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
+    def init(self, kw):
+        self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+        self.blocking_factor_x = kw.pop('warpx_blocking_factor_x', None)
+
+        self.potential_xmin = None
+        self.potential_xmax = None
+        self.potential_ymin = None
+        self.potential_ymax = None
+        self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
+        self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+
+    def initialize_inputs(self):
+        pywarpx.amr.n_cell = self.number_of_cells
+
+        # Maximum allowable size of each subdomain in the problem domain;
+        #    this is used to decompose the domain for parallel calculations.
+        pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.blocking_factor_x = self.blocking_factor_x
+
+        # Geometry
+        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin]]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax]]
+        pywarpx.boundary.particle_lo = [self.bc_xmin_particles]
+        pywarpx.boundary.particle_hi = [self.bc_xmax_particles]
+
+        if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
+            pywarpx.warpx.do_moving_window = 1
+            if self.moving_window_velocity[2] != 0.:
+                pywarpx.warpx.moving_window_dir = 'z'
+                pywarpx.warpx.moving_window_v = self.moving_window_velocity[2]/constants.c  # in units of the speed of light
+
+        if self.refined_regions:
+            assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
+            assert self.refined_regions[0][0] == 1, Exception('The one refined region can only be level 1')
+            pywarpx.amr.max_level = 1
+            pywarpx.warpx.fine_tag_lo = self.refined_regions[0][1]
+            pywarpx.warpx.fine_tag_hi = self.refined_regions[0][2]
+            # The refinement_factor is ignored (assumed to be [2,2])
+        else:
+            pywarpx.amr.max_level = 0
+
 class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.max_grid_size_y = kw.pop('warpx_max_grid_size_y', None)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+        self.blocking_factor_x = kw.pop('warpx_blocking_factor_x', None)
+        self.blocking_factor_y = kw.pop('warpx_blocking_factor_y', None)
 
         self.potential_xmin = kw.pop('warpx_potential_lo_x', None)
         self.potential_xmax = kw.pop('warpx_potential_hi_x', None)
@@ -471,7 +536,11 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.max_grid_size_y = self.max_grid_size_y
         pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.blocking_factor_x = self.blocking_factor_x
+        pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
@@ -507,7 +576,13 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.max_grid_size_y = kw.pop('warpx_max_grid_size_y', None)
+        self.max_grid_size_z = kw.pop('warpx_max_grid_size_z', None)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+        self.blocking_factor_x = kw.pop('warpx_blocking_factor_x', None)
+        self.blocking_factor_y = kw.pop('warpx_blocking_factor_y', None)
+        self.blocking_factor_z = kw.pop('warpx_blocking_factor_z', None)
 
         self.potential_xmin = kw.pop('warpx_potential_lo_x', None)
         self.potential_xmax = kw.pop('warpx_potential_hi_x', None)
@@ -522,7 +597,13 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.max_grid_size_y = self.max_grid_size_y
+        pywarpx.amr.max_grid_size_z = self.max_grid_size_z
         pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.blocking_factor_x = self.blocking_factor_x
+        pywarpx.amr.blocking_factor_y = self.blocking_factor_y
+        pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
@@ -573,6 +654,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
 
+        self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
+        self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
+        self.do_pml_j_damping = kw.pop('warpx_do_pml_j_damping', None)
+
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
@@ -612,11 +697,22 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         if self.source_smoother is not None:
             self.source_smoother.initialize_inputs(self)
 
+        pywarpx.warpx.do_dive_cleaning = self.divE_cleaning
+        pywarpx.warpx.do_divb_cleaning = self.divB_cleaning
+
+        pywarpx.warpx.do_pml_dive_cleaning = self.pml_divE_cleaning
+        pywarpx.warpx.do_pml_divb_cleaning = self.pml_divB_cleaning
+
+        pywarpx.warpx.do_pml_in_domain = self.do_pml_in_domain
+        pywarpx.warpx.pml_has_particles = self.pml_has_particles
+        pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
+        self.absolute_tolerance = kw.pop('warpx_absolute_tolerance', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
+
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
@@ -626,6 +722,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         else:
             pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
+            pywarpx.warpx.self_fields_absolute_tolerance = self.absolute_tolerance
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
             pywarpx.warpx.self_fields_verbosity = self.self_fields_verbosity
             pywarpx.boundary.potential_lo_x = self.grid.potential_xmin

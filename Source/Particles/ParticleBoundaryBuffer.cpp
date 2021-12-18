@@ -69,12 +69,17 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
     for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
         amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
+#if defined(WARPX_DIM_1D_Z)
+        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[0][ispecies]);
+        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[1][ispecies]);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
         pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
-#if AMREX_SPACEDIM == 2
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[2][ispecies]);
         pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[3][ispecies]);
 #else
+        pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
+        pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
         pp_species.query("save_particles_at_ylo", m_do_boundary_buffer[2][ispecies]);
         pp_species.query("save_particles_at_yhi", m_do_boundary_buffer[3][ispecies]);
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[4][ispecies]);
@@ -110,6 +115,20 @@ void ParticleBoundaryBuffer::printNumParticles () const {
                        << np << " particles in the EB boundary buffer \n";
     }
 #endif
+}
+
+void ParticleBoundaryBuffer::redistribute () {
+    for (int i = 0; i < numBoundaries(); ++i)
+    {
+        auto& buffer = m_particle_containers[i];
+        for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
+        {
+            auto& species_buffer = buffer[ispecies];
+            if (species_buffer.isDefined()) {
+                species_buffer.Redistribute();
+            }
+        }
+    }
 }
 
 void ParticleBoundaryBuffer::clearParticles () {
@@ -213,7 +232,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 int timestep = warpx_instance.getistep(0);
                 using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
-                    [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip) noexcept
+                    [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)
+                    /* NVCC 11.3.109 chokes in C++17 on this: noexcept */
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);

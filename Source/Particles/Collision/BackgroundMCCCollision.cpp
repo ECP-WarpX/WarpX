@@ -209,28 +209,38 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     auto const flvl = species1.finestLevel();
     for (int lev = 0; lev <= flvl; ++lev) {
 
+        auto cost = WarpX::getCosts(lev);
+
         // firstly loop over particles box by box and do all particle conserving
         // scattering
 #ifdef _OPENMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            amrex::Real wt = amrex::second();
+
             doBackgroundCollisionsWithinTile(pti);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
 
         // secondly perform ionization through the SmartCopyFactory if needed
         if (ionization_flag) {
-            doBackgroundIonization(lev, species1, species2);
+            doBackgroundIonization(lev, cost, species1, species2);
         }
     }
 }
 
 
-/** Perform all particle conserving MCC collisions within a tile
- *
- * @param pti particle iterator
- *
- */
 void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 ( WarpXParIter& pti )
 {
@@ -352,16 +362,9 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 }
 
 
-/** Perform MCC ionization interactions
- *
- * @param pti particle iterator
- * @param species1/2 reference to species container used to inject new
- particles from ionization events
- *
- */
 void BackgroundMCCCollision::doBackgroundIonization
-( int lev, WarpXParticleContainer& species1,
-  WarpXParticleContainer& species2)
+( int lev, amrex::LayoutData<amrex::Real>* cost,
+  WarpXParticleContainer& species1, WarpXParticleContainer& species2)
 {
     WARPX_PROFILE("BackgroundMCCCollision::doBackgroundIonization()");
 
@@ -384,6 +387,13 @@ void BackgroundMCCCollision::doBackgroundIonization
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         auto& elec_tile = species1.ParticlesAt(lev, pti);
         auto& ion_tile = species2.ParticlesAt(lev, pti);
 
@@ -401,5 +411,12 @@ void BackgroundMCCCollision::doBackgroundIonization
 
         setNewParticleIDs(elec_tile, np_elec, num_added);
         setNewParticleIDs(ion_tile, np_ion, num_added);
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+        }
     }
 }

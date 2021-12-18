@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 """
 This script is used to test the results of the Galilean PSATD method and
 averaged Galilean PSATD method in WarpX.
@@ -7,7 +7,7 @@ It compares the energy of the electric field with precalculated reference energy
      standard PSATD (v_galilean = (0.,0.,0.)):
          * if 'v_galilean == 0': simulation is unstable because of the arosen NCI;
          * if 'v_galilean != 0 : NCI is suppressed => simulation is stable.
-  2) Averaged Galilean PSATD with large timestep dz/dx = 2. and c*dt = dz:
+  2) Averaged Galilean PSATD with large timestep dz/dx = 3. and c*dt = dz:
      reference energy was calculated with Galilean PSATD (v_galilean = (0.,0.,0.99498743710662):
          * if standard Galilean PSATD is used (psatd.do_time_averaging == 0'):
            simulation is unstable because of the arosen NCI.
@@ -37,7 +37,7 @@ Ez = all_data['boxlib', 'Ez'].squeeze().v
 
 if (averaged):
     # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
-    energyE_ref = 460315.9845556079
+    energyE_ref = 6.816182771544472
     tolerance_rel = 1e-4
 elif (current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):

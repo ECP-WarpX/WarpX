@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Jean-Luc Vay, Maxence Thevenet, Remi Lehe
 # Weiqun Zhang

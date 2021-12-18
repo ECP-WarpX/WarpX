@@ -27,8 +27,11 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     amrex::Vector<char> HeaderCharPtr;
     amrex::Long fileLength(0), fileLengthPadded(0);
     std::ifstream iss;
+    iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
+    if(!iss) amrex::Abort("Failed to load BTD MultiFabHeader");
+
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());
     iss.seekg(0, std::ios::beg);
@@ -178,8 +181,11 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     amrex::Vector<char> HeaderCharPtr;
     amrex::Long fileLength(0), fileLengthPadded(0);
     std::ifstream iss;
+    iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
+    if(!iss) amrex::Abort("Failed to load BTD MultiFabHeader");
+
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());
     iss.seekg(0, std::ios::beg);
@@ -335,5 +341,3 @@ BTDMultiFabHeaderImpl::CopyVec(amrex::Vector<amrex::Real>& dst,
         dst[i] = src[i];
     }
 }
-
-

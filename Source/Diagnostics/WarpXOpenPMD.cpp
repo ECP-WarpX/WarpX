@@ -187,7 +187,9 @@ namespace detail
     getParticlePositionComponentLabels ()
     {
         using vs = std::vector< std::string >;
-#if defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_1D_Z)
+        vs const positionComponents{"z"};
+#elif defined(WARPX_DIM_XZ)
         vs const positionComponents{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // note: although we internally store particle positions
@@ -197,7 +199,7 @@ namespace detail
         //       Other attributes like momentum are consequently
         //       stored in x,y,z internally.
         vs const positionComponents{"x", "y", "z"};
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
         vs const positionComponents{"x", "y", "z"};
 #else
 #   error Unknown WarpX dimensionality.
@@ -216,7 +218,9 @@ namespace detail
         using vs = std::vector< std::string >;
 
         // Fortran order of the index labels for the AMReX FArrayBox
-#if defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_1D_Z)
+        vs const axisLabels{"z"};
+#elif defined(WARPX_DIM_XZ)
         vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // if we are start to write individual modes
@@ -600,7 +604,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   // TODO allow this per direction in the openPMD standard, ED-PIC extension?
   currSpecies.setAttribute( "particleShapes", [](){
       return std::vector< double >{
+#if AMREX_SPACEDIM>=2
           double(WarpX::nox),
+#endif
 #if AMREX_SPACEDIM==3
           double(WarpX::noy),
 #endif
@@ -745,8 +751,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
     //
     auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
         // handle scalar and non-scalar records by name
-        std::string record_name, component_name;
-        std::tie(record_name, component_name) = detail::name2openPMD(comp_name);
+        const auto [record_name, component_name] = detail::name2openPMD(comp_name);
         return currSpecies[record_name][component_name];
     };
     auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
@@ -767,13 +772,11 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
         auto ii = m_NumAoSRealAttributes + idx; // jump over AoS names
         if (write_real_comp[ii]) {
             // handle scalar and non-scalar records by name
-            std::string record_name, component_name;
-            std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[ii]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
-            bool newRecord = false;
-            std::tie(std::ignore, newRecord) = addedRecords.insert(record_name);
+            [[maybe_unused]] const auto [_, newRecord] = addedRecords.insert(record_name);
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 if( record_name == "weighting" )
@@ -791,13 +794,11 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
         auto ii = m_NumAoSIntAttributes + idx; // jump over AoS names
         if (write_int_comp[ii]) {
             // handle scalar and non-scalar records by name
-            std::string record_name, component_name;
-            std::tie(record_name, component_name) = detail::name2openPMD(int_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[ii]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
-            bool newRecord = false;
-            std::tie(std::ignore, newRecord) = addedRecords.insert(record_name);
+            [[maybe_unused]] const auto [_, newRecord] = addedRecords.insert(record_name);
             if( newRecord ) {
                 currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 currRecord.setAttribute( "macroWeighted", 0u );
@@ -837,8 +838,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for( auto idx=0; idx<m_NumAoSRealAttributes; idx++ ) {
       if( write_real_comp[idx] ) {
           // handle scalar and non-scalar records by name
-          std::string record_name, component_name;
-          std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[idx]);
+          const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
           auto currRecord = currSpecies[record_name];
           auto currRecordComp = currRecord[component_name];
 
@@ -858,8 +858,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
   auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
     // handle scalar and non-scalar records by name
-    std::string record_name, component_name;
-    std::tie(record_name, component_name) = detail::name2openPMD(comp_name);
+    const auto [record_name, component_name] = detail::name2openPMD(comp_name);
     return currSpecies[record_name][component_name];
   };
 
@@ -947,10 +946,8 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
       auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
       std::vector<std::string> fieldBoundary(6, "reflecting");
       std::vector<std::string> particleBoundary(6, "absorbing");
-#if AMREX_SPACEDIM != 3
-      fieldBoundary.resize(4);
-      particleBoundary.resize(4);
-#endif
+      fieldBoundary.resize(AMREX_SPACEDIM * 2);
+      particleBoundary.resize(AMREX_SPACEDIM * 2);
 
       for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
           if (m_fieldPMLdirections.at(i))
@@ -986,12 +983,16 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
           meshes.setAttribute("currentSmoothingParameters", []() {
               std::stringstream ss;
               ss << "period=1;compensator=false";
+#if (AMREX_SPACEDIM >= 2)
               ss << ";numPasses_x=" << WarpX::filter_npass_each_dir[0];
+#endif
 #if (AMREX_SPACEDIM == 3)
               ss << ";numPasses_y=" << WarpX::filter_npass_each_dir[1];
               ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[2];
-#else
+#elif (AMREX_SPACEDIM == 2)
               ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
+#elif (AMREX_SPACEDIM == 1)
+              ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[0];
 #endif
               std::string currentSmoothingParameters = ss.str();
               return currentSmoothingParameters;

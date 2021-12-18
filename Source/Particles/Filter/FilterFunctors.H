@@ -40,11 +40,14 @@ struct RandomFilter
     /**
      * \brief draw random number, return 1 if number < m_fraction, 1 otherwise
      * \param p one particle
+     * \param engine the random number state and factory
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& /*p*/, const amrex::RandomEngine& engine) const noexcept
+    bool operator () (const SuperParticleType& p, const amrex::RandomEngine& engine) const noexcept
     {
+        amrex::ignore_unused(p);
+
         if ( !m_is_active ) return 1;
         else if ( amrex::Random(engine) < m_fraction ) return 1;
         else return 0;
@@ -90,6 +93,8 @@ struct ParserFilter
 {
     /** constructor
      * \param a_is_active whether the test is active
+     * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, and returning a value > 0.5 for selected particle
+     * \param a_mass mass of the particle species
      */
     ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
                  amrex::Real a_mass)
@@ -150,7 +155,6 @@ struct GeometryFilter
     /**
      * \brief return 1 if the partcile is within the region described by the RealBox
      * \param p one particle
-     * \param rb RealBox
      * \return whether or not the particle is inside the region defined by m_domain
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

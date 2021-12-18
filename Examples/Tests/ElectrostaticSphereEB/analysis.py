@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Run the default regression test for the PICMI version of the EB test
 # using the same reference file as for the non-PICMI test since the two

@@ -17,8 +17,6 @@ jobs:
 
     runs-on: ubuntu-20.04
 
-    if: github.event.pull_request.draft == false
-
     steps:
     - uses: actions/checkout@v2
     - name: Non-ASCII characters

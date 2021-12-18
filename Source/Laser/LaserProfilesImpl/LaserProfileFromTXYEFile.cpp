@@ -121,8 +121,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     }
 
     //Find left and right time indices
-    int idx_t_left, idx_t_right;
-    std::tie(idx_t_left, idx_t_right) = find_left_right_time_indices(t);
+    const auto [idx_t_left, idx_t_right] = find_left_right_time_indices(t);
 
     if(idx_t_left <  m_params.first_time_index){
         Abort("Something bad has happened with the simulation time");
@@ -144,6 +143,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(txye_file_name, std::ios::binary);
         if(!inp) Abort("Failed to open txye file");
+        inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
         //Uniform grid flag
         char flag;
@@ -291,6 +291,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         //Read data chunk
         std::ifstream inp(m_params.txye_file_name, std::ios::binary);
         if(!inp) Abort("Failed to open txye file");
+        inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
         auto skip_amount = 1 +
             3*sizeof(uint32_t) +
             m_params.t_coords.size()*sizeof(double) +
@@ -422,6 +424,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_x_right)],
             t, Xp[i])*tmp_e_max;
         amrex::ignore_unused(Yp);
+#else
+        // TODO: implement WARPX_DIM_1D_Z
+        amrex::ignore_unused(x_0, x_1, tmp_e_max, p_E_data, tmp_idx_first_time,
+                             t_left, t_right, Xp, Yp, t, idx_x_left);
+        amrex::Abort("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry");
 #endif
         }
     );
@@ -519,6 +526,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
             p_E_data[idx(idx_t_right, idx_x_left)],
             p_E_data[idx(idx_t_right, idx_x_right)],
             t, Xp[ip])*tmp_e_max;
+#else
+        // TODO: implement WARPX_DIM_1D_Z
+        amrex::ignore_unused(idx_x_left, idx_t_left, idx_t_right, tmp_e_max,
+                             p_E_data, tmp_idx_first_time, t_left, t_right, t);
+        amrex::Abort("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry");
 #endif
         }
     );

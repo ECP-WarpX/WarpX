@@ -251,9 +251,7 @@ Logger::collective_gather_msgs_with_counter_and_ranks() const
     // Find out who is the "gather rank" and how many messages it has
     const auto my_msgs = get_msgs();
     const auto how_many_msgs = my_msgs.size();
-    int gather_rank = 0;
-    std::int64_t gather_rank_how_many_msgs = 0;
-    std::tie(gather_rank, gather_rank_how_many_msgs) =
+    const auto [gather_rank, gather_rank_how_many_msgs] =
         find_gather_rank_and_its_msgs(how_many_msgs);
 
     // If the "gather rank" has zero messages there are no messages at all
@@ -273,9 +271,7 @@ Logger::collective_gather_msgs_with_counter_and_ranks() const
             m_messages, is_gather_rank);
 
     // Send back all the data to the "gather rank"
-    auto all_data = std::vector<char>{};
-    auto displacements = std::vector<int>{};
-    std::tie(all_data, displacements) =
+    const auto [all_data, displacements] =
         ::gather_all_data(
             package_for_gather_rank,
             gather_rank, m_rank);
@@ -650,4 +646,3 @@ std::vector<Msg> deserialize_msgs(
 }
 
 #endif
-

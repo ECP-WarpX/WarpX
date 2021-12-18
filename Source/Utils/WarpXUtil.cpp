@@ -170,8 +170,10 @@ void ConvertLabParamsToBoost()
 
 #if (AMREX_SPACEDIM == 3)
     Vector<int> dim_map {0, 1, 2};
-#else
+#elif (AMREX_SPACEDIM == 2)
     Vector<int> dim_map {0, 2};
+#else
+    Vector<int> dim_map {2};
 #endif
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
@@ -219,6 +221,8 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
             amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0., };
 #elif (AMREX_SPACEDIM == 2)
             amrex::Array<amrex::Real,3> galilean_shift = { 0., std::numeric_limits<Real>::quiet_NaN(),  0., } ;
+#elif (AMREX_SPACEDIM == 1)
+            amrex::Array<amrex::Real,3> galilean_shift = {std::numeric_limits<Real>::quiet_NaN(), std::numeric_limits<Real>::quiet_NaN(),  0., } ;
 #endif
         const amrex::Real zmin_box = WarpX::LowerCorner(bx, galilean_shift, lev)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev)[2];
@@ -226,8 +230,10 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         // Get box lower index in the z direction
 #if (AMREX_SPACEDIM==3)
         const int lo_ind = bx.loVect()[2];
-#else
+#elif (AMREX_SPACEDIM==2)
         const int lo_ind = bx.loVect()[1];
+#else
+        const int lo_ind = bx.loVect()[0];
 #endif
         // Check if box intersect with [zmin, zmax]
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
@@ -237,8 +243,10 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept{
 #if (AMREX_SPACEDIM==3)
                     const Real z_gridpoint = zmin_box+(k-lo_ind)*dz;
-#else
+#elif (AMREX_SPACEDIM==2)
                     const Real z_gridpoint = zmin_box+(j-lo_ind)*dz;
+#else
+                    const Real z_gridpoint = zmin_box+(i-lo_ind)*dz;
 #endif
                     if ( (z_gridpoint >= zmin) && (z_gridpoint < zmax) ) {
                         arr(i,j,k) = 0.;
@@ -327,6 +335,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
        {"m_e", PhysConst::m_e},
        {"m_p", PhysConst::m_p},
        {"m_u", PhysConst::m_u},
+       {"kb", PhysConst::kb},
        {"pi", MathConst::pi},
       };
 
@@ -546,9 +555,15 @@ void CheckGriddingForRZSpectral ()
     Vector<int> blocking_factor_x(max_level+1);
     Vector<int> max_grid_size_x(max_level+1);
 
-    // Set the radial block size to be equal to the radial grid size.
-    blocking_factor_x[0] = n_cell[0];
-    max_grid_size_x[0] = n_cell[0];
+    // Set the radial block size to be the power of 2 greater than or equal to
+    // the number of grid cells. The blocking_factor must be a power of 2
+    // and the max_grid_size should be a multiple of the blocking_factor.
+    int k = 1;
+    while (k < n_cell[0]) {
+        k *= 2;
+    }
+    blocking_factor_x[0] = k;
+    max_grid_size_x[0] = k;
 
     for (int lev=1 ; lev <= max_level ; lev++) {
         // For this to be correct, this needs to read in any user specified refinement ratios.

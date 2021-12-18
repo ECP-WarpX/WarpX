@@ -15,23 +15,26 @@
 #include <AMReX_Random.H>
 
 
-/** \brief Prepare information for and call
- *        UpdateMomentumPerezElastic().
+/** Prepare information for and call UpdateMomentumPerezElastic().
+ *
+ * @tparam T_index type of index arguments
+ * @tparam T_R type of floating point arguments
+ * @tparam SoaData_type type of the "struct of array" for the two involved species
  * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
  * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
- * @param[in] I1 and I2 are the index arrays. They determine all elements that will be used.
- * @param[in,out] u1 and u2 are the velocity arrays (u=v*gamma),
- *                they could be either different or the same,
- *                their lengths are not needed,
- * @param[in] w1 and w2 are arrays of weights.
- * @param[in] q1 and q2 are charges. m1 and m2 are masses.
- * @param[in] T1 and T2 are temperatures (Joule)
+ * @param[in] I1,I2 the index arrays. They determine all elements that will be used.
+ * @param[in,out] soa_1,soa_2 the struct of array for species 1/2
+ * @param[in] q1,q2 charge of species 1/2
+ * @param[in] m1,m2 mass of species 1/2
+ * @param[in] T1 temperature (Joule) of species 1
  *            and will be used if greater than zero,
  *            otherwise will be computed.
+ * @param[in] T2 temperature (Joule) of species 2, @see T1
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] L is the Coulomb log and will be used if greater than zero,
  *            otherwise will be computed.
  * @param[in] dV is the volume of the corresponding cell.
+ * @param[in] engine the random number generator state & factory
 */
 
 template <typename T_index, typename T_R, typename SoaData_type>
@@ -104,11 +107,32 @@ void ElasticCollisionPerez (
                amrex::max(n1,n2), T_R(-1.0/3.0) );
     lmdD = amrex::max(lmdD, rmin);
 
+#if (defined WARPX_DIM_RZ)
+    T_R * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
+    T_R * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
+#endif
+
     // call UpdateMomentumPerezElastic()
     {
       int i1 = I1s; int i2 = I2s;
       for (int k = 0; k < amrex::max(NI1,NI2); ++k)
       {
+
+#if (defined WARPX_DIM_RZ)
+          /* In RZ geometry, macroparticles can collide with other macroparticles
+           * in the same *cylindrical* cell. For this reason, collisions between macroparticles
+           * are actually not local in space. In this case, the underlying assumption is that
+           * particles within the same cylindrical cell represent a cylindrically-symmetry
+           * momentum distribution function. Therefore, here, we temporarily rotate the
+           * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
+           * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
+           * there is a corresponding assert statement at initialization.) */
+          T_R const theta = theta2[I2[i2]]-theta1[I1[i1]];
+          T_R const u1xbuf = u1x[I1[i1]];
+          u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
+          u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
+#endif
+
           UpdateMomentumPerezElastic(
               u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
               u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
@@ -116,6 +140,13 @@ void ElasticCollisionPerez (
               q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
               dt, L, lmdD,
               engine);
+
+#if (defined WARPX_DIM_RZ)
+          T_R const u1xbuf_new = u1x[I1[i1]];
+          u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
+          u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+#endif
+
           ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
           ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
       }

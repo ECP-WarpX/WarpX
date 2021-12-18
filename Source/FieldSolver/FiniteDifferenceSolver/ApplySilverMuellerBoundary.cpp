@@ -165,9 +165,11 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 #else
 
     // Calculate relevant coefficients
+#if (defined WARPX_DIM_3D || WARPX_DIM_XZ)
     amrex::Real const cdt_over_dx = PhysConst::c*dt*m_h_stencil_coefs_x[0];
     amrex::Real const coef1_x = (1._rt - cdt_over_dx)/(1._rt + cdt_over_dx);
     amrex::Real const coef2_x = 2._rt*cdt_over_dx/(1._rt + cdt_over_dx) / PhysConst::c;
+#endif
 #ifdef WARPX_DIM_3D
     amrex::Real const cdt_over_dy = PhysConst::c*dt*m_h_stencil_coefs_y[0];
     amrex::Real const coef1_y = (1._rt - cdt_over_dy)/(1._rt + cdt_over_dy);
@@ -177,8 +179,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Real const coef1_z = (1._rt - cdt_over_dz)/(1._rt + cdt_over_dz);
     amrex::Real const coef2_z = 2._rt*cdt_over_dz/(1._rt + cdt_over_dz) / PhysConst::c;
 
+#if (defined WARPX_DIM_3D || WARPX_DIM_XZ)
     bool const apply_lo_x = (field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller);
     bool const apply_hi_x = (field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller);
+#endif
 #ifdef WARPX_DIM_3D
     bool const apply_lo_y = (field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller);
     bool const apply_hi_y = (field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller);
@@ -201,10 +205,14 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
         // Extract field data for this grid/tile
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
+#ifndef WARPX_DIM_1D_Z
         Array4<Real> const& Ez = Efield[2]->array(mfi);
+#endif
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
+#ifndef WARPX_DIM_1D_Z
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
+#endif
 
         // Extract the tileboxes for which to loop
         Box tbx  = mfi.tilebox(Bfield[0]->ixType().toIntVect());
@@ -244,18 +252,27 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 // At the -z boundary (innermost guard cell)
                 if ( apply_lo_z && ( j==domain_box.smallEnd(1)-1 ) )
                     Bx(i,j,k) = coef1_z * Bx(i,j,k) + coef2_z * Ey(i,j+1,k);
+#elif WARPX_DIM_1D_Z
+                // At the +z boundary (innermost guard cell)
+                if ( apply_hi_z && ( i==domain_box.bigEnd(0)+1 ) )
+                    Bx(i,j,k) = coef1_z * Bx(i,j,k) - coef2_z * Ey(i,j,k);
+                // At the -z boundary (innermost guard cell)
+                if ( apply_lo_z && ( i==domain_box.smallEnd(0)-1 ) )
+                    Bx(i,j,k) = coef1_z * Bx(i,j,k) + coef2_z * Ey(i+1,j,k);
 #endif
             },
 
             // Apply Boundary condition to By
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
+#if (defined WARPX_DIM_3D || WARPX_DIM_XZ)
                 // At the +x boundary (innermost guard cell)
                 if ( apply_hi_x && ( i==domain_box.bigEnd(0)+1 ) )
                     By(i,j,k) = coef1_x * By(i,j,k) - coef2_x * Ez(i,j,k);
                 // At the -x boundary (innermost guard cell)
                 if ( apply_lo_x && ( i==domain_box.smallEnd(0)-1 ) )
                     By(i,j,k) = coef1_x * By(i,j,k) + coef2_x * Ez(i+1,j,k);
+#endif
 #ifdef WARPX_DIM_3D
                 // At the +z boundary (innermost guard cell)
                 if ( apply_hi_z && ( k==domain_box.bigEnd(2)+1 ) )
@@ -270,18 +287,27 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 // At the -z boundary (innermost guard cell)
                 if ( apply_lo_z && ( j==domain_box.smallEnd(1)-1 ) )
                     By(i,j,k) = coef1_z * By(i,j,k) - coef2_z * Ex(i,j+1,k);
+#elif WARPX_DIM_1D_Z
+                // At the +z boundary (innermost guard cell)
+                if ( apply_hi_z && ( i==domain_box.bigEnd(0)+1 ) )
+                    By(i,j,k) = coef1_z * By(i,j,k) + coef2_z * Ex(i,j,k);
+                // At the -z boundary (innermost guard cell)
+                if ( apply_lo_z && ( i==domain_box.smallEnd(0)-1 ) )
+                    By(i,j,k) = coef1_z * By(i,j,k) - coef2_z * Ex(i+1,j,k);
 #endif
             },
 
             // Apply Boundary condition to Bz
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
+#if (defined WARPX_DIM_3D || WARPX_DIM_XZ)
                 // At the +x boundary (innermost guard cell)
                 if ( apply_hi_x && ( i==domain_box.bigEnd(0)+1 ) )
                     Bz(i,j,k) = coef1_x * Bz(i,j,k) + coef2_x * Ey(i,j,k);
                 // At the -x boundary (innermost guard cell)
                 if ( apply_lo_x && ( i==domain_box.smallEnd(0)-1 ) )
                     Bz(i,j,k) = coef1_x * Bz(i,j,k) - coef2_x * Ey(i+1,j,k);
+#endif
 #ifdef WARPX_DIM_3D
                 // At the +y boundary (innermost guard cell)
                 if ( apply_hi_y && ( j==domain_box.bigEnd(1)+1 ) )
@@ -289,6 +315,8 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
                 // At the -y boundary (innermost guard cell)
                 if ( apply_lo_y && ( j==domain_box.smallEnd(1)-1 ) )
                     Bz(i,j,k) = coef1_y * Bz(i,j,k) + coef2_y * Ex(i,j+1,k);
+#elif WARPX_DIM_1D_Z
+                ignore_unused(i,j,k);
 #endif
             }
         );

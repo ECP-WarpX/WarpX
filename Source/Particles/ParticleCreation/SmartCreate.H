@@ -46,13 +46,17 @@ struct SmartCreate
         const int cpu = 0,
         const int id = 0) const noexcept
     {
+#if defined(WARPX_DIM_3D)
         prt.m_aos[i_prt].pos(0) = x;
-#if (AMREX_SPACEDIM == 3)
         prt.m_aos[i_prt].pos(1) = y;
         prt.m_aos[i_prt].pos(2) = z;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        prt.m_aos[i_prt].pos(0) = x;
         prt.m_aos[i_prt].pos(1) = z;
         amrex::ignore_unused(y);
+#else
+        prt.m_aos[i_prt].pos(0) = z;
+        amrex::ignore_unused(x,y);
 #endif
 
         prt.m_aos[i_prt].cpu() = cpu;

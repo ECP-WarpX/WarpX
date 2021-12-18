@@ -76,7 +76,7 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
         const IntVect sz = domlen / numprocs;
         const IntVect extra = domlen - sz*numprocs;
         BoxList bl;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         for (int k = 0; k < numprocs[2]; ++k) {
             // The first extra[2] blocks get one extra cell with a total of
             // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
@@ -86,11 +86,13 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
             klo += domlo[2];
             khi += domlo[2];
 #endif
+#if (AMREX_SPACEDIM >= 2)
             for (int j = 0; j < numprocs[1]; ++j) {
                 int jlo = (j < extra[1]) ? j*(sz[1]+1) : (j*sz[1]+extra[1]);
                 int jhi = (j < extra[1]) ? jlo+(sz[1]+1)-1 : jlo+sz[1]-1;
                 jlo += domlo[1];
                 jhi += domlo[1];
+#endif
                 for (int i = 0; i < numprocs[0]; ++i) {
                     int ilo = (i < extra[0]) ? i*(sz[0]+1) : (i*sz[0]+extra[0]);
                     int ihi = (i < extra[0]) ? ilo+(sz[0]+1)-1 : ilo+sz[0]-1;
@@ -199,6 +201,7 @@ WarpX::InitDiagnostics () {
                                                slice_realbox,
                                                particle_slice_width_lab);
     }
+    reduced_diags->InitData();
 }
 
 void
@@ -240,8 +243,10 @@ WarpX::InitPML ()
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
-                             J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             J_linear_in_time, guard_cells.ng_FieldSolver.max(),
+                             do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
+
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -269,6 +274,7 @@ WarpX::InitPML ()
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   guard_cells.ng_FieldSolver.max(),
                                    do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
@@ -317,7 +323,7 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
     // Sanity checks: can use zmax_plasma_to_compute_max_step only if
     // the moving window and the boost are all in z direction.
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
+        WarpX::moving_window_dir == WARPX_ZINDEX,
         "Can use zmax_plasma_to_compute_max_step only if " +
         "moving window along z. TODO: all directions.");
     if (gamma_boost > 1){
@@ -331,7 +337,7 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
 
     // Lower end of the simulation domain. All quantities are given in boosted
     // frame except zmax_plasma_to_compute_max_step.
-    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
+    const Real zmin_domain_boost = a_geom.ProbLo(WARPX_ZINDEX);
     // End of the plasma: Transform input argument
     // zmax_plasma_to_compute_max_step to boosted frame.
     const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
@@ -357,6 +363,7 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
 void
 WarpX::InitNCICorrector ()
 {
+#if !(defined WARPX_DIM_1D_Z)
     if (WarpX::use_fdtd_nci_corr)
     {
         for (int lev = 0; lev <= max_level; ++lev)
@@ -364,11 +371,13 @@ WarpX::InitNCICorrector ()
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
             amrex::Real dz, cdtodz;
-            if (AMREX_SPACEDIM == 3){
+#if defined(WARPX_DIM_3D)
                 dz = dx[2];
-            }else{
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 dz = dx[1];
-            }
+#else
+                dz = dx[0];
+#endif
             cdtodz = PhysConst::c * dt[lev] / dz;
 
             // Initialize Godfrey filters
@@ -384,6 +393,7 @@ WarpX::InitNCICorrector ()
             nci_godfrey_filter_bxbyez[lev]->ComputeStencils();
         }
     }
+#endif
 }
 
 void
@@ -484,38 +494,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
 #ifdef AMREX_USE_EB
-    if(lev==maxLevel()) {
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
-            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
-            ComputeEdgeLengths();
-            ComputeFaceAreas();
-            ScaleEdges();
-            ScaleAreas();
-            ComputeDistanceToEB();
-
-            const auto &period = Geom(lev).periodicity();
-            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][0], guard_cells.ng_alloc_EB, period);
-            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][1], guard_cells.ng_alloc_EB, period);
-            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][2], guard_cells.ng_alloc_EB, period);
-            WarpXCommUtil::FillBoundary(*m_face_areas[lev][0], guard_cells.ng_alloc_EB, period);
-            WarpXCommUtil::FillBoundary(*m_face_areas[lev][1], guard_cells.ng_alloc_EB, period);
-            WarpXCommUtil::FillBoundary(*m_face_areas[lev][2], guard_cells.ng_alloc_EB, period);
-
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
-                WarpXCommUtil::FillBoundary(*m_area_mod[lev][0], guard_cells.ng_alloc_EB, period);
-                WarpXCommUtil::FillBoundary(*m_area_mod[lev][1], guard_cells.ng_alloc_EB, period);
-                WarpXCommUtil::FillBoundary(*m_area_mod[lev][2], guard_cells.ng_alloc_EB, period);
-                MarkCells();
-                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][0], guard_cells.ng_alloc_EB, period);
-                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][1], guard_cells.ng_alloc_EB, period);
-                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][2], guard_cells.ng_alloc_EB, period);
-                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][0], guard_cells.ng_alloc_EB, period);
-                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][1], guard_cells.ng_alloc_EB, period);
-                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][2], guard_cells.ng_alloc_EB, period);
-                ComputeFaceExtensions();
-            }
-        }
-    }
+    InitializeEBGridData(lev);
 #endif
 
     // if the input string for the B-field is "parse_b_ext_grid_function",
@@ -646,7 +625,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     if (costs[lev]) {
-        for (int i : costs[lev]->IndexArray()) {
+        const auto iarr = costs[lev]->IndexArray();
+        for (int i : iarr) {
             (*costs[lev])[i] = 0.0;
             WarpX::setLoadBalanceEfficiency(lev, -1);
         }
@@ -692,13 +672,20 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
+#if defined(WARPX_DIM_1D_Z)
+                amrex::Real x = 0._rt;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #else
+                amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real fac_y = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
                 amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
@@ -711,13 +698,20 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #ifdef AMREX_USE_EB
                 if(geom_data_y(i, j, k)<=0) return;
 #endif
-                amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
+#if defined(WARPX_DIM_1D_Z)
+                amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+#elif defined(WARPX_DIM_3D)
+                amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
@@ -730,13 +724,20 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #ifdef AMREX_USE_EB
                 if(geom_data_z(i, j, k)<=0) return;
 #endif
-                amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
-                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
+#if defined(WARPX_DIM_1D_Z)
+                amrex::Real x = 0._rt;
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+#elif defined(WARPX_DIM_3D)
+                amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
                 amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
@@ -862,4 +863,44 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
             amrex::Abort(ss.str());
         }
     }
+}
+
+void WarpX::InitializeEBGridData (int lev)
+{
+#ifdef AMREX_USE_EB
+    if (lev == maxLevel()) {
+
+        // Throw a warning if EB is on and particle_shape > 1
+        bool flag_eb_on = not fieldEBFactory(lev).isAllRegular();
+
+        if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
+        {
+            this->RecordWarning("Particles",
+                                "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+                                "particles are close to embedded boundaries");
+        }
+
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+
+            auto const eb_fact = fieldEBFactory(lev);
+
+            ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
+            ComputeFaceAreas(m_face_areas[lev], eb_fact);
+            ScaleEdges(m_edge_lengths[lev], CellSize(lev));
+            ScaleAreas(m_face_areas[lev], CellSize(lev));
+
+            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+                MarkCells();
+                ComputeFaceExtensions();
+            }
+        }
+
+        ComputeDistanceToEB();
+
+    }
+#else
+    amrex::ignore_unused(lev);
+#endif
 }
