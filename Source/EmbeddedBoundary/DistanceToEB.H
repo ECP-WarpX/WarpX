@@ -66,7 +66,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
     normal[2] += phi(i  , j+1, k+1) * dxi[2] * W[0][0] * W[1][1];
     normal[2] -= phi(i+1, j+1, k  ) * dxi[2] * W[0][1] * W[1][1];
     normal[2] += phi(i+1, j+1, k+1) * dxi[2] * W[0][1] * W[1][1];
-#elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::RealVect normal{0.0, 0.0};
 
     normal[0] -= phi(i,   j  , k) * dxi[0] * W[1][0];

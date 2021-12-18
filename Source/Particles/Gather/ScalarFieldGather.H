@@ -42,7 +42,7 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
     W[1][0] = 1.0 - W[1][1];
     W[2][0] = 1.0 - W[2][1];
 
-#elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
 #   if (defined WARPX_DIM_XZ)
     amrex::Real x = (xp - plo[0]) * dxi[0];
@@ -91,7 +91,7 @@ amrex::Real interp_field_nodal (int i, int j, int k,
     value += scalar_field(i+1, j  , k+1) * W[0][1] * W[1][0] * W[2][1];
     value += scalar_field(i  , j+1, k+1) * W[0][0] * W[1][1] * W[2][1];
     value += scalar_field(i+1, j+1, k+1) * W[0][1] * W[1][1] * W[2][1];
-#elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     value += scalar_field(i,   j ,  k) * W[0][0] * W[1][0];
     value += scalar_field(i+1, j ,  k) * W[0][1] * W[1][0];
     value += scalar_field(i,   j+1, k) * W[0][0] * W[1][1];
