@@ -2619,6 +2619,3 @@ class LibWarpX():
 
 
 libwarpx = LibWarpX()
-
-# --- Is there a better way of handling constants?
-clight = 2.99792458e+8 # m/s
