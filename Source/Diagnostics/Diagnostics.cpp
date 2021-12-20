@@ -198,8 +198,8 @@ Diagnostics::InitData ()
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
             InitializeFieldFunctors(lev);
-            // Initialize field buffer data, m_mf_output
-            InitializeFieldBufferData(i_buffer, lev);
+            // Initialize buffer data required for particle and/or fields
+            InitializeBufferData(i_buffer, lev);
         }
     }
 
@@ -308,6 +308,7 @@ Diagnostics::InitBaseData ()
 void
 Diagnostics::ComputeAndPack ()
 {
+    PrepareBufferData();
     // prepare the field-data necessary to compute output data
     PrepareFieldDataForOutput();
     // Prepare the particle data necessary to compute output data
@@ -341,9 +342,9 @@ Diagnostics::ComputeAndPack ()
         for (int isp = 0; isp < m_all_particle_functors.size(); ++isp) {
             m_all_particle_functors[isp]->operator()(*m_particles_buffer[i_buffer][isp], m_totalParticles_in_buffer[i_buffer][isp], i_buffer);
         }
-
-
     }
+
+    UpdateBufferData();
 }
 
 

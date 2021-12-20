@@ -76,6 +76,8 @@ private:
      * The particle containers required for this must be added to populate this function.
      */
     void InitializeParticleBuffer () override;
+    void PrepareBufferData () override;
+    void UpdateBufferData () override;
     /** The cell-centered data for all fields, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is computed and stored in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
@@ -100,9 +102,9 @@ private:
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
-     * \param[in] lev mesh-refinement level for which the field buffer data is initialized.
+     * \param[in] lev mesh-refinement level for which the field and/or particle buffer data is initialized.
      */
-    void InitializeFieldBufferData ( int i_buffer , int lev) override;
+    void InitializeBufferData ( int i_buffer , int lev) override;
     /** Whether to compute back-tranformed values for field-data.
      *  default value is true.
      */

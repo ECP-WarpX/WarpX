@@ -82,7 +82,6 @@ void BTDiagnostics::DerivedInitData ()
         m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
     }
-
     for (int lev = 0; lev < nmax_lev; ++lev) {
         // Define cell-centered multifab over the whole domain with
         // user-defined crse_ratio for nlevels
@@ -151,6 +150,7 @@ BTDiagnostics::ReadParameters ()
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
+    if (m_do_back_transformed_fields == false) m_varnames.clear();
 
     getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
     m_num_buffers = m_num_snapshots_lab;
@@ -214,7 +214,7 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 }
 
 void
-BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
+BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
@@ -356,6 +356,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 void
 BTDiagnostics::DefineCellCenteredMultiFab(int lev)
 {
+    if (m_do_back_transformed_fields == false) return;
     // Creating MultiFab to store cell-centered data in boosted-frame for the entire-domain
     // This MultiFab will store all the user-requested fields in the boosted-frame
     auto & warpx = WarpX::GetInstance();
@@ -372,6 +373,9 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
 void
 BTDiagnostics::InitializeFieldFunctors (int lev)
 {
+    // Initialize fields functors only if do_back_transformed_fields is selected
+    if (m_do_back_transformed_fields == false) return;
+
     auto & warpx = WarpX::GetInstance();
     // Clear any pre-existing vector to release stored data
     // This ensures that when domain is load-balanced, the functors point
@@ -425,8 +429,54 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
 }
 
 void
+BTDiagnostics::PrepareBufferData ()
+{
+    auto & warpx = WarpX::GetInstance();
+    int num_BT_functors = 1;
+
+    for (int lev = 0; lev < nlev_output; ++lev)
+    {
+        for (int i = 0; i < num_BT_functors; ++i)
+        {
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
+            {
+                m_old_z_boost[i_buffer] = m_current_z_boost[i_buffer];
+                // Update z-boost and z-lab positions
+                m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
+                                                                      warpx.gett_new(lev) );
+                m_current_z_lab[i_buffer] = UpdateCurrentZLabCoordinate(m_t_lab[i_buffer],
+                                                                      warpx.gett_new(lev) );
+            }
+        }
+    }
+}
+
+void
+BTDiagnostics::UpdateBufferData ()
+{
+    int num_BT_functors = 1;
+
+    for (int lev = 0; lev < nlev_output; ++lev)
+    {
+        for (int i = 0; i < num_BT_functors; ++i)
+        {
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
+            {
+                bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
+                if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
+                // when the 0th z-index is filled, then set lastValidZSlice to 1
+                if (k_index_zlab(i_buffer, lev) == 0) m_lastValidZSlice[i_buffer] = 1;
+            }
+        }
+   }
+}
+
+void
 BTDiagnostics::PrepareFieldDataForOutput ()
 {
+    // Initialize fields functors only if do_back_transformed_fields is selected
+    if (m_do_back_transformed_fields == false) return;
+
     auto & warpx = WarpX::GetInstance();
     // In this function, we will get cell-centered data for every level, lev,
     // using the cell-center functors and their respective opeators()
@@ -461,12 +511,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         {
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
             {
-                m_old_z_boost[i_buffer] = m_current_z_boost[i_buffer];
-                // Update z-boost and z-lab positions
-                m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
-                                                                      warpx.gett_new(lev) );
-                m_current_z_lab[i_buffer] = UpdateCurrentZLabCoordinate(m_t_lab[i_buffer],
-                                                                      warpx.gett_new(lev) );
                 // Check if the zslice is in domain
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 // Initialize and define field buffer multifab if buffer is empty
@@ -487,9 +531,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              k_index_zlab(i_buffer, lev), m_max_box_size,
                                              m_snapshot_full[i_buffer] );
 
-                if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
-                // when the 0th z-index is filled, then set lastValidZSlice to 1
-                if (k_index_zlab(i_buffer, lev) == 0) m_lastValidZSlice[i_buffer] = 1;
             }
         }
     }
@@ -735,38 +776,40 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::rename(buffer_job_info_path.c_str(), snapshot_job_info_path.c_str());
         }
 
-        // Read the header file to get the fab on disk string
-        BTDMultiFabHeaderImpl Buffer_FabHeader(recent_Buffer_FabHeaderFilename);
-        Buffer_FabHeader.ReadMultiFabHeader();
-        if (Buffer_FabHeader.ba_size() > 1) amrex::Abort("BTD Buffer has more than one fabs.");
-        // Every buffer that is flushed only has a single fab.
-        std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
-                                              + Buffer_FabHeader.FabName(0);
-        // Existing snapshot Fab Header Filename
-        std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
-        std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], 5);
-        // Name of the newly appended fab in the snapshot
-        std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
+        if (m_do_back_transformed_fields == true) {
+            // Read the header file to get the fab on disk string
+            BTDMultiFabHeaderImpl Buffer_FabHeader(recent_Buffer_FabHeaderFilename);
+            Buffer_FabHeader.ReadMultiFabHeader();
+            if (Buffer_FabHeader.ba_size() > 1) amrex::Abort("BTD Buffer has more than one fabs.");
+            // Every buffer that is flushed only has a single fab.
+            std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
+                                                  + Buffer_FabHeader.FabName(0);
+            // Existing snapshot Fab Header Filename
+            std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
+            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], 5);
+            // Name of the newly appended fab in the snapshot
+            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
 
-        if ( m_buffer_flush_counter[i_snapshot] == 0) {
-            std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
-            Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
-                                        new_snapshotFabFilename,
-                                        Buffer_FabHeader.FabHead(0));
-            Buffer_FabHeader.WriteMultiFabHeader();
-            std::rename(recent_Buffer_FabHeaderFilename.c_str(),
-                        snapshot_FabHeaderFilename.c_str());
-            std::rename(recent_Buffer_FabFilename.c_str(),
-                        snapshot_FabFilename.c_str());
-        } else {
-            // Interleave Header file
-            InterleaveBufferAndSnapshotHeader(recent_Header_filename,
-                                              snapshot_Header_filename);
-            InterleaveFabArrayHeader(recent_Buffer_FabHeaderFilename,
-                                     snapshot_FabHeaderFilename,
-                                     new_snapshotFabFilename);
-            std::rename(recent_Buffer_FabFilename.c_str(),
-                        snapshot_FabFilename.c_str());
+            if ( m_buffer_flush_counter[i_snapshot] == 0) {
+                std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
+                Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
+                                            new_snapshotFabFilename,
+                                            Buffer_FabHeader.FabHead(0));
+                Buffer_FabHeader.WriteMultiFabHeader();
+                std::rename(recent_Buffer_FabHeaderFilename.c_str(),
+                            snapshot_FabHeaderFilename.c_str());
+                std::rename(recent_Buffer_FabFilename.c_str(),
+                            snapshot_FabFilename.c_str());
+            } else {
+                // Interleave Header file
+                InterleaveBufferAndSnapshotHeader(recent_Header_filename,
+                                                  snapshot_Header_filename);
+                InterleaveFabArrayHeader(recent_Buffer_FabHeaderFilename,
+                                         snapshot_FabHeaderFilename,
+                                         new_snapshotFabFilename);
+                std::rename(recent_Buffer_FabFilename.c_str(),
+                            snapshot_FabFilename.c_str());
+            }
         }
         for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
             // species filename of recently flushed buffer
