@@ -40,12 +40,15 @@ _libc = ctypes.CDLL(_path_libc)
 _LP_c_int = ctypes.POINTER(ctypes.c_int)
 _LP_c_char = ctypes.POINTER(ctypes.c_char)
 
+
 class LibWarpX():
+
     """This class manages the warpx shared object, the library from the compiled C++ code.
     It will only load the library when it is referenced, and this can only be done after
     the geometry is defined so that the version of the library that is needed can be determined.
     Once loaded, all of the setting of function call interfaces is setup.
     """
+
     def __init__(self):
 
         # Track whether amrex and warpx have been initialized
@@ -424,7 +427,6 @@ class LibWarpX():
 
         self.initialized = True
 
-
     @atexit.register
     def finalize(self, finalize_mpi=1):
         '''
@@ -473,22 +475,18 @@ class LibWarpX():
 
         self.libwarpx_so.warpx_evolve(num_steps);
 
-
     def getProbLo(self, direction):
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
         return self.libwarpx_so.warpx_getProbLo(direction)
-
 
     def getProbHi(self, direction):
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
         return self.libwarpx_so.warpx_getProbHi(direction)
 
-
     def getCellSize(self, direction, level=0):
         assert 0 <= direction < 3, 'Inappropriate direction specified'
         assert 0 <= level and level <= self.libwarpx_so.warpx_finestLevel(), 'Inappropriate level specified'
         return self.libwarpx_so.warpx_getCellSize(direction, level)
-
 
     #def get_sigma(self, direction):
     #    '''
@@ -628,7 +626,6 @@ class LibWarpX():
             x, y, z, ux, uy, uz, nattr, attr, unique_particles
         )
 
-
     def get_particle_count(self, species_name):
         '''
 
@@ -649,7 +646,6 @@ class LibWarpX():
         return self.libwarpx_so.warpx_getNumParticles(
             ctypes.c_char_p(species_name.encode('utf-8'))
         )
-
 
     def get_particle_structs(self, species_name, level):
         '''
@@ -690,7 +686,6 @@ class LibWarpX():
         _libc.free(particles_per_tile)
         _libc.free(data)
         return particle_data
-
 
     def get_particle_arrays(self, species_name, comp_name, level):
         '''
@@ -740,7 +735,6 @@ class LibWarpX():
         _libc.free(data)
         return particle_data
 
-
     def get_particle_x(self, species_name, level=0):
         '''
 
@@ -754,7 +748,6 @@ class LibWarpX():
         elif self.geometry_dim == 'rz':
             return [struct['x']*np.cos(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
 
-
     def get_particle_y(self, species_name, level=0):
         '''
 
@@ -767,7 +760,6 @@ class LibWarpX():
             return [struct['y'] for struct in structs]
         elif self.geometry_dim == 'rz':
             return [struct['x']*np.sin(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
-
 
     def get_particle_r(self, species_name, level=0):
         '''
@@ -784,7 +776,6 @@ class LibWarpX():
         elif self.geometry_dim == '2d':
             raise Exception('get_particle_r: There is no r coordinate with 2D Cartesian')
 
-
     def get_particle_z(self, species_name, level=0):
         '''
 
@@ -798,7 +789,6 @@ class LibWarpX():
         elif self.geometry_dim == 'rz' or self.geometry_dim == '2d':
             return [struct['y'] for struct in structs]
 
-
     def get_particle_id(self, species_name, level=0):
         '''
 
@@ -808,7 +798,6 @@ class LibWarpX():
         '''
         structs = self.get_particle_structs(species_name, level)
         return [struct['id'] for struct in structs]
-
 
     def get_particle_cpu(self, species_name, level=0):
         '''
@@ -820,7 +809,6 @@ class LibWarpX():
         structs = self.get_particle_structs(species_name, level)
         return [struct['cpu'] for struct in structs]
 
-
     def get_particle_weight(self, species_name, level=0):
         '''
 
@@ -830,7 +818,6 @@ class LibWarpX():
         '''
 
         return self.get_particle_arrays(species_name, 'w', level)
-
 
     def get_particle_ux(self, species_name, level=0):
         '''
@@ -842,7 +829,6 @@ class LibWarpX():
 
         return self.get_particle_arrays(species_name, 'ux', level)
 
-
     def get_particle_uy(self, species_name, level=0):
         '''
 
@@ -853,7 +839,6 @@ class LibWarpX():
 
         return self.get_particle_arrays(species_name, 'uy', level)
 
-
     def get_particle_uz(self, species_name, level=0):
         '''
 
@@ -863,7 +848,6 @@ class LibWarpX():
         '''
 
         return self.get_particle_arrays(species_name, 'uz', level)
-
 
     def get_particle_theta(self, species_name, level=0):
         '''
@@ -880,7 +864,6 @@ class LibWarpX():
             return [np.arctan2(struct['y'], struct['x']) for struct in structs]
         elif self.geometry_dim == '2d':
             raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
-
 
     def get_particle_comp_index(self, species_name, pid_name):
         '''
@@ -906,7 +889,6 @@ class LibWarpX():
             ctypes.c_char_p(pid_name.encode('utf-8'))
         )
 
-
     def add_real_comp(self, species_name, pid_name, comm=True):
         '''
 
@@ -924,7 +906,6 @@ class LibWarpX():
             ctypes.c_char_p(species_name.encode('utf-8')),
             ctypes.c_char_p(pid_name.encode('utf-8')), comm
         )
-
 
     def get_particle_boundary_buffer_size(self, species_name, boundary):
         '''
@@ -949,7 +930,6 @@ class LibWarpX():
             ctypes.c_char_p(species_name.encode('utf-8')),
             self.get_boundary_number(boundary)
         )
-
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
         '''
@@ -995,7 +975,6 @@ class LibWarpX():
         _libc.free(particles_per_tile)
         _libc.free(data)
         return particle_data
-
 
     def get_particle_boundary_buffer(self, species_name, boundary, comp_name, level):
         '''
@@ -1058,7 +1037,6 @@ class LibWarpX():
         _libc.free(data)
         return particle_data
 
-
     def clearParticleBoundaryBuffer(self):
         '''
 
@@ -1066,7 +1044,6 @@ class LibWarpX():
 
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
-
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """
@@ -1114,7 +1091,6 @@ class LibWarpX():
         _libc.free(data)
         return grid_data
 
-
     def get_mesh_electric_field(self, level, direction, include_ghosts=True):
         '''
 
@@ -1142,7 +1118,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getEfield, level, direction, include_ghosts)
 
-
     def get_mesh_electric_field_cp(self, level, direction, include_ghosts=True):
         '''
 
@@ -1169,7 +1144,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getEfieldCP, level, direction, include_ghosts)
 
-
     def get_mesh_electric_field_fp(self, level, direction, include_ghosts=True):
         '''
 
@@ -1195,7 +1169,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getEfieldFP, level, direction, include_ghosts)
-
 
     def get_mesh_electric_field_cp_pml(self, level, direction, include_ghosts=True):
         '''
@@ -1226,7 +1199,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_electric_field_fp_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -1256,7 +1228,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_magnetic_field(self, level, direction, include_ghosts=True):
         '''
 
@@ -1284,7 +1255,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getBfield, level, direction, include_ghosts)
 
-
     def get_mesh_magnetic_field_cp(self, level, direction, include_ghosts=True):
         '''
 
@@ -1311,7 +1281,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getBfieldCP, level, direction, include_ghosts)
 
-
     def get_mesh_magnetic_field_fp(self, level, direction, include_ghosts=True):
         '''
 
@@ -1337,7 +1306,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getBfieldFP, level, direction, include_ghosts)
-
 
     def get_mesh_magnetic_field_cp_pml(self, level, direction, include_ghosts=True):
         '''
@@ -1368,7 +1336,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_magnetic_field_fp_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -1398,7 +1365,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_current_density(self, level, direction, include_ghosts=True):
         '''
 
@@ -1423,7 +1389,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensity, level, direction, include_ghosts)
-
 
     def get_mesh_current_density_cp(self, level, direction, include_ghosts=True):
         '''
@@ -1451,7 +1416,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityCP, level, direction, include_ghosts)
 
-
     def get_mesh_current_density_fp(self, level, direction, include_ghosts=True):
         '''
 
@@ -1477,7 +1441,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP, level, direction, include_ghosts)
-
 
     def get_mesh_current_density_cp_pml(self, level, direction, include_ghosts=True):
         '''
@@ -1508,7 +1471,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_current_density_fp_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -1538,7 +1500,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_charge_density_cp(self, level, include_ghosts=True):
         '''
 
@@ -1563,7 +1524,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getChargeDensityCP, level, None, include_ghosts)
-
 
     def get_mesh_charge_density_fp(self, level, include_ghosts=True):
         '''
@@ -1590,7 +1550,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getChargeDensityFP, level, None, include_ghosts)
 
-
     def get_mesh_phi_fp(self, level, include_ghosts=True):
         '''
 
@@ -1614,7 +1573,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getPhiFP, level, None, include_ghosts)
-
 
     def get_mesh_F_cp(self, level, include_ghosts=True):
         '''
@@ -1641,7 +1599,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getFfieldCP, level, None, include_ghosts)
 
-
     def get_mesh_F_fp(self, level, include_ghosts=True):
         '''
 
@@ -1666,7 +1623,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getFfieldFP, level, None, include_ghosts)
-
 
     def get_mesh_F_fp_pml(self, level, include_ghosts=True):
         '''
@@ -1695,7 +1651,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_F_cp_pml(self, level, include_ghosts=True):
         '''
 
@@ -1723,7 +1678,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_G_cp(self, level, include_ghosts=True):
         '''
 
@@ -1749,7 +1703,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getGfieldCP, level, None, include_ghosts)
 
-
     def get_mesh_G_fp(self, level, include_ghosts=True):
         '''
 
@@ -1774,7 +1727,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getGfieldFP, level, None, include_ghosts)
-
 
     def get_mesh_G_cp_pml(self, level, include_ghosts=True):
         '''
@@ -1803,7 +1755,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_G_fp_pml(self, level, include_ghosts=True):
         '''
 
@@ -1831,7 +1782,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_edge_lengths(self, level, direction, include_ghosts=True):
         '''
 
@@ -1858,7 +1808,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getEdgeLengths, level, direction, include_ghosts)
 
-
     def get_mesh_face_areas(self, level, direction, include_ghosts=True):
         '''
 
@@ -1884,7 +1833,6 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getFaceAreas, level, direction, include_ghosts)
-
 
     def _get_mesh_array_lovects(self, level, direction, include_ghosts=True, getlovectsfunc=None):
         assert(0 <= level and level <= self.libwarpx_so.warpx_finestLevel())
@@ -1918,7 +1866,6 @@ class LibWarpX():
         _libc.free(data)
         return lovects, ng
 
-
     def get_mesh_electric_field_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -1942,7 +1889,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getEfieldLoVects)
 
-
     def get_mesh_electric_field_cp_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -1964,7 +1910,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getEfieldCPLoVects)
 
-
     def get_mesh_electric_field_fp_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -1985,7 +1930,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getEfieldFPLoVects)
-
 
     def get_mesh_electric_field_cp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
@@ -2011,7 +1955,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_electric_field_fp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -2036,7 +1979,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_magnetic_field_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -2060,7 +2002,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getBfieldLoVects)
 
-
     def get_mesh_magnetic_field_cp_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -2082,7 +2023,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getBfieldCPLoVects)
 
-
     def get_mesh_magnetic_field_fp_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -2103,7 +2043,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getBfieldFPLoVects)
-
 
     def get_mesh_magnetic_field_cp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
@@ -2129,7 +2068,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_magnetic_field_fp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -2154,7 +2092,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_current_density_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -2175,7 +2112,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getCurrentDensityLoVects)
-
 
     def get_mesh_current_density_cp_lovects(self, level, direction, include_ghosts=True):
         '''
@@ -2218,7 +2154,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getCurrentDensityFPLoVects)
-
 
     def get_mesh_current_density_cp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
@@ -2268,7 +2203,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_charge_density_cp_lovects(self, level, include_ghosts=True):
         '''
 
@@ -2288,7 +2222,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, None, include_ghosts, self.libwarpx_so.warpx_getChargeDensityCPLoVects)
-
 
     def get_mesh_charge_density_fp_lovects(self, level, include_ghosts=True):
         '''
@@ -2310,7 +2243,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, None, include_ghosts, self.libwarpx_so.warpx_getChargeDensityFPLoVects)
 
-
     def get_mesh_phi_fp_lovects(self, level, include_ghosts=True):
         '''
 
@@ -2330,7 +2262,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, None, include_ghosts, self.libwarpx_so.warpx_getPhiFPLoVects)
-
 
     def get_mesh_F_cp_lovects(self, level, include_ghosts=True):
         '''
@@ -2352,7 +2283,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, None, include_ghosts, self.libwarpx_so.warpx_getFfieldCPLoVects)
 
-
     def get_mesh_F_fp_lovects(self, level, include_ghosts=True):
         '''
 
@@ -2372,7 +2302,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, None, include_ghosts, self.libwarpx_so.warpx_getFfieldFPLoVects)
-
 
     def get_mesh_F_cp_lovects_pml(self, level, include_ghosts=True):
         '''
@@ -2397,7 +2326,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_F_fp_lovects_pml(self, level, include_ghosts=True):
         '''
 
@@ -2421,7 +2349,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_G_cp_lovects(self, level, include_ghosts=True):
         '''
 
@@ -2442,7 +2369,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, None, include_ghosts, self.libwarpx_so.warpx_getGfieldCPLoVects)
 
-
     def get_mesh_G_fp_lovects(self, level, include_ghosts=True):
         '''
 
@@ -2462,7 +2388,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, None, include_ghosts, self.libwarpx_so.warpx_getGfieldFPLoVects)
-
 
     def get_mesh_G_cp_lovects_pml(self, level, include_ghosts=True):
         '''
@@ -2487,7 +2412,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_G_fp_lovects_pml(self, level, include_ghosts=True):
         '''
 
@@ -2511,7 +2435,6 @@ class LibWarpX():
         except ValueError:
             raise Exception('PML not initialized')
 
-
     def get_mesh_edge_lengths_lovects(self, level, direction, include_ghosts=True):
         '''
 
@@ -2532,7 +2455,6 @@ class LibWarpX():
 
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getEdgeLengthsLoVects)
-
 
     def get_mesh_face_areas_lovects(self, level, direction, include_ghosts=True):
         '''
@@ -2555,7 +2477,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getFaceAreasLoVects)
 
-
     def _get_nodal_flag(self, getdatafunc):
         data = getdatafunc()
         if not data:
@@ -2570,13 +2491,11 @@ class LibWarpX():
         _libc.free(data)
         return nodal_flag
 
-
     def get_Ex_nodal_flag(self):
         '''
         This returns a 1d array of the nodal flags for Ex along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getEx_nodal_flag)
-
 
     def get_Ey_nodal_flag(self):
         '''
@@ -2584,13 +2503,11 @@ class LibWarpX():
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getEy_nodal_flag)
 
-
     def get_Ez_nodal_flag(self):
         '''
         This returns a 1d array of the nodal flags for Ez along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getEz_nodal_flag)
-
 
     def get_Bx_nodal_flag(self):
         '''
@@ -2598,13 +2515,11 @@ class LibWarpX():
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getBx_nodal_flag)
 
-
     def get_By_nodal_flag(self):
         '''
         This returns a 1d array of the nodal flags for By along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getBy_nodal_flag)
-
 
     def get_Bz_nodal_flag(self):
         '''
@@ -2612,13 +2527,11 @@ class LibWarpX():
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getBz_nodal_flag)
 
-
     def get_Jx_nodal_flag(self):
         '''
         This returns a 1d array of the nodal flags for Jx along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getJx_nodal_flag)
-
 
     def get_Jy_nodal_flag(self):
         '''
@@ -2626,13 +2539,11 @@ class LibWarpX():
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getJy_nodal_flag)
 
-
     def get_Jz_nodal_flag(self):
         '''
         This returns a 1d array of the nodal flags for Jz along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getJz_nodal_flag)
-
 
     def get_Rho_nodal_flag(self):
         '''
