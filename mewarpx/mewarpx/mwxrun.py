@@ -30,7 +30,8 @@ import sys
 
 import numpy as np
 
-from pywarpx import _libwarpx, picmi, fields
+import pywarpx
+from pywarpx import libwarpx, picmi, fields
 
 import mewarpx
 from mewarpx.utils_store import mwxconstants as constants
@@ -171,13 +172,13 @@ class MEWarpXRun(object):
             self.simulation.initialize_inputs()
             self.simulation.initialize_warpx()
 
-            self.me = _libwarpx.libwarpx.warpx_getMyProc()
-            self.n_procs = _libwarpx.libwarpx.warpx_getNProcs()
+            self.me = pywarpx.getMyProc()
+            self.n_procs = pywarpx.getNProcs()
 
             # A level is needed for many things like level number. For now I'm
             # statically setting the default level here. I'm not sure of
             # pitfalls or how to handle it more generally yet.
-            self.lev = _libwarpx.libwarpx.warpx_finestLevel()
+            self.lev = libwarpx.libwarpx_so.warpx_finestLevel()
 
             self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
             self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
@@ -322,7 +323,7 @@ class MEWarpXRun(object):
 
     def get_it(self):
         """Return the current integer iteration number."""
-        return _libwarpx.libwarpx.warpx_getistep(self.lev)
+        return pywarpx.getistep(self.lev)
 
     def get_dt(self):
         """Return the timestep."""
@@ -337,7 +338,7 @@ class MEWarpXRun(object):
         """
         npart = 0
         for spec in self.simulation.species:
-            npart += _libwarpx.get_particle_count(spec.name)
+            npart += pywarpx.get_particle_count(spec.name)
 
         return npart
 
@@ -349,7 +350,7 @@ class MEWarpXRun(object):
         for spec in self.simulation.species:
             if spec.name is None:
                 raise ValueError("Unnamed species are not supported.")
-            npart_dict[spec.name] = _libwarpx.get_particle_count(spec.name)
+            npart_dict[spec.name] = pywarpx.get_particle_count(spec.name)
 
         return npart_dict
 
@@ -367,7 +368,7 @@ class MEWarpXRun(object):
         """
 
         if species_name is not None:
-            _libwarpx.libwarpx.warpx_depositRhoSpecies(
+            libwarpx.libwarpx_so.warpx_depositRhoSpecies(
                 ctypes.c_char_p(species_name.encode('utf-8'))
             )
         if include_ghosts:
@@ -411,11 +412,11 @@ class MEWarpXRun(object):
         """
         if isinstance(expr, str):
             if t is not None:
-                return _libwarpx.libwarpx.eval_expression_t(
+                return libwarpx.libwarpx_so.eval_expression_t(
                     ctypes.c_char_p(expr.encode('utf-8')), t
                 )
             else:
-                return _libwarpx.libwarpx.eval_expression_t(
+                return libwarpx.libwarpx_so.eval_expression_t(
                     ctypes.c_char_p(expr.encode('utf-8')), self.get_t()
                 )
         else:
@@ -430,7 +431,7 @@ class MEWarpXRun(object):
             src_species_name (str): The source species name
             dst_species_name (str): The destination species name
         """
-        _libwarpx.libwarpx.warpx_moveParticlesBetweenSpecies(
+        libwarpx.libwarpx_so.warpx_moveParticlesBetweenSpecies(
             ctypes.c_char_p(src_species_name.encode('utf-8')),
             ctypes.c_char_p(dst_species_name.encode('utf-8')),
             self.lev
@@ -445,7 +446,7 @@ class MEWarpXRun(object):
             pre_fac (float): Exponent pre-factor in the Schottky enhancement
                 calculation -> sqrt(e / 4*pi*eps0) / (kT)
         """
-        _libwarpx.libwarpx.warpx_calcSchottkyWeight(
+        libwarpx.libwarpx_so.warpx_calcSchottkyWeight(
             ctypes.c_char_p(species_name.encode('utf-8')), pre_fac, self.lev
         )
 
@@ -455,8 +456,8 @@ mwxrun = MEWarpXRun()
 
 @atexit.register
 def exit_handler():
-    atexit.unregister(_libwarpx.finalize)
-    _libwarpx.finalize()
+    atexit.unregister(pywarpx.finalize)
+    pywarpx.finalize()
 
     if os.path.isfile("stdout.out") and mwxrun.me == 0:
         profileparser.main("stdout.out")

@@ -272,6 +272,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_finestLevel.restype = ctypes.c_int
         self.libwarpx_so.warpx_getMyProc.restype = ctypes.c_int
         self.libwarpx_so.warpx_getNProcs.restype = ctypes.c_int
+        self.libwarpx_so.eval_expression_t.restype = c_real
 
         self.libwarpx_so.warpx_EvolveE.argtypes = [c_real]
         self.libwarpx_so.warpx_EvolveB.argtypes = [c_real]
