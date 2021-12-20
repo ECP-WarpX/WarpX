@@ -52,6 +52,7 @@ class LibWarpX():
     def __init__(self):
         # Track whether amrex and warpx have been initialized
         self.initialized = False
+        atexit.register(self.finalize)
 
     def __getattr__(self, attribute):
         if attribute == 'libwarpx_so':
@@ -428,12 +429,10 @@ class LibWarpX():
 
         self.initialized = True
 
-    @atexit.register
     def finalize(self, finalize_mpi=1):
         '''
 
-        Call finalize for WarpX and AMReX. Must be called at
-        the end of your script.
+        Call finalize for WarpX and AMReX. Registered to run at program exit.
 
         '''
         if self.initialized:
