@@ -876,6 +876,7 @@ class LibWarpX():
         if self.geometry_dim == 'rz':
             return self.get_particle_arrays(species_name, 'theta', level)
         elif self.geometry_dim == '3d':
+            structs = self.get_particle_structs(species_name, level)
             return [np.arctan2(struct['y'], struct['x']) for struct in structs]
         elif self.geometry_dim == '2d':
             raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
