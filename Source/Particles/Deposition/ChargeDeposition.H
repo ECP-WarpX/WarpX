@@ -72,7 +72,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
-#if (AMREX_SPACEDIM >= 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
     const amrex::Real xmin = xyzmin[0];
 #endif
 #if defined(WARPX_DIM_3D)
@@ -112,7 +112,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
             // --- Compute shape factors
             Compute_shape_factor< depos_order > const compute_shape_factor;
-#if (AMREX_SPACEDIM >= 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
             // x direction
             // Get particle position in grid coordinates
 #if defined(WARPX_DIM_RZ)
@@ -141,7 +141,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             } else if (rho_type[0] == CELL) {
                 i = compute_shape_factor(sx, x - 0.5_rt);
             }
-#endif //AMREX_SPACEDIM >= 2
+#endif //defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
 #if defined(WARPX_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
@@ -293,7 +293,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
-#if (AMREX_SPACEDIM >= 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
     const amrex::Real xmin = xyzmin[0];
 #endif
 #if defined(WARPX_DIM_3D)
@@ -365,11 +365,11 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         {
           ParticleReal xp, yp, zp;
           GetPosition(bin_start, xp, yp, zp);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
           IntVect iv = IntVect(int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
                                int(amrex::Math::floor((yp-plo[1])*dxiarr[1])),
                                int(amrex::Math::floor((zp-plo[2])*dxiarr[2])));
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
           IntVect iv = IntVect(
                                int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
                                int(amrex::Math::floor((zp-plo[1])*dxiarr[1])));
@@ -415,7 +415,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
             // --- Compute shape factors
             Compute_shape_factor< depos_order > const compute_shape_factor;
-#if (AMREX_SPACEDIM >= 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
             // x direction
             // Get particle position in grid coordinates
 #if defined(WARPX_DIM_RZ)
@@ -444,7 +444,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             } else if (rho_type[0] == CELL) {
                 i = compute_shape_factor(sx, x - 0.5_rt);
             }
-#endif //AMREX_SPACEDIM >= 2
+#endif //defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
 #if defined(WARPX_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
