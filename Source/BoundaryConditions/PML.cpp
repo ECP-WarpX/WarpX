@@ -597,27 +597,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     pml_B_fp[1]->setVal(0.0);
     pml_B_fp[2]->setVal(0.0);
 
-    pml_edge_lengths[0] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_edge_lengths[1] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_edge_lengths[2] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-
-    pml_face_areas[0] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_face_areas[1] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_face_areas[2] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-
-    pml_edge_lengths[0]->setVal(1.0);
-    pml_edge_lengths[1]->setVal(1.0);
-    pml_edge_lengths[2]->setVal(1.0);
-    pml_face_areas[0]->setVal(1.0);
-    pml_face_areas[1]->setVal(1.0);
-    pml_face_areas[2]->setVal(1.0);
-
     pml_j_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect() ), dm, 1, ngb );
     pml_j_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
@@ -630,6 +609,19 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     pml_j_fp[2]->setVal(0.0);
 
 #ifdef AMREX_USE_EB
+    pml_edge_lengths[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_edge_lengths[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_edge_lengths[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_face_areas[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_face_areas[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_face_areas[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
         WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
         WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
