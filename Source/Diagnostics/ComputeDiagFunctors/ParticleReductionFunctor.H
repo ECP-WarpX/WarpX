@@ -8,7 +8,7 @@
 #include <AMReX_BaseFwd.H>
 
 /**
- * \brief Functor to cell-center MF and store result in mf_out.
+ * \brief Functor to calculate per-cell averages of particle properties.
  */
 class
 ParticleReductionFunctor final : public ComputeDiagFunctor
@@ -17,11 +17,12 @@ public:
     /** Constructor.
      * \param[in] mf_src source multifab. Must be nullptr as not source MF is needed
      *            to compute the number of particles per cell, banane.
-     * \param[in] lev level of multifab. Used for averaging in rz.
+     * \param[in] lev level of multifab.
      * \param[in] crse_ratio for interpolating field values from simulation MultiFabs
                   to the output diagnostic MultiFab mf_dst.
-     * \param[in] fn_str string that describes the function to apply to particles
+     * \param[in] fn_str parser string that describes the function to apply to particles
      *            and then average over each cell
+     * \param[in[ ispec index of the species over which to calculate the average
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     ParticleReductionFunctor(const amrex::MultiFab * const mf_src, const int lev,
@@ -36,9 +37,9 @@ public:
     virtual void operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer=0*/) const override;
 private:
     int const m_lev; /**< level on which mf_src is defined */
-    int const m_ispec; /* index of species to average over*/
+    int const m_ispec; /**< index of species to average over */
     std::unique_ptr<amrex::Parser> m_map_fn_parser;
-    // Parser function that takes x, y, z, ux, uz, uz
+    /** Parser function that takes x, y, z, ux, uz, uz */
     amrex::ParserExecutor<6> m_map_fn;
 };
 

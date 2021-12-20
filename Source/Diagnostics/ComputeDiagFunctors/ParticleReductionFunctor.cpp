@@ -54,7 +54,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi)
             {
                 // Get position in WarpX convention to use in parser. Will be different from
-                // p.pos() for 2D simulations.
+                // p.pos() for 1D and 2D simulations.
                 amrex::ParticleReal xw = 0, yw = 0, zw = 0;
                 get_particle_position(p, xw, yw, zw);
 
