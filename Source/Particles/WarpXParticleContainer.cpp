@@ -620,10 +620,12 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         // are not trivial, this check might be too strict and we might need to relax it, as currently
         // done for the current deposition.
 
-#if   (AMREX_SPACEDIM == 2)
+#if   defined(WARPX_DIM_1D_Z)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2));
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
                                                            static_cast<int>(WarpX::noz/2+1));
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
         const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
                                                            static_cast<int>(WarpX::noy/2+1),
                                                            static_cast<int>(WarpX::noz/2+1));
