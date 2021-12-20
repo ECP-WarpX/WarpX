@@ -159,7 +159,7 @@ Setting up the field mesh
     Note: in development; currently allowed value: ``2 2 2``.
 
 * ``geometry.dims`` (`string`)
-    The geometry of the simulation.
+    The dimensions of the simulation geometry.
     Supported values are ``1``, ``2``, ``3``, ``RZ``.
     For ``3``, a cartesian geometry of ``x``, ``y``, ``z`` is modeled.
     For ``2``, the axes are ``x`` and ``z`` and all physics in ``y`` is assumed to be translation symmetric.
