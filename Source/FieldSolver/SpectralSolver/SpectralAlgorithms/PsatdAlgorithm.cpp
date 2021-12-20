@@ -85,7 +85,7 @@ PsatdAlgorithm::PsatdAlgorithm(
 
     if (do_multi_J)
     {
-        X9_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsMultiJ(spectral_kspace, dm, dt);
     }
 
@@ -187,10 +187,10 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             X6_arr = X6_coef[mfi].array();
         }
 
-        amrex::Array4<const amrex::Real> X9_arr;
+        amrex::Array4<const amrex::Real> X7_arr;
         if (do_multi_J)
         {
-            X9_arr = X9_coef[mfi].array();
+            X7_arr = X7_coef[mfi].array();
         }
 
         // Extract pointers for the k vectors
@@ -261,15 +261,15 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             {
                 fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
                                        + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                       + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
+                                       + X4 * Jx + I * T2 * X3 * rho_old * kx - I * X2 * rho_new * kx;
 
                 fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
                                        + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                       + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
+                                       + X4 * Jy + I * T2 * X3 * rho_old * ky - I * X2 * rho_new * ky;
 
                 fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
                                        + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                       + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
+                                       + X4 * Jz + I * T2 * X3 * rho_old * kz - I * X2 * rho_new * kz;
             }
 
             // Update equations for E in the formulation without rho
@@ -334,7 +334,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             if (do_multi_J)
             {
-                const amrex::Real X9 = X9_arr(i,j,k);
+                const amrex::Real X7 = X7_arr(i,j,k);
 
                 const Complex rho_mid = fields(i,j,k,Idx.rho_mid);
                 const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
@@ -342,11 +342,11 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
 
                 fields(i,j,k,Idx.Ex) += -X1 * ((Jx_new - Jx) / dt + I * c2 * rho_mid * kx)
-                    - I * c2 / ep0 * X9 * rho_mid * kx;
+                    + I * X7 * rho_mid * kx;
                 fields(i,j,k,Idx.Ey) += -X1 * ((Jy_new - Jy) / dt + I * c2 * rho_mid * ky)
-                    - I * c2 / ep0 * X9 * rho_mid * ky;
+                    + I * X7 * rho_mid * ky;
                 fields(i,j,k,Idx.Ez) += -X1 * ((Jz_new - Jz) / dt + I * c2 * rho_mid * kz)
-                    - I * c2 / ep0 * X9 * rho_mid * kz;
+                    + I * X7 * rho_mid * kz;
 
                 fields(i,j,k,Idx.Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
                 fields(i,j,k,Idx.By) += I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
@@ -576,7 +576,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 X1(i,j,k) = 0.5_rt * dt2 / ep0;
             }
 
-            // TODO Update comment
             // X2 (multiplies rho_new      if update_with_rho = 1 in the update equation for E)
             // X2 (multiplies ([k] \dot E) if update_with_rho = 0 in the update equation for E)
             if (do_multi_J)
@@ -618,7 +617,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 }
             }
 
-            // TODO Update comment
             // X3 (multiplies rho_old      if update_with_rho = 1 in the update equation for E)
             // X3 (multiplies ([k] \dot J) if update_with_rho = 0 in the update equation for E)
             if (do_multi_J)
@@ -966,7 +964,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
         amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
         amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
 
-        amrex::Array4<amrex::Real> X9 = X9_coef[mfi].array();
+        amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -981,6 +979,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
+            const amrex::Real c2 = std::pow(c, 2);
+            constexpr amrex::Real ep0 = PhysConst::ep0;
 
             // Auxiliary coefficients
             const amrex::Real dt2 = dt * dt;
@@ -991,12 +991,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
 
             if (om_s != 0.)
             {
-                X9(i,j,k) = ((C(i,j,k) - 1._rt) * (om2_s * dt2 - 8._rt) - 4._rt * om2_s * dt * S_ck(i,j,k))
-                            / (om4_s * dt2);
+                X7(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) * (om2_s * dt2 - 8._rt)
+                            + 4._rt * om2_s * dt * S_ck(i,j,k)) / (om4_s * dt2);
             }
             else
             {
-                X9(i,j,k) = dt2 / 6._rt;
+                X7(i,j,k) = - c2 / ep0 * dt2 / 6._rt;
             }
         });
     }
