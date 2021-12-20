@@ -729,7 +729,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
             ptile_tmp.resize(ptile.numParticles());
 
             Box box = pti.validbox();
-            box.grow(1);
+            box.grow(ng_rho);
             amrex::IntVect bin_size = WarpX::sort_bin_size;
             int ntiles = numTilesInBox(box, true, bin_size);
 
@@ -761,7 +761,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
             auto pstruct_ptr = aos().dataPtr();
 
             Box box = pti.validbox();
-            box.grow(1);
+            box.grow(ng_rho);
             amrex::IntVect bin_size = WarpX::sort_bin_size;
 
             const auto offsets_ptr = bins.offsetsPtr();
@@ -817,7 +817,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         const auto GetPosition = GetParticlePosition(pti, offset);
         const Geometry& geom = Geom(lev);
         Box box = pti.validbox();
-        box.grow(1);
+        box.grow(ng_rho);
 
         if (WarpX::nox == 1){
             doChargeDepositionSharedShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
