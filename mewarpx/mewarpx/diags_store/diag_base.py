@@ -6,7 +6,7 @@ import sys
 import numpy as np
 # import psutil
 
-from pywarpx import callbacks, _libwarpx
+from pywarpx import callbacks
 
 from mewarpx.mwxrun import mwxrun
 
@@ -320,14 +320,15 @@ class TextDiag(WarpXDiagnostic):
 
     def print_performance_summary(self):
         total_time = time.time() - self.start_time
-        total_timesteps = _libwarpx.libwarpx.warpx_getistep(0)
+        total_timesteps = mwxrun.get_it()
         steps_per_second = total_timesteps / total_time
 
-        n_procs = _libwarpx.libwarpx.warpx_getNProcs()
-        steps_per_second_per_proc = steps_per_second / n_procs
+        steps_per_second_per_proc = steps_per_second / mwxrun.n_procs
 
         particle_steps_per_second = self.particle_steps_total / total_time
-        particle_steps_per_second_per_proc = particle_steps_per_second / n_procs
+        particle_steps_per_second_per_proc = (
+            particle_steps_per_second / mwxrun.n_procs
+        )
         logger.info("### Run Summary ###")
 
         logger.info(f"steps / second : {steps_per_second:.4f}")

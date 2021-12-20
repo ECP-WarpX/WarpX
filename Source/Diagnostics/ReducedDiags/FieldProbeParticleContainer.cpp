@@ -101,11 +101,11 @@ FieldProbeParticleContainer::AddNParticles (int lev,
         ParticleType p;
         p.id() = ParticleType::NextID();
         p.cpu() = ParallelDescriptor::MyProc();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
         p.pos(2) = z[i];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(y) ;
         p.pos(0) = x[i];
         p.pos(1) = 0;

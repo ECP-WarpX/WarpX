@@ -1,6 +1,7 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
+import os
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -13,5 +14,5 @@ check_restart(filename)
 
 # Check-sum analysis
 filename = sys.argv[1]
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2021 Remi Lehe
 #
@@ -24,7 +24,7 @@ beta is the velocity normalized by the speed of light
 """
 import numpy as np
 from scipy.constants import m_e, c, physical_constants
-import sys, re
+import sys, re, os
 import yt
 import glob
 import matplotlib.pyplot as plt
@@ -74,5 +74,5 @@ assert np.allclose( -beta2[1:], beta_th[1:], atol=0.01  )
 # Run checksum regression test
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-test_name = last_filename[:-9]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, last_filename)

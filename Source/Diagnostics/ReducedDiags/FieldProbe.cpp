@@ -189,9 +189,9 @@ bool FieldProbe::ProbeInDomain () const
      * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
      * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
      */
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     return z_probe >= prob_lo[1] && z_probe < prob_hi[1];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
            z_probe >= prob_lo[1] && z_probe < prob_hi[1];
 #else
@@ -253,13 +253,13 @@ void FieldProbe::ComputeDiags (int step)
             {
                 const auto cell_size = gm.CellSizeArray();
                 const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
                 const int j_probe = 0;
                 const int k_probe = 0;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
                 const int k_probe = 0;
-#elif(AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
                 const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
                 const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
 #endif

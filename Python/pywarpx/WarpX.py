@@ -20,6 +20,8 @@ from .Collisions import collisions, collisions_list
 from .PSATD import psatd
 from .Diagnostics import diagnostics
 
+from . import _libwarpx
+
 
 class WarpX(Bucket):
     """
@@ -74,25 +76,20 @@ class WarpX(Bucket):
         return argv
 
     def init(self, mpi_comm=None):
-        from . import wx
         argv = ['warpx'] + self.create_argv_list()
-        wx.initialize(argv, mpi_comm=mpi_comm)
+        _libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
-        from . import wx
-        wx.evolve(nsteps)
+        _libwarpx.evolve(nsteps)
 
     def finalize(self, finalize_mpi=1):
-        from . import wx
-        wx.finalize(finalize_mpi)
+        _libwarpx.finalize(finalize_mpi)
 
     def getProbLo(self, direction):
-        from . import wx
-        return wx.libwarpx.warpx_getProbLo(direction)
+        return _libwarpx.libwarpx.libwarpx_so.warpx_getProbLo(direction)
 
     def getProbHi(self, direction):
-        from . import wx
-        return wx.libwarpx.warpx_getProbHi(direction)
+        return _libwarpx.libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
     def write_inputs(self, filename='inputs', **kw):
         argv = self.create_argv_list()

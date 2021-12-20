@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2020 Luca Fedeli, Neil Zaim
 #
@@ -13,6 +13,7 @@
 
 import yt
 import numpy as np
+import os
 import sys
 import re
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -120,5 +121,5 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
 
 do_analysis(Ex_test, Ey_test, Ez_test, Bx_test, By_test, Bz_test)
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

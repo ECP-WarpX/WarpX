@@ -66,7 +66,7 @@ python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
 # Clone PICSAR, AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 9373709e34b23add981551d5446bc4810fd3b688 && cd -
+cd amrex && git checkout --detach 134d33e4b7f0c9999ab9cfc2f1c129c47be31cee && cd -
 # Use QED brach for QED tests
 git clone https://github.com/ECP-WarpX/picsar.git
 cd picsar && git checkout --detach 7b5449f92a4b30a095cc4a67f0a8b1fc69680e15 && cd -

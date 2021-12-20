@@ -1,8 +1,9 @@
-from pywarpx import picmi
-import numpy as np
-
+#!/usr/bin/env python3
 import argparse
 import sys
+import numpy as np
+import pywarpx
+from pywarpx import picmi, callbacks
 
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
@@ -104,11 +105,10 @@ sim.initialize_warpx()
 # python particle data access
 ##########################
 
-from pywarpx import _libwarpx, callbacks
 
-_libwarpx.add_real_comp('electrons', 'newPid')
+pywarpx.add_real_comp('electrons', 'newPid')
 
-my_id = _libwarpx.libwarpx.warpx_getMyProc()
+my_id = pywarpx.getMyProc()
 
 def add_particles():
 
@@ -122,7 +122,7 @@ def add_particles():
     w = np.ones(nps) * 2.0
     newPid = 5.0
 
-    _libwarpx.add_particles(
+    pywarpx.add_particles(
         species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
         w=w, newPid=newPid, unique_particles=args.unique
     )
@@ -140,11 +140,11 @@ sim.step(max_steps - 1)
 # are properly set
 ##########################
 
-assert (_libwarpx.get_particle_count('electrons') == 270 / (2 - args.unique))
-assert (_libwarpx.get_particle_comp_index('electrons', 'w') == 0)
-assert (_libwarpx.get_particle_comp_index('electrons', 'newPid') == 4)
+assert (pywarpx.get_particle_count('electrons') == 270 / (2 - args.unique))
+assert (pywarpx.get_particle_comp_index('electrons', 'w') == 0)
+assert (pywarpx.get_particle_comp_index('electrons', 'newPid') == 4)
 
-new_pid_vals = _libwarpx.get_particle_arrays(
+new_pid_vals = pywarpx.get_particle_arrays(
     'electrons', 'newPid', 0
 )
 for vals in new_pid_vals:

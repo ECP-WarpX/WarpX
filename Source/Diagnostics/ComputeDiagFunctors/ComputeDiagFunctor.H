@@ -19,11 +19,11 @@ public:
     //** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeDiagFunctor() = default;
     /** Compute a field and store the result in mf_dst
+     *
      * \param[out] mf_dst output MultiFab where the result is written
      * \param[in] dcomp first component of mf_dst in which the result is written
-     * \param[in] ncomp number of components of mf_dst to update
-     * \param[in] crse_ratio for interpolating field values from simulation MultiFab, mf_src,
-                  to the output diagnostic MultiFab, mf_dst.
+     *            to the output diagnostic MultiFab, mf_dst.
+     * \param[in] i_buffer index of a back-transformed snapshot
      */
     virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, const int i_buffer = 0) const = 0;
     /** Number of component from the input multifab to write to the output
@@ -38,6 +38,7 @@ public:
      * \param[in] z_slice_in_domain if the z-slice at current_z_boost is within
      *            the boosted-frame and lab-frame domain.
      *            The fields are sliced and back-transformed only if this value is true.
+     * \param[in] current_z_boost current z coordinate in the boosted-frame
      * \param[in] buffer_box     Box with index-space in lab-frame for the ith buffer
      * \param[in] k_index_zlab   k-index in the lab-frame corresponding to the
      *                           current z co-ordinate in the lab-frame for the ith buffer.

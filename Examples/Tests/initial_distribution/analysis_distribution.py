@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Yinjian Zhao
 #
@@ -17,6 +17,7 @@
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
 import numpy as np
+import os
 import scipy.constants as scc
 import scipy.special as scs
 from read_raw_data import read_reduced_diags_histogram, read_reduced_diags
@@ -257,5 +258,5 @@ print('Maxwell-Boltzmann parser velocity difference:', f7_error)
 
 assert(f7_error < tolerance)
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
