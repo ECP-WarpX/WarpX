@@ -214,7 +214,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 }
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void addLocalToGlobal (const amrex::Box& bx,
                        const amrex::Array4<amrex::Real>& global,
@@ -317,7 +317,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     }
 #endif
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     const auto dxiarr = geom.InvCellSizeArray();
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
@@ -346,7 +346,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     ignore_unused(np_to_deposit);
 #endif
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     amrex::launch(
                   nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
                   [=] AMREX_GPU_DEVICE () noexcept
@@ -354,7 +354,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip) noexcept
 #endif
       {
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];
         const unsigned int bin_stop = offsets_ptr[bin_id+1];
@@ -394,9 +394,9 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
 #else
         amrex::Array4<amrex::Real> const &buf = rho_arr;
-#endif // defined(AMREX_USE_GPU)
+#endif // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         for (unsigned int ip = bin_start + threadIdx.x; ip < bin_stop; ip += blockDim.x)
 #endif
         {
