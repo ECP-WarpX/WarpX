@@ -85,8 +85,6 @@ PsatdAlgorithm::PsatdAlgorithm(
 
     if (do_multi_J)
     {
-        X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-        X8_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         X9_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsMultiJ(spectral_kspace, dm, dt);
     }
@@ -189,13 +187,9 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             X6_arr = X6_coef[mfi].array();
         }
 
-        amrex::Array4<const amrex::Real> X7_arr;
-        amrex::Array4<const amrex::Real> X8_arr;
         amrex::Array4<const amrex::Real> X9_arr;
         if (do_multi_J)
         {
-            X7_arr = X7_coef[mfi].array();
-            X8_arr = X8_coef[mfi].array();
             X9_arr = X9_coef[mfi].array();
         }
 
@@ -340,8 +334,6 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             if (do_multi_J)
             {
-                const amrex::Real X7 = X7_arr(i,j,k);
-                const amrex::Real X8 = X8_arr(i,j,k);
                 const amrex::Real X9 = X9_arr(i,j,k);
 
                 const Complex rho_mid = fields(i,j,k,Idx.rho_mid);
@@ -350,16 +342,10 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
 
                 fields(i,j,k,Idx.Ex) += -X1 * ((Jx_new - Jx) / dt + I * c2 * rho_mid * kx)
-                    - I * c2 / ep0 * X7 * rho_new * kx
-                    + I * c2 / ep0 * X8 * rho_old * kx
                     - I * c2 / ep0 * X9 * rho_mid * kx;
                 fields(i,j,k,Idx.Ey) += -X1 * ((Jy_new - Jy) / dt + I * c2 * rho_mid * ky)
-                    - I * c2 / ep0 * X7 * rho_new * ky
-                    + I * c2 / ep0 * X8 * rho_old * ky
                     - I * c2 / ep0 * X9 * rho_mid * ky;
                 fields(i,j,k,Idx.Ez) += -X1 * ((Jz_new - Jz) / dt + I * c2 * rho_mid * kz)
-                    - I * c2 / ep0 * X7 * rho_new * kz
-                    + I * c2 / ep0 * X8 * rho_old * kz
                     - I * c2 / ep0 * X9 * rho_mid * kz;
 
                 fields(i,j,k,Idx.Bx) += I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
@@ -468,6 +454,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 {
     const bool update_with_rho = m_update_with_rho;
     const bool is_galilean     = m_is_galilean;
+    const bool do_multi_J      = m_do_multi_J;
 
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -542,6 +529,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 
             const amrex::Real om_s = c * knorm_s;
             const amrex::Real om2_s = std::pow(om_s, 2);
+            const amrex::Real om4_s = std::pow(om_s, 4);
 
             const Complex theta_c      = amrex::exp( I * w_c * dt * 0.5_rt);
             const Complex theta2_c     = amrex::exp( I * w_c * dt);
@@ -588,68 +576,100 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 X1(i,j,k) = 0.5_rt * dt2 / ep0;
             }
 
+            // TODO Update comment
             // X2 (multiplies rho_new      if update_with_rho = 1 in the update equation for E)
             // X2 (multiplies ([k] \dot E) if update_with_rho = 0 in the update equation for E)
-            if (update_with_rho)
+            if (do_multi_J)
             {
-                if (w_c != 0.)
+                if (om_s != 0.)
                 {
-                    X2(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c * tmp)
-                                / (theta_c_star - theta_c);
+                    X2(i,j,k) = - c2 / ep0 * (4._rt * (1._rt - C(i,j,k))
+                                - om2_s * dt * S_ck(i,j,k) - om2_s * dt2) / (om4_s * dt2);
                 }
-                else // w_c = 0
+                else
                 {
-                    if (om_s != 0.)
-                    {
-                        X2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
-                    }
-                    else // om_s = 0 and w_c = 0
-                    {
-                        X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
-                    }
+                    X2(i,j,k) = - c2 / ep0 * dt2 / 6._rt;
                 }
             }
-            else // update_with_rho = 0
+            else // standard or Galilean PSATD
             {
-                X2(i,j,k) = c2 * ep0 * theta2_c * tmp;
+                if (update_with_rho)
+                {
+                    if (w_c != 0.)
+                    {
+                        X2(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c * tmp)
+                                    / (theta_c_star - theta_c);
+                    }
+                    else // w_c = 0
+                    {
+                        if (om_s != 0.)
+                        {
+                            X2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                        }
+                        else // om_s = 0 and w_c = 0
+                        {
+                            X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
+                        }
+                    }
+                }
+                else // update_with_rho = 0
+                {
+                    X2(i,j,k) = c2 * ep0 * theta2_c * tmp;
+                }
             }
 
+            // TODO Update comment
             // X3 (multiplies rho_old      if update_with_rho = 1 in the update equation for E)
             // X3 (multiplies ([k] \dot J) if update_with_rho = 0 in the update equation for E)
-            if (update_with_rho)
+            if (do_multi_J)
             {
-                if (w_c != 0.)
+                if (om_s != 0.)
                 {
-                    X3(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c_star * tmp)
-                                / (theta_c_star - theta_c);
+                    X3(i,j,k) = c2 / ep0 * (4._rt * (1._rt - C(i,j,k))
+                                - 3._rt * om2_s * dt * S_ck(i,j,k) + om2_s * dt2 * C(i,j,k)) / (om4_s * dt2);
                 }
-                else // w_c = 0
+                else
                 {
-                    if (om_s != 0.)
-                    {
-                        X3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
-                    }
-                    else // om_s = 0 and w_c = 0
-                    {
-                        X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
-                    }
+                    X3(i,j,k) = 0._rt;
                 }
             }
-            else // update_with_rho = 0
+            else // standard or Galilean PSATD
             {
-                if (w_c != 0.)
+                if (update_with_rho)
                 {
-                    X3(i,j,k) = I * c2 * (theta2_c * tmp - X1(i,j,k)) / w_c;
-                }
-                else // w_c = 0
-                {
-                    if (om_s != 0.)
+                    if (w_c != 0.)
                     {
-                        X3(i,j,k) = c2 * (S_ck(i,j,k) - dt) / (ep0 * om2_s);
+                        X3(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c_star * tmp)
+                                    / (theta_c_star - theta_c);
                     }
-                    else // om_s = 0 and w_c = 0
+                    else // w_c = 0
                     {
-                        X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
+                        if (om_s != 0.)
+                        {
+                            X3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                        }
+                        else // om_s = 0 and w_c = 0
+                        {
+                            X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
+                        }
+                    }
+                }
+                else // update_with_rho = 0
+                {
+                    if (w_c != 0.)
+                    {
+                        X3(i,j,k) = I * c2 * (theta2_c * tmp - X1(i,j,k)) / w_c;
+                    }
+                    else // w_c = 0
+                    {
+                        if (om_s != 0.)
+                        {
+                            X3(i,j,k) = c2 * (S_ck(i,j,k) - dt) / (ep0 * om2_s);
+                        }
+                        else // om_s = 0 and w_c = 0
+                        {
+                            X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
+                        }
                     }
                 }
             }
@@ -946,8 +966,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
         amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
         amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
 
-        amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
-        amrex::Array4<amrex::Real> X8 = X8_coef[mfi].array();
         amrex::Array4<amrex::Real> X9 = X9_coef[mfi].array();
 
         // Loop over indices within one box
@@ -966,7 +984,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
 
             // Auxiliary coefficients
             const amrex::Real dt2 = dt * dt;
-            const amrex::Real dt3 = dt * dt2;
 
             const amrex::Real om_s  = c * knorm_s;
             const amrex::Real om2_s = om_s * om_s;
@@ -974,36 +991,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
 
             if (om_s != 0.)
             {
-                X7(i,j,k) = (om2_s * dt2 * C(i,j,k) + 8._rt * C(i,j,k)
-                            - 2._rt * c * om2_s * dt * S_ck(i,j,k) + 4._rt * c * om_s * S_ck(i,j,k)
-                            + om2_s * dt2 - 8._rt) / (2._rt * om4_s * dt2);
-            }
-            else
-            {
-                X7(i,j,k) = dt2 / 12._rt;
-            }
-
-            if (om_s != 0.)
-            {
-                X8(i,j,k) = (2._rt * om2_s * dt2 * (C(i,j,k) + 1._rt)
-                            - 4._rt * om2_s * dt * S_ck(i,j,k)
-                            + (C(i,j,k) - 1._rt) * (om2_s * dt2 - 8._rt)
-                            - 4._rt * om_s * S_ck(i,j,k) - 2._rt * om2_s * dt2 * S_ck(i,j,k)
-                            + 2._rt * om2_s * dt3) / (2._rt * om4_s * dt2);
-            }
-            else
-            {
-                X8(i,j,k) = dt2 * (2._rt * dt - 7._rt) / 12._rt;
-            }
-
-            if (om_s != 0.)
-            {
-                X9(i,j,k) = ((C(i,j,k) - 1._rt) * (om2_s * dt2 - 8._rt) - 4._rt * om_s * S_ck(i,j,k))
+                X9(i,j,k) = ((C(i,j,k) - 1._rt) * (om2_s * dt2 - 8._rt) - 4._rt * om2_s * dt * S_ck(i,j,k))
                             / (om4_s * dt2);
             }
             else
             {
-                X9(i,j,k) = -5._rt * dt2 / 6._rt;
+                X9(i,j,k) = dt2 / 6._rt;
             }
         });
     }

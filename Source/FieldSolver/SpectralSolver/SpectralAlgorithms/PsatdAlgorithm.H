@@ -169,8 +169,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralComplexCoefficients X5_coef, X6_coef;
 
         // These real coefficients are allocated only with the multi-J algorithm
-        SpectralRealCoefficients X7_coef;
-        SpectralRealCoefficients X8_coef;
+        // TODO Rename this consistently
         SpectralRealCoefficients X9_coef;
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
