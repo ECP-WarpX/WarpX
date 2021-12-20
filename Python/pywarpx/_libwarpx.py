@@ -50,7 +50,6 @@ class LibWarpX():
     """
 
     def __init__(self):
-
         # Track whether amrex and warpx have been initialized
         self.initialized = False
 
@@ -341,9 +340,11 @@ class LibWarpX():
 
         return boundary_num
 
-    # this is a function for converting a ctypes pointer to a numpy array
     @staticmethod
     def _array1d_from_pointer(pointer, dtype, size):
+        '''
+        Function for converting a ctypes pointer to a numpy array
+        '''
         if not pointer:
             raise Exception(f'_array1d_from_pointer: pointer is a nullptr')
         if sys.version_info.major >= 3:
