@@ -7,7 +7,7 @@
 #ifndef ABLASTR_DEPOSIT_CHARGE_H_
 #define ABLASTR_DEPOSIT_CHARGE_H_
 
-#include "ABLASTR/ProfilerWrapper.H"
+#include "ablastr/profiler/ProfilerWrapper.H"
 #include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
@@ -20,10 +20,11 @@
 
 
 namespace ablastr {
+namespace particles {
 
 /** Perform charge deposition for the particles on a tile.
  *
- * \tparam PC a type of amrex::ParticleContainer
+ * \tparam T_PC a type of amrex::ParticleContainer
  *
  * \param pti an amrex::ParIter pointing to the tile to operate on
  * \param wp vector of the particle weights for those particles.
@@ -53,20 +54,21 @@ namespace ablastr {
  * \param load_balance_costs_update_algo selected method for updating load balance costs.
  * \param do_device_synchronize call amrex::Gpu::synchronize() for tiny profiler regions
  */
-template <typename PC>
-void DepositCharge (typename PC::ParIterType& pti,
-                    typename PC::RealVector& wp,
-                    const int * const ion_lev,
-                    amrex::MultiFab* rho, const int icomp, const int nc,
-                    const long offset, const long np_to_depose,
-                    amrex::FArrayBox& local_rho, const int lev, const int depos_lev,
-                    const amrex::Real charge, const int nox, const int noy, const int noz,
-                    const amrex::IntVect& ng_rho, const std::array<amrex::Real,3>& dx,
-                    const std::array<amrex::Real, 3>& xyzmin,
-                    const amrex::IntVect& ref_ratio,
-                    amrex::Real* cost, const int n_rz_azimuthal_modes,
-                    const long load_balance_costs_update_algo,
-                    const bool do_device_synchronize)
+template< typename T_PC >
+static void
+deposit_charge (typename T_PC::ParIterType& pti,
+                typename T_PC::RealVector& wp,
+                const int * const ion_lev,
+                amrex::MultiFab* rho, const int icomp, const int nc,
+                const long offset, const long np_to_depose,
+                amrex::FArrayBox& local_rho, const int lev, const int depos_lev,
+                const amrex::Real charge, const int nox, const int noy, const int noz,
+                const amrex::IntVect& ng_rho, const std::array<amrex::Real,3>& dx,
+                const std::array<amrex::Real, 3>& xyzmin,
+                const amrex::IntVect& ref_ratio,
+                amrex::Real* cost, const int n_rz_azimuthal_modes,
+                const long load_balance_costs_update_algo,
+                const bool do_device_synchronize)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -101,13 +103,13 @@ void DepositCharge (typename PC::ParIterType& pti,
 #else
     const amrex::IntVect range = rho->nGrowVect() - shape_extent;
 #endif
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    amrex::ignore_unused(range); // for release builds
+    AMREX_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
-    ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::ChargeDeposition", blp_ppc_chd, do_device_synchronize);
-    ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Accumulate", blp_accumulate, do_device_synchronize);
+    ABLASTR_PROFILE_VAR_NS("ablastr::particles::deposit_charge::ChargeDeposition", blp_ppc_chd, do_device_synchronize);
+    ABLASTR_PROFILE_VAR_NS("ablastr::particles::deposit_charge::Accumulate", blp_accumulate, do_device_synchronize);
 
     // Get tile box where charge is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -176,7 +178,7 @@ void DepositCharge (typename PC::ParIterType& pti,
 #endif
 }
 
+} // namespace particles
 } // namespace ablastr
 
 #endif // ABLASTR_DEPOSIT_CHARGE_H_
-

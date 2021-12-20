@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 David Grote, Maxence Thevenet
 #
@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
+import os
 from scipy.constants import e, m_e, epsilon_0, c
 import post_processing_utils
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -30,7 +31,7 @@ import checksumAPI
 # this will be the name of the plot file
 fn = sys.argv[1]
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 # Parse test name and check if current correction (psatd.current_correction) is applied
 current_correction = True if re.search('current_correction', fn) else False

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 """
 This script is used to test the results of the Galilean PSATD method and
 averaged Galilean PSATD method in WarpX.
@@ -18,6 +18,7 @@ import sys
 import re
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
+import os
 import scipy.constants as scc
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -82,5 +83,5 @@ if current_correction:
     print("tolerance = {}".format(tolerance))
     assert( error_rel < tolerance )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

@@ -2,34 +2,34 @@
   "electrons": {
     "particle_cpu": 0.0,
     "particle_id": 536887296.0,
-    "particle_momentum_x": 3.069066828245467e-20,
-    "particle_momentum_y": 2.955868705778091e-20,
-    "particle_momentum_z": 8.904171964713278e-17,
-    "particle_position_x": 158433.3693892244,
-    "particle_position_y": 158432.16743352715,
-    "particle_position_z": 15724303.927902682,
-    "particle_weight": 4.082754265421834e+18
+    "particle_momentum_x": 7.645562440610894e-22,
+    "particle_momentum_y": 7.701497641150062e-22,
+    "particle_momentum_z": 8.903836155428374e-17,
+    "particle_position_x": 8.192003025897461e+04,
+    "particle_position_y": 8.191962659597211e+04,
+    "particle_position_z": 4.859842246432355e+06,
+    "particle_weight": 8.465938144469544e+17
   },
   "ions": {
     "particle_cpu": 0.0,
     "particle_id": 1610629120.0,
-    "particle_momentum_x": 1.314370492303153e-18,
-    "particle_momentum_y": 1.311559654544720e-18,
-    "particle_momentum_z": 1.6348803504847822e-13,
-    "particle_position_x": 158433.36794743096,
-    "particle_position_y": 158432.13055422663,
-    "particle_position_z": 15724303.986784957,
-    "particle_weight": 4.082754265421834e+18
+    "particle_momentum_x": 1.313741580546445e-18,
+    "particle_momentum_y": 1.310996366510680e-18,
+    "particle_momentum_z": 1.634880384578601e-13,
+    "particle_position_x": 8.192002728525293e+04,
+    "particle_position_y": 8.191964341716655e+04,
+    "particle_position_z": 4.859842246204216e+06,
+    "particle_weight": 8.465938144469544e+17
   },
   "lev=0": {
-    "Bx": 5.811688215947619e-02,
-    "By": 6.003802004939475e-02,
-    "Bz": 5.330066640710849e-01,
-    "Ex": 1.732369792715417e+08,
-    "Ey": 1.658909323129718e+08,
-    "Ez": 1.037164140296824e+06,
-    "jx": 76766.28402952384,
-    "jy": 75076.8695684449,
-    "jz": 20606.225852789266
+    "Bx": 1.446349499148714e-03,
+    "By": 1.456125168616220e-03,
+    "Bz": 1.339627652627294e-03,
+    "Ex": 5.250525396939223e+05,
+    "Ey": 5.587387700727878e+05,
+    "Ez": 6.106704319862885e+04,
+    "jx": 5.355287941546474e+02,
+    "jy": 5.505728912673302e+02,
+    "jz": 1.273315076795212e+04
   }
 }

@@ -66,6 +66,7 @@ public:
     virtual bool DoComputeAndPack(int step, bool force_flush=false) = 0;
     /** whether to flush at this time step
      * \param[in] step current time step
+     * \param[in] i_buffer index of the buffer data to be flushed.
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
@@ -107,7 +108,7 @@ protected:
      *
      * \param[in] step current time step
      */
-    virtual void MovingWindowAndGalileanDomainShift (int /*step*/) {}
+    virtual void MovingWindowAndGalileanDomainShift (int step) { amrex::ignore_unused(step); }
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */

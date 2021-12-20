@@ -56,14 +56,14 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
         // In boosted-frame simulations, the plasma has moved since the last
         // call to this function, and injection position needs to be updated
         current_injection_position -= WarpX::beta_boost *
-#if ( AMREX_SPACEDIM == 3 )
+#if defined(WARPX_DIM_3D)
             WarpX::boost_direction[dir] * PhysConst::c * a_dt;
-#elif ( AMREX_SPACEDIM == 2 )
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
             // This needs to be converted in order to index `boost_direction`
             // which has 3 components, for both 2D and 3D simulations.
             WarpX::boost_direction[2*dir] * PhysConst::c * a_dt;
-#elif ( AMREX_SPACEDIM == 1 )
+#elif defined(WARPX_DIM_1D_Z)
             // In 1D, dir=0 corresponds to z
             // This needs to be converted in order to index `boost_direction`
             // which has 3 components, for 1D, 2D, and 3D simulations.
@@ -371,12 +371,12 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
                       [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) noexcept
                 {
                       // Compute x,y,z co-ordinates based on index type of mf
-#if (AMREX_SPACEDIM==1)
+#if defined(WARPX_DIM_1D_Z)
                       amrex::Real x = 0.0;
                       amrex::Real y = 0.0;
                       amrex::Real fac_z = (1.0 - mf_type[0]) * dx[0]*0.5;
                       amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
-#elif (AMREX_SPACEDIM==2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                       amrex::Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
                       amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
                       amrex::Real y = 0.0;
@@ -420,36 +420,36 @@ WarpX::ShiftGalileanBoundary ()
 
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         m_galilean_shift = {
             m_v_galilean[0]*time_shift,
             m_v_galilean[1]*time_shift,
             m_v_galilean[2]*time_shift };
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         m_galilean_shift = {
             m_v_galilean[0]*time_shift,
             std::numeric_limits<amrex::Real>::quiet_NaN(),
             m_v_galilean[2]*time_shift };
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
         m_galilean_shift = {
             std::numeric_limits<Real>::quiet_NaN(),
             std::numeric_limits<Real>::quiet_NaN(),
             m_v_galilean[2]*time_shift };
 #endif
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         for (int i=0; i<AMREX_SPACEDIM; i++) {
             new_lo[i] = current_lo[i] + m_galilean_shift[i];
             new_hi[i] = current_hi[i] + m_galilean_shift[i];
         }
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     {
         new_lo[0] = current_lo[0] + m_galilean_shift[0];
         new_hi[0] = current_hi[0] + m_galilean_shift[0];
         new_lo[1] = current_lo[1] + m_galilean_shift[2];
         new_hi[1] = current_hi[1] + m_galilean_shift[2];
     }
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     {
         new_lo[0] = current_lo[0] + m_galilean_shift[2];
         new_hi[0] = current_hi[0] + m_galilean_shift[2];

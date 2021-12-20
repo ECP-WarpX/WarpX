@@ -35,6 +35,7 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ (qualifier \c override) and cannot be
          * overridden by further derived classes (qualifier \c final).
          *
+         * \param[in]     lev        mesh-refinement level
          * \param[in,out] field_data all fields in Fourier space
          * \param[in,out] current    two-dimensional array of unique pointers to MultiFab
          *                           storing the three components of the current density
@@ -51,6 +52,7 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ and cannot be overridden by further
          * derived classes.
          *
+         * \param[in]     lev        mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density

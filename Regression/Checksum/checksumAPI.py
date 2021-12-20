@@ -80,7 +80,7 @@ def reset_all_benchmarks(path_to_all_plotfiles):
     '''
 
     # Get list of plotfiles in path_to_all_plotfiles
-    plotfile_list = glob.glob(path_to_all_plotfiles + '*_plt?????',
+    plotfile_list = glob.glob(path_to_all_plotfiles + '*_plt*[0-9]',
                               recursive=True)
     plotfile_list.sort()
 

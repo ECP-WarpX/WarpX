@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2020 Neil Zaim
 #
@@ -11,6 +11,7 @@
 
 import yt
 import numpy as np
+import os
 import sys
 from scipy.special import erf
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -134,5 +135,5 @@ assert(numparts_unaffected == numparts_unaffected_anticipated)
 # Check that particles with weight higher than level weight are unaffected by resampling.
 assert(np.all(w[-numparts_unaffected:] == w0[-numparts_unaffected:]))
 
-test_name = fn_final[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn_final)

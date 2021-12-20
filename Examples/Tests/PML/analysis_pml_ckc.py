@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2018-2019 Andrew Myers, Jean-Luc Vay, Maxence Thevenet
 # Remi Lehe
@@ -11,6 +11,7 @@
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
+import os
 import scipy.constants as scc
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -51,5 +52,5 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

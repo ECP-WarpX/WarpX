@@ -654,6 +654,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
 
+        self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
+        self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
+        self.do_pml_j_damping = kw.pop('warpx_do_pml_j_damping', None)
+
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
@@ -698,6 +702,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         pywarpx.warpx.do_pml_dive_cleaning = self.pml_divE_cleaning
         pywarpx.warpx.do_pml_divb_cleaning = self.pml_divB_cleaning
+
+        pywarpx.warpx.do_pml_in_domain = self.do_pml_in_domain
+        pywarpx.warpx.pml_has_particles = self.pml_has_particles
+        pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
