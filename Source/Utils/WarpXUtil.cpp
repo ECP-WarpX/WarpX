@@ -547,6 +547,11 @@ void CheckGriddingForRZSpectral ()
     // Ensure that geometry.dims is set properly.
     CheckDims();
 
+    // Ensure that AMReX geometry.coord_sys is set properly
+    int coord_sys = 1;
+    ParmParse pp_geometry("geometry");
+    pp_geometry.add("coord_sys", coord_sys);
+
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
