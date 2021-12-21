@@ -1,5 +1,12 @@
 Version, Physics version, Date,        List of changes
-2.0.12, 2, In progress, "
+2.1.12, 2, In progress, "
+
+**Features**:
+
+- Added ability to write to a `results.txt` file that is created when a
+  simulation successfully terminates
+"
+2.0.12, 2, 12/21/2021, "
 
 **Features**:
 

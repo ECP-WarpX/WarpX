@@ -314,6 +314,9 @@ class MEWarpXRun(object):
         while sim_control.check_criteria():
             self.simulation.step(self.step_interval)
 
+        # create file to signal that simulation ran to completion
+        sim_control.write_results()
+
     def get_domain_area(self):
         """Return float of simulation domain area in X & Y directions or R
         depending on geometry. Used to get the surface area over which current

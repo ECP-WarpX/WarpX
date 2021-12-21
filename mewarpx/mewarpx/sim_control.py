@@ -2,8 +2,12 @@
 a set of user defined criteria
 """
 import logging
+import os
+import sys
 
+from mewarpx.diags_store.diag_base import WarpXDiagnostic
 from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import util as mwxutil
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +45,7 @@ class SimControl:
 
         self.crit_list = []
         self.crit_args_list = []
+        self._write_func = None
         self.total_steps = total_steps
         if self.total_steps < 1:
             raise AssertionError("total_steps must be >= 1")
@@ -93,3 +98,26 @@ class SimControl:
             logger.info(terminate_statement)
 
         return all_good
+
+    def write_results(self):
+        """Create results.txt file, and write to it if write_func is set.
+        The file signifies that the simulation ran to completion."""
+        results_string = ""
+        if callable(self._write_func):
+            results_string = self._write_func()
+
+        if mwxrun.me == 0:
+            mwxutil.mkdir_p(WarpXDiagnostic.DIAG_DIR)
+            with open(os.path.join(WarpXDiagnostic.DIAG_DIR, "results.txt"), 'a') as results_file:
+                results_file.write(results_string)
+
+    def set_write_func(self, func):
+        """Sets a function for writing to results.txt file.
+
+        Arguments:
+            func (function): Returns a string that will be written to the
+            results.txt file
+        """
+        if not callable(func):
+            raise ValueError("The write func is not callable")
+        self._write_func = func
