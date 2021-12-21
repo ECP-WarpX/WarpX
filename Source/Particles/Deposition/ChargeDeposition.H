@@ -350,7 +350,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     amrex::launch(
                   nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
                   [=] AMREX_GPU_DEVICE () noexcept
-#else // defined(AMREX_USE_GPU)
+#else // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     amrex::ParallelFor(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip) noexcept
 #endif
       {
@@ -506,11 +506,11 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
         }
 
-#if defined(AMREX_USE_GPU)
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
           __syncthreads();
 
           addLocalToGlobal(tbx, rho_arr, buf);
-#endif // defined(AMREX_USE_GPU)
+#endif // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
       }
       );
 #if defined(WARPX_USE_GPUCLOCK)
