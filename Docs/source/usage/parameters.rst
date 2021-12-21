@@ -277,7 +277,7 @@ Additional PML parameters
 * ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
 
-* ``do_similar_dm_pml`` (`int`; default: 0)
+* ``do_similar_dm_pml`` (`int`; default: 1)
     Whether or not to use an amrex::DistributionMapping for the PML grids that is `similar` to the mother grids, meaning that the
     mapping will be computed to minimize the communication costs between the PML and the mother grids.
 
