@@ -275,7 +275,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    rm -rf build
 
    #                       append if you target GPUs:    -DWarpX_COMPUTE=CUDA
-   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3
+   cmake -S . -B build -DWarpX_DIMS=3
    cmake --build build -j 16
 
 The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake-python>` apply as usual:
@@ -286,7 +286,7 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   WARPX_MPI=ON WARPX_OPENPMD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
+   WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
 
 .. _running-cpp-cori:
 
