@@ -12,7 +12,7 @@ my_constants.xmax = +128.e-6
 my_constants.ymax = +128.e-6
 my_constants.zmax = 0.96e-6
 
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 3
 geometry.prob_lo     = xmin ymin zmin
 geometry.prob_hi     = xmax ymax zmax
 

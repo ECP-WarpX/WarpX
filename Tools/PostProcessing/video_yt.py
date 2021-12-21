@@ -20,8 +20,11 @@ to generate the images. It can be quite slow for even moderately large
 plotfiles.
 '''
 
+import glob
+
 # Import statements
-import yt, glob
+import yt
+
 yt.enable_parallelism()
 import numpy as np
 

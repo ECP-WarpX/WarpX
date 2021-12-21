@@ -1,25 +1,30 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 #
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-
-
+#
 # This is a script that analyses the simulation results from
 # the script `inputs_field_PEC_3d`. This simulates a sinusoindal wave.
 # The electric field (Ey) is a standing wave due to the PEC boundary condition,
 # and as a result, the minimum and maximum value after reflection would be two times the value at initialization due to constructive interference.
 # Additionally, the value of Ey at the boundary must be equal to zero.
-import sys
+import os
 import re
+import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import yt
+
 yt.funcs.mylog.setLevel(50)
+
 import numpy as np
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -75,7 +80,7 @@ print("tolerance_rel: " + str(tolerance_rel))
 assert( max_Ey_error_rel < tolerance_rel )
 assert( min_Ey_error_rel < tolerance_rel )
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 if re.search( 'single_precision', fn ):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)

@@ -8,12 +8,13 @@
 
 """Classes following the PICMI standard
 """
-import re
 import os
-import picmistandard
+import re
+
 import numpy as np
-import pywarpx
 import periodictable
+import picmistandard
+import pywarpx
 
 codename = 'warpx'
 picmistandard.register_codename(codename)
@@ -432,7 +433,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
 
         # Geometry
-        pywarpx.geometry.coord_sys = 1  # RZ
+        pywarpx.geometry.dims = 'RZ'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
@@ -488,7 +489,7 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '1'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
@@ -543,7 +544,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '2'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
@@ -606,7 +607,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '3'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
@@ -654,6 +655,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
 
+        self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
+        self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
+        self.do_pml_j_damping = kw.pop('warpx_do_pml_j_damping', None)
+
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
@@ -698,6 +703,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         pywarpx.warpx.do_pml_dive_cleaning = self.pml_divE_cleaning
         pywarpx.warpx.do_pml_divb_cleaning = self.pml_divB_cleaning
+
+        pywarpx.warpx.do_pml_in_domain = self.do_pml_in_domain
+        pywarpx.warpx.pml_has_particles = self.pml_has_particles
+        pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):

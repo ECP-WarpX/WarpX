@@ -464,6 +464,9 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 void
 WarpX::ReadParameters ()
 {
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
+
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         queryWithParser(pp, "max_step", max_step);
@@ -562,7 +565,7 @@ WarpX::ReadParameters ()
             if (s == "x" || s == "X") {
                 moving_window_dir = 0;
             }
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             else if (s == "y" || s == "Y") {
                 moving_window_dir = 1;
             }
@@ -667,7 +670,7 @@ WarpX::ReadParameters ()
 #if (AMREX_SPACEDIM >= 2)
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
@@ -1372,6 +1375,13 @@ WarpX::BackwardCompatibility ()
             "lasers.nlasers is ignored. Just use lasers.names please.",
             WarnPriority::low);
     }
+    ParmParse pp_geometry("geometry");
+    std::string coord_sys;
+    if (pp_geometry.query("coord_sys", coord_sys)){
+        this->RecordWarning("Geometry",
+            "geometry.coord_sys is ignored. Please use the new geometry.dims parameter.",
+            WarnPriority::low);
+    }
 }
 
 // This is a virtual function.
@@ -1439,11 +1449,11 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 {
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     amrex::RealVect dx(WarpX::CellSize(lev)[2]);
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
 #endif
 
@@ -1513,7 +1523,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     amrex::IntVect F_nodal_flag, G_nodal_flag;
 
     // Set nodal flags
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     // AMReX convention: x = missing dimension, y = missing dimension, z = only dimension
     Ex_nodal_flag = IntVect(1);
     Ey_nodal_flag = IntVect(1);
@@ -1524,7 +1534,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jx_nodal_flag = IntVect(1);
     jy_nodal_flag = IntVect(1);
     jz_nodal_flag = IntVect(0);
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
     Ex_nodal_flag = IntVect(0,1);
     Ey_nodal_flag = IntVect(1,1);
@@ -1535,7 +1545,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jx_nodal_flag = IntVect(0,1);
     jy_nodal_flag = IntVect(1,1);
     jz_nodal_flag = IntVect(1,0);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     Ex_nodal_flag = IntVect(0,1,1);
     Ey_nodal_flag = IntVect(1,0,1);
     Ez_nodal_flag = IntVect(1,1,0);
@@ -2025,11 +2035,11 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                       const std::array<Real,3>& dx,
                                       const bool pml_flag)
 {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     RealVect dx_vect(dx[0], dx[2]);
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     RealVect dx_vect(dx[2]);
 #endif
 
@@ -2065,9 +2075,9 @@ WarpX::CellSize (int lev)
 {
     const amrex::Geometry& gm = GetInstance().Geom(lev);
     const Real* dx = gm.CellSize();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     return { dx[0], dx[1], dx[2] };
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { dx[0], 1.0, dx[1] };
 #else
     return { 1.0, 1.0, dx[0] };
@@ -2089,13 +2099,13 @@ WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int 
 
     const Real* xyzmin = grid_box.lo();
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { xyzmin[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), xyzmin[1] + galilean_shift[2] };
 
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     return { std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::lowest(), xyzmin[0] + galilean_shift[2] };
 #endif
 }
@@ -2105,11 +2115,11 @@ WarpX::UpperCorner(const Box& bx, int lev)
 {
     const RealBox grid_box = getRealBox( bx, lev );
     const Real* xyzmax = grid_box.hi();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     return { xyzmax[0], xyzmax[1], xyzmax[2] };
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { xyzmax[0], std::numeric_limits<Real>::max(), xyzmax[1] };
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] };
 #endif
 }
@@ -2310,7 +2320,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
     const amrex::Dim3 hi = amrex::ubound( tbx );
     Array4<int> msk = buffer_mask.array();
     Array4<int const> gmsk = guard_mask.array();
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     int k = lo.z;
     int j = lo.y;
     for (int i = lo.x; i <= hi.x; ++i) {
@@ -2322,7 +2332,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
         if ( setnull ) msk(i,j,k) = 0;
         else           msk(i,j,k) = 1;
     }
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     int k = lo.z;
     for     (int j = lo.y; j <= hi.y; ++j) {
         for (int i = lo.x; i <= hi.x; ++i) {
@@ -2337,7 +2347,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
             else           msk(i,j,k) = 1;
         }
     }
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     for         (int k = lo.z; k <= hi.z; ++k) {
         for     (int j = lo.y; j <= hi.y; ++j) {
             for (int i = lo.x; i <= hi.x; ++i) {

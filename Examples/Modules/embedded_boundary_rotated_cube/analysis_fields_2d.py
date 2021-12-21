@@ -1,10 +1,11 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
-import yt
 import os
 import sys
-from scipy.constants import mu_0, pi, c
+
 import numpy as np
+from scipy.constants import c, mu_0, pi
+import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

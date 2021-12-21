@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Luca Fedeli, Maxence Thevenet
 #
@@ -8,15 +8,17 @@
 
 # -*- coding: utf-8 -*-
 
-import yt
-import numpy as np
+import os
 import sys
-import scipy.special as spe
+
+import numpy as np
 import scipy.integrate as integ
+import scipy.special as spe
 import scipy.stats as st
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
 import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Quantum Synchrotron photon emission process.
@@ -297,7 +299,7 @@ def check():
 
         print("*************\n")
 
-    test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
 
 def main():

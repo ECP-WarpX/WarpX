@@ -5,20 +5,20 @@
 #
 # License: BSD-3-Clause-LBNL
 
-from .Bucket import Bucket
-from .Constants import my_constants
-from .Amr import amr
-from .Geometry import geometry
-from .Boundary import boundary
+from . import Particles, _libwarpx
 from .Algo import algo
-from .Langmuirwave import langmuirwave
-from .Interpolation import interpolation
-from .Lasers import lasers, lasers_list
-from . import Particles
-from .Particles import particles, particles_list
+from .Amr import amr
+from .Boundary import boundary
+from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
-from .PSATD import psatd
+from .Constants import my_constants
 from .Diagnostics import diagnostics
+from .Geometry import geometry
+from .Interpolation import interpolation
+from .Langmuirwave import langmuirwave
+from .Lasers import lasers, lasers_list
+from .PSATD import psatd
+from .Particles import particles, particles_list
 
 
 class WarpX(Bucket):
@@ -74,25 +74,20 @@ class WarpX(Bucket):
         return argv
 
     def init(self, mpi_comm=None):
-        from . import wx
         argv = ['warpx'] + self.create_argv_list()
-        wx.initialize(argv, mpi_comm=mpi_comm)
+        _libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
-        from . import wx
-        wx.evolve(nsteps)
+        _libwarpx.evolve(nsteps)
 
     def finalize(self, finalize_mpi=1):
-        from . import wx
-        wx.finalize(finalize_mpi)
+        _libwarpx.finalize(finalize_mpi)
 
     def getProbLo(self, direction):
-        from . import wx
-        return wx.libwarpx.warpx_getProbLo(direction)
+        return _libwarpx.libwarpx.libwarpx_so.warpx_getProbLo(direction)
 
     def getProbHi(self, direction):
-        from . import wx
-        return wx.libwarpx.warpx_getProbHi(direction)
+        return _libwarpx.libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
     def write_inputs(self, filename='inputs', **kw):
         argv = self.create_argv_list()

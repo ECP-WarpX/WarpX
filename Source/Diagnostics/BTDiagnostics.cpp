@@ -310,7 +310,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // Take the max of 0 and num_ycells_lab
     int Nx_lab = std::max( 0, num_xcells_lab);
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     // Number of lab-frame cells in the y-direction at level, lev
     const int num_ycells_lab = static_cast<int>( floor (
                                    ( diag_dom.hi(1) - diag_dom.lo(1) )
@@ -319,7 +319,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // Take the max of 0 and num_xcells_lab
     int Ny_lab = std::max( 0, num_ycells_lab );
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Ny_lab, Nz_lab};
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     m_snapshot_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
 #else
     m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
