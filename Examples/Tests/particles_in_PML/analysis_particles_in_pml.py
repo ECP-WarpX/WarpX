@@ -19,7 +19,9 @@ charge, with associated fields, behind them.
 """
 import os
 import sys
+
 import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

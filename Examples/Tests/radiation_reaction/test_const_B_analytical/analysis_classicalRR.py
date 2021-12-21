@@ -30,10 +30,12 @@
 # 3) H. Spohn, Dynamics of charged particles and their radiation field
 #   (Cambridge University Press, Cambridge, 2004)
 
-import numpy as np
 import os
 import sys
+
+import numpy as np
 import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

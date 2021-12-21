@@ -5,13 +5,14 @@
 #
 # License: BSD-3-Clause-LBNL
 
+import os
 # This script modifies `WarpX-test.ini` (which is used for nightly builds)
 # and creates the file `ci-test.ini` (which is used for continous
 # integration)
 # The subtests that are selected are controlled by WARPX_TEST_DIM
 # The architecture (CPU/GPU) is selected by WARPX_TEST_ARCH
 import re
-import os
+
 # Get relevant environment variables
 arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
 

@@ -6,9 +6,10 @@
 # --- used for the field solve step.
 
 import numpy as np
-from scipy.sparse import csc_matrix, linalg as sla
 import pywarpx
-from pywarpx import picmi, callbacks, fields
+from pywarpx import callbacks, fields, picmi
+from scipy.sparse import csc_matrix
+from scipy.sparse import linalg as sla
 
 constants = picmi.constants
 

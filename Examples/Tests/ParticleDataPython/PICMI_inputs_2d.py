@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import argparse
 import sys
+
 import numpy as np
 import pywarpx
-from pywarpx import picmi, callbacks
+from pywarpx import callbacks, picmi
 
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
