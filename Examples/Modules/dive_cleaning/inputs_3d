@@ -3,7 +3,7 @@ amr.n_cell =  64 64 64
 amr.max_grid_size = 32
 amr.max_level = 0
 
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 3
 geometry.prob_lo     = -50.e-6   -50.e-6  -50.e-6
 geometry.prob_hi     =  50.e-6    50.e-6   50.e-6
 

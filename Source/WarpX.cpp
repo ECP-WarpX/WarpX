@@ -464,6 +464,9 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 void
 WarpX::ReadParameters ()
 {
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
+
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         queryWithParser(pp, "max_step", max_step);
@@ -1365,6 +1368,13 @@ WarpX::BackwardCompatibility ()
     if (pp_lasers.query("nlasers", nlasers)){
         this->RecordWarning("Laser",
             "lasers.nlasers is ignored. Just use lasers.names please.",
+            WarnPriority::low);
+    }
+    ParmParse pp_geometry("geometry");
+    std::string coord_sys;
+    if (pp_geometry.query("coord_sys", coord_sys)){
+        this->RecordWarning("Geometry",
+            "geometry.coord_sys is ignored. Please use the new geometry.dims parameter.",
             WarnPriority::low);
     }
 }

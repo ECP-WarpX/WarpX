@@ -23,6 +23,7 @@ amr.n_cell = 2688 3712
 # simulation box, no MR
 #   note: increase z (space & cells) for converging ion energy
 amr.max_level = 0
+geometry.dims = 2
 geometry.prob_lo = -7.5e-6 -5.e-6
 geometry.prob_hi =  7.5e-6 25.e-6
 
