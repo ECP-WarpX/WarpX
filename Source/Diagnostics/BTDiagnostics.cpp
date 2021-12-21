@@ -150,6 +150,7 @@ BTDiagnostics::ReadParameters ()
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
     getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
