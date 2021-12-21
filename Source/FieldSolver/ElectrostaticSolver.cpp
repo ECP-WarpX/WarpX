@@ -323,6 +323,8 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
     // Define the linear operator (Poisson operator)
     MLNodeLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
 
+    linop.setRZCorrection(true);
+
     for (int lev = 0; lev <= max_level; ++lev) {
         linop.setSigma( lev, *sigma[lev] );
     }
