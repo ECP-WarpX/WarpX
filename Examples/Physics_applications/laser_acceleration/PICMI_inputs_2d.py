@@ -108,7 +108,7 @@ diag_field_list = ["B", "E", "J", "rho"]
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
-    period = 200,
+    period = 1000,
     data_list = diag_field_list)
 
 # Set up simulation
