@@ -6,7 +6,6 @@
 # License: BSD-3-Clause-LBNL
 
 from . import Particles
-from ._libwarpx import libwarpx
 from .Algo import algo
 from .Amr import amr
 from .Boundary import boundary
@@ -20,6 +19,7 @@ from .Langmuirwave import langmuirwave
 from .Lasers import lasers, lasers_list
 from .PSATD import psatd
 from .Particles import particles, particles_list
+from ._libwarpx import libwarpx
 
 
 class WarpX(Bucket):
