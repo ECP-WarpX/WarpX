@@ -26,12 +26,13 @@ import ctypes
 import datetime
 import logging
 import os.path
+import shutil
 import sys
 
 import numpy as np
 
 import pywarpx
-from pywarpx import libwarpx, picmi, fields
+from pywarpx import libwarpx, picmi, fields, callbacks
 
 import mewarpx
 from mewarpx.utils_store import mwxconstants as constants
@@ -54,6 +55,7 @@ class MEWarpXRun(object):
     def __init__(self):
         self.initialized = False
         self.simulation = picmi.Simulation(verbose=0)
+        callbacks.installafterinit(self._after_init)
 
     def init_grid(self, xmin, xmax, zmin, zmax, nx, nz,
                   field_boundary_xmin='periodic',
@@ -169,23 +171,13 @@ class MEWarpXRun(object):
                     )
                 )
 
+            # at this point we are committed to either restarting or starting
+            # fresh; if this is a fresh start we can delete diags if present
+            if not self.restart and os.path.exists("diags"):
+                shutil.rmtree("diags")
+
             self.simulation.initialize_inputs()
             self.simulation.initialize_warpx()
-
-            self.me = pywarpx.getMyProc()
-            self.n_procs = pywarpx.getNProcs()
-
-            # A level is needed for many things like level number. For now I'm
-            # statically setting the default level here. I'm not sure of
-            # pitfalls or how to handle it more generally yet.
-            self.lev = libwarpx.libwarpx_so.warpx_finestLevel()
-
-            self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
-            self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
-            self.rho_wrapper_no_ghosts = fields.RhoFPWrapper(self.lev, False)
-            self.phi_wrapper_no_ghosts = fields.PhiFPWrapper(self.lev, False)
-
-            self.initialized = True
 
         except RuntimeError:
             if self.restart:
@@ -209,6 +201,24 @@ class MEWarpXRun(object):
 
         # Ensure all initialization info printed before run starts
         sys.stdout.flush()
+
+    def _after_init(self):
+        """This function will be called after WarpX has been initialized but
+        before any other `afterinit` callbacks."""
+        self.me = pywarpx.getMyProc()
+        self.n_procs = pywarpx.getNProcs()
+
+        # A level is needed for many things like level number. For now I'm
+        # statically setting the default level here. I'm not sure of
+        # pitfalls or how to handle it more generally yet.
+        self.lev = libwarpx.libwarpx_so.warpx_finestLevel()
+
+        self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
+        self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
+        self.rho_wrapper_no_ghosts = fields.RhoFPWrapper(self.lev, False)
+        self.phi_wrapper_no_ghosts = fields.PhiFPWrapper(self.lev, False)
+
+        self.initialized = True
 
     def _set_geom_str(self):
         """Set the geom_str variable corresponding to the geometry used.

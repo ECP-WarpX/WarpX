@@ -1,5 +1,15 @@
 Version, Physics version, Date,        List of changes
-2.0.11, 2, In progress, "
+2.0.12, 2, In progress, "
+
+**Features**:
+
+- At initialization of runs that are not restarted from checkpoint files, old
+  ``diags`` will be deleted.
+- Child classes of :class:`mewarpx.diags_store.diag_base.WarpXDiagnostic` are
+  now expected to have an attribute ``write_dir`` specifying the directory in
+  which it will store diagnostic output.
+"
+2.0.11, 2, 12/20/2021, "
 
 **Other changes**:
 

@@ -9,6 +9,7 @@ import numpy as np
 from pywarpx import callbacks
 
 from mewarpx.mwxrun import mwxrun
+import mewarpx.utils_store.util as mwxutil
 
 # Get module-level logger
 logger = logging.getLogger(__name__)
@@ -64,6 +65,20 @@ class WarpXDiagnostic(object):
         ):
             raise ValueError("manual_timesteps and extended_interval_level "
                              "cannot be used together; one must be None.")
+
+        # handle creating the folder to save diagnostics
+        if mwxrun.initialized:
+            self._create_diag_folder()
+        else:
+            callbacks.installafterinit(self._create_diag_folder)
+
+    def _create_diag_folder(self):
+        """Helper function to create folder in which to save diagnostics. Child
+        classes that save diagnostic files should have a ``write_dir``
+        attribute specifying the directory in which it will save diagnostic
+        files."""
+        if hasattr(self, "write_dir") and mwxrun.me == 0:
+            mwxutil.mkdir_p(self.write_dir)
 
     def check_timestep(self):
         """Check if the diagnostic should run on this timestep.

@@ -2,7 +2,7 @@
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.diags_store.diag_base import WarpXDiagnostic
-from mewarpx.utils_store import util, mwxconstants, plotting
+from mewarpx.utils_store import mwxconstants, plotting
 
 from pywarpx import callbacks, picmi
 
@@ -252,14 +252,9 @@ class FieldDiagnostic(WarpXDiagnostic):
     def get_fileprefix(self, title):
         """Return filepath except for the filetype.
 
-        Note:
-            Will also make directory if not present.
-
         Arguments:
             title (str): String for title; whitespace will become underscores
         """
-        if mwxrun.me == 0:
-            util.mkdir_p(self.write_dir)
         return os.path.join(
             self.write_dir, '_'.join(title.split() + [f"{self.it:010d}"])
         )

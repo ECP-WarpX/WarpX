@@ -43,17 +43,10 @@ class ParticleCSVDiag(diag_base.WarpXDiagnostic):
             kwargs: See :class:`mewarpx.diags_store.diag_base.WarpXDiagnostic`
                 for more timing options.
         """
-        self.write_dir = write_dir
-        self.save_name = save_name
-        self.save = (
-            (self.write_dir is not None) and (self.save_name is not None)
-        )
-
+        self.save = (write_dir is not None) and (save_name is not None)
         if self.save:
-            # Initialize variables
-            if mwxrun.me == 0:
-                mwxutil.mkdir_p(self.write_dir)
-            self.save_path = os.path.join(self.write_dir, self.save_name)
+            self.write_dir = write_dir
+            self.save_path = os.path.join(self.write_dir, save_name)
 
         self.accumulate_dict = {}
 
@@ -301,8 +294,6 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
             self.ts_dict = collections.OrderedDict()
 
         self.write_dir = os.path.join(self.DIAG_DIR, self.FLUX_DIAG_DIR)
-        if mwxrun.me == 0:
-            mwxutil.mkdir_p(self.write_dir)
 
         super(FluxDiagBase, self).__init__(
             diag_steps=diag_steps,

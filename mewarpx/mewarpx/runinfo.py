@@ -30,16 +30,16 @@ class SimInfo(object):
     This must contain:
         SimInfo.nxyz (int nx, int ny, int nz)
         SimInfo.pos_lims (floats xmin, xmax, ymin, ymax, zmin, zmax)
-        SimInfo.geom (str 'XZ', 'RZ' or 'XYZ')
+        SimInfo.geom (str 'Z', 'XZ', 'RZ' or 'XYZ')
         SimInfo.dt (float)
         SimInfo.periodic (bool)
 
     Arguments:
         nxyz (list): tuple of ints, holding the grid dimensions
-        pos_lims (list) : tuple of floats, holding the position limits along each
-            dimension (xmax, ymin, ymax, zmin, zmax)
-        geom (str): geometry string 'XZ', 'RZ', or 'XYZ' for 2D grid,
-            cylindrical, or 3D grid
+        pos_lims (list) : tuple of floats, holding the position limits along
+            each dimension (xmax, ymin, ymax, zmin, zmax)
+        geom (str): geometry string 'Z', 'XZ', 'RZ', or 'XYZ' for 1D grid,
+            2D grid, cylindrical, or 3D grid
         dt (float): simulation timestep interval
         periodic (bool): use periodic boundary conditions
 
