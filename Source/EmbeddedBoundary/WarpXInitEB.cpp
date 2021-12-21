@@ -113,15 +113,10 @@ WarpX::InitEB ()
 #endif
 }
 
-
+#ifdef AMREX_USE_EB
 void
 WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
-#ifdef AMREX_USE_EB
                            const amrex::EBFArrayBoxFactory& eb_fact) {
-#else
-                           const amrex::FabFactory<amrex::FArrayBox>& eb_fact) {
-#endif
-#ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
@@ -180,20 +175,12 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
             }
         }
     }
-#else
-    amrex::ignore_unused(edge_lengths, eb_fact);
-#endif
 }
 
 
 void
 WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
-#ifdef AMREX_USE_EB
                          const amrex::EBFArrayBoxFactory& eb_fact) {
-#else
-                         const amrex::FabFactory<amrex::FArrayBox>& eb_fact) {
-#endif
-#ifdef AMREX_USE_EB
     BL_PROFILE("ComputeFaceAreas");
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
@@ -247,16 +234,12 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
             }
         }
     }
-#else
-    amrex::ignore_unused(face_areas, eb_fact);
-#endif
 }
 
 
 void
 WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
                    const std::array<amrex::Real,3>& cell_size) {
-#ifdef AMREX_USE_EB
     BL_PROFILE("ScaleEdges");
 
     for (amrex::MFIter mfi(*edge_lengths[0]); mfi.isValid(); ++mfi) {
@@ -276,15 +259,11 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
             });
         }
     }
-#else
-    amrex::ignore_unused(edge_lengths, cell_size);
-#endif
 }
 
 void
 WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
                   const std::array<amrex::Real,3>& cell_size) {
-#ifdef AMREX_USE_EB
     BL_PROFILE("ScaleAreas");
 
     amrex::Real full_area;
@@ -321,15 +300,11 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
 
         }
     }
-#else
-    amrex::ignore_unused(face_areas, cell_size);
-#endif
 }
 
 
 void
 WarpX::MarkCells(){
-#ifdef AMREX_USE_EB
     auto const &cell_size = CellSize(maxLevel());
 
 #ifdef WARPX_DIM_3D
@@ -409,8 +384,8 @@ WarpX::MarkCells(){
             });
         }
     }
-#endif
 }
+#endif
 
 
 void

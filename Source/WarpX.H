@@ -1270,22 +1270,17 @@ public:
     */
 
 public:
-    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
 #ifdef AMREX_USE_EB
+    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
                                     const amrex::EBFArrayBoxFactory& eb_fact);
-#else
-                                    const amrex::FabFactory<amrex::FArrayBox>& eb_fact);
-#endif
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
     static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
-#ifdef AMREX_USE_EB
                                   const amrex::EBFArrayBoxFactory& eb_fact);
-#else
-                                  const amrex::FabFactory<amrex::FArrayBox>& eb_fact);
-#endif    /**
+
+    /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
     static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
@@ -1307,6 +1302,7 @@ public:
     /**
     * \brief Compute the level set function used for particle-boundary interaction.
     */
+#endif
     void ComputeDistanceToEB ();
     /**
     * \brief Auxiliary function to count the amount of faces which still need to be extended
