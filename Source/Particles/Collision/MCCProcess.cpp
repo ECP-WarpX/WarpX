@@ -100,7 +100,6 @@ MCCProcess::readCrossSectionFile (
     std::ifstream infile(cross_section_file);
     if(!infile.is_open()) amrex::Abort("Failed to open cross-section data file");
 
-    /* NOTE Were these declared double intentionally? */
     amrex::Real energy, sigma;
     while (infile >> energy >> sigma) {
         energies.push_back(energy);
