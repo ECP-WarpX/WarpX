@@ -76,7 +76,11 @@ private:
      * The particle containers required for this must be added to populate this function.
      */
     void InitializeParticleBuffer () override;
+    /** This function prepares the current z coordinate in the boosted-frame and lab-frame as required by
+        the particle and fields.
+     */
     void PrepareBufferData () override;
+    /** This function increments the buffer counter and identifies if the snapshot is fully populated */
     void UpdateBufferData () override;
     /** The cell-centered data for all fields, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is computed and stored in

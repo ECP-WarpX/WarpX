@@ -62,6 +62,7 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev) = 0;
+    /** Initialize functors that store pointers to the species data requested by the user. */
     virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step
      * \param[in] step current time step
@@ -104,12 +105,19 @@ protected:
     virtual void DerivedInitData () {}
     /** This function initialized particle buffers (not implemented in diagnostics, yet) */
     virtual void InitializeParticleBuffer () = 0;
+    /** This function prepares buffer data as required for fields and particles. For back-transformed diagnostics,
+     *  this function prepares the z coordinate in the boosted-frame and lab-frame.
+     */
     virtual void PrepareBufferData () {}
+    /** This function updates buffer data and computes the number of buffers filled in the output multifab as well
+     *  as identifies if the last buffer has been filled as needed to close the output files.
+     */
     virtual void UpdateBufferData () {}
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
     virtual void PrepareFieldDataForOutput () {}
+    /** The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output */
     virtual void PrepareParticleDataForOutput () {}
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
