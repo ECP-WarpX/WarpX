@@ -125,7 +125,6 @@ protected:
      * \param[in] step current time step
      */
     virtual void MovingWindowAndGalileanDomainShift (int step) { amrex::ignore_unused(step); }
-    virtual void PrepareParticleDataForOutput() {}
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
