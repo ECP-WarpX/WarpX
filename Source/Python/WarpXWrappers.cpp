@@ -232,6 +232,11 @@ namespace
         warpx_py_appliedfields = callback;
     }
 
+    void warpx_clear_callback_py_poissonsolver ()
+    {
+        warpx_py_poissonsolver = nullptr;
+    }
+
     void warpx_evolve (int numsteps)
     {
         WarpX& warpx = WarpX::GetInstance();

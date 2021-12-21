@@ -62,6 +62,8 @@ extern "C" {
     void warpx_set_callback_py_particleinjection (WARPX_CALLBACK_PY_FUNC_0);
     void warpx_set_callback_py_appliedfields (WARPX_CALLBACK_PY_FUNC_0);
 
+    void warpx_clear_callback_py_poissonsolver ();
+
     void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
     void warpx_addNParticles(const char* char_species_name,

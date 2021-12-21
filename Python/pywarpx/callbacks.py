@@ -94,7 +94,7 @@ class CallbackFunctions(object):
     def clearlist(self):
         self.funcs = []
 
-    def __nonzero__(self):
+    def __bool__(self):
         "Returns True if functions are installed, otherwise False"
         return self.hasfuncsinstalled()
 
@@ -188,7 +188,7 @@ class CallbackFunctions(object):
                 return
             elif isinstance(func,list) and isinstance(f,types.MethodType):
                 object = self._getmethodobject(func)
-                if f.im_self is object and f.__name__ == func[1]:
+                if f.__self__ is object and f.__name__ == func[1]:
                     self.funcs.remove(func)
                     return
             elif isinstance(func,str):
@@ -213,7 +213,7 @@ class CallbackFunctions(object):
                 return 1
             elif isinstance(func,list) and isinstance(f,types.MethodType):
                 object = self._getmethodobject(func)
-                if f.im_self is object and f.__name__ == func[1]:
+                if f.__self__ is object and f.__name__ == func[1]:
                     return 1
             elif isinstance(func,str):
                 if f.__name__ == func:
@@ -320,16 +320,17 @@ def callfrompoissonsolver(f):
     installpoissonsolver(f)
     return f
 def installpoissonsolver(f):
-    """Adds a function to solve Poisson's equation. Note that the C++ object
-    warpx_py_poissonsolver is declared as a nullptr but once the call to set it
-    to _c_poissonsolver below is executed it is no longer a nullptr, and therefore
-    if (warpx_py_poissonsolver) evaluates to True. For this reason a poissonsolver
-    cannot be uninstalled with the uninstallfuncinlist functionality at present."""
+    """Installs an external function to solve Poisson's equation"""
     if _poissonsolver.hasfuncsinstalled():
-        raise RuntimeError('Only one field solver can be installed.')
+        raise RuntimeError("Only one external Poisson solver can be installed.")
     _poissonsolver.installfuncinlist(f)
+def uninstallpoissonsolver():
+    """Removes the external function to solve Poisson's equation and resets the
+    C++ object to a nullptr so that the default MLMG solver will be called."""
+    _poissonsolver.clearlist()
+    libwarpx.libwarpx_so.warpx_clear_callback_py_poissonsolver()
 def isinstalledpoissonsolver(f):
-    """Checks if the function is called for a field solve"""
+    """Checks if the function is called to solve Poisson's equation"""
     return _poissonsolver.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
