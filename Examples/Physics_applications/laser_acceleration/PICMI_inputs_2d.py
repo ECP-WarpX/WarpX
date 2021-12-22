@@ -5,7 +5,7 @@ c = picmi.constants.c
 q_e = picmi.constants.q_e
 
 # Number of time steps
-max_steps = 1000
+max_steps = 200
 
 # Number of cells
 nx = 64
@@ -16,6 +16,10 @@ xmin = -30e-06
 xmax =  30e-06
 zmin = -56e-06
 zmax =  12e-06
+xmin_refined = -5e-06
+xmax_refined =  5e-06
+zmin_refined = -35e-06
+zmax_refined = -25e-06
 
 # Domain decomposition
 max_grid_size = 64
@@ -32,7 +36,8 @@ grid = picmi.Cartesian2DGrid(
     upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
     moving_window_velocity = [0., c],
     warpx_max_grid_size = max_grid_size,
-    warpx_blocking_factor = blocking_factor)
+    warpx_blocking_factor = blocking_factor,
+    refined_regions = [[1, [xmin_refined, zmin_refined], [xmax_refined, zmax_refined]]])
 
 # Particles: plasma electrons
 plasma_density = 2e23
@@ -117,7 +122,8 @@ sim = picmi.Simulation(
     max_steps = max_steps,
     verbose = 1,
     particle_shape = 'cubic',
-    warpx_use_filter = 1)
+    warpx_use_filter = 1,
+    warpx_serialize_ics = 1)
 
 # Add plasma electrons
 sim.add_species(
