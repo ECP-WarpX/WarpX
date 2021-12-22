@@ -1,5 +1,11 @@
 Version, Physics version, Date,        List of changes
-2.1.12, 2, In progress, "
+2.1.13, 2, 12/20/2021, "
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``f73b3cd``) into memaster.
+"
+2.1.12, 2, 12/22/2021, "
 
 **Features**:
 

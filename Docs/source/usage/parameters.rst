@@ -158,8 +158,19 @@ Setting up the field mesh
 
     Note: in development; currently allowed value: ``2 2 2``.
 
-* ``geometry.coord_sys`` (`integer`) optional (default `0`)
-    Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
+* ``geometry.dims`` (`string`)
+    The dimensions of the simulation geometry.
+    Supported values are ``1``, ``2``, ``3``, ``RZ``.
+    For ``3``, a cartesian geometry of ``x``, ``y``, ``z`` is modeled.
+    For ``2``, the axes are ``x`` and ``z`` and all physics in ``y`` is assumed to be translation symmetric.
+    For ``1``, the only axis is ``z`` and the dimensions ``x`` and ``y`` are translation symmetric.
+    For ``RZ``, we apply an azimuthal mode decomposition, with ``warpx.n_rz_azimuthal_modes`` providing further control.
+
+    Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
+    If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
+
+* ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+    When using the RZ version, this is the number of azimuthal modes.
 
 * ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its
@@ -232,9 +243,6 @@ Setting up the field mesh
     in the list will gather their fields from the main grid
     (i.e. the coarsest level), even if they are inside a refinement patch.
 
-* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
-    When using the RZ version, this is the number of azimuthal modes.
-
 .. _running-cpp-parameters-bc:
 
 Domain Boundary Conditions
@@ -276,6 +284,10 @@ Additional PML parameters
 
 * ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
+
+* ``do_similar_dm_pml`` (`int`; default: 1)
+    Whether or not to use an amrex::DistributionMapping for the PML grids that is `similar` to the mother grids, meaning that the
+    mapping will be computed to minimize the communication costs between the PML and the mother grids.
 
 * ``warpx.pml_delta`` (`int`; default: 10)
     The characteristic depth, in number of cells, over which

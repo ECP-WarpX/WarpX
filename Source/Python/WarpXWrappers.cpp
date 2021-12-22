@@ -265,7 +265,7 @@ namespace
 
     void warpx_CheckGriddingForRZSpectral()
     {
-      CheckGriddingForRZSpectral();
+        CheckGriddingForRZSpectral();
     }
 
     amrex::Real warpx_getProbLo(int dir)

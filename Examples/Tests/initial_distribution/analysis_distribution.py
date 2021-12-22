@@ -16,12 +16,14 @@
 # 7 denotes maxwell-boltzmann distribution w/ spatially-varying velocity
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
-import numpy as np
 import os
+import sys
+
+import numpy as np
+from read_raw_data import read_reduced_diags, read_reduced_diags_histogram
 import scipy.constants as scc
 import scipy.special as scs
-from read_raw_data import read_reduced_diags_histogram, read_reduced_diags
-import sys
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

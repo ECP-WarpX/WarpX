@@ -5,24 +5,31 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os, sys, shutil, datetime, git
-import argparse, time, copy
+import argparse
+import copy
+import datetime
+import os
+import shutil
+import sys
+import time
+
+from functions_perftest import (extract_dataframe, get_file_content,
+                                run_batch_nnode, store_git_hash)
+import git
 import pandas as pd
-from functions_perftest import store_git_hash, get_file_content, \
-    run_batch_nnode, extract_dataframe
 
 # Get name of supercomputer and import configuration functions from
 # machine-specific file
 if os.getenv("LMOD_SYSTEM_NAME") == 'summit':
     machine = 'summit'
-    from summit import executable_name, process_analysis, \
-        get_config_command, time_min, get_submit_job_command, \
-        get_batch_string, get_run_string, get_test_list
+    from summit import (executable_name, get_batch_string, get_config_command,
+                        get_run_string, get_submit_job_command, get_test_list,
+                        process_analysis, time_min)
 if os.getenv("NERSC_HOST") == 'cori':
     machine = 'cori'
-    from cori import executable_name, process_analysis, \
-        get_config_command, time_min, get_submit_job_command, \
-        get_batch_string, get_run_string, get_test_list
+    from cori import (executable_name, get_batch_string, get_config_command,
+                      get_run_string, get_submit_job_command, get_test_list,
+                      process_analysis, time_min)
 
 # typical use: python run_automated.py --n_node_list='1,8,16,32' --automated
 # Assume warpx, picsar, amrex and perf_logs repos ar in the same directory and

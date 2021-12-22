@@ -4,14 +4,17 @@
 # the script `PICMI_inputs_2d`.
 
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import yt
+
 yt.funcs.mylog.setLevel(50)
 import numpy as np
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksum
-
 
 # this will be the name of the first plot file
 fn1 = "Python_pass_mpi_comm_plt1_00010"

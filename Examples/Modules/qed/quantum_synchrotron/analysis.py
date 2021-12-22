@@ -8,16 +8,17 @@
 
 # -*- coding: utf-8 -*-
 
-import yt
-import numpy as np
 import os
 import sys
-import scipy.special as spe
+
+import numpy as np
 import scipy.integrate as integ
+import scipy.special as spe
 import scipy.stats as st
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
 import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Quantum Synchrotron photon emission process.
