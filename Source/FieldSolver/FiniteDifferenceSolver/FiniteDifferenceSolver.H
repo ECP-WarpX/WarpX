@@ -152,7 +152,7 @@ class FiniteDifferenceSolver
         void EvolveBCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,            
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
             const int lev,
             amrex::Real const dt );
 
