@@ -10,11 +10,6 @@
 
 #include "WarpXWrappers.H"
 
-
-extern "C" {
-
-    extern std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
-
-}
+extern std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
 
 #endif
