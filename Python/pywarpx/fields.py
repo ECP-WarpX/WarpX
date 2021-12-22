@@ -14,6 +14,7 @@ JxWrapper, JyWrapper, JzWrapper
 
 """
 import numpy as np
+
 try:
     from mpi4py import MPI as mpi
     comm_world = mpi.COMM_WORLD
@@ -42,7 +43,7 @@ class _MultiFABWrapper(object):
         self.level = level
         self.include_ghosts = include_ghosts
 
-        self.dim = _libwarpx.dim
+        self.dim = _libwarpx.libwarpx.dim
 
         # overlaps is one along the axes where the grid boundaries overlap the neighboring grid,
         # which is the case with node centering.
@@ -85,13 +86,13 @@ class _MultiFABWrapper(object):
         """
 
         try:
-            if _libwarpx.geometry_dim == '3d':
+            if _libwarpx.libwarpx.geometry_dim == '3d':
                 idir = ['x', 'y', 'z'].index(direction)
                 celldir = idir
-            elif _libwarpx.geometry_dim == '2d':
+            elif _libwarpx.libwarpx.geometry_dim == '2d':
                 idir = ['x', 'z'].index(direction)
                 celldir = 2*idir
-            elif _libwarpx.geometry_dim == 'rz':
+            elif _libwarpx.libwarpx.geometry_dim == 'rz':
                 idir = ['r', 'z'].index(direction)
                 celldir = 2*idir
             elif _libwarpx.geometry_dim == '1d':
@@ -299,7 +300,7 @@ class _MultiFABWrapper(object):
         if ncomps > 1 and ic is None:
             sss = tuple(list(sss) + [ncomps])
         # --- Create the array to be returned.
-        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
+        resultglobal = np.zeros(sss, dtype=_libwarpx.libwarpx._numpy_real_dtype)
 
         datalist = []
         for i in range(len(fields)):

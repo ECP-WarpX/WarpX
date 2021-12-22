@@ -102,7 +102,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {
                     const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                     dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);
 #else
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);

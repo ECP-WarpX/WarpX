@@ -158,9 +158,9 @@ namespace
         // Open the output.
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
         // Create a 3D, nx x ny x nz dataspace.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         hsize_t dims[3] = {nx, ny, nz};
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         hsize_t dims[3] = {nx, nz};
 #else
         hsize_t dims[3] = {nz};
@@ -418,13 +418,13 @@ namespace
         // Iterate over Fabs, select matching hyperslab and write.
         hid_t status;
         // slab lo index and shape.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         hsize_t slab_offsets[3], slab_dims[3];
         int shift[3];
         shift[0] = lo_x;
         shift[1] = lo_y;
         shift[2] = lo_z;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         hsize_t slab_offsets[2], slab_dims[2];
         int shift[2];
         shift[0] = lo_x;
@@ -593,10 +593,10 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 #if (AMREX_SPACEDIM >= 2)
     int Nx_lab = geom.Domain().length(0);
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     int Ny_lab = geom.Domain().length(1);
     IntVect prob_ncells_lab = {Nx_lab, Ny_lab, Nz_lab};
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // Ny_lab = 1;
     IntVect prob_ncells_lab = {Nx_lab, Nz_lab};
 #else
@@ -677,7 +677,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // to be consistent with the number of cells created for the output.
         if (Nx_lab != Nx_slice_lab) Nx_slice_lab++;
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         auto Ny_slice_lab = static_cast<int>(
             (current_slice_hi[1] - current_slice_lo[1]) /
             geom.CellSize(1));
@@ -686,7 +686,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // to be consistent with the number of cells created for the output.
         if (Ny_lab != Ny_slice_lab) Ny_slice_lab++;
         amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
 #else
         amrex::IntVect slice_ncells_lab(Nz_slice_lab);
@@ -1233,7 +1233,7 @@ createLabFrameDirectories() {
 #else
                                     1,
 #endif
-#if ( AMREX_SPACEDIM == 3 )
+#if defined(WARPX_DIM_3D)
                                     m_prob_ncells_lab_[1],
 #else
                                     1,
@@ -1315,20 +1315,20 @@ writeLabFrameHeader() {
         HeaderFile << m_t_lab << "\n";
         // Write domain number of cells
         HeaderFile << m_prob_ncells_lab_[0] << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_prob_ncells_lab_[1] << ' '
 #endif
                    << m_prob_ncells_lab_[WARPX_ZINDEX] <<'\n';
         // Write domain physical boundaries
         // domain lower bound
         HeaderFile << m_diag_domain_lab_.lo(0) << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_diag_domain_lab_.lo(1) << ' '
 #endif
                    << m_diag_domain_lab_.lo(WARPX_ZINDEX) <<'\n';
         // domain higher bound
         HeaderFile << m_diag_domain_lab_.hi(0) << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_diag_domain_lab_.hi(1) << ' '
 #endif
                    << m_diag_domain_lab_.hi(WARPX_ZINDEX) <<'\n';
@@ -1404,9 +1404,9 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
              [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
              {
                  const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                  buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                  buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
 #else
                  buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
@@ -1443,9 +1443,9 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
            {
               const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
               buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
               buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
 #else
               buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
@@ -1558,7 +1558,7 @@ AddPartDataToParticleBuffer(
         Real const xmin = m_diag_domain_lab_.lo(0)-m_particle_slice_dx_lab_;
         Real const xmax = m_diag_domain_lab_.hi(0)+m_particle_slice_dx_lab_;
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         Real const ymin = m_diag_domain_lab_.lo(1)-m_particle_slice_dx_lab_;
         Real const ymax = m_diag_domain_lab_.hi(1)+m_particle_slice_dx_lab_;
 #endif
@@ -1574,7 +1574,7 @@ AddPartDataToParticleBuffer(
                  x_temp[i] <= (xmax) )
 #endif
             {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                if (y_temp[i] >= (ymin) &&
                    y_temp[i] <= (ymax) )
 #endif

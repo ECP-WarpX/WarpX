@@ -66,7 +66,7 @@ void BilinearFilter::ComputeStencils(){
     for (auto el : npass_each_dir )
         stencil_length_each_dir[i++] = el;
     stencil_length_each_dir += 1.;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     // npass_each_dir = npass_x npass_y npass_z
     stencil_x.resize( 1u + npass_each_dir[0] );
     stencil_y.resize( 1u + npass_each_dir[1] );
@@ -74,22 +74,22 @@ void BilinearFilter::ComputeStencils(){
     compute_stencil(stencil_x, npass_each_dir[0]);
     compute_stencil(stencil_y, npass_each_dir[1]);
     compute_stencil(stencil_z, npass_each_dir[2]);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // npass_each_dir = npass_x npass_z
     stencil_x.resize( 1u + npass_each_dir[0] );
     stencil_z.resize( 1u + npass_each_dir[1] );
     compute_stencil(stencil_x, npass_each_dir[0]);
     compute_stencil(stencil_z, npass_each_dir[1]);
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     // npass_each_dir = npass_z
     stencil_z.resize( 1u + npass_each_dir[0] );
     compute_stencil(stencil_z, npass_each_dir[0]);
 #endif
     slen = stencil_length_each_dir.dim3();
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     slen.z = 1;
 #endif
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     slen.y = 1;
     slen.z = 1;
 #endif

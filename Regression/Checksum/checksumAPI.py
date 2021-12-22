@@ -8,12 +8,13 @@
  License: BSD-3-Clause-LBNL
  """
 
-from checksum import Checksum
-from benchmark import Benchmark
 import argparse
 import glob
-import sys
 import os
+import sys
+
+from benchmark import Benchmark
+from checksum import Checksum
 
 '''
 API for WarpX checksum tests. It can be used in two ways:
@@ -80,7 +81,7 @@ def reset_all_benchmarks(path_to_all_plotfiles):
     '''
 
     # Get list of plotfiles in path_to_all_plotfiles
-    plotfile_list = glob.glob(path_to_all_plotfiles + '*_plt?????',
+    plotfile_list = glob.glob(path_to_all_plotfiles + '*_plt*[0-9]',
                               recursive=True)
     plotfile_list.sort()
 

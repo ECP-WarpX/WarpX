@@ -6,7 +6,9 @@
 # --- if the correct amount of processors are initialized in AMReX.
 
 from mpi4py import MPI
+import pywarpx
 from pywarpx import picmi
+
 constants = picmi.constants
 
 ##########################
@@ -124,18 +126,16 @@ sim.step(max_steps, mpi_comm=new_comm)
 comm_world_size = comm_world.size
 new_comm_size = new_comm.size
 
-from pywarpx import wx
-
 if color == 0:
     # verify that communicator contains correct number of procs (1)
-    assert wx.libwarpx.warpx_getNProcs() == comm_world_size - 1
-    assert wx.libwarpx.warpx_getNProcs() == new_comm_size
+    assert pywarpx.getNProcs() == comm_world_size - 1
+    assert pywarpx.getNProcs() == new_comm_size
 
 else:
     # verify that amrex initialized with 1 fewer proc than comm world
-    assert wx.libwarpx.warpx_getNProcs() == comm_world_size - 1
-    assert wx.libwarpx.warpx_getNProcs() == new_comm_size
+    assert pywarpx.getNProcs() == comm_world_size - 1
+    assert pywarpx.getNProcs() == new_comm_size
 
     # verify that amrex proc ranks are offset by -1 from
     # world comm proc ranks
-    assert wx.libwarpx.warpx_getMyProc() == rank - 1
+    assert pywarpx.getMyProc() == rank - 1

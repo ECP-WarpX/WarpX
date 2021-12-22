@@ -2,7 +2,6 @@
 
 from pywarpx import picmi
 
-
 ##########################
 # physics parameters
 ##########################

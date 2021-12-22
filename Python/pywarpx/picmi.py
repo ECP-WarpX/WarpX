@@ -8,12 +8,13 @@
 
 """Classes following the PICMI standard
 """
-import re
 import os
-import picmistandard
+import re
+
 import numpy as np
-import pywarpx
 import periodictable
+import picmistandard
+import pywarpx
 
 codename = 'warpx'
 picmistandard.register_codename(codename)
@@ -432,7 +433,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
 
         # Geometry
-        pywarpx.geometry.coord_sys = 1  # RZ
+        pywarpx.geometry.dims = 'RZ'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
@@ -488,7 +489,7 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '1'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
@@ -543,7 +544,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '2'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
@@ -606,7 +607,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '3'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
