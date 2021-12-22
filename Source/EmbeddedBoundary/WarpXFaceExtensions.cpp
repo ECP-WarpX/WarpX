@@ -117,7 +117,7 @@ ComputeSStab(const int i, const int j, const int k,
         return 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
     }else if(dim == 1){
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         return 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
                                lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #elif defined(WARPX_DIM_3D)
@@ -141,13 +141,12 @@ amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
-#ifndef WARPX_DIM_RZ
 
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) 
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
     for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #elif defined(WARPX_DIM_3D)
-        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+    for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
         amrex::Abort("CountExtFaces: Only implemented in 2D3V and 3D3V");
 #endif
@@ -167,7 +166,6 @@ WarpX::CountExtFaces() {
     }
 
     amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
-#endif
 #endif
     return sums;
 }
@@ -371,7 +369,6 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
 void
 WarpX::ComputeOneWayExtensions() {
 #ifdef AMREX_USE_EB
-#ifndef WARPX_DIM_RZ
     auto const eb_fact = fieldEBFactory(maxLevel());
 
     auto const &cell_size = CellSize(maxLevel());
@@ -381,11 +378,11 @@ WarpX::ComputeOneWayExtensions() {
     const amrex::Real dz = cell_size[2];
 
     // Do the extensions
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
     for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #elif defined(WARPX_DIM_3D)
-        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+    for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
         amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
 #endif
@@ -487,14 +484,12 @@ WarpX::ComputeOneWayExtensions() {
     }
 
 #endif
-#endif
 }
 
 
 void
 WarpX::ComputeEightWaysExtensions() {
 #ifdef AMREX_USE_EB
-#ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 
     const amrex::Real dx = cell_size[0];
@@ -502,11 +497,11 @@ WarpX::ComputeEightWaysExtensions() {
     const amrex::Real dz = cell_size[2];
 
     // Do the extensions
-#ifdef WARPX_DIM_XZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
     for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #elif defined(WARPX_DIM_3D)
-        for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+    for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
         amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
 #endif
@@ -644,7 +639,6 @@ WarpX::ComputeEightWaysExtensions() {
             }, amrex::Scan::Type::exclusive);
         }
     }
-#endif
 #endif
 }
 
