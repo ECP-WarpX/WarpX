@@ -83,9 +83,9 @@ WarpX::Evolve (int numsteps)
         if (verbose) {
             amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
         }
-        if (warpx_py_beforestep) {
+        if ( warpx_callback_py_map.count("beforestep") ) {
             WARPX_PROFILE("warpx_py_beforestep");
-            warpx_py_beforestep();
+            warpx_callback_py_map["beforestep"]();
         }
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -168,9 +168,9 @@ WarpX::Evolve (int numsteps)
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
 
-        if (warpx_py_particleinjection) {
+        if ( warpx_callback_py_map.count("particleinjection") ) {
             WARPX_PROFILE("warpx_py_particleinjection");
-            warpx_py_particleinjection();
+            warpx_callback_py_map["particleinjection"]();
         }
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
@@ -300,9 +300,9 @@ WarpX::Evolve (int numsteps)
         }
 
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
-            if (warpx_py_beforeEsolve) {
+            if ( warpx_callback_py_map.count("beforeEsolve") ) {
                 WARPX_PROFILE("warpx_py_beforeEsolve");
-                warpx_py_beforeEsolve();
+                warpx_callback_py_map["beforeEsolve"]();
             }
             // Electrostatic solver:
             // For each species: deposit charge and add the associated space-charge
@@ -312,9 +312,9 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
-            if (warpx_py_afterEsolve) {
+            if ( warpx_callback_py_map.count("afterEsolve") ) {
                 WARPX_PROFILE("warpx_py_afterEsolve");
-                warpx_py_afterEsolve();
+                warpx_callback_py_map["afterEsolve"]();
             }
         }
 
@@ -323,11 +323,11 @@ WarpX::Evolve (int numsteps)
             t_new[i] = cur_time;
         }
 
-        // warpx_py_afterstep runs with the updated global time. It is included
+        // afterstep callback runs with the updated global time. It is included
         // in the evolve timing.
-        if (warpx_py_afterstep) {
+        if ( warpx_callback_py_map.count("afterstep") ) {
             WARPX_PROFILE("warpx_py_afterstep");
-            warpx_py_afterstep();
+            warpx_callback_py_map["afterstep"]();
         }
 
         /// reduced diags
@@ -385,19 +385,19 @@ WarpX::OneStep_nosub (Real cur_time)
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
-    if (warpx_py_particlescraper) {
+    if ( warpx_callback_py_map.count("particlescraper") ) {
         WARPX_PROFILE("warpx_py_particlescraper");
-        warpx_py_particlescraper();
+        warpx_callback_py_map["particlescraper"]();
     }
-    if (warpx_py_beforedeposition) {
+    if ( warpx_callback_py_map.count("beforedeposition") ) {
         WARPX_PROFILE("warpx_py_beforedeposition");
-        warpx_py_beforedeposition();
+        warpx_callback_py_map["beforedeposition"]();
     }
     PushParticlesandDepose(cur_time);
 
-    if (warpx_py_afterdeposition) {
+    if ( warpx_callback_py_map.count("afterdeposition") ) {
         WARPX_PROFILE("warpx_py_afterdeposition");
-        warpx_py_afterdeposition();
+        warpx_callback_py_map["afterdeposition"]();
     }
 
     // Synchronize J and rho
@@ -420,9 +420,9 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
 
-    if (warpx_py_beforeEsolve) {
+    if ( warpx_callback_py_map.count("beforeEsolve") ) {
         WARPX_PROFILE("warpx_py_beforeEsolve");
-        warpx_py_beforeEsolve();
+        warpx_callback_py_map["beforeEsolve"]();
     }
 
     // Push E and B from {n} to {n+1}
@@ -505,9 +505,9 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
 
-    if (warpx_py_afterEsolve) {
+    if ( warpx_callback_py_map.count("afterEsolve") ) {
         WARPX_PROFILE("warpx_py_afterEsolve");
-        warpx_py_afterEsolve();
+        warpx_callback_py_map["afterEsolve"]();
     }
 }
 
