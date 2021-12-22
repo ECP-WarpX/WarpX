@@ -66,8 +66,7 @@ void FiniteDifferenceSolver::EvolveE (
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-        ignore_unused(edge_lengths);
-        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
+        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 #else
     if (m_do_nodal) {
 
@@ -232,8 +231,13 @@ void FiniteDifferenceSolver::EvolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,    
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
+
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
