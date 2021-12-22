@@ -150,7 +150,7 @@ struct LorentzTransformParticles
 #elif defined (WARPX_DIM_1D)
         dst.m_aos[i_dst].pos(0) = zp;
         amrex::ignore_unused(yp, zp);
-#elif
+#else
         amrex::ignore_unused(xp, yp, zp)
 #endif
         dst.m_rdata[PIdx::w][i_dst] = m_wpnew[i_src];
