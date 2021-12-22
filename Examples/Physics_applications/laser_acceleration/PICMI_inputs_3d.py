@@ -5,12 +5,12 @@ c = picmi.constants.c
 q_e = picmi.constants.q_e
 
 # Number of time steps
-max_steps = 1000
+max_steps = 100
 
 # Number of cells
-nx = 64
-ny = 64
-nz = 512
+nx = 32
+ny = 32
+nz = 256
 
 # Physical domain
 xmin = -30e-06
@@ -41,7 +41,7 @@ grid = picmi.Cartesian3DGrid(
 plasma_density = 2e23
 plasma_xmin = -20e-06
 plasma_ymin = -20e-06
-plasma_zmin = 10e-06
+plasma_zmin = 0
 plasma_xmax = 20e-06
 plasma_ymax = 20e-06
 plasma_zmax = None
@@ -95,7 +95,9 @@ sim = picmi.Simulation(
     max_steps = max_steps,
     verbose = 1,
     particle_shape = 'cubic',
-    warpx_use_filter = 1)
+    warpx_use_filter = 1,
+    warpx_serialize_ics = 1,
+    warpx_do_dynamic_scheduling = 0)
 
 # Add plasma electrons
 sim.add_species(
