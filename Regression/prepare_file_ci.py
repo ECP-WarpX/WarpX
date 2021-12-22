@@ -146,7 +146,6 @@ if ci_single_precision:
 
 if ci_rz_or_nompi:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
     block1 = select_tests(test_blocks, ['USE_RZ=TRUE'], True)
     block2 = select_tests(test_blocks, ['useMPI = 0'], True)
     test_blocks = block1 + block2
@@ -155,6 +154,7 @@ if ci_qed:
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], True)
 
 if ci_eb:
+    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)    
     test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], True)
 
 # - Add the selected test blocks to the text
