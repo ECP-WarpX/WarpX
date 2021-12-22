@@ -5,7 +5,7 @@ c = picmi.constants.c
 q_e = picmi.constants.q_e
 
 # Number of time steps
-max_steps = 1000
+max_steps = 10
 
 # Number of cells
 nr = 64
@@ -109,8 +109,14 @@ diag_field_list = ["B", "E", "J", "rho"]
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
-    period = 1000,
+    period = 10,
     data_list = diag_field_list)
+diag_particle_list = ["weighting", "momentum"]
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 10,
+    species = [electrons, beam],
+    data_list = diag_particle_list)
 
 # Set up simulation
 sim = picmi.Simulation(
@@ -137,6 +143,7 @@ sim.add_laser(
 
 # Add diagnostics
 sim.add_diagnostic(field_diag)
+sim.add_diagnostic(particle_diag)
 
 # Write input file that can be used to run with the compiled version
 sim.write_input_file(file_name = 'inputs_rz_picmi')
