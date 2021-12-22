@@ -14,11 +14,13 @@ along each of the three axis. It launches particles heading toward each of the b
 and checks that they end up in the correct place (or are deleted).
 """
 
-import sys
-import yt
-import numpy as np
 import os
-from scipy.constants import m_e, c
+import sys
+
+import numpy as np
+from scipy.constants import c, m_e
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

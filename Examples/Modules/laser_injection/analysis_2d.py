@@ -17,15 +17,18 @@
 # the simulation and it compares it with theory. It also checks that the
 # central frequency of the Fourier transform is the expected one.
 
-import yt
+import os
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
-import os
-from scipy.signal import hilbert
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
+from scipy.signal import hilbert
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

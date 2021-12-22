@@ -12,8 +12,7 @@
 # Note that this is intended to be an example only and may not be functional. The
 # onestep routine as written here is out of date and is not consistent with WarpX::Evolve.
 
-from . import libwarpx
-from . import callbacks
+from . import callbacks, libwarpx
 
 
 class TimeStepper(object):

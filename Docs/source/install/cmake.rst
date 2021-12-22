@@ -66,7 +66,7 @@ or by adding arguments with ``-D<OPTION>=<VALUE>`` to the first CMake call, e.g.
 
 .. code-block:: bash
 
-   cmake -S . -B build -DWarpX_DIMS=2 -DWarpX_COMPUTE=CUDA -DWarpX_OPENPMD=ON
+   cmake -S . -B build -DWarpX_DIMS=2 -DWarpX_COMPUTE=CUDA
 
 
 .. _building-cmake-options:
@@ -90,7 +90,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
-``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
+``WarpX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
@@ -189,7 +189,7 @@ Environment Variable          Default & Values                             Descr
 ``WARPX_DIMS``                ``"2;3;RZ"``                                 Simulation dimensionalities (semicolon-separated list)
 ``WARPX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
 ``WARPX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
-``WARPX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
+``WARPX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WARPX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WARPX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WARPX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
@@ -229,7 +229,7 @@ So another sophisticated example might be: use Clang as the compiler, build with
 
 .. code-block:: bash
 
-   CC=$(which clang) CXX=$(which clang++) WARPX_AMREX_SRC=$PWD/../amrex WARPX_PICSAR_SRC=$PWD/../picsar WARPX_PSATD=ON WARPX_MPI=ON WARPX_OPENPMD=ON WARPX_DIMS=3 CMAKE_PREFIX_PATH=$HOME/sw/hdf5-parallel-1.10.4:$CMAKE_PREFIX_PATH python3 -m pip install --force-reinstall -v .
+   CC=$(which clang) CXX=$(which clang++) WARPX_AMREX_SRC=$PWD/../amrex WARPX_PICSAR_SRC=$PWD/../picsar WARPX_PSATD=ON WARPX_MPI=ON WARPX_DIMS=3 CMAKE_PREFIX_PATH=$HOME/sw/hdf5-parallel-1.10.4:$CMAKE_PREFIX_PATH python3 -m pip install --force-reinstall -v .
 
 Here we wrote this all in one line, but one can also set all environment variables in a development environment and keep the pip call nice and short as in the beginning.
 Note that you need to use absolute paths for external source trees, because pip builds in a temporary directory, e.g. ``export WARPX_AMREX_SRC=$HOME/src/amrex``.

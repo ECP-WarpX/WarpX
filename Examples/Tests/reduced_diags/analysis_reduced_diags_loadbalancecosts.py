@@ -17,9 +17,11 @@
 
 # Possible running time: ~ 1 s
 
-import numpy as np
 import os
 import sys
+
+import numpy as np
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import pywarpx
-from pywarpx import picmi, fields
+from pywarpx import fields, picmi
 
 max_steps = 1
 unit = 1e-3

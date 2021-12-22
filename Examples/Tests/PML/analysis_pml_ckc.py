@@ -8,11 +8,13 @@
 # License: BSD-3-Clause-LBNL
 
 
-import sys
-import yt ; yt.funcs.mylog.setLevel(0)
-import numpy as np
 import os
+import sys
+
+import numpy as np
 import scipy.constants as scc
+
+import yt ; yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

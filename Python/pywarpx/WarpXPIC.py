@@ -12,7 +12,9 @@
 # able to run a customized PIC simulation with that code.
 
 from warp.run_modes.timestepper import PICAPI
+
 from ._libwarpx import libwarpx
+
 
 class WarpXPIC(PICAPI):
 

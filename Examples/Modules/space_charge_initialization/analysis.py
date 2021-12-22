@@ -11,15 +11,18 @@ This script checks the space-charge initialization routine, by
 verifying that the space-charge field of a Gaussian beam corresponds to
 the expected theoretical field.
 """
+import os
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import yt
 import numpy as np
-import os
 import scipy.constants as scc
 from scipy.special import gammainc
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
