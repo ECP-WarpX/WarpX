@@ -29,8 +29,8 @@ import checksumAPI
 
 tolerance = 0
 
-last_fn = sys.argv[1]
-ds = yt.load( last_fn )
+fn = sys.argv[1]
+ds = yt.load( fn )
 ad = ds.all_data()
 x = ad['electron', 'particle_position_x'].v
 
