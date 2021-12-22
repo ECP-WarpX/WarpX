@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from pywarpx import fields, libwarpx, picmi
+from pywarpx import fields, picmi
 
 constants = picmi.constants
 
@@ -177,7 +177,7 @@ def calcEz( z, r, k0, w0, wp, t, epsilons) :
     return( Ez_array )
 
 # Current time of the simulation
-t0 = libwarpx.gett_new(0)
+t0 = sim.extension.gett_new(0)
 
 # Get the raw field data. Note that these are the real and imaginary
 # parts of the fields for each azimuthal mode.
