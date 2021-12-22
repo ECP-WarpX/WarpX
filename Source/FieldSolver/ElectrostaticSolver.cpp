@@ -285,22 +285,19 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         );
     }
 
-#ifndef AMREX_USE_EB
-
-    // Define the linear operator (Poisson operator)
-    MLEBNodeFDLaplacian linop( geom_scaled, boxArray(), DistributionMap() );
-
-#else
-
-    // With embedded boundary: extract EB info
     LPInfo info;
+
+#ifndef AMREX_USE_EB
+    // Define the linear operator (Poisson operator)
+    MLEBNodeFDLaplacian linop( geom_scaled, boxArray(), DistributionMap(), info );
+#else
+    // With embedded boundary: extract EB info
     Vector<EBFArrayBoxFactory const*> eb_factory;
     eb_factory.resize(max_level+1);
     for (int lev = 0; lev <= max_level; ++lev) {
         eb_factory[lev] = &WarpX::fieldEBFactory(lev);
     }
     MLEBNodeFDLaplacian linop( Geom(), boxArray(), DistributionMap(), info, eb_factory);
-
     // if the EB potential only depends on time, the potential can be passed
     // as a float instead of a callable
     if (field_boundary_handler.phi_EB_only_t) {
