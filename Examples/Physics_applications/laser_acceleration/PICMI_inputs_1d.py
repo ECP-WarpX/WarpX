@@ -5,10 +5,10 @@ c = picmi.constants.c
 q_e = picmi.constants.q_e
 
 # Number of time steps
-max_steps = 1000
+max_steps = 100
 
 # Number of cells
-nz = 512
+nz = 256
 
 # Physical domain
 zmin = -56e-06
@@ -89,7 +89,9 @@ sim = picmi.Simulation(
     max_steps = max_steps,
     verbose = 1,
     particle_shape = 'cubic',
-    warpx_use_filter = 1)
+    warpx_use_filter = 1,
+    warpx_serialize_ics = 1,
+    warpx_do_dynamic_scheduling = 0)
 
 # Add plasma electrons
 sim.add_species(
