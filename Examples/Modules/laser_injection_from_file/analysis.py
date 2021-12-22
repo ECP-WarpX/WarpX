@@ -16,14 +16,17 @@
 # - Compute the theory for laser envelope at time T
 # - Compare theory and simulation, for both envelope and central frequency
 
-import yt ; yt.funcs.mylog.setLevel(50)
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from scipy.signal import hilbert
 import glob
 import os
+
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.signal import hilbert
+
+import yt ; yt.funcs.mylog.setLevel(50)
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.065

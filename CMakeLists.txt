@@ -66,7 +66,7 @@ cmake_dependent_option(WarpX_GPUCLOCK
                            "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
 option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
-option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
+option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
 option(WarpX_QED           "QED support (requires PICSAR)"                    ON)

@@ -524,7 +524,7 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
-PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
+PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
@@ -570,8 +570,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         m_ok = true;
     }
 
-    DistributionMapping dm{ba};
-
     // Define the number of guard cells in each direction, for E, B, and F
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
@@ -616,6 +614,14 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         nge = ngFFT;
         ngb = ngFFT;
         ngf = ngFFT;
+    }
+
+    DistributionMapping dm;
+    if (WarpX::do_similar_dm_pml) {
+        auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
+        dm = amrex::MakeSimilarDM(ba, grid_ba, grid_dm, ng_sim);
+    } else {
+        dm.define(ba);
     }
 
     // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
@@ -738,7 +744,13 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
                                            cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-        DistributionMapping cdm{cba};
+        DistributionMapping cdm;
+        if (WarpX::do_similar_dm_pml) {
+            auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
+            cdm = amrex::MakeSimilarDM(cba, grid_cba_reduced, grid_dm, ng_sim);
+        } else {
+            cdm.define(cba);
+        }
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, ncompe, nge );

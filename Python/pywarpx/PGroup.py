@@ -5,7 +5,9 @@
 # License: BSD-3-Clause-LBNL
 
 import numpy as np
+
 from . import _libwarpx
+
 
 class PGroup(object):
     """Implements a class that has the same API as a warp ParticleGroup instance.

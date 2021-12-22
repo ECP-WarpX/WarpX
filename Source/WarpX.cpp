@@ -193,6 +193,8 @@ int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
 
+int WarpX::do_similar_dm_pml = 1;
+
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize = true;
 #else
@@ -464,6 +466,9 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 void
 WarpX::ReadParameters ()
 {
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
+
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         queryWithParser(pp, "max_step", max_step);
@@ -744,6 +749,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
+        pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
@@ -1365,6 +1371,13 @@ WarpX::BackwardCompatibility ()
     if (pp_lasers.query("nlasers", nlasers)){
         this->RecordWarning("Laser",
             "lasers.nlasers is ignored. Just use lasers.names please.",
+            WarnPriority::low);
+    }
+    ParmParse pp_geometry("geometry");
+    std::string coord_sys;
+    if (pp_geometry.query("coord_sys", coord_sys)){
+        this->RecordWarning("Geometry",
+            "geometry.coord_sys is ignored. Please use the new geometry.dims parameter.",
             WarnPriority::low);
     }
 }
