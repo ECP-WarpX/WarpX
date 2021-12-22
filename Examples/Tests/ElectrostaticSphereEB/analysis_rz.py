@@ -27,8 +27,8 @@ import checksumAPI
 
 tolerance = 0.004
 
-last_fn = sys.argv[1]
-ds = yt.load( last_fn )
+fn = sys.argv[1]
+ds = yt.load( fn )
 
 all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 phi = all_data_level_0['boxlib', 'phi'].v.squeeze()
@@ -50,10 +50,10 @@ for i in range(len(r)):
     if r[i]>=0.1:
         phi_theory = A+B*np.log(r[i])
         Er_theory = -B/float(r[i])
-        err = abs( phi_theory - phi[i,phi.shape[1]//2] ) / phi_theory
+        err = abs( phi_theory - phi[i,:] ).max() / phi_theory
         if err>errmax_phi:
             errmax_phi = err
-        err = abs( Er_theory - Er[i,Er.shape[1]//2] ) / Er_theory
+        err = abs( Er_theory - Er[i,:] ).max() / Er_theory
         # Exclude the last inaccurate interpolation.
         if err>errmax_Er and i<len(r)-1:
             errmax_Er = err
