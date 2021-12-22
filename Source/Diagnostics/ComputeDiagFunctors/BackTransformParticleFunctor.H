@@ -147,7 +147,7 @@ struct LorentzTransformParticles
         dst.m_aos[i_dst].pos(1) = zp;
         amrex::ignore_unused(yp);
 #elif (WARPX_DIM_RZ)
-        amrex::ignore_unused(yp);
+        amrex::ignore_unused(yp, zp);
 #endif
         dst.m_rdata[PIdx::w][i_dst] = m_wpnew[i_src];
         dst.m_rdata[PIdx::ux][i_dst] = uxp;
