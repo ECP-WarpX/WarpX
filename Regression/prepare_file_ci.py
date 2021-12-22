@@ -153,6 +153,7 @@ if ci_qed:
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], True)
 
 if ci_eb:
+    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], True)
 
 # - Add the selected test blocks to the text
