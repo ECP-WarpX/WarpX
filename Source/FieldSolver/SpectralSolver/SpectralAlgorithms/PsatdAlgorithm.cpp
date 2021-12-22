@@ -587,7 +587,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 }
                 else
                 {
-                    X2(i,j,k) = - c2 / ep0 * dt2 / 6._rt;
+                    X2(i,j,k) = 0._rt;
                 }
             }
             else // standard or Galilean PSATD
@@ -628,7 +628,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 }
                 else
                 {
-                    X3(i,j,k) = 0._rt;
+                    X3(i,j,k) = - c2 * dt2 / (6._rt * ep0);
                 }
             }
             else // standard or Galilean PSATD
@@ -996,7 +996,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
             }
             else
             {
-                X7(i,j,k) = - c2 / ep0 * dt2 / 6._rt;
+                X7(i,j,k) = c2 * dt2 / (6._rt * ep0);
             }
         });
     }
