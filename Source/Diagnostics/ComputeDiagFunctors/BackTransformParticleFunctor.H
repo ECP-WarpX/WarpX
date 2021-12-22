@@ -140,11 +140,13 @@ struct LorentzTransformParticles
         const amrex::ParticleReal uzp = uz_old_p * weight_old
                                       + uz_new_p * weight_new;
         dst.m_aos[i_dst].pos(0) = xp;
-#if (AMREX_SPACEDIM == 3)
+#if (WARPX_DIM_3D == 3)
         dst.m_aos[i_dst].pos(1) = yp;
         dst.m_aos[i_dst].pos(2) = zp;
-#elif (AMREX_SPACEDIM == 2)
+#elif (WARPX_DIM_2D == 2)
         dst.m_aos[i_dst].pos(1) = zp;
+        amrex::ignore_unused(yp);
+#elif (WARPX_DIM_RZ)
         amrex::ignore_unused(yp);
 #endif
         dst.m_rdata[PIdx::w][i_dst] = m_wpnew[i_src];
