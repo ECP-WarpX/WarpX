@@ -494,6 +494,12 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
         Array4<Real> const& Et = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
 
+#ifdef AMREX_USE_EB
+        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+#endif
+
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
         int const n_coefs_r = m_stencil_coefs_r.size();
@@ -514,6 +520,10 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
         amrex::ParallelFor(tbr, tbt, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (Sx(i, j, k) <= 0) return;
+#endif
                 Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
                 if (r != 0) { // Off-axis, regular Maxwell equations
                     Br(i, j, 0, 0) += dt * T_Algo::UpwardDz(Et, coefs_z, n_coefs_z, i, j, 0, 0); // Mode m=0
@@ -547,6 +557,10 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (Sy(i, j, k) <= 0) return;
+#endif
                 Bt(i, j, 0, 0) += dt*(
                     T_Algo::UpwardDr(Ez, coefs_r, n_coefs_r, i, j, 0, 0)
                     - T_Algo::UpwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0)); // Mode m=0
@@ -561,6 +575,10 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (Sz(i, j, k) <= 0) return;
+#endif
                 Real const r = rmin + (i + 0.5)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
                 Bz(i, j, 0, 0) += dt*( - T_Algo::UpwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
