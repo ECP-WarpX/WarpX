@@ -23,7 +23,7 @@ import numpy as np
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-#import checksumAPI
+import checksumAPI
 
 tolerance = 0.004
 
