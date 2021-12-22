@@ -142,7 +142,7 @@ WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) 
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
     for(int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #elif defined(WARPX_DIM_3D)
