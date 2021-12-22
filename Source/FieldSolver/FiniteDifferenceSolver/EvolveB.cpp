@@ -527,7 +527,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sx(i, j, k) <= 0) return;
+                if (Sx(i, j, 0) <= 0) return;
 #endif
                 Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
                 if (r != 0) { // Off-axis, regular Maxwell equations
@@ -564,7 +564,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sy(i, j, k) <= 0) return;
+                if (Sy(i, j, 0) <= 0) return;
 #endif
                 Bt(i, j, 0, 0) += dt*(
                     T_Algo::UpwardDr(Ez, coefs_r, n_coefs_r, i, j, 0, 0)
@@ -582,7 +582,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sz(i, j, k) <= 0) return;
+                if (Sz(i, j, 0) <= 0) return;
 #endif
                 Real const r = rmin + (i + 0.5)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
                 Bz(i, j, 0, 0) += dt*( - T_Algo::UpwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
