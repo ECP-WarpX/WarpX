@@ -105,18 +105,22 @@ solver = picmi.ElectromagneticSolver(
     divE_cleaning = 0)
 
 # Diagnostics
-diag_field_list = ["B", "E", "J", "rho"]
+diag_field_list = ['B', 'E', 'J', 'rho']
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 10,
-    data_list = diag_field_list)
-diag_particle_list = ["weighting", "momentum"]
+    data_list = diag_field_list,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_LaserAccelerationRZ_plt')
+diag_particle_list = ['weighting', 'momentum']
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 10,
     species = [electrons, beam],
-    data_list = diag_particle_list)
+    data_list = diag_particle_list,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_LaserAccelerationRZ_plt')
 
 # Set up simulation
 sim = picmi.Simulation(
