@@ -1,7 +1,6 @@
 """File to keep constants not already in picmi.py that are needed in mewarpx."""
-from pywarpx.picmi import constants
-
 import numpy as np
+from pywarpx.picmi import constants
 
 # CONSTANTS - SI
 h = constants.hbar * 2*np.pi # J s

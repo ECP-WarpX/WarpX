@@ -4,19 +4,19 @@ Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 """
 
 from mewarpx.utils_store import util as mwxutil
+
 mwxutil.init_libwarpx(ndim=2, rz=False)
 
-from mewarpx.mwxrun import mwxrun
-from mewarpx.diags_store import diag_base
-from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
-from mewarpx import mespecies, emission, mcc_wrapper, poisson_pseudo_1d
-
-from pywarpx import picmi, _libwarpx, callbacks
+import argparse
+import sys
 
 import numpy as np
+from pywarpx import _libwarpx, callbacks, picmi
 
-import sys
-import argparse
+from mewarpx import emission, mcc_wrapper, mespecies, poisson_pseudo_1d
+from mewarpx.diags_store import diag_base
+from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
+from mewarpx.mwxrun import mwxrun
 
 constants = picmi.constants
 

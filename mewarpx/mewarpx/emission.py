@@ -1,25 +1,23 @@
 """
 Module for various types of particle emission in WarpX.
 """
+import collections
 # import collections
 import logging
 import warnings
 
-import numba
-import numpy as np
-import collections
-
-import skimage.measure
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import numba
+import numpy as np
+from pywarpx import _libwarpx, callbacks, picmi
+import skimage.measure
 
-from pywarpx import callbacks, _libwarpx, picmi
-
-import mewarpx.utils_store.util as mwxutil
-from mewarpx.mwxrun import mwxrun
-import mewarpx.utils_store.mwxconstants as constants
-from mewarpx.utils_store import appendablearray, parallel_util
 from mewarpx.mespecies import Species
+from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import appendablearray, parallel_util
+import mewarpx.utils_store.mwxconstants as constants
+import mewarpx.utils_store.util as mwxutil
 
 # Get module-level logger
 logger = logging.getLogger(__name__)

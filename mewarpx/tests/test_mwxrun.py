@@ -1,8 +1,9 @@
 """Tests for functionality in mwxrun.py"""
-import pytest
-import numpy as np
-import yt
 import logging
+
+import numpy as np
+import pytest
+import yt
 
 from mewarpx.utils_store import util as mwxutil
 
@@ -26,9 +27,9 @@ def test_capacitive_discharge_multigrid(caplog, name):
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=use_rz)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below

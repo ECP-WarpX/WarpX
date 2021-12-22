@@ -1,8 +1,10 @@
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import numpy as np
 import copy
 import logging
+
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import numpy as np
+
 from mewarpx.mwxrun import mwxrun
 from mewarpx.utils_store import util
 

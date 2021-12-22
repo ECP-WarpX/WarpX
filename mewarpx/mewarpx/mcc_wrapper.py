@@ -1,9 +1,11 @@
-import glob, os
+import glob
+import os
+
 from pywarpx import picmi
-from mewarpx.utils_store import util as mwxutil
 
 # For use later to sync with diode test template and access sim object in mwxrun
 from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import util as mwxutil
 
 
 class MCC():

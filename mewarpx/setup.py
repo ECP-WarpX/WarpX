@@ -2,6 +2,7 @@
 # Template for this package from
 # https://github.com/kragniz/cookiecutter-pypackage-minimal
 import os
+
 import setuptools
 
 requires = [

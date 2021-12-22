@@ -3,12 +3,13 @@ Assembly implementations.
 """
 import collections
 import logging
+
 import numpy as np
+from pywarpx import _libwarpx, picmi
 
 from mewarpx.mwxrun import mwxrun
-from mewarpx.utils_store.appendablearray import AppendableArray
 from mewarpx.utils_store import parallel_util
-from pywarpx import picmi, _libwarpx
+from mewarpx.utils_store.appendablearray import AppendableArray
 
 # Get module-level logger
 logger = logging.getLogger(__name__)

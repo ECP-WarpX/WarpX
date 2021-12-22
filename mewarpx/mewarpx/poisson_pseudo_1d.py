@@ -1,11 +1,13 @@
-import numpy as np
-from scipy.sparse import csc_matrix, linalg as sla
 from functools import partial
 import logging
 
-from mewarpx.mwxrun import mwxrun
+import numpy as np
 from pywarpx import callbacks
 from pywarpx.picmi import Cartesian2DGrid, ElectrostaticSolver, constants
+from scipy.sparse import csc_matrix
+from scipy.sparse import linalg as sla
+
+from mewarpx.mwxrun import mwxrun
 
 logger = logging.getLogger(__name__)
 

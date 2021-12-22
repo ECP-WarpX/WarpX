@@ -4,15 +4,14 @@ Monte-Carlo Collision script based on case 1 from
 Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 """
 
-import pytest
-import os.path
 import glob
-
-from mewarpx.utils_store import util as mwxutil
-
-from pywarpx import picmi
+import os.path
 
 import numpy as np
+import pytest
+from pywarpx import picmi
+
+from mewarpx.utils_store import util as mwxutil
 
 constants = picmi.constants
 

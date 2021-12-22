@@ -1,18 +1,17 @@
 from mewarpx.utils_store import util as mwxutil
+
 mwxutil.init_libwarpx(ndim=2, rz=False)
 
-from mewarpx import assemblies, emission, mespecies
-from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
-
-from mewarpx.mwxrun import mwxrun
-from mewarpx.diags_store import diag_base
-from mewarpx.mcc_wrapper import MCC
-from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
-
-import mewarpx.utils_store.mwxconstants as constants
-
-import sys
 import argparse
+import sys
+
+from mewarpx import assemblies, emission, mespecies
+from mewarpx.diags_store import diag_base
+from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
+from mewarpx.mcc_wrapper import MCC
+from mewarpx.mwxrun import mwxrun
+from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
+import mewarpx.utils_store.mwxconstants as constants
 
 ####################################
 # physics parameters

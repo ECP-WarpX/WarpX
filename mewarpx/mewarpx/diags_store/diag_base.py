@@ -1,15 +1,16 @@
 """Base diagnostic code used in many diagnostics."""
 import logging
 import time
-import sys
 
 import numpy as np
-# import psutil
-
 from pywarpx import callbacks
 
 from mewarpx.mwxrun import mwxrun
 import mewarpx.utils_store.util as mwxutil
+
+# import psutil
+
+
 
 # Get module-level logger
 logger = logging.getLogger(__name__)
@@ -282,7 +283,6 @@ class TextDiag(WarpXDiagnostic):
 
         Do this by assigning key/value pairs into self.status_dict.
         """
-        pass
 
     def _get_part_nums(self):
         """Handle fetching of particle numbers."""

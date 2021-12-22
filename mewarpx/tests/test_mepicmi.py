@@ -1,5 +1,6 @@
 """Test the functionality in mewarpx/mepicmy.py"""
 import logging
+
 import numpy as np
 
 from mewarpx.utils_store import util as mwxutil
@@ -12,10 +13,11 @@ def test_extra_pid(caplog):
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.mwxrun import mwxrun
     from pywarpx import _libwarpx
+
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below

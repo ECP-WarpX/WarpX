@@ -13,8 +13,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 
 # Use mock to avoid importing warp -- see
 # http://docs.readthedocs.io/en/latest/faq.html

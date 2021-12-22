@@ -1,15 +1,17 @@
 """Framework that sets up a 1D or 2D run based on input parameters, with
 defaults available.
 """
+import logging
+
 from pywarpx import picmi
 
+from mewarpx import (assemblies, emission, mcc_wrapper, mespecies,
+                     poisson_pseudo_1d, runinfo)
+from mewarpx.diags_store import (field_diagnostic, flux_diagnostic,
+                                 particle_diagnostic)
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
-from mewarpx import mcc_wrapper, poisson_pseudo_1d, emission, assemblies, mespecies, runinfo
-from mewarpx.diags_store import field_diagnostic, particle_diagnostic, flux_diagnostic
 from mewarpx.utils_store import util as mwxutil
-
-import logging
 
 logger = logging.getLogger(__name__)
 

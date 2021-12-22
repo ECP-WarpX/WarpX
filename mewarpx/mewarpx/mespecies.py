@@ -3,9 +3,10 @@ File to hold a child class of picmi.Species to allow us to add extra attributes
 and functionality to species.
 """
 import logging
-import numpy as np
 
-from pywarpx import picmi, _libwarpx, callbacks
+import numpy as np
+from pywarpx import _libwarpx, callbacks, picmi
+
 from mewarpx.mwxrun import mwxrun
 
 # Get module-level logger

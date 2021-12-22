@@ -1,9 +1,10 @@
 """Test the mewarpx wrapper for embedded boundaries. This test is the same
 as the test in warpx/Examples/Tests/ElectrostaticSphereEB/inputs_3d but in 2d.
 """
-import numpy as np
 import os
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from mewarpx.utils_store import util as mwxutil
 
@@ -15,9 +16,9 @@ def test_embedded_cylinder():
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
     from mewarpx import assemblies
+    from mewarpx.mwxrun import mwxrun
     from mewarpx.setups_store import diode_setup
     from mewarpx.utils_store import testing_util
-    from mewarpx.mwxrun import mwxrun
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
@@ -94,9 +95,9 @@ def test_embedded_rectangle():
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
     from mewarpx import assemblies
+    from mewarpx.mwxrun import mwxrun
     from mewarpx.setups_store import diode_setup
     from mewarpx.utils_store import testing_util
-    from mewarpx.mwxrun import mwxrun
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
@@ -173,9 +174,9 @@ def test_two_embedded_cylinders():
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
     from mewarpx import assemblies
+    from mewarpx.mwxrun import mwxrun
     from mewarpx.setups_store import diode_setup
     from mewarpx.utils_store import testing_util
-    from mewarpx.mwxrun import mwxrun
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
@@ -257,9 +258,9 @@ def test_two_embedded_cylinders_scraping():
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
     from mewarpx import assemblies, emission
+    from mewarpx.mwxrun import mwxrun
     from mewarpx.setups_store import diode_setup
     from mewarpx.utils_store import testing_util
-    from mewarpx.mwxrun import mwxrun
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below

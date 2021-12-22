@@ -30,14 +30,13 @@ import shutil
 import sys
 
 import numpy as np
-
 import pywarpx
-from pywarpx import libwarpx, picmi, fields, callbacks
+from pywarpx import callbacks, fields, libwarpx, picmi
 
 import mewarpx
+from mewarpx.utils_store import init_restart_util
 from mewarpx.utils_store import mwxconstants as constants
-from mewarpx.utils_store import parallel_util
-from mewarpx.utils_store import profileparser, init_restart_util
+from mewarpx.utils_store import parallel_util, profileparser
 from mewarpx.utils_store.util import compute_step
 
 logger = logging.getLogger(__name__)

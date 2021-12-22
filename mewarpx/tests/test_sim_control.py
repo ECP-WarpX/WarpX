@@ -1,7 +1,9 @@
-import numpy as np
 import os
 
+import numpy as np
+
 from mewarpx.utils_store import util as mwxutil
+
 
 def test_write_results():
     dim = 2
@@ -10,10 +12,10 @@ def test_write_results():
 
     mwxutil.init_libwarpx(ndim=dim, rz=use_rz)
 
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.diags_store.diag_base import WarpXDiagnostic
-    from mewarpx.setups_store import diode_setup
     from mewarpx import sim_control
+    from mewarpx.diags_store.diag_base import WarpXDiagnostic
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
     from mewarpx.utils_store import testing_util
 
 

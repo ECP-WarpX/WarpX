@@ -1,18 +1,17 @@
 """Class for installing a field diagnostic with optional plotting"""
 
-from mewarpx.mwxrun import mwxrun
-from mewarpx.diags_store.diag_base import WarpXDiagnostic
-from mewarpx.utils_store import mwxconstants, plotting
-
-from pywarpx import callbacks, picmi
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-import os
-import yt
 import glob
 import logging
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+from pywarpx import callbacks, picmi
+import yt
+
+from mewarpx.diags_store.diag_base import WarpXDiagnostic
+from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import mwxconstants, plotting
 
 logger = logging.getLogger(__name__)
 

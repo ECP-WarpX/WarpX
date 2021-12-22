@@ -3,7 +3,6 @@ a set of user defined criteria
 """
 import logging
 import os
-import sys
 
 from mewarpx.diags_store.diag_base import WarpXDiagnostic
 from mewarpx.mwxrun import mwxrun

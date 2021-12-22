@@ -40,15 +40,15 @@ The number of cores, or if the run was with a GPU, is contained in the name of t
 '''
 
 import json
-import os
 import math
+import os
 from pathlib import Path
 
+import hatchet as ht
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import cm
-import pandas as pd
 import numpy as np
-import hatchet as ht
+import pandas as pd
 
 from mewarpx.utils_store import profileparser
 
@@ -290,4 +290,3 @@ if __name__ == "__main__":
         title="Selected exclusive average times across regions",
         filename="selected_exclusive_average_function_times"
     )
-

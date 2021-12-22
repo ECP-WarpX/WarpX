@@ -1,15 +1,14 @@
 """
 Utility functions for mewarpx.
 """
+import collections
 import errno
 import inspect
+import logging
 import os
 import warnings
-import collections
-import logging
 
 import numpy as np
-
 from pywarpx import geometry
 
 import mewarpx
@@ -87,6 +86,7 @@ def init_libwarpx(ndim, rz):
     geometry.coord_sys = 1 if rz else 0
     geometry.prob_lo = [0]*ndim
     import pywarpx._libwarpx
+
     # This just quiets linters like pyflakes by using the otherwise-unused
     # variable
     assert pywarpx._libwarpx

@@ -1,17 +1,16 @@
 """Diagnostic code that wraps the picmi.ParticleDiagnostics class"""
 
-import os
 import glob
 import logging
+import os
 import warnings
 
 import matplotlib.pyplot as plt
+from pywarpx import callbacks, picmi
 import yt
 
-from pywarpx import callbacks, picmi
-
-from mewarpx.mwxrun import mwxrun
 from mewarpx.diags_store.diag_base import WarpXDiagnostic
+from mewarpx.mwxrun import mwxrun
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,7 @@
 """Test functionality in mewarpx.emission.py"""
 import collections
 import os
+
 from matplotlib.pyplot import plot
 import numpy as np
 import pandas
@@ -15,10 +16,9 @@ def test_thermionic_emission():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
-
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
     import mewarpx.utils_store.mwxconstants as constants
 
     # Include a random run number to allow parallel runs to not collide.  Using
@@ -93,10 +93,9 @@ def test_thermionic_emission_with_Schottky():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
-
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
     import mewarpx.utils_store.mwxconstants as constants
 
     # Include a random run number to allow parallel runs to not collide.  Using
@@ -169,10 +168,10 @@ def test_circle_emitter():
     name = "circleEmitter"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import picmi
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.utils_store import testing_util
 
+    from mewarpx import assemblies, emission, mespecies
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -244,10 +243,10 @@ def test_rectangle_emitter():
     name = "rectangleEmitter"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import picmi
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.utils_store import testing_util
 
+    from mewarpx import assemblies, emission, mespecies
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -322,12 +321,12 @@ def test_rectangle_emitter():
 def test_plasma_injector():
     name = "plasmainjector"
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import picmi, _libwarpx
-    from mewarpx import assemblies, emission
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
+    from pywarpx import _libwarpx, picmi
 
+    from mewarpx import assemblies, emission
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -448,11 +447,11 @@ def test_plasma_injector_fixedT2():
     name = "plasmainjector_fixedT2"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import _libwarpx
-    from mewarpx import emission
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
 
+    from mewarpx import emission
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below

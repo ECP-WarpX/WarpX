@@ -1,13 +1,13 @@
 """File to hold utility functions associated with setting up and plotting time
 varying voltage functions."""
 
-import numpy as np
-from functools import partial
 from collections import namedtuple
+from functools import partial
 
-from mewarpx.mwxrun import mwxrun
+import numpy as np
 from pywarpx import callbacks
 
+from mewarpx.mwxrun import mwxrun
 
 # namedtuple is a convenient way of making a class with given properties
 PulseFunction = namedtuple(
@@ -91,6 +91,7 @@ def plot_pulse(pulse_function, save_dir='diags/circuit'):
         save_dir (str): Directory where the pulse schematic should be saved.
     """
     import os
+
     import matplotlib as ml
     import matplotlib.pyplot as plt
 
