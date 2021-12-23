@@ -876,7 +876,7 @@ Particle initialization
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
-* ``warpx.serialize_ics`` (`0 or 1`)
+* ``warpx.serialize_ics`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing.
     Mainly whether or not to use OpenMP threading for particle initialization.
 
