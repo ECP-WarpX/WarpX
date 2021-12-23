@@ -120,6 +120,8 @@ extern "C" {
 
     void warpx_clearParticleBoundaryBuffer ();
 
+    void warpx_depositChargeDensity (const char* species_name, int lev);
+
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);
 
