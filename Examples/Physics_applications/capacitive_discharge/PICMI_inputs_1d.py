@@ -245,7 +245,6 @@ class CapacitiveDischargeExample(object):
         #######################################################################
 
         cross_sec_direc = '../../../../warpx-data/MCC_cross_sections/He/'
-        cross_sec_direc = '/home/roelof/software/warpx-data/MCC_cross_sections/He/'
         mcc_electrons = picmi.MCCCollisions(
             name='coll_elec',
             species=self.electrons,
