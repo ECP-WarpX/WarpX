@@ -503,9 +503,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // provided in the input file.
     if (B_ext_grid_s == "parse_b_ext_grid_function") {
 
-#ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
-#endif
        Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
                                                     str_Bx_ext_grid_function);
        Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
@@ -554,9 +551,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // provided in the input file.
     if (E_ext_grid_s == "parse_e_ext_grid_function") {
 
-#ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
-#endif
        Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
                                                     str_Ex_ext_grid_function);
        Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
