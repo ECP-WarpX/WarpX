@@ -700,23 +700,9 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
-                     amrex::Real const absolute_tolerance=amrex::Real(0.0),
+                     amrex::Real absolute_tolerance=amrex::Real(0.0),
                      const int max_iters=200,
                      const int verbosity=2) const;
-    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
-    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
@@ -1267,20 +1253,26 @@ public:
     */
 
 public:
-    void ComputeEdgeLengths ();
+#ifdef AMREX_USE_EB
+    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                                    const amrex::EBFArrayBoxFactory& eb_fact);
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    void ComputeFaceAreas ();
+    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                                  const amrex::EBFArrayBoxFactory& eb_fact);
+
     /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    void ScaleEdges ();
+    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    void ScaleAreas ();
+    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
     *        The flags convention for m_flag_info_face is as follows
@@ -1293,6 +1285,7 @@ public:
     /**
     * \brief Compute the level set function used for particle-boundary interaction.
     */
+#endif
     void ComputeDistanceToEB ();
     /**
     * \brief Auxiliary function to count the amount of faces which still need to be extended
