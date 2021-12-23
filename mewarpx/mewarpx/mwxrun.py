@@ -30,8 +30,7 @@ import shutil
 import sys
 
 import numpy as np
-import pywarpx
-from pywarpx import callbacks, fields, libwarpx, picmi
+from pywarpx import callbacks, fields, picmi
 
 import mewarpx
 from mewarpx.utils_store import init_restart_util
@@ -54,8 +53,10 @@ class MEWarpXRun(object):
     def __init__(self):
         self.initialized = False
         self.simulation = picmi.Simulation(verbose=0)
+        # make a shorthand for simulation.extension since we use it a lot
+        self.sim_ext = self.simulation.extension
         callbacks.installafterinit(self._after_init)
-        # grab the simulation geometry from libwarpx
+        # grab the simulation geometry from simulation.extension
         self._set_geom_props()
 
     def init_grid(self, lower_bound, upper_bound, number_of_cells, **kwargs):
@@ -236,13 +237,13 @@ class MEWarpXRun(object):
     def _after_init(self):
         """This function will be called after WarpX has been initialized but
         before any other `afterinit` callbacks."""
-        self.me = pywarpx.getMyProc()
-        self.n_procs = pywarpx.getNProcs()
+        self.me = self.sim_ext.getMyProc()
+        self.n_procs = self.sim_ext.getNProcs()
 
         # A level is needed for many things like level number. For now I'm
         # statically setting the default level here. I'm not sure of
         # pitfalls or how to handle it more generally yet.
-        self.lev = libwarpx.libwarpx_so.warpx_finestLevel()
+        self.lev = self.sim_ext.libwarpx_so.warpx_finestLevel()
 
         self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
         self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
@@ -257,21 +258,21 @@ class MEWarpXRun(object):
         Currently supports Z, XZ, RZ, and XYZ.
         """
         self.coord_map = {}
-        if libwarpx.geometry_dim == 'rz':
+        if self.sim_ext.geometry_dim == 'rz':
             self.geom_str = 'RZ'
             self.dim = 2
             self.coord_map['r'] = 0
             self.coord_map['z'] = 1
-        elif libwarpx.geometry_dim == '1d':
+        elif self.sim_ext.geometry_dim == '1d':
             self.geom_str = 'Z'
             self.dim = 1
             self.coord_map['z'] = 0
-        elif libwarpx.geometry_dim == '2d':
+        elif self.sim_ext.geometry_dim == '2d':
             self.geom_str = 'XZ'
             self.dim = 2
             self.coord_map['x'] = 0
             self.coord_map['z'] = 1
-        elif libwarpx.geometry_dim == '3d':
+        elif self.sim_ext.geometry_dim == '3d':
             self.geom_str = 'XYZ'
             self.dim = 3
             self.coord_map['x'] = 0
@@ -279,7 +280,7 @@ class MEWarpXRun(object):
             self.coord_map['z'] = 2
         else:
             raise ValueError(
-                f"Unrecognized geometry type: {libwarpx.geometry_dim}"
+                f"Unrecognized geometry type: {self.sim_ext.geometry_dim}"
             )
 
     def _set_grid_params(self):
@@ -415,7 +416,7 @@ class MEWarpXRun(object):
 
     def get_it(self):
         """Return the current integer iteration number."""
-        return pywarpx.getistep(self.lev)
+        return self.sim_ext.getistep(self.lev)
 
     def get_dt(self):
         """Return the timestep."""
@@ -430,7 +431,7 @@ class MEWarpXRun(object):
         """
         npart = 0
         for spec in self.simulation.species:
-            npart += pywarpx.get_particle_count(spec.name)
+            npart += self.sim_ext.get_particle_count(spec.name)
 
         return npart
 
@@ -442,7 +443,7 @@ class MEWarpXRun(object):
         for spec in self.simulation.species:
             if spec.name is None:
                 raise ValueError("Unnamed species are not supported.")
-            npart_dict[spec.name] = pywarpx.get_particle_count(spec.name)
+            npart_dict[spec.name] = self.sim_ext.get_particle_count(spec.name)
 
         return npart_dict
 
@@ -460,7 +461,7 @@ class MEWarpXRun(object):
         """
 
         if species_name is not None:
-            libwarpx.libwarpx_so.warpx_depositRhoSpecies(
+            self.sim_ext.libwarpx_so.warpx_depositRhoSpecies(
                 ctypes.c_char_p(species_name.encode('utf-8'))
             )
         if include_ghosts:
@@ -504,11 +505,11 @@ class MEWarpXRun(object):
         """
         if isinstance(expr, str):
             if t is not None:
-                return libwarpx.libwarpx_so.eval_expression_t(
+                return self.sim_ext.libwarpx_so.eval_expression_t(
                     ctypes.c_char_p(expr.encode('utf-8')), t
                 )
             else:
-                return libwarpx.libwarpx_so.eval_expression_t(
+                return self.sim_ext.libwarpx_so.eval_expression_t(
                     ctypes.c_char_p(expr.encode('utf-8')), self.get_t()
                 )
         else:
@@ -523,7 +524,7 @@ class MEWarpXRun(object):
             src_species_name (str): The source species name
             dst_species_name (str): The destination species name
         """
-        libwarpx.libwarpx_so.warpx_moveParticlesBetweenSpecies(
+        self.sim_ext.libwarpx_so.warpx_moveParticlesBetweenSpecies(
             ctypes.c_char_p(src_species_name.encode('utf-8')),
             ctypes.c_char_p(dst_species_name.encode('utf-8')),
             self.lev
@@ -538,7 +539,7 @@ class MEWarpXRun(object):
             pre_fac (float): Exponent pre-factor in the Schottky enhancement
                 calculation -> sqrt(e / 4*pi*eps0) / (kT)
         """
-        libwarpx.libwarpx_so.warpx_calcSchottkyWeight(
+        self.sim_ext.libwarpx_so.warpx_calcSchottkyWeight(
             ctypes.c_char_p(species_name.encode('utf-8')), pre_fac, self.lev
         )
 
@@ -548,8 +549,8 @@ mwxrun = MEWarpXRun()
 
 @atexit.register
 def exit_handler():
-    atexit.unregister(pywarpx.finalize)
-    pywarpx.finalize()
+    atexit.unregister(self.sim_ext.finalize)
+    self.sim_ext.finalize()
 
     if os.path.isfile("stdout.out") and mwxrun.me == 0:
         profileparser.main("stdout.out")

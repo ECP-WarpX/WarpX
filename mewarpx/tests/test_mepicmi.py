@@ -13,7 +13,6 @@ def test_extra_pid(caplog):
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from pywarpx import _libwarpx
 
     from mewarpx.mwxrun import mwxrun
     from mewarpx.setups_store import diode_setup
@@ -59,7 +58,7 @@ def test_extra_pid(caplog):
 
     nps = 1000
     w = np.random.randint(low=1, high=100, size=nps)
-    _libwarpx.add_particles(
+    mwxrun.sim_ext.add_particles(
         run.electrons.name,
         x=np.random.random(nps) * D_CA / NZ * NX, y=np.zeros(nps),
         z=np.random.random(nps) * D_CA,

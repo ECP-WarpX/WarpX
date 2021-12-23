@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numba
 import numpy as np
 import pandas
-from pywarpx import callbacks, libwarpx
+from pywarpx import callbacks
 
 from mewarpx.diags_store import diag_base, timeseries
 from mewarpx.mwxrun import mwxrun
@@ -204,7 +204,8 @@ class SurfaceFluxDiag(ParticleCSVDiag):
         # particle buffer and record the scraped particles data
         # TODO change this to only process the particle buffer on a diagnostic
         # step instead of after every step
-        callbacks.installbeforestep(libwarpx.libwarpx_so.warpx_clearParticleBoundaryBuffer)
+        callbacks.installbeforestep(
+            mwxrun.sim_ext.libwarpx_so.warpx_clearParticleBoundaryBuffer)
         callbacks.installbeforeEsolve(self.surface.record_scrapedparticles)
 
     def _collect_dataframe(self, clear=True):
