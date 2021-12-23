@@ -4,11 +4,11 @@ amr.max_grid_size = 128
 amr.max_level = 0
 
 geometry.dims = RZ
-geometry.prob_lo     = -0.8 -0.8
+geometry.prob_lo     =  0. -0.8
 geometry.prob_hi     =  0.8  0.8
 warpx.cfl = 1
 
-boundary.field_lo = pec pec
+boundary.field_lo = none pec
 boundary.field_hi = pec pec
 
 my_constants.xmin = -0.5
