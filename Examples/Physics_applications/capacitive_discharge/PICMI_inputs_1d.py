@@ -5,11 +5,10 @@
 # --- https://doi.org/10.1063/1.4775084
 
 import argparse
-from functools import partial
 import sys
 
 import numpy as np
-from pywarpx import callbacks, picmi, fields, _libwarpx
+from pywarpx import callbacks, picmi, fields
 from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
 
@@ -85,10 +84,9 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         # Set up the computation matrix in order to solve A*phi = rho
         A = np.zeros((self.nsolve, self.nsolve))
-        kk = 0
+
         for ii in range(self.nsolve):
             for jj in range(self.nsolve):
-
                 if ii == jj:
                     A[ii, jj] = -2.0
                 elif ii == jj - 1 or ii == jj + 1:
@@ -126,7 +124,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         left_voltage = 0.0
         right_voltage = eval(
             self.right_voltage,
-            {'t':_libwarpx.libwarpx.gett_new(0), 'sin':np.sin, 'pi':np.pi}
+            {'t':self.sim.extension.gett_new(0), 'sin':np.sin, 'pi':np.pi}
         )
 
         # Construct b vector
@@ -215,7 +213,7 @@ class CapacitiveDischargeExample(object):
         #######################################################################
 
         # self.solver = picmi.ElectrostaticSolver(
-        #    grid=mwxrun.grid, method='Multigrid', required_precision=1e-12,
+        #    grid=self.grid, method='Multigrid', required_precision=1e-12,
         #    warpx_self_fields_verbosity=0
         # )
         self.solver = PoissonSolver1D(grid=self.grid)
@@ -314,6 +312,10 @@ class CapacitiveDischargeExample(object):
                 n_macroparticle_per_cell=[self.SEED_NPPC], grid=self.grid
             )
         )
+
+        # pass the simulation object to the Poisson solver so that the time
+        # dependent boundary potentials can be calculated
+        self.solver.sim = self.sim
 
         #######################################################################
         # Add diagnostics for the CI test to be happy                         #
