@@ -86,6 +86,12 @@ PsatdAlgorithm::PsatdAlgorithm(
     if (do_multi_J)
     {
         X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        if (dive_cleaning)
+        {
+            X8_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+            X9_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+            X10_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        }
         InitializeSpectralCoefficientsMultiJ(spectral_kspace, dm, dt);
     }
 
@@ -188,9 +194,19 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
         }
 
         amrex::Array4<const amrex::Real> X7_arr;
+        amrex::Array4<const amrex::Real> X8_arr;
+        amrex::Array4<const amrex::Real> X9_arr;
+        amrex::Array4<const amrex::Real> X10_arr;
         if (do_multi_J)
         {
             X7_arr = X7_coef[mfi].array();
+
+            if (dive_cleaning)
+            {
+                X8_arr = X8_coef[mfi].array();
+                X9_arr = X9_coef[mfi].array();
+                X10_arr = X10_coef[mfi].array();
+            }
         }
 
         // Extract pointers for the k vectors
@@ -354,9 +370,14 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
                 if (dive_cleaning)
                 {
+                    const amrex::Real X8 = X8_arr(i,j,k);
+                    const amrex::Real X9 = X9_arr(i,j,k);
+                    const amrex::Real X10 = X10_arr(i,j,k);
+
                     const Complex k_dot_dJ = kx * (Jx_new - Jx) + ky * (Jy_new - Jy) + kz * (Jz_new - Jz);
 
-                    fields(i,j,k,Idx.F) += -I * X2/c2 * k_dot_dJ;
+                    fields(i,j,k,Idx.F) += -I * X2/c2 * k_dot_dJ
+                        + X8 * rho_old + X9 * rho_new + X10 * rho_mid;
                 }
 
                 if (time_averaging)
@@ -947,6 +968,8 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
 {
+    const bool dive_cleaning = m_dive_cleaning;
+
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Loop over boxes and allocate the corresponding coefficients for each box
@@ -965,6 +988,16 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
         amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
 
         amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
+
+        amrex::Array4<amrex::Real> X8;
+        amrex::Array4<amrex::Real> X9;
+        amrex::Array4<amrex::Real> X10;
+        if (dive_cleaning)
+        {
+            X8 = X8_coef[mfi].array();
+            X9 = X9_coef[mfi].array();
+            X10 = X10_coef[mfi].array();
+        }
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -997,6 +1030,40 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsMultiJ (
             else
             {
                 X7(i,j,k) = c2 * dt2 / (6._rt * ep0);
+            }
+
+            if (dive_cleaning)
+            {
+                if (om_s != 0.)
+                {
+                    X8(i,j,k) = (-5._rt * C(i,j,k) - om2_s * dt * S_ck(i,j,k)
+                                + 8._rt * S_ck(i,j,k)/dt - 3._rt) / (om2_s * dt * ep0)
+                                + S_ck(i,j,k) / ep0 - (1 - C(i,j,k)) / (om2_s * dt * ep0);
+                }
+                else
+                {
+                    X8(i,j,k) = 2._rt * dt / (3._rt * ep0);
+                }
+
+                if (om_s != 0.)
+                {
+                    X9(i,j,k) = (8._rt * S_ck(i,j,k)/dt - 3._rt * C(i,j,k) - 5._rt)
+                                / (om2_s * dt * ep0) + (1 - C(i,j,k)) / (om2_s * dt * ep0);
+                }
+                else
+                {
+                    X9(i,j,k) = 2._rt * dt / (3._rt * ep0);
+                }
+
+                if (om_s != 0.)
+                {
+                    X10(i,j,k) = 8._rt * (C(i,j,k) - 2._rt * S_ck(i,j,k)/dt + 1._rt)
+                                 / (om2_s * dt * ep0);
+                }
+                else
+                {
+                    X10(i,j,k) = - 4._rt * dt / (3._rt * ep0);
+                }
             }
         });
     }
