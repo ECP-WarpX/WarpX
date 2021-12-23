@@ -661,12 +661,15 @@ namespace
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
+        // reset rho before depositing
+        warpx.get_pointer_rho_fp(lev)->setVal(0.);
+
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
         {
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
             myspc.DepositCharge(pti, wp, nullptr, warpx.get_pointer_rho_fp(lev),
-                          0, 0, np, 0, lev, lev);
+                                0, 0, np, 0, lev, lev);
         }
 #ifdef WARPX_DIM_RZ
         warpx.ApplyInverseVolumeScalingToChargeDensity(warpx.get_pointer_rho_fp(lev), lev);
