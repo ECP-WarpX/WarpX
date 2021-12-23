@@ -13,7 +13,7 @@ amr.blocking_factor = 8
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 2
 geometry.prob_lo     = -20.e-6   -20.e-6
 geometry.prob_hi     =  20.e-6    20.e-6
 

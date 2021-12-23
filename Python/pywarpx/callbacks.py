@@ -53,14 +53,16 @@ installafterstep(myplots)
 """
 from __future__ import generators
 
-import types
 import copy
-import time
 import ctypes
 import sys
+import time
+import types
+
 import numpy
 
 from ._libwarpx import libwarpx
+
 
 class CallbackFunctions(object):
     """

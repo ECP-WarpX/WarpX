@@ -8,12 +8,13 @@
  License: BSD-3-Clause-LBNL
  """
 
-from checksum import Checksum
-from benchmark import Benchmark
 import argparse
 import glob
-import sys
 import os
+import sys
+
+from benchmark import Benchmark
+from checksum import Checksum
 
 '''
 API for WarpX checksum tests. It can be used in two ways:
