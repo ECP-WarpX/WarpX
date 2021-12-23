@@ -82,10 +82,6 @@ WarpX::InitEB ()
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
-#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    amrex::Abort("InitEB: Embedded Boundaries are only implemented in 2D3V and 3D3V");
-#endif
-
     amrex::ParmParse pp_warpx("warpx");
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);
@@ -117,6 +113,7 @@ WarpX::InitEB ()
 void
 WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
                            const amrex::EBFArrayBoxFactory& eb_fact) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ComputeEdgeLengths");
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
@@ -175,12 +172,14 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
             }
         }
     }
+#endif
 }
 
 
 void
 WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
                          const amrex::EBFArrayBoxFactory& eb_fact) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ComputeFaceAreas");
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
@@ -234,12 +233,14 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
             }
         }
     }
+#endif
 }
 
 
 void
 WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
                    const std::array<amrex::Real,3>& cell_size) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ScaleEdges");
 
     for (amrex::MFIter mfi(*edge_lengths[0]); mfi.isValid(); ++mfi) {
@@ -259,11 +260,13 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
             });
         }
     }
+#endif
 }
 
 void
 WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
                   const std::array<amrex::Real,3>& cell_size) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ScaleAreas");
 
     amrex::Real full_area;
@@ -300,11 +303,13 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
 
         }
     }
+#endif
 }
 
 
 void
 WarpX::MarkCells(){
+#ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 
 #ifdef WARPX_DIM_3D
@@ -384,9 +389,9 @@ WarpX::MarkCells(){
             });
         }
     }
+#endif
 }
 #endif
-
 
 void
 WarpX::ComputeDistanceToEB () {

@@ -924,6 +924,12 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
 
 
 class Simulation(picmistandard.PICMI_Simulation):
+
+    # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
+    # Simulation objects. In the future, LibWarpX objects may actually be owned
+    # by Simulation objects to permit multiple WarpX runs simultaneously.
+    extension = pywarpx.libwarpx
+
     def init(self, kw):
 
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)
