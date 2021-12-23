@@ -10,7 +10,7 @@ import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numba
 import numpy as np
-from pywarpx import _libwarpx, callbacks, picmi
+from pywarpx import callbacks, picmi
 import skimage.measure
 
 from mewarpx.mespecies import Species
@@ -276,7 +276,7 @@ class FixedNumberInjector(Injector):
             # and they're referred to as momenta. But I don't see anywhere
             # they're actually used as momenta including the particle mass -
             # the actual update is in Source/Particles/Pusher/UpdatePosition.H
-            _libwarpx.add_particles(
+            mwxrun.sim_ext.add_particles(
                 self.species.name,
                 x=particles_dict['x'],
                 y=particles_dict['y'],
@@ -478,7 +478,7 @@ class ThermionicInjector(Injector):
         # and they're referred to as momenta. But I don't see anywhere
         # they're actually used as momenta including the particle mass -
         # the actual update is in Source/Particles/Pusher/UpdatePosition.H
-        _libwarpx.add_particles(
+        mwxrun.sim_ext.add_particles(
             self.injection_species.name,
             x=particles_dict['x'],
             y=particles_dict['y'],
@@ -505,16 +505,16 @@ class ThermionicInjector(Injector):
             total_weight = 0.
             total_energy = 0.
             npart = 0
-            weight_arrays = _libwarpx.get_particle_arrays(
+            weight_arrays = mwxrun.sim_ext.get_particle_arrays(
                 self.injection_species.name, 'w', 0
             )
-            ux_arrays = _libwarpx.get_particle_arrays(
+            ux_arrays = mwxrun.sim_ext.get_particle_arrays(
                 self.injection_species.name, 'ux', 0
             )
-            uy_arrays = _libwarpx.get_particle_arrays(
+            uy_arrays = mwxrun.sim_ext.get_particle_arrays(
                 self.injection_species.name, 'uy', 0
             )
-            uz_arrays = _libwarpx.get_particle_arrays(
+            uz_arrays = mwxrun.sim_ext.get_particle_arrays(
                 self.injection_species.name, 'uz', 0
             )
             for ii, w in enumerate(weight_arrays):
@@ -726,7 +726,7 @@ class PlasmaInjector(Injector):
                 f"Inject {len(particles1_dict['x'])} particles each of "
                 f"{self.species1.name} and {self.species2.name}."
             )
-            _libwarpx.add_particles(
+            mwxrun.sim_ext.add_particles(
                 self.species1.name,
                 x=particles1_dict['x'],
                 y=particles1_dict['y'],
@@ -738,7 +738,7 @@ class PlasmaInjector(Injector):
                 E_total=particles1_dict['E_total'],
                 unique_particles=self.unique_particles
             )
-            _libwarpx.add_particles(
+            mwxrun.sim_ext.add_particles(
                 self.species2.name,
                 x=particles2_dict['x'],
                 y=particles2_dict['y'],

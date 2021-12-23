@@ -5,7 +5,7 @@ import collections
 import logging
 
 import numpy as np
-from pywarpx import _libwarpx, picmi
+from pywarpx import picmi
 
 from mewarpx.mwxrun import mwxrun
 from mewarpx.utils_store import parallel_util
@@ -144,12 +144,12 @@ class Assembly(object):
             # get the number of particles in the buffer - this is primarily
             # to avoid trying to access the buffer if it is not defined
             # which causes a segfault
-            buffer_count = _libwarpx.get_particle_boundary_buffer_size(
+            buffer_count = mwxrun.sim_ext.get_particle_boundary_buffer_size(
                 species.name, self.scraper_label
             )
             if buffer_count > 0:
                 # get the timesteps at which particles were scraped
-                comp_steps = _libwarpx.get_particle_boundary_buffer(
+                comp_steps = mwxrun.sim_ext.get_particle_boundary_buffer(
                     species.name, self.scraper_label, "step_scraped", mwxrun.lev
                 )
                 # get the particles that were scraped in this timestep
@@ -161,7 +161,7 @@ class Assembly(object):
                 # sort the particles appropriately if this is an eb
                 if not empty and self.scraper_label == 'eb':
                     temp_idx_list = []
-                    structs = _libwarpx.get_particle_boundary_buffer_structs(
+                    structs = mwxrun.sim_ext.get_particle_boundary_buffer_structs(
                         species.name, self.scraper_label, mwxrun.lev
                     )
 
@@ -193,13 +193,13 @@ class Assembly(object):
 
             if not empty:
                 data[4] = sum(np.size(idx) for idx in idx_list)
-                w_arrays = _libwarpx.get_particle_boundary_buffer(
+                w_arrays = mwxrun.sim_ext.get_particle_boundary_buffer(
                     species.name, self.scraper_label, "w", mwxrun.lev
                 )
                 data[5] = -species.sq * sum(np.sum(w_arrays[i][idx_list[i]])
                      for i in range(len(idx_list))
                 )
-                E_arrays = _libwarpx.get_particle_boundary_buffer(
+                E_arrays = mwxrun.sim_ext.get_particle_boundary_buffer(
                     species.name, self.scraper_label, "E_total", mwxrun.lev
                 )
                 data[6] = -sum(np.sum(E_arrays[i][idx_list[i]])

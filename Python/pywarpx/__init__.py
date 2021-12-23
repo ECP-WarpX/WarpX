@@ -17,4 +17,4 @@ from .Lasers import lasers
 from .PSATD import psatd
 from .Particles import electrons, newspecies, particles, positrons, protons
 from .WarpX import warpx
-from ._libwarpx import *  # noqa
+from ._libwarpx import libwarpx

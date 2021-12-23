@@ -856,7 +856,9 @@ Particle initialization
     species that impact the embedded boundary.
     The scraped particle buffer can be used to track particle fluxes out of the
     simulation but is currently only accessible via the Python interface. The
-    ``pywarpx`` function ``get_particle_boundary_buffer()`` can be
+    function ``get_particle_boundary_buffer``, found in the
+    ``picmi.Simulation`` class as
+    ``sim.extension.get_particle_boundary_buffer()``, can be
     used to access the scraped particle buffer. An entry is included for every
     particle in the buffer of the timestep at which the particle was scraped.
     This can be accessed by passing the argument ``comp_name="step_scraped"`` to
@@ -874,7 +876,7 @@ Particle initialization
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
-* ``warpx.serialize_ics`` (`0 or 1`)
+* ``warpx.serialize_ics`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing.
     Mainly whether or not to use OpenMP threading for particle initialization.
 

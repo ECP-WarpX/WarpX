@@ -376,7 +376,7 @@ def test_rectangle_emitter():
 def test_plasma_injector():
     name = "plasmainjector"
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import _libwarpx, picmi
+    from pywarpx import picmi
 
     from mewarpx import assemblies, emission
     from mewarpx.mwxrun import mwxrun
@@ -477,13 +477,13 @@ def test_plasma_injector():
     for species in [run.electrons, run.ions]:
         sname = species.name
         res_dict = collections.OrderedDict()
-        res_dict['x'] = np.concatenate(_libwarpx.get_particle_x(sname), axis=0)
-        res_dict['y'] = np.concatenate(_libwarpx.get_particle_y(sname), axis=0)
-        res_dict['z'] = np.concatenate(_libwarpx.get_particle_z(sname), axis=0)
-        res_dict['ux'] = np.concatenate(_libwarpx.get_particle_ux(sname), axis=0)
-        res_dict['uy'] = np.concatenate(_libwarpx.get_particle_uy(sname), axis=0)
-        res_dict['uz'] = np.concatenate(_libwarpx.get_particle_uz(sname), axis=0)
-        res_dict['w'] = np.concatenate(_libwarpx.get_particle_weight(sname), axis=0)
+        res_dict['x'] = np.concatenate(mwxrun.sim_ext.get_particle_x(sname), axis=0)
+        res_dict['y'] = np.concatenate(mwxrun.sim_ext.get_particle_y(sname), axis=0)
+        res_dict['z'] = np.concatenate(mwxrun.sim_ext.get_particle_z(sname), axis=0)
+        res_dict['ux'] = np.concatenate(mwxrun.sim_ext.get_particle_ux(sname), axis=0)
+        res_dict['uy'] = np.concatenate(mwxrun.sim_ext.get_particle_uy(sname), axis=0)
+        res_dict['uz'] = np.concatenate(mwxrun.sim_ext.get_particle_uz(sname), axis=0)
+        res_dict['w'] = np.concatenate(mwxrun.sim_ext.get_particle_weight(sname), axis=0)
 
         label_base = f'{species.name}_'
         df[label_base + 'npart'] = npart_dict[sname]
@@ -501,7 +501,6 @@ def test_plasma_injector():
 def test_plasma_injector_fixedT2():
     name = "plasmainjector_fixedT2"
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import _libwarpx
 
     from mewarpx import emission
     from mewarpx.mwxrun import mwxrun
@@ -546,13 +545,13 @@ def test_plasma_injector_fixedT2():
     for species in [run.electrons, run.ions]:
         sname = species.name
         res_dict = collections.OrderedDict()
-        res_dict['x'] = np.concatenate(_libwarpx.get_particle_x(sname), axis=0)
-        res_dict['y'] = np.concatenate(_libwarpx.get_particle_y(sname), axis=0)
-        res_dict['z'] = np.concatenate(_libwarpx.get_particle_z(sname), axis=0)
-        res_dict['ux'] = np.concatenate(_libwarpx.get_particle_ux(sname), axis=0)
-        res_dict['uy'] = np.concatenate(_libwarpx.get_particle_uy(sname), axis=0)
-        res_dict['uz'] = np.concatenate(_libwarpx.get_particle_uz(sname), axis=0)
-        res_dict['w'] = np.concatenate(_libwarpx.get_particle_weight(sname), axis=0)
+        res_dict['x'] = np.concatenate(mwxrun.sim_ext.get_particle_x(sname), axis=0)
+        res_dict['y'] = np.concatenate(mwxrun.sim_ext.get_particle_y(sname), axis=0)
+        res_dict['z'] = np.concatenate(mwxrun.sim_ext.get_particle_z(sname), axis=0)
+        res_dict['ux'] = np.concatenate(mwxrun.sim_ext.get_particle_ux(sname), axis=0)
+        res_dict['uy'] = np.concatenate(mwxrun.sim_ext.get_particle_uy(sname), axis=0)
+        res_dict['uz'] = np.concatenate(mwxrun.sim_ext.get_particle_uz(sname), axis=0)
+        res_dict['w'] = np.concatenate(mwxrun.sim_ext.get_particle_weight(sname), axis=0)
 
         label_base = f'{species.name}_'
         df[label_base + 'npart'] = npart_dict[sname]

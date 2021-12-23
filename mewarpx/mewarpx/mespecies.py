@@ -5,7 +5,7 @@ and functionality to species.
 import logging
 
 import numpy as np
-from pywarpx import _libwarpx, callbacks, picmi
+from pywarpx import callbacks, picmi
 
 from mewarpx.mwxrun import mwxrun
 
@@ -66,12 +66,14 @@ class Species(picmi.Species):
         self.pids_initialized = True
 
         self.pid_list = ['w']
-        self.nattribs = _libwarpx.get_nattr()
+        self.nattribs = mwxrun.sim_ext.get_nattr()
         # npids are used to inform the dimension of the attr array (used in
         # add_particles), so we need to subtract the non-extra pid arrays
         # (which include the weight) and then add 1 since the weight is treated
         # as an extra pid by AddNParticles()
-        self.npids = _libwarpx.get_nattr_species(self.name) - self.nattribs + 1
+        self.npids = (
+            mwxrun.sim_ext.get_nattr_species(self.name) - self.nattribs + 1
+        )
 
         for pid in self.waiting_extra_pids.keys():
             self.add_pid(pid)
@@ -94,7 +96,7 @@ class Species(picmi.Species):
         if pid_name in self.pid_list:
             return
 
-        _libwarpx.add_real_comp(self.name, pid_name)
+        mwxrun.sim_ext.add_real_comp(self.name, pid_name)
         self.pid_list.append(pid_name)
         self.npids += 1
 
@@ -110,4 +112,4 @@ class Species(picmi.Species):
             with the numpy array holding the particle data for the requested
             PID.
         """
-        return _libwarpx.get_particle_arrays(self.name, pid_name, level)
+        return mwxrun.sim_ext.get_particle_arrays(self.name, pid_name, level)
