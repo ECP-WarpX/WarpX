@@ -38,7 +38,7 @@ AMReX ``inputs``:
 
 PICMI files:
 
-* :download:`Without mesh refinement<../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py>`
+* :download:`Without mesh refinement<../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py>`
 
 Plasma mirror
 -------------
