@@ -51,7 +51,6 @@ def test_particle_diag():
     DIAG_PLOT_DATA_LIST = ["particle_position_x", "particle_momentum_x"]
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -61,7 +60,6 @@ def test_particle_diag():
         NPPC=50,
         NX=NX,
         NZ=NZ,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,

@@ -11,10 +11,9 @@ from mewarpx.utils_store import util as mwxutil
 @pytest.mark.parametrize(
     ("name"),
     [
+        'Run2D_RZ',
+        'Run1D',
         'Run2D',
-        # For these two to work we'll need to allow python to choose which of
-        # multiple libwarpx...so files it should load.
-        # 'Run2D_RZ',
         # 'Run3D'
     ]
 )
@@ -47,11 +46,7 @@ def test_capacitive_discharge_multigrid(caplog, name):
     DIAG_INTERVAL = DIAG_STEPS*DT
     VOLTAGE = 450.0
     D_CA = 0.067  # m
-    NX = 16
-    NZ = 128
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
-        rz=use_rz,
         V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION="%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
         D_CA=D_CA,
@@ -61,16 +56,12 @@ def test_capacitive_discharge_multigrid(caplog, name):
         PLASMA_DENSITY=2.56e14,  # m^-3
         T_ELEC=30000.0,  # K
         SEED_NPPC=16*32,
-        NX=NX,
-        NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
+        NX=16,
+        NZ=128,
         DT=DT,
         TOTAL_TIMESTEPS=10,
         DIAG_STEPS=DIAG_STEPS,
-        DIAG_INTERVAL=DIAG_INTERVAL,
-        FIELD_DIAG_INSTALL_WARPX=True,
-        FIELD_DIAG_DATA_LIST=['rho_electrons', 'rho_he_ions', 'phi'],
+        DIAG_INTERVAL=DIAG_INTERVAL
     )
     # Only the functions we change from defaults are listed here
     run.setup_run(
@@ -87,26 +78,6 @@ def test_capacitive_discharge_multigrid(caplog, name):
     # Run the main WARP loop
     while run.control.check_criteria():
         mwxrun.simulation.step()
-
-    #######################################################################
-    # Compare mwxrun data gathering to diagnostic output                  #
-    #######################################################################
-
-    # the edges are treated differently in our gather rho versus the yt
-    # dump so we only look at the interior here
-    rho_data = np.mean(mwxrun.get_gathered_rho_grid(
-        species_name='he_ions', include_ghosts=False
-    )[:,1:,0], axis=0)[2:-2]
-
-    ds = yt.load( "diags/fields/fields00010" )
-    grid_data = ds.covering_grid(
-        level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions
-    )
-    rho_data_yt = np.mean(
-        grid_data['rho_he_ions'].to_ndarray()[:,:,0], axis=0
-    )[2:-2]
-
-    assert np.allclose(rho_data, rho_data_yt, rtol=0.01)
 
     #######################################################################
     # Cleanup and final output                                            #

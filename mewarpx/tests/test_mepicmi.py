@@ -34,14 +34,10 @@ def test_extra_pid(caplog):
     NX = 16
     NZ = 128
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
-        rz=False,
         V_ANODE_CATHODE=450.0,
         D_CA=D_CA,
         NX=NX,
         NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
         DT=1.0e-10,
         TOTAL_TIMESTEPS=25,
         DIAG_STEPS=DIAG_STEPS,

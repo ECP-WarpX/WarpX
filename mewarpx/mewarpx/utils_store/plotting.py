@@ -474,8 +474,15 @@ class ArrayPlot(object):
         return contour_points
 
 def get_vec(axis):
-    nxyz = (mwxrun.nx, mwxrun.ny, mwxrun.nz)
-    pos_lims = (mwxrun.xmin, mwxrun.xmax, mwxrun.ymin, mwxrun.ymax, mwxrun.zmin, mwxrun.zmax)
+    if mwxrun.geom_str == 'Z':
+        nx = mwxrun.nz // 2
+        xmax = (mwxrun.zmax - mwxrun.zmin) / 2
+    else:
+        nx = mwxrun.nx
+        xmax = mwxrun.xmax
+
+    nxyz = (nx, mwxrun.ny, mwxrun.nz)
+    pos_lims = (mwxrun.xmin, xmax, mwxrun.ymin, mwxrun.ymax, mwxrun.zmin, mwxrun.zmax)
 
     if axis == 'r':
         raise ValueError("RZ plotting is not implemented yet.")

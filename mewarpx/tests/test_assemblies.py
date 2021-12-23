@@ -31,16 +31,12 @@ def test_embedded_cylinder():
 
     # Specific numbers match older run for consistency
     D_CA = 1  # m
-    NX = 64
-    NZ = 64
     run = diode_setup.DiodeRun_V1(
         dim=dim,
         #V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
-        NX=NX,
-        NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
+        NX=64,
+        NZ=64,
         DT=1e-6,
         TOTAL_TIMESTEPS=1,
         DIAG_STEPS=1,
@@ -110,15 +106,10 @@ def test_embedded_rectangle():
 
     # Specific numbers match older run for consistency
     D_CA = 1  # m
-    NX = 64
-    NZ = 64
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
         D_CA=D_CA,
-        NX=NX,
-        NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
+        NX=64,
+        NZ=64,
         DT=1e-6,
         TOTAL_TIMESTEPS=1,
         DIAG_STEPS=1,
@@ -189,16 +180,11 @@ def test_two_embedded_cylinders():
 
     # Specific numbers match older run for consistency
     D_CA = 1  # m
-    NX = 64
-    NZ = 64
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
         #V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
-        NX=NX,
-        NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
+        NX = 64,
+        NZ = 64,
         DT=1e-6,
         TOTAL_TIMESTEPS=1,
         DIAG_STEPS=1,
@@ -273,16 +259,11 @@ def test_two_embedded_cylinders_scraping():
 
     # Specific numbers match older run for consistency
     D_CA = 0.025  # m
-    NX = 64
-    NZ = 64
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
         #V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
-        NX=NX,
-        NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
+        NX=64,
+        NZ=64,
         DT=1e-10,
         TOTAL_TIMESTEPS=15,
         DIAG_STEPS=15,

@@ -37,8 +37,6 @@ def test_write_results():
     DT = 1.0 / (400 * FREQ)
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
-        rz=use_rz,
         V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION="%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
         D_CA=D_CA,
@@ -50,8 +48,6 @@ def test_write_results():
         SEED_NPPC=10,
         NX=NX,
         NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=STEPS,
     )

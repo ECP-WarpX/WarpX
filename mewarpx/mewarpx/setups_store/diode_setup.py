@@ -33,6 +33,8 @@ class DiodeRun_V1(object):
     CATHODE_A = 120.17e4
     # Work function in eV.
     CATHODE_PHI = 2.4
+    # Whether to use Schottky injection
+    USE_SCHOTTKY = False
     # Anode temperature in K
     ANODE_TEMP = 773
     # Work Function of Anode.
@@ -86,8 +88,6 @@ class DiodeRun_V1(object):
     PERIOD = None
 
     # [[[TODO ONCE IN WARPX]]]
-    # # Whether to use Schottky injection
-    USE_SCHOTTKY = False
     # # Noninteracting run - only inject trace particles and do field solve once
     NONINTERAC = False
     # # Number of particles injected each noninteracting wave
@@ -169,24 +169,27 @@ class DiodeRun_V1(object):
     # steps between doing load-balancing. If <1 load balancing will not be done
     LOAD_BALANCE_INTERVALS = 0
 
-    def __init__(self, dim=1, rz=False, **kwargs):
-        for kw in list(kwargs.keys()):
-            setattr(self, kw, kwargs[kw])
+    def __init__(self, **kwargs):
+        for kw, value in kwargs.items():
+            setattr(self, kw, value)
 
-        self.dim = dim
+        self.dim = mwxrun.dim
         if self.dim not in [1, 2, 3]:
             raise ValueError(f"Unavailable dimension {self.dim}")
-        self.rz = rz
+        self.rz = mwxrun.geom_str == 'RZ'
         if self.dim != 2 and self.rz:
             raise ValueError("dim=2 required for RZ")
 
-        if self.dim > 1:
-            if self.PERIOD is None:
-                raise ValueError("Derived period not yet supported.")
-                # self.PERIOD = (
-                #     np.ceil(float(self.NPARTPERSTEP)/self.NPPC)
-                #     * self.RES_LENGTH
-                # )
+        if self.dim == 2 and self.PERIOD is None:
+            # This gives equal spacing in x & z
+            self.PERIOD = self.D_CA * self.NX / self.NZ
+
+        if self.dim == 3 and self.PERIOD is None:
+            raise ValueError("Derived period not yet supported.")
+            # self.PERIOD = (
+            #     np.ceil(float(self.NPARTPERSTEP)/self.NPPC)
+            #     * self.RES_LENGTH
+            # )
 
         if self.V_ANODE_EXPRESSION is None:
             # V_CATHODE is set so that its Fermi level is at V=0.
@@ -274,6 +277,10 @@ class DiodeRun_V1(object):
             # offset here, though nothing should depend on it.
             xmin = 0
             xmax = 1.0
+        elif self.rz:
+            # assume for now that PERIOD is used to set r_max
+            xmin = 0
+            xmax = self.PERIOD
         else:
             xmin = -self.PERIOD/2.0
             xmax = self.PERIOD/2.0
@@ -303,45 +310,32 @@ class DiodeRun_V1(object):
             else:
                 self.NX = int(round(self.PERIOD/self.RES_LENGTH))
         if self.NY is None:
-            if self.dim < 3 and not self.rz:
+            if self.dim < 3:
                 self.NY = 0
             else:
                 self.NY = int(round(self.PERIOD/self.RES_LENGTH))
 
-        logger.info(
-            f"Creating grid with NX={self.NX}, NY={self.NY}, NZ={self.NZ} and "
-            f"x, y, z limits of [[{xmin:.4g}, {xmax:.4g}], [{ymin:.4g}, "
-            f"{ymax:.4g}], [{zmin:.4g}, {zmax:.4g}]]"
-        )
-
         # create the grid
+        grid_kwargs = {"min_tiles": self.MIN_TILES}
+
         if self.dim == 1:
-            raise NotImplementedError(
-                "1D grid is not yet implemented in mewarpx")
+            lower_bound = [zmin]
+            upper_bound = [zmax]
+            number_of_cells = [self.NZ]
         elif self.dim == 2:
-            mwxrun.init_grid(
-                xmin, xmax, zmin, zmax, self.NX, self.NZ,
-                min_tiles=self.MIN_TILES
-            )
+            lower_bound = [xmin, zmin]
+            upper_bound = [xmax, zmax]
+            number_of_cells = [self.NX, self.NZ]
         elif self.dim == 3:
             raise NotImplementedError("3d grid not yet implemented.")
-            '''
-            self.grid = picmi.Cartesian3DGrid(
-                number_of_cells=[self.NX, self.NY, self.NZ],
-                lower_bound=[xmin, ymin, zmin],
-                upper_bound=[xmax, ymax, zmax],
-                lower_boundary_conditions=['periodic', 'periodic', 'dirichlet'],
-                upper_boundary_conditions=['periodic', 'periodic', 'dirichlet'],
-                warpx_potential_lo_z=self.V_CATHODE,
-                warpx_potential_hi_z=self.V_ANODE_EXPRESSION,
-                lower_boundary_conditions_particles=[
-                    'periodic', 'periodic', 'absorbing'],
-                upper_boundary_conditions_particles=[
-                    'periodic', 'periodic', 'absorbing'],
-                moving_window_velocity=None,
-                warpx_max_grid_size=self.NZ//self.MIN_TILES
-            )
-            '''
+            lower_bound = [xmin, ymin, zmin]
+            upper_bound = [xmax, ymax, zmax]
+            number_of_cells = [self.NX, self.NY, self.NZ]
+
+        mwxrun.init_grid(
+            lower_bound=lower_bound, upper_bound=upper_bound,
+            number_of_cells=number_of_cells, **grid_kwargs
+        )
 
         self.DT = mwxrun.init_timestep(
             DT=self.DT,
@@ -415,22 +409,25 @@ class DiodeRun_V1(object):
 
     def init_solver(self):
         logger.info("### Init Diode Solver Setup ###")
-        if self.dim == 1:
-            raise NotImplementedError(
-                "1D solving is not yet implemented in mewarpx")
-            # self.solver = poisson1d.PoissonSolver1D()
-        elif self.dim in [2, 3]:
-            if self.DIRECT_SOLVER:
+        if self.DIRECT_SOLVER:
+            if self.dim == 1:
+                raise NotImplementedError(
+                    "Direct 1D solving is not yet implemented in mewarpx")
+                # self.solver = poisson1d.PoissonSolver1D()
+            elif self.dim == 2:
+                if self.rz:
+                    raise NotImplementedError(
+                        "Direct RZ solving is not yet implemented in mewarpx")
                 self.solver = poisson_pseudo_1d.PoissonSolverPseudo1D(
                     grid=mwxrun.grid
                 )
-            else:
-                self.solver = picmi.ElectrostaticSolver(
-                    grid=mwxrun.grid,
-                    method='Multigrid',
-                    required_precision=1e-6,
-                    maximum_iterations=10000
-                )
+        else:
+            self.solver = picmi.ElectrostaticSolver(
+                grid=mwxrun.grid,
+                method='Multigrid',
+                required_precision=1e-6,
+                maximum_iterations=10000
+            )
         self.solver.self_fields_verbosity = 2 if self.NONINTERAC else 0
 
     def init_conductors(self):

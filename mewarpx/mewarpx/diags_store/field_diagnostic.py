@@ -134,10 +134,12 @@ class FieldDiagnostic(WarpXDiagnostic):
                 draw_contourlines=False)
         if self.process_rho:
             # assume that rho_fp still holds the net charge density
-            data = (
-                mwxrun.get_gathered_rho_grid(include_ghosts=False)
-                * 1e-6
-            )[:,:,0]
+            data = mwxrun.get_gathered_rho_grid(include_ghosts=False) * 1e-6
+            if mwxrun.dim == 1:
+                data = data[:,0]
+            elif mwxrun.dim == 2:
+                data = data[:,:,0]
+
             self.process_field(
                 data=data,
                 titlestr='Net charge density',
@@ -150,7 +152,12 @@ class FieldDiagnostic(WarpXDiagnostic):
                     mwxrun.get_gathered_rho_grid(
                         species_name=species.name, include_ghosts=False
                     ) / species.sq * 1e-6
-                )[:,:,0]
+                )
+                if mwxrun.dim == 1:
+                    data = data[:,0]
+                elif mwxrun.dim == 2:
+                    data = data[:,:,0]
+
                 self.process_field(
                     data=data,
                     titlestr=f'{species.name} particle density',
@@ -183,6 +190,11 @@ class FieldDiagnostic(WarpXDiagnostic):
             try:
                 # Plot if desired, and array is not all-0.
                 if self.plot and not np.all(data == 0.):
+                    # tile the data to give 2d plots a finite width
+                    if mwxrun.dim == 1:
+                        data = np.tile(data, mwxrun.nz//2).reshape(
+                            mwxrun.nz//2, data.shape[0])
+
                     self.plot_field(data=data, plottype=plottype,
                                     titlestr=titlestr, **kwargs)
             except Exception as exc:

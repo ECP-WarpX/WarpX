@@ -27,7 +27,6 @@ def get_run():
 
     # Initialize and import only when we know dimension
     run = diode_setup.DiodeRun_V1(
-        dim=2,
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -35,8 +34,6 @@ def get_run():
         NPPC=4,
         NX=NX,
         NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=MAX_STEPS,
         DIAG_STEPS=DIAG_STEPS,

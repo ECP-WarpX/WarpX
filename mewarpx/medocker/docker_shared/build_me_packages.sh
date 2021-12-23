@@ -14,8 +14,9 @@ popd
 pushd WarpX
 
 export WARPX_MPI=ON
-export WARPX_DIMS=2
+export WARPX_DIMS='1;2;RZ'
 export BUILD_SHARED_LIBS=ON
+export WARPX_QED=OFF
 export WARPX_EB=ON
 export BUILD_PARALLEL=8
 export CC=$(which clang)

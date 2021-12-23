@@ -77,6 +77,11 @@ class CMakeBuild(build_ext):
         r_dim = re.search(r'warpx_(1|2|3|rz)(?:d*)', ext.name)
         dims = r_dim.group(1).upper()
 
+        if dims == 'RZ':
+            WARPX_EB = 'OFF'
+        else:
+            WARPX_EB = 'ON'
+
         cmake_args = [
             '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' +
             os.path.join(extdir, "pywarpx"),

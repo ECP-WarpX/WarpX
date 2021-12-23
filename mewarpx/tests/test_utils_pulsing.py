@@ -58,7 +58,7 @@ def test_utils_pulsing_sim():
     # grid, solver and timesteps
     #####################################
 
-    mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz)
+    mwxrun.init_grid([xmin, zmin], [xmax, zmax], [nx, nz])
 
     solver = PoissonSolverPseudo1D(grid=mwxrun.grid)
 

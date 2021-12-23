@@ -97,7 +97,6 @@ def test_injector_flux_diagnostic():
         NX=NX,
         NZ=NZ,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,
@@ -186,7 +185,6 @@ def test_flux_diag_accuracy(caplog):
 
     # Run with relatively large bias to have stronger signals.
     run = diode_setup.DiodeRun_V1(
-        dim=2,
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=4.,
@@ -197,7 +195,6 @@ def test_flux_diag_accuracy(caplog):
         NX=NX,
         NZ=NZ,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,

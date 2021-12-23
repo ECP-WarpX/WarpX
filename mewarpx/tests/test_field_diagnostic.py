@@ -50,8 +50,6 @@ def test_field_diag(plot_on_diag_steps):
     D_CA = 0.067 # m
     FREQ = 13.56e6 # MHz
     VOLTAGE = 450.0
-    NX = 8
-    NZ = 128
     DT = 1.0 / (400 * FREQ)
     DIAG_STEPS = 2 * (int(post_processing) + 1)
     DIAG_DATA_LIST = ['rho_electrons', 'rho_he_ions', 'phi']
@@ -59,8 +57,6 @@ def test_field_diag(plot_on_diag_steps):
     DIAG_SPECIES_LIST = None
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
-        rz=use_rz,
         V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION="%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
         D_CA=D_CA,
@@ -70,10 +66,8 @@ def test_field_diag(plot_on_diag_steps):
         PLASMA_DENSITY=2.56e14,  # m^-3
         T_ELEC=30000.0,  # K
         SEED_NPPC=10,
-        NX=NX,
-        NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
+        NX=8,
+        NZ=128,
         DT=DT,
         TOTAL_TIMESTEPS=STEPS,
         DIAG_STEPS=DIAG_STEPS,

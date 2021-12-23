@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export WARPX_DIMS=2
+export WARPX_DIMS='1;2;RZ'
 export WARPX_MPI=ON
 export WARPX_OPENPMD=OFF
 export WARPX_PSATD=OFF
