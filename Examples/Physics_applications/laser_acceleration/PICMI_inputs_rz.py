@@ -111,6 +111,7 @@ field_diag = picmi.FieldDiagnostic(
     grid = grid,
     period = 10,
     data_list = diag_field_list,
+    warpx_dump_rz_modes = 1,
     write_dir = '.',
     warpx_file_prefix = 'Python_LaserAccelerationRZ_plt')
 diag_particle_list = ['weighting', 'momentum']
